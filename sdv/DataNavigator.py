@@ -23,6 +23,16 @@ class DataNavigator:
         else:
             return []
 
+    def get_parents(self, table_name):
+        """ returns parents of a table
+        Args:
+            table_name (str): name of table to get parents of
+        """
+        if table_name in self.parent_map:
+            return self.parent_map[table_name]
+        else:
+            return []
+
     def _parse_data(self, meta, meta_filename):
         """ extracts the data from a meta.json object
         and maps tabls name to tuple (dataframe, table meta) """

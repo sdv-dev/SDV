@@ -57,7 +57,9 @@ class Modeler:
 
     def model_database(self):
         """ Uses RCPA and stores model for database """
-        pass
+        for table in self.dn.data:
+            if self.dn.get_parents(table) == []:
+                self.RCPA(table)
 
     def load_model(self, filename):
         """ Loads model from filename
