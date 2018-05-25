@@ -36,7 +36,7 @@ class Modeler:
         num_rows = table_df.shape[0]
         sets = {}
         for i in range(num_rows):
-            row = table_df.loc[i,:]
+            row = table_df.loc[i, :]
             # get specific value
             val = row[pk]
             sets[val] = None
@@ -94,6 +94,5 @@ class Modeler:
             if fk is None:
                 pass
             for val in sets:
-                key = sets[val]
                 df = child_table[child_table[fk] == val]
                 sets[val] = df

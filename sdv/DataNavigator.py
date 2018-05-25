@@ -68,4 +68,3 @@ class DataNavigator:
                     else:
                         parent_map[table] = {parent}
         return (child_map, parent_map)
-
