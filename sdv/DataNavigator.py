@@ -66,6 +66,6 @@ class DataNavigator:
                     if table in parent_map:
                         parent_map[table].add(parent)
                     else:
-                        parent_map[table] = {table}
+                        parent_map[table] = {parent}
         return (child_map, parent_map)
 
