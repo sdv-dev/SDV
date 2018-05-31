@@ -61,6 +61,24 @@ class Modeler:
             if self.dn.get_parents(table) == []:
                 self.RCPA(table)
 
+    def flatten_model(self, model):
+        """ Flatten a model's parameters into an array
+        Args:
+            model: a model object
+        Returns:
+            1D array of parameters for model
+        """
+        params = []
+        num_rows = model.cov_matrix.shape[0]
+        num_cols = len(model.means)
+        params = params + list(model.cov_matrix.flatten())
+        params = params + model.means
+        for key in model.distribs:
+            col_model = model.distribs[key]
+            params.append(col_model.std)
+            params.append(col_model.mean)
+        return (params, num_rows, num_cols)
+
     def load_model(self, filename):
         """ Loads model from filename
         Args:
