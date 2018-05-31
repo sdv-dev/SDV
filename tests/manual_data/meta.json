@@ -1,0 +1,116 @@
+{
+    "path": "", 
+    "tables": [ 
+        {
+            "fields": [
+                {
+                    "name": "CUSTOMER_ID", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "CUST_POSTAL_CODE", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                },  
+                {
+                    "name": "PHONE_NUMBER1", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                },
+                {
+                    "name": "CREDIT_LIMIT", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }
+            ], 
+            "headers": true, 
+            "name": "DEMO_CUSTOMERS",
+            "path": "DEMO_CUSTOMERS_DATA_TABLE.csv", 
+            "primary_key": "CUSTOMER_ID", 
+            "use": true
+        }, 
+        {
+            "fields": [
+                {
+                    "name": "ORDER_ID", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "CUSTOMER_ID", 
+                    "ref": {
+                        "field": "(CUSTOMER_ID)", 
+                        "table": "DEMO_CUSTOMERS"
+                    }, 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "ORDER_TOTAL", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }
+            ], 
+            "headers": true, 
+            "name": "DEMO_ORDERS", 
+            "path": "DEMO_ORDERS_DATA_TABLE.csv",
+            "primary_key": "ORDER_ID", 
+            "use": true
+        }, 
+        {
+            "fields": [
+                {
+                    "name": "ORDER_ITEM_ID", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "ORDER_ID", 
+                    "ref": {
+                        "field": "(ORDER_ID)", 
+                        "table": "DEMO_ORDERS"
+                    }, 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "PRODUCT_ID", 
+                    "ref": {
+                        "field": "(PRODUCT_ID)", 
+                        "table": "DEMO_PRODUCT_INFO"
+                    }, 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "UNIT_PRICE", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }, 
+                {
+                    "name": "QUANTITY", 
+                    "subtype": "integer", 
+                    "type": "number", 
+                    "uniques": 0
+                }
+            ], 
+            "headers": true, 
+            "name": "DEMO_ORDER_ITEMS",
+            "path": "DEMO_ORDER_ITEMS_DATA_TABLE.csv", 
+            "primary_key": "ORDER_ITEM_ID", 
+            "use": true
+        }
+    ]
+}
