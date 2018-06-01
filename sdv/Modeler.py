@@ -1,4 +1,5 @@
 import pandas as pd
+from copulas.multivariate.GaussianCopula import GaussianCopula
 
 
 class Modeler:
@@ -12,6 +13,7 @@ class Modeler:
             model_type: Type of Copula to use for modeling
         """
         self.tables = {}
+        self.models = {}
         self.dn = data_navigator
         self.transformed_data = transformed_data
         self.model_type = model_type
@@ -24,7 +26,6 @@ class Modeler:
         # Grab table
         data = self.dn.data
         table_df, table_meta = data[table]
-        print(table_df)
         children = self.dn.get_children(table)
         # get primary key
         if 'primary_key' not in table_meta:
@@ -39,11 +40,19 @@ class Modeler:
             row = table_df.loc[i, :]
             # get specific value
             val = row[pk]
-            sets[val] = None
+            sets[val] = []
         # get conditional data for val
         self._get_conditional_data(sets, pk, children)
-        # change this part later to create copula
-        self.tables = sets
+        extended_table = pd.DataFrame([])
+        # create extended table
+        for i in range(num_rows):
+            row = table_df.loc[i, :]
+            # get specific value
+            val = row[pk]
+            for extension in sets[val]:
+                row = row.append(extension)
+            extended_table = extended_table.append(row, ignore_index=True)
+        self.tables[table] = extended_table
 
     def RCPA(self, table):
         """ Recursively calls CPA starting at table
@@ -60,15 +69,20 @@ class Modeler:
         for table in self.dn.data:
             if self.dn.get_parents(table) == []:
                 self.RCPA(table)
+        for table in self.tables:
+            table_model = GaussianCopula()
+            table_model.fit(self.tables[table])
+            self.models[table] = table_model
 
-    def flatten_model(self, model):
+    def flatten_model(self, model, label=''):
         """ Flatten a model's parameters into an array
         Args:
             model: a model object
         Returns:
-            1D array of parameters for model
+            pandas Series of parameters for model
         """
         params = []
+        labels = []
         num_rows = model.cov_matrix.shape[0]
         num_cols = len(model.means)
         params = params + list(model.cov_matrix.flatten())
@@ -77,7 +91,14 @@ class Modeler:
             col_model = model.distribs[key]
             params.append(col_model.std)
             params.append(col_model.mean)
-        return (params, num_rows, num_cols)
+        for i in range(len(params)):
+            labels.append(label + str(i))
+        params.append(num_rows)
+        labels.append(label+'_num_rows')
+        params.append(num_cols)
+        labels.append(label+'_num_cols')
+        param_series = pd.Series(params, labels)
+        return param_series
 
     def load_model(self, filename):
         """ Loads model from filename
@@ -99,6 +120,7 @@ class Modeler:
         """
         # find children that ref primary key
         for child in children:
+            print('Child table', child)
             child_table, child_meta = self.dn.data[child]
             fk = None
             fields = child_meta['fields']
@@ -110,7 +132,13 @@ class Modeler:
                         fk = field['name']
             # fk should be found by this point
             if fk is None:
-                pass
+                continue
+            # add model params conditional data
             for val in sets:
-                df = child_table[child_table[fk] == val]
-                sets[val] = df
+                extension = child_table[child_table[fk] == val]
+                if extension.empty:
+                    continue
+                model = GaussianCopula()
+                model.fit(extension)
+                flattened_extension = self.flatten_model(model, child)
+                sets[val].append(flattened_extension)

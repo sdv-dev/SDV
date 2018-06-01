@@ -9,22 +9,31 @@ from copulas.multivariate.GaussianCopula import GaussianCopula
 
 
 # try out data navigator and modeler
-dn = DataNavigator('../demo/Airbnb_demo_meta.json')
-print(dn.data)
-print(dn.child_map)
-print(dn.parent_map)
+# dn = DataNavigator('../demo/Airbnb_demo_meta.json')
+dn = DataNavigator('../tests/manual_data/meta.json')
+print('Data', dn.data)
+print('child map', dn.child_map)
+print('parent map', dn.parent_map)
 sampler = Sampler(dn)
 modeler = Modeler(dn)
+# modeler.CPA('DEMO_CUSTOMERS')
+# modeler.RCPA('DEMO_CUSTOMERS')
+modeler.model_database()
+print(modeler.tables)
+print(modeler.models)
 
-# create copula model
-model = GaussianCopula()
-data = pd.read_csv('../tests/manual_data/customers.csv')
-model.fit(data)
-params = modeler.flatten_model(model)
-print(params)
+# # create copula model
+# model = GaussianCopula()
+# data = pd.read_csv('../tests/manual_data/customers.csv')
+# model.fit(data)
+# params = modeler.flatten_model(model)
+# print(params)
+
+# # model the database
 # modeler.model_database()
 # print(modeler.tables)
 
+# # Sample the data base
 # print('Sample rows before parent', sampler.sample_rows('sessions', 10))
 # print('Sample Table', sampler.sample_table('users'))
 # print('sample rows', sampler.sample_rows('users', 5))
