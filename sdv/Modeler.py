@@ -5,7 +5,7 @@ from copulas.multivariate.GaussianCopula import GaussianCopula
 class Modeler:
     """ Class responsible for modeling database """
     def __init__(self, data_navigator, transformed_data=None,
-                 model_type='Gaussian'):
+                 model_type='GaussianCopula'):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -70,7 +70,7 @@ class Modeler:
             if self.dn.get_parents(table) == []:
                 self.RCPA(table)
         for table in self.tables:
-            table_model = GaussianCopula()
+            table_model = self._get_model(self.model_type)()
             table_model.fit(self.tables[table])
             self.models[table] = table_model
 
@@ -81,24 +81,25 @@ class Modeler:
         Returns:
             pandas Series of parameters for model
         """
-        params = []
-        labels = []
-        num_rows = model.cov_matrix.shape[0]
-        num_cols = len(model.means)
-        params = params + list(model.cov_matrix.flatten())
-        params = params + model.means
-        for key in model.distribs:
-            col_model = model.distribs[key]
-            params.append(col_model.std)
-            params.append(col_model.mean)
-        for i in range(len(params)):
-            labels.append(label + str(i))
-        params.append(num_rows)
-        labels.append(label+'_num_rows')
-        params.append(num_cols)
-        labels.append(label+'_num_cols')
-        param_series = pd.Series(params, labels)
-        return param_series
+        if self.model_type == "GaussianCopula":
+            params = []
+            labels = []
+            num_rows = model.cov_matrix.shape[0]
+            num_cols = len(model.means)
+            params = params + list(model.cov_matrix.flatten())
+            params = params + model.means
+            for key in model.distribs:
+                col_model = model.distribs[key]
+                params.append(col_model.std)
+                params.append(col_model.mean)
+            for i in range(len(params)):
+                labels.append(label + str(i))
+            params.append(num_rows)
+            labels.append(label+'_num_rows')
+            params.append(num_cols)
+            labels.append(label+'_num_cols')
+            param_series = pd.Series(params, labels)
+            return param_series
 
     def load_model(self, filename):
         """ Loads model from filename
@@ -138,7 +139,11 @@ class Modeler:
                 extension = child_table[child_table[fk] == val]
                 if extension.empty:
                     continue
-                model = GaussianCopula()
+                model = self._get_model(self.model_type)()
                 model.fit(extension)
                 flattened_extension = self.flatten_model(model, child)
                 sets[val].append(flattened_extension)
+
+    def _get_model(self, model_name):
+        """ Gets instance of model from name of model """
+        return globals()[model_name]

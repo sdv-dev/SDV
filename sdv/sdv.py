@@ -17,10 +17,10 @@ print('parent map', dn.parent_map)
 sampler = Sampler(dn)
 modeler = Modeler(dn)
 # modeler.CPA('DEMO_CUSTOMERS')
-# modeler.RCPA('DEMO_CUSTOMERS')
-modeler.model_database()
+modeler.RCPA('DEMO_ORDERS')
+# modeler.model_database()
 print(modeler.tables)
-print(modeler.models)
+# print(modeler.models)
 
 # # create copula model
 # model = GaussianCopula()
