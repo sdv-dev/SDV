@@ -139,6 +139,8 @@ class Modeler:
                 extension = child_table[child_table[fk] == val]
                 if extension.empty:
                     continue
+                # remove column of foreign key
+                extension = extension.drop(fk, axis=1)
                 model = self._get_model(self.model_type)()
                 model.fit(extension)
                 flattened_extension = self.flatten_model(model, child)
