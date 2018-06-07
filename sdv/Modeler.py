@@ -84,8 +84,6 @@ class Modeler:
         if self.model_type == "GaussianCopula":
             params = []
             labels = []
-            num_rows = model.cov_matrix.shape[0]
-            num_cols = len(model.means)
             params = params + list(model.cov_matrix.flatten())
             params = params + model.means
             for key in model.distribs:
@@ -94,10 +92,6 @@ class Modeler:
                 params.append(col_model.mean)
             for i in range(len(params)):
                 labels.append(label + str(i))
-            params.append(num_rows)
-            labels.append(label+'_num_rows')
-            params.append(num_cols)
-            labels.append(label+'_num_cols')
             param_series = pd.Series(params, labels)
             return param_series
 

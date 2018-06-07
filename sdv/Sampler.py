@@ -4,10 +4,12 @@ import pandas as pd
 
 class Sampler:
     """ Class to sample data from a model """
-    def __init__(self, data_navigator):
+    def __init__(self, data_navigator, modeler):
         """ Instantiates a sampler """
         self.dn = data_navigator
+        self.modeler = modeler
         self.been_sampled = set()  # table_name -> if already sampled
+        self.sampled = {}  # table_name -> [(primary_key, generated_row)]
 
     def sample_rows(self, table_name, num_rows):
         """ Sample specified number of rows for specified table
@@ -24,13 +26,15 @@ class Sampler:
                 parent_sampled = True
                 break
         if parents == []:
-            orig_table = self.dn.data[table_name][0]
-            num_cols = orig_table.shape[1]
-            shape = (num_rows, num_cols)
-            col_names = orig_table.columns.values
-            sampled_table = pd.DataFrame(np.random.randint(0, 100, size=shape),
-                                         columns=col_names)
-            self.been_sampled.add(table_name)
+            model = self.modeler.models[table_name]
+            primary_key = self.dn.data[table_name][1]['primary_key']
+            synthesized_row = model.sample()
+            sample_info = (primary_key, synthesized_row)
+            if table_name in self.sampled:
+                self.sampled[table_name].append(sample_info)
+            else:
+                self.sampled[table_name] = [sample_info]
+            return synthesized_row
         elif parent_sampled:
             # Here we would get params necessary to get model
             orig_table = self.dn.data[table_name][0]
