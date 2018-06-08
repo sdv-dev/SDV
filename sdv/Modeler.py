@@ -1,11 +1,13 @@
 import pandas as pd
 from copulas.multivariate.GaussianCopula import GaussianCopula
+from copulas.univariate.GaussianUnivariate import GaussianUnivariate
 
 
 class Modeler:
     """ Class responsible for modeling database """
     def __init__(self, data_navigator, transformed_data=None,
-                 model_type='GaussianCopula'):
+                 model_type='GaussianCopula',
+                 distribution='GaussianUnivariate'):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -17,6 +19,7 @@ class Modeler:
         self.dn = data_navigator
         self.transformed_data = transformed_data
         self.model_type = model_type
+        self.distribution = distribution
 
     def CPA(self, table):
         """ Runs CPA algorithm on a table
@@ -143,3 +146,11 @@ class Modeler:
     def _get_model(self, model_name):
         """ Gets instance of model from name of model """
         return globals()[model_name]
+
+    def get_model(self):
+        """ Gets instance of model based on model type """
+        return globals()[self.model_type]
+
+    def get_distribution(self):
+        """ Gets instance of model based on model type """
+        return globals()[self.distribution]

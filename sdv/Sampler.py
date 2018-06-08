@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import random
 
 
 class Sampler:
@@ -21,13 +22,13 @@ class Sampler:
         """
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
+        primary_key = self.dn.data[table_name][1]['primary_key']
         for parent in parents:
-            if parent in self.been_sampled:
+            if parent in self.sampled:
                 parent_sampled = True
                 break
         if parents == []:
             model = self.modeler.models[table_name]
-            primary_key = self.dn.data[table_name][1]['primary_key']
             synthesized_row = model.sample()
             sample_info = (primary_key, synthesized_row)
             if table_name in self.sampled:
@@ -36,18 +37,24 @@ class Sampler:
                 self.sampled[table_name] = [sample_info]
             return synthesized_row
         elif parent_sampled:
-            # Here we would get params necessary to get model
-            orig_table = self.dn.data[table_name][0]
-            num_cols = orig_table.shape[1]
-            shape = (num_rows, num_cols)
-            col_names = orig_table.columns.values
-            sampled_table = pd.DataFrame(np.random.randint(0, 100, size=shape),
-                                         columns=col_names)
-            self.been_sampled.add(table_name)
+            # grab random parent row
+            random_parent = random.sample(parents, 1)[0]
+            parent_rows = self.sampled[random_parent]
+            parent_row = random.sample(parent_rows, 1)[0][1]
+            # get parameters from parent to make model
+            model = self._make_model_from_params(parent_row,
+                                                 table_name,
+                                                 random_parent)
+            # sample from that model
+            synthesized_row = model.sample()
+            sample_info = (primary_key, synthesized_row)
+            if table_name in self.sampled:
+                self.sampled[table_name].append(sample_info)
+            else:
+                self.sampled[table_name] = [sample_info]
+            return synthesized_row
         else:
             raise Exception('Parents must be synthesized first')
-        print(self.been_sampled)
-        return sampled_table
 
     def sample_table(self, table_name):
         """ Sample a table equal to the size of the original
@@ -97,3 +104,48 @@ class Sampler:
             else:
                 sampled_data[child] = rows
             self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
+
+    def _make_model_from_params(self, parent_row, table_name, parent_name):
+        """ Takes the params from a generated parent row
+        and creates a model from it
+        Args:
+            parent_row (dataframe): a generated parent row
+            table_name (string): name of table to make model for
+            parent_name (string): name of parent table
+        """
+        # get parameters
+        params = parent_row.filter(regex=table_name+'[0-9]*', axis=1)
+        totalcols = params.shape[1]
+        # build model
+        model = self.modeler.get_model()()
+        num_cols = self.dn.data[table_name][0].shape[1]-1
+        cov_size = num_cols**2
+        # get labels for dataframe
+        labels = list(self.dn.data[table_name][0])
+        parent_meta = self.dn.data[parent_name][1]
+        fk = parent_meta['primary_key']
+        labels.remove(fk)
+        # getcovariance matrix
+        cov = params.iloc[:, 0:num_cols**2]
+        cov_matrix = cov.as_matrix()
+        cov_matrix = cov_matrix.reshape((num_cols, num_cols))
+        model.cov_matrix = cov_matrix
+        distribs = {}
+        # get distributions of columns and means
+        means = list(params.iloc[:, cov_size:cov_size+2].values.flatten())
+        model.means = means
+        label_index = 0
+        for i in range(num_cols**2+2, totalcols, 2):
+            distrib = self.modeler.get_distribution()()
+            std = params.iloc[:, i]
+            mean = params.iloc[:, i+1]
+            distrib.mean = mean
+            distrib.std = std
+            distribs[labels[label_index]] = distrib
+            label_index += 1
+        model.distribs = distribs
+        # create fake data
+        data = pd.DataFrame(np.random.randint(0, 10, size=(2, len(labels))),
+                            columns=labels)
+        model.data = data
+        return model

@@ -22,7 +22,8 @@ modeler.model_database()
 print(modeler.tables)
 print('customers table', modeler.models['DEMO_CUSTOMERS'].data)
 print('orders table', modeler.models['DEMO_ORDERS'].data)
-print(sampler.sample_rows('DEMO_CUSTOMERS', 1))
+print('first', sampler.sample_rows('DEMO_CUSTOMERS', 1))
+print('second', sampler.sample_rows('DEMO_ORDERS', 1))
 
 # # create copula model
 # model = GaussianCopula()
