@@ -35,23 +35,28 @@ class Sampler:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
+            # TODO: filter out parameters
             return synthesized_row
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
             parent_rows = self.sampled[random_parent]
-            parent_row = random.sample(parent_rows, 1)[0][1]
+            fk, parent_row = random.sample(parent_rows, 1)[0]
             # get parameters from parent to make model
             model = self._make_model_from_params(parent_row,
                                                  table_name,
                                                  random_parent)
             # sample from that model
             synthesized_row = model.sample()
+            # add foreign key value to row
+            fk_val = parent_row.loc[0, fk]
+            synthesized_row[fk] = fk_val
             sample_info = (primary_key, synthesized_row)
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
+            # TODO: filter out parameters
             return synthesized_row
         else:
             raise Exception('Parents must be synthesized first')
@@ -116,12 +121,10 @@ class Sampler:
         # get parameters
         child_range = self.modeler.child_locs[parent_name][table_name]
         params = parent_row.iloc[:, child_range[0]:child_range[1]]
-        print('params', params)
         totalcols = params.shape[1]
         # build model
         model = self.modeler.get_model()()
         num_cols = self.modeler.tables[table_name].shape[1]-1
-        print('num_cols', num_cols)
         cov_size = num_cols**2
         # get labels for dataframe
         labels = list(self.modeler.tables[table_name])
@@ -133,13 +136,10 @@ class Sampler:
         cov_matrix = cov.as_matrix()
         cov_matrix = cov_matrix.reshape((num_cols, num_cols))
         model.cov_matrix = cov_matrix
-        print('covariance', cov_matrix)
         distribs = {}
         # get distributions of columns and means
         means = list(params.iloc[:,
                                  cov_size:cov_size+num_cols].values.flatten())
-        print('means', means)
-        print('labels', labels)
         model.means = means
         label_index = 0
         for i in range(num_cols**2+num_cols, totalcols, 2):
