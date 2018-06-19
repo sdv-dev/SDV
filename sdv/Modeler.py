@@ -16,6 +16,7 @@ class Modeler:
         """
         self.tables = {}
         self.models = {}
+        self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
         self.transformed_data = transformed_data
         self.model_type = model_type
@@ -28,8 +29,10 @@ class Modeler:
         """
         # Grab table
         data = self.dn.data
-        table_df, table_meta = data[table]
+        # TODO: grab table from self.tables if it is not a leaf
+        # ow grab from data
         children = self.dn.get_children(table)
+        table_df, table_meta = data[table]
         # get primary key
         if 'primary_key' not in table_meta:
             # there are no references to the table
@@ -45,7 +48,7 @@ class Modeler:
             val = row[pk]
             sets[val] = []
         # get conditional data for val
-        self._get_conditional_data(sets, pk, children)
+        self._get_conditional_data(sets, pk, children, table)
         extended_table = pd.DataFrame([])
         # create extended table
         for i in range(num_rows):
@@ -54,7 +57,9 @@ class Modeler:
             val = row[pk]
             for extension in sets[val]:
                 row = row.append(extension)
-            extended_table = extended_table.append(row, ignore_index=True)
+            # make sure row doesn't have nans
+            if not row.isnull().values.any():
+                extended_table = extended_table.append(row, ignore_index=True)
         self.tables[table] = extended_table
 
     def RCPA(self, table):
@@ -86,16 +91,13 @@ class Modeler:
         """
         if self.model_type == "GaussianCopula":
             params = []
-            labels = []
             params = params + list(model.cov_matrix.flatten())
             params = params + model.means
             for key in model.distribs:
                 col_model = model.distribs[key]
                 params.append(col_model.std)
                 params.append(col_model.mean)
-            for i in range(len(params)):
-                labels.append(label + str(i))
-            param_series = pd.Series(params, labels)
+            param_series = pd.Series(params)
             return param_series
 
     def load_model(self, filename):
@@ -112,14 +114,17 @@ class Modeler:
         """
         pass
 
-    def _get_conditional_data(self, sets, pk, children):
+    def _get_conditional_data(self, sets, pk, children, table):
         """ loops through children looking for rows that
         reference the value
         """
+        # keep track of which columns belong to which child
+        start = 0
+        end = 0
         # find children that ref primary key
         for child in children:
-            print('Child table', child)
             child_table, child_meta = self.dn.data[child]
+            child_table = self.tables[child]
             fk = None
             fields = child_meta['fields']
             for field_key in fields:
@@ -141,7 +146,14 @@ class Modeler:
                 model = self._get_model(self.model_type)()
                 model.fit(extension)
                 flattened_extension = self.flatten_model(model, child)
+                # keep track of child column indices
+                end = max(end, start + len(flattened_extension))
+                if table in self.child_locs:
+                    self.child_locs[table][child] = (start, end)
+                else:
+                    self.child_locs[table] = {child: (start, end)}
                 sets[val].append(flattened_extension)
+            start = end
 
     def _get_model(self, model_name):
         """ Gets instance of model from name of model """

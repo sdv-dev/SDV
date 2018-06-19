@@ -114,28 +114,35 @@ class Sampler:
             parent_name (string): name of parent table
         """
         # get parameters
-        params = parent_row.filter(regex=table_name+'[0-9]*', axis=1)
+        child_range = self.modeler.child_locs[parent_name][table_name]
+        params = parent_row.iloc[:, child_range[0]:child_range[1]]
+        print('params', params)
         totalcols = params.shape[1]
         # build model
         model = self.modeler.get_model()()
-        num_cols = self.dn.data[table_name][0].shape[1]-1
+        num_cols = self.modeler.tables[table_name].shape[1]-1
+        print('num_cols', num_cols)
         cov_size = num_cols**2
         # get labels for dataframe
-        labels = list(self.dn.data[table_name][0])
+        labels = list(self.modeler.tables[table_name])
         parent_meta = self.dn.data[parent_name][1]
         fk = parent_meta['primary_key']
         labels.remove(fk)
-        # getcovariance matrix
+        # get covariance matrix
         cov = params.iloc[:, 0:num_cols**2]
         cov_matrix = cov.as_matrix()
         cov_matrix = cov_matrix.reshape((num_cols, num_cols))
         model.cov_matrix = cov_matrix
+        print('covariance', cov_matrix)
         distribs = {}
         # get distributions of columns and means
-        means = list(params.iloc[:, cov_size:cov_size+2].values.flatten())
+        means = list(params.iloc[:,
+                                 cov_size:cov_size+num_cols].values.flatten())
+        print('means', means)
+        print('labels', labels)
         model.means = means
         label_index = 0
-        for i in range(num_cols**2+2, totalcols, 2):
+        for i in range(num_cols**2+num_cols, totalcols, 2):
             distrib = self.modeler.get_distribution()()
             std = params.iloc[:, i]
             mean = params.iloc[:, i+1]
@@ -145,6 +152,7 @@ class Sampler:
             label_index += 1
         model.distribs = distribs
         # create fake data
+        # TODO: Change copulas to not need data
         data = pd.DataFrame(np.random.randint(0, 10, size=(2, len(labels))),
                             columns=labels)
         model.data = data
