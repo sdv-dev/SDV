@@ -35,8 +35,9 @@ class Sampler:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
-            # TODO: filter out parameters
-            return synthesized_row
+            # filter out parameters
+            labels = list(self.dn.data[table_name][0])
+            return synthesized_row[labels]
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
@@ -56,8 +57,9 @@ class Sampler:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
-            # TODO: filter out parameters
-            return synthesized_row
+            # filter out parameters
+            labels = list(self.dn.data[table_name][0])
+            return synthesized_row[labels]
         else:
             raise Exception('Parents must be synthesized first')
 
