@@ -29,37 +29,39 @@ class Sampler:
                 break
         if parents == []:
             model = self.modeler.models[table_name]
-            synthesized_row = model.sample()
-            sample_info = (primary_key, synthesized_row)
+            synthesized_rows = model.sample(num_rows)
+            sample_info = (primary_key, synthesized_rows)
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
-            return synthesized_row[labels]
+            return synthesized_rows[labels]
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
             parent_rows = self.sampled[random_parent]
             fk, parent_row = random.sample(parent_rows, 1)[0]
+            # Make sure only using one row
+            parent_row = parent_row.loc[[0]]
             # get parameters from parent to make model
             model = self._make_model_from_params(parent_row,
                                                  table_name,
                                                  random_parent)
             # sample from that model
-            synthesized_row = model.sample()
+            synthesized_rows = model.sample(num_rows)
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
-            synthesized_row[fk] = fk_val
-            sample_info = (primary_key, synthesized_row)
+            synthesized_rows[fk] = fk_val
+            sample_info = (primary_key, synthesized_rows)
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
-            return synthesized_row[labels]
+            return synthesized_rows[labels]
         else:
             raise Exception('Parents must be synthesized first')
 

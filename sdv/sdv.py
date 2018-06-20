@@ -23,8 +23,8 @@ print('HERE', modeler.tables)
 print(modeler.child_locs)
 print('customers table', modeler.models['DEMO_CUSTOMERS'].data)
 print('orders table', modeler.models['DEMO_ORDERS'].data)
-print('first', sampler.sample_rows('DEMO_CUSTOMERS', 1))
-print('second', sampler.sample_rows('DEMO_ORDERS', 1))
+print('first', sampler.sample_rows('DEMO_CUSTOMERS', 2))
+print('second', sampler.sample_rows('DEMO_ORDERS', 2))
 print('third', sampler.sample_rows('DEMO_ORDER_ITEMS', 1))
 
 # # create copula model
