@@ -1,6 +1,7 @@
 import pandas as pd
 from copulas.multivariate.GaussianCopula import GaussianCopula
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate
+from rdt.hyper_transformer import HyperTransformer
 
 
 class Modeler:
