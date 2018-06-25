@@ -53,9 +53,14 @@ class Modeler:
         extended_table = pd.DataFrame([])
         # create extended table
         for i in range(num_rows):
-            row = table_df.loc[i, :]
+            # TODO: change to be transformed table
+            orig_row = table_df.loc[i, :]
+            row = self.dn.transformed[table].loc[i, :]
             # get specific value
-            val = row[pk]
+            val = orig_row[pk]
+            # make sure val isn't none
+            if pd.isnull(val):
+                continue
             for extension in sets[val]:
                 row = row.append(extension)
             # make sure row doesn't have nans
@@ -71,6 +76,7 @@ class Modeler:
         children = self.dn.get_children(table)
         for child in children:
             self.RCPA(child)
+        print(self.tables)
         self.CPA(table)
 
     def model_database(self):
@@ -125,7 +131,8 @@ class Modeler:
         # find children that ref primary key
         for child in children:
             child_table, child_meta = self.dn.data[child]
-            child_table = self.tables[child]
+            # child_table = self.tables[child]
+            transformed_child_table = self.dn.transformed[child]
             fk = None
             fields = child_meta['fields']
             for field_key in fields:
@@ -139,11 +146,13 @@ class Modeler:
                 continue
             # add model params conditional data
             for val in sets:
-                extension = child_table[child_table[fk] == val]
+                # TODO: grab the tranformed table columns instead
+                # extension = child_table[child_table[fk] == val]
+                extension = transformed_child_table[child_table[fk] == val]
                 if extension.empty:
                     continue
                 # remove column of foreign key
-                extension = extension.drop(fk, axis=1)
+                # extension = extension.drop(fk, axis=1)
                 model = self._get_model(self.model_type)()
                 model.fit(extension)
                 flattened_extension = self.flatten_model(model, child)

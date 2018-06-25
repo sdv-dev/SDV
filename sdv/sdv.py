@@ -8,24 +8,34 @@ from Modeler import Modeler
 from copulas.multivariate.GaussianCopula import GaussianCopula
 
 
-# try out data navigator and modeler
-# dn = DataNavigator('../demo/Airbnb_demo_meta.json')
-dn = DataNavigator('../tests/manual_data/meta.json')
+# Try to incorporate rdt
+dn = DataNavigator('../demo/Airbnb_demo_meta.json')
 print('Data', dn.data)
 print('child map', dn.child_map)
 print('parent map', dn.parent_map)
+print('transformed data', dn.transformed)
+
 modeler = Modeler(dn)
+modeler.model_database()
+print('customers table', modeler.models['users'].data)
+print('orders table', modeler.models['sessions'].data)
+# try out data navigator and modeler
+# dn = DataNavigator('../tests/manual_data/meta.json')
+# print('Data', dn.data)
+# print('child map', dn.child_map)
+# print('parent map', dn.parent_map)
+# modeler = Modeler(dn)
 # modeler.CPA('DEMO_CUSTOMERS')
 # modeler.RCPA('DEMO_ORDERS')
-sampler = Sampler(dn, modeler)
-modeler.model_database()
-print('HERE', modeler.tables)
-print(modeler.child_locs)
-print('customers table', modeler.models['DEMO_CUSTOMERS'].data)
-print('orders table', modeler.models['DEMO_ORDERS'].data)
-print('first', sampler.sample_rows('DEMO_CUSTOMERS', 2))
-print('second', sampler.sample_rows('DEMO_ORDERS', 2))
-print('third', sampler.sample_rows('DEMO_ORDER_ITEMS', 1))
+# sampler = Sampler(dn, modeler)
+# modeler.model_database()
+# print('HERE', modeler.tables)
+# print(modeler.child_locs)
+# print('customers table', modeler.models['DEMO_CUSTOMERS'].data)
+# print('orders table', modeler.models['DEMO_ORDERS'].data)
+# print('first', sampler.sample_rows('DEMO_CUSTOMERS', 2))
+# print('second', sampler.sample_rows('DEMO_ORDERS', 2))
+# print('third', sampler.sample_rows('DEMO_ORDER_ITEMS', 1))
 
 # # create copula model
 # model = GaussianCopula()
