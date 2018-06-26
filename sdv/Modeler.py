@@ -1,7 +1,8 @@
 import pandas as pd
+import pickle
+import os.path as op
 from copulas.multivariate.GaussianCopula import GaussianCopula
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate
-from rdt.hyper_transformer import HyperTransformer
 
 
 class Modeler:
@@ -86,7 +87,12 @@ class Modeler:
                 self.RCPA(table)
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
-            table_model.fit(self.tables[table])
+            clean_table = self.dn.ht.impute_table(self.tables[table])
+            # table_model.fit(self.tables[table])
+            print('not cleaned', self.tables[table])
+            print('cleaned', clean_table)
+            print('has nulls', clean_table.isnull().values.any())
+            table_model.fit(clean_table)
             self.models[table] = table_model
 
     def flatten_model(self, model, label=''):
@@ -107,19 +113,15 @@ class Modeler:
             param_series = pd.Series(params)
             return param_series
 
-    def load_model(self, filename):
-        """ Loads model from filename
-        Args:
-            filename (string): path of file to load
-        """
-        pass
-
     def save_model(self, file_destination):
         """ Saves model to file destination
         Args:
             file_destination (string): path to store file
         """
-        pass
+        suffix = '.pkl'
+        filename = op.join('models', file_destination + suffix)
+        with open(filename, 'wb') as output:
+            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
     def _get_conditional_data(self, sets, pk, children, table):
         """ loops through children looking for rows that
@@ -154,7 +156,8 @@ class Modeler:
                 # remove column of foreign key
                 # extension = extension.drop(fk, axis=1)
                 model = self._get_model(self.model_type)()
-                model.fit(extension)
+                clean_extension = self.dn.ht.impute_table(extension)
+                model.fit(clean_extension)
                 flattened_extension = self.flatten_model(model, child)
                 # keep track of child column indices
                 end = max(end, start + len(flattened_extension))
