@@ -1,3 +1,4 @@
+exrex==0.10.5
 flake8==3.5.0
 numpy==1.13.1
 pandas==0.22.0
