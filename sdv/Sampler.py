@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import random
+import exrex
 
 
 class Sampler:
@@ -22,7 +23,11 @@ class Sampler:
         """
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
-        primary_key = self.dn.data[table_name][1]['primary_key']
+        meta = self.dn.data[table_name][1]
+        orig_meta = self._get_table_meta(self.dn.meta,
+                                         table_name)
+        primary_key = meta['primary_key']
+        regex = meta['fields'][primary_key]['regex']
         for parent in parents:
             if parent in self.sampled:
                 parent_sampled = True
@@ -30,6 +35,8 @@ class Sampler:
         if parents == []:
             model = self.modeler.models[table_name]
             synthesized_rows = model.sample(num_rows)
+            # add primary key
+            synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
             sample_info = (primary_key, synthesized_rows)
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
@@ -37,7 +44,11 @@ class Sampler:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
-            return synthesized_rows[labels]
+            # reverse transform data
+            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
+                                                     orig_meta,
+                                                     missing=False)
+            return res
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
@@ -161,3 +172,10 @@ class Sampler:
                             columns=labels)
         model.data = data
         return model
+
+    def _get_table_meta(self, meta, table_name):
+        """ get table meta for a given table name"""
+        for table in meta['tables']:
+            if table['name'] == table_name:
+                return table
+        return None

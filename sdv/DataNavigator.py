@@ -1,4 +1,5 @@
 import json
+import copy
 import pandas as pd
 import os.path as op
 from utils import format_table_meta
@@ -11,10 +12,12 @@ class DataNavigator:
         """ Instantiates data navigator object """
         with open(meta_filename) as f:
             self.meta = json.load(f)
-        self.data = self._parse_data(self.meta, meta_filename)
+        meta = copy.deepcopy(self.meta)
+        self.data = self._parse_data(meta, meta_filename)
         self.ht = HyperTransformer(meta_filename)
         tl = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
-        self.transformed = self.ht.hyper_fit_transform(transformer_list=tl)
+        self.transformed = self.ht.hyper_fit_transform(transformer_list=tl,
+                                                       missing=False)
         self.child_map, self.parent_map = self._get_relationships(self.data)
 
     def get_children(self, table_name):

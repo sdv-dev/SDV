@@ -31,8 +31,8 @@ class Modeler:
         """
         # Grab table
         data = self.dn.data
-        # TODO: grab table from self.tables if it is not a leaf
-        # ow grab from data
+        # grab table from self.tables if it is not a leaf
+        # o.w. grab from data
         children = self.dn.get_children(table)
         table_df, table_meta = data[table]
         # get primary key
@@ -54,7 +54,7 @@ class Modeler:
         extended_table = pd.DataFrame([])
         # create extended table
         for i in range(num_rows):
-            # TODO: change to be transformed table
+            # change to be transformed table
             orig_row = table_df.loc[i, :]
             row = self.dn.transformed[table].loc[i, :]
             # get specific value
@@ -88,10 +88,6 @@ class Modeler:
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
             clean_table = self.dn.ht.impute_table(self.tables[table])
-            # table_model.fit(self.tables[table])
-            print('not cleaned', self.tables[table])
-            print('cleaned', clean_table)
-            print('has nulls', clean_table.isnull().values.any())
             table_model.fit(clean_table)
             self.models[table] = table_model
 
