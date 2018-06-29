@@ -38,7 +38,9 @@ class Modeler:
         # get primary key
         if 'primary_key' not in table_meta:
             # there are no references to the table
-            return
+            # have fake primary key
+            pk = 'GENERATED_PRIMARY_KEY'
+            # return
         else:
             pk = table_meta['primary_key']
         # loop through rows of table
@@ -46,8 +48,11 @@ class Modeler:
         sets = {}
         for i in range(num_rows):
             row = table_df.loc[i, :]
-            # get specific value
-            val = row[pk]
+            if pk == 'GENERATED_PRIMARY_KEY':
+                val = pk + str(i)
+            else:
+                # get specific value
+                val = row[pk]
             sets[val] = []
         # get conditional data for val
         self._get_conditional_data(sets, pk, children, table)
@@ -57,8 +62,11 @@ class Modeler:
             # change to be transformed table
             orig_row = table_df.loc[i, :]
             row = self.dn.transformed[table].loc[i, :]
-            # get specific value
-            val = orig_row[pk]
+            if pk == 'GENERATED_PRIMARY_KEY':
+                val = pk + str(i)
+            else:
+                # get specific value
+                val = orig_row[pk]
             # make sure val isn't none
             if pd.isnull(val):
                 continue

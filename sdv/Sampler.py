@@ -26,8 +26,11 @@ class Sampler:
         meta = self.dn.data[table_name][1]
         orig_meta = self._get_table_meta(self.dn.meta,
                                          table_name)
-        primary_key = meta['primary_key']
-        regex = meta['fields'][primary_key]['regex']
+        if 'primary_key' in meta:
+            primary_key = meta['primary_key']
+            regex = meta['fields'][primary_key]['regex']
+        else:
+            primary_key = None
         for parent in parents:
             if parent in self.sampled:
                 parent_sampled = True
@@ -36,8 +39,10 @@ class Sampler:
             model = self.modeler.models[table_name]
             synthesized_rows = model.sample(num_rows)
             # add primary key
-            synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+            if primary_key:
+                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
             sample_info = (primary_key, synthesized_rows)
+            # store sample data
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
@@ -64,7 +69,12 @@ class Sampler:
             synthesized_rows = model.sample(num_rows)
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
-            synthesized_rows[fk] = fk_val
+            # get foreign key name from current table
+            foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
+            synthesized_rows[foreign_key] = fk_val
+            # add primary key
+            if primary_key:
+                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
             sample_info = (primary_key, synthesized_rows)
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
@@ -72,7 +82,13 @@ class Sampler:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
-            return synthesized_rows[labels]
+            print('synthesized_rows', synthesized_rows)
+            # reverse transform data
+            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
+                                                     orig_meta,
+                                                     missing=False)
+            # return synthesized_rows[labels]
+            return res
         else:
             raise Exception('Parents must be synthesized first')
 
@@ -139,13 +155,15 @@ class Sampler:
         totalcols = params.shape[1]
         # build model
         model = self.modeler.get_model()()
-        num_cols = self.modeler.tables[table_name].shape[1]-1
-        cov_size = num_cols**2
+        num_cols = self.modeler.tables[table_name].shape[1]
         # get labels for dataframe
         labels = list(self.modeler.tables[table_name])
         parent_meta = self.dn.data[parent_name][1]
         fk = parent_meta['primary_key']
-        labels.remove(fk)
+        if fk in labels:
+            labels.remove(fk)
+            num_cols -= 1
+        cov_size = num_cols**2
         # get covariance matrix
         cov = params.iloc[:, 0:num_cols**2]
         cov_matrix = cov.as_matrix()
@@ -158,6 +176,7 @@ class Sampler:
         model.means = means
         label_index = 0
         for i in range(num_cols**2+num_cols, totalcols, 2):
+            print(label_index)
             distrib = self.modeler.get_distribution()()
             std = params.iloc[:, i]
             mean = params.iloc[:, i+1]
