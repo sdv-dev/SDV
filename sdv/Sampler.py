@@ -82,12 +82,10 @@ class Sampler:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
-            print('synthesized_rows', synthesized_rows)
             # reverse transform data
             res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
                                                      orig_meta,
                                                      missing=False)
-            # return synthesized_rows[labels]
             return res
         else:
             raise Exception('Parents must be synthesized first')
@@ -176,7 +174,6 @@ class Sampler:
         model.means = means
         label_index = 0
         for i in range(num_cols**2+num_cols, totalcols, 2):
-            print(label_index)
             distrib = self.modeler.get_distribution()()
             std = params.iloc[:, i]
             mean = params.iloc[:, i+1]

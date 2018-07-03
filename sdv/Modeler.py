@@ -85,7 +85,6 @@ class Modeler:
         children = self.dn.get_children(table)
         for child in children:
             self.RCPA(child)
-        print(self.tables)
         self.CPA(table)
 
     def model_database(self):
