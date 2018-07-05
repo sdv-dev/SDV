@@ -1,5 +1,5 @@
-<p align="left"> 
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“Copulas” />
+<p align="left">
+<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“SDV” />
   <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
