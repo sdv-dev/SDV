@@ -84,11 +84,7 @@
                     "uniques": 0
                 }, 
                 {
-                    "name": "PRODUCT_ID", 
-                    "ref": {
-                        "field": "(PRODUCT_ID)", 
-                        "table": "DEMO_PRODUCT_INFO"
-                    }, 
+                    "name": "PRODUCT_ID",
                     "subtype": "integer", 
                     "type": "number", 
                     "uniques": 0
