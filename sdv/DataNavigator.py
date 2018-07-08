@@ -13,11 +13,9 @@ class DataNavigator:
         with open(meta_filename) as f:
             self.meta = json.load(f)
         meta = copy.deepcopy(self.meta)
-        self.data = self._parse_data(meta, meta_filename)
+        self.data = self._parse_meta_data(meta, meta_filename)
         self.ht = HyperTransformer(meta_filename)
-        tl = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
-        self.transformed = self.ht.hyper_fit_transform(transformer_list=tl,
-                                                       missing=False)
+        self.transformed_data = None
         relationships = self._get_relationships(self.data)
         self.child_map = relationships[0]
         self.parent_map = relationships[1]
@@ -43,9 +41,42 @@ class DataNavigator:
         else:
             return []
 
-    def _parse_data(self, meta, meta_filename):
+    def transform_data(self, transformers=None, missing=False):
+        """ Applies the specified transformations using
+        a hyper transformer and returns the new data
+        Args:
+            transformers (list): List of transformers to use
+            missing (bool): Whether or not to keep track of
+            missing variables and create extra columns for them.
+        Returns:
+            transformed_data (dict): dict with keys that are
+            the names of the tables and values that are the
+            transformed dataframes.
+        """
+        if transformers is None:
+            transformers = ['NumberTransformer',
+                            'DTTransformer',
+                            'CatTransformer']
+        self.transformed_data = self.ht.hyper_fit_transform(transformer_list=transformers,
+                                                            missing=missing)
+        return self.transformed_data
+
+    def get_data(self):
+        """ returns the data in the DataNavigator
+        Returns:
+            {table_name: (table_dataframe, table_meta)}
+        """
+        return self.data
+
+    def get_hyper_transformer(self):
+        """ returns the HyperTransformer being used by
+        the DataNavigator
+        """
+        return self.ht
+
+    def _parse_meta_data(self, meta, meta_filename):
         """ extracts the data from a meta.json object
-        and maps tabls name to tuple (dataframe, table meta) """
+        and maps table names to tuple (dataframe, table meta) """
         data = {}
         for table_meta in meta['tables']:
             if table_meta['use']:
