@@ -1,9 +1,9 @@
 import pandas as pd
-from copulas.multivariate.GaussianCopula import GaussianCopula
 
 
 class Modeler:
     """ Class responsible for modeling database """
+
     def __init__(self, data_navigator, transformed_data=None,
                  model_type='GaussianCopula'):
         """ Instantiates a modeler object
@@ -95,9 +95,9 @@ class Modeler:
             for i in range(len(params)):
                 labels.append(label + str(i))
             params.append(num_rows)
-            labels.append(label+'_num_rows')
+            labels.append(label + '_num_rows')
             params.append(num_cols)
-            labels.append(label+'_num_cols')
+            labels.append(label + '_num_cols')
             param_series = pd.Series(params, labels)
             return param_series
 

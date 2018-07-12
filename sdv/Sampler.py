@@ -4,6 +4,7 @@ import pandas as pd
 
 class Sampler:
     """ Class to sample data from a model """
+
     def __init__(self, data_navigator):
         """ Instantiates a sampler """
         self.dn = data_navigator

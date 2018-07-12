@@ -1,11 +1,14 @@
 import json
-import pandas as pd
 import os.path as op
-from utils import format_table_meta
+
+import pandas as pd
+
+from sdv.utils import format_table_meta
 
 
 class DataNavigator:
     """ Class to navigate through data set """
+
     def __init__(self, meta_filename):
         """ Instantiates data navigator object """
         with open(meta_filename) as f:

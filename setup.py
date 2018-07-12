@@ -11,12 +11,19 @@ with open('README.md') as readme_file:
 with open('HISTORY.md') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0',
+requirements = [
+    'Click>=6.0',
 ]
 
-setup_requirements = ['pytest-runner', ]
+setup_requires = ['pytest-runner', ]
 
-test_requirements = ['pytest', ]
+test_require = [
+    'pytest>=3.4.2',
+    'coverage>=4.5.1',
+    'tox>=2.9.1',
+    'flake8>=3.5.0',
+    'isort>=4.3.4',
+]
 
 setup(
     author="Andrew Montanez",
@@ -37,6 +44,9 @@ setup(
             'sdv=sdv.cli:main',
         ],
     },
+    extras_require={
+        'test': test_require,
+    },
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,
@@ -46,9 +56,9 @@ setup(
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
     python_requires='>=3.4',
-    setup_requires=setup_requirements,
+    setup_requires=setup_requires,
     test_suite='tests',
-    tests_require=test_requirements,
+    tests_require=test_require,
     url='https://github.com/HDI-Project/sdv',
     version='0.1.0',
     zip_safe=False,

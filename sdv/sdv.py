@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """Main module."""
-import pandas as pd
 from DataNavigator import DataNavigator
-from Sampler import Sampler
 from Modeler import Modeler
-from copulas.multivariate.GaussianCopula import GaussianCopula
-
+from Sampler import Sampler
 
 # try out data navigator and modeler
 # dn = DataNavigator('../demo/Airbnb_demo_meta.json')
