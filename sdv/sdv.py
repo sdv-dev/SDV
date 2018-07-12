@@ -1,38 +1,30 @@
 # -*- coding: utf-8 -*-
 
 """Main module."""
-from DataNavigator import DataNavigator
-from Modeler import Modeler
-from Sampler import Sampler
+import numpy as np
 
-# try out data navigator and modeler
-# dn = DataNavigator('../demo/Airbnb_demo_meta.json')
-dn = DataNavigator('../tests/manual_data/meta.json')
+from sdv.DataNavigator import DataNavigator
+from sdv.Modeler import Modeler
+from sdv.Sampler import Sampler
+
+
+np.set_printoptions(threshold=np.inf)
+
+# Try to incorporate rdt
+dn = DataNavigator('../demo/Airbnb_demo_meta.json')
 print('Data', dn.data)
 print('child map', dn.child_map)
 print('parent map', dn.parent_map)
-sampler = Sampler(dn)
+print('transformed data', dn.transformed)
+
 modeler = Modeler(dn)
-# modeler.CPA('DEMO_CUSTOMERS')
-modeler.RCPA('DEMO_ORDERS')
-# modeler.model_database()
-print(modeler.tables)
-# print(modeler.models)
-
-# # create copula model
-# model = GaussianCopula()
-# data = pd.read_csv('../tests/manual_data/customers.csv')
-# model.fit(data)
-# params = modeler.flatten_model(model)
-# print(params)
-
-# # model the database
-# modeler.model_database()
-# print(modeler.tables)
-
-# # Sample the data base
-# print('Sample rows before parent', sampler.sample_rows('sessions', 10))
-# print('Sample Table', sampler.sample_table('users'))
-# print('sample rows', sampler.sample_rows('users', 5))
-# print('Sample rows after parent', sampler.sample_rows('sessions', 10))
-# print('sample all', sampler.sample_all())
+modeler.model_database()
+modeler.save_model('example')
+# modeler = load_model('models/example3.pkl')
+print('customers table', modeler.models['users'].data)
+print('orders table', modeler.models['sessions'].data)
+sampler = Sampler(dn, modeler)
+print('generated users', sampler.sample_rows('users', 2))
+print('generated sessions', sampler.sample_rows('sessions', 10))
+print('sampling everything', sampler.sample_all())
+print('sampling specific table', sampler.sample_table('users'))

@@ -1,7 +1,9 @@
+import copy
 import json
 import os.path as op
 
 import pandas as pd
+from rdt.hyper_transformer import HyperTransformer
 
 from sdv.utils import format_table_meta
 
@@ -13,8 +15,16 @@ class DataNavigator:
         """ Instantiates data navigator object """
         with open(meta_filename) as f:
             self.meta = json.load(f)
-        self.data = self._parse_data(self.meta, meta_filename)
-        self.child_map, self.parent_map = self._get_relationships(self.data)
+        meta = copy.deepcopy(self.meta)
+        self.data = self._parse_data(meta, meta_filename)
+        self.ht = HyperTransformer(meta_filename)
+        tl = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
+        self.transformed = self.ht.hyper_fit_transform(transformer_list=tl,
+                                                       missing=False)
+        relationships = self._get_relationships(self.data)
+        self.child_map = relationships[0]
+        self.parent_map = relationships[1]
+        self.foreign_keys = relationships[2]
 
     def get_children(self, table_name):
         """ returns children of a table
@@ -54,12 +64,15 @@ class DataNavigator:
         """ maps table name to names of child tables """
         child_map = {}
         parent_map = {}
+        foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
         for table in data:
             table_meta = data[table][1]
             for field in table_meta['fields']:
                 field_meta = table_meta['fields'][field]
                 if 'ref' in field_meta:
                     parent = field_meta['ref']['table']
+                    parent_pk = field_meta['ref']['field']
+                    fk = field_meta['name']
                     # update child map
                     if parent in child_map:
                         child_map[parent].add(table)
@@ -70,4 +83,5 @@ class DataNavigator:
                         parent_map[table].add(parent)
                     else:
                         parent_map[table] = {parent}
-        return (child_map, parent_map)
+                    foreign_keys[(table, parent)] = (parent_pk, fk)
+        return (child_map, parent_map, foreign_keys)

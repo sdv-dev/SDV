@@ -1,11 +1,18 @@
+
+import pickle
+import os.path as op
+
 import pandas as pd
+from copulas.multivariate.GaussianCopula import GaussianCopula
+from copulas.univariate.GaussianUnivariate import GaussianUnivariate
 
 
 class Modeler:
     """ Class responsible for modeling database """
 
     def __init__(self, data_navigator, transformed_data=None,
-                 model_type='GaussianCopula'):
+                 model_type='GaussianCopula',
+                 distribution='GaussianUnivariate'):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -14,9 +21,11 @@ class Modeler:
         """
         self.tables = {}
         self.models = {}
+        self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
         self.transformed_data = transformed_data
         self.model_type = model_type
+        self.distribution = distribution
 
     def CPA(self, table):
         """ Runs CPA algorithm on a table
@@ -25,12 +34,16 @@ class Modeler:
         """
         # Grab table
         data = self.dn.data
-        table_df, table_meta = data[table]
+        # grab table from self.tables if it is not a leaf
+        # o.w. grab from data
         children = self.dn.get_children(table)
+        table_df, table_meta = data[table]
         # get primary key
         if 'primary_key' not in table_meta:
             # there are no references to the table
-            return
+            # have fake primary key
+            pk = 'GENERATED_PRIMARY_KEY'
+            # return
         else:
             pk = table_meta['primary_key']
         # loop through rows of table
@@ -38,20 +51,33 @@ class Modeler:
         sets = {}
         for i in range(num_rows):
             row = table_df.loc[i, :]
-            # get specific value
-            val = row[pk]
+            if pk == 'GENERATED_PRIMARY_KEY':
+                val = pk + str(i)
+            else:
+                # get specific value
+                val = row[pk]
             sets[val] = []
         # get conditional data for val
-        self._get_conditional_data(sets, pk, children)
+        self._get_conditional_data(sets, pk, children, table)
         extended_table = pd.DataFrame([])
         # create extended table
         for i in range(num_rows):
-            row = table_df.loc[i, :]
-            # get specific value
-            val = row[pk]
+            # change to be transformed table
+            orig_row = table_df.loc[i, :]
+            row = self.dn.transformed[table].loc[i, :]
+            if pk == 'GENERATED_PRIMARY_KEY':
+                val = pk + str(i)
+            else:
+                # get specific value
+                val = orig_row[pk]
+            # make sure val isn't none
+            if pd.isnull(val):
+                continue
             for extension in sets[val]:
                 row = row.append(extension)
-            extended_table = extended_table.append(row, ignore_index=True)
+            # make sure row doesn't have nans
+            if not row.isnull().values.any():
+                extended_table = extended_table.append(row, ignore_index=True)
         self.tables[table] = extended_table
 
     def RCPA(self, table):
@@ -71,7 +97,8 @@ class Modeler:
                 self.RCPA(table)
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
-            table_model.fit(self.tables[table])
+            clean_table = self.dn.ht.impute_table(self.tables[table])
+            table_model.fit(clean_table)
             self.models[table] = table_model
 
     def flatten_model(self, model, label=''):
@@ -83,46 +110,37 @@ class Modeler:
         """
         if self.model_type == "GaussianCopula":
             params = []
-            labels = []
-            num_rows = model.cov_matrix.shape[0]
-            num_cols = len(model.means)
             params = params + list(model.cov_matrix.flatten())
             params = params + model.means
             for key in model.distribs:
                 col_model = model.distribs[key]
                 params.append(col_model.std)
                 params.append(col_model.mean)
-            for i in range(len(params)):
-                labels.append(label + str(i))
-            params.append(num_rows)
-            labels.append(label + '_num_rows')
-            params.append(num_cols)
-            labels.append(label + '_num_cols')
-            param_series = pd.Series(params, labels)
+            param_series = pd.Series(params)
             return param_series
-
-    def load_model(self, filename):
-        """ Loads model from filename
-        Args:
-            filename (string): path of file to load
-        """
-        pass
 
     def save_model(self, file_destination):
         """ Saves model to file destination
         Args:
             file_destination (string): path to store file
         """
-        pass
+        suffix = '.pkl'
+        filename = op.join('models', file_destination + suffix)
+        with open(filename, 'wb') as output:
+            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
-    def _get_conditional_data(self, sets, pk, children):
+    def _get_conditional_data(self, sets, pk, children, table):
         """ loops through children looking for rows that
         reference the value
         """
+        # keep track of which columns belong to which child
+        start = 0
+        end = 0
         # find children that ref primary key
         for child in children:
-            print('Child table', child)
             child_table, child_meta = self.dn.data[child]
+            # child_table = self.tables[child]
+            transformed_child_table = self.dn.transformed[child]
             fk = None
             fields = child_meta['fields']
             for field_key in fields:
@@ -136,16 +154,34 @@ class Modeler:
                 continue
             # add model params conditional data
             for val in sets:
-                extension = child_table[child_table[fk] == val]
+                # TODO: grab the tranformed table columns instead
+                # extension = child_table[child_table[fk] == val]
+                extension = transformed_child_table[child_table[fk] == val]
                 if extension.empty:
                     continue
                 # remove column of foreign key
-                extension = extension.drop(fk, axis=1)
+                # extension = extension.drop(fk, axis=1)
                 model = self._get_model(self.model_type)()
-                model.fit(extension)
+                clean_extension = self.dn.ht.impute_table(extension)
+                model.fit(clean_extension)
                 flattened_extension = self.flatten_model(model, child)
+                # keep track of child column indices
+                end = max(end, start + len(flattened_extension))
+                if table in self.child_locs:
+                    self.child_locs[table][child] = (start, end)
+                else:
+                    self.child_locs[table] = {child: (start, end)}
                 sets[val].append(flattened_extension)
+            start = end
 
     def _get_model(self, model_name):
         """ Gets instance of model from name of model """
         return globals()[model_name]
+
+    def get_model(self):
+        """ Gets instance of model based on model type """
+        return globals()[self.model_type]
+
+    def get_distribution(self):
+        """ Gets instance of model based on model type """
+        return globals()[self.distribution]

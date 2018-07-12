@@ -1,14 +1,17 @@
 import numpy as np
 import pandas as pd
+import random
+import exrex
 
 
 class Sampler:
     """ Class to sample data from a model """
-
-    def __init__(self, data_navigator):
+    def __init__(self, data_navigator, modeler):
         """ Instantiates a sampler """
         self.dn = data_navigator
+        self.modeler = modeler
         self.been_sampled = set()  # table_name -> if already sampled
+        self.sampled = {}  # table_name -> [(primary_key, generated_row)]
 
     def sample_rows(self, table_name, num_rows):
         """ Sample specified number of rows for specified table
@@ -20,31 +23,72 @@ class Sampler:
         """
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
+        meta = self.dn.data[table_name][1]
+        orig_meta = self._get_table_meta(self.dn.meta,
+                                         table_name)
+        if 'primary_key' in meta:
+            primary_key = meta['primary_key']
+            regex = meta['fields'][primary_key]['regex']
+        else:
+            primary_key = None
         for parent in parents:
-            if parent in self.been_sampled:
+            if parent in self.sampled:
                 parent_sampled = True
                 break
         if parents == []:
-            orig_table = self.dn.data[table_name][0]
-            num_cols = orig_table.shape[1]
-            shape = (num_rows, num_cols)
-            col_names = orig_table.columns.values
-            sampled_table = pd.DataFrame(np.random.randint(0, 100, size=shape),
-                                         columns=col_names)
-            self.been_sampled.add(table_name)
+            model = self.modeler.models[table_name]
+            synthesized_rows = model.sample(num_rows)
+            # add primary key
+            if primary_key:
+                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+            sample_info = (primary_key, synthesized_rows)
+            # store sample data
+            if table_name in self.sampled:
+                self.sampled[table_name].append(sample_info)
+            else:
+                self.sampled[table_name] = [sample_info]
+            # filter out parameters
+            labels = list(self.dn.data[table_name][0])
+            # reverse transform data
+            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
+                                                     orig_meta,
+                                                     missing=False)
+            return res
         elif parent_sampled:
-            # Here we would get params necessary to get model
-            orig_table = self.dn.data[table_name][0]
-            num_cols = orig_table.shape[1]
-            shape = (num_rows, num_cols)
-            col_names = orig_table.columns.values
-            sampled_table = pd.DataFrame(np.random.randint(0, 100, size=shape),
-                                         columns=col_names)
-            self.been_sampled.add(table_name)
+            # grab random parent row
+            random_parent = random.sample(parents, 1)[0]
+            parent_rows = self.sampled[random_parent]
+            fk, parent_row = random.sample(parent_rows, 1)[0]
+            # Make sure only using one row
+            parent_row = parent_row.loc[[0]]
+            # get parameters from parent to make model
+            model = self._make_model_from_params(parent_row,
+                                                 table_name,
+                                                 random_parent)
+            # sample from that model
+            synthesized_rows = model.sample(num_rows)
+            # add foreign key value to row
+            fk_val = parent_row.loc[0, fk]
+            # get foreign key name from current table
+            foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
+            synthesized_rows[foreign_key] = fk_val
+            # add primary key
+            if primary_key:
+                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+            sample_info = (primary_key, synthesized_rows)
+            if table_name in self.sampled:
+                self.sampled[table_name].append(sample_info)
+            else:
+                self.sampled[table_name] = [sample_info]
+            # filter out parameters
+            labels = list(self.dn.data[table_name][0])
+            # reverse transform data
+            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
+                                                     orig_meta,
+                                                     missing=False)
+            return res
         else:
             raise Exception('Parents must be synthesized first')
-        print(self.been_sampled)
-        return sampled_table
 
     def sample_table(self, table_name):
         """ Sample a table equal to the size of the original
@@ -94,3 +138,60 @@ class Sampler:
             else:
                 sampled_data[child] = rows
             self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
+
+    def _make_model_from_params(self, parent_row, table_name, parent_name):
+        """ Takes the params from a generated parent row
+        and creates a model from it
+        Args:
+            parent_row (dataframe): a generated parent row
+            table_name (string): name of table to make model for
+            parent_name (string): name of parent table
+        """
+        # get parameters
+        child_range = self.modeler.child_locs[parent_name][table_name]
+        params = parent_row.iloc[:, child_range[0]:child_range[1]]
+        totalcols = params.shape[1]
+        # build model
+        model = self.modeler.get_model()()
+        num_cols = self.modeler.tables[table_name].shape[1]
+        # get labels for dataframe
+        labels = list(self.modeler.tables[table_name])
+        parent_meta = self.dn.data[parent_name][1]
+        fk = parent_meta['primary_key']
+        if fk in labels:
+            labels.remove(fk)
+            num_cols -= 1
+        cov_size = num_cols**2
+        # get covariance matrix
+        cov = params.iloc[:, 0:num_cols**2]
+        cov_matrix = cov.as_matrix()
+        cov_matrix = cov_matrix.reshape((num_cols, num_cols))
+        model.cov_matrix = cov_matrix
+        distribs = {}
+        # get distributions of columns and means
+        means = list(params.iloc[:,
+                                 cov_size:cov_size+num_cols].values.flatten())
+        model.means = means
+        label_index = 0
+        for i in range(num_cols**2+num_cols, totalcols, 2):
+            distrib = self.modeler.get_distribution()()
+            std = params.iloc[:, i]
+            mean = params.iloc[:, i+1]
+            distrib.mean = mean
+            distrib.std = std
+            distribs[labels[label_index]] = distrib
+            label_index += 1
+        model.distribs = distribs
+        # create fake data
+        # TODO: Change copulas to not need data
+        data = pd.DataFrame(np.random.randint(0, 10, size=(2, len(labels))),
+                            columns=labels)
+        model.data = data
+        return model
+
+    def _get_table_meta(self, meta, table_name):
+        """ get table meta for a given table name"""
+        for table in meta['tables']:
+            if table['name'] == table_name:
+                return table
+        return None
