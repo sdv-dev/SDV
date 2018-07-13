@@ -19,8 +19,8 @@ setup_requirements = ['pytest-runner', ]
 test_requirements = ['pytest', ]
 
 setup(
-    author="Andrew Montanez",
-    author_email='amontane@mit.edu',
+    author="MIT Data To AI Lab",
+    author_email='dailabmit@gmail.com',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

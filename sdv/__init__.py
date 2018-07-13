@@ -2,6 +2,6 @@
 
 """Top-level package for SDV."""
 
-__author__ = """Andrew Montanez"""
-__email__ = 'amontane@mit.edu'
+__author__ = """MIT Data To AI Lab"""
+__email__ = 'dailabmit@gmail.com'
 __version__ = '0.1.0'
