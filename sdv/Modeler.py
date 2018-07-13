@@ -100,7 +100,7 @@ class Modeler:
                 self.RCPA(table)
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
-            clean_table = self.dn.ht.impute_table(self.tables[table])
+            clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
 
@@ -162,7 +162,7 @@ class Modeler:
                     continue
                 # remove column of foreign key
                 model = self._get_model(self.model_type)()
-                clean_extension = self.dn.ht.impute_table(extension)
+                clean_extension = self.impute_table(extension)
                 model.fit(clean_extension)
                 flattened_extension = self.flatten_model(model, child)
                 # keep track of child column indices
@@ -185,3 +185,14 @@ class Modeler:
     def get_distribution(self):
         """ Gets instance of model based on model type """
         return globals()[self.model_params[0]]
+
+    def impute_table(self, table):
+        """ Fills in any NaN values in a table """
+        values = {}
+        for label in table:
+            if not pd.isnull(table[label].mean()):
+                values[label] = table[label].mean()
+            else:
+                values[label] = 0
+        imputed_table = table.fillna(values)
+        return imputed_table
