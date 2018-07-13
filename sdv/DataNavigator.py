@@ -2,18 +2,57 @@ import json
 import copy
 import pandas as pd
 import os.path as op
-from utils import format_table_meta
 from rdt.hyper_transformer import HyperTransformer
+
+
+class DataLoader:
+    """ Abstract class responsible for loading data and returning a
+    DataNavigator """
+    def __init__(self, meta_filename):
+        """ Instantiates data loader object """
+        self.meta_filename = meta_filename
+        with open(meta_filename) as f:
+            self.meta = json.load(f)
+
+    def load_data(self):
+        raise NotImplementedError
+
+
+class CSVDataLoader(DataLoader):
+    """ Data loader class used for loading data from csvs """
+    def __init__(self, meta_filename):
+        DataLoader.__init__(self, meta_filename)
+
+    def _format_table_meta(self, table_meta):
+        """ reformats table meta to turn fields into dictionary """
+        new_fields = {}
+        for field in table_meta['fields']:
+            field_name = field['name']
+            new_fields[field_name] = field
+        table_meta['fields'] = new_fields
+        return table_meta
+
+    def load_data(self):
+        """ loads data from csvs and returns DataNavigator """
+        meta = copy.deepcopy(self.meta)
+        data = {}
+        for table_meta in meta['tables']:
+            if table_meta['use']:
+                formatted_table_meta = self._format_table_meta(table_meta)
+                prefix = op.dirname(self.meta_filename)
+                relative_path = op.join(prefix, meta['path'],
+                                        table_meta['path'])
+                data_table = pd.read_csv(relative_path)
+                data[table_meta['name']] = (data_table, formatted_table_meta)
+        return DataNavigator(self.meta_filename, self.meta, data)
 
 
 class DataNavigator:
     """ Class to navigate through data set """
-    def __init__(self, meta_filename):
+    def __init__(self, meta_filename, meta, data):
         """ Instantiates data navigator object """
-        with open(meta_filename) as f:
-            self.meta = json.load(f)
-        meta = copy.deepcopy(self.meta)
-        self.data = self._parse_meta_data(meta, meta_filename)
+        self.meta = meta
+        self.data = data
         self.ht = HyperTransformer(meta_filename)
         self.transformed_data = None
         relationships = self._get_relationships(self.data)
@@ -29,7 +68,7 @@ class DataNavigator:
         if table_name in self.child_map:
             return self.child_map[table_name]
         else:
-            return []
+            return set()
 
     def get_parents(self, table_name):
         """ returns parents of a table
@@ -39,7 +78,7 @@ class DataNavigator:
         if table_name in self.parent_map:
             return self.parent_map[table_name]
         else:
-            return []
+            return set()
 
     def transform_data(self, transformers=None, missing=False):
         """ Applies the specified transformations using
@@ -73,20 +112,6 @@ class DataNavigator:
         the DataNavigator
         """
         return self.ht
-
-    def _parse_meta_data(self, meta, meta_filename):
-        """ extracts the data from a meta.json object
-        and maps table names to tuple (dataframe, table meta) """
-        data = {}
-        for table_meta in meta['tables']:
-            if table_meta['use']:
-                formatted_table_meta = format_table_meta(table_meta)
-                prefix = op.dirname(meta_filename)
-                relative_path = op.join(prefix, meta['path'],
-                                        table_meta['path'])
-                data_table = pd.read_csv(relative_path)
-                data[table_meta['name']] = (data_table, formatted_table_meta)
-        return data
 
     def _get_relationships(self, data):
         """ maps table name to names of child tables """
