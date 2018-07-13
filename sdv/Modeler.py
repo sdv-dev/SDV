@@ -96,7 +96,7 @@ class Modeler:
     def model_database(self):
         """ Uses RCPA and stores model for database """
         for table in self.dn.data:
-            if self.dn.get_parents(table) == []:
+            if self.dn.get_parents(table) == set():
                 self.RCPA(table)
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
@@ -128,7 +128,8 @@ class Modeler:
             file_destination (string): path to store file
         """
         suffix = '.pkl'
-        filename = op.join('models', file_destination + suffix)
+        ROOT_DIR = op.dirname(op.abspath(__file__))
+        filename = op.join(ROOT_DIR, 'models', file_destination + suffix)
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
