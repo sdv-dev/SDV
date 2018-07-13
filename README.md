@@ -94,7 +94,7 @@ You can use the data navigator to get parents of a certain table, get the childr
 ...
 ```
 
-## Using the Modeler
+### Using the Modeler
 The Modeler can be used to recursively model the database. An instance of the class can be saved for easy access.
 
 First, import from the Modeler and create an instance of the class. Note that in order for the modeler to work, the DataNavigator must have transformed its data.
@@ -115,7 +115,7 @@ To load a model, import the load_model function from utils.
 >>> from sdv.utils import load_model
 >>> modeler = load_model('sdv/models/demo_model.pkl')
 ```
-## Using the Sampler
+### Using the Sampler
 The sampler takes in a Modeler and DataNavigator. It can be used to sample rows from specified tables, sample an entire table at once or sample the whole database.
 
 First import the Sampler and create an instance of the class.
