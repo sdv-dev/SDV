@@ -118,8 +118,7 @@ Finally, we can use the transform_data() function to apply transformations from 
 ### Using the Modeler
 The Modeler can be used to recursively model the data. This is important because the tables in the data have relationships between them, that should also be modeled in order to have reliable sampling. Let's look at the Airbnb data for example. There are two tables in this data set: the users tables and the sessions table. A hierarchical graph of the dataset is shown below.
 <p align="left">
-<img width=15% src="https://drive.google.com/drive/u/0/folders/1Q28tDMXqtcMGXVUIcLat4YCiZwlrrTxO" alt=“Airbnb hierarchical graph” />
-  <i>An open source project from Data to AI Lab at MIT.</i>
+<img width=15% src="https://drive.google.com/open?id=1QyWO7DqvJHFfijg7MO1Wn4Fnbddh5ctx" alt=“Airbnb hierarchical graph” />
 </p>
 As shown above, the sessions table has a field labelled "user_id", that references the "id" field of the user table. SDV wants to model not only the data, but these relationships as well. The Modeler class is responsible for carrying out this task.
 
