@@ -51,3 +51,10 @@ class SDV:
         """
         with open(filename, 'rb') as input:
             self.modeler = pickle.load(input)
+
+    def save_modeler(self, file_destination):
+        """ Saves model to file destination
+        Args:
+            file_destination (string): path to store file
+        """
+        self.modeler.save_model(file_destination)
