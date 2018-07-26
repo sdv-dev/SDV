@@ -104,19 +104,6 @@ class DataNavigator:
             transformer_list=transformers, missing=missing)
         return self.transformed_data
 
-    def get_data(self):
-        """ returns the data in the DataNavigator
-        Returns:
-            {table_name: (table_dataframe, table_meta)}
-        """
-        return self.data
-
-    def get_hyper_transformer(self):
-        """ returns the HyperTransformer being used by
-        the DataNavigator
-        """
-        return self.ht
-
     def _get_relationships(self, data):
         """ maps table name to names of child tables """
         child_map = {}
