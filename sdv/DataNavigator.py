@@ -5,6 +5,8 @@ import os.path as op
 import pandas as pd
 from rdt.hyper_transformer import HyperTransformer
 
+from sdv.utils import format_table_meta
+
 
 class DataLoader:
     """ Abstract class responsible for loading data and returning a

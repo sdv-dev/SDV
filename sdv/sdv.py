@@ -3,9 +3,10 @@
 """Main module."""
 import numpy as np
 
-from DataNavigator import DataNavigator
-from Modeler import Modeler
-from Sampler import Sampler
+from sdv.DataNavigator import DataNavigator
+from sdv.Modeler import Modeler
+from sdv.Sampler import Sampler
+
 
 np.set_printoptions(threshold=np.inf)
 
