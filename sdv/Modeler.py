@@ -97,7 +97,7 @@ class Modeler:
             if self.dn.get_parents(table) == set():
                 self.RCPA(table)
         for table in self.tables:
-            table_model = self._get_model(self.model_type)()
+            table_model = self.get_model()
             clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
@@ -160,7 +160,7 @@ class Modeler:
                 if extension.empty:
                     continue
                 # remove column of foreign key
-                model = self._get_model(self.model_type)()
+                model = self.get_model()
                 clean_extension = self.impute_table(extension)
                 model.fit(clean_extension)
                 flattened_extension = self.flatten_model(model, child)
@@ -173,13 +173,9 @@ class Modeler:
                 conditional_data_map[val].append(flattened_extension)
             start = end
 
-    def _get_model(self, model_name):
-        """ Gets instance of model from name of model """
-        return globals()[model_name]
-
     def get_model(self):
         """ Gets instance of model based on model type """
-        return globals()[self.model_type]
+        return globals()[self.model_type]()
 
     def get_distribution(self):
         """ Gets instance of model based on model type """
