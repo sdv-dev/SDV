@@ -69,20 +69,14 @@ class DataNavigator:
         Args:
             table_name (str): name of table to get children of
         """
-        if table_name in self.child_map:
-            return self.child_map[table_name]
-        else:
-            return set()
+        return self.child_map.get(table_name, set())
 
     def get_parents(self, table_name):
         """ returns parents of a table
         Args:
             table_name (str): name of table to get parents of
         """
-        if table_name in self.parent_map:
-            return self.parent_map[table_name]
-        else:
-            return set()
+        return self.parent_map.get(table_name, set())
 
     def transform_data(self, transformers=None, missing=False):
         """ Applies the specified transformations using

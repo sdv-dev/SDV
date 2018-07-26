@@ -7,6 +7,7 @@ from copulas.univariate.GaussianUnivariate import GaussianUnivariate  # noqa F40
 
 DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
 
+
 class Modeler:
     """ Class responsible for modeling database """
 
@@ -43,20 +44,14 @@ class Modeler:
         children = self.dn.get_children(table)
         table_df, table_meta = data[table]
         # get primary key
-        if 'primary_key' not in table_meta:
-            # there are no references to the table
-            # have fake primary key
-            pk = DEFAULT_PRIMARY_KEY
-            # return
-        else:
-            pk = table_meta['primary_key']
+        pk = table_meta.get('primary_key', DEFAULT_PRIMARY_KEY)
         # loop through rows of table
         num_rows = table_df.shape[0]
         # create dict mapping row id to conditional data
         conditional_data_map = {}
         for i in range(num_rows):
             row = table_df.loc[i, :]
-            if pk == DEFAULT_PRIMARY_KEY
+            if pk == DEFAULT_PRIMARY_KEY:
                 val = pk + str(i)
             else:
                 # get specific value
