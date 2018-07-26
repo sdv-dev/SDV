@@ -5,6 +5,7 @@ import pandas as pd
 from copulas.multivariate.GaussianCopula import GaussianCopula  # noqa F401 FIXME
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate  # noqa F401
 
+DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
 
 class Modeler:
     """ Class responsible for modeling database """
@@ -45,7 +46,7 @@ class Modeler:
         if 'primary_key' not in table_meta:
             # there are no references to the table
             # have fake primary key
-            pk = 'GENERATED_PRIMARY_KEY'
+            pk = DEFAULT_PRIMARY_KEY
             # return
         else:
             pk = table_meta['primary_key']
@@ -55,7 +56,7 @@ class Modeler:
         conditional_data_map = {}
         for i in range(num_rows):
             row = table_df.loc[i, :]
-            if pk == 'GENERATED_PRIMARY_KEY':
+            if pk == DEFAULT_PRIMARY_KEY
                 val = pk + str(i)
             else:
                 # get specific value
@@ -70,7 +71,7 @@ class Modeler:
             # change to be transformed table
             orig_row = table_df.loc[i, :]
             row = self.dn.transformed_data[table].loc[i, :]
-            if pk == 'GENERATED_PRIMARY_KEY':
+            if pk == DEFAULT_PRIMARY_KEY:
                 val = pk + str(i)
             else:
                 # get specific value
