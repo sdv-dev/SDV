@@ -9,23 +9,26 @@ from copulas.univariate.GaussianUnivariate import GaussianUnivariate
 
 class Modeler:
     """ Class responsible for modeling database """
-
-    def __init__(self, data_navigator, transformed_data=None,
+    def __init__(self, data_navigator,
                  model_type='GaussianCopula',
-                 distribution='GaussianUnivariate'):
+                 model_params=None):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
             transformed_data: tables post tranformation {table_name:dataframe}
-            model_type: Type of Copula to use for modeling
+            model_type: Name of model class to use
+            model_params: list of parameters to use for specified model
         """
         self.tables = {}
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
-        self.transformed_data = transformed_data
         self.model_type = model_type
-        self.distribution = distribution
+        # set default model params if necessary
+        if model_params is None:
+            self.model_params = ['GaussianUnivariate']
+        else:
+            self.model_params = model_params
 
     def CPA(self, table):
         """ Runs CPA algorithm on a table
@@ -48,7 +51,8 @@ class Modeler:
             pk = table_meta['primary_key']
         # loop through rows of table
         num_rows = table_df.shape[0]
-        sets = {}
+        # create dict mapping row id to conditional data
+        conditional_data_map = {}
         for i in range(num_rows):
             row = table_df.loc[i, :]
             if pk == 'GENERATED_PRIMARY_KEY':
@@ -56,15 +60,16 @@ class Modeler:
             else:
                 # get specific value
                 val = row[pk]
-            sets[val] = []
+            conditional_data_map[val] = []
         # get conditional data for val
-        self._get_conditional_data(sets, pk, children, table)
+        self._get_conditional_data(conditional_data_map,
+                                   pk, children, table)
         extended_table = pd.DataFrame([])
         # create extended table
         for i in range(num_rows):
             # change to be transformed table
             orig_row = table_df.loc[i, :]
-            row = self.dn.transformed[table].loc[i, :]
+            row = self.dn.transformed_data[table].loc[i, :]
             if pk == 'GENERATED_PRIMARY_KEY':
                 val = pk + str(i)
             else:
@@ -73,7 +78,7 @@ class Modeler:
             # make sure val isn't none
             if pd.isnull(val):
                 continue
-            for extension in sets[val]:
+            for extension in conditional_data_map[val]:
                 row = row.append(extension)
             # make sure row doesn't have nans
             if not row.isnull().values.any():
@@ -93,11 +98,11 @@ class Modeler:
     def model_database(self):
         """ Uses RCPA and stores model for database """
         for table in self.dn.data:
-            if self.dn.get_parents(table) == []:
+            if self.dn.get_parents(table) == set():
                 self.RCPA(table)
         for table in self.tables:
             table_model = self._get_model(self.model_type)()
-            clean_table = self.dn.ht.impute_table(self.tables[table])
+            clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
 
@@ -125,11 +130,12 @@ class Modeler:
             file_destination (string): path to store file
         """
         suffix = '.pkl'
-        filename = op.join('models', file_destination + suffix)
+        ROOT_DIR = op.dirname(op.abspath(__file__))
+        filename = op.join(ROOT_DIR, 'models', file_destination + suffix)
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
-    def _get_conditional_data(self, sets, pk, children, table):
+    def _get_conditional_data(self, conditional_data_map, pk, children, table):
         """ loops through children looking for rows that
         reference the value
         """
@@ -139,8 +145,7 @@ class Modeler:
         # find children that ref primary key
         for child in children:
             child_table, child_meta = self.dn.data[child]
-            # child_table = self.tables[child]
-            transformed_child_table = self.dn.transformed[child]
+            transformed_child_table = self.dn.transformed_data[child]
             fk = None
             fields = child_meta['fields']
             for field_key in fields:
@@ -153,16 +158,14 @@ class Modeler:
             if fk is None:
                 continue
             # add model params conditional data
-            for val in sets:
-                # TODO: grab the tranformed table columns instead
-                # extension = child_table[child_table[fk] == val]
+            for val in conditional_data_map:
+                # grab the tranformed table columns instead
                 extension = transformed_child_table[child_table[fk] == val]
                 if extension.empty:
                     continue
                 # remove column of foreign key
-                # extension = extension.drop(fk, axis=1)
                 model = self._get_model(self.model_type)()
-                clean_extension = self.dn.ht.impute_table(extension)
+                clean_extension = self.impute_table(extension)
                 model.fit(clean_extension)
                 flattened_extension = self.flatten_model(model, child)
                 # keep track of child column indices
@@ -171,7 +174,7 @@ class Modeler:
                     self.child_locs[table][child] = (start, end)
                 else:
                     self.child_locs[table] = {child: (start, end)}
-                sets[val].append(flattened_extension)
+                conditional_data_map[val].append(flattened_extension)
             start = end
 
     def _get_model(self, model_name):
@@ -184,4 +187,15 @@ class Modeler:
 
     def get_distribution(self):
         """ Gets instance of model based on model type """
-        return globals()[self.distribution]
+        return globals()[self.model_params[0]]
+
+    def impute_table(self, table):
+        """ Fills in any NaN values in a table """
+        values = {}
+        for label in table:
+            if not pd.isnull(table[label].mean()):
+                values[label] = table[label].mean()
+            else:
+                values[label] = 0
+        imputed_table = table.fillna(values)
+        return imputed_table

@@ -8,19 +8,56 @@ from rdt.hyper_transformer import HyperTransformer
 from sdv.utils import format_table_meta
 
 
-class DataNavigator:
-    """ Class to navigate through data set """
-
+class DataLoader:
+    """ Abstract class responsible for loading data and returning a
+    DataNavigator """
     def __init__(self, meta_filename):
-        """ Instantiates data navigator object """
+        """ Instantiates data loader object """
+        self.meta_filename = meta_filename
         with open(meta_filename) as f:
             self.meta = json.load(f)
+
+    def load_data(self):
+        raise NotImplementedError
+
+
+class CSVDataLoader(DataLoader):
+    """ Data loader class used for loading data from csvs """
+    def __init__(self, meta_filename):
+        DataLoader.__init__(self, meta_filename)
+
+    def _format_table_meta(self, table_meta):
+        """ reformats table meta to turn fields into dictionary """
+        new_fields = {}
+        for field in table_meta['fields']:
+            field_name = field['name']
+            new_fields[field_name] = field
+        table_meta['fields'] = new_fields
+        return table_meta
+
+    def load_data(self):
+        """ loads data from csvs and returns DataNavigator """
         meta = copy.deepcopy(self.meta)
-        self.data = self._parse_data(meta, meta_filename)
+        data = {}
+        for table_meta in meta['tables']:
+            if table_meta['use']:
+                formatted_table_meta = self._format_table_meta(table_meta)
+                prefix = op.dirname(self.meta_filename)
+                relative_path = op.join(prefix, meta['path'],
+                                        table_meta['path'])
+                data_table = pd.read_csv(relative_path)
+                data[table_meta['name']] = (data_table, formatted_table_meta)
+        return DataNavigator(self.meta_filename, self.meta, data)
+
+
+class DataNavigator:
+    """ Class to navigate through data set """
+    def __init__(self, meta_filename, meta, data):
+        """ Instantiates data navigator object """
+        self.meta = meta
+        self.data = data
         self.ht = HyperTransformer(meta_filename)
-        tl = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
-        self.transformed = self.ht.hyper_fit_transform(transformer_list=tl,
-                                                       missing=False)
+        self.transformed_data = None
         relationships = self._get_relationships(self.data)
         self.child_map = relationships[0]
         self.parent_map = relationships[1]
@@ -34,7 +71,7 @@ class DataNavigator:
         if table_name in self.child_map:
             return self.child_map[table_name]
         else:
-            return []
+            return set()
 
     def get_parents(self, table_name):
         """ returns parents of a table
@@ -44,21 +81,40 @@ class DataNavigator:
         if table_name in self.parent_map:
             return self.parent_map[table_name]
         else:
-            return []
+            return set()
 
-    def _parse_data(self, meta, meta_filename):
-        """ extracts the data from a meta.json object
-        and maps tabls name to tuple (dataframe, table meta) """
-        data = {}
-        for table_meta in meta['tables']:
-            if table_meta['use']:
-                formatted_table_meta = format_table_meta(table_meta)
-                prefix = op.dirname(meta_filename)
-                relative_path = op.join(prefix, meta['path'],
-                                        table_meta['path'])
-                data_table = pd.read_csv(relative_path)
-                data[table_meta['name']] = (data_table, formatted_table_meta)
-        return data
+    def transform_data(self, transformers=None, missing=False):
+        """ Applies the specified transformations using
+        a hyper transformer and returns the new data
+        Args:
+            transformers (list): List of transformers to use
+            missing (bool): Whether or not to keep track of
+            missing variables and create extra columns for them.
+        Returns:
+            transformed_data (dict): dict with keys that are
+            the names of the tables and values that are the
+            transformed dataframes.
+        """
+        if transformers is None:
+            transformers = ['NumberTransformer',
+                            'DTTransformer',
+                            'CatTransformer']
+        self.transformed_data = self.ht.hyper_fit_transform(transformer_list=transformers,
+                                                            missing=missing)
+        return self.transformed_data
+
+    def get_data(self):
+        """ returns the data in the DataNavigator
+        Returns:
+            {table_name: (table_dataframe, table_meta)}
+        """
+        return self.data
+
+    def get_hyper_transformer(self):
+        """ returns the HyperTransformer being used by
+        the DataNavigator
+        """
+        return self.ht
 
     def _get_relationships(self, data):
         """ maps table name to names of child tables """
