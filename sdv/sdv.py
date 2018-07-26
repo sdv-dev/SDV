@@ -11,7 +11,7 @@ np.set_printoptions(threshold=np.inf)
 
 if __name__ == '__main__':
     # Try to incorporate rdt
-    loader  = CSVDataLoader('demo/Airbnb_demo_meta.json')
+    loader = CSVDataLoader('demo/Airbnb_demo_meta.json')
     dn = loader.load_data()
     dn.transform_data()
     print('Data', dn.data)
