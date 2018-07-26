@@ -2,6 +2,7 @@
 
 """Console script for sdv."""
 import sys
+
 import click
 
 

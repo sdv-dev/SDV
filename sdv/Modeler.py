@@ -1,12 +1,14 @@
-import pandas as pd
-import pickle
 import os.path as op
-from copulas.multivariate.GaussianCopula import GaussianCopula
-from copulas.univariate.GaussianUnivariate import GaussianUnivariate
+import pickle
+
+import pandas as pd
+from copulas.multivariate.GaussianCopula import GaussianCopula  # noqa F401 FIXME
+from copulas.univariate.GaussianUnivariate import GaussianUnivariate  # noqa F401
 
 
 class Modeler:
     """ Class responsible for modeling database """
+
     def __init__(self, data_navigator,
                  model_type='GaussianCopula',
                  model_params=None):

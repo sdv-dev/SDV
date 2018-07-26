@@ -1,11 +1,14 @@
+import random
+
 import numpy as np
 import pandas as pd
-import random
+
 import exrex
 
 
 class Sampler:
     """ Class to sample data from a model """
+
     def __init__(self, data_navigator, modeler):
         """ Instantiates a sampler """
         self.dn = data_navigator
@@ -170,13 +173,13 @@ class Sampler:
         distribs = {}
         # get distributions of columns and means
         means = list(params.iloc[:,
-                                 cov_size:cov_size+num_cols].values.flatten())
+                                 cov_size:cov_size + num_cols].values.flatten())
         model.means = means
         label_index = 0
-        for i in range(num_cols**2+num_cols, totalcols, 2):
+        for i in range(num_cols**2 + num_cols, totalcols, 2):
             distrib = self.modeler.get_distribution()()
             std = params.iloc[:, i]
-            mean = params.iloc[:, i+1]
+            mean = params.iloc[:, i + 1]
             distrib.mean = mean
             distrib.std = std
             distribs[labels[label_index]] = distrib

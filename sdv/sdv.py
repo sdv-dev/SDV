@@ -2,10 +2,10 @@
 
 """Main module."""
 import numpy as np
+
 from DataNavigator import DataNavigator
-from Sampler import Sampler
 from Modeler import Modeler
-from utils import load_model
+from Sampler import Sampler
 
 np.set_printoptions(threshold=np.inf)
 

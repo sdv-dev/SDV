@@ -1,13 +1,15 @@
-import json
 import copy
-import pandas as pd
+import json
 import os.path as op
+
+import pandas as pd
 from rdt.hyper_transformer import HyperTransformer
 
 
 class DataLoader:
     """ Abstract class responsible for loading data and returning a
     DataNavigator """
+
     def __init__(self, meta_filename):
         """ Instantiates data loader object """
         self.meta_filename = meta_filename
@@ -20,6 +22,7 @@ class DataLoader:
 
 class CSVDataLoader(DataLoader):
     """ Data loader class used for loading data from csvs """
+
     def __init__(self, meta_filename):
         DataLoader.__init__(self, meta_filename)
 
@@ -49,6 +52,7 @@ class CSVDataLoader(DataLoader):
 
 class DataNavigator:
     """ Class to navigate through data set """
+
     def __init__(self, meta_filename, meta, data):
         """ Instantiates data navigator object """
         self.meta = meta
@@ -96,8 +100,8 @@ class DataNavigator:
             transformers = ['NumberTransformer',
                             'DTTransformer',
                             'CatTransformer']
-        self.transformed_data = self.ht.hyper_fit_transform(transformer_list=transformers,
-                                                            missing=missing)
+        self.transformed_data = self.ht.hyper_fit_transform(
+            transformer_list=transformers, missing=missing)
         return self.transformed_data
 
     def get_data(self):
