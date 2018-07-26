@@ -38,7 +38,7 @@ class Sampler:
             if parent in self.sampled:
                 parent_sampled = True
                 break
-        if parents == set():
+        if not parents:
             model = self.modeler.models[table_name]
             synthesized_rows = model.sample(num_rows)
             # add primary key
@@ -109,7 +109,7 @@ class Sampler:
         data = self.dn.data
         sampled_data = {}
         for table in data:
-            if self.dn.get_parents(table) == set():
+            if not self.dn.get_parents(table):
                 for i in range(num_rows):
                     row = self.sample_rows(table, 1)
                     if table in sampled_data:

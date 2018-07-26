@@ -94,7 +94,7 @@ class Modeler:
     def model_database(self):
         """ Uses RCPA and stores model for database """
         for table in self.dn.data:
-            if self.dn.get_parents(table) == set():
+            if not self.dn.get_parents(table):
                 self.RCPA(table)
         for table in self.tables:
             table_model = self.get_model()
