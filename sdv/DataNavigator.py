@@ -23,9 +23,6 @@ class DataLoader:
 class CSVDataLoader(DataLoader):
     """ Data loader class used for loading data from csvs """
 
-    def __init__(self, meta_filename):
-        DataLoader.__init__(self, meta_filename)
-
     def _format_table_meta(self, table_meta):
         """ reformats table meta to turn fields into dictionary """
         new_fields = {}
