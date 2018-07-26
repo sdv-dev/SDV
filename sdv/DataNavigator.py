@@ -113,7 +113,7 @@ class DataNavigator:
             table_meta = data[table][1]
             for field in table_meta['fields']:
                 field_meta = table_meta['fields'][field]
-                ref = field_meta.get('field')
+                ref = field_meta.get('ref')
                 if ref:
                     parent = ref['table']
                     parent_pk = ref['field']
@@ -123,7 +123,7 @@ class DataNavigator:
                     child_map = self.update_mapping(child_map, parent, table)
 
                     # update parent map
-                    parent_map = self.update_mapping(parent_map, parent, table)
+                    parent_map = self.update_mapping(parent_map, table, parent)
 
                     foreign_keys[(table, parent)] = (parent_pk, fk)
 

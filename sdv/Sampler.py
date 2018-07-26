@@ -168,7 +168,7 @@ class Sampler:
         totalcols = params.shape[1]
 
         # build model
-        model = self.modeler.get_model()()
+        model = self.modeler.get_model()
         num_cols = self.modeler.tables[table_name].shape[1]
 
         # get labels for dataframe
