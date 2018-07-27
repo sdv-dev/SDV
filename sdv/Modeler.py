@@ -1,8 +1,13 @@
 import pandas as pd
 import pickle
+import logging
 import os.path as op
 from copulas.multivariate.GaussianCopula import GaussianCopula
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Modeler:
@@ -33,7 +38,7 @@ class Modeler:
         Args:
             table (string): name of table
         """
-        print('Modeling ' + table)
+        logger.info('Modeling %s', table)
         # Grab table
         data = self.dn.data
         # grab table from self.tables if it is not a leaf
@@ -104,7 +109,7 @@ class Modeler:
             clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
-        print('Modeling Complete')
+        logger.info('Modeling Complete')
 
     def flatten_model(self, model, label=''):
         """ Flatten a model's parameters into an array
@@ -179,10 +184,7 @@ class Modeler:
                 else:
                     self.child_locs[table] = {child: (start, end)}
                 # rename columns
-                old_names = list(range(len(flattened_extension)))
-                new_names = list(range(start, end))
-                col_names = dict(zip(old_names, new_names))
-                flattened_extension = flattened_extension.rename(col_names)
+                flattened_extension.index = range(start, end)
                 conditional_data_map[val].append(flattened_extension)
             start = end
 
