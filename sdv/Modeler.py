@@ -7,7 +7,6 @@ from copulas.univariate.GaussianUnivariate import GaussianUnivariate
 
 # Configure logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class Modeler:
