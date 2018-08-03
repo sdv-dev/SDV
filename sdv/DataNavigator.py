@@ -88,6 +88,14 @@ class DataNavigator:
         else:
             return set()
 
+    def get_data(self, table_name):
+        """ returns dataframe for a table """
+        return self.tables[table_name].data
+
+    def get_meta_data(self, table_name):
+        """ returns meta data for a table """
+        return self.tables[table_name].meta
+
     def transform_data(self, transformers=None, missing=False):
         """ Applies the specified transformations using
         a hyper transformer and returns the new data
