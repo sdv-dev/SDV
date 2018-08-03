@@ -5,6 +5,13 @@ import os.path as op
 from rdt.hyper_transformer import HyperTransformer
 
 
+class Table:
+    """ Class that represents a table object """
+    def __init__(self, data, meta):
+        self.data = data
+        self.meta = meta
+
+
 class DataLoader:
     """ Abstract class responsible for loading data and returning a
     DataNavigator """
@@ -35,7 +42,7 @@ class CSVDataLoader(DataLoader):
     def load_data(self):
         """ loads data from csvs and returns DataNavigator """
         meta = copy.deepcopy(self.meta)
-        data = {}
+        tables = {}
         for table_meta in meta['tables']:
             if table_meta['use']:
                 formatted_table_meta = self._format_table_meta(table_meta)
@@ -43,19 +50,20 @@ class CSVDataLoader(DataLoader):
                 relative_path = op.join(prefix, meta['path'],
                                         table_meta['path'])
                 data_table = pd.read_csv(relative_path)
-                data[table_meta['name']] = (data_table, formatted_table_meta)
-        return DataNavigator(self.meta_filename, self.meta, data)
+                tables[table_meta['name']] = Table(data_table,
+                                                   formatted_table_meta)
+        return DataNavigator(self.meta_filename, self.meta, tables)
 
 
 class DataNavigator:
     """ Class to navigate through data set """
-    def __init__(self, meta_filename, meta, data):
+    def __init__(self, meta_filename, meta, tables):
         """ Instantiates data navigator object """
         self.meta = meta
-        self.data = data
+        self.tables = tables
         self.ht = HyperTransformer(meta_filename)
         self.transformed_data = None
-        relationships = self._get_relationships(self.data)
+        relationships = self._get_relationships(self.tables)
         self.child_map = relationships[0]
         self.parent_map = relationships[1]
         self.foreign_keys = relationships[2]
@@ -100,26 +108,19 @@ class DataNavigator:
                                                             missing=missing)
         return self.transformed_data
 
-    def get_data(self):
-        """ returns the data in the DataNavigator
-        Returns:
-            {table_name: (table_dataframe, table_meta)}
-        """
-        return self.data
-
     def get_hyper_transformer(self):
         """ returns the HyperTransformer being used by
         the DataNavigator
         """
         return self.ht
 
-    def _get_relationships(self, data):
+    def _get_relationships(self, tables):
         """ maps table name to names of child tables """
         child_map = {}
         parent_map = {}
         foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
-        for table in data:
-            table_meta = data[table][1]
+        for table in tables:
+            table_meta = tables[table].meta
             for field in table_meta['fields']:
                 field_meta = table_meta['fields'][field]
                 if 'ref' in field_meta:
