@@ -56,11 +56,18 @@ class Sampler:
 
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
+            # fill in non-numeric columns
+            synthesized_rows = self._fill_text_columns(synthesized_rows,
+                                                       labels,
+                                                       table_name)
             # reverse transform data
-            res = self.dn.ht.reverse_transform_table(
-                synthesized_rows[labels], orig_meta, missing=False)
+            reversed_data = self.dn.ht.reverse_transform_table(
+                synthesized_rows, orig_meta, missing=False)
 
-            return res
+            synthesized_rows.update(reversed_data)
+            return synthesized_rows[labels]
+        
+        # sample a child node
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
@@ -93,12 +100,16 @@ class Sampler:
 
             # filter out parameters
             labels = list(self.dn.data[table_name][0])
+            synthesized_rows = self._fill_text_columns(synthesized_rows,
+                                                       labels,
+                                                       table_name)
             # reverse transform data
-            res = self.dn.ht.reverse_transform_table(
-                synthesized_rows[labels], orig_meta, missing=False)
-
-            return res
-
+            reversed_data = self.dn.ht.reverse_transform_table(
+                synthesized_rows, orig_meta, missing=False)
+            
+            synthesized_rows.update(reversed_data)
+            return synthesized_rows[labels]
+        
         else:
             raise Exception('Parents must be synthesized first')
 
@@ -164,7 +175,8 @@ class Sampler:
         """
         # get parameters
         child_range = self.modeler.child_locs[parent_name][table_name]
-        params = parent_row.iloc[:, child_range[0]:child_range[1]]
+        param_indices = list(range(child_range[0], child_range[1]))
+        params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
 
         # build model
@@ -218,3 +230,31 @@ class Sampler:
                 return table
 
         return None
+
+    def _fill_text_columns(self, row, labels, table_name):
+        """ This function fills in the column values
+        for every non numeric column that isn't the
+        primary key """
+        table_meta = self.dn.get_data()[table_name][1]
+        fields = table_meta['fields']
+        for label in labels:
+            field = fields[label]
+            row_columns = list(row)
+            if field['type'] == 'id' and field['name'] not in row_columns:
+                # check foreign key
+                if 'ref' in field:
+                    # generate parent row
+                    parent_name = field['ref']['table']
+                    parent_row = self.sample_rows(parent_name, 1)
+                    # grab value of foreign key
+                    val = parent_row[field['ref']['field']]
+                    row.loc[:, field['name']] = val
+                else:
+                    # generate fake id
+                    regex = field['regex']
+                    row.loc[:, field['name']] = exrex.getone(regex)
+            elif field['type'] == 'text':
+                # generate fake text
+                regex = field['regex']
+                row.loc[:, field['name']] = exrex.getone(regex)
+        return row

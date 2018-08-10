@@ -1,9 +1,13 @@
+import logging
 import os
 import pickle
 
 import pandas as pd
 from copulas.multivariate.GaussianCopula import GaussianCopula  # noqa F401 FIXME
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate  # noqa F401
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class Modeler:
@@ -33,6 +37,7 @@ class Modeler:
         Args:
             table (string): name of table
         """
+        logger.info('Modeling %s', table)
         # Grab table
         data = self.dn.data
         # grab table from self.tables if it is not a leaf otherwise grab from data
@@ -103,6 +108,7 @@ class Modeler:
             clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
+        logger.info('Modeling Complete')
 
     def flatten_model(self, model, label=''):
         """ Flatten a model's parameters into an array
@@ -152,8 +158,14 @@ class Modeler:
         # find children that ref primary key
         for child in children:
             child_table, child_meta = self.dn.data[child]
-            transformed_child_table = self.dn.transformed_data[child]
-
+            # check if leaf node
+            if not self.dn.get_children(child):
+                transformed_child_table = self.dn.transformed_data[child]
+            
+            else:
+                transformed_child_table = self.tables[child]
+            
+            fk = None
             fields = child_meta['fields']
             fk = self.get_foreign_key(fields, pk)
 
@@ -180,7 +192,8 @@ class Modeler:
                     self.child_locs[table][child] = (start, end)
                 else:
                     self.child_locs[table] = {child: (start, end)}
-
+                # rename columns
+                flattened_extension.index = range(start, end)
                 conditional_data_map[val].append(flattened_extension)
             start = end
 
