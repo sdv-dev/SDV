@@ -23,7 +23,7 @@ class Sampler:
         """
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
-        meta = self.dn.data[table_name][1]
+        meta = self.dn.tables[table_name].meta
         orig_meta = self._get_table_meta(self.dn.meta,
                                          table_name)
         # get primary key column name
@@ -51,7 +51,7 @@ class Sampler:
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
-            labels = list(self.dn.data[table_name][0])
+            labels = list(self.dn.tables[table_name].data)
             # fill in non-numeric columns
             synthesized_rows = self._fill_text_columns(synthesized_rows,
                                                        labels,
@@ -90,7 +90,7 @@ class Sampler:
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
-            labels = list(self.dn.data[table_name][0])
+            labels = list(self.dn.tables[table_name].data)
             synthesized_rows = self._fill_text_columns(synthesized_rows,
                                                        labels,
                                                        table_name)
@@ -110,15 +110,15 @@ class Sampler:
         Returns:
             Synthesized table (dataframe)
         """
-        orig_table = self.dn.data[table_name][0]
+        orig_table = self.dn.tables[table_name].data
         num_rows = orig_table.shape[0]
         return self.sample_rows(table_name, num_rows)
 
     def sample_all(self, num_rows=5):
         """ Samples the entire database """
-        data = self.dn.data
+        tables = self.dn.tables
         sampled_data = {}
-        for table in data:
+        for table in tables:
             if self.dn.get_parents(table) == set():
                 for i in range(num_rows):
                     row = self.sample_rows(table, 1)
@@ -170,7 +170,7 @@ class Sampler:
         num_cols = self.modeler.tables[table_name].shape[1]
         # get labels for dataframe
         labels = list(self.modeler.tables[table_name])
-        parent_meta = self.dn.data[parent_name][1]
+        parent_meta = self.dn.tables[parent_name].meta
         fk = parent_meta['primary_key']
         if fk in labels:
             labels.remove(fk)
@@ -214,7 +214,7 @@ class Sampler:
         """ This function fills in the column values
         for every non numeric column that isn't the
         primary key """
-        table_meta = self.dn.get_data()[table_name][1]
+        table_meta = self.dn.tables[table_name].meta
         fields = table_meta['fields']
         for label in labels:
             field = fields[label]
