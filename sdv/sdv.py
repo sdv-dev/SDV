@@ -8,6 +8,7 @@ from sklearn.exceptions import NotFittedError
 import os.path as op
 import pickle
 
+
 DATA_LOADERS = {
     'csv': CSVDataLoader
 }
@@ -30,6 +31,7 @@ class SDV:
         # transform data
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)
+        self.modeler.model_database()
         self.sampler = Sampler(self.dn, self.modeler)
 
     def sample_rows(self, table_name, num_rows):
