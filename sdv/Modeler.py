@@ -1,8 +1,12 @@
 import pandas as pd
 import pickle
+import logging
 import os.path as op
 from copulas.multivariate.GaussianCopula import GaussianCopula
 from copulas.univariate.GaussianUnivariate import GaussianUnivariate
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class Modeler:
@@ -33,12 +37,13 @@ class Modeler:
         Args:
             table (string): name of table
         """
+        logger.info('Modeling %s', table)
         # Grab table
-        data = self.dn.data
+        tables = self.dn.tables
         # grab table from self.tables if it is not a leaf
         # o.w. grab from data
         children = self.dn.get_children(table)
-        table_df, table_meta = data[table]
+        table_df, table_meta = tables[table].data, tables[table].meta
         # get primary key
         if 'primary_key' not in table_meta:
             # there are no references to the table
@@ -95,7 +100,7 @@ class Modeler:
 
     def model_database(self):
         """ Uses RCPA and stores model for database """
-        for table in self.dn.data:
+        for table in self.dn.tables:
             if self.dn.get_parents(table) == set():
                 self.RCPA(table)
         for table in self.tables:
@@ -103,6 +108,7 @@ class Modeler:
             clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
+        logger.info('Modeling Complete')
 
     def flatten_model(self, model, label=''):
         """ Flatten a model's parameters into an array
@@ -142,8 +148,13 @@ class Modeler:
         end = 0
         # find children that ref primary key
         for child in children:
-            child_table, child_meta = self.dn.data[child]
-            transformed_child_table = self.dn.transformed_data[child]
+            child_table = self.dn.tables[child].data
+            child_meta = self.dn.tables[child].meta
+            # check if leaf node
+            if self.dn.get_children(child) == set():
+                transformed_child_table = self.dn.transformed_data[child]
+            else:
+                transformed_child_table = self.tables[child]
             fk = None
             fields = child_meta['fields']
             for field_key in fields:
@@ -172,6 +183,8 @@ class Modeler:
                     self.child_locs[table][child] = (start, end)
                 else:
                     self.child_locs[table] = {child: (start, end)}
+                # rename columns
+                flattened_extension.index = range(start, end)
                 conditional_data_map[val].append(flattened_extension)
             start = end
 

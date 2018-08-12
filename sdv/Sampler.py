@@ -23,18 +23,21 @@ class Sampler:
         """
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
-        meta = self.dn.data[table_name][1]
+        meta = self.dn.tables[table_name].meta
         orig_meta = self._get_table_meta(self.dn.meta,
                                          table_name)
+        # get primary key column name
         if 'primary_key' in meta:
             primary_key = meta['primary_key']
             regex = meta['fields'][primary_key]['regex']
         else:
             primary_key = None
+        # check to see if parent has been sampled
         for parent in parents:
             if parent in self.sampled:
                 parent_sampled = True
                 break
+        # sample a root node
         if parents == set():
             model = self.modeler.models[table_name]
             synthesized_rows = model.sample(num_rows)
@@ -48,12 +51,18 @@ class Sampler:
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
-            labels = list(self.dn.data[table_name][0])
+            labels = list(self.dn.tables[table_name].data)
+            # fill in non-numeric columns
+            synthesized_rows = self._fill_text_columns(synthesized_rows,
+                                                       labels,
+                                                       table_name)
             # reverse transform data
-            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
-                                                     orig_meta,
-                                                     missing=False)
-            return res
+            reversed = self.dn.ht.reverse_transform_table(synthesized_rows,
+                                                          orig_meta,
+                                                          missing=False)
+            synthesized_rows.update(reversed)
+            return synthesized_rows[labels]
+        # sample a child node
         elif parent_sampled:
             # grab random parent row
             random_parent = random.sample(parents, 1)[0]
@@ -81,12 +90,16 @@ class Sampler:
             else:
                 self.sampled[table_name] = [sample_info]
             # filter out parameters
-            labels = list(self.dn.data[table_name][0])
+            labels = list(self.dn.tables[table_name].data)
+            synthesized_rows = self._fill_text_columns(synthesized_rows,
+                                                       labels,
+                                                       table_name)
             # reverse transform data
-            res = self.dn.ht.reverse_transform_table(synthesized_rows[labels],
-                                                     orig_meta,
-                                                     missing=False)
-            return res
+            reversed = self.dn.ht.reverse_transform_table(synthesized_rows,
+                                                          orig_meta,
+                                                          missing=False)
+            synthesized_rows.update(reversed)
+            return synthesized_rows[labels]
         else:
             raise Exception('Parents must be synthesized first')
 
@@ -97,15 +110,15 @@ class Sampler:
         Returns:
             Synthesized table (dataframe)
         """
-        orig_table = self.dn.data[table_name][0]
+        orig_table = self.dn.tables[table_name].data
         num_rows = orig_table.shape[0]
         return self.sample_rows(table_name, num_rows)
 
     def sample_all(self, num_rows=5):
         """ Samples the entire database """
-        data = self.dn.data
+        tables = self.dn.tables
         sampled_data = {}
-        for table in data:
+        for table in tables:
             if self.dn.get_parents(table) == set():
                 for i in range(num_rows):
                     row = self.sample_rows(table, 1)
@@ -149,14 +162,15 @@ class Sampler:
         """
         # get parameters
         child_range = self.modeler.child_locs[parent_name][table_name]
-        params = parent_row.iloc[:, child_range[0]:child_range[1]]
+        param_indices = list(range(child_range[0], child_range[1]))
+        params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
         # build model
         model = self.modeler.get_model()()
         num_cols = self.modeler.tables[table_name].shape[1]
         # get labels for dataframe
         labels = list(self.modeler.tables[table_name])
-        parent_meta = self.dn.data[parent_name][1]
+        parent_meta = self.dn.tables[parent_name].meta
         fk = parent_meta['primary_key']
         if fk in labels:
             labels.remove(fk)
@@ -195,3 +209,31 @@ class Sampler:
             if table['name'] == table_name:
                 return table
         return None
+
+    def _fill_text_columns(self, row, labels, table_name):
+        """ This function fills in the column values
+        for every non numeric column that isn't the
+        primary key """
+        table_meta = self.dn.tables[table_name].meta
+        fields = table_meta['fields']
+        for label in labels:
+            field = fields[label]
+            row_columns = list(row)
+            if field['type'] == 'id' and field['name'] not in row_columns:
+                # check foreign key
+                if 'ref' in field:
+                    # generate parent row
+                    parent_name = field['ref']['table']
+                    parent_row = self.sample_rows(parent_name, 1)
+                    # grab value of foreign key
+                    val = parent_row[field['ref']['field']]
+                    row.loc[:, field['name']] = val
+                else:
+                    # generate fake id
+                    regex = field['regex']
+                    row.loc[:, field['name']] = exrex.getone(regex)
+            elif field['type'] == 'text':
+                # generate fake text
+                regex = field['regex']
+                row.loc[:, field['name']] = exrex.getone(regex)
+        return row
