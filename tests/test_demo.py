@@ -1,10 +1,13 @@
-import unittest
+from unittest import TestCase, skipIf
 import demo_data_downloader
 
 from demo import demo_airbnb, demo_telstra, demo_biodegradability
 
 
-class DTTransformerTest(unittest.TestCase):
+# Ignored tests
+SLOW_TESTS = True
+@skipIf(SLOW_TESTS, 'slow tests')
+class DTTransformerTest(TestCase):
 
     def test_airbnb_demo(self):
         demo_airbnb()
