@@ -6,6 +6,13 @@ import pandas as pd
 from rdt.hyper_transformer import HyperTransformer
 
 
+class Table:
+    """ Class that represents a table object """
+    def __init__(self, data, meta):
+        self.data = data
+        self.meta = meta
+
+
 class DataLoader:
     """ Abstract class responsible for loading data and returning a
     DataNavigator """
@@ -38,17 +45,16 @@ class CSVDataLoader(DataLoader):
     def load_data(self):
         """ loads data from csvs and returns DataNavigator """
         meta = copy.deepcopy(self.meta)
-        data = {}
-
+        tables = {}
         for table_meta in meta['tables']:
             if table_meta['use']:
                 formatted_table_meta = self._format_table_meta(table_meta)
                 prefix = os.path.dirname(self.meta_filename)
                 relative_path = os.path.join(prefix, meta['path'], table_meta['path'])
                 data_table = pd.read_csv(relative_path)
-                data[table_meta['name']] = (data_table, formatted_table_meta)
+                tables[table_meta['name']] = Table(data_table, formatted_table_meta)
 
-        return DataNavigator(self.meta_filename, self.meta, data)
+        return DataNavigator(self.meta_filename, self.meta, tables)
 
 
 class DataNavigator:
@@ -56,10 +62,10 @@ class DataNavigator:
 
     DEFAULT_TRANSFORMERS = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
 
-    def __init__(self, meta_filename, meta, data):
+    def __init__(self, meta_filename, meta, tables):
         """ Instantiates data navigator object """
         self.meta = meta
-        self.data = data
+        self.tables = tables
         self.ht = HyperTransformer(meta_filename)
         self.transformed_data = None
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.data)
@@ -77,6 +83,14 @@ class DataNavigator:
             table_name (str): name of table to get parents of
         """
         return self.parent_map.get(table_name, set())
+
+    def get_data(self, table_name):
+        """ returns dataframe for a table """
+        return self.tables[table_name].data
+
+    def get_meta_data(self, table_name):
+        """ returns meta data for a table """
+        return self.tables[table_name].meta
 
     def transform_data(self, transformers=None, missing=False):
         """ Applies the specified transformations using
@@ -104,13 +118,13 @@ class DataNavigator:
             mapping[key] = {value}
         return mapping
 
-    def _get_relationships(self, data):
+    def _get_relationships(self, tables):
         """ maps table name to names of child tables """
         child_map = {}
         parent_map = {}
         foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
-        for table in data:
-            table_meta = data[table][1]
+        for table in tables:
+            table_meta = tables[table].meta
             for field in table_meta['fields']:
                 field_meta = table_meta['fields'][field]
                 ref = field_meta.get('ref')
