@@ -1,11 +1,14 @@
+import random
+
 import numpy as np
 import pandas as pd
-import random
+
 import exrex
 
 
 class Sampler:
     """ Class to sample data from a model """
+
     def __init__(self, data_navigator, modeler):
         """ Instantiates a sampler """
         self.dn = data_navigator
@@ -24,32 +27,34 @@ class Sampler:
         parents = self.dn.get_parents(table_name)
         parent_sampled = False
         meta = self.dn.tables[table_name].meta
-        orig_meta = self._get_table_meta(self.dn.meta,
-                                         table_name)
+        orig_meta = self._get_table_meta(self.dn.meta, table_name)
+
         # get primary key column name
-        if 'primary_key' in meta:
-            primary_key = meta['primary_key']
+        primary_key = meta.get('primary_key')
+        if primary_key:
             regex = meta['fields'][primary_key]['regex']
-        else:
-            primary_key = None
-        # check to see if parent has been sampled
+
         for parent in parents:
             if parent in self.sampled:
                 parent_sampled = True
                 break
-        # sample a root node
-        if parents == set():
+
+        if not parents:
             model = self.modeler.models[table_name]
             synthesized_rows = model.sample(num_rows)
+
             # add primary key
             if primary_key:
                 synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+
             sample_info = (primary_key, synthesized_rows)
+
             # store sample data
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
+
             # filter out parameters
             labels = list(self.dn.tables[table_name].data)
             # fill in non-numeric columns
@@ -57,11 +62,12 @@ class Sampler:
                                                        labels,
                                                        table_name)
             # reverse transform data
-            reversed = self.dn.ht.reverse_transform_table(synthesized_rows,
-                                                          orig_meta,
-                                                          missing=False)
-            synthesized_rows.update(reversed)
+            reversed_data = self.dn.ht.reverse_transform_table(
+                synthesized_rows, orig_meta, missing=False)
+
+            synthesized_rows.update(reversed_data)
             return synthesized_rows[labels]
+
         # sample a child node
         elif parent_sampled:
             # grab random parent row
@@ -71,35 +77,40 @@ class Sampler:
             # Make sure only using one row
             parent_row = parent_row.loc[[0]]
             # get parameters from parent to make model
-            model = self._make_model_from_params(parent_row,
-                                                 table_name,
-                                                 random_parent)
+            model = self._make_model_from_params(parent_row, table_name, random_parent)
             # sample from that model
             synthesized_rows = model.sample(num_rows)
+
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
+
             # get foreign key name from current table
             foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
             synthesized_rows[foreign_key] = fk_val
+
             # add primary key
             if primary_key:
                 synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+
             sample_info = (primary_key, synthesized_rows)
+
             if table_name in self.sampled:
                 self.sampled[table_name].append(sample_info)
             else:
                 self.sampled[table_name] = [sample_info]
+
             # filter out parameters
             labels = list(self.dn.tables[table_name].data)
             synthesized_rows = self._fill_text_columns(synthesized_rows,
                                                        labels,
                                                        table_name)
             # reverse transform data
-            reversed = self.dn.ht.reverse_transform_table(synthesized_rows,
-                                                          orig_meta,
-                                                          missing=False)
-            synthesized_rows.update(reversed)
+            reversed_data = self.dn.ht.reverse_transform_table(
+                synthesized_rows, orig_meta, missing=False)
+
+            synthesized_rows.update(reversed_data)
             return synthesized_rows[labels]
+
         else:
             raise Exception('Parents must be synthesized first')
 
@@ -118,16 +129,20 @@ class Sampler:
         """ Samples the entire database """
         tables = self.dn.tables
         sampled_data = {}
+
         for table in tables:
-            if self.dn.get_parents(table) == set():
+            if not self.dn.get_parents(table):
                 for i in range(num_rows):
                     row = self.sample_rows(table, 1)
+
                     if table in sampled_data:
                         length = sampled_data[table].shape[0]
                         sampled_data[table].loc[length:, :] = row
+
                     else:
                         sampled_data[table] = row
                     self._sample_child_rows(table, row, sampled_data)
+
         return sampled_data
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data,
@@ -150,6 +165,7 @@ class Sampler:
                 sampled_data[child].loc[length:, :] = rows.iloc[0:1, :]
             else:
                 sampled_data[child] = rows
+
             self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
 
     def _make_model_from_params(self, parent_row, table_name, parent_name):
@@ -165,41 +181,48 @@ class Sampler:
         param_indices = list(range(child_range[0], child_range[1]))
         params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
+
         # build model
-        model = self.modeler.get_model()()
+        model = self.modeler.get_model()
         num_cols = self.modeler.tables[table_name].shape[1]
+
         # get labels for dataframe
         labels = list(self.modeler.tables[table_name])
         parent_meta = self.dn.tables[parent_name].meta
         fk = parent_meta['primary_key']
+
         if fk in labels:
             labels.remove(fk)
             num_cols -= 1
+
         cov_size = num_cols**2
+
         # get covariance matrix
         cov = params.iloc[:, 0:num_cols**2]
         cov_matrix = cov.as_matrix()
         cov_matrix = cov_matrix.reshape((num_cols, num_cols))
         model.cov_matrix = cov_matrix
         distribs = {}
+
         # get distributions of columns and means
-        means = list(params.iloc[:,
-                                 cov_size:cov_size+num_cols].values.flatten())
+        means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
         model.means = means
         label_index = 0
-        for i in range(num_cols**2+num_cols, totalcols, 2):
+
+        for i in range(num_cols**2 + num_cols, totalcols, 2):
             distrib = self.modeler.get_distribution()()
             std = params.iloc[:, i]
-            mean = params.iloc[:, i+1]
+            mean = params.iloc[:, i + 1]
             distrib.mean = mean
             distrib.std = std
             distribs[labels[label_index]] = distrib
             label_index += 1
         model.distribs = distribs
+
         # create fake data
         # TODO: Change copulas to not need data
-        data = pd.DataFrame(np.random.randint(0, 10, size=(2, len(labels))),
-                            columns=labels)
+        values = np.random.randint(0, 10, size=(2, len(labels)))
+        data = pd.DataFrame(values, columns=labels)
         model.data = data
         return model
 
@@ -208,6 +231,7 @@ class Sampler:
         for table in meta['tables']:
             if table['name'] == table_name:
                 return table
+
         return None
 
     def _fill_text_columns(self, row, labels, table_name):
