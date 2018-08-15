@@ -4,9 +4,9 @@
 """Tests for `sdv` package."""
 
 import unittest
+
 from click.testing import CliRunner
 
-from sdv import sdv
 from sdv import cli
 
 

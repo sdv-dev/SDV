@@ -72,7 +72,7 @@ The load_data() function can then be used to create an instance of a DataNavigat
 
 The DataNavigator stores the data as a dictionary mapping the table names to a tuple of the data itself (represented as a pandas dataframe) and the meta information for that table. You can access the data using the following command:
 ```bash
->>> data = data_navigator.get_data()
+>>> data = data_navigator.data
 >>> users_data = data['users'][0]
 >>> print(users_data)
 id date_account_created  timestamp_first_active  \
