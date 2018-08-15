@@ -3,15 +3,15 @@ from sdv.sdv import SDV
 
 
 def get_logger():
-    logger = logging.getLogger()  # Nameless
+    logger = logging.getLogger()
     # We create a formatter
     fmt = '%(asctime)s - %(process)d - %(module)s - %(levelname)s - %(message)s'
     formatter = logging.Formatter(fmt)
 
     # Setup Handler
-    console_handler = logging.StreamHandler()  # This one is for consoles.
-    logger.setLevel(logging.INFO)    # Level of messages that will filtered out
-    console_handler.setFormatter(formatter)   # Message format
+    console_handler = logging.StreamHandler()
+    logger.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     return logger
 
