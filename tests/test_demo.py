@@ -1,5 +1,6 @@
 from unittest import TestCase, skipIf
 import demo_data_downloader
+import pandas as pd
 
 from demo import demo_airbnb, demo_telstra, demo_biodegradability
 
@@ -13,12 +14,21 @@ class DTTransformerTest(TestCase):
 
     def test_airbnb_demo(self):
         """Tests that airbnb demo returns something."""
-        demo_airbnb()
+        synthesized_data = demo_airbnb()
+        for table_name in synthesized_data:
+            table = synthesized_data[table_name]
+            self.assertTrue(isinstance(table, pd.DataFrame))
 
     def test_telstra_demo(self):
         """Tests that telstra demo returns something."""
-        demo_telstra()
+        synthesized_data = demo_telstra()
+        for table_name in synthesized_data:
+            table = synthesized_data[table_name]
+            self.assertTrue(isinstance(table, pd.DataFrame))
 
     def test_bio_demo(self):
         """Tests that bio demo returns something."""
-        demo_biodegradability()
+        synthesized_data = demo_biodegradability()
+        for table_name in synthesized_data:
+            table = synthesized_data[table_name]
+            self.assertTrue(isinstance(table, pd.DataFrame))

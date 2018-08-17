@@ -19,12 +19,14 @@ class SDV:
     """Class to do modeling and sampling all in one."""
     def __init__(self, meta_file_name, data_loader_type='csv'):
         """Initializes sdv class."""
-        self.data_loader = DATA_LOADERS[data_loader_type](meta_file_name)
+        self.meta_file_name = meta_file_name
+        self.data_loader_type = data_loader_type
         self.sampler = None
 
     def fit(self):
         """Transforms the data and models the database."""
-        self.dn = self.data_loader.load_data()
+        data_loader = DATA_LOADERS[self.data_loader_type](self.meta_file_name)
+        self.dn = data_loader.load_data()
         # transform data
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)
