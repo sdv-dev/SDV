@@ -51,7 +51,7 @@ class Modeler:
         num_rows = table_df.shape[0]
 
         # create dict mapping row id to conditional data
-        map_keys = [self.get_pk_value(pk, i, table_df.loc[i, :]) for i in range(num_rows)]
+        map_keys = [self.get_pk_value(pk, i, table_df.iloc[i, :]) for i in range(num_rows)]
         conditional_data_map = {key: [] for key in map_keys}
 
         # get conditional data for val
@@ -60,8 +60,8 @@ class Modeler:
         # create extended table
         for i in range(num_rows):
             # change to be transformed table
-            orig_row = table_df.loc[i, :]
-            row = self.dn.transformed_data[table].loc[i, :]
+            orig_row = table_df.iloc[i, :]
+            row = self.dn.transformed_data[table].iloc[i, :]
 
             val = self.get_pk_value(pk, i, orig_row)
 
