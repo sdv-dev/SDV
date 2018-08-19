@@ -68,7 +68,7 @@ class DataNavigator:
         self.tables = tables
         self.ht = HyperTransformer(meta_filename)
         self.transformed_data = None
-        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.data)
+        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
 
     def get_children(self, table_name):
         """ returns children of a table
