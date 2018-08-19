@@ -105,7 +105,7 @@ class DataNavigator:
             transformed dataframes.
         """
         transformers = transformers or self.DEFAULT_TRANSFORMERS
-        self.transformed_data = self.ht.hyper_fit_transform(
+        self.transformed_data = self.ht.fit_transform(
             transformer_list=transformers, missing=missing)
 
         return self.transformed_data
