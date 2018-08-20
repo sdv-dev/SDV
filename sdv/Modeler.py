@@ -3,8 +3,8 @@ import os
 import pickle
 
 import pandas as pd
-from copulas.multivariate.GaussianCopula import GaussianCopula  # noqa F401 FIXME
-from copulas.univariate.GaussianUnivariate import GaussianUnivariate  # noqa F401
+from copulas.multivariate.gaussian import GaussianMultivariate
+from copulas.univariate.gaussian import GaussianUnivariate
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class Modeler:
     FILE_SUFFIX = '.pkl'
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    def __init__(self, data_navigator, model_type='GaussianCopula', model_params=None):
+    def __init__(self, data_navigator, model_type='GaussianMultivariate', model_params=None):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -117,7 +117,7 @@ class Modeler:
         Returns:
             pandas Series of parameters for model
         """
-        if self.model_type == "GaussianCopula":
+        if self.model_type == "GaussianMultivariate":
             params = []
             params = params + list(model.cov_matrix.flatten())
             params = params + model.means
