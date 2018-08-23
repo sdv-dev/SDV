@@ -6,7 +6,6 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate.gaussian import GaussianUnivariate
 
-from timeit import default_timer as timer
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -108,6 +107,8 @@ class Modeler:
 
             for key in model.distribs:
                 col_model = model.distribs[key]
+                params.append(col_model.min)
+                params.append(col_model.max)
                 params.append(col_model.std)
                 params.append(col_model.mean)
 

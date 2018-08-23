@@ -209,10 +209,14 @@ class Sampler:
         model.means = means
         label_index = 0
 
-        for i in range(num_cols**2 + num_cols, totalcols, 2):
+        for i in range(num_cols**2 + num_cols, totalcols, 4):
             distrib = self.modeler.get_distribution()()
-            std = params.iloc[:, i]
-            mean = params.iloc[:, i + 1]
+            min = params.iloc[:, i]
+            max = params.iloc[:, i + 1]
+            std = params.iloc[:, i + 2]
+            mean = params.iloc[:, i + 3]
+            distrib.min = min
+            distrib.max = max
             distrib.mean = mean
             distrib.std = std
             distribs[labels[label_index]] = distrib
