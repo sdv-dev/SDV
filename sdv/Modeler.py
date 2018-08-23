@@ -56,44 +56,9 @@ class Modeler:
         # start with transformed table
         extended_table = self.dn.transformed_data[table]
         extensions = self._get_extensions(pk, children, table)
+        # add extensions
         for extension in extensions:
             extended_table = pd.concat([extended_table, extension])
-        # # create dict mapping row id to conditional data
-        # map_keys = [self.get_pk_value(pk, i, table_df.iloc[i, :]) for i in range(num_rows)]
-        # conditional_data_map = {key: [] for key in map_keys}
-        #
-        # # get conditional data for val
-        # self._get_conditional_data(conditional_data_map, pk, children, table)
-        # extended_table = pd.DataFrame()
-        # start_total_time = timer()
-        # # create extended table
-        # for i in range(num_rows):
-        #     # change to be transformed table
-        #     start_time = timer()
-        #     orig_row = table_df.iloc[i, :]
-        #     row = self.dn.transformed_data[table].iloc[i, :]
-        #
-        #     val = self.get_pk_value(pk, i, orig_row)
-        #
-        #     # make sure val isn't none
-        #     if pd.isnull(val):
-        #         continue
-        #
-        #     for extension in conditional_data_map[val]:
-        #         row = row.append(extension)
-        #
-        #     # make sure row doesn't have nans
-        #     if not row.isnull().values.any():
-        #         extended_table = extended_table.append(row, ignore_index=True)
-        #     end_time = timer()
-        #     # log time for one iteration of other loop
-        #     if not logged:
-        #         logger.info('Time for one iteration of other loop: %s',
-        #                      str(end_time-start_time))
-        #         logged = True
-        # end_total_time = timer()
-        # logger.info('Total time for other loop: %s',
-        #              str(round(end_total_time-start_total_time,2)))
         self.tables[table] = extended_table
 
     def get_pk_value(self, pk, index, mapping):
@@ -167,70 +132,6 @@ class Modeler:
                 foreign = field['name']
                 return foreign
 
-    def _get_conditional_data(self, conditional_data_map, pk, children, table):
-        """ loops through children looking for rows that
-        reference the value
-        """
-        # only log iteration once
-        logged = False
-        # keep track of which columns belong to which child
-        start = 0
-        end = 0
-        # find children that ref primary key
-        for child in children:
-            child_table = self.dn.tables[child].data
-            child_meta = self.dn.tables[child].meta
-            # check if leaf node
-            if not self.dn.get_children(child):
-                transformed_child_table = self.dn.transformed_data[child]
-
-            else:
-                transformed_child_table = self.tables[child]
-
-            fk = None
-            fields = child_meta['fields']
-            fk = self.get_foreign_key(fields, pk)
-
-            if not fk:
-                continue
-
-            # add model params conditional data
-            start_total_time = timer()
-            for val in conditional_data_map:
-                start_time = timer()
-                # grab the tranformed table columns instead
-                extension = transformed_child_table[child_table[fk] == val]
-                if not logged:
-                    logger.info('extension: %s', extension)
-                if extension.empty:
-                    continue
-
-                # remove column of foreign key
-                model = self.get_model()
-                clean_extension = self.impute_table(extension)
-                model.fit(clean_extension)
-                flattened_extension = self.flatten_model(model, child)
-                # keep track of child column indices
-                end = max(end, start + len(flattened_extension))
-
-                if table in self.child_locs:
-                    self.child_locs[table][child] = (start, end)
-                else:
-                    self.child_locs[table] = {child: (start, end)}
-                # rename columns
-                flattened_extension.index = range(start, end)
-                conditional_data_map[val].append(flattened_extension)
-                # log time for one iteration of loop
-                end_time = timer()
-                if not logged:
-                    logger.info('Time for one iteration of get conditional data: %s',
-                                 str(end_time-start_time))
-                    logged = True
-            end_total_time = timer()
-            logger.info('Total time for get conditional data: %s',
-                         str(round(end_total_time-start_total_time,2)))
-            start = end
-
     def _get_extensions(self, pk, children, table_name):
         """Loops through child tables and generates list of
         extension dataframes"""
@@ -257,7 +158,6 @@ class Modeler:
                 continue
 
             conditional_data_map = dict(tuple(child_table.groupby(fk)))
-            # unique_pks = self.dn.tables[table_name].data[pk].unique()
             extension_as_array = [self._create_extension(conditional_data_map[val], child, transformed_child_table) for val in conditional_data_map]
             extension = pd.DataFrame(extension_as_array)
             print('Extension: ', extension)
