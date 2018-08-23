@@ -160,7 +160,6 @@ class Modeler:
             conditional_data_map = dict(tuple(child_table.groupby(fk)))
             extension_as_array = [self._create_extension(conditional_data_map[val], child, transformed_child_table) for val in conditional_data_map]
             extension = pd.DataFrame(extension_as_array)
-            print('Extension: ', extension)
             # keep track of child column indices
             end = max(end, start + extension.shape[1])
 
@@ -171,6 +170,7 @@ class Modeler:
             # rename columns
             extension.columns = range(start, end)
             extensions.append(extension)
+            start = end
         return extensions
 
     def _create_extension(self, df, child, transformed_child_table):
