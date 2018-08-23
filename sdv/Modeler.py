@@ -6,6 +6,8 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate.gaussian import GaussianUnivariate
 
+from timeit import default_timer as timer
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,7 @@ class Modeler:
             table (string): name of table
         """
         logger.info('Modeling %s', table)
+        logged = False
         # Grab table
         tables = self.dn.tables
         # grab table from self.tables if it is not a leaf
@@ -57,9 +60,11 @@ class Modeler:
         # get conditional data for val
         self._get_conditional_data(conditional_data_map, pk, children, table)
         extended_table = pd.DataFrame()
+        start_total_time = timer()
         # create extended table
         for i in range(num_rows):
             # change to be transformed table
+            start_time = timer()
             orig_row = table_df.iloc[i, :]
             row = self.dn.transformed_data[table].iloc[i, :]
 
@@ -75,6 +80,15 @@ class Modeler:
             # make sure row doesn't have nans
             if not row.isnull().values.any():
                 extended_table = extended_table.append(row, ignore_index=True)
+            end_time = timer()
+            # log time for one iteration of other loop
+            if not logged:
+                logger.info('Time for one iteration of other loop: %s',
+                             str(end_time-start_time))
+                logged = True
+        end_total_time = timer()
+        logger.info('Total time for other loop: %s',
+                     str(round(end_total_time-start_total_time,2)))
         self.tables[table] = extended_table
 
     def get_pk_value(self, pk, index, mapping):
@@ -152,6 +166,8 @@ class Modeler:
         """ loops through children looking for rows that
         reference the value
         """
+        # only log iteration once
+        logged = False
         # keep track of which columns belong to which child
         start = 0
         end = 0
@@ -174,7 +190,9 @@ class Modeler:
                 continue
 
             # add model params conditional data
+            start_total_time = timer()
             for val in conditional_data_map:
+                start_time = timer()
                 # grab the tranformed table columns instead
                 extension = transformed_child_table[child_table[fk] == val]
 
@@ -196,6 +214,15 @@ class Modeler:
                 # rename columns
                 flattened_extension.index = range(start, end)
                 conditional_data_map[val].append(flattened_extension)
+                # log time for one iteration of loop
+                end_time = timer()
+                if not logged:
+                    logger.info('Time for one iteration of get conditional data: %s',
+                                 str(end_time-start_time))
+                    logged = True
+            end_total_time = timer()
+            logger.info('Total time for get conditional data: %s',
+                         str(round(end_total_time-start_total_time,2)))
             start = end
 
     def get_model(self):

@@ -21,7 +21,7 @@ LOGGER = get_logger()
 
 def demo_airbnb():
     # Demo for Airbnb
-    airbnb_sdv = SDV('demo/Airbnb_demo_meta.json')
+    airbnb_sdv = SDV('demo/airbnb_demo/Airbnb_demo_meta.json')
     airbnb_sdv.fit()
     sampled_rows = {}
     sampled_rows['users'] = airbnb_sdv.sample_rows('users', 1)
@@ -79,6 +79,6 @@ def demo_biodegradability():
 
 
 if __name__ == '__main__':
-    # demo_airbnb()
-    demo_telstra()
+    demo_airbnb()
+    # demo_telstra()
     # demo_biodegradability()
