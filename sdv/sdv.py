@@ -17,6 +17,7 @@ DATA_LOADERS = {
 
 class SDV:
     """Class to do modeling and sampling all in one."""
+
     def __init__(self, meta_file_name, data_loader_type='csv'):
         """Initializes sdv class."""
         self.meta_file_name = meta_file_name

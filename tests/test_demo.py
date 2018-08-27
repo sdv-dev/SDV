@@ -1,9 +1,8 @@
 from unittest import TestCase, skipIf
-import demo_data_downloader
+
 import pandas as pd
 
-from demo import demo_airbnb, demo_telstra, demo_biodegradability
-
+from examples.demo import demo_airbnb, demo_biodegradability, demo_telstra
 
 # Ignored tests
 SLOW_TESTS = True

@@ -3,8 +3,8 @@ import os
 import pickle
 
 import pandas as pd
-from copulas.multivariate.gaussian import GaussianMultivariate
-from copulas.univariate.gaussian import GaussianUnivariate
+
+from sdv.utils import import_object
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -12,12 +12,13 @@ logger = logging.getLogger(__name__)
 
 class Modeler:
     """ Class responsible for modeling database """
-    DEFAULT_MODEL_PARAMS = ['GaussianUnivariate']
+    DEFAULT_MODEL_PARAMS = ['copulas.univariate.GaussianUnivariate']
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
+    DEFAULT_MODEL_TYPE = 'copulas.multivariate.GaussianMultivariate'
     FILE_SUFFIX = '.pkl'
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    def __init__(self, data_navigator, model_type='GaussianMultivariate', model_params=None):
+    def __init__(self, data_navigator, model_type=None, model_params=None):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -29,7 +30,7 @@ class Modeler:
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
-        self.model_type = model_type
+        self.model_type = model_type or self.DEFAULT_MODEL_TYPE
         self.model_params = model_params or self.DEFAULT_MODEL_PARAMS
 
     def CPA(self, table):
@@ -200,11 +201,11 @@ class Modeler:
 
     def get_model(self):
         """ Gets instance of model based on model type """
-        return globals()[self.model_type]()
+        return import_object(self.model_type)
 
     def get_distribution(self):
         """ Gets instance of model based on model type """
-        return globals()[self.model_params[0]]
+        return import_object(self.model_params[0])
 
     def impute_table(self, table):
         """ Fills in any NaN values in a table """

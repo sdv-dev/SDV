@@ -12,7 +12,16 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'Click>=6.0',
+    'boto3==1.8.1',
+    'exrex==0.10.5',
+    'flake8==3.5.0',
+    'numpy==1.13.1',
+    'pandas==0.22.0',
+    'pytest==3.5.1',
+    'scipy==0.19.1',
+    'scikit-learn==0.19.1',
+    'copulas==0.1.1',
+    'rdt==0.1.0'
 ]
 
 setup_requires = ['pytest-runner', ]
@@ -39,11 +48,6 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     description="Automated generative modeling and sampling",
-    entry_points={
-        'console_scripts': [
-            'sdv=sdv.cli:main',
-        ],
-    },
     extras_require={
         'test': test_require,
     },
