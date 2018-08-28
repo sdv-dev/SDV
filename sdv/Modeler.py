@@ -163,22 +163,25 @@ class Modeler:
 
             if not fk:
                 continue
-
             extension = child_table.groupby(fk).apply(self._extension_from_group(child, transformed_child_table))
-            # keep track of child column indices
-            end = max(end, start + extension.shape[1])
+            if extension is not None:
+                # keep track of child column indices
+                end = max(end, start + extension.shape[1])
 
-            self.child_locs[table_name][child] = (start, end)
-            # rename columns
-            extension.columns = range(start, end)
-            extensions.append(extension)
-            start = end
+                self.child_locs[table_name][child] = (start, end)
+                # rename columns
+                extension.columns = range(start, end)
+                extensions.append(extension)
+                start = end
         return extensions
 
     def _create_extension(self, df, child, transformed_child_table):
         """Takes a dataframe, models it and returns the flattened model"""
         # remove column of foreign key
-        conditional_data = transformed_child_table.loc[df.index]
+        try:
+            conditional_data = transformed_child_table.loc[df.index]
+        except KeyError:
+            return None
         model = self.get_model()
         clean_df = self.impute_table(conditional_data)
         model.fit(clean_df)

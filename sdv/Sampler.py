@@ -41,7 +41,10 @@ class Sampler:
 
         if not parents:
             model = self.modeler.models[table_name]
-            synthesized_rows = model.sample(num_rows)
+            if len(model.distribs) > 0:
+                synthesized_rows = model.sample(num_rows)
+            else:
+                synthesized_rows = pd.DataFrame(index=[0])
 
             # add primary key
             if primary_key:
@@ -79,7 +82,10 @@ class Sampler:
             # get parameters from parent to make model
             model = self._make_model_from_params(parent_row, table_name, random_parent)
             # sample from that model
-            synthesized_rows = model.sample(num_rows)
+            if model is not None and len(model.distribs) > 0:
+                synthesized_rows = model.sample(num_rows)
+            else:
+                synthesized_rows = pd.DataFrame(index=[0])
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -177,7 +183,10 @@ class Sampler:
             parent_name (string): name of parent table
         """
         # get parameters
-        child_range = self.modeler.child_locs[parent_name][table_name]
+        # child_range = self.modeler.child_locs[parent_name][table_name]
+        child_range = self.modeler.child_locs.get(parent_name, {}).get(table_name, {})
+        if child_range == {}:
+            return None
         param_indices = list(range(child_range[0], child_range[1]))
         params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
@@ -212,10 +221,6 @@ class Sampler:
         distrib_class = self.modeler.get_distribution()
         for i in range(num_cols**2 + num_cols, totalcols, 4):
             distrib = distrib_class()
-            # min = params.iloc[:, i]
-            # max = params.iloc[:, i + 1]
-            # std = params.iloc[:, i + 2]
-            # mean = params.iloc[:, i + 3]
             distrib.min = params.iloc[:, i]
             distrib.max = params.iloc[:, i + 1]
             distrib.std = params.iloc[:, i + 2]
