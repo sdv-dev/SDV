@@ -12,12 +12,10 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'boto3==1.8.1',
+    'boto3>=1.4.7',
     'exrex==0.10.5',
-    'flake8==3.5.0',
     'numpy==1.13.1',
     'pandas==0.22.0',
-    'pytest==3.5.1',
     'scipy==0.19.1',
     'scikit-learn==0.19.1',
     'copulas==0.1.1',
