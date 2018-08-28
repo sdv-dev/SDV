@@ -208,17 +208,18 @@ class Sampler:
         means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
         model.means = means
         label_index = 0
-
+        # get distribution class
+        distrib_class = self.modeler.get_distribution()
         for i in range(num_cols**2 + num_cols, totalcols, 4):
-            distrib = self.modeler.get_distribution()()
-            min = params.iloc[:, i]
-            max = params.iloc[:, i + 1]
-            std = params.iloc[:, i + 2]
-            mean = params.iloc[:, i + 3]
-            distrib.min = min
-            distrib.max = max
-            distrib.mean = mean
-            distrib.std = std
+            distrib = distrib_class()
+            # min = params.iloc[:, i]
+            # max = params.iloc[:, i + 1]
+            # std = params.iloc[:, i + 2]
+            # mean = params.iloc[:, i + 3]
+            distrib.min = params.iloc[:, i]
+            distrib.max = params.iloc[:, i + 1]
+            distrib.std = params.iloc[:, i + 2]
+            distrib.mean = params.iloc[:, i + 3]
             distribs[labels[label_index]] = distrib
             label_index += 1
         model.distribs = distribs

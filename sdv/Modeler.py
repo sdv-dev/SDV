@@ -39,7 +39,6 @@ class Modeler:
             table (string): name of table
         """
         logger.info('Modeling %s', table)
-        logged = False
         # Grab table
         tables = self.dn.tables
         # grab table from self.tables if it is not a leaf
@@ -133,6 +132,11 @@ class Modeler:
                 foreign = field['name']
                 return foreign
 
+    def _extension_from_group(self, child, transformed_child_table):
+        def f(group):
+            return self._create_extension(group, child, transformed_child_table)
+        return f
+
     def _get_extensions(self, pk, children, table_name):
         """Loops through child tables and generates list of
         extension dataframes"""
@@ -140,6 +144,8 @@ class Modeler:
         start = 0
         end = 0
         extensions = []
+        # make sure child_locs has value for table name
+        self.child_locs[table_name] = self.child_locs.get(table_name, {})
         # find children that ref primary key
         for child in children:
             child_table = self.dn.tables[child].data
@@ -158,16 +164,11 @@ class Modeler:
             if not fk:
                 continue
 
-            conditional_data_map = dict(tuple(child_table.groupby(fk)))
-            extension_as_array = [self._create_extension(conditional_data_map[val], child, transformed_child_table) for val in conditional_data_map]
-            extension = pd.DataFrame(extension_as_array)
+            extension = child_table.groupby(fk).apply(self._extension_from_group(child, transformed_child_table))
             # keep track of child column indices
             end = max(end, start + extension.shape[1])
 
-            if table_name in self.child_locs:
-                self.child_locs[table_name][child] = (start, end)
-            else:
-                self.child_locs[table_name] = {child: (start, end)}
+            self.child_locs[table_name][child] = (start, end)
             # rename columns
             extension.columns = range(start, end)
             extensions.append(extension)
