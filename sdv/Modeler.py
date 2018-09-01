@@ -163,7 +163,8 @@ class Modeler:
 
             if not fk:
                 continue
-            extension = child_table.groupby(fk).apply(self._extension_from_group(child, transformed_child_table))
+            extension = child_table.groupby(fk).apply(
+                self._extension_from_group(child, transformed_child_table))
             if extension is not None:
                 # keep track of child column indices
                 end = max(end, start + extension.shape[1])

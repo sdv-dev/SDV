@@ -47,8 +47,8 @@ table_dict = {
 def run_demo(folder_name):
     """Runs the demo for specified folder"""
     start = timer()
-    meta_file = os.path.join('demo', folder_name,
-                             folder_name.capitalize() + '_manual_meta.json')
+    meta_file = os.path.join(
+        'demo', folder_name, folder_name.capitalize() + '_manual_meta.json')
     sdv = SDV(meta_file)
     sdv.fit()
     sampled_rows = {}
