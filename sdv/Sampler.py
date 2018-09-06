@@ -44,11 +44,11 @@ class Sampler:
             if len(model.distribs) > 0:
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame(index=[0])
+                synthesized_rows = pd.DataFrame()
 
             # add primary key
             if primary_key:
-                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+                synthesized_rows[primary_key] = exrex.getone(regex)
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -80,12 +80,13 @@ class Sampler:
             # Make sure only using one row
             parent_row = parent_row.loc[[0]]
             # get parameters from parent to make model
-            model = self._make_model_from_params(parent_row, table_name, random_parent)
+            model = self._make_model_from_params(
+                parent_row, table_name, random_parent)
             # sample from that model
             if model is not None and len(model.distribs) > 0:
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame(index=[0])
+                synthesized_rows = pd.DataFrame()
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -96,7 +97,7 @@ class Sampler:
 
             # add primary key
             if primary_key:
-                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+                synthesized_rows[primary_key] = exrex.getone(regex)
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -183,7 +184,6 @@ class Sampler:
             parent_name (string): name of parent table
         """
         # get parameters
-        # child_range = self.modeler.child_locs[parent_name][table_name]
         child_range = self.modeler.child_locs.get(parent_name, {}).get(table_name, {})
         if child_range == {}:
             return None
