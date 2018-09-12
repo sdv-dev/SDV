@@ -1,4 +1,5 @@
-from unittest import TestCase, skipIf
+from unittest import TestCase
+
 import pandas as pd
 
 from sdv.DataNavigator import CSVDataLoader
@@ -12,15 +13,12 @@ class ModelerTest(TestCase):
         dl = CSVDataLoader('tests/manual_data/meta.json')
         self.dn = dl.load_data()
         self.dn.transform_data()
-        self.Modeler = Modeler(
-            self.dn, model_type='GaussianMultivariate',
-            model_params=['GaussianUnivariate'])
+        self.Modeler = Modeler(self.dn)
 
     def test_create_extension(self):
         """Tests that the create extension method returns correct parameters"""
         child_table = self.dn.get_data('DEMO_ORDERS')
         user = child_table[child_table['CUSTOMER_ID'] == 50]
-        transformer_child_table = self.dn.transformed_data['DEMO_ORDERS']
         parameters = self.Modeler._create_extension(
             user, 'DEMO_ORDERS', child_table)
 
@@ -41,12 +39,9 @@ class ModelerTest(TestCase):
         children = self.dn.get_children(table)
         result = self.Modeler._get_extensions(pk, children, table)
         # expected dimensions of output
-        expected_len = 1
-        expected_num_colums = 50
-        expected_num_rows = 10
 
         assert len(result) == 1
-        assert result[0].shape == (expected_num_rows, expected_num_colums)
+        assert result[0].shape == (10, 50)
 
     def test_get_extensions_no_children(self):
         """Tests that get extensions works for table with no children"""

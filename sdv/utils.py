@@ -1,4 +1,3 @@
-import importlib
 import pickle
 
 
@@ -19,9 +18,3 @@ def load_model(filename):
     """
     with open(filename, 'rb') as input:
         return pickle.load(input)
-
-
-def import_object(object_name):
-    """Import an object from its Fully Qualified Name."""
-    package, name = object_name.rsplit('.', 1)
-    return getattr(importlib.import_module(package), name)

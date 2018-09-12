@@ -3,9 +3,8 @@ import os
 import pickle
 
 import pandas as pd
-
-from sdv.utils import import_object
-
+from copulas.multivariate import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -13,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 class Modeler:
     """ Class responsible for modeling database """
-    DEFAULT_MODEL_PARAMS = ['copulas.univariate.GaussianUnivariate']
+    DEFAULT_MODEL_PARAMS = GaussianUnivariate
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
-    DEFAULT_MODEL_TYPE = 'copulas.multivariate.GaussianMultivariate'
+    DEFAULT_MODEL_TYPE = GaussianMultivariate
     FILE_SUFFIX = '.pkl'
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    def __init__(self, data_navigator, model_type=None, model_params=None):
+    def __init__(self, data_navigator, model=None, distribution=None):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -31,8 +30,8 @@ class Modeler:
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
-        self.model_type = model_type or self.DEFAULT_MODEL_TYPE
-        self.model_params = model_params or self.DEFAULT_MODEL_PARAMS
+        self.model = model or GaussianMultivariate
+        self.distribution = distribution or GaussianUnivariate
 
     def CPA(self, table):
         """ Runs CPA algorithm on a table
@@ -45,12 +44,9 @@ class Modeler:
         # grab table from self.tables if it is not a leaf
         # o.w. grab from data
         children = self.dn.get_children(table)
-        table_df, table_meta = tables[table].data, tables[table].meta
+        table_meta = tables[table].meta
         # get primary key
         pk = table_meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
-
-        # loop through rows of table
-        num_rows = table_df.shape[0]
 
         # start with transformed table
         extended_table = self.dn.transformed_data[table]
@@ -100,20 +96,16 @@ class Modeler:
         Returns:
             pandas Series of parameters for model
         """
-        if self.model_type == "GaussianMultivariate":
-            params = []
-            params = params + list(model.cov_matrix.flatten())
-            params = params + model.means
+        params = list(model.cov_matrix.flatten()) + model.means
+        for key in model.distribs:
+            col_model = model.distribs[key]
+            params.append(col_model.min)
+            params.append(col_model.max)
+            params.append(col_model.std)
+            params.append(col_model.mean)
 
-            for key in model.distribs:
-                col_model = model.distribs[key]
-                params.append(col_model.min)
-                params.append(col_model.max)
-                params.append(col_model.std)
-                params.append(col_model.mean)
-
-            param_series = pd.Series(params)
-            return param_series
+        param_series = pd.Series(params)
+        return param_series
 
     def save_model(self, file_destination):
         """ Saves model to file destination
@@ -184,19 +176,12 @@ class Modeler:
             conditional_data = transformed_child_table.loc[df.index]
         except KeyError:
             return None
-        model = self.get_model()
+
+        model = self.model()
         clean_df = self.impute_table(conditional_data)
         model.fit(clean_df)
         flattened_model = self.flatten_model(model, child)
         return flattened_model
-
-    def get_model(self):
-        """ Gets instance of model based on model type """
-        return import_object(self.model_type)
-
-    def get_distribution(self):
-        """ Gets instance of model based on model type """
-        return import_object(self.model_params[0])
 
     def impute_table(self, table):
         """ Fills in any NaN values in a table """

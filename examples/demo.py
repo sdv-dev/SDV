@@ -1,10 +1,10 @@
 import logging
 import os
 import sys
+from timeit import default_timer as timer
 
 from sdv.sdv import SDV
-from timeit import default_timer as timer
-from utils import download_folder
+from examples.utils import download_folder
 
 
 def get_logger():
