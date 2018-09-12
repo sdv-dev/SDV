@@ -41,11 +41,14 @@ class Sampler:
 
         if not parents:
             model = self.modeler.models[table_name]
-            synthesized_rows = model.sample(num_rows)
+            if len(model.distribs) > 0:
+                synthesized_rows = model.sample(num_rows)
+            else:
+                synthesized_rows = pd.DataFrame()
 
             # add primary key
             if primary_key:
-                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+                synthesized_rows[primary_key] = exrex.getone(regex)
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -77,9 +80,13 @@ class Sampler:
             # Make sure only using one row
             parent_row = parent_row.loc[[0]]
             # get parameters from parent to make model
-            model = self._make_model_from_params(parent_row, table_name, random_parent)
+            model = self._make_model_from_params(
+                parent_row, table_name, random_parent)
             # sample from that model
-            synthesized_rows = model.sample(num_rows)
+            if model is not None and len(model.distribs) > 0:
+                synthesized_rows = model.sample(num_rows)
+            else:
+                synthesized_rows = pd.DataFrame()
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -90,7 +97,7 @@ class Sampler:
 
             # add primary key
             if primary_key:
-                synthesized_rows.loc[:, primary_key] = exrex.getone(regex)
+                synthesized_rows[primary_key] = exrex.getone(regex)
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -177,7 +184,9 @@ class Sampler:
             parent_name (string): name of parent table
         """
         # get parameters
-        child_range = self.modeler.child_locs[parent_name][table_name]
+        child_range = self.modeler.child_locs.get(parent_name, {}).get(table_name, {})
+        if child_range == {}:
+            return None
         param_indices = list(range(child_range[0], child_range[1]))
         params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
@@ -208,13 +217,14 @@ class Sampler:
         means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
         model.means = means
         label_index = 0
-
-        for i in range(num_cols**2 + num_cols, totalcols, 2):
-            distrib = self.modeler.get_distribution()()
-            std = params.iloc[:, i]
-            mean = params.iloc[:, i + 1]
-            distrib.mean = mean
-            distrib.std = std
+        # get distribution class
+        distrib_class = self.modeler.get_distribution()
+        for i in range(num_cols**2 + num_cols, totalcols, 4):
+            distrib = distrib_class()
+            distrib.min = params.iloc[:, i]
+            distrib.max = params.iloc[:, i + 1]
+            distrib.std = params.iloc[:, i + 2]
+            distrib.mean = params.iloc[:, i + 3]
             distribs[labels[label_index]] = distrib
             label_index += 1
         model.distribs = distribs

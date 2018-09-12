@@ -6,6 +6,7 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate.gaussian import GaussianUnivariate
 
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -50,31 +51,12 @@ class Modeler:
         # loop through rows of table
         num_rows = table_df.shape[0]
 
-        # create dict mapping row id to conditional data
-        map_keys = [self.get_pk_value(pk, i, table_df.iloc[i, :]) for i in range(num_rows)]
-        conditional_data_map = {key: [] for key in map_keys}
-
-        # get conditional data for val
-        self._get_conditional_data(conditional_data_map, pk, children, table)
-        extended_table = pd.DataFrame()
-        # create extended table
-        for i in range(num_rows):
-            # change to be transformed table
-            orig_row = table_df.iloc[i, :]
-            row = self.dn.transformed_data[table].iloc[i, :]
-
-            val = self.get_pk_value(pk, i, orig_row)
-
-            # make sure val isn't none
-            if pd.isnull(val):
-                continue
-
-            for extension in conditional_data_map[val]:
-                row = row.append(extension)
-
-            # make sure row doesn't have nans
-            if not row.isnull().values.any():
-                extended_table = extended_table.append(row, ignore_index=True)
+        # start with transformed table
+        extended_table = self.dn.transformed_data[table]
+        extensions = self._get_extensions(pk, children, table)
+        # add extensions
+        for extension in extensions:
+            extended_table = pd.concat([extended_table, extension])
         self.tables[table] = extended_table
 
     def get_pk_value(self, pk, index, mapping):
@@ -124,6 +106,8 @@ class Modeler:
 
             for key in model.distribs:
                 col_model = model.distribs[key]
+                params.append(col_model.min)
+                params.append(col_model.max)
                 params.append(col_model.std)
                 params.append(col_model.mean)
 
@@ -148,13 +132,20 @@ class Modeler:
                 foreign = field['name']
                 return foreign
 
-    def _get_conditional_data(self, conditional_data_map, pk, children, table):
-        """ loops through children looking for rows that
-        reference the value
-        """
+    def _extension_from_group(self, child, transformed_child_table):
+        def f(group):
+            return self._create_extension(group, child, transformed_child_table)
+        return f
+
+    def _get_extensions(self, pk, children, table_name):
+        """Loops through child tables and generates list of
+        extension dataframes"""
         # keep track of which columns belong to which child
         start = 0
         end = 0
+        extensions = []
+        # make sure child_locs has value for table name
+        self.child_locs[table_name] = self.child_locs.get(table_name, {})
         # find children that ref primary key
         for child in children:
             child_table = self.dn.tables[child].data
@@ -172,31 +163,31 @@ class Modeler:
 
             if not fk:
                 continue
-
-            # add model params conditional data
-            for val in conditional_data_map:
-                # grab the tranformed table columns instead
-                extension = transformed_child_table[child_table[fk] == val]
-
-                if extension.empty:
-                    continue
-
-                # remove column of foreign key
-                model = self.get_model()
-                clean_extension = self.impute_table(extension)
-                model.fit(clean_extension)
-                flattened_extension = self.flatten_model(model, child)
+            extension = child_table.groupby(fk).apply(
+                self._extension_from_group(child, transformed_child_table))
+            if extension is not None:
                 # keep track of child column indices
-                end = max(end, start + len(flattened_extension))
+                end = max(end, start + extension.shape[1])
 
-                if table in self.child_locs:
-                    self.child_locs[table][child] = (start, end)
-                else:
-                    self.child_locs[table] = {child: (start, end)}
+                self.child_locs[table_name][child] = (start, end)
                 # rename columns
-                flattened_extension.index = range(start, end)
-                conditional_data_map[val].append(flattened_extension)
-            start = end
+                extension.columns = range(start, end)
+                extensions.append(extension)
+                start = end
+        return extensions
+
+    def _create_extension(self, df, child, transformed_child_table):
+        """Takes a dataframe, models it and returns the flattened model"""
+        # remove column of foreign key
+        try:
+            conditional_data = transformed_child_table.loc[df.index]
+        except KeyError:
+            return None
+        model = self.get_model()
+        clean_df = self.impute_table(conditional_data)
+        model.fit(clean_df)
+        flattened_model = self.flatten_model(model, child)
+        return flattened_model
 
     def get_model(self):
         """ Gets instance of model based on model type """
