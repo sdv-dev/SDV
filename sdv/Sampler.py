@@ -192,7 +192,7 @@ class Sampler:
         totalcols = params.shape[1]
 
         # build model
-        model = self.modeler.get_model()
+        model = self.modeler.model()
         num_cols = self.modeler.tables[table_name].shape[1]
 
         # get labels for dataframe
@@ -217,10 +217,10 @@ class Sampler:
         means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
         model.means = means
         label_index = 0
+
         # get distribution class
-        distrib_class = self.modeler.get_distribution()
         for i in range(num_cols**2 + num_cols, totalcols, 4):
-            distrib = distrib_class()
+            distrib = self.modeler.distribution()
             distrib.min = params.iloc[:, i]
             distrib.max = params.iloc[:, i + 1]
             distrib.std = params.iloc[:, i + 2]
