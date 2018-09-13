@@ -9,16 +9,18 @@ from copulas.univariate import GaussianUnivariate
 # Configure logger
 logger = logging.getLogger(__name__)
 
+DEFAULT_MODEL = GaussianMultivariate
+DEFAULT_DISTRIBUTION = GaussianUnivariate
+
 
 class Modeler:
     """ Class responsible for modeling database """
-    DEFAULT_MODEL_PARAMS = GaussianUnivariate
+
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
-    DEFAULT_MODEL_TYPE = GaussianMultivariate
     FILE_SUFFIX = '.pkl'
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    def __init__(self, data_navigator, model=None, distribution=None):
+    def __init__(self, data_navigator, model=DEFAULT_MODEL, distribution=DEFAULT_DISTRIBUTION):
         """ Instantiates a modeler object
         Args:
             data_navigator: A DataNavigator object for the dataset
@@ -30,8 +32,8 @@ class Modeler:
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
-        self.model = model or GaussianMultivariate
-        self.distribution = distribution or GaussianUnivariate
+        self.model = model
+        self.distribution = distribution
 
     def CPA(self, table):
         """ Runs CPA algorithm on a table
