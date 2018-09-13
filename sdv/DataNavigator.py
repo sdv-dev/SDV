@@ -8,6 +8,7 @@ from rdt.hyper_transformer import HyperTransformer
 
 class Table:
     """ Class that represents a table object """
+
     def __init__(self, data, meta):
         self.data = data
         self.meta = meta
