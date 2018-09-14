@@ -7,8 +7,8 @@ import pickle
 from sklearn.exceptions import NotFittedError
 
 import sdv
-from sdv.DataNavigator import CSVDataLoader
-from sdv.Modeler import Modeler
+from sdv.data_navigator import CSVDataLoader
+from sdv.modeler import Modeler
 from sdv.Sampler import Sampler
 
 
