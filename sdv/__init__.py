@@ -9,11 +9,14 @@ __email__ = 'dailabmit@gmail.com'
 __version__ = '0.1.0'
 
 import logging
+import os
 
 from sdv.DataNavigator import DataLoader, CSVDataLoader, DataNavigator
 from sdv.Modeler import Modeler
 from sdv.Sampler import Sampler
-from sdv import utils
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FILE_SUFFIX = '.pkl'
 
 __all__ = (
     'DataLoader',
@@ -21,7 +24,6 @@ __all__ = (
     'DataNavigator',
     'Modeler',
     'Sampler',
-    'utils'
 )
 
 logging.getLogger('btb').addHandler(logging.NullHandler())
