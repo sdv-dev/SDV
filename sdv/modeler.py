@@ -60,8 +60,9 @@ class Modeler:
 
         # add extensions
         for extension in extensions:
-            extended_table = pd.concat([extended_table, extension])
-
+            if extension.shape[0] == extended_table.shape[0]:
+                extension.index = extended_table.index
+            extended_table = pd.concat([extended_table, extension], axis=1)
         self.tables[table] = extended_table
 
     def get_pk_value(self, pk, index, mapping):
@@ -125,6 +126,10 @@ class Modeler:
             file_name (string): path to store file
         """
         path = self.get_path(file_name)
+        dir_path = os.path.dirname(path)
+
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
 
         with open(path, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)

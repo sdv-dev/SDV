@@ -9,7 +9,7 @@ from sklearn.exceptions import NotFittedError
 import sdv
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
-from sdv.Sampler import Sampler
+from sdv.sampler import Sampler
 
 
 class SDV:
