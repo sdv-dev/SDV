@@ -10,7 +10,7 @@ class ModelerTest(TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
-        dl = CSVDataLoader('tests/manual_data/meta.json')
+        dl = CSVDataLoader('tests/data/meta.json')
         self.dn = dl.load_data()
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)

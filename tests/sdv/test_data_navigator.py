@@ -1,6 +1,6 @@
 from unittest import TestCase, expectedFailure
 
-from sdv.DataNavigator import CSVDataLoader
+from sdv.data_navigator import CSVDataLoader
 
 
 class TestDataNavigator(TestCase):
@@ -8,7 +8,6 @@ class TestDataNavigator(TestCase):
     def setUp(self):
         data_loader = CSVDataLoader('tests/data/meta.json')
         self.data_navigator = data_loader.load_data()
-
 
     @expectedFailure
     def test_transform_data(self):

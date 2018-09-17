@@ -1,8 +1,8 @@
 from unittest import TestCase, expectedFailure
 
-from sdv.DataNavigator import CSVDataLoader
-from sdv.Modeler import Modeler
-from sdv.Sampler import Sampler
+from sdv.data_navigator import CSVDataLoader
+from sdv.modeler import Modeler
+from sdv.sampler import Sampler
 
 
 class TestSampler(TestCase):
@@ -20,7 +20,6 @@ class TestSampler(TestCase):
     @expectedFailure
     def test_sample_all(self):
         """Check sample_all and returns some value."""
-        # Setup
 
         # Run
         result = self.sampler.sample_all()
