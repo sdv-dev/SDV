@@ -1,12 +1,9 @@
 import logging
-import os
 import pickle
 
 import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
-
-import sdv
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -115,34 +112,23 @@ class Modeler:
 
         return pd.Series(params)
 
-    @staticmethod
-    def get_path(file_name):
-        return os.path.join(sdv.ROOT_DIR, 'models', file_name + sdv.FILE_SUFFIX)
-
-    def save_model(self, file_name):
+    def save(self, file_name):
         """Saves model to file destination.
 
         Args:
             file_name (string): path to store file
         """
-        path = self.get_path(file_name)
-        dir_path = os.path.dirname(path)
-
-        if not os.path.isdir(dir_path):
-            os.makedirs(dir_path)
-
-        with open(path, 'wb') as output:
+        with open(file_name, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
     @classmethod
-    def load_model(cls, file_name):
+    def load(cls, file_name):
         """Load model from filename.
 
         Args:
             file_name (string): path of file to load
         """
-        path = cls.get_path(file_name)
-        with open(path, 'rb') as input:
+        with open(file_name, 'rb') as input:
             return pickle.load(input)
 
     def get_foreign_key(self, fields, primary):

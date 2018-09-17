@@ -23,15 +23,13 @@ Automated generative modeling and sampling
 ## Summary
 
 The goal of the Synthetic Data Vault (SDV) is to allow data scientists to navigate, model and
-sample relational databases. The library is divided into three core classes: the DataNavigator,
-the Modeler and the Sampler. Using these classes, users can get easy access to information about
-the relational database, create generative models for tables in the database and sample rows
-from these models to produce synthetic data.
+sample relational databases. The main access point of the library is  the class `SDV`, that wraps
+the functionality of the three core classes: the `DataNavigator`, the `Modeler` and the `Sampler`.
 
-The overall flow of SDV is as follows: the DataNavigator extracts relevant information from the
-dataset, as well as applies desired transformations. This class is then passed into a Modeler,
-which uses the information in the DataNavigator to create generative models of the tables.
-Finally, a Modeler can be given to a Sampler to actual sample rows of synthetic data.
+Using these classes, users can get easy access to information about the relational database,
+create generative models for tables in the database and sample rows from these models to produce
+synthetic data.
+
 
 ## Installation
 
@@ -62,44 +60,50 @@ relational tables.
 
 The easiest way to use SDV is using the SDV class from the root of the package:
 
-
-
 ```python
-from sdv import SDV
+>>> from sdv import SDV
 
-data_vault = SDV('tests/data/meta.json')
-data_vault.fit()
-samples = data_vault.sample_all()
-samples
+>>> data_vault = SDV('tests/data/meta.json')
+>>> data_vault.fit()
+>>> samples = data_vault.sample_all()
 ```
 
-### Using the DataNavigator
+With this, we will be able to generate sintetic samples of data. The only argument we pass to `CSV`
+is a path to a JSON file containing the information of the different tables, their fields and
+relations. Further explanation of how to generate this file can be found on the docs.
 
-The DataNavigator can be used to extract useful information about a dataset, such as the
+After instantiating the class, we call to the `fit()` method in order to transform and model the
+data, and after that we are ready to sample rows, tables or the whole database.
+
+### Using each class manually
+
+The overall flow of SDV is as follows: the DataNavigator extracts relevant information from the
+dataset, as well as applies desired transformations. This class is then passed into a `Modeler`,
+which uses the information in the `DataNavigator` to create generative models of the tables.
+Finally, a `Modeler` can be given to a `Sampler` to actual sample rows of synthetic data.
+
+#### DataNavigator
+
+The `DataNavigator` can be used to extract useful information about a dataset, such as the
 relationships between tables. It can also be used to apply transformations. Here we will use it to
-load the Airbnb data from the CSV files and apply some transformations to it.
+load the test data from the CSV files and apply some transformations to it.
 
-First, we will create an instance of a DataLoader class. There are different types of DataLoaders,
-but since the Airbnb data is stored in CSV files, we will use the CSVDataLoader class.
+First, we will instantiate the `CSVDataLoader` class, that will load the data and prepare it to use it with `DataNavigator`.
+To create an instance of the `CSVDataLoader` class, the filepath to the meta.json file must be provided.
 
 ```python
 >>> from sdv import CSVDataLoader
-```
-
-To create an instance of the class, the filepath to the meta.json file must be provided.
-
-```python
 >>> data_loader = CSVDataLoader('tests/data/meta.json')
 ```
 
-The load_data() function can then be used to create an instance of a DataNavigator.
+The `load_data()` function can then be used to create an instance of a `DataNavigator`.
 
 ```python
 >>> data_navigator = data_loader.load_data()
 ```
 
-The DataNavigator stores the data as a dictionary mapping the table names to a tuple of the data
-itself (represented as a pandas dataframe) and the meta information for that table. You can access
+The `DataNavigator` stores the data as a dictionary mapping the table names to a tuple of the data
+itself (represented as a `pandas.Dataframe`) and the meta information for that table. You can access
 the data using the following command:
 
 ```python
@@ -145,7 +149,7 @@ You can also use the data navigator to get parents or children of a table.
 {'DEMO_ORDERS'}
 ```
 
-Finally, we can use the transform_data() function to apply transformations from the
+Finally, we can use the `transform_data()` function to apply transformations from the
 [RDT library](https://github.com/HDI-Project/rdt) to our data. If no transformations are provided,
 the function will convert all categorical types and datetime types to numeric values by default.
 It will return a dictionary mapping the table name to the transformed data represented as a
@@ -163,22 +167,20 @@ CREDIT_LIMIT            1000         500        1000
 
 ### Using the Modeler
 
-The Modeler can be used to recursively model the data. This is important because the tables in the
-data have relationships between them, that should also be modeled in order to have reliable
-sampling. Let's look at the Airbnb data for example. There are two tables in this data set: the
-users tables and the sessions table. A hierarchical graph of the dataset is shown below.
+The `Modeler` can be used to recursively model the data. This is important because the tables in
+the data have relationships between them, that should also be modeled in order to have reliable
+sampling. Let's look at the test data for example. There are three tables in this data set:
+`DEMO_CUSTOMERS`, `DEMO_ORDERS` and `DEMO_ORDER_ITEMS`.
 
-![Airbnb Hierarchical Graph](imgs/Airbnb_hierarchical_graph.png)
 
-As shown above, the sessions table has a field labelled "user_id", that references the "id" field
-of the user table. SDV wants to model not only the data, but these relationships as well. The
-Modeler class is responsible for carrying out this task.
+The `DEMO_ORDERS` table has a field labelled `CUSTOMER_ID`, that references the "id" field
+of the `DEMO_CUSTOMERS` table. SDV wants to model not only the data, but these relationships as
+well. The Modeler class is responsible for carrying out this task.
 
-Let's do an example with the Airbnb data. First, import from the Modeler and create an instance
-of the class. The Modeler must be provided the DataNavigator and the type of model to use. If no
-model type is provided, it will use a [Gaussian Copula](https://github.com/DAI-Lab/copulas) by
-default. Note that in order for the modeler to work, the DataNavigator must have already
-transformed its data.
+To do so, first, import from the Modeler and create an instance of the class. The Modeler must
+be provided the DataNavigator and the type of model to use. If no model type is provided, it will
+use a [copulas.multivariate.Gaussian Copula](https://github.com/DAI-Lab/copulas) by default. Note that in order for
+the modeler to work, the DataNavigator must have already transformed its data.
 
 ```python
 >>> from sdv import Modeler
@@ -225,28 +227,28 @@ Standard deviation: 1064804060.6865476
 ```
 The output above shows the parameters that got stored for every column in the users table.
 
-The modeler can also be saved to a file using the save_model() function. This will save a pkl file
-to a folder labelled "models", in the sdv folder. The desired name for the file must be provided.
+The modeler can also be saved to a file using the `save()` method. This will save a pickle file
+on the specified path.
 
 ```python
->>> modeler.save_model('demo_model')
+>>> modeler.save('models/demo_model.pkl')
 ```
 
 If you have stored a model in a previous session using the command above, you can load the model
-using the following command:
+using the `load()` method:
 
 ```python
->>> modeler = Modeler.load_model('demo_model')
+>>> modeler = Modeler.load('models/demo_model.pkl')
 ```
 
 ### Using the Sampler
 
-The Sampler takes in a Modeler and DataNavigator. Using the mdels created in the last step, the
-Sampler can recursively move through the tables in the dataset, and sample synthetic data.
+The `Sampler` takes in a `Modeler` and `DataNavigator`. Using the mdels created in the last step,
+the `Sampler` can recursively move through the tables in the dataset, and sample synthetic data.
 It can be used to sample rows from specified tables, sample an entire table at once or sample the
 whole database.
 
-Let's do an example with the Airbnb data. First import the Sampler and create an instance of
+Let's do an example with out dataset. First import the Sampler and create an instance of
 the class.
 
 ```python
@@ -254,7 +256,7 @@ the class.
 >>> sampler = Sampler(data_navigator, modeler)
 ```
 
-To sample from a row, use the command below. Note that before sampling from a child table, one of
+To sample from a row, use the command `sample_rows()`. Note that before sampling from a child table, one of
 its parent tables must be sampled from.
 
 ```python
@@ -271,7 +273,7 @@ its parent tables must be sampled from.
 0  Mobile Safari
 ```
 
-To sample a whole table use sample_table. This will create as many rows as in the original
+To sample a whole table use `sample_table()`. This will create as many rows as in the original
 database.
 
 ```python
@@ -287,7 +289,7 @@ date_account_created timestamp_first_active date_first_booking     gender  \
 ...
 ```
 
-Finally, the entire database can be sampled using sample_all(num_rows). The num_rows parameter 
+Finally, the entire database can be sampled using `sample_all(num_rows)`. The `num_rows` parameter
 specifies how many child rows to create per parent row. This function returns a dictionary mapping
 table names to the generated dataframes.
 
