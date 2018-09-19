@@ -72,10 +72,14 @@ class DataNavigator:
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
 
     def get_children(self, table_name):
-        """Returns children of a table.
+        """Return set of children of a table.
 
         Args:
-            table_name (str): name of table to get children of
+            table_name (str): name of table to get children of.
+
+        Returns:
+            set: Set of children for the given table.
+
         """
         return self.child_map.get(table_name, set())
 
@@ -88,7 +92,11 @@ class DataNavigator:
         return self.parent_map.get(table_name, set())
 
     def get_data(self, table_name):
-        """Return dataframe for a table."""
+        """Return dataframe for a table.
+
+        Args:
+            table_name
+        """
         return self.tables[table_name].data
 
     def get_meta_data(self, table_name):
@@ -115,6 +123,16 @@ class DataNavigator:
         return self.transformed_data
 
     def update_mapping(self, mapping, key, value):
+        """Safely updates a dict of sets.
+
+        Args:
+            mapping (dict): Dictionary to be updated.
+            key(string): Key to update on `mapping`.
+            value: Value to add.
+
+        If mapping[key] exists then value will be added to it.
+        If not, it will be created as a single-element set containing `value`.
+        """
         item = mapping.get(key)
 
         if item:
@@ -126,7 +144,17 @@ class DataNavigator:
         return mapping
 
     def _get_relationships(self, tables):
-        """Map table name to names of child tables."""
+        """Map table name to names of child tables.
+
+        Arguments:
+            tables (dict): table_name -> Table.
+
+        Returns:
+            tuple: dicts of children, parents and foreign_keys.
+
+        This method is what allow `DataNavigator` to be aware of the different tables and the
+        relations between them.
+        """
         child_map = {}
         parent_map = {}
         foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
