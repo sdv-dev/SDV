@@ -34,7 +34,9 @@ class Sampler:
         # get primary key column name
         primary_key = meta.get('primary_key')
         if primary_key:
-            regex = meta['fields'][primary_key]['regex']
+            node = meta['fields'][primary_key]
+            regex = node['regex']
+            int_primary_key = (node['type'] == 'number') and (node['subtype'] == 'integer')
 
         for parent in parents:
             if parent in self.sampled:
@@ -43,7 +45,7 @@ class Sampler:
 
         if not parents:
             model = self.modeler.models[table_name]
-            if len(model.distribs) > 0:
+            if len(model.distribs):
                 synthesized_rows = model.sample(num_rows)
             else:
                 synthesized_rows = pd.DataFrame()
@@ -51,6 +53,9 @@ class Sampler:
             # add primary key
             if primary_key:
                 synthesized_rows[primary_key] = exrex.getone(regex)
+
+                if int_primary_key:
+                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -100,6 +105,9 @@ class Sampler:
             # add primary key
             if primary_key:
                 synthesized_rows[primary_key] = exrex.getone(regex)
+
+                if int_primary_key:
+                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
 
             sample_info = (primary_key, synthesized_rows)
 

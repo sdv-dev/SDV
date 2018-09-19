@@ -57,9 +57,8 @@ class Modeler:
 
         # add extensions
         for extension in extensions:
-            if extension.shape[0] == extended_table.shape[0]:
-                extension.index = extended_table.index
-            extended_table = pd.concat([extended_table, extension], axis=1)
+            extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
+
         self.tables[table] = extended_table
 
     def get_pk_value(self, pk, index, mapping):
@@ -106,6 +105,7 @@ class Modeler:
             pd.Series: parameters for model
         """
         params = list(model.cov_matrix.flatten()) + model.means
+
         for key in model.distribs:
             col_model = model.distribs[key]
             params.extend([col_model.min, col_model.max, col_model.std, col_model.mean])
@@ -173,8 +173,8 @@ class Modeler:
             if not fk:
                 continue
 
-            extension = child_table.groupby(fk).apply(
-                self._extension_from_group(transformed_child_table))
+            extension = child_table.groupby(fk)
+            extension = extension.apply(self._extension_from_group(transformed_child_table))
 
             if extension is not None:
                 # keep track of child column indices
