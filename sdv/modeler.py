@@ -132,6 +132,15 @@ class Modeler:
             return pickle.load(input)
 
     def get_foreign_key(self, fields, primary):
+        """Get foreign key from primary key.
+
+        Args:
+            fields (dict): metadata's fields key for a given table.
+            primary (str): Name of primary key in original table.
+
+        Return:
+            str: Name of foreign key in current table.
+        """
         for field_key in fields:
             field = fields[field_key]
             ref = field.get('ref')
@@ -204,7 +213,14 @@ class Modeler:
         return self.flatten_model(model)
 
     def impute_table(self, table):
-        """Fill in any NaN values in a table."""
+        """Fill in any NaN values in a table.
+
+        Args:
+            table(pandas.DataFrame):
+
+        Returns:
+            pandas.DataFrame
+        """
         values = {}
 
         for label in table:
