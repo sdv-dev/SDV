@@ -33,6 +33,7 @@ class Sampler:
 
         # get primary key column name
         primary_key = meta.get('primary_key')
+
         if primary_key:
             node = meta['fields'][primary_key]
             regex = node['regex']
@@ -48,7 +49,11 @@ class Sampler:
             if len(model.distribs):
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame()
+                msg = (
+                    'Modeler hasn\'t been fitted. '
+                    'Please call Modeler.model_database(9) before sampling'
+                )
+                raise ValueError(msg)
 
             # add primary key
             if primary_key:
@@ -93,7 +98,10 @@ class Sampler:
             if model is not None and len(model.distribs) > 0:
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame()
+                msg = (
+                    'There was an error recreating models from parameters. '
+                    'Sampling could not continue.')
+                raise ValueError(msg)
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -244,7 +252,7 @@ class Sampler:
         return model
 
     def _get_table_meta(self, meta, table_name):
-        """ get table meta for a given table name"""
+        """Return metadata  get table meta for a given table name"""
         for table in meta['tables']:
             if table['name'] == table_name:
                 return table
@@ -252,7 +260,16 @@ class Sampler:
         return None
 
     def _fill_text_columns(self, row, labels, table_name):
-        """Fill in the column values for every non numeric column that isn't the primary key."""
+        """Fill in the column values for every non numeric column that isn't the primary key.
+
+        Args:
+            row (pandas.Series): row to fill text columns.
+            labels (list): Column names.
+            table_name (str): Name of the table.
+
+        Returns:
+            pd.Series: Series with text values filled.
+        """
         fields = self.dn.tables[table_name].meta['fields']
         for label in labels:
             field = fields[label]

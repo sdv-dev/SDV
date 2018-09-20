@@ -77,16 +77,17 @@ class ModelerTest(TestCase):
 
         # Check
         for name, table in self.modeler.tables.items():
+            with self.subTest(table=name):
+                raw_table = self.modeler.dn.tables[name].data
 
-            raw_table = self.modeler.dn.tables[name].data
+                # When we run Conditional Parameter Aggregation we add a key on Modeler.tables
+                # for each table. It contains a not null pandas DataFrame with the computed
+                # extension.
+                assert isinstance(table, pd.DataFrame)
 
-            # When we run Conditional Parameter Aggregation we add a key on Modeler.tables
-            # for each table. It contains a not null pandas DataFrame with the computed extension.
-            assert isinstance(table, pd.DataFrame)
-
-            assert raw_table.shape[0] == table.shape[0]
-            assert (raw_table.index == table.index).all()
-            assert all([column in table.columns for column in raw_table.columns])
+                assert raw_table.shape[0] == table.shape[0]
+                assert (raw_table.index == table.index).all()
+                assert all([column in table.columns for column in raw_table.columns])
 
     def test_flatten_model(self):
         """flatten_model returns a pandas.Series with all the params to recreate a model."""
