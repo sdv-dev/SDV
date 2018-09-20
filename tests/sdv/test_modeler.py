@@ -50,7 +50,7 @@ class ModelerTest(TestCase):
 
         # Check
         assert len(result) == 1
-        assert result[0].shape == (10, 50)
+        assert result[0].shape == (10, 35)
 
     def test_get_extensions_no_children(self):
         """Tests that get extensions works for table with no children."""
@@ -100,13 +100,12 @@ class ModelerTest(TestCase):
             # We generate it this way because RDT behavior is not fully deterministic
             # and transformed data can change between test runs.
             distribs_values = np.array([
-                [col_model.min, col_model.max, col_model.std, col_model.mean]
+                [col_model.std, col_model.mean]
                 for col_model in model.distribs.values()
             ]).flatten()
 
             expected_result = pd.Series(
-                list(model.cov_matrix.flatten()) +
-                model.means +
+                list(model.covariance.flatten()) +
                 list(distribs_values)
             )
 
@@ -115,7 +114,7 @@ class ModelerTest(TestCase):
 
             # Check
             assert (result == expected_result).all()
-            assert len(result) == num_columns ** 2 + (5 * num_columns)
+            assert len(result) == num_columns ** 2 + (2 * num_columns)
 
     def test_impute_table(self):
         """impute_table fills all NaN values with 0 or the mean of values."""

@@ -18,7 +18,7 @@ install_requires = [
     'pandas==0.22.0',
     'scipy==0.19.1',
     'scikit-learn==0.19.1',
-    'copulas==0.1.1',
+    'copulas==0.2.0',
     'rdt==0.1.0'
 ]
 
@@ -30,6 +30,21 @@ test_require = [
     'tox>=2.9.1',
     'flake8>=3.5.0',
     'isort>=4.3.4',
+]
+
+development_requires = [
+    'bumpversion>=0.5.3',
+    'watchdog>=0.8.3',
+    'Sphinx>=1.7.1',
+    'recommonmark>=0.4.0',
+    'sphinx_rtd_theme>=0.2.4',
+    'flake8>=3.5.0',
+    'isort>=4.3.4',
+    'autoflake>=1.1',
+    'autopep8>=1.3.5',
+    'twine>=1.10.0',
+    'wheel>=0.30.0',
+    'ipdb>=0.11'
 ]
 
 setup(
@@ -48,6 +63,7 @@ setup(
     description="Automated generative modeling and sampling",
     extras_require={
         'test': test_require,
+        'dev': test_require + development_requires
     },
     install_requires=install_requires,
     license="MIT license",

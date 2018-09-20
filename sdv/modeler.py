@@ -104,11 +104,11 @@ class Modeler:
         Returns:
             pd.Series: parameters for model
         """
-        params = list(model.cov_matrix.flatten()) + model.means
+        params = list(model.covariance.flatten())
 
         for key in model.distribs:
             col_model = model.distribs[key]
-            params.extend([col_model.min, col_model.max, col_model.std, col_model.mean])
+            params.extend([col_model.std, col_model.mean])
 
         return pd.Series(params)
 

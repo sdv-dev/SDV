@@ -227,20 +227,14 @@ class Sampler:
 
         # get covariance matrix
         cov = params.iloc[:, 0:num_cols ** 2]
-        model.cov_matrix = cov.values.reshape((num_cols, num_cols))
+        model.covariance = cov.values.reshape((num_cols, num_cols))
         distribs = {}
 
-        # get distributions of columns and means
-        means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
-        model.means = means
-
         # get distribution class
-        for label_index, i in enumerate(range(num_cols**2 + num_cols, totalcols, 4)):
+        for label_index, i in enumerate(range(cov_size, totalcols, 2)):
             distrib = self.modeler.distribution()
-            distrib.min = params.iloc[:, i]
-            distrib.max = params.iloc[:, i + 1]
-            distrib.std = params.iloc[:, i + 2]
-            distrib.mean = params.iloc[:, i + 3]
+            distrib.std = params.iloc[:, i]
+            distrib.mean = params.iloc[:, i + 1]
             distribs[labels[label_index]] = distrib
 
         model.distribs = distribs
