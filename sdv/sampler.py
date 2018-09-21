@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import pandas as pd
 
 import exrex
@@ -57,7 +56,8 @@ class Sampler:
 
             # add primary key
             if primary_key:
-                synthesized_rows[primary_key] = exrex.getone(regex)
+                synthesized_rows[primary_key] = synthesized_rows[primary_key].apply(
+                    lambda x: exrex.getone(regex))
 
                 if int_primary_key:
                     synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
@@ -209,41 +209,37 @@ class Sampler:
         param_indices = list(range(child_range[0], child_range[1]))
         params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
-
-        # build model
-        model = self.modeler.model()
         num_cols = self.modeler.tables[table_name].shape[1]
 
         # get labels for dataframe
-        labels = list(self.modeler.tables[table_name])
-        parent_meta = self.dn.tables[parent_name].meta
-        fk = parent_meta['primary_key']
+        labels = list(self.modeler.tables[table_name].columns)
 
-        if fk in labels:
-            labels.remove(fk)
-            num_cols -= 1
+        # parent_meta = self.dn.tables[parent_name].meta
+        # fk = parent_meta['primary_key']
+
+        # if fk in labels:
+        #     labels.remove(fk)
+        #     num_cols -= 1
 
         cov_size = num_cols ** 2
 
-        # get covariance matrix
-        cov = params.iloc[:, 0:num_cols ** 2]
-        model.covariance = cov.values.reshape((num_cols, num_cols))
-        distribs = {}
+        # Covariance matrix
+        covariance = params.iloc[:, 0:cov_size]
+        covariance = covariance.values.reshape((num_cols, num_cols))
 
-        # get distribution class
+        # Distributions
+        distributions = {}
         for label_index, i in enumerate(range(cov_size, totalcols, 2)):
-            distrib = self.modeler.distribution()
-            distrib.std = params.iloc[:, i]
-            distrib.mean = params.iloc[:, i + 1]
-            distribs[labels[label_index]] = distrib
+            distributions[labels[label_index]] = {
+                'std': params.iloc[:, i],
+                'mean': params.iloc[:, i + 1],
+            }
 
-        model.distribs = distribs
-
-        # create fake data
-        values = np.random.randint(0, 10, size=(2, len(labels)))
-        data = pd.DataFrame(values, columns=labels)
-        model.data = data
-        return model
+        model_params = {
+            'covariance': covariance,
+            'distribs': distributions
+        }
+        return self.modeler.model.from_dict(model_params)
 
     def _get_table_meta(self, meta, table_name):
         """Return metadata  get table meta for a given table name"""

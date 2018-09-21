@@ -71,8 +71,7 @@ class Modeler:
         """
         params = list(model.covariance.flatten())
 
-        for key in model.distribs:
-            col_model = model.distribs[key]
+        for col_model in model.distribs.values():
             params.extend([col_model.std, col_model.mean])
 
         return pd.Series(params)
