@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """Main module."""
-import os
 import pickle
 
 from sklearn.exceptions import NotFittedError
 
-import sdv
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
-from sdv.Sampler import Sampler
+from sdv.sampler import Sampler
 
 
 class SDV:
@@ -56,6 +54,5 @@ class SDV:
         Args:
             file_destination (string): path to store file.
         """
-        filename = os.path.join(sdv.ROOT_DIR, 'models', filename + sdv.FILE_SUFFIX)
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
