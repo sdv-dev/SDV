@@ -33,85 +33,6 @@ class Modeler:
         self.model = model
         self.distribution = distribution
 
-    def CPA(self, table):
-        """Run CPA algorithm on a table.
-
-        Conditional Parameter Aggregation. It will take the tab
-
-        Args:
-            table (string): name of table.
-        """
-        logger.info('Modeling %s', table)
-        # Grab table
-        tables = self.dn.tables
-        # grab table from self.tables if it is not a leaf
-        # o.w. grab from data
-        children = self.dn.get_children(table)
-        table_meta = tables[table].meta
-        # get primary key
-        pk = table_meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
-
-        # start with transformed table
-        extended_table = self.dn.transformed_data[table]
-        extensions = self._get_extensions(pk, children, table)
-
-        # add extensions
-        for extension in extensions:
-            if extension.shape[0] == extended_table.shape[0]:
-                extension.index = extended_table.index
-            extended_table = pd.concat([extended_table, extension], axis=1)
-        self.tables[table] = extended_table
-
-    def get_pk_value(self, pk, index, mapping):
-        if pk == self.DEFAULT_PRIMARY_KEY:
-            val = pk + str(index)
-        else:
-            val = mapping[pk]
-
-        return val
-
-    def RCPA(self, table):
-        """Recursively calls CPA starting at table.
-
-        Args:
-            table (string): name of table to start from.
-        """
-        children = self.dn.get_children(table)
-
-        for child in children:
-            self.RCPA(child)
-
-        self.CPA(table)
-
-    def model_database(self):
-        """Use RCPA and store model for database."""
-        for table in self.dn.tables:
-            if not self.dn.get_parents(table):
-                self.RCPA(table)
-
-        for table in self.tables:
-            table_model = self.model()
-            clean_table = self.impute_table(self.tables[table])
-            table_model.fit(clean_table)
-            self.models[table] = table_model
-        logger.info('Modeling Complete')
-
-    def flatten_model(self, model):
-        """Flatten a model's parameters into an array.
-
-        Args:
-            model: a model object
-
-        Returns:
-            pd.Series: parameters for model
-        """
-        params = list(model.cov_matrix.flatten()) + model.means
-        for key in model.distribs:
-            col_model = model.distribs[key]
-            params.extend([col_model.min, col_model.max, col_model.std, col_model.mean])
-
-        return pd.Series(params)
-
     def save(self, file_name):
         """Saves model to file destination.
 
@@ -131,13 +52,81 @@ class Modeler:
         with open(file_name, 'rb') as input:
             return pickle.load(input)
 
+    def get_pk_value(self, pk, index, mapping):
+        if pk == self.DEFAULT_PRIMARY_KEY:
+            val = pk + str(index)
+        else:
+            val = mapping[pk]
+
+        return val
+
+    def flatten_model(self, model):
+        """Flatten a model's parameters into an array.
+
+        Args:
+            model: a model object
+
+        Returns:
+            pd.Series: parameters for model
+        """
+        params = list(model.covariance.flatten())
+
+        for col_model in model.distribs.values():
+            params.extend([col_model.std, col_model.mean])
+
+        return pd.Series(params)
+
     def get_foreign_key(self, fields, primary):
+        """Get foreign key from primary key.
+
+        Args:
+            fields (dict): metadata's fields key for a given table.
+            primary (str): Name of primary key in original table.
+
+        Return:
+            str: Name of foreign key in current table.
+        """
         for field_key in fields:
             field = fields[field_key]
             ref = field.get('ref')
             if ref and ref['field'] == primary:
                 foreign = field['name']
                 return foreign
+
+    def impute_table(self, table):
+        """Fill in any NaN values in a table.
+
+        Args:
+            table(pandas.DataFrame):
+
+        Returns:
+            pandas.DataFrame
+        """
+        values = {}
+
+        for label in table:
+            value = table[label].mean()
+
+            if not pd.isnull(value):
+                values[label] = value
+            else:
+                values[label] = 0
+
+        return table.fillna(values)
+
+    def _create_extension(self, df, transformed_child_table):
+        """Return the flattened model from a dataframe."""
+        # remove column of foreign key
+        try:
+            conditional_data = transformed_child_table.loc[df.index]
+        except KeyError:
+            return None
+
+        model = self.model()
+        clean_df = self.impute_table(conditional_data)
+        model.fit(clean_df)
+
+        return self.flatten_model(model)
 
     def _extension_from_group(self, transformed_child_table):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
@@ -173,8 +162,8 @@ class Modeler:
             if not fk:
                 continue
 
-            extension = child_table.groupby(fk).apply(
-                self._extension_from_group(transformed_child_table))
+            extension = child_table.groupby(fk)
+            extension = extension.apply(self._extension_from_group(transformed_child_table))
 
             if extension is not None:
                 # keep track of child column indices
@@ -189,30 +178,57 @@ class Modeler:
 
         return extensions
 
-    def _create_extension(self, df, transformed_child_table):
-        """Return the flattened model from a dataframe."""
-        # remove column of foreign key
-        try:
-            conditional_data = transformed_child_table.loc[df.index]
-        except KeyError:
-            return None
+    def CPA(self, table):
+        """Run CPA algorithm on a table.
 
-        model = self.model()
-        clean_df = self.impute_table(conditional_data)
-        model.fit(clean_df)
+        Conditional Parameter Aggregation. It will take the tab
 
-        return self.flatten_model(model)
+        Args:
+            table (string): name of table.
+        """
+        logger.info('Modeling %s', table)
+        # Grab table
+        tables = self.dn.tables
+        # grab table from self.tables if it is not a leaf
+        # o.w. grab from data
+        children = self.dn.get_children(table)
+        table_meta = tables[table].meta
+        # get primary key
+        pk = table_meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
 
-    def impute_table(self, table):
-        """Fill in any NaN values in a table."""
-        values = {}
+        # start with transformed table
+        extended_table = self.dn.transformed_data[table]
+        extensions = self._get_extensions(pk, children, table)
 
-        for label in table:
-            value = table[label].mean()
+        # add extensions
+        for extension in extensions:
+            extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
 
-            if not pd.isnull(value):
-                values[label] = value
-            else:
-                values[label] = 0
+        self.tables[table] = extended_table
 
-        return table.fillna(values)
+    def RCPA(self, table):
+        """Recursively calls CPA starting at table.
+
+        Args:
+            table (string): name of table to start from.
+        """
+        children = self.dn.get_children(table)
+
+        for child in children:
+            self.RCPA(child)
+
+        self.CPA(table)
+
+    def model_database(self):
+        """Use RCPA and store model for database."""
+        for table in self.dn.tables:
+            if not self.dn.get_parents(table):
+                self.RCPA(table)
+
+        for table in self.tables:
+            table_model = self.model()
+            clean_table = self.impute_table(self.tables[table])
+            table_model.fit(clean_table)
+            self.models[table] = table_model
+
+        logger.info('Modeling Complete')

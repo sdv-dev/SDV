@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import pandas as pd
 
 import exrex
@@ -33,8 +32,11 @@ class Sampler:
 
         # get primary key column name
         primary_key = meta.get('primary_key')
+
         if primary_key:
-            regex = meta['fields'][primary_key]['regex']
+            node = meta['fields'][primary_key]
+            regex = node['regex']
+            int_primary_key = (node['type'] == 'number') and (node['subtype'] == 'integer')
 
         for parent in parents:
             if parent in self.sampled:
@@ -43,14 +45,28 @@ class Sampler:
 
         if not parents:
             model = self.modeler.models[table_name]
-            if len(model.distribs) > 0:
+            if len(model.distribs):
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame()
+                raise ValueError(
+                    'Modeler hasn\'t been fitted. '
+                    'Please call Modeler.model_database() before sampling'
+                )
 
             # add primary key
             if primary_key:
-                synthesized_rows[primary_key] = exrex.getone(regex)
+                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+                if len(values) != num_rows:
+                    raise ValueError(
+                        'Not enough unique values for primary key of table {} with regex {}'
+                        ' to generate {} samples.'.format(table_name, regex, num_rows)
+                    )
+
+                synthesized_rows[primary_key] = pd.Series(values)
+
+                if int_primary_key:
+                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -88,7 +104,10 @@ class Sampler:
             if model is not None and len(model.distribs) > 0:
                 synthesized_rows = model.sample(num_rows)
             else:
-                synthesized_rows = pd.DataFrame()
+                raise ValueError(
+                    'There was an error recreating models from parameters. '
+                    'Sampling could not continue.'
+                )
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -99,7 +118,18 @@ class Sampler:
 
             # add primary key
             if primary_key:
-                synthesized_rows[primary_key] = exrex.getone(regex)
+                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+                if len(values) != num_rows:
+                    raise ValueError(
+                        'Not enough unique values for primary key of table {} with regex {}'
+                        ' to generate {} samples.'.format(table_name, regex, num_rows)
+                    )
+
+                synthesized_rows[primary_key] = pd.Series(values)
+
+                if int_primary_key:
+                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
 
             sample_info = (primary_key, synthesized_rows)
 
@@ -193,50 +223,41 @@ class Sampler:
         param_indices = list(range(child_range[0], child_range[1]))
         params = parent_row.loc[:, param_indices]
         totalcols = params.shape[1]
-
-        # build model
-        model = self.modeler.model()
         num_cols = self.modeler.tables[table_name].shape[1]
 
         # get labels for dataframe
-        labels = list(self.modeler.tables[table_name])
-        parent_meta = self.dn.tables[parent_name].meta
-        fk = parent_meta['primary_key']
+        labels = list(self.modeler.tables[table_name].columns)
 
-        if fk in labels:
-            labels.remove(fk)
-            num_cols -= 1
+        # parent_meta = self.dn.tables[parent_name].meta
+        # fk = parent_meta['primary_key']
+
+        # if fk in labels:
+        #     labels.remove(fk)
+        #     num_cols -= 1
 
         cov_size = num_cols ** 2
 
-        # get covariance matrix
-        cov = params.iloc[:, 0:num_cols ** 2]
-        model.cov_matrix = cov.values.reshape((num_cols, num_cols))
-        distribs = {}
+        # Covariance matrix
+        covariance = params.iloc[:, 0:cov_size]
+        covariance = covariance.values.reshape((num_cols, num_cols))
 
-        # get distributions of columns and means
-        means = list(params.iloc[:, cov_size:cov_size + num_cols].values.flatten())
-        model.means = means
+        # Distributions
+        distributions = {}
+        for label_index, i in enumerate(range(cov_size, totalcols, 2)):
+            distributions[labels[label_index]] = {
+                'std': params.iloc[:, i],
+                'mean': params.iloc[:, i + 1],
+            }
 
-        # get distribution class
-        for label_index, i in enumerate(range(num_cols**2 + num_cols, totalcols, 4)):
-            distrib = self.modeler.distribution()
-            distrib.min = params.iloc[:, i]
-            distrib.max = params.iloc[:, i + 1]
-            distrib.std = params.iloc[:, i + 2]
-            distrib.mean = params.iloc[:, i + 3]
-            distribs[labels[label_index]] = distrib
+        model_params = {
+            'covariance': covariance,
+            'distribs': distributions
+        }
 
-        model.distribs = distribs
-
-        # create fake data
-        values = np.random.randint(0, 10, size=(2, len(labels)))
-        data = pd.DataFrame(values, columns=labels)
-        model.data = data
-        return model
+        return self.modeler.model.from_dict(model_params)
 
     def _get_table_meta(self, meta, table_name):
-        """ get table meta for a given table name"""
+        """Return metadata  get table meta for a given table name"""
         for table in meta['tables']:
             if table['name'] == table_name:
                 return table
@@ -244,7 +265,16 @@ class Sampler:
         return None
 
     def _fill_text_columns(self, row, labels, table_name):
-        """Fill in the column values for every non numeric column that isn't the primary key."""
+        """Fill in the column values for every non numeric column that isn't the primary key.
+
+        Args:
+            row (pandas.Series): row to fill text columns.
+            labels (list): Column names.
+            table_name (str): Name of the table.
+
+        Returns:
+            pd.Series: Series with text values filled.
+        """
         fields = self.dn.tables[table_name].meta['fields']
         for label in labels:
             field = fields[label]
@@ -263,6 +293,7 @@ class Sampler:
                     # generate fake id
                     regex = field['regex']
                     row.loc[:, field['name']] = exrex.getone(regex)
+
             elif field['type'] == 'text':
                 # generate fake text
                 regex = field['regex']
