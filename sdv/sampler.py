@@ -48,16 +48,22 @@ class Sampler:
             if len(model.distribs):
                 synthesized_rows = model.sample(num_rows)
             else:
-                msg = (
+                raise ValueError(
                     'Modeler hasn\'t been fitted. '
-                    'Please call Modeler.model_database(9) before sampling'
+                    'Please call Modeler.model_database() before sampling'
                 )
-                raise ValueError(msg)
 
             # add primary key
             if primary_key:
-                synthesized_rows[primary_key] = synthesized_rows[primary_key].apply(
-                    lambda x: exrex.getone(regex))
+                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+                if len(values) != num_rows:
+                    raise ValueError(
+                        'Not enough unique values for primary key of table {} with regex {}'
+                        ' to generate {} samples.'.format(table_name, regex, num_rows)
+                    )
+
+                synthesized_rows[primary_key] = pd.Series(values)
 
                 if int_primary_key:
                     synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
@@ -98,10 +104,10 @@ class Sampler:
             if model is not None and len(model.distribs) > 0:
                 synthesized_rows = model.sample(num_rows)
             else:
-                msg = (
+                raise ValueError(
                     'There was an error recreating models from parameters. '
-                    'Sampling could not continue.')
-                raise ValueError(msg)
+                    'Sampling could not continue.'
+                )
 
             # add foreign key value to row
             fk_val = parent_row.loc[0, fk]
@@ -112,7 +118,15 @@ class Sampler:
 
             # add primary key
             if primary_key:
-                synthesized_rows[primary_key] = exrex.getone(regex)
+                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+                if len(values) != num_rows:
+                    raise ValueError(
+                        'Not enough unique values for primary key of table {} with regex {}'
+                        ' to generate {} samples.'.format(table_name, regex, num_rows)
+                    )
+
+                synthesized_rows[primary_key] = pd.Series(values)
 
                 if int_primary_key:
                     synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
@@ -239,6 +253,7 @@ class Sampler:
             'covariance': covariance,
             'distribs': distributions
         }
+
         return self.modeler.model.from_dict(model_params)
 
     def _get_table_meta(self, meta, table_name):
@@ -278,6 +293,7 @@ class Sampler:
                     # generate fake id
                     regex = field['regex']
                     row.loc[:, field['name']] = exrex.getone(regex)
+
             elif field['type'] == 'text':
                 # generate fake text
                 regex = field['regex']

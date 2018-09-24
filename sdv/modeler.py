@@ -230,4 +230,5 @@ class Modeler:
             clean_table = self.impute_table(self.tables[table])
             table_model.fit(clean_table)
             self.models[table] = table_model
+
         logger.info('Modeling Complete')
