@@ -93,7 +93,8 @@ class Modeler:
                 foreign = field['name']
                 return foreign
 
-    def impute_table(self, table):
+    @staticmethod
+    def impute_table(table):
         """Fill in any NaN values in a table.
 
         Args:
@@ -114,6 +115,20 @@ class Modeler:
 
         return table.fillna(values)
 
+    def fit_model(self, data):
+        """Returns an instance of self.model fitted with the given data.
+
+        Args:
+            data (pandas.DataFrame): Data to train the model with.
+
+        Returns:
+            GaussianMultivariate: Fitted model.
+        """
+        model = self.model()
+        model.fit(data)
+
+        return model
+
     def _create_extension(self, df, transformed_child_table):
         """Return the flattened model from a dataframe."""
         # remove column of foreign key
@@ -122,11 +137,9 @@ class Modeler:
         except KeyError:
             return None
 
-        model = self.model()
         clean_df = self.impute_table(conditional_data)
-        model.fit(clean_df)
 
-        return self.flatten_model(model)
+        return self.flatten_model(self.fit_model(clean_df))
 
     def _extension_from_group(self, transformed_child_table):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
@@ -226,9 +239,7 @@ class Modeler:
                 self.RCPA(table)
 
         for table in self.tables:
-            table_model = self.model()
             clean_table = self.impute_table(self.tables[table])
-            table_model.fit(clean_table)
-            self.models[table] = table_model
+            self.models[table] = self.fit_model(clean_table)
 
         logger.info('Modeling Complete')
