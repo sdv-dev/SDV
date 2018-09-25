@@ -245,7 +245,7 @@ class Sampler:
         distributions = {}
         for label_index, i in enumerate(range(cov_size, totalcols, 2)):
             distributions[labels[label_index]] = {
-                'std': params.iloc[:, i],
+                'std': abs(params.iloc[:, i]),
                 'mean': params.iloc[:, i + 1],
             }
 
