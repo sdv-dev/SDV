@@ -1,6 +1,6 @@
 <p align="left">
 <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“SDV” />
-  <i>An open source project from Data to AI Lab at MIT.</i>
+<i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
 
@@ -66,9 +66,24 @@ The easiest way to use SDV is using the SDV class from the root of the package:
 >>> data_vault = SDV('tests/data/meta.json')
 >>> data_vault.fit()
 >>> samples = data_vault.sample_all()
+>>> for dataset in samples:
+...    print(samples[dataset].head(3), '\n')
+   CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
+0            0           61026.0   5.410825e+09        1017.0  FRANCE
+
+   ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
+0         0            0       1251.0
+1         1            0       1691.0
+2         2            0       1126.0
+
+   ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
+0              0         0         9.0        20.0       0.0
+1              1         0         8.0        79.0       3.0
+2              2         0         8.0        66.0       1.0
+
 ```
 
-With this, we will be able to generate sintetic samples of data. The only argument we pass to `CSV`
+With this, we will be able to generate sintetic samples of data. The only argument we pass to `SDV`
 is a path to a JSON file containing the information of the different tables, their fields and
 relations. Further explanation of how to generate this file can be found on the docs.
 
@@ -116,15 +131,17 @@ CUSTOMER_ID               50           4    97338810
 CUST_POSTAL_CODE       11371       63145        6096
 PHONE_NUMBER1     6175553295  8605551835  7035552143
 CREDIT_LIMIT            1000         500        1000
+COUNTRY                   UK          US      CANADA
 
 >>> customers_meta = customer_table.meta
 >>> customers_meta.keys()
 dict_keys(['fields', 'headers', 'name', 'path', 'primary_key', 'use'])
 >>> customers_meta['fields']
-{'CUSTOMER_ID': {'name': 'CUSTOMER_ID',
+  {'CUSTOMER_ID': {'name': 'CUSTOMER_ID',
   'subtype': 'integer',
   'type': 'number',
-  'uniques': 0},
+  'uniques': 0,
+  'regex': '^[0-9]{10}$'},
  'CUST_POSTAL_CODE': {'name': 'CUST_POSTAL_CODE',
   'subtype': 'integer',
   'type': 'number',
@@ -136,7 +153,9 @@ dict_keys(['fields', 'headers', 'name', 'path', 'primary_key', 'use'])
  'CREDIT_LIMIT': {'name': 'CREDIT_LIMIT',
   'subtype': 'integer',
   'type': 'number',
-  'uniques': 0}}
+  'uniques': 0},
+ 'COUNTRY': {'name': 'COUNTRY', 'type': 'categorical', 'uniques': 0}}
+
 ```
 
 You can also use the data navigator to get parents or children of a table.
@@ -158,11 +177,12 @@ It will return a dictionary mapping the table name to the transformed data repre
 ```python
 >>> transformed_data = data_navigator.transform_data()
 >>> transformed_data['DEMO_CUSTOMERS'].head(3).T
-                           0           1           2
-CUSTOMER_ID               50           4    97338810
-CUST_POSTAL_CODE       11371       63145        6096
-PHONE_NUMBER1     6175553295  8605551835  7035552143
-CREDIT_LIMIT            1000         500        1000
+                             0             1             2
+CUSTOMER_ID       5.000000e+01  4.000000e+00  9.733881e+07
+CUST_POSTAL_CODE  1.137100e+04  6.314500e+04  6.096000e+03
+PHONE_NUMBER1     6.175553e+09  8.605552e+09  7.035552e+09
+CREDIT_LIMIT      1.000000e+03  5.000000e+02  1.000000e+03
+COUNTRY           5.617796e-01  8.718027e-01  5.492714e-02
 ```
 
 ### Using the Modeler
@@ -204,25 +224,22 @@ CUSTOMER_ID
 Distribution Type: Gaussian
 Variable name: CUSTOMER_ID
 Mean: 22198555.57142857
-Standard deviation: 30269487.960631203
-Max: 97338810.0
-Min: 4.0
+Standard deviation: 36178958.000449404
 
 CUST_POSTAL_CODE
 ==============
 Distribution Type: Gaussian
 Variable name: CUST_POSTAL_CODE
 Mean: 34062.71428571428
-Standard deviation: 21312.957555038134
-Max: 63145.0
-Min: 6096.0
+Standard deviation: 25473.85661931119
 
 PHONE_NUMBER1
 ==============
 Distribution Type: Gaussian
 Variable name: PHONE_NUMBER1
 Mean: 6464124184.428572
-Standard deviation: 1064804060.6865476
+Standard deviation: 1272684276.6679976
+
 ...
 ```
 The output above shows the parameters that got stored for every column in the users table.
@@ -261,16 +278,12 @@ its parent tables must be sampled from.
 
 ```python
 >>> sampler.sample_rows('DEMO_CUSTOMERS', 1).T
-0           2014-01-02         20140102175145         2014-01-30  -unknown-
-
-   age signup_method  signup_flow language affiliate_channel  \
-0   20         basic            0       en            direct
-
-  affiliate_provider first_affiliate_tracked signup_app first_device_type  \
-0             google                     omg        Web       Mac Desktop
-
-   first_browser
-0  Mobile Safari
+                            0
+CUSTOMER_ID                 0
+CUST_POSTAL_CODE        44462
+PHONE_NUMBER1     7.45576e+09
+CREDIT_LIMIT              976
+COUNTRY                    US
 ```
 
 To sample a whole table use `sample_table()`. This will create as many rows as in the original
@@ -278,15 +291,15 @@ database.
 
 ```python
 >>> sampler.sample_table('DEMO_CUSTOMERS')
-date_account_created timestamp_first_active date_first_booking     gender  \
-0             2014-01-04         20140104172305         2014-01-09       MALE
-1             2014-01-01         20140101145313         2014-04-18  -unknown-
-2             2014-01-01         20140101233803         2013-12-23       MALE
-3             2014-01-02         20140102173933         2014-03-23  -unknown-
-4             2014-01-03         20140104071157         2014-01-31  -unknown-
-5             2013-12-31         20131231224951         2013-12-09  -unknown-
-6             2014-01-05         20140105205012         2014-05-01  -unknown-
-...
+   CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
+0            0           27937.0   8.095336e+09        1029.0  CANADA
+1            1           18183.0   2.761015e+09         891.0  CANADA
+2            2           16402.0   4.956798e+09        1313.0   SPAIN
+3            3            7116.0   8.072395e+09        1124.0  FRANCE
+4            4             368.0   4.330203e+09        1186.0  FRANCE
+5            5           64304.0   6.256936e+09        1113.0      US
+6            6           94698.0   8.271224e+09        1086.0  CANADA
+
 ```
 
 Finally, the entire database can be sampled using `sample_all(num_rows)`. The `num_rows` parameter
@@ -295,28 +308,18 @@ table names to the generated dataframes.
 
 ```python
 >>> samples = sampler.sample_all()
->>> samples['DEMO_CUSTOMERS']
-{'DEMO_CUSTOMERS':   date_account_created timestamp_first_active date_first_booking     gender  \
-0           2014-01-01         20140102081228         2014-02-12  -unknown-
+>>> for dataset in samples:
+...     print(samples[dataset].head(3), '\n')
+   CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
+0            0           29394.0   4.777667e+09         763.0   SPAIN
 
-   age signup_method  signup_flow language affiliate_channel  \
-0   60         basic            0       en         sem-brand
+   ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
+0         0            0        578.0
+1         1            0       1248.0
+2         2            0        891.0
 
-  affiliate_provider first_affiliate_tracked signup_app first_device_type  \
-0             direct               untracked        Web       Mac Desktop
-
-  first_browser
-0        Safari  , 'sessions':           action  action_type  action_detail      device_type  \
-0         create          NaN            NaN  Windows Desktop
-1         search          NaN            NaN  Windows Desktop
-2  confirm_email          NaN            NaN  Windows Desktop
-3           edit          NaN            NaN  Windows Desktop
-4   authenticate          NaN            NaN  Windows Desktop
-
-          secs_elapsed
-0  9223372036854775807
-1  9223372036854775807
-2  9223372036854775807
-3  9223372036854775807
-4  9223372036854775807  }
+   ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
+0              0         0         8.0        51.0       4.0
+1              1         0         7.0       149.0       2.0
+2              2         0        11.0       112.0       2.0
 ```
