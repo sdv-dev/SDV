@@ -81,7 +81,7 @@ clean-docs: ## remove previously built docs
 	$(MAKE) -C docs clean
 
 docs: clean-docs ## generate Sphinx HTML documentation, including API docs
-	sphinx-apidoc -o docs/ sdv
+	# sphinx-apidoc -o docs/ sdv
 	$(MAKE) -C docs html
 	touch docs/_build/html/.nojekyll
 

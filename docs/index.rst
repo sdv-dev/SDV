@@ -28,7 +28,7 @@ synthetic data.
    :caption: References
    :titlesonly:
 
-   modules
+   api_reference
    contributing
    authors
    history

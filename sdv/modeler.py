@@ -185,6 +185,9 @@ class Modeler:
 
         Args:
             table (string): name of table.
+
+        Returns:
+            None:
         """
         logger.info('Modeling %s', table)
         # Grab table

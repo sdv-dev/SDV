@@ -156,7 +156,7 @@ class Sampler:
             table_name (str): name of table to synthesize
 
         Returns:
-            Synthesized table (dataframe)
+            pandas.DataFrame: Synthesized table.
         """
         orig_table = self.dn.tables[table_name].data
         num_rows = orig_table.shape[0]
