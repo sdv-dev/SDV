@@ -62,6 +62,23 @@ class Sampler:
         synthesized_rows.update(reversed_data)
         return synthesized_rows[labels]
 
+    def _get_parent_row(self, table_name):
+        parents = self.dn.get_parents(table_name)
+        if not parents:
+            return None
+
+        parent_rows = dict()
+        for parent in parents:
+            if parent not in self.sampled:
+                raise Exception('Parents must be synthesized first')
+
+            parent_rows[parent] = self.sampled[parent]
+
+        random_parent, parent_rows = random.choice(list(parent_rows.items()))
+        foreign_key, parent_row = random.choice(parent_rows)
+
+        return random_parent, foreign_key, parent_row
+
     def sample_rows(self, table_name, num_rows):
         """Sample specified number of rows for specified table.
 
@@ -72,32 +89,11 @@ class Sampler:
         Returns:
             pd.DataFrame: synthesized rows.
         """
-        parents = self.dn.get_parents(table_name)
-        parent_sampled = False
 
-        for parent in parents:
-            if parent in self.sampled:
-                parent_sampled = True
-                break
+        parent_row = self._get_parent_row(table_name)
 
-        if not parents:
-            model = self.modeler.models[table_name]
-            if len(model.distribs):
-                synthesized_rows = model.sample(num_rows)
-            else:
-                raise ValueError(
-                    'Modeler hasn\'t been fitted. '
-                    'Please call Modeler.model_database() before sampling'
-                )
-
-            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
-
-        # sample a child node
-        elif parent_sampled:
-            # grab random parent row
-            random_parent = random.sample(parents, 1)[0]
-            parent_rows = self.sampled[random_parent]
-            fk, parent_row = random.sample(parent_rows, 1)[0]
+        if parent_row:
+            random_parent, fk, parent_row = parent_row
 
             # Make sure only using one row
             parent_row = parent_row.loc[[0]]
@@ -124,8 +120,17 @@ class Sampler:
 
             return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
-        else:
-            raise Exception('Parents must be synthesized first')
+        else:    # there is no parent
+            model = self.modeler.models[table_name]
+            if len(model.distribs):
+                synthesized_rows = model.sample(num_rows)
+            else:
+                raise ValueError(
+                    'Modeler hasn\'t been fitted. '
+                    'Please call Modeler.model_database() before sampling'
+                )
+
+            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
     def sample_table(self, table_name):
         """Sample a table equal to the size of the original.
