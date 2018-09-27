@@ -14,6 +14,22 @@ class Sampler:
         self.modeler = modeler
         self.been_sampled = set()  # table_name -> if already sampled
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
+        self.primary_key = {}
+
+    @staticmethod
+    def reset_indices_tables(sampled_tables):
+        """Reset the indices of sampled tables.
+
+        Args:
+            sampled_tables (dict): All values are dataframes for sampled tables.
+
+        Returns:
+            dict: The same dict entered, just reindexed.
+        """
+        for name, table in sampled_tables.items():
+            sampled_tables[name] = table.reset_index(drop=True)
+
+        return sampled_tables
 
     def transform_synthesized_rows(self, synthesized_rows, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
@@ -34,7 +50,15 @@ class Sampler:
         if primary_key:
             node = meta['fields'][primary_key]
             regex = node['regex']
-            values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+            generator = self.primary_key.get(table_name)
+
+            if not generator:
+                generator = exrex.generate(regex)
+
+            values = [x for i, x in zip(range(num_rows), generator)]
+
+            self.primary_key[table_name] = generator
 
             if len(values) != num_rows:
                 raise ValueError(
@@ -139,31 +163,44 @@ class Sampler:
             table_name (str): name of table to synthesize
 
         Returns:
-            Synthesized table (dataframe)
+            pandas.DataFrame: Synthesized table.
         """
         orig_table = self.dn.tables[table_name].data
         num_rows = orig_table.shape[0]
         return self.sample_rows(table_name, num_rows)
 
     def sample_all(self, num_rows=5):
-        """Samples the entire database."""
+        """Samples the entire database.
+
+        Args:
+            num_rows (int): Number of rows to be sampled on the parent tables.
+
+        Returns:
+            dict: Tables sampled.
+
+        `sample_all` returns a dictionary with all the tables of the dataset sampled.
+        The amount of rows sampled will depend from table to table, and is only guaranteed
+        to match `num_rows` on tables without parents.
+
+        This is this way because the children tables are created modelling the relation
+        thet have with their parent tables, so it's behavior may change from one table to another.
+        """
         tables = self.dn.tables
         sampled_data = {}
 
         for table in tables:
             if not self.dn.get_parents(table):
-                for i in range(num_rows):
+                for _ in range(num_rows):
                     row = self.sample_rows(table, 1)
 
                     if table in sampled_data:
-                        length = sampled_data[table].shape[0]
-                        sampled_data[table].loc[length:, :] = row
-
+                        sampled_data[table] = pd.concat([sampled_data[table], row])
                     else:
                         sampled_data[table] = row
+
                     self._sample_child_rows(table, row, sampled_data)
 
-        return sampled_data
+        return self.reset_indices_tables(sampled_data)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
         """Uses parameters from parent row to synthesize child rows.
@@ -182,8 +219,7 @@ class Sampler:
             rows = self.sample_rows(child, num_rows)
 
             if child in sampled_data:
-                length = sampled_data[child].shape[0]
-                sampled_data[child].loc[length:, :] = rows.iloc[0:1, :]
+                sampled_data[child] = pd.concat([sampled_data[child], rows])
             else:
                 sampled_data[child] = rows
 
@@ -228,8 +264,8 @@ class Sampler:
         distributions = {}
         for label_index, i in enumerate(range(cov_size, totalcols, 2)):
             distributions[labels[label_index]] = {
-                'std': params.iloc[:, i],
-                'mean': params.iloc[:, i + 1],
+                'std': abs(params.iloc[:, i]),  # Pending for issue
+                'mean': params.iloc[:, i + 1],  # https://github.com/HDI-Project/SDV/issues/58
             }
 
         model_params = {
