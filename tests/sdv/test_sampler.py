@@ -58,7 +58,7 @@ class TestSampler(TestCase):
         """Check sample_all and returns some value."""
 
         # Run
-        result = self.sampler.sample_all()
+        result = self.sampler.sample_all(num_rows=5)
 
         # Check
         assert result.keys() == self.sampler.dn.tables.keys()
@@ -67,3 +67,8 @@ class TestSampler(TestCase):
             with self.subTest(table=name):
                 raw_data = self.modeler.dn.tables[name].data
                 assert (table.columns == raw_data.columns).all()
+
+                if not self.sampler.dn.get_parents(name):
+                    primary_key = self.sampler.dn.get_meta_data(name)['primary_key']
+                    assert len(table) == 5
+                    assert len(table[primary_key].unique()) == 5

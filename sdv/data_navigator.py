@@ -75,11 +75,10 @@ class DataNavigator:
         """Return set of children of a table.
 
         Args:
-            table_name (str): name of table to get children of.
+            table_name (str): Name of table to get children of.
 
         Returns:
             set: Set of children for the given table.
-
         """
         return self.child_map.get(table_name, set())
 
@@ -87,7 +86,10 @@ class DataNavigator:
         """Returns parents of a table.
 
         Args:
-            table_name (str): name of table to get parents of
+            table_name (str): Name of table to get parents of.
+
+        Returns:
+            set: Set of parents for the given table.
         """
         return self.parent_map.get(table_name, set())
 
@@ -95,17 +97,26 @@ class DataNavigator:
         """Return dataframe for a table.
 
         Args:
-            table_name
+            table_name (str): Name of table to get data for.
+
+        Returns:
+            pandas.DataFrame: DataFrame with the contents of table_name
         """
         return self.tables[table_name].data
 
     def get_meta_data(self, table_name):
-        """Return meta data for a table."""
+        """Return meta data for a table.
+
+        Args:
+            table_name (str): Name of table to get data for.
+
+        Returns:
+            dict: metadata for table_name
+        """
         return self.tables[table_name].meta
 
     def transform_data(self, transformers=None, missing=False):
-        """ Applies the specified transformations using
-        a hyper transformer and returns the new data
+        """Applies the specified transformations using an HyperTransformer and returns the new data
 
         Args:
             transformers (list): List of transformers to use.
@@ -113,8 +124,7 @@ class DataNavigator:
                             and create extra columns for them.
 
         Returns:
-            transformed_data (dict): dict with keys that are the names of the tables and values
-                                     that are the transformed dataframes.
+            dict: dict with the transformed dataframes.
         """
         transformers = transformers or self.DEFAULT_TRANSFORMERS
         self.transformed_data = self.ht.fit_transform(
@@ -129,6 +139,9 @@ class DataNavigator:
             mapping (dict): Dictionary to be updated.
             key(string): Key to update on `mapping`.
             value: Value to add.
+
+        Returns:
+            dict: Updated mapping.
 
         If mapping[key] exists then value will be added to it.
         If not, it will be created as a single-element set containing `value`.
