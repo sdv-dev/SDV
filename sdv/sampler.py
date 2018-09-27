@@ -163,7 +163,21 @@ class Sampler:
         return self.sample_rows(table_name, num_rows)
 
     def sample_all(self, num_rows=5):
-        """Samples the entire database."""
+        """Samples the entire database.
+
+        Args:
+            num_rows (int): Number of rows to be sampled on the parent tables.
+
+        Returns:
+            dict: Tables sampled.
+
+        `sample_all` returns a dictionary with all the tables of the dataset sampled.
+        The amount of rows sampled will depend from table to table, and is only guaranteed
+        to match `num_rows` on tables without parents.
+
+        This is this way because the children tables are created modelling the relation
+        thet have with their parent tables, so it's behavior may change from one table to another.
+        """
         tables = self.dn.tables
         sampled_data = {}
 
@@ -173,9 +187,7 @@ class Sampler:
                     row = self.sample_rows(table, 1)
 
                     if table in sampled_data:
-                        length = sampled_data[table].shape[0]
-                        sampled_data[table].loc[length:, :] = row
-
+                        sampled_data[table] = pd.concat([sampled_data[table], row])
                     else:
                         sampled_data[table] = row
                     self._sample_child_rows(table, row, sampled_data)
@@ -199,8 +211,7 @@ class Sampler:
             rows = self.sample_rows(child, num_rows)
 
             if child in sampled_data:
-                length = sampled_data[child].shape[0]
-                sampled_data[child].loc[length:, :] = rows.iloc[0:1, :]
+                sampled_data[child] = pd.concat([sampled_data[child], rows])
             else:
                 sampled_data[child] = rows
 

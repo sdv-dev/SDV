@@ -312,6 +312,8 @@ table names to the generated dataframes.
 ...     print(samples[dataset].head(3), '\n')
    CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
 0            0           29394.0   4.777667e+09         763.0   SPAIN
+1            0           94718.0   9.097729e+09        1068.0      US
+2            0           44345.0   7.656314e+09         701.0      UK 
 
    ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
 0         0            0        578.0
