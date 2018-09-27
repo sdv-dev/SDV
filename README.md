@@ -311,17 +311,18 @@ table names to the generated dataframes.
 >>> for dataset in samples:
 ...     print(samples[dataset].head(3), '\n')
    CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
-0            0           29394.0   4.777667e+09         763.0   SPAIN
-1            0           94718.0   9.097729e+09        1068.0      US
-2            0           44345.0   7.656314e+09         701.0      UK 
+0            0           46038.0   7.779893e+09         673.0      UK
+1            1           21063.0   6.511387e+09         808.0   SPAIN
+2            2           24494.0   5.703648e+09         757.0   SPAIN
 
    ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
-0         0            0        578.0
-1         1            0       1248.0
-2         2            0        891.0
+0         0            0       1520.0
+1         1            0       1217.0
+2         2            0       1375.0
 
    ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
-0              0         0         8.0        51.0       4.0
-1              1         0         7.0       149.0       2.0
-2              2         0        11.0       112.0       2.0
+0              0         0        17.0        94.0       3.0
+1              1         0        14.0        44.0       3.0
+2              2         0        20.0        78.0       3.0
+
 ```

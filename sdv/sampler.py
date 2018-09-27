@@ -14,6 +14,22 @@ class Sampler:
         self.modeler = modeler
         self.been_sampled = set()  # table_name -> if already sampled
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
+        self.primary_key = {}
+
+    @staticmethod
+    def reset_indices_tables(sampled_tables):
+        """Reset the indices of sampled tables.
+
+        Args:
+            sampled_tables (dict): All values are dataframes for sampled tables.
+
+        Returns:
+            dict: The same dict entered, just reindexed.
+        """
+        for name, table in sampled_tables.items():
+            sampled_tables[name] = table.reset_index(drop=True)
+
+        return sampled_tables
 
     def transform_synthesized_rows(self, synthesized_rows, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
@@ -34,7 +50,15 @@ class Sampler:
         if primary_key:
             node = meta['fields'][primary_key]
             regex = node['regex']
-            values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+            generator = self.primary_key.get(table_name)
+
+            if not generator:
+                generator = exrex.generate(regex)
+
+            values = [x for i, x in zip(range(num_rows), generator)]
+
+            self.primary_key[table_name] = generator
 
             if len(values) != num_rows:
                 raise ValueError(
@@ -166,7 +190,7 @@ class Sampler:
 
         for table in tables:
             if not self.dn.get_parents(table):
-                for i in range(num_rows):
+                for _ in range(num_rows):
                     row = self.sample_rows(table, 1)
 
                     if table in sampled_data:
@@ -175,7 +199,7 @@ class Sampler:
                         sampled_data[table] = row
                     self._sample_child_rows(table, row, sampled_data)
 
-        return sampled_data
+        return self.reset_indices_tables(sampled_data)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
         """Uses parameters from parent row to synthesize child rows.
