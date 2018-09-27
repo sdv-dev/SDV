@@ -68,7 +68,7 @@ Ready to contribute? Here's how to set up `sdv` for local development.
 
     $ mkvirtualenv sdv
     $ cd sdv/
-    $ python setup.py develop
+    $ pip install -e .[dev]
 
 4. Create a branch for local development::
 
@@ -76,35 +76,83 @@ Ready to contribute? Here's how to set up `sdv` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the
+5. While hacking your changes, make sure to cover all your developments with the required
+   unit tests, and that none of the old tests fail as a consequence of your changes.
+   For this, make sure to run the tests suite and check the code coverage::
+
+    $ make test       # Run the tests
+    $ make coverage   # Get the coverage report
+
+6. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ make lint
-    $ pytest
-    $ tox
+    $ make test-all
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+7. Make also sure to include the necessary documentation in the code as docstrings following
+   the [google](https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments)
+   or the [numpy](https://numpydoc.readthedocs.io/en/latest/format.html) docstring style.
+   If you want to view how your documentation will look like when it is published, you can
+   generate and view the docs with this command::
 
-6. Commit your changes and push your branch to GitHub::
+    $ make viewdocs
+
+8. Commit your changes and push your branch to GitHub::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+9. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
+1. It resolves an open GitHub Issue and contains its reference in the title or
+   the comment. If there is no associated issue, feel free to create one.
+2. Whenever possible, it resolves only **one** issue. If your PR resolves more than
+   one issue, try to split it in more than one pull request.
+3. The pull request should include unit tests that cover all the changed code
+4. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python3.4, 3.5 and 3.6, and for PyPy. Check
+5. The pull request should work for Python3.5 and 3.6. Check
    https://travis-ci.org/HDI-Project/sdv/pull_requests
    and make sure that the tests pass for all supported Python versions.
+
+Unit Testing Guidelines
+-----------------------
+
+All the Unit Tests should comply with the following requirements:
+
+1. Unit Tests should be based only in unittest and pytest modules.
+
+2. The tests that cover a module called ``sdv/path/to/a_module.py`` should be
+   implemented in a separated module called ``tests/sdv/path/to/test_a_module.py``.
+   Note that the module name has the ``test_`` prefix and is located in a path similar
+   to the one of the tested module, just inside te ``tests`` folder.
+
+3. Each method of the tested module should have at least one associated test method, and
+   each test method should cover only **one** use case or scenario.
+
+4. Test case methods should start with the ``test_`` prefix and have descriptive names
+   that indicate which scenario they cover.
+   Names such as ``test_some_methed_input_none``, ``test_some_method_value_error`` or
+   ``test_some_method_timeout`` are right, but names like ``test_some_method_1``,
+   ``some_method`` or ``test_error`` are not.
+
+5. Each test should validate only what the code of the method being tested does, and not
+   cover the behavior of any third party package or tool being used, which is assumed to
+   work properly as far as it is being passed the right values.
+
+6. Any third party tool that may have any kind of random behavior, such as some Machine
+   Learning models, databases or Web APIs, will be mocked using the ``mock`` library, and
+   the only thing that will be tested is that our code passes the right values to them.
+
+7. Unit tests should not use anything from outside the test and the code being tested. This
+   includes not reading or writting to any filesystem or database, which will be properly
+   mocked.
 
 Tips
 ----
@@ -113,15 +161,32 @@ To run a subset of tests::
 
     $ pytest tests.test_sdv
 
-Deploying
----------
+Release Workflow
+----------------
 
-A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
+The process of releasing a new version involves several steps combining both ``git`` and
+``bumpversion`` which, briefly:
 
-$ bumpversion patch # possible: major / minor / patch
-$ git push
-$ git push --tags
+1. Merge what is in ``master`` branch into ``stable`` branch.
+2. Update the version in ``setup.cfg``, ``sdv/__init__.py`` and ``HISTORY.md`` files.
+3. Create a new TAG pointing at the correspoding commit in ``stable`` branch.
+4. Merge the new commit from ``stable`` into ``master``.
+5. Update the version in ``setup.cfg`` and ``sdv/__init__.py`` to open the next
+   development interation.
 
-Travis will then deploy to PyPI if tests pass.
+**Note:** Before starting the process, make sure that ``HISTORY.md`` has a section titled
+**Unreleased** with the list of changes that will be included in the new version, and that
+these changes are committed and available in ``master`` branch.
+Normally this is just a list of the Pull Requests that have been merged since the latest version.
+
+Once this is done, just run the following commands::
+
+    git checkout stable
+    git merge --no-ff master    # This creates a merge commit
+    bumpversion release   # This creates a new commit and a TAG
+    git push --tags origin stable
+    make release
+    git checkout master
+    git merge stable
+    bumpversion --no-tag patch
+    git push
