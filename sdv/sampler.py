@@ -15,6 +15,70 @@ class Sampler:
         self.been_sampled = set()  # table_name -> if already sampled
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
 
+    def transform_synthesized_rows(self, synthesized_rows, table_name, num_rows):
+        """Add primary key and reverse transform synthetized data.
+
+        Args:
+            synthesized_rows(pandas.DataFrame): Generated data from model
+            table_name(str): Name of the table.
+            num_rows(int): Number of rows sampled.
+
+        Return:
+            pandas.DataFrame: Formatted synthesized data.
+        """
+        # get primary key column name
+        meta = self.dn.tables[table_name].meta
+        orig_meta = self._get_table_meta(self.dn.meta, table_name)
+        primary_key = meta.get('primary_key')
+
+        if primary_key:
+            node = meta['fields'][primary_key]
+            regex = node['regex']
+            values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+
+            if len(values) != num_rows:
+                raise ValueError(
+                    'Not enough unique values for primary key of table {} with regex {}'
+                    ' to generate {} samples.'.format(table_name, regex, num_rows)
+                )
+
+            synthesized_rows[primary_key] = pd.Series(values)
+
+            if (node['type'] == 'number') and (node['subtype'] == 'integer'):
+                synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
+
+        sample_info = (primary_key, synthesized_rows)
+
+        self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
+
+        # filter out parameters
+        labels = list(self.dn.tables[table_name].data)
+        synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
+
+        # reverse transform data
+        reversed_data = self.dn.ht.reverse_transform_table(
+            synthesized_rows, orig_meta, missing=False)
+
+        synthesized_rows.update(reversed_data)
+        return synthesized_rows[labels]
+
+    def _get_parent_row(self, table_name):
+        parents = self.dn.get_parents(table_name)
+        if not parents:
+            return None
+
+        parent_rows = dict()
+        for parent in parents:
+            if parent not in self.sampled:
+                raise Exception('Parents must be synthesized first')
+
+            parent_rows[parent] = self.sampled[parent]
+
+        random_parent, parent_rows = random.choice(list(parent_rows.items()))
+        foreign_key, parent_row = random.choice(parent_rows)
+
+        return random_parent, foreign_key, parent_row
+
     def sample_rows(self, table_name, num_rows):
         """Sample specified number of rows for specified table.
 
@@ -25,73 +89,11 @@ class Sampler:
         Returns:
             pd.DataFrame: synthesized rows.
         """
-        parents = self.dn.get_parents(table_name)
-        parent_sampled = False
-        meta = self.dn.tables[table_name].meta
-        orig_meta = self._get_table_meta(self.dn.meta, table_name)
 
-        # get primary key column name
-        primary_key = meta.get('primary_key')
+        parent_row = self._get_parent_row(table_name)
 
-        if primary_key:
-            node = meta['fields'][primary_key]
-            regex = node['regex']
-            int_primary_key = (node['type'] == 'number') and (node['subtype'] == 'integer')
-
-        for parent in parents:
-            if parent in self.sampled:
-                parent_sampled = True
-                break
-
-        if not parents:
-            model = self.modeler.models[table_name]
-            if len(model.distribs):
-                synthesized_rows = model.sample(num_rows)
-            else:
-                raise ValueError(
-                    'Modeler hasn\'t been fitted. '
-                    'Please call Modeler.model_database() before sampling'
-                )
-
-            # add primary key
-            if primary_key:
-                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
-
-                if len(values) != num_rows:
-                    raise ValueError(
-                        'Not enough unique values for primary key of table {} with regex {}'
-                        ' to generate {} samples.'.format(table_name, regex, num_rows)
-                    )
-
-                synthesized_rows[primary_key] = pd.Series(values)
-
-                if int_primary_key:
-                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
-
-            sample_info = (primary_key, synthesized_rows)
-
-            # store sample data
-            self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
-
-            # filter out parameters
-            labels = list(self.dn.tables[table_name].data)
-
-            # fill in non-numeric columns
-            synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
-
-            # reverse transform data
-            reversed_data = self.dn.ht.reverse_transform_table(
-                synthesized_rows, orig_meta, missing=False)
-
-            synthesized_rows.update(reversed_data)
-            return synthesized_rows[labels]
-
-        # sample a child node
-        elif parent_sampled:
-            # grab random parent row
-            random_parent = random.sample(parents, 1)[0]
-            parent_rows = self.sampled[random_parent]
-            fk, parent_row = random.sample(parent_rows, 1)[0]
+        if parent_row:
+            random_parent, fk, parent_row = parent_row
 
             # Make sure only using one row
             parent_row = parent_row.loc[[0]]
@@ -116,38 +118,19 @@ class Sampler:
             foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
             synthesized_rows[foreign_key] = fk_val
 
-            # add primary key
-            if primary_key:
-                values = [x for x, i in zip(exrex.generate(regex), range(num_rows))]
+            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
-                if len(values) != num_rows:
-                    raise ValueError(
-                        'Not enough unique values for primary key of table {} with regex {}'
-                        ' to generate {} samples.'.format(table_name, regex, num_rows)
-                    )
+        else:    # there is no parent
+            model = self.modeler.models[table_name]
+            if len(model.distribs):
+                synthesized_rows = model.sample(num_rows)
+            else:
+                raise ValueError(
+                    'Modeler hasn\'t been fitted. '
+                    'Please call Modeler.model_database() before sampling'
+                )
 
-                synthesized_rows[primary_key] = pd.Series(values)
-
-                if int_primary_key:
-                    synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
-
-            sample_info = (primary_key, synthesized_rows)
-
-            self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
-
-            # filter out parameters
-            labels = list(self.dn.tables[table_name].data)
-            synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
-
-            # reverse transform data
-            reversed_data = self.dn.ht.reverse_transform_table(
-                synthesized_rows, orig_meta, missing=False)
-
-            synthesized_rows.update(reversed_data)
-            return synthesized_rows[labels]
-
-        else:
-            raise Exception('Parents must be synthesized first')
+            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
     def sample_table(self, table_name):
         """Sample a table equal to the size of the original.

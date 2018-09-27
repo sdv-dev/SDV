@@ -3,7 +3,6 @@ language: python
 python:
   - 3.6
   - 3.5
-  - 3.4
 
 # Command to install dependencies
 install: pip install -U tox-travis
