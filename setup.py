@@ -44,7 +44,6 @@ development_requires = [
     'autopep8>=1.3.5',
     'twine>=1.10.0',
     'wheel>=0.30.0',
-    'ipdb>=0.11',
     'm2r==0.2.0'
 ]
 

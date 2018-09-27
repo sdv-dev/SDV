@@ -197,6 +197,7 @@ class Sampler:
                         sampled_data[table] = pd.concat([sampled_data[table], row])
                     else:
                         sampled_data[table] = row
+
                     self._sample_child_rows(table, row, sampled_data)
 
         return self.reset_indices_tables(sampled_data)
@@ -263,8 +264,8 @@ class Sampler:
         distributions = {}
         for label_index, i in enumerate(range(cov_size, totalcols, 2)):
             distributions[labels[label_index]] = {
-                'std': abs(params.iloc[:, i]),
-                'mean': params.iloc[:, i + 1],
+                'std': abs(params.iloc[:, i]),  # Pending for issue
+                'mean': params.iloc[:, i + 1],  # https://github.com/HDI-Project/SDV/issues/58
             }
 
         model_params = {
