@@ -1,0 +1,483 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Usage &mdash; SDV 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api_reference.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SDV
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development">Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Advanced Usage</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparation-of-the-data">Preparation of the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metadata-file-specification">Metadata file specification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#table-details">Table details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#field-details">Field details</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sampling-new-data">Sampling new data</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Usage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/HDI-Project/sdv/blob/master/docs/usage.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="preparation-of-the-data">
+<h2>Preparation of the data<a class="headerlink" href="#preparation-of-the-data" title="Permalink to this headline">¶</a></h2>
+<p>SDV is used to model and sample data from relational datasets along with their relational
+behaviors. To do so it needs the data in a format in which it can process their relationships.</p>
+<p>To prepare a dataset to work with SDV you need to do the following:</p>
+<ol class="arabic simple">
+<li>Dump your tables in <code class="docutils literal notranslate"><span class="pre">.csv</span></code> files, named after them. There have to be <strong>one single file</strong> for table.</li>
+<li>Create a <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file with the specification of your dataset.</li>
+<li>Load it with <code class="docutils literal notranslate"><span class="pre">SDV</span></code></li>
+</ol>
+</div>
+<div class="section" id="metadata-file-specification">
+<h2>Metadata file specification<a class="headerlink" href="#metadata-file-specification" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> is a file containing a single JSON with all the information SDV requires to
+work, its base schema is as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">&quot;regex&quot;</span><span class="p">:</span> <span class="s2">&quot;^[0-9]{10}$&quot;</span>
+                <span class="p">},</span>
+                <span class="o">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;customers.csv&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;use&quot;</span><span class="p">:</span> <span class="n">true</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Path:</th><td class="field-body">Relative path from this file to the root folder of the datasets. Leave empty if the
+datasets are on the same folder than the <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Tables:</th><td class="field-body">List of tables in the dataset. Each table should have</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="table-details">
+<h3>Table details<a class="headerlink" href="#table-details" title="Permalink to this headline">¶</a></h3>
+<p>A node <code class="docutils literal notranslate"><span class="pre">table</span></code> should be made for each table in our dataset. It contains the configuration on
+how to handle this table. It has the following elements:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+        <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;customers.csv&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;use&quot;</span><span class="p">:</span> <span class="n">true</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Fields:</th><td class="field-body">List of fields of the table.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Headers:</th><td class="field-body">Whether or not load the headers from the csv file.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Name:</th><td class="field-body">Name of the table.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Path:</th><td class="field-body">Relative path to the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file from the data root folder.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Primary_key:</th><td class="field-body">Name of the field that act as a primary key of the table.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Use:</th><td class="field-body">Wheter or not use this table when sampling.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="field-details">
+<h3>Field details<a class="headerlink" href="#field-details" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CREDIT_LIMIT&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Name:</th><td class="field-body">Name of the field.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Uniques:</th><td class="field-body">Number of unique values in this field.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">The type of the field. See table below.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Subtype:</th><td class="field-body">The subtype of the field. See table below</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Type</th>
+<th class="head">Subtype</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number</td>
+<td>integer</td>
+</tr>
+<tr class="row-odd"><td>number</td>
+<td>float</td>
+</tr>
+<tr class="row-even"><td>datetime</td>
+<td>datetime</td>
+</tr>
+<tr class="row-odd"><td>categorical</td>
+<td>categorical</td>
+</tr>
+<tr class="row-even"><td>categorical</td>
+<td>boolean</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="datetime-fields">
+<h4>Datetime fields<a class="headerlink" href="#datetime-fields" title="Permalink to this headline">¶</a></h4>
+<p>For  <code class="docutils literal notranslate"><span class="pre">datetime</span></code> types, a <code class="docutils literal notranslate"><span class="pre">format</span></code> key should be included containing the date format using
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior">strftime</a> format.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp_first_active&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">213451</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="primary-key-fields">
+<h4>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h4>
+<p>If a field is specified as a <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> of the table, then a key <code class="docutils literal notranslate"><span class="pre">regex</span></code> matching its format
+should be included.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;regex&quot;</span><span class="p">:</span> <span class="s2">&quot;^[0-9]{10}$&quot;</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="foreign-key-fields">
+<h4>Foreign key fields<a class="headerlink" href="#foreign-key-fields" title="Permalink to this headline">¶</a></h4>
+<p>If a field is a foreign key to another table, then it has to be specified using the <code class="docutils literal notranslate"><span class="pre">ref</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ref&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">table:</th><td class="field-body">Origin table name.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">field:</th><td class="field-body">Origin table field name.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<p>A full working example can be found on the <a class="reference external" href="https://github.com/HDI-Project/SDV/blob/master/tests/data/meta.json">tests</a> folder.</p>
+</div>
+</div>
+<div class="section" id="sampling-new-data">
+<h2>Sampling new data<a class="headerlink" href="#sampling-new-data" title="Permalink to this headline">¶</a></h2>
+<p>To use SDV in a project</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">(</span><span class="s1">&#39;meta.json&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

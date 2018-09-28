@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API Reference &mdash; SDV 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing" href="contributing.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SDV
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development">Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Advanced Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#preparation-of-the-data">Preparation of the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#metadata-file-specification">Metadata file specification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="usage.html#table-details">Table details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usage.html#field-details">Field details</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="usage.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="usage.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="usage.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#sampling-new-data">Sampling new data</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>API Reference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/HDI-Project/sdv/blob/master/docs/api_reference.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sdv">
+<span id="api-reference"></span><h1>API Reference<a class="headerlink" href="#module-sdv" title="Permalink to this headline">¶</a></h1>
+<p>Top-level package for SDV.</p>
+<dl class="class">
+<dt id="sdv.DataLoader">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">DataLoader</code><span class="sig-paren">(</span><em>meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class responsible for loading data and returning a DataNavigator.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdv.CSVDataLoader">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">CSVDataLoader</code><span class="sig-paren">(</span><em>meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data loader class used for loading data from csvs.</p>
+<dl class="method">
+<dt id="sdv.CSVDataLoader.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader.load_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from csvs and returns DataNavigator.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sdv.DataNavigator">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">DataNavigator</code><span class="sig-paren">(</span><em>meta_filename</em>, <em>meta</em>, <em>tables</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to navigate through data set.</p>
+<dl class="method">
+<dt id="sdv.DataNavigator.get_children">
+<code class="descname">get_children</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_children"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return set of children of a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) – Name of table to get children of.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Set of children for the given table.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">set</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.DataNavigator.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dataframe for a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) – Name of table to get data for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">DataFrame with the contents of table_name</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pandas.DataFrame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.DataNavigator.get_meta_data">
+<code class="descname">get_meta_data</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_meta_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_meta_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return meta data for a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) – Name of table to get data for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">metadata for table_name</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.DataNavigator.get_parents">
+<code class="descname">get_parents</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_parents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_parents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns parents of a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) – Name of table to get parents of.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Set of parents for the given table.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">set</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.DataNavigator.transform_data">
+<code class="descname">transform_data</code><span class="sig-paren">(</span><em>transformers=None</em>, <em>missing=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.transform_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.transform_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies the specified transformations using an HyperTransformer and returns the new data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>transformers</strong> (<em>list</em>) – List of transformers to use.</li>
+<li><strong>missing</strong> (<em>bool</em>) – Whether or not to keep track of missing variables
+and create extra columns for them.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dict with the transformed dataframes.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.DataNavigator.update_mapping">
+<code class="descname">update_mapping</code><span class="sig-paren">(</span><em>mapping</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.update_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.update_mapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely updates a dict of sets.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mapping</strong> (<em>dict</em>) – Dictionary to be updated.</li>
+<li><strong>key</strong> (<em>string</em>) – Key to update on <cite>mapping</cite>.</li>
+<li><strong>value</strong> – Value to add.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Updated mapping.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If mapping[key] exists then value will be added to it.
+If not, it will be created as a single-element set containing <cite>value</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sdv.Modeler">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">Modeler</code><span class="sig-paren">(</span><em>data_navigator</em>, <em>model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em>distribution=&lt;class 'copulas.univariate.gaussian.GaussianUnivariate'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class responsible for modeling database.</p>
+<dl class="method">
+<dt id="sdv.Modeler.CPA">
+<code class="descname">CPA</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.CPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.CPA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run CPA algorithm on a table.</p>
+<p>Conditional Parameter Aggregation. It will take the tab</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table</strong> (<em>string</em>) – name of table.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.RCPA">
+<code class="descname">RCPA</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.RCPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.RCPA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively calls CPA starting at table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table</strong> (<em>string</em>) – name of table to start from.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.fit_model">
+<code class="descname">fit_model</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.fit_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.fit_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an instance of self.model fitted with the given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>pandas.DataFrame</em>) – Data to train the model with.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Fitted model.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">GaussianMultivariate</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.flatten_model">
+<code class="descname">flatten_model</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.flatten_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.flatten_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten a model’s parameters into an array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model</strong> – a model object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">parameters for model</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pd.Series</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.get_foreign_key">
+<code class="descname">get_foreign_key</code><span class="sig-paren">(</span><em>fields</em>, <em>primary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.get_foreign_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.get_foreign_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get foreign key from primary key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> (<em>dict</em>) – metadata’s fields key for a given table.</li>
+<li><strong>primary</strong> (<em>str</em>) – Name of primary key in original table.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Name of foreign key in current table.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="sdv.Modeler.impute_table">
+<em class="property">static </em><code class="descname">impute_table</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.impute_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.impute_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill in any NaN values in a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table</strong> (<em>pandas.DataFrame</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">pandas.DataFrame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sdv.Modeler.load">
+<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load model from filename.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> (<em>string</em>) – path of file to load</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.model_database">
+<code class="descname">model_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.model_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.model_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use RCPA and store model for database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Modeler.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves model to file destination.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> (<em>string</em>) – path to store file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sdv.Sampler">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">Sampler</code><span class="sig-paren">(</span><em>data_navigator</em>, <em>modeler</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to sample data from a model.</p>
+<dl class="staticmethod">
+<dt id="sdv.Sampler.reset_indices_tables">
+<em class="property">static </em><code class="descname">reset_indices_tables</code><span class="sig-paren">(</span><em>sampled_tables</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.reset_indices_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.reset_indices_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the indices of sampled tables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sampled_tables</strong> (<em>dict</em>) – All values are dataframes for sampled tables.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The same dict entered, just reindexed.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Sampler.sample_all">
+<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples the entire database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the parent tables.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tables sampled.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+<p><cite>sample_all</cite> returns a dictionary with all the tables of the dataset sampled.
+The amount of rows sampled will depend from table to table, and is only guaranteed
+to match <cite>num_rows</cite> on tables without parents.</p>
+<p>This is this way because the children tables are created modelling the relation
+thet have with their parent tables, so it’s behavior may change from one table to another.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Sampler.sample_rows">
+<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample specified number of rows for specified table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>table_name</strong> (<em>str</em>) – name of table to synthesize</li>
+<li><strong>num_rows</strong> (<em>int</em>) – number of rows to synthesize</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">synthesized rows.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pd.DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Sampler.sample_table">
+<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample a table equal to the size of the original.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) – name of table to synthesize</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Synthesized table.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pandas.DataFrame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Sampler.transform_synthesized_rows">
+<code class="descname">transform_synthesized_rows</code><span class="sig-paren">(</span><em>synthesized_rows</em>, <em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.transform_synthesized_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.transform_synthesized_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add primary key and reverse transform synthetized data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>synthesized_rows</strong> (<em>pandas.DataFrame</em>) – Generated data from model</li>
+<li><strong>table_name</strong> (<em>str</em>) – Name of the table.</li>
+<li><strong>num_rows</strong> (<em>int</em>) – Number of rows sampled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Formatted synthesized data.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pandas.DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Sampler.update_mapping_list">
+<code class="descname">update_mapping_list</code><span class="sig-paren">(</span><em>mapping</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.update_mapping_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.update_mapping_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append value on mapping[key] if exists, create it otherwise.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sdv.SDV">
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">SDV</code><span class="sig-paren">(</span><em>meta_file_name</em>, <em>data_loader_type='csv'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to do modeling and sampling all in one.</p>
+<dl class="method">
+<dt id="sdv.SDV.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the data and model the database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.SDV.sample_all">
+<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for Sampler.sample_all.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.SDV.sample_rows">
+<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for Sampler.sample_rows.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.SDV.sample_table">
+<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for Sampler.sample_table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.SDV.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save SDV instance to file destination.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_destination</strong> (<em>string</em>) – path to store file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="usage.html" class="btn btn-neutral" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
