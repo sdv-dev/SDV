@@ -13,7 +13,7 @@
 Automated generative modeling and sampling
 
 - Free software: MIT license
-- Documentation: https://HDI-Project.github.io/sdv
+- Documentation: https://HDI-Project.github.io/SDV
 
 [travis-img]: https://travis-ci.org/HDI-Project/SDV.svg?branch=master
 [travis-url]: https://travis-ci.org/HDI-Project/SDV
