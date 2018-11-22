@@ -1,0 +1,101 @@
+lecture_id,name,teacher_id,classroom_id,lecture_date,lecture_hour
+1,Group Theory,4,1,2019-07-15,16:00
+2,Algebra,2,1,2019-01-30,16:00
+3,Algebra,2,2,2019-05-27,10:00
+4,Linear Geometry,3,1,2019-07-11,14:00
+5,Calculus II,1,1,2019-01-22,16:00
+6,Algebra,2,1,2019-05-07,10:00
+7,Group Theory,4,2,2019-07-07,12:00
+8,Calculus II,1,1,2019-01-29,12:00
+9,Projective Geometry,5,2,2019-02-27,16:00
+10,Calculus II,1,2,2019-04-06,12:00
+11,Projective Geometry,5,2,2019-05-25,12:00
+12,Group Theory,4,2,2019-01-27,12:00
+13,Algebra,2,2,2019-05-05,10:00
+14,Projective Geometry,5,1,2019-05-30,12:00
+15,Calculus II,1,2,2019-02-06,10:00
+16,Group Theory,4,2,2019-02-08,12:00
+17,Algebra,2,1,2019-04-05,16:00
+18,Projective Geometry,5,1,2019-01-29,14:00
+19,Calculus II,1,2,2019-05-24,16:00
+20,Linear Geometry,3,2,2019-03-25,12:00
+21,Calculus II,1,2,2019-01-26,12:00
+22,Group Theory,4,2,2019-05-19,16:00
+23,Group Theory,4,1,2019-03-08,14:00
+24,Calculus II,1,2,2019-03-24,10:00
+25,Group Theory,4,2,2019-07-14,14:00
+26,Projective Geometry,5,1,2019-06-22,10:00
+27,Algebra,2,1,2019-06-21,16:00
+28,Group Theory,4,2,2019-01-20,12:00
+29,Linear Geometry,3,2,2019-03-08,12:00
+30,Projective Geometry,5,1,2019-02-22,10:00
+31,Linear Geometry,3,2,2019-04-26,10:00
+32,Linear Geometry,3,2,2019-06-05,16:00
+33,Linear Geometry,3,1,2019-02-22,14:00
+34,Linear Geometry,3,1,2019-03-26,12:00
+35,Calculus II,1,1,2019-06-28,12:00
+36,Calculus II,1,2,2019-06-28,10:00
+37,Algebra,2,1,2019-04-05,14:00
+38,Projective Geometry,5,2,2019-06-18,16:00
+39,Calculus II,1,1,2019-04-17,12:00
+40,Projective Geometry,5,2,2019-03-22,14:00
+41,Algebra,2,2,2019-03-19,10:00
+42,Linear Geometry,3,1,2019-04-10,12:00
+43,Projective Geometry,5,1,2019-04-13,16:00
+44,Linear Geometry,3,1,2019-04-12,10:00
+45,Algebra,2,2,2019-07-07,10:00
+46,Projective Geometry,5,1,2019-04-10,16:00
+47,Group Theory,4,2,2019-04-02,12:00
+48,Calculus II,1,2,2019-01-31,14:00
+49,Algebra,2,2,2019-05-16,10:00
+50,Linear Geometry,3,2,2019-06-12,16:00
+51,Linear Geometry,3,1,2019-06-17,10:00
+52,Algebra,2,2,2019-07-07,10:00
+53,Group Theory,4,2,2019-02-17,16:00
+54,Group Theory,4,1,2019-06-26,16:00
+55,Linear Geometry,3,1,2019-02-10,10:00
+56,Linear Geometry,3,1,2019-05-21,14:00
+57,Linear Geometry,3,2,2019-05-14,14:00
+58,Calculus II,1,2,2019-05-18,14:00
+59,Calculus II,1,1,2019-02-11,12:00
+60,Algebra,2,1,2019-06-17,16:00
+61,Group Theory,4,1,2019-02-07,14:00
+62,Linear Geometry,3,2,2019-06-19,10:00
+63,Projective Geometry,5,2,2019-05-09,10:00
+64,Projective Geometry,5,1,2019-02-02,16:00
+65,Linear Geometry,3,1,2019-06-06,10:00
+66,Linear Geometry,3,2,2019-01-29,10:00
+67,Algebra,2,2,2019-02-12,16:00
+68,Calculus II,1,2,2019-06-15,12:00
+69,Linear Geometry,3,1,2019-04-08,16:00
+70,Group Theory,4,2,2019-02-14,12:00
+71,Calculus II,1,2,2019-01-21,12:00
+72,Linear Geometry,3,1,2019-07-09,14:00
+73,Projective Geometry,5,2,2019-07-10,10:00
+74,Calculus II,1,2,2019-05-18,16:00
+75,Linear Geometry,3,2,2019-07-02,10:00
+76,Linear Geometry,3,2,2019-03-23,16:00
+77,Calculus II,1,1,2019-05-21,12:00
+78,Projective Geometry,5,1,2019-05-08,12:00
+79,Algebra,2,1,2019-03-30,12:00
+80,Group Theory,4,2,2019-02-03,10:00
+81,Linear Geometry,3,1,2019-05-22,16:00
+82,Algebra,2,1,2019-04-25,16:00
+83,Calculus II,1,1,2019-05-28,10:00
+84,Algebra,2,2,2019-04-08,14:00
+85,Calculus II,1,2,2019-03-23,14:00
+86,Linear Geometry,3,1,2019-04-11,12:00
+87,Linear Geometry,3,2,2019-05-01,10:00
+88,Group Theory,4,2,2019-05-05,12:00
+89,Linear Geometry,3,1,2019-04-22,16:00
+90,Calculus II,1,1,2019-04-14,16:00
+91,Projective Geometry,5,1,2019-04-23,16:00
+92,Group Theory,4,2,2019-04-18,10:00
+93,Algebra,2,1,2019-02-10,10:00
+94,Group Theory,4,1,2019-01-24,12:00
+95,Linear Geometry,3,1,2019-05-30,12:00
+96,Projective Geometry,5,1,2019-06-30,12:00
+97,Calculus II,1,1,2019-02-10,12:00
+98,Linear Geometry,3,1,2019-05-18,16:00
+99,Group Theory,4,1,2019-05-05,14:00
+100,Projective Geometry,5,2,2019-05-01,12:00
