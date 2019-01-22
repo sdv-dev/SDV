@@ -2,6 +2,7 @@ import logging
 import pickle
 
 import pandas as pd
+from copulas import get_qualified_name
 from copulas.multivariate import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 
@@ -124,7 +125,7 @@ class Modeler:
         Returns:
             GaussianMultivariate: Fitted model.
         """
-        model = self.model()
+        model = self.model(distribution=get_qualified_name(self.distribution))
         model.fit(data)
 
         return model

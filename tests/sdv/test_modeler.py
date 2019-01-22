@@ -1,7 +1,8 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import numpy as np
 import pandas as pd
+from copulas.univariate.kde import KDEUnivariate
 
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
@@ -164,3 +165,29 @@ class ModelerTest(TestCase):
 
         # Check
         assert result == expected_result
+
+    def test_fit_model_distribution_arg(self):
+        """fit_model will pass self.distribution FQN to modeler."""
+        # Setup
+        model_mock = mock.MagicMock()
+        modeler = Modeler(data_navigator='navigator', model=model_mock, distribution=KDEUnivariate)
+        data = pd.DataFrame({
+            'column': [0, 1, 1, 1, 0],
+        })
+
+        # Run
+        modeler.fit_model(data)
+
+        # Check
+        model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
+
+    def test_model_database_distribution_arg(self):
+        """model_database will use self.distribution to model tables."""
+        # Setup
+        modeler = Modeler(data_navigator=self.dn, distribution=KDEUnivariate)
+
+        # Run
+        modeler.model_database()
+
+        # Check
+        assert True
