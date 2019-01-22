@@ -13,13 +13,13 @@ with open('HISTORY.md') as history_file:
 
 install_requires = [
     'boto3>=1.7.47',
-    'exrex==0.10.5',
-    'numpy==1.13.1',
-    'pandas==0.22.0',
-    'scipy==0.19.1',
-    'scikit-learn==0.19.1',
-    'copulas==0.2.1',
-    'rdt==0.1.0'
+    'exrex>=0.10.5',
+    'numpy>=1.13.1',
+    'pandas>=0.22.0',
+    'scipy>=0.19.1',
+    'scikit-learn>=0.19.1',
+    'copulas>=0.2.1',
+    'rdt>=0.1.0'
 ]
 
 setup_requires = ['pytest-runner', ]
@@ -44,7 +44,7 @@ development_requires = [
     'autopep8>=1.3.5',
     'twine>=1.10.0',
     'wheel>=0.30.0',
-    'm2r==0.2.0'
+    'm2r>=0.2.0'
 ]
 
 setup(
