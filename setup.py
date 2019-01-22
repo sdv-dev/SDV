@@ -18,7 +18,7 @@ install_requires = [
     'pandas==0.22.0',
     'scipy==0.19.1',
     'scikit-learn==0.19.1',
-    'copulas==0.2.0',
+    'copulas==0.2.1',
     'rdt==0.1.0'
 ]
 
