@@ -1,6 +1,7 @@
 import logging
 import pickle
 
+import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
 from copulas.multivariate import GaussianMultivariate
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = GaussianMultivariate
 DEFAULT_DISTRIBUTION = GaussianUnivariate
+IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 
 class Modeler:
@@ -60,6 +62,67 @@ class Modeler:
             val = mapping[pk]
 
         return val
+
+    @classmethod
+    def flatten_nested_array(cls, nested, prefix=''):
+        """Return a dictionary with the values of the given nested array.
+
+        Args:
+            nested (list, np.array): Iterable to flatten.
+        """
+        result = {}
+        for index in range(len(nested)):
+            prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
+
+            if isinstance(nested[index], (list, np.ndarray)):
+                result.update(cls.flatten_nested_array(nested[index], prefix=prefix_key))
+
+            else:
+                result[prefix_key] = nested[index]
+
+        return result
+
+    @classmethod
+    def flatten_nested_dict(cls, nested, prefix=''):
+        """Return a flatten dict from a nested one.
+
+        This method returns a flatten version of a dictionary, concatenating key names with
+        double underscores, that is:
+
+        >>> nested_dict = {
+            'my_key':{
+                'a': 1,
+                'b': 2
+            }
+        }
+        >>> Modeler.flatten_nested_dict(nested_dict)
+        {
+            'my_key__a': 1,
+            'my_key__b': 2
+        }
+
+        Args:
+            nested (dict): Original dictionary to flatten.
+            prefix (str): Prefix to append to key name
+        """
+        result = {}
+
+        for key in nested.keys():
+            prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
+
+            if key in IGNORED_DICT_KEYS:
+                continue
+
+            elif isinstance(nested[key], dict):
+                result.update(cls.flatten_nested_dict(nested[key], prefix_key))
+
+            elif isinstance(nested[key], (np.ndarray, list)):
+                result.update(cls.flatten_nested_array(nested[key], prefix_key))
+
+            else:
+                result[prefix_key] = nested[key]
+
+        return result
 
     def flatten_model(self, model):
         """Flatten a model's parameters into an array.
@@ -130,11 +193,12 @@ class Modeler:
 
         return model
 
-    def _create_extension(self, df, transformed_child_table):
+    def _create_extension(self, df, transformed_child_table, foreign_key):
         """Return the flattened model from a dataframe."""
-        # remove column of foreign key
         try:
             conditional_data = transformed_child_table.loc[df.index]
+            conditional_data = conditional_data.drop(foreign_key, axis=1)
+
         except KeyError:
             return None
 
@@ -142,10 +206,10 @@ class Modeler:
 
         return self.flatten_model(self.fit_model(clean_df))
 
-    def _extension_from_group(self, transformed_child_table):
+    def _extension_from_group(self, transformed_child_table, foreign_key):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
         def f(group):
-            return self._create_extension(group, transformed_child_table)
+            return self._create_extension(group, transformed_child_table, foreign_key)
         return f
 
     def _get_extensions(self, pk, children, table_name):
@@ -177,7 +241,7 @@ class Modeler:
                 continue
 
             extension = child_table.groupby(fk)
-            extension = extension.apply(self._extension_from_group(transformed_child_table))
+            extension = extension.apply(self._extension_from_group(transformed_child_table, fk))
 
             if len(extension):
                 # keep track of child column indices

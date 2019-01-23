@@ -1,4 +1,4 @@
-from unittest import TestCase, mock
+from unittest import TestCase, mock, skip
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,8 @@ class ModelerTest(TestCase):
         """Tests that the create extension method returns correct parameters."""
         # Setup
         child_table = self.dn.get_data('DEMO_ORDERS')
-        user = child_table[child_table['CUSTOMER_ID'] == 50]
+        foreign_key = 'CUSTOMER_ID'
+        user = child_table[child_table[foreign_key] == 50]
         expected = pd.Series([
             1.500000e+00, 0.000000e+00, -1.269991e+00,
             0.000000e+00, 0.000000e+00, 0.000000e+00,
@@ -34,7 +35,7 @@ class ModelerTest(TestCase):
         ])
 
         # Run
-        parameters = self.modeler._create_extension(user, child_table)
+        parameters = self.modeler._create_extension(user, child_table, foreign_key)
 
         # Check
         assert expected.subtract(parameters).all() < 10E-3
@@ -191,3 +192,98 @@ class ModelerTest(TestCase):
 
         # Check
         assert True
+
+    def test_flatten_nested_dict_flat_dict(self):
+        """flatten_nested_dict don't modify flat dicts."""
+        # Setup
+        nested_dict = {
+            'a': 1,
+            'b': 2
+        }
+        expected_result = {
+            'a': 1,
+            'b': 2
+        }
+
+        # Run
+        result = Modeler.flatten_nested_dict(nested_dict)
+
+        # Check
+        assert result == expected_result
+
+    def test_flatten_nested_dict_nested_dict(self):
+        """flatten_nested_dict flatten nested dicts respecting the prefixes."""
+        # Setup
+        nested_dict = {
+            'first_key': {
+                'a': 1,
+                'b': 2
+            },
+            'second_key': {
+                'x': 0
+            }
+        }
+
+        expected_result = {
+            'first_key__a': 1,
+            'first_key__b': 2,
+            'second_key__x': 0
+        }
+
+        # Run
+        result = Modeler.flatten_nested_dict(nested_dict)
+
+        # Check
+        assert result == expected_result
+
+    def test_flatten_nested_array_ndarray(self):
+        """flatten_nested_array_ return a dict formed from the input np.array"""
+        # Setup
+        nested = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        expected_result = {
+            '0__0': 1,
+            '0__1': 0,
+            '0__2': 0,
+            '1__0': 0,
+            '1__1': 1,
+            '1__2': 0,
+            '2__0': 0,
+            '2__1': 0,
+            '2__2': 1
+        }
+
+        # Run
+        result = Modeler.flatten_nested_array(nested)
+
+        # Check
+        assert result == expected_result
+
+    def test_flatten_nested_array_LIST(self):
+        """flatten_nested_array_ return a dict formed from the input list"""
+        # Setup
+        nested = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ]
+        expected_result = {
+            '0__0': 1,
+            '0__1': 0,
+            '0__2': 0,
+            '1__0': 0,
+            '1__1': 1,
+            '1__2': 0,
+            '2__0': 0,
+            '2__1': 0,
+            '2__2': 1
+        }
+
+        # Run
+        result = Modeler.flatten_nested_array(nested)
+
+        # Check
+        assert result == expected_result
