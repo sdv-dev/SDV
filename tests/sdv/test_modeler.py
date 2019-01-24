@@ -5,7 +5,7 @@ import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 from copulas.univariate.kde import KDEUnivariate
 
-from sdv.data_navigator import CSVDataLoader
+from sdv.data_navigator import CSVDataLoader, Table
 from sdv.modeler import Modeler
 
 
@@ -60,31 +60,56 @@ class ModelerTest(TestCase):
         # Check
         assert result is None
 
-
-    def test__get_extensions(self):
-        """_get_extensions returns a works for table with child"""
+    @mock.patch('sdv.modeler.Modeler.get_foreign_key')
+    @mock.patch('sdv.modeler.pd.core.groupby.GroupBy.apply')
+    def test__get_extensions(self, apply_mock, get_foreign_mock):
+        """_get_extensions return the conditional modelling parameters for each children."""
         # Setup
-        pk = 'ORDER_ID'
-        table = 'DEMO_ORDERS'
-        children = self.dn.get_children(table)
+        data_navigator = mock.MagicMock()
+
+        first_table_data = pd.DataFrame({'foreign_key': [0, 1]})
+        first_table_meta = {'fields': []}
+
+        data_navigator.tables = {
+            'first_children': Table(first_table_data, first_table_meta),
+            'second_children': Table(first_table_data, first_table_meta),
+        }
+        data_navigator.get_children.return_value = {}
+        modeler = Modeler(data_navigator)
+        modeler.tables = {}
+
+        apply_mock.side_effect = lambda x: pd.DataFrame([{
+            'column_1': 1,
+            'column_2': 2
+        }])
+        get_foreign_mock.return_value = 'foreign_key'
+
+        pk = 'primary_key'
+        table_name = 'table_name'
+        children = ['first_children', 'second_children']
+
+        expected_result = [
+            pd.DataFrame([[1, 2]]),
+            pd.DataFrame([[1, 2]], columns=range(2, 4))
+        ]
 
         # Run
-        result = self.modeler._get_extensions(pk, children, table)
+        result = modeler._get_extensions(pk, children, table_name)
 
         # Check
-        assert len(result) == 1
-        assert result[0].shape == (10, 35)
+        assert all([(result[index] == expected_result[index]).all().all() for index in range(2)])
 
     def test_get_extensions_no_children(self):
-        """Tests that get extensions works for table with no children."""
+        """_get_extensions return an empty list if children is empty."""
         # Setup
-        pk = 'ORDER_ITEM_ID'
-        table = 'DEMO_ORDER_ITEMS'
-        children = self.dn.get_children(table)
+        pk = 'primary_key'
+        children = {}
+        table_name = 'table_name'
+
         expected_result = []
 
         # Run
-        result = self.modeler._get_extensions(pk, children, table)
+        result = self.modeler._get_extensions(pk, children, table_name)
 
         # Check
         assert result == expected_result

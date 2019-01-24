@@ -372,7 +372,6 @@ class Sampler:
                     if step == len(path) - 1:
                         if isinstance(walked, list):
                             walked.append(value)
-
                         else:
                             walked[name] = value
 
@@ -381,7 +380,6 @@ class Sampler:
                         if next_step.isdigit():
                             if isinstance(name, int):
                                 walked.append([])
-
                             else:
                                 walked[name] = []
 
@@ -390,7 +388,6 @@ class Sampler:
                         else:
                             if isinstance(name, int):
                                 walked.append({})
-
                             else:
                                 walked[name] = {}
 
