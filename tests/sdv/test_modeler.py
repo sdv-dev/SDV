@@ -21,8 +21,7 @@ class ModelerTest(TestCase):
         """Tests that the create extension method returns correct parameters."""
         # Setup
         child_table = self.dn.get_data('DEMO_ORDERS')
-        foreign_key = 'CUSTOMER_ID'
-        user = child_table[child_table[foreign_key] == 50]
+        user = child_table[child_table['CUSTOMER_ID'] == 50]
         expected = pd.Series([
             1.500000e+00, 0.000000e+00, -1.269991e+00,
             0.000000e+00, 0.000000e+00, 0.000000e+00,
@@ -35,7 +34,7 @@ class ModelerTest(TestCase):
         ])
 
         # Run
-        parameters = self.modeler._create_extension(user, child_table, foreign_key)
+        parameters = self.modeler._create_extension(user, child_table)
 
         # Check
         assert expected.subtract(parameters).all() < 10E-3
@@ -182,6 +181,7 @@ class ModelerTest(TestCase):
         # Check
         model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
 
+    @skip('Work in Progress')
     def test_model_database_distribution_arg(self):
         """model_database will use self.distribution to model tables."""
         # Setup
@@ -193,8 +193,8 @@ class ModelerTest(TestCase):
         # Check
         assert True
 
-    def test_flatten_nested_dict_flat_dict(self):
-        """flatten_nested_dict don't modify flat dicts."""
+    def test__flatten_dict_flat_dict(self):
+        """_flatten_dict don't modify flat dicts."""
         # Setup
         nested_dict = {
             'a': 1,
@@ -206,13 +206,13 @@ class ModelerTest(TestCase):
         }
 
         # Run
-        result = Modeler.flatten_nested_dict(nested_dict)
+        result = Modeler._flatten_dict(nested_dict)
 
         # Check
         assert result == expected_result
 
-    def test_flatten_nested_dict_nested_dict(self):
-        """flatten_nested_dict flatten nested dicts respecting the prefixes."""
+    def test__flatten_dict_nested_dict(self):
+        """_flatten_dict flatten nested dicts respecting the prefixes."""
         # Setup
         nested_dict = {
             'first_key': {
@@ -231,13 +231,13 @@ class ModelerTest(TestCase):
         }
 
         # Run
-        result = Modeler.flatten_nested_dict(nested_dict)
+        result = Modeler._flatten_dict(nested_dict)
 
         # Check
         assert result == expected_result
 
-    def test_flatten_nested_array_ndarray(self):
-        """flatten_nested_array_ return a dict formed from the input np.array"""
+    def test__flatten_array_ndarray(self):
+        """_flatten_array return a dict formed from the input np.array"""
         # Setup
         nested = np.array([
             [1, 0, 0],
@@ -257,13 +257,13 @@ class ModelerTest(TestCase):
         }
 
         # Run
-        result = Modeler.flatten_nested_array(nested)
+        result = Modeler._flatten_array(nested)
 
         # Check
         assert result == expected_result
 
-    def test_flatten_nested_array_LIST(self):
-        """flatten_nested_array_ return a dict formed from the input list"""
+    def test__flatten_array_list(self):
+        """_flatten_array return a dict formed from the input list"""
         # Setup
         nested = [
             [1, 0, 0],
@@ -283,7 +283,7 @@ class ModelerTest(TestCase):
         }
 
         # Run
-        result = Modeler.flatten_nested_array(nested)
+        result = Modeler._flatten_array(nested)
 
         # Check
         assert result == expected_result

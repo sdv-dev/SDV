@@ -337,3 +337,63 @@ class Sampler:
             mapping[key] = [value]
 
         return mapping
+
+    @classmethod
+    def _unflatten_dict(cls, flat):
+        """Transform a flattened dict into its original form.
+
+        Works in exact opposite way that `sdv.Modeler._flatten_dict`.
+
+        Args:
+            flat (dict): Flattened dict.
+
+        """
+
+        result = {}
+
+        for key in sorted(flat.keys()):
+            path = key.split('__')
+            value = flat[key]
+            walked = result
+            for step, name in enumerate(path):
+
+                if isinstance(walked, dict) and name in walked:
+                    walked = walked[name]
+                    continue
+
+                elif isinstance(walked, list) and len(walked) and len(walked) - 1 >= int(name):
+                    walked = walked[int(name)]
+                    continue
+
+                else:
+                    if name.isdigit():
+                        name = int(name)
+
+                    if step == len(path) - 1:
+                        if isinstance(walked, list):
+                            walked.append(value)
+
+                        else:
+                            walked[name] = value
+
+                    else:
+                        next_step = path[step + 1]
+                        if next_step.isdigit():
+                            if isinstance(name, int):
+                                walked.append([])
+
+                            else:
+                                walked[name] = []
+
+                            walked = walked[name]
+
+                        else:
+                            if isinstance(name, int):
+                                walked.append({})
+
+                            else:
+                                walked[name] = {}
+
+                            walked = walked[name]
+
+        return result

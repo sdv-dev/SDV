@@ -64,7 +64,7 @@ class Modeler:
         return val
 
     @classmethod
-    def flatten_nested_array(cls, nested, prefix=''):
+    def _flatten_array(cls, nested, prefix=''):
         """Return a dictionary with the values of the given nested array.
 
         Args:
@@ -75,7 +75,7 @@ class Modeler:
             prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
 
             if isinstance(nested[index], (list, np.ndarray)):
-                result.update(cls.flatten_nested_array(nested[index], prefix=prefix_key))
+                result.update(cls._flatten_array(nested[index], prefix=prefix_key))
 
             else:
                 result[prefix_key] = nested[index]
@@ -83,7 +83,7 @@ class Modeler:
         return result
 
     @classmethod
-    def flatten_nested_dict(cls, nested, prefix=''):
+    def _flatten_dict(cls, nested, prefix=''):
         """Return a flatten dict from a nested one.
 
         This method returns a flatten version of a dictionary, concatenating key names with
@@ -95,7 +95,7 @@ class Modeler:
                 'b': 2
             }
         }
-        >>> Modeler.flatten_nested_dict(nested_dict)
+        >>> Modeler.flatten_dict(nested_dict)
         {
             'my_key__a': 1,
             'my_key__b': 2
@@ -114,10 +114,10 @@ class Modeler:
                 continue
 
             elif isinstance(nested[key], dict):
-                result.update(cls.flatten_nested_dict(nested[key], prefix_key))
+                result.update(cls._flatten_dict(nested[key], prefix_key))
 
             elif isinstance(nested[key], (np.ndarray, list)):
-                result.update(cls.flatten_nested_array(nested[key], prefix_key))
+                result.update(cls._flatten_array(nested[key], prefix_key))
 
             else:
                 result[prefix_key] = nested[key]
@@ -193,11 +193,10 @@ class Modeler:
 
         return model
 
-    def _create_extension(self, df, transformed_child_table, foreign_key):
+    def _create_extension(self, df, transformed_child_table):
         """Return the flattened model from a dataframe."""
         try:
             conditional_data = transformed_child_table.loc[df.index]
-            conditional_data = conditional_data.drop(foreign_key, axis=1)
 
         except KeyError:
             return None
@@ -206,10 +205,10 @@ class Modeler:
 
         return self.flatten_model(self.fit_model(clean_df))
 
-    def _extension_from_group(self, transformed_child_table, foreign_key):
+    def _extension_from_group(self, transformed_child_table):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
         def f(group):
-            return self._create_extension(group, transformed_child_table, foreign_key)
+            return self._create_extension(group, transformed_child_table)
         return f
 
     def _get_extensions(self, pk, children, table_name):
@@ -241,7 +240,7 @@ class Modeler:
                 continue
 
             extension = child_table.groupby(fk)
-            extension = extension.apply(self._extension_from_group(transformed_child_table, fk))
+            extension = extension.apply(self._extension_from_group(transformed_child_table))
 
             if len(extension):
                 # keep track of child column indices

@@ -72,3 +72,65 @@ class TestSampler(TestCase):
                     primary_key = self.sampler.dn.get_meta_data(name)['primary_key']
                     assert len(table) == 5
                     assert len(table[primary_key].unique()) == 5
+
+    def test_unflatten_dict(self):
+        """ """
+        # Setup
+        flat = {
+            'first_key__a': 1,
+            'first_key__b': 2,
+            'second_key__x': 0
+        }
+
+        expected_result = {
+            'first_key': {
+                'a': 1,
+                'b': 2
+            },
+            'second_key': {
+                'x': 0
+            }
+        }
+
+        # Run
+        result = Sampler._unflatten_dict(flat)
+
+        # Check
+        assert result == expected_result
+
+    def test_unflatten_dict_mixed_array(self):
+        """ """
+        # Setup
+        flat = {
+            'first_key__0__0': 1,
+            'first_key__0__1': 0,
+            'first_key__1__0': 0,
+            'first_key__1__1': 1,
+            'second_key__0__std': 0.5,
+            'second_key__0__mean': 0.5,
+            'second_key__1__std': 0.25,
+            'second_key__1__mean': 0.25
+        }
+
+        expected_result = {
+            'first_key': [
+                [1, 0],
+                [0, 1]
+            ],
+            'second_key': [
+                {
+                    'std': 0.5,
+                    'mean': 0.5
+                },
+                {
+                    'std': 0.25,
+                    'mean': 0.25
+                }
+            ]
+        }
+
+        # Run
+        result = Sampler._unflatten_dict(flat)
+
+        # Check
+        assert result == expected_result
