@@ -124,7 +124,8 @@ class Modeler:
 
         return result
 
-    def flatten_model(self, model):
+    @classmethod
+    def flatten_model(cls, model):
         """Flatten a model's parameters into an array.
 
         Args:
@@ -133,18 +134,13 @@ class Modeler:
         Returns:
             pd.Series: parameters for model
         """
-        params = list(model.covariance.flatten())
-
-        for col_model in model.distribs.values():
-            params.extend([col_model.std, col_model.mean])
-
-        return pd.Series(params)
+        return pd.Series(cls._flatten_dict(model.to_dict()))
 
     def get_foreign_key(self, fields, primary):
         """Get foreign key from primary key.
 
         Args:
-            fields (dict): metadata's fields key for a given table.
+            fields (dict): metadata `fields` key for a given table.
             primary (str): Name of primary key in original table.
 
         Return:

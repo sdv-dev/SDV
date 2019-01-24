@@ -2,6 +2,7 @@ from unittest import TestCase, mock, skip
 
 import numpy as np
 import pandas as pd
+from copulas.multivariate import GaussianMultivariate
 from copulas.univariate.kde import KDEUnivariate
 
 from sdv.data_navigator import CSVDataLoader
@@ -20,24 +21,45 @@ class ModelerTest(TestCase):
     def test__create_extension(self):
         """Tests that the create extension method returns correct parameters."""
         # Setup
-        child_table = self.dn.get_data('DEMO_ORDERS')
-        user = child_table[child_table['CUSTOMER_ID'] == 50]
-        expected = pd.Series([
-            1.500000e+00, 0.000000e+00, -1.269991e+00,
-            0.000000e+00, 0.000000e+00, 0.000000e+00,
-            -1.269991e+00, 0.000000e+00, 1.500000e+00,
-            0.000000e+00, 0.000000e+00, -7.401487e-17,
-            1.000000e+00, 7.000000e+00, 2.449490e+00,
-            4.000000e+00, 5.000000e+01, 5.000000e+01,
-            1.000000e-03, 5.000000e+01, 7.300000e+02,
-            2.380000e+03, 7.618545e+02, 1.806667e+03
-        ])
+        data_navigator = mock.MagicMock()
+        modeler = Modeler(data_navigator)
+        table = pd.DataFrame({
+            'a': [0, 1, 0, 1, 0, 1],
+            'b': [1, 2, 3, 4, 5, 6]
+        })
+        group = table[table.a == 0]
+
+        expected_result = pd.Series({
+            'covariance__0__0': 0.0,
+            'covariance__0__1': 0.0,
+            'covariance__1__0': 0.0,
+            'covariance__1__1': 1.4999999999999991,
+            'distribs__a__mean': 0.0,
+            'distribs__a__std': 0.001,
+            'distribs__b__mean': 3.0,
+            'distribs__b__std': 1.632993161855452
+        })
 
         # Run
-        parameters = self.modeler._create_extension(user, child_table)
+        result = modeler._create_extension(group, table)
 
         # Check
-        assert expected.subtract(parameters).all() < 10E-3
+        assert (expected_result == result).all()
+
+    def test__create_extension_wrong_index_return_none(self):
+        """_create_extension raises an exception if df.index not in transformed_child_table."""
+        # Setup
+        data_navigator = mock.MagicMock()
+        modeler = Modeler(data_navigator)
+        transformed_child_table = pd.DataFrame(np.eye(3), columns=['A', 'B', 'C'])
+        df = pd.DataFrame(index=range(5, 10))
+
+        # Run
+        result = modeler._create_extension(df, transformed_child_table)
+
+        # Check
+        assert result is None
+
 
     def test__get_extensions(self):
         """_get_extensions returns a works for table with child"""
@@ -93,29 +115,33 @@ class ModelerTest(TestCase):
     def test_flatten_model(self):
         """flatten_model returns a pandas.Series with all the params to recreate a model."""
         # Setup
-        for data in self.dn.transformed_data.values():
-            num_columns = data.shape[1]
-            model = self.modeler.model()
-            model.fit(data)
+        model = GaussianMultivariate()
+        X = np.eye(3)
+        model.fit(X)
 
-            # We generate it this way because RDT behavior is not fully deterministic
-            # and transformed data can change between test runs.
-            distribs_values = np.array([
-                [col_model.std, col_model.mean]
-                for col_model in model.distribs.values()
-            ]).flatten()
+        expected_result = pd.Series({
+            'covariance__0__0': 1.5000000000000004,
+            'covariance__0__1': -0.7500000000000003,
+            'covariance__0__2': -0.7500000000000003,
+            'covariance__1__0': -0.7500000000000003,
+            'covariance__1__1': 1.5000000000000004,
+            'covariance__1__2': -0.7500000000000003,
+            'covariance__2__0': -0.7500000000000003,
+            'covariance__2__1': -0.7500000000000003,
+            'covariance__2__2': 1.5000000000000007,
+            'distribs__0__mean': 0.33333333333333331,
+            'distribs__0__std': 0.47140452079103168,
+            'distribs__1__mean': 0.33333333333333331,
+            'distribs__1__std': 0.47140452079103168,
+            'distribs__2__mean': 0.33333333333333331,
+            'distribs__2__std': 0.47140452079103168
+        })
 
-            expected_result = pd.Series(
-                list(model.covariance.flatten()) +
-                list(distribs_values)
-            )
+        # Run
+        result = Modeler.flatten_model(model)
 
-            # Run
-            result = self.modeler.flatten_model(model)
-
-            # Check
-            assert (result == expected_result).all()
-            assert len(result) == num_columns ** 2 + (2 * num_columns)
+        # Check
+        assert (result == expected_result).all()
 
     def test_impute_table(self):
         """impute_table fills all NaN values with 0 or the mean of values."""
