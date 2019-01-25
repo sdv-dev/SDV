@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
@@ -76,6 +77,9 @@ class TestSampler(TestCase):
     def test_unflatten_dict(self):
         """ """
         # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
         flat = {
             'first_key__a': 1,
             'first_key__b': 2,
@@ -93,14 +97,19 @@ class TestSampler(TestCase):
         }
 
         # Run
-        result = Sampler._unflatten_dict(flat)
+        result = sampler._unflatten_dict(flat)
 
         # Check
         assert result == expected_result
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
 
     def test_unflatten_dict_mixed_array(self):
-        """ """
+        """unflatten_dict restruicture arrays"""
         # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
         flat = {
             'first_key__0__0': 1,
             'first_key__0__1': 0,
@@ -130,7 +139,43 @@ class TestSampler(TestCase):
         }
 
         # Run
-        result = Sampler._unflatten_dict(flat)
+
+        result = sampler._unflatten_dict(flat)
+
+        # Check
+        assert result == expected_result
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
+
+    def test_unflatten_dict_extension(self):
+        """ """
+        # Setup
+        data_navigator = MagicMock()
+        data_navigator.get_children.return_value = ['CHILD_TABLE']
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        flat = {
+            'first_key__a': 1,
+            'first_key____CHILD_TABLE__model_param': 0,
+            'distribs____CHILD_TABLE__distribs__UNIT_PRICE__std__mean': 0
+        }
+        expected_result = {
+            'first_key': {
+                'a': 1,
+                'CHILD_TABLE': {
+                    'model_param': 0
+                }
+            },
+            'distribs': {
+                'CHILD_TABLE__distribs__UNIT_PRICE__std': {
+                    'mean': 0
+                }
+            }
+        }
+
+        # Run
+        result = sampler._unflatten_dict(flat)
 
         # Check
         assert result == expected_result

@@ -60,9 +60,10 @@ class ModelerTest(TestCase):
         # Check
         assert result is None
 
+    @mock.patch('sdv.modeler.Modeler._extension_from_group')
     @mock.patch('sdv.modeler.Modeler.get_foreign_key')
     @mock.patch('sdv.modeler.pd.core.groupby.GroupBy.apply')
-    def test__get_extensions(self, apply_mock, get_foreign_mock):
+    def test__get_extensions(self, apply_mock, get_foreign_mock, extension_mock):
         """_get_extensions return the conditional modelling parameters for each children."""
         # Setup
         data_navigator = mock.MagicMock()
@@ -78,9 +79,11 @@ class ModelerTest(TestCase):
         modeler = Modeler(data_navigator)
         modeler.tables = {}
 
+        extension_mock.side_effect = lambda x, y: y
+
         apply_mock.side_effect = lambda x: pd.DataFrame([{
-            'column_1': 1,
-            'column_2': 2
+            '{}_column_1'.format(x): 1,
+            '{}_column_2'.format(x): 2
         }])
         get_foreign_mock.return_value = 'foreign_key'
 
@@ -89,15 +92,21 @@ class ModelerTest(TestCase):
         children = ['first_children', 'second_children']
 
         expected_result = [
-            pd.DataFrame([[1, 2]]),
-            pd.DataFrame([[1, 2]], columns=range(2, 4))
+            pd.DataFrame([{
+                '__first_children_column_1': 1,
+                '__first_children_column_2': 2
+            }]),
+            pd.DataFrame([{
+                '__second_children_column_1': 1,
+                '__second_children_column_2': 2
+            }])
         ]
 
         # Run
         result = modeler._get_extensions(pk, children, table_name)
 
         # Check
-        assert all([(result[index] == expected_result[index]).all().all() for index in range(2)])
+        assert all([result[index].equals(expected_result[index]) for index in range(len(result))])
 
     def test_get_extensions_no_children(self):
         """_get_extensions return an empty list if children is empty."""

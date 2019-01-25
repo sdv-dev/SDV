@@ -5,6 +5,8 @@ from copulas import get_qualified_name
 
 import exrex
 
+GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
+
 
 class Sampler:
     """Class to sample data from a model."""
@@ -13,7 +15,6 @@ class Sampler:
         """Instantiate a new object."""
         self.dn = data_navigator
         self.modeler = modeler
-        self.been_sampled = set()  # table_name -> if already sampled
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
         self.primary_key = {}
 
@@ -104,6 +105,103 @@ class Sampler:
 
         return random_parent, foreign_key, parent_row
 
+    def _unflatten_dict(self, flat, table_name=''):
+        """Transform a flattened dict into its original form.
+
+        Works in exact opposite way that `sdv.Modeler._flatten_dict`.
+
+        Args:
+            flat (dict): Flattened dict.
+
+        """
+        result = {}
+        children = self.dn.get_children(table_name)
+        for key in sorted(flat.keys()):
+            path = key.split('__')
+
+            if any(['____{}'.format(child) in key for child in children]):
+                path = [
+                    path[0],
+                    '__'.join(path[2: -1]),
+                    path[-1]
+                ]
+
+            value = flat[key]
+            walked = result
+            for step, name in enumerate(path):
+
+                if isinstance(walked, dict) and name in walked:
+                    walked = walked[name]
+                    continue
+
+                elif isinstance(walked, list) and len(walked) and len(walked) - 1 >= int(name):
+                    walked = walked[int(name)]
+                    continue
+
+                else:
+                    if name.isdigit():
+                        name = int(name)
+
+                    if step == len(path) - 1:
+                        if isinstance(walked, list):
+                            walked.append(value)
+                        else:
+                            walked[name] = value
+
+                    else:
+                        next_step = path[step + 1]
+                        if next_step.isdigit():
+                            if isinstance(name, int):
+                                walked.append([])
+                                while len(walked) < name + 1:
+                                    walked.append([])
+
+                            else:
+                                walked[name] = []
+
+                            walked = walked[name]
+
+                        else:
+                            if isinstance(name, int):
+                                walked.append({})
+                            else:
+                                walked[name] = {}
+
+                            walked = walked[name]
+
+        return result
+
+    def unflatten_model(self, parent_row, table_name, parent_name):
+        """ Takes the params from a generated parent row and creates a model from it.
+
+        Args:
+            parent_row (dataframe): a generated parent row
+            table_name (string): name of table to make model for
+            parent_name (string): name of parent table
+        """
+
+        prefix = '__{}__'.format(table_name)
+        columns = [column for column in parent_row.columns if column.startswith(prefix)]
+        new_columns = {column: column.replace(prefix, '') for column in columns}
+        flat_parameters = parent_row.loc[:, columns]
+        flat_parameters = flat_parameters.rename(columns=new_columns).to_dict('records')[0]
+
+        model_dict = self._unflatten_dict(flat_parameters, table_name)
+        model_name = get_qualified_name(self.modeler.model)
+        distribution_name = get_qualified_name(self.modeler.distribution)
+        model_dict['fitted'] = True
+        model_dict['type'] = model_name
+
+        if model_name == GAUSSIAN_COPULA:
+            model_dict['distribution'] = distribution_name
+            for key in model_dict['distribs']:
+                model_dict['distribs'][key].update({
+                    'fitted': True,
+                    'type': distribution_name
+                })
+
+        return self.modeler.model.from_dict(model_dict)
+
     def sample_rows(self, table_name, num_rows):
         """Sample specified number of rows for specified table.
 
@@ -124,11 +222,10 @@ class Sampler:
             parent_row = parent_row.loc[[0]]
 
             # get parameters from parent to make model
-            model = self._make_model_from_params(
-                parent_row, table_name, random_parent)
+            model = self.unflatten_model(parent_row, table_name, random_parent)
 
             # sample from that model
-            if model is not None and len(model.distribs) > 0:
+            if model is not None and model.fitted:
                 synthesized_rows = model.sample(num_rows)
             else:
                 raise ValueError(
@@ -147,7 +244,7 @@ class Sampler:
 
         else:    # there is no parent
             model = self.modeler.models[table_name]
-            if len(model.distribs):
+            if model.fitted:
                 synthesized_rows = model.sample(num_rows)
             else:
                 raise ValueError(
@@ -337,60 +434,3 @@ class Sampler:
             mapping[key] = [value]
 
         return mapping
-
-    @classmethod
-    def _unflatten_dict(cls, flat):
-        """Transform a flattened dict into its original form.
-
-        Works in exact opposite way that `sdv.Modeler._flatten_dict`.
-
-        Args:
-            flat (dict): Flattened dict.
-
-        """
-
-        result = {}
-
-        for key in sorted(flat.keys()):
-            path = key.split('__')
-            value = flat[key]
-            walked = result
-            for step, name in enumerate(path):
-
-                if isinstance(walked, dict) and name in walked:
-                    walked = walked[name]
-                    continue
-
-                elif isinstance(walked, list) and len(walked) and len(walked) - 1 >= int(name):
-                    walked = walked[int(name)]
-                    continue
-
-                else:
-                    if name.isdigit():
-                        name = int(name)
-
-                    if step == len(path) - 1:
-                        if isinstance(walked, list):
-                            walked.append(value)
-                        else:
-                            walked[name] = value
-
-                    else:
-                        next_step = path[step + 1]
-                        if next_step.isdigit():
-                            if isinstance(name, int):
-                                walked.append([])
-                            else:
-                                walked[name] = []
-
-                            walked = walked[name]
-
-                        else:
-                            if isinstance(name, int):
-                                walked.append({})
-                            else:
-                                walked[name] = {}
-
-                            walked = walked[name]
-
-        return result

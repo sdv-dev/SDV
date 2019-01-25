@@ -125,16 +125,17 @@ class Modeler:
         return result
 
     @classmethod
-    def flatten_model(cls, model):
+    def flatten_model(cls, model, name=''):
         """Flatten a model's parameters into an array.
 
         Args:
-            model: a model object
+            model(self.model): Instance of model.
+            name (str):
 
         Returns:
             pd.Series: parameters for model
         """
-        return pd.Series(cls._flatten_dict(model.to_dict()))
+        return pd.Series(cls._flatten_dict(model.to_dict(), name))
 
     def get_foreign_key(self, fields, primary):
         """Get foreign key from primary key.
@@ -189,7 +190,7 @@ class Modeler:
 
         return model
 
-    def _create_extension(self, df, transformed_child_table):
+    def _create_extension(self, df, transformed_child_table, child_name=''):
         """Return the flattened model from a dataframe."""
         try:
             conditional_data = transformed_child_table.loc[df.index]
@@ -199,19 +200,16 @@ class Modeler:
 
         clean_df = self.impute_table(conditional_data)
 
-        return self.flatten_model(self.fit_model(clean_df))
+        return self.flatten_model(self.fit_model(clean_df), child_name)
 
-    def _extension_from_group(self, transformed_child_table):
+    def _extension_from_group(self, transformed_child_table, child=''):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
         def f(group):
-            return self._create_extension(group, transformed_child_table)
+            return self._create_extension(group, transformed_child_table, child)
         return f
 
     def _get_extensions(self, pk, children, table_name):
         """Generate list of extension for child tables."""
-        # keep track of which columns belong to which child
-        start = 0
-        end = 0
         extensions = []
 
         # make sure child_locs has value for table name
@@ -222,6 +220,12 @@ class Modeler:
             child_table = self.dn.tables[child].data
             child_meta = self.dn.tables[child].meta
 
+            fields = child_meta['fields']
+            fk = self.get_foreign_key(fields, pk)
+
+            if not fk:
+                continue
+
             # check if leaf node
             if not self.dn.get_children(child):
                 transformed_child_table = self.dn.transformed_data[child]
@@ -229,25 +233,12 @@ class Modeler:
             else:
                 transformed_child_table = self.tables[child]
 
-            fields = child_meta['fields']
-            fk = self.get_foreign_key(fields, pk)
-
-            if not fk:
-                continue
-
             extension = child_table.groupby(fk)
-            extension = extension.apply(self._extension_from_group(transformed_child_table))
+            extension = extension.apply(
+                self._extension_from_group(transformed_child_table, '__' + child))
 
             if len(extension):
-                # keep track of child column indices
-                end = max(end, start + extension.shape[1])
-
-                self.child_locs[table_name][child] = (start, end)
-
-                # rename columns
-                extension.columns = range(start, end)
                 extensions.append(extension)
-                start = end
 
         return extensions
 
