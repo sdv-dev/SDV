@@ -1,6 +1,7 @@
 import random
 
 import pandas as pd
+from copulas import get_qualified_name
 
 import exrex
 
@@ -264,13 +265,18 @@ class Sampler:
         distributions = {}
         for label_index, i in enumerate(range(cov_size, totalcols, 2)):
             distributions[labels[label_index]] = {
+                'type': get_qualified_name(self.modeler.distribution),
+                'fitted': True,
                 'std': abs(params.iloc[:, i]),  # Pending for issue
                 'mean': params.iloc[:, i + 1],  # https://github.com/HDI-Project/SDV/issues/58
             }
 
         model_params = {
             'covariance': covariance,
-            'distribs': distributions
+            'distribs': distributions,
+            'type': get_qualified_name(self.modeler.model),
+            'fitted': True,
+            'distribution': get_qualified_name(self.modeler.distribution)
         }
 
         return self.modeler.model.from_dict(model_params)
