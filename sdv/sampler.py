@@ -79,6 +79,7 @@ class Sampler:
 
         # filter out parameters
         labels = list(self.dn.tables[table_name].data)
+
         synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
 
         # reverse transform data
@@ -105,6 +106,49 @@ class Sampler:
 
         return random_parent, foreign_key, parent_row
 
+    @staticmethod
+    def generate_keys(prefix=''):
+        def f(row):
+            parts = [str(row[key]) for key in row.keys() if row[key] is not None]
+            if prefix:
+                parts = [prefix] + parts
+
+            return '__'.join(parts)
+
+        return f
+
+    @classmethod
+    def _get_sorted_keys(cls, _dict):
+        result = []
+        keys = list(_dict.keys())
+
+        if not keys:
+            return []
+
+        serie = pd.Series(keys)
+        df = pd.DataFrame(serie.str.split('__').values.tolist())
+        uniques = df[0].unique()
+
+        for value in uniques:
+            index = df[df[0] == value].index
+            _slice = df.loc[index, range(1, df.shape[1])].copy()
+
+            try:
+                for column in _slice.columns:
+                    _slice[column] = _slice[column].astype(int)
+
+            except (ValueError, TypeError):
+                pass
+
+            df.drop(index, inplace=True)
+            _slice = _slice.sort_values(list(range(1, df.shape[1])))
+            result += _slice.apply(cls.generate_keys(value), axis=1).values.tolist()
+
+        df = df.sort_values(list(range(df.shape[1])))
+        result += df.apply(cls.generate_keys(), axis=1).values.tolist()
+
+        return result
+
     def _unflatten_dict(self, flat, table_name=''):
         """Transform a flattened dict into its original form.
 
@@ -116,13 +160,15 @@ class Sampler:
         """
         result = {}
         children = self.dn.get_children(table_name)
-        for key in sorted(flat.keys()):
+        keys = self._get_sorted_keys(flat)
+
+        for key in keys:
             path = key.split('__')
 
-            if any(['____{}'.format(child) in key for child in children]):
+            if any(['__{}__'.format(child) in key for child in children]):
                 path = [
                     path[0],
-                    '__'.join(path[2: -1]),
+                    '__'.join(path[1: -1]),
                     path[-1]
                 ]
 
@@ -267,6 +313,30 @@ class Sampler:
         num_rows = orig_table.shape[0]
         return self.sample_rows(table_name, num_rows)
 
+    def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
+        """Uses parameters from parent row to synthesize child rows.
+
+        Args:
+            parent_name (str): name of parent table
+            parent_row (dataframe): synthesized parent row
+            sample_data (dict): maps table name to sampled data
+            num_rows (int): number of rows to synthesize per parent row
+
+        Returns:
+            synthesized children rows
+        """
+
+        children = self.dn.get_children(parent_name)
+        for child in children:
+            rows = self.sample_rows(child, num_rows)
+
+            if child in sampled_data:
+                sampled_data[child] = pd.concat([sampled_data[child], rows])
+            else:
+                sampled_data[child] = rows
+
+            self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
+
     def sample_all(self, num_rows=5):
         """Samples the entire database.
 
@@ -283,6 +353,7 @@ class Sampler:
         This is this way because the children tables are created modelling the relation
         thet have with their parent tables, so it's behavior may change from one table to another.
         """
+
         tables = self.dn.tables
         sampled_data = {}
 
@@ -299,84 +370,6 @@ class Sampler:
                     self._sample_child_rows(table, row, sampled_data)
 
         return self.reset_indices_tables(sampled_data)
-
-    def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
-        """Uses parameters from parent row to synthesize child rows.
-
-        Args:
-            parent_name (str): name of parent table
-            parent_row (dataframe): synthesized parent row
-            sample_data (dict): maps table name to sampled data
-            num_rows (int): number of rows to synthesize per parent row
-
-        Returns:
-            synthesized children rows
-        """
-        children = self.dn.get_children(parent_name)
-        for child in children:
-            rows = self.sample_rows(child, num_rows)
-
-            if child in sampled_data:
-                sampled_data[child] = pd.concat([sampled_data[child], rows])
-            else:
-                sampled_data[child] = rows
-
-            self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
-
-    def _make_model_from_params(self, parent_row, table_name, parent_name):
-        """ Takes the params from a generated parent row and creates a model from it.
-
-        Args:
-            parent_row (dataframe): a generated parent row
-            table_name (string): name of table to make model for
-            parent_name (string): name of parent table
-        """
-        # get parameters
-        child_range = self.modeler.child_locs.get(parent_name, {}).get(table_name, {})
-
-        if not child_range:
-            return None
-
-        param_indices = list(range(child_range[0], child_range[1]))
-        params = parent_row.loc[:, param_indices]
-        totalcols = params.shape[1]
-        num_cols = self.modeler.tables[table_name].shape[1]
-
-        # get labels for dataframe
-        labels = list(self.modeler.tables[table_name].columns)
-
-        # parent_meta = self.dn.tables[parent_name].meta
-        # fk = parent_meta['primary_key']
-
-        # if fk in labels:
-        #     labels.remove(fk)
-        #     num_cols -= 1
-
-        cov_size = num_cols ** 2
-
-        # Covariance matrix
-        covariance = params.iloc[:, 0:cov_size]
-        covariance = covariance.values.reshape((num_cols, num_cols))
-
-        # Distributions
-        distributions = {}
-        for label_index, i in enumerate(range(cov_size, totalcols, 2)):
-            distributions[labels[label_index]] = {
-                'type': get_qualified_name(self.modeler.distribution),
-                'fitted': True,
-                'std': abs(params.iloc[:, i]),  # Pending for issue
-                'mean': params.iloc[:, i + 1],  # https://github.com/HDI-Project/SDV/issues/58
-            }
-
-        model_params = {
-            'covariance': covariance,
-            'distribs': distributions,
-            'type': get_qualified_name(self.modeler.model),
-            'fitted': True,
-            'distribution': get_qualified_name(self.modeler.distribution)
-        }
-
-        return self.modeler.model.from_dict(model_params)
 
     def _get_table_meta(self, meta, table_name):
         """Return metadata  get table meta for a given table name"""
