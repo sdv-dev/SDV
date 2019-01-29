@@ -190,10 +190,13 @@ class Modeler:
 
         return model
 
-    def _create_extension(self, df, transformed_child_table, child_name=''):
+    def _create_extension(self, df, transformed_child_table, table_info):
         """Return the flattened model from a dataframe."""
+
+        foreign_key, child_name = table_info
         try:
             conditional_data = transformed_child_table.loc[df.index]
+            conditional_data = conditional_data.drop(foreign_key, axis=1)
 
         except KeyError:
             return None
@@ -202,10 +205,10 @@ class Modeler:
 
         return self.flatten_model(self.fit_model(clean_df), child_name)
 
-    def _extension_from_group(self, transformed_child_table, child=''):
+    def _extension_from_group(self, transformed_child_table, table_info):
         """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
         def f(group):
-            return self._create_extension(group, transformed_child_table, child)
+            return self._create_extension(group, transformed_child_table, table_info)
         return f
 
     def _get_extensions(self, pk, children, table_name):
@@ -233,9 +236,10 @@ class Modeler:
             else:
                 transformed_child_table = self.tables[child]
 
+            table_info = (fk, '__' + child)
             extension = child_table.groupby(fk)
             extension = extension.apply(
-                self._extension_from_group(transformed_child_table, '__' + child))
+                self._extension_from_group(transformed_child_table, table_info))
 
             if len(extension):
                 extensions.append(extension)

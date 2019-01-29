@@ -1,4 +1,4 @@
-from unittest import TestCase, mock, skip
+from unittest import TestCase, mock
 
 import numpy as np
 import pandas as pd
@@ -24,10 +24,12 @@ class ModelerTest(TestCase):
         data_navigator = mock.MagicMock()
         modeler = Modeler(data_navigator)
         table = pd.DataFrame({
+            'foreign': [0, 1, 0, 1, 0, 1],
             'a': [0, 1, 0, 1, 0, 1],
             'b': [1, 2, 3, 4, 5, 6]
         })
         group = table[table.a == 0]
+        table_info = ('foreign', '')
 
         expected_result = pd.Series({
             'covariance__0__0': 0.0,
@@ -41,7 +43,7 @@ class ModelerTest(TestCase):
         })
 
         # Run
-        result = modeler._create_extension(group, table)
+        result = modeler._create_extension(group, table, table_info)
 
         # Check
         assert (expected_result == result).all()
@@ -52,10 +54,11 @@ class ModelerTest(TestCase):
         data_navigator = mock.MagicMock()
         modeler = Modeler(data_navigator)
         transformed_child_table = pd.DataFrame(np.eye(3), columns=['A', 'B', 'C'])
+        table_info = ('', '')
         df = pd.DataFrame(index=range(5, 10))
 
         # Run
-        result = modeler._create_extension(df, transformed_child_table)
+        result = modeler._create_extension(df, transformed_child_table, table_info)
 
         # Check
         assert result is None
@@ -79,7 +82,7 @@ class ModelerTest(TestCase):
         modeler = Modeler(data_navigator)
         modeler.tables = {}
 
-        extension_mock.side_effect = lambda x, y: y
+        extension_mock.side_effect = lambda x, y: y[1]
 
         apply_mock.side_effect = lambda x: pd.DataFrame([{
             '{}_column_1'.format(x): 1,
@@ -241,7 +244,6 @@ class ModelerTest(TestCase):
         # Check
         model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
 
-    @skip('Work in Progress')
     def test_model_database_distribution_arg(self):
         """model_database will use self.distribution to model tables."""
         # Setup
