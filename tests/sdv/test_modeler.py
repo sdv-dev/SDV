@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 
 import numpy as np
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
+from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate.kde import KDEUnivariate
 
 from sdv.data_navigator import CSVDataLoader, Table
@@ -86,7 +86,6 @@ class ModelerTest(TestCase):
         get_foreign_mock.return_value = 'foreign_key'
 
         pk = 'primary_key'
-        table_name = 'table_name'
         children = ['first_children', 'second_children']
 
         expected_result = [
@@ -101,7 +100,7 @@ class ModelerTest(TestCase):
         ]
 
         # Run
-        result = modeler._get_extensions(pk, children, table_name)
+        result = modeler._get_extensions(pk, children)
 
         # Check
         assert all([result[index].equals(expected_result[index]) for index in range(len(result))])
@@ -111,18 +110,17 @@ class ModelerTest(TestCase):
         # Setup
         pk = 'primary_key'
         children = {}
-        table_name = 'table_name'
 
         expected_result = []
 
         # Run
-        result = self.modeler._get_extensions(pk, children, table_name)
+        result = self.modeler._get_extensions(pk, children)
 
         # Check
         assert result == expected_result
 
     def test_CPA(self):
-        """ """
+        """CPA will append extensions to the original table."""
         # Setup
         self.modeler.model_database()
         table_name = 'DEMO_CUSTOMERS'
@@ -228,6 +226,8 @@ class ModelerTest(TestCase):
         """fit_model will pass self.distribution FQN to modeler."""
         # Setup
         model_mock = mock.MagicMock()
+        model_mock.__eq__.return_value = True
+        model_mock.__ne__.return_value = False
         modeler = Modeler(data_navigator='navigator', model=model_mock, distribution=KDEUnivariate)
         data = pd.DataFrame({
             'column': [0, 1, 1, 1, 0],
@@ -239,16 +239,21 @@ class ModelerTest(TestCase):
         # Check
         model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
 
-    def test_model_database_distribution_arg(self):
-        """model_database will use self.distribution to model tables."""
+    def test_model_database_kde_distribution(self):
+        """model_database works fine with kde distribution."""
         # Setup
         modeler = Modeler(data_navigator=self.dn, distribution=KDEUnivariate)
 
         # Run
         modeler.model_database()
 
-        # Check
-        assert True
+    def test_model_database_vine_modeler(self):
+        """model_database works fine with vine modeler."""
+        # Setup
+        modeler = Modeler(data_navigator=self.dn, model=VineCopula)
+
+        # Run
+        modeler.model_database()
 
     def test__flatten_dict_flat_dict(self):
         """_flatten_dict don't modify flat dicts."""

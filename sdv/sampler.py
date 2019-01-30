@@ -234,11 +234,12 @@ class Sampler:
 
         model_dict = self._unflatten_dict(flat_parameters, table_name)
         model_name = get_qualified_name(self.modeler.model)
-        distribution_name = get_qualified_name(self.modeler.distribution)
+
         model_dict['fitted'] = True
         model_dict['type'] = model_name
 
         if model_name == GAUSSIAN_COPULA:
+            distribution_name = self.modeler.model_kwargs['distribution']
             model_dict['distribution'] = distribution_name
             for key in model_dict['distribs']:
                 model_dict['distribs'][key].update({

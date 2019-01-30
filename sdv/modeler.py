@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
-from copulas.multivariate import GaussianMultivariate
+from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
 
 # Configure logger
@@ -14,27 +14,52 @@ DEFAULT_MODEL = GaussianMultivariate
 DEFAULT_DISTRIBUTION = GaussianUnivariate
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
+MODELLING_ERROR_MESSAGE = (
+    'There was an error while trying to model the database. If you are using a custom'
+    'distribution or model, please try again using the default ones. If the problem persist,'
+    'please report it here: https://github.com/HDI-Project/SDV/issues'
+)
+
 
 class Modeler:
-    """Class responsible for modeling database."""
+    """Class responsible for modeling database.
+
+    Args:
+        data_navigator (DataNavigator):  object for the dataset.
+        model (type): Class of model to use.
+        distribution (type): Class of distribution to use. Will be deprecated shortly.
+        model_kwargs (dict): Keyword arguments to pass to model.
+    """
 
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
 
-    def __init__(self, data_navigator, model=DEFAULT_MODEL, distribution=DEFAULT_DISTRIBUTION):
+    def __init__(self, data_navigator, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
         """Instantiates a modeler object.
 
-        Args:
-            data_navigator (DataNavigator):  object for the dataset.
-            transformed_data (dict): transformed tables {table_name:dataframe}.
-            model (type): Class of model to use.
-            distribution (type): Class of model to use.
         """
         self.tables = {}
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
         self.model = model
-        self.distribution = distribution
+
+        if distribution and model != DEFAULT_MODEL:
+            raise ValueError(
+                '`distribution` argument is only suported for `GaussianMultivariate` model.')
+
+        if distribution:
+            distribution = get_qualified_name(distribution)
+        else:
+            distribution = get_qualified_name(DEFAULT_DISTRIBUTION)
+
+        if not model_kwargs:
+            if model == DEFAULT_MODEL:
+                model_kwargs = {'distribution': distribution}
+
+            else:
+                model_kwargs = {'vine_type': TreeTypes.REGULAR}
+
+        self.model_kwargs = model_kwargs
 
     def save(self, file_name):
         """Saves model to file destination.
@@ -69,6 +94,10 @@ class Modeler:
 
         Args:
             nested (list, np.array): Iterable to flatten.
+            prefix (str): Name to append to the array indices.
+
+        Returns:
+            dict
         """
         result = {}
         for index in range(len(nested)):
@@ -89,21 +118,12 @@ class Modeler:
         This method returns a flatten version of a dictionary, concatenating key names with
         double underscores, that is:
 
-        >>> nested_dict = {
-            'my_key':{
-                'a': 1,
-                'b': 2
-            }
-        }
-        >>> Modeler.flatten_dict(nested_dict)
-        {
-            'my_key__a': 1,
-            'my_key__b': 2
-        }
-
         Args:
             nested (dict): Original dictionary to flatten.
             prefix (str): Prefix to append to key name
+
+        Returns:
+            dict: Flattened dictionary. That is, all its keys hold a primitive value.
         """
         result = {}
 
@@ -130,7 +150,7 @@ class Modeler:
 
         Args:
             model(self.model): Instance of model.
-            name (str):
+            name (str): Prefix to the parameter name.
 
         Returns:
             pd.Series: parameters for model
@@ -160,7 +180,7 @@ class Modeler:
         """Fill in any NaN values in a table.
 
         Args:
-            table(pandas.DataFrame):
+            table(pandas.DataFrame): Table to fill NaN values
 
         Returns:
             pandas.DataFrame
@@ -184,9 +204,9 @@ class Modeler:
             data (pandas.DataFrame): Data to train the model with.
 
         Returns:
-            GaussianMultivariate: Fitted model.
+            model: Instance of self.model fitted with data.
         """
-        model = self.model(distribution=get_qualified_name(self.distribution))
+        model = self.model(**self.model_kwargs)
         model.fit(data)
 
         return model
@@ -201,9 +221,7 @@ class Modeler:
             table_info (tuple(str, str)): foreign_key and child table names.
 
         Returns:
-            pd.DataFrame : Parameter extension
-
-
+            pd.Series : Parameter extension
             """
 
         foreign_key, child_name = table_info
@@ -215,23 +233,24 @@ class Modeler:
             return None
 
         clean_df = self.impute_table(conditional_data)
-
-        # if min([len(clean_df[column].unique()) for column in clean_df.columns]) == 1:
-        #     return None
         return self.flatten_model(self.fit_model(clean_df), child_name)
 
-    def _extension_from_group(self, transformed_child_table, table_info):
-        """Wrapper around _create_extension to use it with pd.DataFrame.apply."""
-        def f(group):
-            return self._create_extension(group, transformed_child_table, table_info)
-        return f
+    def _get_extensions(self, pk, children):
+        """Generate list of extension for child tables.
 
-    def _get_extensions(self, pk, children, table_name):
-        """Generate list of extension for child tables."""
+        Args:
+            pk (str): Name of the primary_key column in the parent table.
+            children (set[str]): Names of the children.
+
+        Returns: list(pandas.DataFrame)
+
+        Each element of the list is generated for one single children.
+        That dataframe should have as index.name the `foreign_key` name, and as index
+        it's values.
+        The values for a given index is generated by flattening a model fit with the related
+        data to that index in the children table.
+        """
         extensions = []
-
-        # make sure child_locs has value for table name
-        self.child_locs[table_name] = self.child_locs.get(table_name, {})
 
         # find children that ref primary key
         for child in children:
@@ -275,13 +294,15 @@ class Modeler:
     def CPA(self, table):
         """Run CPA algorithm on a table.
 
-        Conditional Parameter Aggregation. It will take the tab
+        Conditional Parameter Aggregation. It will take the table's children and generate
+        extensions (parameters from modelling the related children for each foreign key)
+        and merge them to the original `table`
 
         Args:
             table (string): name of table.
 
         Returns:
-            None:
+            None
         """
         logger.info('Modeling %s', table)
         # Grab table
@@ -295,7 +316,7 @@ class Modeler:
 
         # start with transformed table
         extended_table = self.dn.transformed_data[table]
-        extensions = self._get_extensions(pk, children, table)
+        extensions = self._get_extensions(pk, children)
 
         # add extensions
         for extension in extensions:
@@ -318,12 +339,16 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
-        for table in self.dn.tables:
-            if not self.dn.get_parents(table):
-                self.RCPA(table)
+        try:
+            for table in self.dn.tables:
+                if not self.dn.get_parents(table):
+                    self.RCPA(table)
 
-        for table in self.tables:
-            clean_table = self.impute_table(self.tables[table])
-            self.models[table] = self.fit_model(clean_table)
+            for table in self.tables:
+                clean_table = self.impute_table(self.tables[table])
+                self.models[table] = self.fit_model(clean_table)
+
+        except (ValueError, np.linalg.linalg.LinAlgError):
+            ValueError(MODELLING_ERROR_MESSAGE)
 
         logger.info('Modeling Complete')
