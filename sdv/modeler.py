@@ -135,6 +135,7 @@ class Modeler:
         Returns:
             pd.Series: parameters for model
         """
+
         return pd.Series(cls._flatten_dict(model.to_dict(), name))
 
     def get_foreign_key(self, fields, primary):
@@ -190,12 +191,24 @@ class Modeler:
 
         return model
 
-    def _create_extension(self, df, transformed_child_table, table_info):
-        """Return the flattened model from a dataframe."""
+    def _create_extension(self, foreign, transformed_child_table, table_info):
+        """Return the flattened model from a dataframe.
+
+        Args:
+            foreign(pandas.DataFrame): Object with Index of elements from children table elements
+                                       of a given foreign_key.
+            transformed_child_table(pandas.DataFrame): Table of data to fil
+            table_info (tuple(str, str)): foreign_key and child table names.
+
+        Returns:
+            pd.DataFrame : Parameter extension
+
+
+            """
 
         foreign_key, child_name = table_info
         try:
-            conditional_data = transformed_child_table.loc[df.index]
+            conditional_data = transformed_child_table.loc[foreign.index].copy()
             conditional_data = conditional_data.drop(foreign_key, axis=1)
 
         except KeyError:
@@ -203,6 +216,8 @@ class Modeler:
 
         clean_df = self.impute_table(conditional_data)
 
+        # if min([len(clean_df[column].unique()) for column in clean_df.columns]) == 1:
+        #     return None
         return self.flatten_model(self.fit_model(clean_df), child_name)
 
     def _extension_from_group(self, transformed_child_table, table_info):
@@ -237,9 +252,20 @@ class Modeler:
                 transformed_child_table = self.tables[child]
 
             table_info = (fk, '__' + child)
-            extension = child_table.groupby(fk)
-            extension = extension.apply(
-                self._extension_from_group(transformed_child_table, table_info))
+
+            foreign_key_values = child_table[fk].unique()
+            parameters = {}
+
+            for foreign_key in foreign_key_values:
+                foreign_index = child_table[child_table[fk] == foreign_key]
+                parameter = self._create_extension(
+                    foreign_index, transformed_child_table, table_info)
+
+                if parameter is not None:
+                    parameters[foreign_key] = parameter.to_dict()
+
+            extension = pd.DataFrame(parameters).T
+            extension.index.name = fk
 
             if len(extension):
                 extensions.append(extension)

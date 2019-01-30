@@ -46,10 +46,10 @@ class ModelerTest(TestCase):
         result = modeler._create_extension(group, table, table_info)
 
         # Check
-        assert (expected_result == result).all()
+        assert result.equals(expected_result)
 
     def test__create_extension_wrong_index_return_none(self):
-        """_create_extension raises an exception if df.index not in transformed_child_table."""
+        """_create_extension return None if transformed_child_table can't be indexed by df."""
         # Setup
         data_navigator = mock.MagicMock()
         modeler = Modeler(data_navigator)
@@ -63,10 +63,9 @@ class ModelerTest(TestCase):
         # Check
         assert result is None
 
-    @mock.patch('sdv.modeler.Modeler._extension_from_group')
+    @mock.patch('sdv.modeler.Modeler._create_extension')
     @mock.patch('sdv.modeler.Modeler.get_foreign_key')
-    @mock.patch('sdv.modeler.pd.core.groupby.GroupBy.apply')
-    def test__get_extensions(self, apply_mock, get_foreign_mock, extension_mock):
+    def test__get_extensions(self, get_foreign_mock, extension_mock):
         """_get_extensions return the conditional modelling parameters for each children."""
         # Setup
         data_navigator = mock.MagicMock()
@@ -82,12 +81,8 @@ class ModelerTest(TestCase):
         modeler = Modeler(data_navigator)
         modeler.tables = {}
 
-        extension_mock.side_effect = lambda x, y: y[1]
+        extension_mock.side_effect = lambda x, y, z: None
 
-        apply_mock.side_effect = lambda x: pd.DataFrame([{
-            '{}_column_1'.format(x): 1,
-            '{}_column_2'.format(x): 2
-        }])
         get_foreign_mock.return_value = 'foreign_key'
 
         pk = 'primary_key'
@@ -178,7 +173,7 @@ class ModelerTest(TestCase):
         result = Modeler.flatten_model(model)
 
         # Check
-        assert (result == expected_result).all()
+        assert np.isclose(result, expected_result).all()
 
     def test_impute_table(self):
         """impute_table fills all NaN values with 0 or the mean of values."""
