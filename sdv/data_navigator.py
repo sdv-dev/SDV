@@ -67,7 +67,7 @@ class DataNavigator:
         """Instantiate data navigator object."""
         self.meta = meta
         self.tables = tables
-        self.ht = HyperTransformer(meta_filename)
+        self.ht = HyperTransformer(meta_filename, missing=False)
         self.transformed_data = None
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
 
@@ -115,20 +115,17 @@ class DataNavigator:
         """
         return self.tables[table_name].meta
 
-    def transform_data(self, transformers=None, missing=False):
+    def transform_data(self, transformers=None):
         """Applies the specified transformations using an HyperTransformer and returns the new data
 
         Args:
             transformers (list): List of transformers to use.
-            missing (bool): Whether or not to keep track of missing variables
-                            and create extra columns for them.
 
         Returns:
             dict: dict with the transformed dataframes.
         """
         transformers = transformers or self.DEFAULT_TRANSFORMERS
-        self.transformed_data = self.ht.fit_transform(
-            transformer_list=transformers, missing=missing)
+        self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
 
         return self.transformed_data
 

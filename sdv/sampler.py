@@ -2,6 +2,7 @@ import random
 
 import pandas as pd
 from copulas import get_qualified_name
+from rdt.transformers.positive_number import PositiveNumberTransformer
 
 import exrex
 
@@ -17,6 +18,19 @@ class Sampler:
         self.modeler = modeler
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
         self.primary_key = {}
+
+    @staticmethod
+    def update_mapping_list(mapping, key, value):
+        """Append value on mapping[key] if exists, create it otherwise."""
+        item = mapping.get(key)
+
+        if item:
+            item.append(value)
+
+        else:
+            mapping[key] = [value]
+
+        return mapping
 
     @staticmethod
     def reset_indices_tables(sampled_tables):
@@ -83,8 +97,7 @@ class Sampler:
         synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(
-            synthesized_rows, orig_meta, missing=False)
+        reversed_data = self.dn.ht.reverse_transform_table(synthesized_rows, orig_meta)
 
         synthesized_rows.update(reversed_data)
         return synthesized_rows[labels]
@@ -217,6 +230,46 @@ class Sampler:
 
         return result
 
+    def _unflatten_gaussian_copula(self, model_parameters):
+        """Prepare unflattened model params to recreate Gaussian Multivariate instance.
+
+        The preparations consist basically in:
+        - Transform sampled negative standard deviations from distributions into positive numbers
+        - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
+        - Add string parameters kept inside the class (as they can't be modelled),
+          like `distribution_type`.
+
+        Args:
+            model_parameters (dict): Sampled and reestructured model parameters.
+
+        Returns:
+            dict: Model parameters ready to recreate the model.
+        """
+
+        distribution_name = self.modeler.model_kwargs['distribution']
+        distribution_kwargs = {
+            'fitted': True,
+            'type': distribution_name
+        }
+        distribs = model_parameters['distribs']
+        if any([distribs[key]['std'] <= 0 for key in distribs]):
+            metadata = {
+                'name': 'std',
+                'type': 'number'
+            }
+            transformer = PositiveNumberTransformer(metadata)
+
+        model_parameters['distribution'] = distribution_name
+        for key in distribs:
+            distribs[key].update(distribution_kwargs)
+
+            distribution_std = distribs[key]['std']
+            if distribution_std <= 0:
+                df = pd.DataFrame({'std': [distribution_std]})
+                distribs[key]['std'] = transformer.fit_transform(df)['std'].values[0]
+
+        return model_parameters
+
     def unflatten_model(self, parent_row, table_name, parent_name):
         """ Takes the params from a generated parent row and creates a model from it.
 
@@ -232,22 +285,16 @@ class Sampler:
         flat_parameters = parent_row.loc[:, columns]
         flat_parameters = flat_parameters.rename(columns=new_columns).to_dict('records')[0]
 
-        model_dict = self._unflatten_dict(flat_parameters, table_name)
+        model_parameters = self._unflatten_dict(flat_parameters, table_name)
         model_name = get_qualified_name(self.modeler.model)
 
-        model_dict['fitted'] = True
-        model_dict['type'] = model_name
+        model_parameters['fitted'] = True
+        model_parameters['type'] = model_name
 
         if model_name == GAUSSIAN_COPULA:
-            distribution_name = self.modeler.model_kwargs['distribution']
-            model_dict['distribution'] = distribution_name
-            for key in model_dict['distribs']:
-                model_dict['distribs'][key].update({
-                    'fitted': True,
-                    'type': distribution_name
-                })
+            model_parameters = self._unflatten_gaussian_copula(model_parameters)
 
-        return self.modeler.model.from_dict(model_dict)
+        return self.modeler.model.from_dict(model_parameters)
 
     def sample_rows(self, table_name, num_rows):
         """Sample specified number of rows for specified table.
@@ -416,15 +463,3 @@ class Sampler:
                 row.loc[:, field['name']] = exrex.getone(regex)
 
         return row
-
-    def update_mapping_list(self, mapping, key, value):
-        """Append value on mapping[key] if exists, create it otherwise."""
-        item = mapping.get(key)
-
-        if item:
-            item.append(value)
-
-        else:
-            mapping[key] = [value]
-
-        return mapping

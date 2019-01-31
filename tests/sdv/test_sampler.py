@@ -91,7 +91,7 @@ class TestSampler(TestCase):
         assert child_mock.call_count == 5
         reset_mock.assert_called_once_with({'TABLE_A': 'concatenated_dataframe'})
 
-    def test_unflatten_dict(self):
+    def test__unflatten_dict(self):
         """ """
         # Setup
         data_navigator = MagicMock()
@@ -121,7 +121,7 @@ class TestSampler(TestCase):
         data_navigator.assert_not_called()
         modeler.assert_not_called()
 
-    def test_unflatten_dict_mixed_array(self):
+    def test__unflatten_dict_mixed_array(self):
         """unflatten_dict restruicture arrays"""
         # Setup
         data_navigator = MagicMock()
@@ -164,7 +164,7 @@ class TestSampler(TestCase):
         data_navigator.assert_not_called()
         modeler.assert_not_called()
 
-    def test_unflatten_dict_child_name(self):
+    def test__unflatten_dict_child_name(self):
         """unflatten_dict will respect the name of child tables."""
         # Setup
         data_navigator = MagicMock()
@@ -200,7 +200,7 @@ class TestSampler(TestCase):
         modeler.assert_not_called()
         data_navigator.get_children.assert_called_once_with('TABLE_NAME')
 
-    def test_unflatten_respect_covariance_matrix(self):
+    def test__unflatten_dict_respect_covariance_matrix(self):
         """unflatten_dict restructures the covariance matrix into an square matrix."""
         # Setup
         data_navigator = MagicMock()
@@ -228,3 +228,105 @@ class TestSampler(TestCase):
 
         # Check
         assert result == expected_result
+
+    def test__unflatten_gaussian_copula(self):
+        """_unflatten_gaussian_copula add the distribution, type and fitted kwargs."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        modeler.model_kwargs = {
+            'distribution': 'distribution_name'
+        }
+        sampler = Sampler(data_navigator, modeler)
+
+        model_parameters = {
+            'some': 'key',
+            'distribs': {
+                0: {
+                    'first': 'distribution',
+                    'std': 1
+                },
+                1: {
+                    'second': 'distribution',
+                    'std': 1
+                }
+            }
+        }
+        expected_result = {
+            'some': 'key',
+            'distribution': 'distribution_name',
+            'distribs': {
+                0: {
+                    'type': 'distribution_name',
+                    'fitted': True,
+                    'first': 'distribution',
+                    'std': 1
+                },
+                1: {
+                    'type': 'distribution_name',
+                    'fitted': True,
+                    'second': 'distribution',
+                    'std': 1
+                }
+            }
+        }
+
+        # Run
+        result = sampler._unflatten_gaussian_copula(model_parameters)
+
+        # Check
+        assert result == expected_result
+
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
+
+    def test__unflatten_gaussian_copula_negative_std(self):
+        """_unflatten_gaussian_copula will transform negative or 0 std into positive."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        modeler.model_kwargs = {
+            'distribution': 'distribution_name'
+        }
+        sampler = Sampler(data_navigator, modeler)
+
+        model_parameters = {
+            'some': 'key',
+            'distribs': {
+                0: {
+                    'first': 'distribution',
+                    'std': 0
+                },
+                1: {
+                    'second': 'distribution',
+                    'std': -1
+                }
+            }
+        }
+        expected_result = {
+            'some': 'key',
+            'distribution': 'distribution_name',
+            'distribs': {
+                0: {
+                    'type': 'distribution_name',
+                    'fitted': True,
+                    'first': 'distribution',
+                    'std': 1
+                },
+                1: {
+                    'type': 'distribution_name',
+                    'fitted': True,
+                    'second': 'distribution',
+                    'std': np.exp(-1)
+                }
+            }
+        }
+
+        # Run
+        result = sampler._unflatten_gaussian_copula(model_parameters)
+
+        # Check
+        assert result == expected_result
+
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
