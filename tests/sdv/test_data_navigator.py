@@ -1,6 +1,9 @@
 from unittest import TestCase
+from unittest.mock import patch
 
-from sdv.data_navigator import CSVDataLoader
+import pandas as pd
+
+from sdv.data_navigator import CSVDataLoader, DataNavigator, Table
 
 
 class TestDataNavigator(TestCase):
@@ -8,6 +11,113 @@ class TestDataNavigator(TestCase):
     def setUp(self):
         data_loader = CSVDataLoader('tests/data/meta.json')
         self.data_navigator = data_loader.load_data()
+
+    @patch('sdv.data_navigator.DataNavigator._get_relationships', autospec=True)
+    @patch('sdv.data_navigator.HyperTransformer')
+    def test__anonymize_data(self, hypertransformer_mock, relations_mock):
+        """If there are pii fields, their tables are anonymized."""
+        # Setup
+        meta_filename = ''
+        table_data = pd.DataFrame([
+            {
+                'primary_key': 1,
+                'credit_card_number': '1111-2222-3333-4444'
+            },
+            {
+                'primary_key': 2,
+                'credit_card_number': '0000-0000-0000-0000'
+            },
+            {
+                'primary_key': 3,
+                'credit_card_number': '2222-2222-2222-2222'
+            },
+        ])
+
+        table_meta = {
+            'fields': [
+                {
+                    'name': 'credit_card_number',
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'credit_card_number'
+                },
+                {
+                    'name': 'primary_key',
+                    'subtype': 'integer',
+                    'type': 'number',
+                    'regex': '^[0-9]{10}$'
+                },
+            ],
+            'headers': True,
+            'name': 'table',
+            'path': 'table.csv',
+            'primary_key': 'primary_key',
+            'use': True
+        }
+
+        tables = {
+            'table': Table(table_data, table_meta)
+        }
+
+        meta = {
+            'path': '',
+            'tables': [
+                table_meta
+            ]
+        }
+
+        ht_instance = hypertransformer_mock.return_value
+        ht_instance.table_dict = {
+            'table': ('anonymized_table', 'anonymized_table_metadata')
+        }
+        relations_mock.return_value = ('child_map', 'parent_map', 'foreign_keys')
+
+        data_navigator = DataNavigator(meta_filename, meta, tables)
+
+        # We reset the mocks as `anonymize_data` is also called on __init__
+        relations_mock.reset_mock()
+        hypertransformer_mock.reset_mock()
+        ht_instance.reset_mock()
+
+        # Run
+        result = data_navigator._anonymize_data()
+
+        # Check
+        assert result is None
+        assert data_navigator.tables['table'].data == 'anonymized_table'
+        assert data_navigator.tables['table'].meta == table_meta
+
+        relations_mock.assert_not_called()
+        hypertransformer_mock.assert_not_called()
+        ht_instance._get_pii_fields.assert_called_once_with('anonymized_table_metadata')
+
+    @patch('sdv.data_navigator.DataNavigator._get_relationships', autospec=True)
+    @patch('sdv.data_navigator.DataNavigator._anonymize_data', autospec=True)
+    @patch('sdv.data_navigator.HyperTransformer')
+    def test___init__(self, hypertransformer_mock, anon_mock, relations_mock):
+        """On init, relationships are built."""
+        # Setup
+        meta_filename = ''
+        meta = {'meta': 'data'}
+        tables = {'table_name': Table('data', 'meta')}
+
+        relations_mock.return_value = ('child_map', 'parent_map', 'foreign_keys')
+
+        # Run
+        data_navigator = DataNavigator(meta_filename, meta, tables)
+
+        # Check
+        assert data_navigator.meta == {'meta': 'data'}
+        assert data_navigator.tables == tables
+        assert data_navigator.transformed_data is None
+        assert data_navigator.ht == hypertransformer_mock.return_value
+        assert data_navigator.child_map == 'child_map'
+        assert data_navigator.parent_map == 'parent_map'
+        assert data_navigator.foreign_keys == 'foreign_keys'
+
+        hypertransformer_mock.assert_called_once_with('', missing=None)
+        anon_mock.assert_called_once_with(data_navigator)
+        relations_mock.assert_called_once_with(data_navigator, tables)
 
     def test_get_children(self):
         """get_children returns the relational children of a table."""

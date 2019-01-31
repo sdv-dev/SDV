@@ -59,78 +59,26 @@ class CSVDataLoader(DataLoader):
 
 
 class DataNavigator:
-    """Class to navigate through data set."""
+    """Navigate through and transform a dataset.
+
+    This class implement two main functionalities:
+
+    - Navigation through the dataset
+        Given a table, it allows to move though its relations and acces its data and metadata.
+
+    - Transform data
+        Transform the dataset using `rdt.HyperTransformer` in a format that is supported
+        by `sdv.Modeler`.
+
+    Args:
+        meta_filename (str): Path to the metadata file.
+        meta (dict): Metadata for the dataset.
+        tables (dict[str, Table]): Mapping of table names to their values and metadata.
+        missing (bool): Wheter or not handle missing values when transforming data.
+
+    """
 
     DEFAULT_TRANSFORMERS = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
-
-    def __init__(self, meta_filename, meta, tables):
-        """Instantiate data navigator object."""
-        self.meta = meta
-        self.tables = tables
-        self.ht = HyperTransformer(meta_filename)
-        self.transformed_data = None
-        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
-
-    def get_children(self, table_name):
-        """Return set of children of a table.
-
-        Args:
-            table_name (str): Name of table to get children of.
-
-        Returns:
-            set: Set of children for the given table.
-        """
-        return self.child_map.get(table_name, set())
-
-    def get_parents(self, table_name):
-        """Returns parents of a table.
-
-        Args:
-            table_name (str): Name of table to get parents of.
-
-        Returns:
-            set: Set of parents for the given table.
-        """
-        return self.parent_map.get(table_name, set())
-
-    def get_data(self, table_name):
-        """Return dataframe for a table.
-
-        Args:
-            table_name (str): Name of table to get data for.
-
-        Returns:
-            pandas.DataFrame: DataFrame with the contents of table_name
-        """
-        return self.tables[table_name].data
-
-    def get_meta_data(self, table_name):
-        """Return meta data for a table.
-
-        Args:
-            table_name (str): Name of table to get data for.
-
-        Returns:
-            dict: metadata for table_name
-        """
-        return self.tables[table_name].meta
-
-    def transform_data(self, transformers=None, missing=False):
-        """Applies the specified transformations using an HyperTransformer and returns the new data
-
-        Args:
-            transformers (list): List of transformers to use.
-            missing (bool): Whether or not to keep track of missing variables
-                            and create extra columns for them.
-
-        Returns:
-            dict: dict with the transformed dataframes.
-        """
-        transformers = transformers or self.DEFAULT_TRANSFORMERS
-        self.transformed_data = self.ht.fit_transform(
-            transformer_list=transformers, missing=missing)
-
-        return self.transformed_data
 
     def update_mapping(self, mapping, key, value):
         """Safely updates a dict of sets.
@@ -190,3 +138,79 @@ class DataNavigator:
                     foreign_keys[(table, parent)] = (parent_pk, fk)
 
         return (child_map, parent_map, foreign_keys)
+
+    def _anonymize_data(self):
+        """Replace data with pii with anonymized data from HyperTransformer."""
+        for table_name in self.tables:
+            table = self.tables[table_name]
+            ht_table, ht_meta = self.ht.table_dict[table_name]
+
+            pii_fields = self.ht._get_pii_fields(ht_meta)
+            if pii_fields:
+                table.data = ht_table
+
+    def __init__(self, meta_filename, meta, tables, missing=None):
+        self.meta = meta
+        self.tables = tables
+        self.ht = HyperTransformer(meta_filename, missing=missing)
+        self._anonymize_data()
+        self.transformed_data = None
+        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
+
+    def get_children(self, table_name):
+        """Return set of children of a table.
+
+        Args:
+            table_name (str): Name of table to get children of.
+
+        Returns:
+            set: Set of children for the given table.
+        """
+        return self.child_map.get(table_name, set())
+
+    def get_parents(self, table_name):
+        """Returns parents of a table.
+
+        Args:
+            table_name (str): Name of table to get parents of.
+
+        Returns:
+            set: Set of parents for the given table.
+        """
+        return self.parent_map.get(table_name, set())
+
+    def get_data(self, table_name):
+        """Return dataframe for a table.
+
+        Args:
+            table_name (str): Name of table to get data for.
+
+        Returns:
+            pandas.DataFrame: DataFrame with the contents of table_name
+        """
+        return self.tables[table_name].data
+
+    def get_meta_data(self, table_name):
+        """Return meta data for a table.
+
+        Args:
+            table_name (str): Name of table to get data for.
+
+        Returns:
+            dict: metadata for table_name
+        """
+        return self.tables[table_name].meta
+
+    def transform_data(self, transformers=None):
+        """Applies the specified transformations using an HyperTransformer and returns the new data
+
+        Args:
+            transformers (list): List of transformers to use.
+
+        Returns:
+            dict: dict with the transformed dataframes.
+        """
+        transformers = transformers or self.DEFAULT_TRANSFORMERS
+        self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
+
+        return self.transformed_data

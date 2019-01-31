@@ -81,8 +81,7 @@ class Sampler:
         synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(
-            synthesized_rows, orig_meta, missing=False)
+        reversed_data = self.dn.ht.reverse_transform_table(synthesized_rows, orig_meta)
 
         synthesized_rows.update(reversed_data)
         return synthesized_rows[labels]
