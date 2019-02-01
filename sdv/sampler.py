@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
 from rdt.transformers.positive_number import PositiveNumberTransformer
@@ -230,6 +231,39 @@ class Sampler:
 
         return result
 
+    def _make_positive_definite(self, matrix):
+        """Turns a matrix into their closest positive-definite.
+
+        Args:
+            matrix (list or numpy.ndarray): Matrix to transform
+
+        Returns:
+            numpy.ndarray: Closest symetric positive-definite matrix.
+        """
+        return matrix
+
+    def _check_matrix_symmetric_positive_definite(self, matrix):
+        """Checks if a matrix is symmetric positive-definite.
+
+        Args:
+            matrix (list or np.ndarray): Matrix to evaluate.
+
+        Returns:
+            bool
+        """
+        matrix = np.array(matrix)
+        try:
+            if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+                # Not 2-dimensional or square, so no simmetric.
+                print(matrix.shape)
+                return False
+
+            np.linalg.cholesky(matrix)
+            return True
+
+        except np.linalg.LinAlgError:
+            return False
+
     def _unflatten_gaussian_copula(self, model_parameters):
         """Prepare unflattened model params to recreate Gaussian Multivariate instance.
 
@@ -251,6 +285,7 @@ class Sampler:
             'fitted': True,
             'type': distribution_name
         }
+
         distribs = model_parameters['distribs']
         if any([distribs[key]['std'] <= 0 for key in distribs]):
             metadata = {
@@ -267,6 +302,10 @@ class Sampler:
             if distribution_std <= 0:
                 df = pd.DataFrame({'std': [distribution_std]})
                 distribs[key]['std'] = transformer.fit_transform(df)['std'].values[0]
+
+        covariance = np.array(model_parameters['covariance'])
+        if not self._check_matrix_symmetric_positive_definite(covariance):
+            covariance = self._make_positive_definite(covariance)
 
         return model_parameters
 

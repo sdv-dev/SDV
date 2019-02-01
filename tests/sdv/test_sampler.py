@@ -241,6 +241,10 @@ class TestSampler(TestCase):
 
         model_parameters = {
             'some': 'key',
+            'covariance': [
+                [1, 0],
+                [0, 1]
+            ],
             'distribs': {
                 0: {
                     'first': 'distribution',
@@ -255,6 +259,10 @@ class TestSampler(TestCase):
         expected_result = {
             'some': 'key',
             'distribution': 'distribution_name',
+            'covariance': [
+                [1, 0],
+                [0, 1]
+            ],
             'distribs': {
                 0: {
                     'type': 'distribution_name',
@@ -292,6 +300,10 @@ class TestSampler(TestCase):
 
         model_parameters = {
             'some': 'key',
+            'covariance': [
+                [1, 0],
+                [0, 1]
+            ],
             'distribs': {
                 0: {
                     'first': 'distribution',
@@ -306,6 +318,10 @@ class TestSampler(TestCase):
         expected_result = {
             'some': 'key',
             'distribution': 'distribution_name',
+            'covariance': [
+                [1, 0],
+                [0, 1]
+            ],
             'distribs': {
                 0: {
                     'type': 'distribution_name',
