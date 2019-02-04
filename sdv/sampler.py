@@ -34,6 +34,37 @@ class Sampler:
         return mapping
 
     @staticmethod
+    def _square_matrix(triangular_matrix):
+        """Fill with zeros a triangular matrix to reshape it to a square one.
+
+        Args:
+            triangular_matrix (list[list[float]]): Array of arrays of
+
+        Returns:
+            list: Square matrix.
+        """
+        length = len(triangular_matrix)
+        zero = [0.0]
+
+        for item in triangular_matrix:
+            item.extend(zero * (length - len(item)))
+
+        return triangular_matrix
+
+    def _prepare_sampled_covariance(self, covariance):
+        """
+
+        Args:
+            covariance (list): covariance after unflattening model parameters.
+
+        Result:
+            list[list]: symmetric Positive semi-definite matrix.
+        """
+        covariance = np.array(self._square_matrix(covariance))
+        covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
+        return covariance
+
+    @staticmethod
     def reset_indices_tables(sampled_tables):
         """Reset the indices of sampled tables.
 
@@ -232,15 +263,32 @@ class Sampler:
         return result
 
     def _make_positive_definite(self, matrix):
-        """Turns a matrix into their closest positive-definite.
+        """Find the nearest positive-definite matrix to input
 
         Args:
-            matrix (list or numpy.ndarray): Matrix to transform
+            matrix (numpy.ndarray): Matrix to transform
 
         Returns:
             numpy.ndarray: Closest symetric positive-definite matrix.
         """
-        return matrix
+        symetric_matrix = (matrix + matrix.T) / 2
+        _, s, V = np.linalg.svd(symetric_matrix)
+        symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
+        A2 = (symetric_matrix + symmetric_polar) / 2
+        A3 = (A2 + A2.T) / 2
+
+        if self._check_matrix_symmetric_positive_definite(A3):
+            return A3
+
+        spacing = np.spacing(np.linalg.norm(matrix))
+        identity = np.eye(matrix.shape[0])
+        iterations = 1
+        while not self._check_matrix_symmetric_positive_definite(A3):
+            min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
+            A3 += identity * (-min_eigenvals * iterations**2 + spacing)
+            iterations += 1
+
+        return A3
 
     def _check_matrix_symmetric_positive_definite(self, matrix):
         """Checks if a matrix is symmetric positive-definite.
@@ -251,11 +299,9 @@ class Sampler:
         Returns:
             bool
         """
-        matrix = np.array(matrix)
         try:
             if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
-                # Not 2-dimensional or square, so no simmetric.
-                print(matrix.shape)
+                # Not 2-dimensional or square, so not simmetric.
                 return False
 
             np.linalg.cholesky(matrix)
@@ -303,9 +349,12 @@ class Sampler:
                 df = pd.DataFrame({'std': [distribution_std]})
                 distribs[key]['std'] = transformer.fit_transform(df)['std'].values[0]
 
-        covariance = np.array(model_parameters['covariance'])
+        covariance = model_parameters['covariance']
+        covariance = self._prepare_sampled_covariance(covariance)
         if not self._check_matrix_symmetric_positive_definite(covariance):
             covariance = self._make_positive_definite(covariance)
+
+        model_parameters['covariance'] = covariance.tolist()
 
         return model_parameters
 

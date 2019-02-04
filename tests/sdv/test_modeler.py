@@ -33,7 +33,6 @@ class ModelerTest(TestCase):
 
         expected_result = pd.Series({
             'covariance__0__0': 0.0,
-            'covariance__0__1': 0.0,
             'covariance__1__0': 0.0,
             'covariance__1__1': 1.4999999999999991,
             'distribs__a__mean': 0.0,
@@ -151,11 +150,8 @@ class ModelerTest(TestCase):
 
         expected_result = pd.Series({
             'covariance__0__0': 1.5000000000000004,
-            'covariance__0__1': -0.7500000000000003,
-            'covariance__0__2': -0.7500000000000003,
             'covariance__1__0': -0.7500000000000003,
             'covariance__1__1': 1.5000000000000004,
-            'covariance__1__2': -0.7500000000000003,
             'covariance__2__0': -0.7500000000000003,
             'covariance__2__1': -0.7500000000000003,
             'covariance__2__2': 1.5000000000000007,

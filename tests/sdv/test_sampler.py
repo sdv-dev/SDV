@@ -23,6 +23,55 @@ class TestSampler(TestCase):
     def setUp(self):
         self.sampler = Sampler(self.data_navigator, self.modeler)
 
+    def test__square_matrix(self):
+        """_square_matrix transform triagular list of list into square matrix."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        triangular_matrix = [
+            [1],
+            [1, 1],
+            [1, 1, 1]
+        ]
+
+        expected_result = [
+            [1, 0, 0],
+            [1, 1, 0],
+            [1, 1, 1]
+        ]
+
+        # Run
+        result = sampler._square_matrix(triangular_matrix)
+
+        # Check
+        assert result == expected_result
+
+    def test__prepare_sampled_covariance(self):
+        """ """
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        covariance = [
+            [1.0],
+            [0.5, 1.0],
+            [0.5, 0.5, 1.0]
+        ]
+
+        expected_result = np.array([
+            [1.0, 0.5, 0.5],
+            [0.5, 1.0, 0.5],
+            [0.5, 0.5, 1.0]
+        ])
+        # Run
+        result = sampler._prepare_sampled_covariance(covariance)
+
+        # Check
+        assert (result == expected_result).all().all()
+
     def test_sample_rows_parent_table(self):
         """sample_rows samples new rows for the given table."""
         # Setup
@@ -242,7 +291,7 @@ class TestSampler(TestCase):
         model_parameters = {
             'some': 'key',
             'covariance': [
-                [1, 0],
+                [1],
                 [0, 1]
             ],
             'distribs': {
@@ -301,7 +350,7 @@ class TestSampler(TestCase):
         model_parameters = {
             'some': 'key',
             'covariance': [
-                [1, 0],
+                [1],
                 [0, 1]
             ],
             'distribs': {
