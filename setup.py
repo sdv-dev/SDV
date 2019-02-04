@@ -19,7 +19,7 @@ install_requires = [
     'scipy>=0.19.1',
     'scikit-learn>=0.19.1',
     'copulas>=0.2.1',
-    'rdt>=0.1.0'
+    'rdt>=0.1.2'
 ]
 
 setup_requires = ['pytest-runner', ]
