@@ -87,8 +87,8 @@ class TestDataNavigator(TestCase):
         assert data_navigator.tables['table'].data == 'anonymized_table'
         assert data_navigator.tables['table'].meta == table_meta
 
-        relations_mock.assert_not_called()
-        hypertransformer_mock.assert_not_called()
+        assert len(relations_mock.call_args_list) == 0
+        assert len(hypertransformer_mock.call_args_list) == 0
         ht_instance._get_pii_fields.assert_called_once_with('anonymized_table_metadata')
 
     @patch('sdv.data_navigator.DataNavigator._get_relationships', autospec=True)
