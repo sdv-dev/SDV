@@ -1,6 +1,9 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
-from sdv.data_navigator import CSVDataLoader
+import pandas as pd
+
+from sdv.data_navigator import CSVDataLoader, Table
 from sdv.modeler import Modeler
 from sdv.sampler import Sampler
 
@@ -18,6 +21,65 @@ class TestSampler(TestCase):
 
     def setUp(self):
         self.sampler = Sampler(self.data_navigator, self.modeler)
+
+    def test__rescale_values(self):
+        """_rescale_values return and array satisfying  0 < array < 1."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        column = pd.Series([0.0, 5.0, 10], name='column')
+        expected_result = pd.Series([0.0, 0.5, 1.0], name='column')
+
+        # Run
+        result = sampler._rescale_values(column)
+
+        # Check
+        assert (result == expected_result).all().all()
+        assert len(data_navigator.call_args_list) == 0
+        assert len(modeler.call_args_list) == 0
+
+    @patch('sdv.sampler.Sampler._get_table_meta')
+    def test_transform_synthesized_rows(self, get_table_meta_mock):
+        """t_s_r will add the primary key and reverse transform rows."""
+        # Setup
+        data_navigator = MagicMock()
+
+        table_metadata = {
+            'fields': {
+                'id': {
+                    'regex': '[0-9]{5}',
+                    'type': 'number',
+                    'subtype': 'integer'
+
+                }
+            },
+            'primary_key': 'id',
+        }
+        table_data = pd.DataFrame()
+        test_table = Table(table_data, table_metadata)
+        data_navigator.tables = {
+            'table': test_table
+        }
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        synthesized_rows = pd.DataFrame({
+
+        })
+        table_name = 'table'
+        num_rows = 2
+
+        expected_result = pd.DataFrame({
+
+        })
+
+        # Run
+        result = sampler.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+
+        # Check
+        assert result.equals(expected_result)
 
     def test_sample_rows_parent_table(self):
         """sample_rows samples new rows for the given table."""

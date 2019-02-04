@@ -2,6 +2,7 @@ import random
 
 import pandas as pd
 from copulas import get_qualified_name
+from sklearn.preprocessing import MinMaxScaler
 
 import exrex
 
@@ -13,7 +14,6 @@ class Sampler:
         """Instantiate a new object."""
         self.dn = data_navigator
         self.modeler = modeler
-        self.been_sampled = set()  # table_name -> if already sampled
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
         self.primary_key = {}
 
@@ -32,6 +32,20 @@ class Sampler:
 
         return sampled_tables
 
+    @staticmethod
+    def _rescale_values(column):
+        """Scale an array of values in the interval [0, 1].
+
+        Args:
+            column (pandas.Series): Column values to scale
+
+        Return:
+            pandas.Series: Column values scaled into [0,1]
+        """
+        scaler = MinMaxScaler()
+        scaled = scaler.fit_transform(column.values.reshape(-1, 1)).ravel()
+        return pd.Series(scaled, name=column.name)
+
     def transform_synthesized_rows(self, synthesized_rows, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
 
@@ -47,6 +61,15 @@ class Sampler:
         meta = self.dn.tables[table_name].meta
         orig_meta = self._get_table_meta(self.dn.meta, table_name)
         primary_key = meta.get('primary_key')
+        categorical_fields = [
+            field['name'] for field in orig_meta['fields']
+            if field['type'] == 'categorical'
+        ]
+
+        if categorical_fields:
+            for field in categorical_fields:
+                if ((synthesized_rows[field] < 0) | (synthesized_rows[field] > 1)).any():
+                    synthesized_rows[field] = self._rescale_values(synthesized_rows[field])
 
         if primary_key:
             node = meta['fields'][primary_key]
