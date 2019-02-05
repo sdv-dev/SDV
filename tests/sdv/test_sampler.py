@@ -1,4 +1,8 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
 
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
@@ -54,21 +58,173 @@ class TestSampler(TestCase):
         assert len(unique_foreign_keys) == 1
         assert unique_foreign_keys[0] in sampled_parent['CUSTOMER_ID'].values
 
-    def test_sample_all(self):
+    @patch('sdv.sampler.pd.concat')
+    @patch('sdv.sampler.Sampler.reset_indices_tables')
+    @patch('sdv.sampler.Sampler._sample_child_rows')
+    @patch('sdv.sampler.Sampler.sample_rows')
+    def test_sample_all(self, rows_mock, child_mock, reset_mock, concat_mock):
         """Check sample_all and returns some value."""
+        # Setup
+        data_navigator = MagicMock()
+        data_navigator.tables = ['TABLE_A', 'TABLE_B']
+        data_navigator.get_parents.side_effect = lambda x: x != 'TABLE_A'
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        def fake_dataframe(name, number):
+            return pd.DataFrame([{name: 0} for i in range(number)], index=[0]*number)
+
+        rows_mock.side_effect = fake_dataframe
+        concat_mock.return_value = 'concatenated_dataframe'
+
+        expected_get_parents_call_list = [(('TABLE_A',), {}), (('TABLE_B',), {})]
+        expected_rows_mock_call_list = [(('TABLE_A', 1), {}) for i in range(5)]
 
         # Run
-        result = self.sampler.sample_all(num_rows=5)
+        result = sampler.sample_all(num_rows=5)
 
         # Check
-        assert result.keys() == self.sampler.dn.tables.keys()
+        assert data_navigator.get_parents.call_args_list == expected_get_parents_call_list
+        assert result == reset_mock.return_value
 
-        for name, table in result.items():
-            with self.subTest(table=name):
-                raw_data = self.modeler.dn.tables[name].data
-                assert (table.columns == raw_data.columns).all()
+        assert rows_mock.call_args_list == expected_rows_mock_call_list
+        assert child_mock.call_count == 5
+        reset_mock.assert_called_once_with({'TABLE_A': 'concatenated_dataframe'})
 
-                if not self.sampler.dn.get_parents(name):
-                    primary_key = self.sampler.dn.get_meta_data(name)['primary_key']
-                    assert len(table) == 5
-                    assert len(table[primary_key].unique()) == 5
+    def test_unflatten_dict(self):
+        """ """
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+        flat = {
+            'first_key__a': 1,
+            'first_key__b': 2,
+            'second_key__x': 0
+        }
+
+        expected_result = {
+            'first_key': {
+                'a': 1,
+                'b': 2
+            },
+            'second_key': {
+                'x': 0
+            }
+        }
+
+        # Run
+        result = sampler._unflatten_dict(flat)
+
+        # Check
+        assert result == expected_result
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
+
+    def test_unflatten_dict_mixed_array(self):
+        """unflatten_dict restruicture arrays"""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+        flat = {
+            'first_key__0__0': 1,
+            'first_key__0__1': 0,
+            'first_key__1__0': 0,
+            'first_key__1__1': 1,
+            'second_key__0__std': 0.5,
+            'second_key__0__mean': 0.5,
+            'second_key__1__std': 0.25,
+            'second_key__1__mean': 0.25
+        }
+
+        expected_result = {
+            'first_key': [
+                [1, 0],
+                [0, 1]
+            ],
+            'second_key': [
+                {
+                    'std': 0.5,
+                    'mean': 0.5
+                },
+                {
+                    'std': 0.25,
+                    'mean': 0.25
+                }
+            ]
+        }
+
+        # Run
+
+        result = sampler._unflatten_dict(flat)
+
+        # Check
+        assert result == expected_result
+        data_navigator.assert_not_called()
+        modeler.assert_not_called()
+
+    def test_unflatten_dict_child_name(self):
+        """unflatten_dict will respect the name of child tables."""
+        # Setup
+        data_navigator = MagicMock()
+        data_navigator.get_children.return_value = ['CHILD_TABLE']
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        flat = {
+            'first_key__a': 1,
+            'first_key____CHILD_TABLE__model_param': 0,
+            'distribs____CHILD_TABLE__distribs__UNIT_PRICE__std__mean': 0
+        }
+        table_name = 'TABLE_NAME'
+        expected_result = {
+            'first_key': {
+                'a': 1,
+                '__CHILD_TABLE': {
+                    'model_param': 0
+                }
+            },
+            'distribs': {
+                '__CHILD_TABLE__distribs__UNIT_PRICE__std': {
+                    'mean': 0
+                }
+            }
+        }
+
+        # Run
+        result = sampler._unflatten_dict(flat, table_name)
+
+        # Check
+        assert result == expected_result
+        modeler.assert_not_called()
+        data_navigator.get_children.assert_called_once_with('TABLE_NAME')
+
+    def test_unflatten_respect_covariance_matrix(self):
+        """unflatten_dict restructures the covariance matrix into an square matrix."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        def fake_values(i, j):
+            return '{}, {}'.format(i, j)
+
+        expected_result = {
+            'covariance': np.array([
+                [fake_values(i, j) for j in range(40)]
+                for i in range(40)
+            ]).tolist()
+        }
+
+        flat = {
+            'covariance__{}__{}'.format(i, j): fake_values(i, j)
+            for i in range(40) for j in range(40)
+        }
+        table_name = 'TABLE_NAME'
+
+        # Run
+        result = sampler._unflatten_dict(flat, table_name)
+
+        # Check
+        assert result == expected_result

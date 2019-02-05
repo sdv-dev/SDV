@@ -1,9 +1,11 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import numpy as np
 import pandas as pd
+from copulas.multivariate import GaussianMultivariate, VineCopula
+from copulas.univariate.kde import KDEUnivariate
 
-from sdv.data_navigator import CSVDataLoader
+from sdv.data_navigator import CSVDataLoader, Table
 from sdv.modeler import Modeler
 
 
@@ -19,55 +21,106 @@ class ModelerTest(TestCase):
     def test__create_extension(self):
         """Tests that the create extension method returns correct parameters."""
         # Setup
-        child_table = self.dn.get_data('DEMO_ORDERS')
-        user = child_table[child_table['CUSTOMER_ID'] == 50]
-        expected = pd.Series([
-            1.500000e+00, 0.000000e+00, -1.269991e+00,
-            0.000000e+00, 0.000000e+00, 0.000000e+00,
-            -1.269991e+00, 0.000000e+00, 1.500000e+00,
-            0.000000e+00, 0.000000e+00, -7.401487e-17,
-            1.000000e+00, 7.000000e+00, 2.449490e+00,
-            4.000000e+00, 5.000000e+01, 5.000000e+01,
-            1.000000e-03, 5.000000e+01, 7.300000e+02,
-            2.380000e+03, 7.618545e+02, 1.806667e+03
-        ])
+        data_navigator = mock.MagicMock()
+        modeler = Modeler(data_navigator)
+        table = pd.DataFrame({
+            'foreign': [0, 1, 0, 1, 0, 1],
+            'a': [0, 1, 0, 1, 0, 1],
+            'b': [1, 2, 3, 4, 5, 6]
+        })
+        group = table[table.a == 0]
+        table_info = ('foreign', '')
+
+        expected_result = pd.Series({
+            'covariance__0__0': 0.0,
+            'covariance__0__1': 0.0,
+            'covariance__1__0': 0.0,
+            'covariance__1__1': 1.4999999999999991,
+            'distribs__a__mean': 0.0,
+            'distribs__a__std': 0.001,
+            'distribs__b__mean': 3.0,
+            'distribs__b__std': 1.632993161855452
+        })
 
         # Run
-        parameters = self.modeler._create_extension(user, child_table)
+        result = modeler._create_extension(group, table, table_info)
 
         # Check
-        assert expected.subtract(parameters).all() < 10E-3
+        assert result.equals(expected_result)
 
-    def test__get_extensions(self):
-        """_get_extensions returns a works for table with child"""
+    def test__create_extension_wrong_index_return_none(self):
+        """_create_extension return None if transformed_child_table can't be indexed by df."""
         # Setup
-        pk = 'ORDER_ID'
-        table = 'DEMO_ORDERS'
-        children = self.dn.get_children(table)
+        data_navigator = mock.MagicMock()
+        modeler = Modeler(data_navigator)
+        transformed_child_table = pd.DataFrame(np.eye(3), columns=['A', 'B', 'C'])
+        table_info = ('', '')
+        df = pd.DataFrame(index=range(5, 10))
 
         # Run
-        result = self.modeler._get_extensions(pk, children, table)
+        result = modeler._create_extension(df, transformed_child_table, table_info)
 
         # Check
-        assert len(result) == 1
-        assert result[0].shape == (10, 35)
+        assert result is None
+
+    @mock.patch('sdv.modeler.Modeler._create_extension')
+    @mock.patch('sdv.modeler.Modeler.get_foreign_key')
+    def test__get_extensions(self, get_foreign_mock, extension_mock):
+        """_get_extensions return the conditional modelling parameters for each children."""
+        # Setup
+        data_navigator = mock.MagicMock()
+
+        first_table_data = pd.DataFrame({'foreign_key': [0, 1]})
+        first_table_meta = {'fields': []}
+
+        data_navigator.tables = {
+            'first_children': Table(first_table_data, first_table_meta),
+            'second_children': Table(first_table_data, first_table_meta),
+        }
+        data_navigator.get_children.return_value = {}
+        modeler = Modeler(data_navigator)
+        modeler.tables = {}
+
+        extension_mock.side_effect = lambda x, y, z: None
+
+        get_foreign_mock.return_value = 'foreign_key'
+
+        pk = 'primary_key'
+        children = ['first_children', 'second_children']
+
+        expected_result = [
+            pd.DataFrame([{
+                '__first_children_column_1': 1,
+                '__first_children_column_2': 2
+            }]),
+            pd.DataFrame([{
+                '__second_children_column_1': 1,
+                '__second_children_column_2': 2
+            }])
+        ]
+
+        # Run
+        result = modeler._get_extensions(pk, children)
+
+        # Check
+        assert all([result[index].equals(expected_result[index]) for index in range(len(result))])
 
     def test_get_extensions_no_children(self):
-        """Tests that get extensions works for table with no children."""
+        """_get_extensions return an empty list if children is empty."""
         # Setup
-        pk = 'ORDER_ITEM_ID'
-        table = 'DEMO_ORDER_ITEMS'
-        children = self.dn.get_children(table)
+        pk = 'primary_key'
+        children = {}
+
         expected_result = []
 
         # Run
-        result = self.modeler._get_extensions(pk, children, table)
+        result = self.modeler._get_extensions(pk, children)
 
         # Check
         assert result == expected_result
 
     def test_CPA(self):
-        """ """
+        """CPA will append extensions to the original table."""
         # Setup
         self.modeler.model_database()
         table_name = 'DEMO_CUSTOMERS'
@@ -92,29 +145,33 @@ class ModelerTest(TestCase):
     def test_flatten_model(self):
         """flatten_model returns a pandas.Series with all the params to recreate a model."""
         # Setup
-        for data in self.dn.transformed_data.values():
-            num_columns = data.shape[1]
-            model = self.modeler.model()
-            model.fit(data)
+        model = GaussianMultivariate()
+        X = np.eye(3)
+        model.fit(X)
 
-            # We generate it this way because RDT behavior is not fully deterministic
-            # and transformed data can change between test runs.
-            distribs_values = np.array([
-                [col_model.std, col_model.mean]
-                for col_model in model.distribs.values()
-            ]).flatten()
+        expected_result = pd.Series({
+            'covariance__0__0': 1.5000000000000004,
+            'covariance__0__1': -0.7500000000000003,
+            'covariance__0__2': -0.7500000000000003,
+            'covariance__1__0': -0.7500000000000003,
+            'covariance__1__1': 1.5000000000000004,
+            'covariance__1__2': -0.7500000000000003,
+            'covariance__2__0': -0.7500000000000003,
+            'covariance__2__1': -0.7500000000000003,
+            'covariance__2__2': 1.5000000000000007,
+            'distribs__0__mean': 0.33333333333333331,
+            'distribs__0__std': 0.47140452079103168,
+            'distribs__1__mean': 0.33333333333333331,
+            'distribs__1__std': 0.47140452079103168,
+            'distribs__2__mean': 0.33333333333333331,
+            'distribs__2__std': 0.47140452079103168
+        })
 
-            expected_result = pd.Series(
-                list(model.covariance.flatten()) +
-                list(distribs_values)
-            )
+        # Run
+        result = Modeler.flatten_model(model)
 
-            # Run
-            result = self.modeler.flatten_model(model)
-
-            # Check
-            assert (result == expected_result).all()
-            assert len(result) == num_columns ** 2 + (2 * num_columns)
+        # Check
+        assert np.isclose(result, expected_result).all()
 
     def test_impute_table(self):
         """impute_table fills all NaN values with 0 or the mean of values."""
@@ -161,6 +218,134 @@ class ModelerTest(TestCase):
 
         # Run
         result = self.modeler.get_foreign_key(fields, primary)
+
+        # Check
+        assert result == expected_result
+
+    def test_fit_model_distribution_arg(self):
+        """fit_model will pass self.distribution FQN to modeler."""
+        # Setup
+        model_mock = mock.MagicMock()
+        model_mock.__eq__.return_value = True
+        model_mock.__ne__.return_value = False
+        modeler = Modeler(data_navigator='navigator', model=model_mock, distribution=KDEUnivariate)
+        data = pd.DataFrame({
+            'column': [0, 1, 1, 1, 0],
+        })
+
+        # Run
+        modeler.fit_model(data)
+
+        # Check
+        model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
+
+    def test_model_database_kde_distribution(self):
+        """model_database works fine with kde distribution."""
+        # Setup
+        modeler = Modeler(data_navigator=self.dn, distribution=KDEUnivariate)
+
+        # Run
+        modeler.model_database()
+
+    def test_model_database_vine_modeler(self):
+        """model_database works fine with vine modeler."""
+        # Setup
+        modeler = Modeler(data_navigator=self.dn, model=VineCopula)
+
+        # Run
+        modeler.model_database()
+
+    def test__flatten_dict_flat_dict(self):
+        """_flatten_dict don't modify flat dicts."""
+        # Setup
+        nested_dict = {
+            'a': 1,
+            'b': 2
+        }
+        expected_result = {
+            'a': 1,
+            'b': 2
+        }
+
+        # Run
+        result = Modeler._flatten_dict(nested_dict)
+
+        # Check
+        assert result == expected_result
+
+    def test__flatten_dict_nested_dict(self):
+        """_flatten_dict flatten nested dicts respecting the prefixes."""
+        # Setup
+        nested_dict = {
+            'first_key': {
+                'a': 1,
+                'b': 2
+            },
+            'second_key': {
+                'x': 0
+            }
+        }
+
+        expected_result = {
+            'first_key__a': 1,
+            'first_key__b': 2,
+            'second_key__x': 0
+        }
+
+        # Run
+        result = Modeler._flatten_dict(nested_dict)
+
+        # Check
+        assert result == expected_result
+
+    def test__flatten_array_ndarray(self):
+        """_flatten_array return a dict formed from the input np.array"""
+        # Setup
+        nested = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        expected_result = {
+            '0__0': 1,
+            '0__1': 0,
+            '0__2': 0,
+            '1__0': 0,
+            '1__1': 1,
+            '1__2': 0,
+            '2__0': 0,
+            '2__1': 0,
+            '2__2': 1
+        }
+
+        # Run
+        result = Modeler._flatten_array(nested)
+
+        # Check
+        assert result == expected_result
+
+    def test__flatten_array_list(self):
+        """_flatten_array return a dict formed from the input list"""
+        # Setup
+        nested = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ]
+        expected_result = {
+            '0__0': 1,
+            '0__1': 0,
+            '0__2': 0,
+            '1__0': 0,
+            '1__1': 1,
+            '1__2': 0,
+            '2__0': 0,
+            '2__1': 0,
+            '2__2': 1
+        }
+
+        # Run
+        result = Modeler._flatten_array(nested)
 
         # Check
         assert result == expected_result
