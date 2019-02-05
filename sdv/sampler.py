@@ -445,8 +445,7 @@ class Sampler:
         Returns:
             pandas.DataFrame: Synthesized table.
         """
-        orig_table = self.dn.tables[table_name].data
-        num_rows = orig_table.shape[0]
+        num_rows = self.dn.tables[table_name].data.shape[0]
         return self.sample_rows(table_name, num_rows)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):

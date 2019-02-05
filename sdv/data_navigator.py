@@ -59,15 +59,101 @@ class CSVDataLoader(DataLoader):
 
 
 class DataNavigator:
-    """Class to navigate through data set."""
+    """Navigate through and transform a dataset.
+
+    This class implement two main functionalities:
+
+    - Navigation through the dataset
+        Given a table, it allows to move though its relations and acces its data and metadata.
+
+    - Transform data
+        Transform the dataset using `rdt.HyperTransformer` in a format that is supported
+        by `sdv.Modeler`.
+
+    Args:
+        meta_filename (str): Path to the metadata file.
+        meta (dict): Metadata for the dataset.
+        tables (dict[str, Table]): Mapping of table names to their values and metadata.
+        missing (bool): Wheter or not handle missing values when transforming data.
+
+    """
 
     DEFAULT_TRANSFORMERS = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
 
-    def __init__(self, meta_filename, meta, tables):
-        """Instantiate data navigator object."""
+    def update_mapping(self, mapping, key, value):
+        """Safely updates a dict of sets.
+
+        Args:
+            mapping (dict): Dictionary to be updated.
+            key(string): Key to update on `mapping`.
+            value: Value to add.
+
+        Returns:
+            dict: Updated mapping.
+
+        If mapping[key] exists then value will be added to it.
+        If not, it will be created as a single-element set containing `value`.
+        """
+        item = mapping.get(key)
+
+        if item:
+            item.add(value)
+
+        else:
+            mapping[key] = {value}
+
+        return mapping
+
+    def _get_relationships(self, tables):
+        """Map table name to names of child tables.
+
+        Arguments:
+            tables (dict): table_name -> Table.
+
+        Returns:
+            tuple: dicts of children, parents and foreign_keys.
+
+        This method is what allow `DataNavigator` to be aware of the different tables and the
+        relations between them.
+        """
+        child_map = {}
+        parent_map = {}
+        foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
+
+        for table in tables:
+            table_meta = tables[table].meta
+            for field_meta in table_meta['fields'].values():
+                ref = field_meta.get('ref')
+                if ref:
+                    parent = ref['table']
+                    parent_pk = ref['field']
+                    fk = field_meta['name']
+
+                    # update child map
+                    child_map = self.update_mapping(child_map, parent, table)
+
+                    # update parent map
+                    parent_map = self.update_mapping(parent_map, table, parent)
+
+                    foreign_keys[(table, parent)] = (parent_pk, fk)
+
+        return (child_map, parent_map, foreign_keys)
+
+    def _anonymize_data(self):
+        """Replace data with pii with anonymized data from HyperTransformer."""
+        for table_name in self.tables:
+            table = self.tables[table_name]
+            ht_table, ht_meta = self.ht.table_dict[table_name]
+
+            pii_fields = self.ht._get_pii_fields(ht_meta)
+            if pii_fields:
+                table.data = ht_table
+
+    def __init__(self, meta_filename, meta, tables, missing=None):
         self.meta = meta
         self.tables = tables
-        self.ht = HyperTransformer(meta_filename, missing=False)
+        self.ht = HyperTransformer(meta_filename, missing=missing)
+        self._anonymize_data()
         self.transformed_data = None
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
 
@@ -128,62 +214,3 @@ class DataNavigator:
         self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
 
         return self.transformed_data
-
-    def update_mapping(self, mapping, key, value):
-        """Safely updates a dict of sets.
-
-        Args:
-            mapping (dict): Dictionary to be updated.
-            key(string): Key to update on `mapping`.
-            value: Value to add.
-
-        Returns:
-            dict: Updated mapping.
-
-        If mapping[key] exists then value will be added to it.
-        If not, it will be created as a single-element set containing `value`.
-        """
-        item = mapping.get(key)
-
-        if item:
-            item.add(value)
-
-        else:
-            mapping[key] = {value}
-
-        return mapping
-
-    def _get_relationships(self, tables):
-        """Map table name to names of child tables.
-
-        Arguments:
-            tables (dict): table_name -> Table.
-
-        Returns:
-            tuple: dicts of children, parents and foreign_keys.
-
-        This method is what allow `DataNavigator` to be aware of the different tables and the
-        relations between them.
-        """
-        child_map = {}
-        parent_map = {}
-        foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
-
-        for table in tables:
-            table_meta = tables[table].meta
-            for field_meta in table_meta['fields'].values():
-                ref = field_meta.get('ref')
-                if ref:
-                    parent = ref['table']
-                    parent_pk = ref['field']
-                    fk = field_meta['name']
-
-                    # update child map
-                    child_map = self.update_mapping(child_map, parent, table)
-
-                    # update parent map
-                    parent_map = self.update_mapping(parent_map, table, parent)
-
-                    foreign_keys[(table, parent)] = (parent_pk, fk)
-
-        return (child_map, parent_map, foreign_keys)
