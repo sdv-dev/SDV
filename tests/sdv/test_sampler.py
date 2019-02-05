@@ -41,46 +41,167 @@ class TestSampler(TestCase):
         assert len(data_navigator.call_args_list) == 0
         assert len(modeler.call_args_list) == 0
 
-    @patch('sdv.sampler.Sampler._get_table_meta')
-    def test_transform_synthesized_rows(self, get_table_meta_mock):
-        """t_s_r will add the primary key and reverse transform rows."""
-        # Setup
-        data_navigator = MagicMock()
+    @patch('sdv.sampler.Sampler._fill_text_columns', autospec=True)
+    @patch('sdv.sampler.Sampler.update_mapping_list', autospec=True)
+    @patch('sdv.sampler.Sampler._get_table_meta', autospec=True)
+    def test_transform_synthesized_rows_no_pk_no_categorical(
+            self, get_table_meta_mock, update_mock, fill_mock):
 
+        """transform_synthesized_rows will update internal state and reverse transform rows."""
+        # Setup - Class Instantiation
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        # Setup - Mock configuration
         table_metadata = {
             'fields': {
-                'id': {
-                    'regex': '[0-9]{5}',
+                'column_A': {
                     'type': 'number',
                     'subtype': 'integer'
-
+                },
+                'column_B': {
+                    'name': 'column',
+                    'type': 'number'
                 }
             },
-            'primary_key': 'id',
+            'primary_key': None
         }
-        table_data = pd.DataFrame()
+        table_data = pd.DataFrame(columns=['column_A', 'column_B'])
         test_table = Table(table_data, table_metadata)
         data_navigator.tables = {
             'table': test_table
         }
-        modeler = MagicMock()
-        sampler = Sampler(data_navigator, modeler)
 
+        data_navigator.ht.reverse_transform_table.return_value = pd.DataFrame({
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
+        })
+
+        get_table_meta_mock.return_value = {
+            'original': 'meta',
+            'fields': []
+        }
+
+        fill_mock.return_value = pd.DataFrame({
+            'column_A': ['filled', 'text_values'],
+            'column_B': ['nothing', 'numerical']
+        })
+
+        # Setup - Method arguments / expected result
         synthesized_rows = pd.DataFrame({
-
+            'column_A': [1.7, 2.5],
+            'column_B': [4.7, 5.1],
+            'model_parameters': ['some', 'parameters']
         })
         table_name = 'table'
         num_rows = 2
 
         expected_result = pd.DataFrame({
-
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
         })
 
         # Run
         result = sampler.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
-        # Check
+        # Check - Result
         assert result.equals(expected_result)
+
+        # Check - Class internal state
+        assert sampler.sampled == update_mock.return_value
+
+        # Check - Mock calls
+        get_table_meta_mock.assert_called_once_with(sampler, data_navigator.meta, 'table')
+        update_mock.assert_called_once_with(sampler, {}, 'table', (None, synthesized_rows))
+        fill_mock.assert_called_once_with(
+            sampler, synthesized_rows, ['column_A', 'column_B'], 'table')
+
+        data_navigator.ht.reverse_transform_table.assert_called_once_with(
+            fill_mock.return_value, get_table_meta_mock.return_value
+        )
+
+    @patch('sdv.sampler.Sampler._fill_text_columns', autospec=True)
+    @patch('sdv.sampler.Sampler.update_mapping_list', autospec=True)
+    @patch('sdv.sampler.Sampler._rescale_values', autospec=True)
+    @patch('sdv.sampler.Sampler._get_table_meta', autospec=True)
+    def test_transform_synthesized_rows_no_pk_but_categorical(
+            self, get_table_meta_mock, rescale_mock, update_mock, fill_mock):
+
+        """transform_synthesized_rows will update internal state and reverse transform rows."""
+        # Setup - Class Instantiation
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        # Setup - Mock configuration
+        table_metadata = {
+            'fields': {
+                'column_A': {
+                    'type': 'categorical',
+                },
+                'column_B': {
+                    'name': 'column',
+                    'type': 'number'
+                }
+            },
+            'primary_key': None
+        }
+        table_data = pd.DataFrame(columns=['column_A', 'column_B'])
+        test_table = Table(table_data, table_metadata)
+        data_navigator.tables = {
+            'table': test_table
+        }
+
+        data_navigator.ht.reverse_transform_table.return_value = pd.DataFrame({
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
+        })
+
+        get_table_meta_mock.return_value = {
+            'original': 'meta',
+            'fields': []
+        }
+
+        rescale_mock.side_effect = lambda x: pd.Series([0.1, 0.8], name=x.name)
+
+        fill_mock.return_value = pd.DataFrame({
+            'column_A': ['filled', 'text_values'],
+            'column_B': ['nothing', 'numerical']
+        })
+
+        # Setup - Method arguments / expected result
+        synthesized_rows = pd.DataFrame({
+            'column_A': [1.7, 2.5],
+            'column_B': [4.7, 5.1],
+            'model_parameters': ['some', 'parameters']
+        })
+        table_name = 'table'
+        num_rows = 2
+
+        expected_result = pd.DataFrame({
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
+        })
+
+        # Run
+        result = sampler.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+
+        # Check - Result
+        assert result.equals(expected_result)
+
+        # Check - Class internal state
+        assert sampler.sampled == update_mock.return_value
+
+        # Check - Mock calls
+        get_table_meta_mock.assert_called_once_with(sampler, data_navigator.meta, 'table')
+        update_mock.assert_called_once_with(sampler, {}, 'table', (None, synthesized_rows))
+        fill_mock.assert_called_once_with(
+            sampler, synthesized_rows, ['column_A', 'column_B'], 'table')
+
+        data_navigator.ht.reverse_transform_table.assert_called_once_with(
+            fill_mock.return_value, get_table_meta_mock.return_value
+        )
 
     def test_sample_rows_parent_table(self):
         """sample_rows samples new rows for the given table."""
@@ -151,7 +272,7 @@ class TestSampler(TestCase):
         reset_mock.assert_called_once_with({'TABLE_A': 'concatenated_dataframe'})
 
     def test_unflatten_dict(self):
-        """ """
+        """unflatten_dict restructure flatten dicts."""
         # Setup
         data_navigator = MagicMock()
         modeler = MagicMock()
@@ -181,7 +302,7 @@ class TestSampler(TestCase):
         modeler.assert_not_called()
 
     def test_unflatten_dict_mixed_array(self):
-        """unflatten_dict restruicture arrays"""
+        """unflatten_dict restructure arrays."""
         # Setup
         data_navigator = MagicMock()
         modeler = MagicMock()

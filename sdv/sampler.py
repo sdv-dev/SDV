@@ -48,11 +48,11 @@ class Sampler:
         scaled = scaler.fit_transform(column.values.reshape(-1, 1)).ravel()
         return pd.Series(scaled, name=column.name)
 
-    def transform_synthesized_rows(self, synthesized_rows, table_name, num_rows):
+    def transform_synthesized_rows(self, synthesized, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
 
         Args:
-            synthesized_rows(pandas.DataFrame): Generated data from model
+            synthesized(pandas.DataFrame): Generated data from model
             table_name(str): Name of the table.
             num_rows(int): Number of rows sampled.
 
@@ -70,8 +70,8 @@ class Sampler:
 
         if categorical_fields:
             for field in categorical_fields:
-                if ((synthesized_rows[field] < 0) | (synthesized_rows[field] > 1)).any():
-                    synthesized_rows[field] = self._rescale_values(synthesized_rows[field])
+                if ((synthesized[field] < 0) | (synthesized[field] > 1)).any():
+                    synthesized[field] = self._rescale_values(synthesized[field])
 
         if primary_key:
             node = meta['fields'][primary_key]
@@ -92,25 +92,24 @@ class Sampler:
                     ' to generate {} samples.'.format(table_name, regex, num_rows)
                 )
 
-            synthesized_rows[primary_key] = pd.Series(values)
+            synthesized[primary_key] = pd.Series(values)
 
             if (node['type'] == 'number') and (node['subtype'] == 'integer'):
-                synthesized_rows[primary_key] = pd.to_numeric(synthesized_rows[primary_key])
+                synthesized[primary_key] = pd.to_numeric(synthesized[primary_key])
 
-        sample_info = (primary_key, synthesized_rows)
-
+        sample_info = (primary_key, synthesized)
         self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
 
         # filter out parameters
         labels = list(self.dn.tables[table_name].data)
 
-        synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
+        text_filled = self._fill_text_columns(synthesized, labels, table_name)
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(synthesized_rows, orig_meta)
+        reversed_data = self.dn.ht.reverse_transform_table(text_filled, orig_meta)
 
-        synthesized_rows.update(reversed_data)
-        return synthesized_rows[labels]
+        synthesized.update(reversed_data)
+        return synthesized[labels]
 
     def _get_parent_row(self, table_name):
         parents = self.dn.get_parents(table_name)
