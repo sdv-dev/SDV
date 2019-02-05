@@ -248,14 +248,14 @@ The modeler can also be saved to a file using the `save()` method. This will sav
 on the specified path.
 
 ```python
->>> modeler.save('models/demo_model.pkl')
+>>> modeler.save('demo_model.pkl')
 ```
 
 If you have stored a model in a previous session using the command above, you can load the model
 using the `load()` method:
 
 ```python
->>> modeler = Modeler.load('models/demo_model.pkl')
+>>> modeler = Modeler.load('demo_model.pkl')
 ```
 
 ### Using the Sampler
