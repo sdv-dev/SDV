@@ -83,8 +83,7 @@ class Sampler:
         synthesized_rows = self._fill_text_columns(synthesized_rows, labels, table_name)
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(
-            synthesized_rows, orig_meta, missing=False)
+        reversed_data = self.dn.ht.reverse_transform_table(synthesized_rows, orig_meta)
 
         synthesized_rows.update(reversed_data)
         return synthesized_rows[labels]
@@ -310,8 +309,7 @@ class Sampler:
         Returns:
             pandas.DataFrame: Synthesized table.
         """
-        orig_table = self.dn.tables[table_name].data
-        num_rows = orig_table.shape[0]
+        num_rows = self.dn.tables[table_name].data.shape[0]
         return self.sample_rows(table_name, num_rows)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):

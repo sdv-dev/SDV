@@ -161,6 +161,48 @@ For  ``datetime`` types, a ``format`` key should be included containing the date
     }]
 
 
+Categorical fields ( Data anonymization)
+""""""""""""""""""""""""""""""""""""""""
+
+For ``categorical`` types, there is an option to anonymize data labeled as Personally Identifiable Information, ``pii``,
+but keeping its statistical properties. To anonymize a field, you should use the following keys.
+
+.. code-block:: python
+
+    'tables': [{
+        'fields': [
+            {
+                'name': 'social_scurity_number',
+                'type': 'categorical',
+                'pii': True, # expected a bool
+                'pii_category': 'ssn' # expected a string
+            },
+            ...
+        ],
+        ...
+    }]
+
+The most common supported values of ``pii_category`` are:
+
++---------------------------+
+| name                      |
++---------------------------+
+| first_name                |
++---------------------------+
+| last_name                 |
++---------------------------+
+| phone_number              |
++---------------------------+
+| ssn                       |
++---------------------------+
+| credit_card_number        |
++---------------------------+
+| credit_card_security_code |
++---------------------------+
+
+But any value supported by faker can be used. A full list can be found here: `Faker`_
+
+
 Primary key fields
 """"""""""""""""""
 
@@ -217,8 +259,6 @@ Examples
 A full working example can be found on the `tests`_ folder.
 
 
-
-
 Sampling new data
 -----------------
 To use SDV in a project
@@ -235,3 +275,4 @@ To use SDV in a project
 .. _RDT: https://github.com/HDI-Project/RDT
 .. _strftime: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
 .. _tests: https://github.com/HDI-Project/SDV/blob/master/tests/data/meta.json
+.. _Faker: https://faker.readthedocs.io/en/master/providers.html
