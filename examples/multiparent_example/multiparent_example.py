@@ -22,12 +22,13 @@ def run_example():
     # Setup
     vault = SDV('data/meta.json')
     vault.fit()
-    
+
     # Run
     result = vault.sample_all()
 
     for name, table in result.items():
         print('Samples generated for table {}:\n{}\n'.format(name, table.head(5)))
+
 
 if __name__ == '__main__':
     run_example()
