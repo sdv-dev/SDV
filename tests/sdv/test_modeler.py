@@ -1,7 +1,9 @@
-from unittest import TestCase, mock
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
+from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate.kde import KDEUnivariate
 
@@ -9,7 +11,7 @@ from sdv.data_navigator import CSVDataLoader, Table
 from sdv.modeler import Modeler
 
 
-class ModelerTest(TestCase):
+class TestModeler(TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
@@ -18,20 +20,30 @@ class ModelerTest(TestCase):
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)
 
-    def test__create_extension(self):
+    @patch('sdv.modeler.Modeler.flatten_model')
+    @patch('sdv.modeler.Modeler.fit_model')
+    @patch('sdv.modeler.Modeler.impute_table')
+    def test__create_extension(self, impute_mock, fit_mock, flatten_mock):
         """Tests that the create extension method returns correct parameters."""
         # Setup
-        data_navigator = mock.MagicMock()
+        data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
         table = pd.DataFrame({
             'foreign': [0, 1, 0, 1, 0, 1],
             'a': [0, 1, 0, 1, 0, 1],
             'b': [1, 2, 3, 4, 5, 6]
         })
-        group = table[table.a == 0]
-        table_info = ('foreign', '')
+        foreign = table[table.a == 0]
+        table_info = ('foreign', 'child')
 
-        expected_result = pd.Series({
+        impute_mock.return_value = pd.DataFrame({
+            'A': [1, 2],
+            'B': [3, 4]
+        })
+
+        fit_mock.return_value = 'fitted model'
+
+        flatten_mock.return_value = pd.Series({
             'covariance__0__0': 0.0,
             'covariance__0__1': 0.0,
             'covariance__1__0': 0.0,
@@ -43,15 +55,30 @@ class ModelerTest(TestCase):
         })
 
         # Run
-        result = modeler._create_extension(group, table, table_info)
+        result = modeler._create_extension(foreign, table, table_info)
 
         # Check
-        assert result.equals(expected_result)
+        assert result.equals(flatten_mock.return_value)
+
+        df = pd.DataFrame({
+            'a': [0, 1, 0, 1, 0, 1],
+            'b': [1, 2, 3, 4, 5, 6]
+        })
+        df = df.loc[foreign.index]
+
+        assert len(impute_mock.call_args_list)
+        call_args = impute_mock.call_args_list[0]
+        assert len(call_args[0]) == 1
+        assert call_args[0][0].equals(df)
+        assert call_args[1] == {}
+
+        fit_mock.assert_called_once_with(impute_mock.return_value)
+        flatten_mock.assert_called_once_with('fitted model', 'child')
 
     def test__create_extension_wrong_index_return_none(self):
         """_create_extension return None if transformed_child_table can't be indexed by df."""
         # Setup
-        data_navigator = mock.MagicMock()
+        data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
         transformed_child_table = pd.DataFrame(np.eye(3), columns=['A', 'B', 'C'])
         table_info = ('', '')
@@ -63,12 +90,12 @@ class ModelerTest(TestCase):
         # Check
         assert result is None
 
-    @mock.patch('sdv.modeler.Modeler._create_extension')
-    @mock.patch('sdv.modeler.Modeler.get_foreign_key')
+    @patch('sdv.modeler.Modeler._create_extension')
+    @patch('sdv.modeler.Modeler.get_foreign_key')
     def test__get_extensions(self, get_foreign_mock, extension_mock):
         """_get_extensions return the conditional modelling parameters for each children."""
         # Setup
-        data_navigator = mock.MagicMock()
+        data_navigator = MagicMock()
 
         first_table_data = pd.DataFrame({'foreign_key': [0, 1]})
         first_table_meta = {'fields': []}
@@ -173,18 +200,18 @@ class ModelerTest(TestCase):
         # Check
         assert np.isclose(result, expected_result).all()
 
-    def test_impute_table(self):
-        """impute_table fills all NaN values with 0 or the mean of values."""
+    def test_impute_table_with_mean(self):
+        """impute_table fills all NaN values the mean of values when possible."""
         # Setup
         table = pd.DataFrame([
-            {'A': np.nan, 'B': 10., 'C': 20.},
-            {'A': 5., 'B': np.nan, 'C': 20.},
-            {'A': 5., 'B': 10., 'C': np.nan},
+            {'A': np.nan, 'B': 2., 'C': 4.},
+            {'A': 4., 'B': np.nan, 'C': 2.},
+            {'A': 2., 'B': 4., 'C': np.nan},
         ])
         expected_result = pd.DataFrame([
-            {'A': 5., 'B': 10., 'C': 20.},
-            {'A': 5., 'B': 10., 'C': 20.},
-            {'A': 5., 'B': 10., 'C': 20.},
+            {'A': 3., 'B': 2., 'C': 4.},
+            {'A': 4., 'B': 3., 'C': 2.},
+            {'A': 2., 'B': 4., 'C': 3.},
         ])
 
         # Run
@@ -200,14 +227,56 @@ class ModelerTest(TestCase):
         for column in result:
             assert 0 not in result[column].values
 
-    def test_model_database(self):
-        """model_database computes conditions between tables and models them."""
+    def test_impute_table_with_mean_default(self):
+        """If a column only has NaN, impute_table fills it with 0.(+EPSILON).
+
+        If a column has no mean (all values are null), then the NaN values are replaced with 0.
+        Then, it will transform like a constant column, adding copulas.EPSILON at the
+        first element.
+        """
+        # Setup
+        table = pd.DataFrame([
+            {'A': np.nan, 'B': 2., 'C': 2.},
+            {'A': np.nan, 'B': 3., 'C': 3.},
+            {'A': np.nan, 'B': 4., 'C': 4.},
+        ])
+        expected_result = pd.DataFrame([
+            {'A': EPSILON,  'B': 2., 'C': 2.},
+            {'A': 0.,       'B': 3., 'C': 3.},
+            {'A': 0.,       'B': 4., 'C': 4.},
+        ])
 
         # Run
-        self.modeler.model_database()
+        result = self.modeler.impute_table(table)
 
         # Check
-        assert self.modeler.tables.keys() == self.modeler.models.keys()
+        assert result.equals(expected_result)
+
+        # No null values are left
+        assert not result.isnull().all().all()
+
+    def test_impute_table_constant_column(self):
+        """impute_table adds EPSILON at the first element of a constant column."""
+        # Setup
+        table = pd.DataFrame([
+            {'A': np.nan,   'B': 10.,       'C': 20.},
+            {'A': 5.,       'B': np.nan,    'C': 20.},
+            {'A': 5.,       'B': 10.,       'C': np.nan},
+        ])
+        expected_result = pd.DataFrame([
+            {'A': 5. + EPSILON, 'B': 10. + EPSILON, 'C': 20. + EPSILON},
+            {'A': 5.,           'B': 10.,           'C': 20.},
+            {'A': 5.,           'B': 10.,           'C': 20.},
+        ])
+
+        # Run
+        result = self.modeler.impute_table(table)
+
+        # Check
+        assert result.equals(expected_result)
+
+        # No null values are left
+        assert not result.isnull().all().all()
 
     def test_get_foreign_key(self):
         """get_foreign_key returns the foreign key from a metadata and a primary key."""
@@ -225,7 +294,7 @@ class ModelerTest(TestCase):
     def test_fit_model_distribution_arg(self):
         """fit_model will pass self.distribution FQN to modeler."""
         # Setup
-        model_mock = mock.MagicMock()
+        model_mock = MagicMock()
         model_mock.__eq__.return_value = True
         model_mock.__ne__.return_value = False
         modeler = Modeler(data_navigator='navigator', model=model_mock, distribution=KDEUnivariate)
@@ -239,6 +308,29 @@ class ModelerTest(TestCase):
         # Check
         model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
 
+    def test_model_database(self):
+        """model_database computes conditions between tables and models them."""
+        # Run
+        self.modeler.model_database()
+
+        # Check
+        assert self.modeler.tables.keys() == self.modeler.models.keys()
+
+    @patch('sdv.modeler.Modeler.RCPA')
+    def test_model_database_raises(self, rcpa_mock):
+        """If the models raise an exception, it prints a custom message."""
+        # Setup
+        data_navigator = MagicMock()
+        modeler = Modeler(data_navigator)
+
+        data_navigator.tables = ['table_1', 'table_2']
+        data_navigator.get_parents.return_value = False
+        rcpa_mock.side_effect = ValueError('value error!')
+
+        # Run / Check
+        with self.assertRaises(ValueError):
+            modeler.model_database()
+
     def test_model_database_kde_distribution(self):
         """model_database works fine with kde distribution."""
         # Setup
@@ -247,10 +339,11 @@ class ModelerTest(TestCase):
         # Run
         modeler.model_database()
 
-    def test_model_database_vine_modeler(self):
+    def test_model_database_vine_modeler_single_table(self):
         """model_database works fine with vine modeler."""
         # Setup
-        modeler = Modeler(data_navigator=self.dn, model=VineCopula)
+        data_navigator = MagicMock()
+        modeler = Modeler(data_navigator=data_navigator, model=VineCopula)
 
         # Run
         modeler.model_database()

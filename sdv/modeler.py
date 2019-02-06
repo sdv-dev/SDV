@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from copulas import get_qualified_name
+from copulas import EPSILON, get_qualified_name
 from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
 
@@ -15,9 +15,9 @@ DEFAULT_DISTRIBUTION = GaussianUnivariate
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 MODELLING_ERROR_MESSAGE = (
-    'There was an error while trying to model the database. If you are using a custom'
-    'distribution or model, please try again using the default ones. If the problem persist,'
-    'please report it here: https://github.com/HDI-Project/SDV/issues'
+    'There was an error while trying to model the database. If you are using a custom '
+    'distribution or model, please try again using the default ones. If the problem persist, '
+    'please report it here:\nhttps://github.com/HDI-Project/SDV/issues.\n'
 )
 
 
@@ -194,8 +194,17 @@ class Modeler:
                 values[label] = value
             else:
                 values[label] = 0
+        table = table.fillna(values)
 
-        return table.fillna(values)
+        # There is an issue when using KDEUnivariate modeler in tables with childs
+        # As the extension columns would have constant values, that make it crash
+        # This is a temporary fix while https://github.com/DAI-Lab/Copulas/issues/82 is solved.
+        first_index = table.index[0]
+        constant_columns = table.loc[:, (table == table.loc[first_index]).all()].columns
+        for column in constant_columns:
+            table.loc[first_index, column] = table.loc[first_index, column] + EPSILON
+
+        return table
 
     def fit_model(self, data):
         """Returns an instance of self.model fitted with the given data.
@@ -218,10 +227,10 @@ class Modeler:
             foreign(pandas.DataFrame): Object with Index of elements from children table elements
                                        of a given foreign_key.
             transformed_child_table(pandas.DataFrame): Table of data to fil
-            table_info (tuple(str, str)): foreign_key and child table names.
+            table_info (tuple[str, str]): foreign_key and child table names.
 
         Returns:
-            pd.Series : Parameter extension
+            pd.Series or None : Parameter extension if it can be generated, None elsewhere.
             """
 
         foreign_key, child_name = table_info
@@ -232,8 +241,11 @@ class Modeler:
         except KeyError:
             return None
 
-        clean_df = self.impute_table(conditional_data)
-        return self.flatten_model(self.fit_model(clean_df), child_name)
+        if len(conditional_data):
+            clean_df = self.impute_table(conditional_data)
+            return self.flatten_model(self.fit_model(clean_df), child_name)
+
+        return None
 
     def _get_extensions(self, pk, children):
         """Generate list of extension for child tables.
@@ -284,7 +296,7 @@ class Modeler:
                     parameters[foreign_key] = parameter.to_dict()
 
             extension = pd.DataFrame(parameters).T
-            extension.index.name = fk
+            extension.index.name = pk
 
             if len(extension):
                 extensions.append(extension)
@@ -348,7 +360,7 @@ class Modeler:
                 clean_table = self.impute_table(self.tables[table])
                 self.models[table] = self.fit_model(clean_table)
 
-        except (ValueError, np.linalg.linalg.LinAlgError):
-            ValueError(MODELLING_ERROR_MESSAGE)
+        except (ValueError, np.linalg.linalg.LinAlgError) as error:
+            raise ValueError(MODELLING_ERROR_MESSAGE).with_traceback(error.__traceback__)
 
         logger.info('Modeling Complete')
