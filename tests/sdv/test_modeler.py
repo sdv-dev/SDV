@@ -170,6 +170,132 @@ class TestModeler(TestCase):
                 assert (raw_table.index == table.index).all()
                 assert all([column in table.columns for column in raw_table.columns])
 
+    @patch('sdv.modeler.Modeler._get_extensions')
+    def test_CPA_transformed_index(self, extension_mock):
+        """CPA is able to merge extensions in tables with transformed index. """
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = Modeler(data_navigator)
+
+        # Setup - Mock
+        parent_data = pd.DataFrame([
+            {'parent_id': 'A',  'values': 1},
+            {'parent_id': 'B',  'values': 2},
+            {'parent_id': 'C',  'values': 3},
+        ])
+        parent_meta = {
+            'name': 'parent',
+            'primary_key': 'parent_id',
+            'fields': {
+                'parent_id': {
+                    'name': 'parent_id',
+                    'type': 'categorical',
+                    'regex': '^[A-Z]$'
+                },
+                'values': {
+                    'name': 'values',
+                    'type': 'number',
+                    'subtype': 'integer'
+                }
+            }
+        }
+
+        child_data = pd.DataFrame([
+            {'child_id': 1, 'parent_id': 'A', 'value': 0.1},
+            {'child_id': 2, 'parent_id': 'A', 'value': 0.2},
+            {'child_id': 3, 'parent_id': 'A', 'value': 0.3},
+            {'child_id': 4, 'parent_id': 'B', 'value': 0.4},
+            {'child_id': 5, 'parent_id': 'B', 'value': 0.5},
+            {'child_id': 6, 'parent_id': 'B', 'value': 0.6},
+            {'child_id': 7, 'parent_id': 'C', 'value': 0.7},
+            {'child_id': 8, 'parent_id': 'C', 'value': 0.8},
+            {'child_id': 9, 'parent_id': 'C', 'value': 0.9},
+        ])
+        child_meta = {
+            'name': 'child',
+            'primary_key': 'child_id',
+            'fields': {
+                'child_id': {
+                    'name': 'child_id',
+                    'type': 'number'
+                },
+                'parent_id': {
+                    'name': 'parent_id',
+                    'type': 'category',
+                    'ref': {
+                        'table': 'parent',
+                        'field': 'parent_id'
+                    }
+                },
+                'value': {
+                    'name': 'value',
+                    'type': 'number'
+                }
+            }
+        }
+
+        data_navigator.tables = {
+            'parent': Table(parent_data, parent_meta),
+            'child': Table(child_data, child_meta)
+        }
+
+        children_map = {'parent': {'child'}}
+        parent_map = {'child': {'parent'}}
+
+        data_navigator.get_children.side_effect = lambda x: children_map.get(x, set())
+        data_navigator.get_parents.side_effect = lambda x: parent_map.get(x, set())
+
+        transformed_parent = pd.DataFrame([
+            {'parent_id': 0.1,  'values': 1},
+            {'parent_id': 0.4,  'values': 2},
+            {'parent_id': 0.8,  'values': 3},
+        ])
+        transformed_child = pd.DataFrame([
+            {'child_id': 1, 'parent_id': 0.15, 'value': 0.1},
+            {'child_id': 2, 'parent_id': 0.10, 'value': 0.2},
+            {'child_id': 3, 'parent_id': 0.20, 'value': 0.3},
+            {'child_id': 4, 'parent_id': 0.35, 'value': 0.4},
+            {'child_id': 5, 'parent_id': 0.50, 'value': 0.5},
+            {'child_id': 6, 'parent_id': 0.55, 'value': 0.6},
+            {'child_id': 7, 'parent_id': 0.70, 'value': 0.7},
+            {'child_id': 8, 'parent_id': 0.80, 'value': 0.8},
+            {'child_id': 9, 'parent_id': 0.85, 'value': 0.9},
+        ])
+
+        data_navigator.transformed_data = {
+            'parent': transformed_parent,
+            'child': transformed_child
+        }
+        extension = pd.DataFrame(**{
+            'data': [
+                {'param_1': 0.5,    'param_2': 0.4},
+                {'param_1': 0.7,    'param_2': 0.2},
+                {'param_1': 0.2,    'param_2': 0.1},
+            ],
+            'index': list('ABC')
+        })
+        extension.index.name = 'parent_id'
+        extension_mock.return_value = [extension]
+
+        expected_extended_parent = pd.DataFrame(
+            [
+                {'parent_id': 0.1,  'values': 1,    'param_1': 0.5, 'param_2': 0.4},
+                {'parent_id': 0.4,  'values': 2,    'param_1': 0.7, 'param_2': 0.2},
+                {'parent_id': 0.8,  'values': 3,    'param_1': 0.2, 'param_2': 0.1},
+            ],
+            columns=['parent_id', 'values', 'param_1', 'param_2']
+        )
+
+        # Run
+        modeler.CPA('parent')
+
+        # Check
+        'parent' in modeler.tables
+        assert modeler.tables['parent'].equals(expected_extended_parent)
+
+        data_navigator.get_children.assert_called_once_with('parent')
+        extension_mock.assert_called_once_with('parent_id', {'child'})
+
     def test_flatten_model(self):
         """flatten_model returns a pandas.Series with all the params to recreate a model."""
         # Setup

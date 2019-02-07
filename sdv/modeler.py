@@ -330,9 +330,19 @@ class Modeler:
         extended_table = self.dn.transformed_data[table]
         extensions = self._get_extensions(pk, children)
 
-        # add extensions
-        for extension in extensions:
-            extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
+        if extensions:
+            original_pk = tables[table].data[pk]
+            transformed_pk = None
+            if not extended_table[pk].equals(original_pk):
+                transformed_pk = extended_table[pk].copy()
+                extended_table[pk] = original_pk
+
+            # add extensions
+            for extension in extensions:
+                extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
+
+            if transformed_pk is not None:
+                extended_table[pk] = transformed_pk
 
         self.tables[table] = extended_table
 
