@@ -187,13 +187,15 @@ class Modeler:
         """
         values = {}
 
-        for label in table:
-            value = table[label].mean()
+        for column in table.loc[:, table.isnull().any()].columns:
+            if table[column].dtype in [np.float64, np.int64]:
+                value = table[column].mean()
 
-            if not pd.isnull(value):
-                values[label] = value
+            if not pd.isnull(value or np.nan):
+                values[column] = value
             else:
-                values[label] = 0
+                values[column] = 0
+
         table = table.fillna(values)
 
         # There is an issue when using KDEUnivariate modeler in tables with childs
@@ -236,7 +238,8 @@ class Modeler:
         foreign_key, child_name = table_info
         try:
             conditional_data = transformed_child_table.loc[foreign.index].copy()
-            conditional_data = conditional_data.drop(foreign_key, axis=1)
+            if foreign_key in conditional_data:
+                conditional_data = conditional_data.drop(foreign_key, axis=1)
 
         except KeyError:
             return None
@@ -308,7 +311,15 @@ class Modeler:
 
         Conditional Parameter Aggregation. It will take the table's children and generate
         extensions (parameters from modelling the related children for each foreign key)
-        and merge them to the original `table`
+        and merge them to the original `table`.
+
+        After the extensions are created, `extended_table` is modified in order for the extensions
+        to be merged. As the extensions are returned with an index consisting of values of the
+        `primary_key` of the parent table, we need to make sure that same values are present in
+        `extended_table`. The values couldn't be present in two situations:
+
+        - They weren't numeric, and have been transformed.
+        - They weren't transformed, and therefore are not present on `extended_table`
 
         Args:
             table (string): name of table.
@@ -333,8 +344,11 @@ class Modeler:
         if extensions:
             original_pk = tables[table].data[pk]
             transformed_pk = None
-            if not extended_table[pk].equals(original_pk):
+
+            if pk in extended_table:
                 transformed_pk = extended_table[pk].copy()
+
+            if (pk not in extended_table) or (not extended_table[pk].equals(original_pk)):
                 extended_table[pk] = original_pk
 
             # add extensions
@@ -343,6 +357,8 @@ class Modeler:
 
             if transformed_pk is not None:
                 extended_table[pk] = transformed_pk
+            else:
+                extended_table = extended_table.drop(pk, axis=1)
 
         self.tables[table] = extended_table
 
