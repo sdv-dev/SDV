@@ -130,7 +130,7 @@ class Modeler:
         for key in nested.keys():
             prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
 
-            if key in IGNORED_DICT_KEYS:
+            if key in IGNORED_DICT_KEYS and not isinstance(nested[key], (dict, list)):
                 continue
 
             elif isinstance(nested[key], dict):

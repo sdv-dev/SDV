@@ -298,6 +298,65 @@ class ModelerTest(TestCase):
         # Check
         assert result == expected_result
 
+    def test__flatten_dict_missing_keys_gh_89(self):
+        """flatten_dict will only ignore keys that don't have dict or list values.
+
+        https://github.com/HDI-Project/SDV/issues/89
+        """
+        # Setup
+        nested_dict = {
+            'covariance': [
+                [1.4999999999999991, 1.4999999999999991, 1.4999999999999991],
+                [1.4999999999999991, 1.4999999999999991, 1.4999999999999991],
+                [1.4999999999999991, 1.4999999999999991, 1.4999999999999991]],
+            'distribs': {
+                'type': {
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate',
+                    'fitted': True,
+                    'mean': 4.0,
+                    'std': 2.449489742783178
+                },
+                'distribution': {
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate',
+                    'fitted': True,
+                    'mean': 5.0,
+                    'std': 2.449489742783178
+                },
+                'fitted': {
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate',
+                    'fitted': True,
+                    'mean': 6.0,
+                    'std': 2.449489742783178
+                }
+            },
+            'type': 'copulas.multivariate.gaussian.GaussianMultivariate',
+            'fitted': True,
+            'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
+        }
+        expected_result = {
+            'covariance__0__0': 1.4999999999999991,
+            'covariance__0__1': 1.4999999999999991,
+            'covariance__0__2': 1.4999999999999991,
+            'covariance__1__0': 1.4999999999999991,
+            'covariance__1__1': 1.4999999999999991,
+            'covariance__1__2': 1.4999999999999991,
+            'covariance__2__0': 1.4999999999999991,
+            'covariance__2__1': 1.4999999999999991,
+            'covariance__2__2': 1.4999999999999991,
+            'distribs__type__mean': 4.0,
+            'distribs__type__std': 2.449489742783178,
+            'distribs__distribution__mean': 5.0,
+            'distribs__distribution__std': 2.449489742783178,
+            'distribs__fitted__mean': 6.0,
+            'distribs__fitted__std': 2.449489742783178
+        }
+
+        # Run
+        result = Modeler._flatten_dict(nested_dict)
+
+        # Check
+        assert result == expected_result
+
     def test__flatten_array_ndarray(self):
         """_flatten_array return a dict formed from the input np.array"""
         # Setup
