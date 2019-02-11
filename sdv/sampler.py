@@ -1,7 +1,9 @@
 import random
 
+import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
+from rdt.transformers.positive_number import PositiveNumberTransformer
 
 import exrex
 
@@ -17,6 +19,50 @@ class Sampler:
         self.modeler = modeler
         self.sampled = {}  # table_name -> [(primary_key, generated_row)]
         self.primary_key = {}
+
+    @staticmethod
+    def update_mapping_list(mapping, key, value):
+        """Append value on mapping[key] if exists, create it otherwise."""
+        item = mapping.get(key)
+
+        if item:
+            item.append(value)
+
+        else:
+            mapping[key] = [value]
+
+        return mapping
+
+    @staticmethod
+    def _square_matrix(triangular_matrix):
+        """Fill with zeros a triangular matrix to reshape it to a square one.
+
+        Args:
+            triangular_matrix (list[list[float]]): Array of arrays of
+
+        Returns:
+            list: Square matrix.
+        """
+        length = len(triangular_matrix)
+        zero = [0.0]
+
+        for item in triangular_matrix:
+            item.extend(zero * (length - len(item)))
+
+        return triangular_matrix
+
+    def _prepare_sampled_covariance(self, covariance):
+        """
+
+        Args:
+            covariance (list): covariance after unflattening model parameters.
+
+        Result:
+            list[list]: symmetric Positive semi-definite matrix.
+        """
+        covariance = np.array(self._square_matrix(covariance))
+        covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
+        return covariance
 
     @staticmethod
     def reset_indices_tables(sampled_tables):
@@ -216,6 +262,102 @@ class Sampler:
 
         return result
 
+    def _make_positive_definite(self, matrix):
+        """Find the nearest positive-definite matrix to input
+
+        Args:
+            matrix (numpy.ndarray): Matrix to transform
+
+        Returns:
+            numpy.ndarray: Closest symetric positive-definite matrix.
+        """
+        symetric_matrix = (matrix + matrix.T) / 2
+        _, s, V = np.linalg.svd(symetric_matrix)
+        symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
+        A2 = (symetric_matrix + symmetric_polar) / 2
+        A3 = (A2 + A2.T) / 2
+
+        if self._check_matrix_symmetric_positive_definite(A3):
+            return A3
+
+        spacing = np.spacing(np.linalg.norm(matrix))
+        identity = np.eye(matrix.shape[0])
+        iterations = 1
+        while not self._check_matrix_symmetric_positive_definite(A3):
+            min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
+            A3 += identity * (-min_eigenvals * iterations**2 + spacing)
+            iterations += 1
+
+        return A3
+
+    def _check_matrix_symmetric_positive_definite(self, matrix):
+        """Checks if a matrix is symmetric positive-definite.
+
+        Args:
+            matrix (list or np.ndarray): Matrix to evaluate.
+
+        Returns:
+            bool
+        """
+        try:
+            if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+                # Not 2-dimensional or square, so not simmetric.
+                return False
+
+            np.linalg.cholesky(matrix)
+            return True
+
+        except np.linalg.LinAlgError:
+            return False
+
+    def _unflatten_gaussian_copula(self, model_parameters):
+        """Prepare unflattened model params to recreate Gaussian Multivariate instance.
+
+        The preparations consist basically in:
+        - Transform sampled negative standard deviations from distributions into positive numbers
+        - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
+        - Add string parameters kept inside the class (as they can't be modelled),
+          like `distribution_type`.
+
+        Args:
+            model_parameters (dict): Sampled and reestructured model parameters.
+
+        Returns:
+            dict: Model parameters ready to recreate the model.
+        """
+
+        distribution_name = self.modeler.model_kwargs['distribution']
+        distribution_kwargs = {
+            'fitted': True,
+            'type': distribution_name
+        }
+
+        distribs = model_parameters['distribs']
+        if any([distribs[key]['std'] <= 0 for key in distribs]):
+            metadata = {
+                'name': 'std',
+                'type': 'number'
+            }
+            transformer = PositiveNumberTransformer(metadata)
+
+        model_parameters['distribution'] = distribution_name
+        for key in distribs:
+            distribs[key].update(distribution_kwargs)
+
+            distribution_std = distribs[key]['std']
+            if distribution_std <= 0:
+                df = pd.DataFrame({'std': [distribution_std]})
+                distribs[key]['std'] = transformer.fit_transform(df)['std'].values[0]
+
+        covariance = model_parameters['covariance']
+        covariance = self._prepare_sampled_covariance(covariance)
+        if not self._check_matrix_symmetric_positive_definite(covariance):
+            covariance = self._make_positive_definite(covariance)
+
+        model_parameters['covariance'] = covariance.tolist()
+
+        return model_parameters
+
     def unflatten_model(self, parent_row, table_name, parent_name):
         """ Takes the params from a generated parent row and creates a model from it.
 
@@ -231,22 +373,16 @@ class Sampler:
         flat_parameters = parent_row.loc[:, columns]
         flat_parameters = flat_parameters.rename(columns=new_columns).to_dict('records')[0]
 
-        model_dict = self._unflatten_dict(flat_parameters, table_name)
+        model_parameters = self._unflatten_dict(flat_parameters, table_name)
         model_name = get_qualified_name(self.modeler.model)
 
-        model_dict['fitted'] = True
-        model_dict['type'] = model_name
+        model_parameters['fitted'] = True
+        model_parameters['type'] = model_name
 
         if model_name == GAUSSIAN_COPULA:
-            distribution_name = self.modeler.model_kwargs['distribution']
-            model_dict['distribution'] = distribution_name
-            for key in model_dict['distribs']:
-                model_dict['distribs'][key].update({
-                    'fitted': True,
-                    'type': distribution_name
-                })
+            model_parameters = self._unflatten_gaussian_copula(model_parameters)
 
-        return self.modeler.model.from_dict(model_dict)
+        return self.modeler.model.from_dict(model_parameters)
 
     def sample_rows(self, table_name, num_rows):
         """Sample specified number of rows for specified table.
@@ -414,15 +550,3 @@ class Sampler:
                 row.loc[:, field['name']] = exrex.getone(regex)
 
         return row
-
-    def update_mapping_list(self, mapping, key, value):
-        """Append value on mapping[key] if exists, create it otherwise."""
-        item = mapping.get(key)
-
-        if item:
-            item.append(value)
-
-        else:
-            mapping[key] = [value]
-
-        return mapping

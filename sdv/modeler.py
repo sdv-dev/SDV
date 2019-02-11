@@ -144,8 +144,7 @@ class Modeler:
 
         return result
 
-    @classmethod
-    def flatten_model(cls, model, name=''):
+    def flatten_model(self, model, name=''):
         """Flatten a model's parameters into an array.
 
         Args:
@@ -155,8 +154,16 @@ class Modeler:
         Returns:
             pd.Series: parameters for model
         """
+        if self.model == DEFAULT_MODEL:
+            values = []
+            triangle = np.tril(model.covariance)
 
-        return pd.Series(cls._flatten_dict(model.to_dict(), name))
+            for index, row in enumerate(triangle.tolist()):
+                values.append(row[:index + 1])
+
+            model.covariance = np.array(values)
+
+        return pd.Series(self._flatten_dict(model.to_dict(), name))
 
     def get_foreign_key(self, fields, primary):
         """Get foreign key from primary key.
