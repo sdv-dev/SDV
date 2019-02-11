@@ -127,20 +127,20 @@ class Modeler:
         """
         result = {}
 
-        for key in nested.keys():
+        for key, value in nested.items():
             prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
 
-            if key in IGNORED_DICT_KEYS:
+            if key in IGNORED_DICT_KEYS and not isinstance(value, (dict, list)):
                 continue
 
-            elif isinstance(nested[key], dict):
-                result.update(cls._flatten_dict(nested[key], prefix_key))
+            elif isinstance(value, dict):
+                result.update(cls._flatten_dict(value, prefix_key))
 
-            elif isinstance(nested[key], (np.ndarray, list)):
-                result.update(cls._flatten_array(nested[key], prefix_key))
+            elif isinstance(value, (np.ndarray, list)):
+                result.update(cls._flatten_array(value, prefix_key))
 
             else:
-                result[prefix_key] = nested[key]
+                result[prefix_key] = value
 
         return result
 
