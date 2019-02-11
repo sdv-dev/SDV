@@ -316,7 +316,7 @@ class TestModeler(TestCase):
             'distribs__2__mean': 0.33333333333333331,
             'distribs__2__std': 0.47140452079103168
         })
-        data_navigator = mock.MagicMock()
+        data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
 
         # Run
