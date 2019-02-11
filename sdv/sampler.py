@@ -63,15 +63,13 @@ class Sampler:
         meta = self.dn.tables[table_name].meta
         orig_meta = self._get_table_meta(self.dn.meta, table_name)
         primary_key = meta.get('primary_key')
-        categorical_fields = [
-            field['name'] for field in orig_meta['fields']
-            if field['type'] == 'categorical'
-        ]
 
-        if categorical_fields:
-            for field in categorical_fields:
-                if ((synthesized[field] < 0) | (synthesized[field] > 1)).any():
-                    synthesized[field] = self._rescale_values(synthesized[field])
+        for field in orig_meta['fields']:
+            if field['type'] == 'categorical':
+                column_name = field['name']
+                column = synthesized[column_name]
+                if ((column < 0) | (column > 1)).any():
+                    synthesized[column_name] = self._rescale_values(column)
 
         if primary_key:
             node = meta['fields'][primary_key]
