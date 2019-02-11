@@ -127,25 +127,24 @@ class Modeler:
         """
         result = {}
 
-        for key in nested.keys():
+        for key, value in nested.items():
             prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
 
-            if key in IGNORED_DICT_KEYS:
+            if key in IGNORED_DICT_KEYS and not isinstance(value, (dict, list)):
                 continue
 
-            elif isinstance(nested[key], dict):
-                result.update(cls._flatten_dict(nested[key], prefix_key))
+            elif isinstance(value, dict):
+                result.update(cls._flatten_dict(value, prefix_key))
 
-            elif isinstance(nested[key], (np.ndarray, list)):
-                result.update(cls._flatten_array(nested[key], prefix_key))
+            elif isinstance(value, (np.ndarray, list)):
+                result.update(cls._flatten_array(value, prefix_key))
 
             else:
-                result[prefix_key] = nested[key]
+                result[prefix_key] = value
 
         return result
 
-    @classmethod
-    def flatten_model(cls, model, name=''):
+    def flatten_model(self, model, name=''):
         """Flatten a model's parameters into an array.
 
         Args:
@@ -155,8 +154,16 @@ class Modeler:
         Returns:
             pd.Series: parameters for model
         """
+        if self.model == DEFAULT_MODEL:
+            values = []
+            triangle = np.tril(model.covariance)
 
-        return pd.Series(cls._flatten_dict(model.to_dict(), name))
+            for index, row in enumerate(triangle.tolist()):
+                values.append(row[:index + 1])
+
+            model.covariance = np.array(values)
+
+        return pd.Series(self._flatten_dict(model.to_dict(), name))
 
     def get_foreign_key(self, fields, primary):
         """Get foreign key from primary key.
