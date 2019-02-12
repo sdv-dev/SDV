@@ -358,23 +358,19 @@ class Sampler:
             'fitted': True,
             'type': distribution_name
         }
+        model_parameters['distribution'] = distribution_name
 
         distribs = model_parameters['distribs']
-        if any([distribs[key]['std'] <= 0 for key in distribs]):
-            metadata = {
-                'name': 'std',
-                'type': 'number'
-            }
-            transformer = PositiveNumberTransformer(metadata)
+        metadata = {
+            'name': 'std',
+            'type': 'number'
+        }
+        transformer = PositiveNumberTransformer(metadata)
 
-        model_parameters['distribution'] = distribution_name
-        for key in distribs:
-            distribs[key].update(distribution_kwargs)
-
-            distribution_std = distribs[key]['std']
-            if distribution_std <= 0:
-                df = pd.DataFrame({'std': [distribution_std]})
-                distribs[key]['std'] = transformer.fit_transform(df)['std'].values[0]
+        for distribution in distribs.values():
+            distribution.update(distribution_kwargs)
+            df = pd.DataFrame({'std': [distribution['std']]})
+            distribution['std'] = transformer.transform(df).loc[0, 'std']
 
         covariance = model_parameters['covariance']
         covariance = self._prepare_sampled_covariance(covariance)

@@ -377,11 +377,11 @@ class TestSampler(TestCase):
             'distribs': {
                 0: {
                     'first': 'distribution',
-                    'std': 1
+                    'std': 0
                 },
                 1: {
                     'second': 'distribution',
-                    'std': 1
+                    'std': 0
                 }
             }
         }

@@ -36,9 +36,9 @@ class ModelerTest(TestCase):
             'covariance__1__0': 0.0,
             'covariance__1__1': 1.4999999999999991,
             'distribs__a__mean': 0.0,
-            'distribs__a__std': 0.001,
+            'distribs__a__std': -6.907755278982137,
             'distribs__b__mean': 3.0,
-            'distribs__b__std': 1.632993161855452
+            'distribs__b__std': 0.4904146265058631
         })
 
         # Run
@@ -156,11 +156,11 @@ class ModelerTest(TestCase):
             'covariance__2__1': -0.7500000000000003,
             'covariance__2__2': 1.5000000000000007,
             'distribs__0__mean': 0.33333333333333331,
-            'distribs__0__std': 0.47140452079103168,
+            'distribs__0__std': -0.7520386983881371,
             'distribs__1__mean': 0.33333333333333331,
-            'distribs__1__std': 0.47140452079103168,
+            'distribs__1__std': -0.7520386983881371,
             'distribs__2__mean': 0.33333333333333331,
-            'distribs__2__std': 0.47140452079103168
+            'distribs__2__std': -0.7520386983881371
         })
         data_navigator = mock.MagicMock()
         modeler = Modeler(data_navigator)
