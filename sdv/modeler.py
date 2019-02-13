@@ -394,6 +394,7 @@ class Modeler:
                 self.models[table] = self.fit_model(clean_table)
 
         except (ValueError, np.linalg.linalg.LinAlgError) as error:
-            raise ValueError(MODELLING_ERROR_MESSAGE).with_traceback(error.__traceback__)
+            raise ValueError(
+                MODELLING_ERROR_MESSAGE).with_traceback(error.__traceback__) from None
 
         logger.info('Modeling Complete')
