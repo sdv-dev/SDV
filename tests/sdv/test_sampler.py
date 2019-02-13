@@ -80,6 +80,11 @@ class TestSampler(TestCase):
             'table': test_table
         }
 
+        data_navigator.ht.transformers = {
+            ('table', 'column_A'): None,
+            ('table', 'column_B'): None
+        }
+
         data_navigator.ht.reverse_transform_table.return_value = pd.DataFrame({
             'column_A': ['some', 'transformed values'],
             'column_B': ['another', 'transformed column']
@@ -124,9 +129,12 @@ class TestSampler(TestCase):
         fill_mock.assert_called_once_with(
             sampler, synthesized_rows, ['column_A', 'column_B'], 'table')
 
-        data_navigator.ht.reverse_transform_table.assert_called_once_with(
-            fill_mock.return_value, get_table_meta_mock.return_value
-        )
+        call_args = data_navigator.ht.reverse_transform_table.call_args_list
+        assert len(call_args) == 1
+        assert len(call_args[0][0]) == 2
+        assert call_args[0][0][0].equals(fill_mock.return_value)
+        assert call_args[0][0][1] == get_table_meta_mock.return_value
+        assert call_args[0][1] == {}
 
     def test__prepare_sampled_covariance(self):
         """ """

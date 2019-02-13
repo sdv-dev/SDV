@@ -152,11 +152,15 @@ class Sampler:
 
         # filter out parameters
         labels = list(self.dn.tables[table_name].data)
+        reverse_columns = [
+            transformer[1] for transformer in self.dn.ht.transformers
+            if table_name in transformer
+        ]
 
         text_filled = self._fill_text_columns(synthesized, labels, table_name)
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(text_filled, orig_meta)
+        reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], orig_meta)
 
         synthesized.update(reversed_data)
         return synthesized[labels]

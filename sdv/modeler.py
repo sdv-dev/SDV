@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from copulas import get_qualified_name
+from copulas import EPSILON, get_qualified_name
 from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
 from rdt.transformers.positive_number import PositiveNumberTransformer
@@ -16,9 +16,9 @@ DEFAULT_DISTRIBUTION = GaussianUnivariate
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 MODELLING_ERROR_MESSAGE = (
-    'There was an error while trying to model the database. If you are using a custom'
-    'distribution or model, please try again using the default ones. If the problem persist,'
-    'please report it here: https://github.com/HDI-Project/SDV/issues'
+    'There was an error while trying to model the database. If you are using a custom '
+    'distribution or model, please try again using the default ones. If the problem persist, '
+    'please report it here:\nhttps://github.com/HDI-Project/SDV/issues.\n'
 )
 
 
@@ -204,15 +204,26 @@ class Modeler:
         """
         values = {}
 
-        for label in table:
-            value = table[label].mean()
+        for column in table.loc[:, table.isnull().any()].columns:
+            if table[column].dtype in [np.float64, np.int64]:
+                value = table[column].mean()
 
-            if not pd.isnull(value):
-                values[label] = value
+            if not pd.isnull(value or np.nan):
+                values[column] = value
             else:
-                values[label] = 0
+                values[column] = 0
 
-        return table.fillna(values)
+        table = table.fillna(values)
+
+        # There is an issue when using KDEUnivariate modeler in tables with childs
+        # As the extension columns would have constant values, that make it crash
+        # This is a temporary fix while https://github.com/DAI-Lab/Copulas/issues/82 is solved.
+        first_index = table.index[0]
+        constant_columns = table.loc[:, (table == table.loc[first_index]).all()].columns
+        for column in constant_columns:
+            table.loc[first_index, column] = table.loc[first_index, column] + EPSILON
+
+        return table
 
     def fit_model(self, data):
         """Returns an instance of self.model fitted with the given data.
@@ -235,22 +246,26 @@ class Modeler:
             foreign(pandas.DataFrame): Object with Index of elements from children table elements
                                        of a given foreign_key.
             transformed_child_table(pandas.DataFrame): Table of data to fil
-            table_info (tuple(str, str)): foreign_key and child table names.
+            table_info (tuple[str, str]): foreign_key and child table names.
 
         Returns:
-            pd.Series : Parameter extension
+            pd.Series or None : Parameter extension if it can be generated, None elsewhere.
             """
 
         foreign_key, child_name = table_info
         try:
             conditional_data = transformed_child_table.loc[foreign.index].copy()
-            conditional_data = conditional_data.drop(foreign_key, axis=1)
+            if foreign_key in conditional_data:
+                conditional_data = conditional_data.drop(foreign_key, axis=1)
 
         except KeyError:
             return None
 
-        clean_df = self.impute_table(conditional_data)
-        return self.flatten_model(self.fit_model(clean_df), child_name)
+        if len(conditional_data):
+            clean_df = self.impute_table(conditional_data)
+            return self.flatten_model(self.fit_model(clean_df), child_name)
+
+        return None
 
     def _get_extensions(self, pk, children):
         """Generate list of extension for child tables.
@@ -301,7 +316,7 @@ class Modeler:
                     parameters[foreign_key] = parameter.to_dict()
 
             extension = pd.DataFrame(parameters).T
-            extension.index.name = fk
+            extension.index.name = pk
 
             if len(extension):
                 extensions.append(extension)
@@ -313,7 +328,15 @@ class Modeler:
 
         Conditional Parameter Aggregation. It will take the table's children and generate
         extensions (parameters from modelling the related children for each foreign key)
-        and merge them to the original `table`
+        and merge them to the original `table`.
+
+        After the extensions are created, `extended_table` is modified in order for the extensions
+        to be merged. As the extensions are returned with an index consisting of values of the
+        `primary_key` of the parent table, we need to make sure that same values are present in
+        `extended_table`. The values couldn't be present in two situations:
+
+        - They weren't numeric, and have been transformed.
+        - They weren't transformed, and therefore are not present on `extended_table`
 
         Args:
             table (string): name of table.
@@ -335,9 +358,24 @@ class Modeler:
         extended_table = self.dn.transformed_data[table]
         extensions = self._get_extensions(pk, children)
 
-        # add extensions
-        for extension in extensions:
-            extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
+        if extensions:
+            original_pk = tables[table].data[pk]
+            transformed_pk = None
+
+            if pk in extended_table:
+                transformed_pk = extended_table[pk].copy()
+
+            if (pk not in extended_table) or (not extended_table[pk].equals(original_pk)):
+                extended_table[pk] = original_pk
+
+            # add extensions
+            for extension in extensions:
+                extended_table = extended_table.merge(extension.reset_index(), how='left', on=pk)
+
+            if transformed_pk is not None:
+                extended_table[pk] = transformed_pk
+            else:
+                extended_table = extended_table.drop(pk, axis=1)
 
         self.tables[table] = extended_table
 
@@ -365,7 +403,8 @@ class Modeler:
                 clean_table = self.impute_table(self.tables[table])
                 self.models[table] = self.fit_model(clean_table)
 
-        except (ValueError, np.linalg.linalg.LinAlgError):
-            ValueError(MODELLING_ERROR_MESSAGE)
+        except (ValueError, np.linalg.linalg.LinAlgError) as error:
+            raise ValueError(
+                MODELLING_ERROR_MESSAGE).with_traceback(error.__traceback__) from None
 
         logger.info('Modeling Complete')
