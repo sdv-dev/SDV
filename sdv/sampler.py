@@ -407,7 +407,7 @@ class Sampler:
 
         return self.modeler.model.from_dict(model_parameters)
 
-    def __get_missing_valid_rows(self, synthesized, drop_indices, valid_rows, num_rows):
+    def _get_missing_valid_rows(self, synthesized, drop_indices, valid_rows, num_rows):
         """
 
         Args:
@@ -453,7 +453,7 @@ class Sampler:
                     if filtered_values.any():
                         drop_indices |= filtered_values
 
-            missing_rows, valid_rows = self.__get_missing_valid_rows(
+            missing_rows, valid_rows = self._get_missing_valid_rows(
                 synthesized, drop_indices, valid_rows, num_rows)
 
             while missing_rows:
@@ -467,7 +467,7 @@ class Sampler:
                     if filtered_values.any():
                         drop_indices |= filtered_values
 
-                missing_rows, valid_rows = self.__get_missing_valid_rows(
+                missing_rows, valid_rows = self._get_missing_valid_rows(
                     synthesized, drop_indices, valid_rows, num_rows)
 
             return valid_rows
