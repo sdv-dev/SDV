@@ -3,7 +3,7 @@
 """Main module."""
 import pickle
 
-from sklearn.exceptions import NotFittedError
+from copulas import NotFittedError
 
 from sdv.data_navigator import CSVDataLoader
 from sdv.modeler import Modeler
