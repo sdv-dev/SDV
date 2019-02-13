@@ -6,6 +6,7 @@ import pandas as pd
 from copulas import EPSILON, get_qualified_name
 from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
+from rdt.transformers.positive_number import PositiveNumberTransformer
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -162,6 +163,15 @@ class Modeler:
                 values.append(row[:index + 1])
 
             model.covariance = np.array(values)
+            if self.model_kwargs['distribution'] == get_qualified_name(DEFAULT_DISTRIBUTION):
+                transformer = PositiveNumberTransformer({
+                    'name': 'field',
+                    'type': 'number'
+                })
+
+                for distribution in model.distribs.values():
+                    column = pd.DataFrame({'field': [distribution.std]})
+                    distribution.std = transformer.reverse_transform(column).loc[0, 'field']
 
         return pd.Series(self._flatten_dict(model.to_dict(), name))
 

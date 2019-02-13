@@ -310,11 +310,11 @@ class TestModeler(TestCase):
             'covariance__2__1': -0.7500000000000003,
             'covariance__2__2': 1.5000000000000007,
             'distribs__0__mean': 0.33333333333333331,
-            'distribs__0__std': 0.47140452079103168,
+            'distribs__0__std': -0.7520386983881371,
             'distribs__1__mean': 0.33333333333333331,
-            'distribs__1__std': 0.47140452079103168,
+            'distribs__1__std': -0.7520386983881371,
             'distribs__2__mean': 0.33333333333333331,
-            'distribs__2__std': 0.47140452079103168
+            'distribs__2__std': -0.7520386983881371,
         })
         data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
@@ -448,19 +448,19 @@ class TestModeler(TestCase):
         modeler = Modeler(data_navigator=data_navigator, model=GaussianMultivariate)
 
         # Setup - Mocks - DataNavigator
-        data = pd.DataFrame({
+        table_data = pd.DataFrame({
             'column_A': list('abdc'),
             'column_B': range(4)
         })
-        meta = {
+        table_metadata = {
             'name': 'table_name',
             'fields': {
                 'column_A': {
-                    'name': 'A',
+                    'name': 'column_A',
                     'type': 'categorical'
                 },
                 'column_B': {
-                    'name': 'B',
+                    'name': 'column_B',
                     'type': 'number',
                     'subtype': 'integer'
                 }
@@ -468,7 +468,7 @@ class TestModeler(TestCase):
         }
 
         data_navigator.tables = {
-            'table_name': Table(data, meta)
+            'table_name': Table(table_data, table_metadata)
         }
         data_navigator.get_parents.return_value = set()
         data_navigator.get_children.return_value = set()
@@ -478,12 +478,23 @@ class TestModeler(TestCase):
                 'column_B': range(4)
             })
         }
-        data_navigator.meta = {
-            'tables': [
+        metadata = {
+            'name': 'table_name',
+            'fields': [
                 {
-                    'name': meta
+                    'name': 'column_A',
+                    'type': 'categorical'
+                },
+                {
+                    'name': 'column_B',
+                    'type': 'number',
+                    'subtype': 'integer'
                 }
             ]
+        }
+
+        data_navigator.meta = {
+            'tables': [metadata]
         }
         data_navigator.ht = MagicMock()
         data_navigator.ht.transformers = {
