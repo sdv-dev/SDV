@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 
-from sdv.data_navigator import CSVDataLoader
-from sdv.modeler import Modeler
+from sdv.data_navigator import CSVDataLoader, DataNavigator, Table
+from sdv.modeler import GaussianMultivariate, Modeler
 from sdv.sampler import Sampler
 
 
@@ -47,6 +47,86 @@ class TestSampler(TestCase):
 
         # Check
         assert result == expected_result
+
+    @patch('sdv.sampler.Sampler._fill_text_columns', autospec=True)
+    @patch('sdv.sampler.Sampler.update_mapping_list')
+    @patch('sdv.sampler.Sampler._get_table_meta', autospec=True)
+    def test_transform_synthesized_rows_no_pk(
+            self, get_table_meta_mock, update_mock, fill_mock):
+
+        """transform_synthesized_rows will update internal state and reverse transform rows."""
+        # Setup - Class Instantiation
+        data_navigator = MagicMock()
+        modeler = MagicMock()
+        sampler = Sampler(data_navigator, modeler)
+
+        # Setup - Mock configuration
+        table_metadata = {
+            'fields': {
+                'column_A': {
+                    'type': 'number',
+                    'subtype': 'integer'
+                },
+                'column_B': {
+                    'name': 'column',
+                    'type': 'number'
+                }
+            },
+            'primary_key': None
+        }
+        table_data = pd.DataFrame(columns=['column_A', 'column_B'])
+        test_table = Table(table_data, table_metadata)
+        data_navigator.tables = {
+            'table': test_table
+        }
+
+        data_navigator.ht.reverse_transform_table.return_value = pd.DataFrame({
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
+        })
+
+        get_table_meta_mock.return_value = {
+            'original': 'meta',
+            'fields': []
+        }
+
+        fill_mock.return_value = pd.DataFrame({
+            'column_A': ['filled', 'text_values'],
+            'column_B': ['nothing', 'numerical']
+        })
+
+        # Setup - Method arguments / expected result
+        synthesized_rows = pd.DataFrame({
+            'column_A': [1.7, 2.5],
+            'column_B': [4.7, 5.1],
+            'model_parameters': ['some', 'parameters']
+        })
+        table_name = 'table'
+        num_rows = 2
+
+        expected_result = pd.DataFrame({
+            'column_A': ['some', 'transformed values'],
+            'column_B': ['another', 'transformed column']
+        })
+
+        # Run
+        result = sampler.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+
+        # Check - Result
+        assert result.equals(expected_result)
+
+        # Check - Class internal state
+        assert sampler.sampled == update_mock.return_value
+
+        # Check - Mock calls
+        get_table_meta_mock.assert_called_once_with(sampler, data_navigator.meta, 'table')
+        update_mock.assert_called_once_with({}, 'table', (None, synthesized_rows))
+        fill_mock.assert_called_once_with(
+            sampler, synthesized_rows, ['column_A', 'column_B'], 'table')
+
+        data_navigator.ht.reverse_transform_table.assert_called_once_with(
+            fill_mock.return_value, get_table_meta_mock.return_value
+        )
 
     def test__prepare_sampled_covariance(self):
         """ """
@@ -141,7 +221,7 @@ class TestSampler(TestCase):
         reset_mock.assert_called_once_with({'TABLE_A': 'concatenated_dataframe'})
 
     def test__unflatten_dict(self):
-        """ """
+        """unflatten_dict restructure flatten dicts."""
         # Setup
         data_navigator = MagicMock()
         modeler = MagicMock()
@@ -171,7 +251,7 @@ class TestSampler(TestCase):
         modeler.assert_not_called()
 
     def test__unflatten_dict_mixed_array(self):
-        """unflatten_dict restruicture arrays"""
+        """unflatten_dict restructure arrays."""
         # Setup
         data_navigator = MagicMock()
         modeler = MagicMock()
@@ -297,11 +377,11 @@ class TestSampler(TestCase):
             'distribs': {
                 0: {
                     'first': 'distribution',
-                    'std': 1
+                    'std': 0
                 },
                 1: {
                     'second': 'distribution',
-                    'std': 1
+                    'std': 0
                 }
             }
         }
@@ -395,3 +475,93 @@ class TestSampler(TestCase):
 
         data_navigator.assert_not_called()
         modeler.assert_not_called()
+
+    def test__sample_valid_rows_respect_categorical_values(self):
+        """_sample_valid_rows will return rows with valid values for categorical columns."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator, modeler)
+
+        data_navigator.meta = {
+            'tables': [
+                {
+                    'name': 'table_name',
+                    'fields': [
+                        {
+                            'name': 'field_A',
+                            'type': 'categorical'
+                        },
+                        {
+                            'name': 'field_B',
+                            'type': 'categorical'
+                        }
+                    ]
+                }
+            ]
+        }
+
+        num_rows = 5
+        table_name = 'table_name'
+        model = MagicMock(spec=GaussianMultivariate)
+        model.fitted = True
+        sample_dataframe = pd.DataFrame([
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 1.5},  # Invalid field_B
+            {'field_A': 1.5,    'field_B': 0.5},  # Invalid field_A
+        ])
+
+        model.sample.side_effect = lambda x: sample_dataframe.iloc[:x].copy()
+
+        expected_model_call_args_list = [
+            ((5,), {}),
+            ((2,), {})
+        ]
+
+        expected_result = pd.DataFrame([
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5,    'field_B': 0.5},
+        ])
+
+        # Run
+        result = sampler._sample_valid_rows(model, num_rows, table_name)
+
+        # Check
+        assert result.equals(expected_result)
+
+        modeler.assert_not_called()
+        assert len(modeler.method_calls) == 0
+
+        data_navigator.assert_not_called()
+        assert len(data_navigator.method_calls) == 0
+
+        assert model.sample.call_args_list == expected_model_call_args_list
+
+    def test__sample_valid_rows_raises_unfitted_model(self):
+        """_sample_valid_rows raise an exception for invalid models."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator, modeler)
+
+        data_navigator.get_parents.return_value = set()
+
+        num_rows = 5
+        table_name = 'table_name'
+        model = None
+
+        # Run
+        with self.assertRaises(ValueError):
+            sampler._sample_valid_rows(model, num_rows, table_name)
+
+        # Check
+        modeler.assert_not_called()
+        assert len(modeler.method_calls) == 0
+
+        data_navigator.assert_not_called()
+        data_navigator.get_parents.assert_called_once_with('table_name')
