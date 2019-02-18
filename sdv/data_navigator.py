@@ -1,10 +1,10 @@
 import copy
 import json
 import os
+from collections import namedtuple
 
 import pandas as pd
 from rdt.hyper_transformer import HyperTransformer
-from collections import namedtuple
 
 """NamedTuple that represents a table object."""
 Table = namedtuple('Table', 'data meta')
@@ -143,7 +143,8 @@ class DataNavigator:
 
             pii_fields = self.ht._get_pii_fields(ht_meta)
             if pii_fields:
-                # Table is a namedtuple, which is immutable, so instantiate a new one with transformed data
+                # Table is a namedtuple, which is immutable, so instantiate a new
+                # one with transformed data
                 self.tables[table_name] = Table(ht_table, table.meta)
 
     def __init__(self, meta_filename, meta, tables, missing=None):
