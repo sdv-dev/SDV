@@ -209,7 +209,7 @@ class TestSampler(TestCase):
         sampler = Sampler(data_navigator, modeler)
 
         def fake_dataframe(name, number):
-            return pd.DataFrame([{name: 0} for i in range(number)], index=[0]*number)
+            return pd.DataFrame([{name: 0} for i in range(number)], index=[0] * number)
 
         rows_mock.side_effect = fake_dataframe
         concat_mock.return_value = 'concatenated_dataframe'
@@ -514,11 +514,11 @@ class TestSampler(TestCase):
         model = MagicMock(spec=GaussianMultivariate)
         model.fitted = True
         sample_dataframe = pd.DataFrame([
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 1.5},  # Invalid field_B
-            {'field_A': 1.5,    'field_B': 0.5},  # Invalid field_A
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 1.5},  # Invalid field_B
+            {'field_A': 1.5, 'field_B': 0.5},  # Invalid field_A
         ])
 
         model.sample.side_effect = lambda x: sample_dataframe.iloc[:x].copy()
@@ -529,11 +529,11 @@ class TestSampler(TestCase):
         ]
 
         expected_result = pd.DataFrame([
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
-            {'field_A': 0.5,    'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
+            {'field_A': 0.5, 'field_B': 0.5},
         ])
 
         # Run

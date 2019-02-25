@@ -10,19 +10,18 @@ __version__ = '0.1.1-dev'
 
 import logging
 
-from sdv.data_navigator import DataLoader, CSVDataLoader, DataNavigator
+from sdv.data_navigator import CSVDataLoader, DataLoader, DataNavigator
 from sdv.modeler import Modeler
 from sdv.sampler import Sampler
 from sdv.sdv import SDV
 
-
 __all__ = (
-    'DataLoader',
     'CSVDataLoader',
+    'DataLoader',
     'DataNavigator',
     'Modeler',
+    'SDV',
     'Sampler',
-    'SDV'
 )
 
 logging.getLogger('btb').addHandler(logging.NullHandler())

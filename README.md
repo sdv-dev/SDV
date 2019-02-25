@@ -4,8 +4,17 @@
 </p>
 
 
+[![PyPi][pypi-img]][pypi-url]
+[![Travis][travis-img]][travis-url]
+[![CodeCov][codecov-img]][codecov-url]
 
-[![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
+[pypi-img]: https://img.shields.io/pypi/v/sdv.svg
+[pypi-url]: https://pypi.python.org/pypi/sdv
+[travis-img]: https://travis-ci.org/HDI-Project/SDV.svg?branch=master
+[travis-url]: https://travis-ci.org/HDI-Project/SDV
+[codecov-img]: https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/HDI-Project/SDV
+
 
 # SDV - Synthetic Data Vault
 
@@ -14,11 +23,6 @@ Automated generative modeling and sampling
 
 - Free software: MIT license
 - Documentation: https://HDI-Project.github.io/SDV
-
-[travis-img]: https://travis-ci.org/HDI-Project/SDV.svg?branch=master
-[travis-url]: https://travis-ci.org/HDI-Project/SDV
-[pypi-img]: https://img.shields.io/pypi/v/sdv.svg
-[pypi-url]: https://pypi.python.org/pypi/sdv
 
 ## Summary
 
