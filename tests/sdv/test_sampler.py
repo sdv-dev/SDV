@@ -98,7 +98,7 @@ class TestSampler(TestCase):
         fill_mock.return_value = pd.DataFrame({
             'column_A': ['filled', 'text_values'],
             'column_B': ['nothing', 'numerical']
-        })
+        }, columns=['column_A', 'column_B'])
 
         # Setup - Method arguments / expected result
         synthesized_rows = pd.DataFrame({

@@ -182,7 +182,7 @@ The process of releasing a new version involves several steps combining both ``g
           Normally this is just a list of the Pull Requests that have been merged to master
           since the last release.
 
-Once this is done, run of the following commands:
+Once this is done, run one of the following commands:
 
 1. If you are releasing a patch version::
 
