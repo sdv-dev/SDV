@@ -1,11 +1,10 @@
 import random
 
+import exrex
 import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
 from rdt.transformers.positive_number import PositiveNumberTransformer
-
-import exrex
 
 GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
 

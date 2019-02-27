@@ -5,11 +5,14 @@
 
 from setuptools import find_packages, setup
 
+
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
+
 with open('HISTORY.md') as history_file:
     history = history_file.read()
+
 
 install_requires = [
     'exrex>=0.10.5',
@@ -19,30 +22,47 @@ install_requires = [
     'rdt>=0.1.2'
 ]
 
-setup_requires = ['pytest-runner', ]
 
-test_require = [
+tests_require = [
     'pytest>=3.4.2',
-    'coverage>=4.5.1',
-    'tox>=2.9.1',
-    'flake8>=3.5.0',
-    'isort>=4.3.4',
+    'pytest-cov>=2.6.0',
 ]
+
+
+setup_requires = [
+    'pytest-runner>=2.11.1',
+]
+
 
 development_requires = [
+    # general
     'bumpversion>=0.5.3',
+    'pip>=9.0.1',
     'watchdog>=0.8.3',
+
+    # docs
+    'm2r>=0.2.0',
     'Sphinx>=1.7.1',
-    'recommonmark>=0.4.0',
     'sphinx_rtd_theme>=0.2.4',
+    'recommonmark>=0.4.0',
+
+    # style check
     'flake8>=3.5.0',
     'isort>=4.3.4',
-    'autoflake>=1.1',
-    'autopep8>=1.3.5',
+
+    # fix style issues
+    'autoflake>=1.2',  # keep this after flake8 to avoid
+    'autopep8>=1.3.5', # version incompatibilities with flake8
+
+    # distribute on PyPI
     'twine>=1.10.0',
     'wheel>=0.30.0',
-    'm2r>=0.2.0'
+
+    # Advanced testing
+    'tox>=2.9.1',
+    'coverage>=4.5.1',
 ]
+
 
 setup(
     author="MIT Data To AI Lab",
@@ -58,8 +78,8 @@ setup(
     ],
     description="Automated generative modeling and sampling",
     extras_require={
-        'test': test_require,
-        'dev': test_require + development_requires
+        'test': tests_require,
+        'dev': tests_require + development_requires
     },
     install_requires=install_requires,
     license="MIT license",
@@ -72,7 +92,7 @@ setup(
     python_requires='>=3.5',
     setup_requires=setup_requires,
     test_suite='tests',
-    tests_require=test_require,
+    tests_require=tests_require,
     url='https://github.com/HDI-Project/sdv',
     version='0.1.1-dev',
     zip_safe=False,

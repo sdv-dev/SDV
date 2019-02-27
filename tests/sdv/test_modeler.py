@@ -178,9 +178,9 @@ class TestModeler(TestCase):
 
         # Setup - Mock
         parent_data = pd.DataFrame([
-            {'parent_id': 'A',  'values': 1},
-            {'parent_id': 'B',  'values': 2},
-            {'parent_id': 'C',  'values': 3},
+            {'parent_id': 'A', 'values': 1},
+            {'parent_id': 'B', 'values': 2},
+            {'parent_id': 'C', 'values': 3},
         ])
         parent_meta = {
             'name': 'parent',
@@ -245,9 +245,9 @@ class TestModeler(TestCase):
         data_navigator.get_parents.side_effect = lambda x: parent_map.get(x, set())
 
         transformed_parent = pd.DataFrame([
-            {'parent_id': 0.1,  'values': 1},
-            {'parent_id': 0.4,  'values': 2},
-            {'parent_id': 0.8,  'values': 3},
+            {'parent_id': 0.1, 'values': 1},
+            {'parent_id': 0.4, 'values': 2},
+            {'parent_id': 0.8, 'values': 3},
         ])
         transformed_child = pd.DataFrame([
             {'child_id': 1, 'parent_id': 0.15, 'value': 0.1},
@@ -267,9 +267,9 @@ class TestModeler(TestCase):
         }
         extension = pd.DataFrame(**{
             'data': [
-                {'param_1': 0.5,    'param_2': 0.4},
-                {'param_1': 0.7,    'param_2': 0.2},
-                {'param_1': 0.2,    'param_2': 0.1},
+                {'param_1': 0.5, 'param_2': 0.4},
+                {'param_1': 0.7, 'param_2': 0.2},
+                {'param_1': 0.2, 'param_2': 0.1},
             ],
             'index': list('ABC')
         })
@@ -278,9 +278,9 @@ class TestModeler(TestCase):
 
         expected_extended_parent = pd.DataFrame(
             [
-                {'parent_id': 0.1,  'values': 1,    'param_1': 0.5, 'param_2': 0.4},
-                {'parent_id': 0.4,  'values': 2,    'param_1': 0.7, 'param_2': 0.2},
-                {'parent_id': 0.8,  'values': 3,    'param_1': 0.2, 'param_2': 0.1},
+                {'parent_id': 0.1, 'values': 1, 'param_1': 0.5, 'param_2': 0.4},
+                {'parent_id': 0.4, 'values': 2, 'param_1': 0.7, 'param_2': 0.2},
+                {'parent_id': 0.8, 'values': 3, 'param_1': 0.2, 'param_2': 0.1},
             ],
             columns=['parent_id', 'values', 'param_1', 'param_2']
         )
@@ -366,9 +366,9 @@ class TestModeler(TestCase):
             {'A': np.nan, 'B': 4., 'C': 4.},
         ])
         expected_result = pd.DataFrame([
-            {'A': EPSILON,  'B': 2., 'C': 2.},
-            {'A': 0.,       'B': 3., 'C': 3.},
-            {'A': 0.,       'B': 4., 'C': 4.},
+            {'A': EPSILON, 'B': 2., 'C': 2.},
+            {'A': 0., 'B': 3., 'C': 3.},
+            {'A': 0., 'B': 4., 'C': 4.},
         ])
 
         # Run
@@ -384,14 +384,14 @@ class TestModeler(TestCase):
         """impute_table adds EPSILON at the first element of a constant column."""
         # Setup
         table = pd.DataFrame([
-            {'A': np.nan,   'B': 10.,       'C': 20.},
-            {'A': 5.,       'B': np.nan,    'C': 20.},
-            {'A': 5.,       'B': 10.,       'C': np.nan},
+            {'A': np.nan, 'B': 10., 'C': 20.},
+            {'A': 5., 'B': np.nan, 'C': 20.},
+            {'A': 5., 'B': 10., 'C': np.nan},
         ])
         expected_result = pd.DataFrame([
             {'A': 5. + EPSILON, 'B': 10. + EPSILON, 'C': 20. + EPSILON},
-            {'A': 5.,           'B': 10.,           'C': 20.},
-            {'A': 5.,           'B': 10.,           'C': 20.},
+            {'A': 5., 'B': 10., 'C': 20.},
+            {'A': 5., 'B': 10., 'C': 20.},
         ])
 
         # Run

@@ -60,7 +60,7 @@ def run_demo(folder_name):
         LOGGER.info('Sampled row from %s: %s', name, table.head(3).T)
 
     end = timer()
-    LOGGER.info('Total time: %s seconds', round(end-start))
+    LOGGER.info('Total time: %s seconds', round(end - start))
 
 
 if __name__ == '__main__':
