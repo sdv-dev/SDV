@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from unittest import TestCase, skip
 from unittest.mock import MagicMock, patch
 
@@ -7,7 +8,7 @@ from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate import KDEUnivariate
 
-from sdv.data_navigator import CSVDataLoader, DataNavigator, Table
+from sdv.data_navigator import CSVDataLoader, DataNavigator, HyperTransformer, Table
 from sdv.modeler import Modeler
 from sdv.sampler import Sampler
 
@@ -433,13 +434,62 @@ class TestModeler(TestCase):
         # Check
         model_mock.assert_called_once_with(distribution='copulas.univariate.kde.KDEUnivariate')
 
-    def test_model_database(self):
+    @patch('sdv.modeler.Modeler.fit_model')
+    @patch('sdv.modeler.Modeler.impute_table')
+    @patch('sdv.modeler.Modeler.RCPA')
+    def test_model_database(self, rcpa_mock, impute_mock, fit_mock):
         """model_database computes conditions between tables and models them."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = Modeler(data_navigator)
+
+        data_navigator.tables = OrderedDict()
+        data_navigator.tables['table_A'] = 'table_A_dataframe'
+        data_navigator.tables['table_B'] = 'table_B_dataframe'
+        data_navigator.tables['table_C'] = 'table_C_dataframe'
+
+        parents = {
+            'table_A': {},
+            'table_B': {'table_A'},
+            'table_C': {'table_B'}
+        }
+        data_navigator.get_parents.side_effect = lambda x: parents[x]
+
+        def rcpa_side_effect(*args):
+            modeler.tables = data_navigator.tables
+
+        rcpa_mock.side_effect = rcpa_side_effect
+        impute_mock.side_effect = ['TABLE_A', 'TABLE_B', 'TABLE_C']
+        fit_mock.side_effect = lambda x: 'model_for_{}'.format(x)
+
         # Run
-        self.modeler.model_database()
+        modeler.model_database()
 
         # Check
-        assert self.modeler.tables.keys() == self.modeler.models.keys()
+        assert data_navigator.get_parents.call_args_list == [
+            (('table_A',), ),
+            (('table_B',), ),
+            (('table_C',), ),
+        ]
+
+        rcpa_mock.assert_called_once_with('table_A')
+        assert impute_mock.call_args_list == [
+            (('table_A_dataframe', ), ),
+            (('table_B_dataframe', ), ),
+            (('table_C_dataframe', ), ),
+        ]
+
+        assert fit_mock.call_args_list == [
+            (('TABLE_A', ), ),
+            (('TABLE_B', ), ),
+            (('TABLE_C', ), ),
+        ]
+
+        assert modeler.models == {
+            'table_A': 'model_for_TABLE_A',
+            'table_B': 'model_for_TABLE_B',
+            'table_C': 'model_for_TABLE_C'
+        }
 
     def test_model_database_gaussian_copula_single_table(self):
         """model_database can model a single table using the gausian copula model."""
@@ -496,36 +546,47 @@ class TestModeler(TestCase):
         data_navigator.meta = {
             'tables': [metadata]
         }
-        data_navigator.ht = MagicMock()
-        data_navigator.ht.transformers = {
+        ht = MagicMock(spec=HyperTransformer)
+        ht.transformers = {
             ('table_name', 'column_A'): None,
             ('table_name', 'column_B'): None
         }
+
+        reverse_transform_dataframe = pd.DataFrame({
+            'column_A': list('bcda'),
+            'column_B': [1, 2, 3, 4]
+        }, columns=['column_A', 'column_B'])
+        ht.reverse_transform_table.return_value = reverse_transform_dataframe
+
+        data_navigator.ht = ht
 
         # Run
         modeler.model_database()
 
         # Check
+        assert len(modeler.models) == 1
         assert 'table_name' in modeler.models
+        model = modeler.models['table_name']
+
+        assert isinstance(model, GaussianMultivariate)
+        assert model.fitted is True
+
+        assert data_navigator.get_parents.call_args_list == [(('table_name', ), )]
+        assert data_navigator.get_children.call_args_list == [
+            (('table_name', ), ),
+            (('table_name', ), )
+        ]
 
         sampler = Sampler(data_navigator, modeler)
-        samples = sampler.sample_all()
+        samples = sampler.sample_table('table_name')
+
+        assert len(samples.keys()) == 1
         assert 'table_name' in samples
+        sampled_table = samples['table_name']
 
-    @patch('sdv.modeler.Modeler.RCPA')
-    def test_model_database_raises(self, rcpa_mock):
-        """If the models raise an exception, it prints a custom message."""
-        # Setup
-        data_navigator = MagicMock()
-        modeler = Modeler(data_navigator)
-
-        data_navigator.tables = ['table_1', 'table_2']
-        data_navigator.get_parents.return_value = False
-        rcpa_mock.side_effect = ValueError('value error!')
-
-        # Run / Check
-        with self.assertRaises(ValueError):
-            modeler.model_database()
+        assert isinstance(sampled_table, pd.DataFrame)
+        import ipdb; ipdb.set_trace()
+        assert sampled_table.equals(modeler.dn.ht.reverse_transform_table())
 
     def test_model_database_kde_distribution(self):
         """model_database works fine with kde distribution."""
