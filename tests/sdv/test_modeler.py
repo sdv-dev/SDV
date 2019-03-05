@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from unittest import TestCase, skip
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -554,7 +554,7 @@ class TestModeler(TestCase):
 
         reverse_transform_dataframe = pd.DataFrame({
             'column_A': list('bcda'),
-            'column_B': [1, 2, 3, 4]
+            'column_B': [1.0, 2.0, 3.0, 4.0]
         }, columns=['column_A', 'column_B'])
         ht.reverse_transform_table.return_value = reverse_transform_dataframe
 
@@ -569,6 +569,101 @@ class TestModeler(TestCase):
         model = modeler.models['table_name']
 
         assert isinstance(model, GaussianMultivariate)
+        assert model.distribution == 'copulas.univariate.gaussian.GaussianUnivariate'
+        assert model.fitted is True
+
+        assert data_navigator.get_parents.call_args_list == [(('table_name', ), )]
+        assert data_navigator.get_children.call_args_list == [
+            (('table_name', ), ),
+            (('table_name', ), )
+        ]
+        assert modeler.tables['table_name'].equals(modeler.dn.transformed_data['table_name'])
+
+        sampler = Sampler(data_navigator, modeler)
+        samples = sampler.sample_table('table_name')
+
+        assert isinstance(samples, pd.DataFrame)
+        assert samples.equals(sampler.dn.ht.reverse_transform_table.return_value)
+
+    def test_model_database_kde_distribution(self):
+        """model_database works fine with kde distribution."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = Modeler(data_navigator=data_navigator, distribution=KDEUnivariate)
+
+        # Setup - Mocks - DataNavigator
+        table_data = pd.DataFrame({
+            'column_A': list('abdc'),
+            'column_B': range(4)
+        })
+        table_metadata = {
+            'name': 'table_name',
+            'fields': {
+                'column_A': {
+                    'name': 'column_A',
+                    'type': 'categorical'
+                },
+                'column_B': {
+                    'name': 'column_B',
+                    'type': 'number',
+                    'subtype': 'integer'
+                }
+            }
+        }
+
+        data_navigator.tables = {
+            'table_name': Table(table_data, table_metadata)
+        }
+        data_navigator.get_parents.return_value = set()
+        data_navigator.get_children.return_value = set()
+        data_navigator.transformed_data = {
+            'table_name': pd.DataFrame({
+                'column_A': [0.1, 0.2, 0.5, 1.0],
+                'column_B': range(4)
+            })
+        }
+        metadata = {
+            'name': 'table_name',
+            'fields': [
+                {
+                    'name': 'column_A',
+                    'type': 'categorical'
+                },
+                {
+                    'name': 'column_B',
+                    'type': 'number',
+                    'subtype': 'integer'
+                }
+            ]
+        }
+
+        data_navigator.meta = {
+            'tables': [metadata]
+        }
+        ht = MagicMock(spec=HyperTransformer)
+        ht.transformers = {
+            ('table_name', 'column_A'): None,
+            ('table_name', 'column_B'): None
+        }
+
+        reverse_transform_dataframe = pd.DataFrame({
+            'column_A': list('bcda'),
+            'column_B': [1.0, 2.0, 3.0, 4.0]
+        }, columns=['column_A', 'column_B'])
+        ht.reverse_transform_table.return_value = reverse_transform_dataframe
+
+        data_navigator.ht = ht
+
+        # Run
+        modeler.model_database()
+
+        # Check
+        assert len(modeler.models) == 1
+        assert 'table_name' in modeler.models
+        model = modeler.models['table_name']
+
+        assert isinstance(model, GaussianMultivariate)
+        assert model.distribution == 'copulas.univariate.kde.KDEUnivariate'
         assert model.fitted is True
 
         assert data_navigator.get_parents.call_args_list == [(('table_name', ), )]
@@ -577,26 +672,6 @@ class TestModeler(TestCase):
             (('table_name', ), )
         ]
 
-        sampler = Sampler(data_navigator, modeler)
-        samples = sampler.sample_table('table_name')
-
-        assert len(samples.keys()) == 1
-        assert 'table_name' in samples
-        sampled_table = samples['table_name']
-
-        assert isinstance(sampled_table, pd.DataFrame)
-        import ipdb; ipdb.set_trace()
-        assert sampled_table.equals(modeler.dn.ht.reverse_transform_table())
-
-    def test_model_database_kde_distribution(self):
-        """model_database works fine with kde distribution."""
-        # Setup
-        modeler = Modeler(data_navigator=self.dn, distribution=KDEUnivariate)
-
-        # Run
-        modeler.model_database()
-
-    @skip('s')
     def test_model_database_vine_modeler_single_table(self):
         """model_database works fine with vine modeler."""
         # Setup
@@ -612,11 +687,11 @@ class TestModeler(TestCase):
             'name': 'table_name',
             'fields': {
                 'column_A': {
-                    'name': 'A',
+                    'name': 'column_A',
                     'type': 'categorical'
                 },
                 'column_B': {
-                    'name': 'B',
+                    'name': 'column_B',
                     'type': 'number',
                     'subtype': 'integer'
                 }
@@ -634,28 +709,59 @@ class TestModeler(TestCase):
                 'column_B': range(4)
             })
         }
-        data_navigator.meta = {
-            'tables': [
+        metadata = {
+            'name': 'table_name',
+            'fields': [
                 {
-                    'name': meta
+                    'name': 'column_A',
+                    'type': 'categorical'
+                },
+                {
+                    'name': 'column_B',
+                    'type': 'number',
+                    'subtype': 'integer'
                 }
             ]
         }
-        data_navigator.ht = MagicMock()
-        data_navigator.ht.transformers = {
+
+        data_navigator.meta = {
+            'tables': [metadata]
+        }
+
+        ht = MagicMock(spec=HyperTransformer)
+        ht.transformers = {
             ('table_name', 'column_A'): None,
             ('table_name', 'column_B'): None
         }
+
+        reverse_transform_dataframe = pd.DataFrame({
+            'column_A': list('bcda'),
+            'column_B': [1.0, 2.0, 3.0, 4.0]
+        }, columns=['column_A', 'column_B'])
+        ht.reverse_transform_table.return_value = reverse_transform_dataframe
+
+        data_navigator.ht = ht
 
         # Run
         modeler.model_database()
 
         # Check
-        assert 'table_name' in modeler.models
+        assert len(modeler.models) == 1
+        model = modeler.models['table_name']
+        assert isinstance(model, VineCopula)
+        assert model.fitted is True
+
+        assert data_navigator.get_parents.call_args_list == [(('table_name', ), )]
+        assert data_navigator.get_children.call_args_list == [
+            (('table_name', ), ),
+            (('table_name', ), )
+        ]
+        assert modeler.tables['table_name'].equals(modeler.dn.transformed_data['table_name'])
 
         sampler = Sampler(data_navigator, modeler)
-        samples = sampler.sample_all()
-        assert 'table_name' in samples
+        samples = sampler.sample_table('table_name')
+
+        assert samples.equals(reverse_transform_dataframe)
 
     def test__flatten_dict_flat_dict(self):
         """_flatten_dict don't modify flat dicts."""

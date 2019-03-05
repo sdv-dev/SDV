@@ -491,6 +491,11 @@ class TestSampler(TestCase):
         modeler = MagicMock(spec=Modeler)
         sampler = Sampler(data_navigator, modeler)
 
+        data = pd.DataFrame(columns=['field_A', 'field_B'])
+        modeler.tables = {
+            'table_name': data,
+        }
+
         data_navigator.meta = {
             'tables': [
                 {
@@ -573,3 +578,127 @@ class TestSampler(TestCase):
 
         data_navigator.assert_not_called()
         data_navigator.get_parents.assert_called_once_with('table_name')
+
+    def test__get_missing_valid_rows(self):
+        """get_missing_valid_rows return an a dataframe and an integer.
+
+        The dataframe contains valid_rows concatenated to synthesized and their index reset.
+        The integer is the diference between num_rows and the returned dataframe rows.
+        """
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator, modeler)
+
+        synthesized = pd.DataFrame(columns=list('AB'), index=range(3, 5))
+        drop_indices = pd.Series(False, index=range(3, 5))
+        valid_rows = pd.DataFrame(columns=list('AB'), index=range(2))
+        num_rows = 5
+
+        # Run
+        result = sampler._get_missing_valid_rows(synthesized, drop_indices, valid_rows, num_rows)
+        missing_rows, valid_rows = result
+
+        # Check
+        assert missing_rows == 1
+        assert valid_rows.equals(pd.DataFrame(columns=list('AB'), index=[0, 1, 2, 3]))
+
+        data_navigator.assert_not_called()
+        assert data_navigator.method_calls == []
+
+        modeler.assert_not_called()
+        assert modeler.method_calls == []
+
+    def test__get_missing_valid_rows_excess_rows(self):
+        """If more rows than required are passed, the result is cut to num_rows."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator, modeler)
+
+        synthesized = pd.DataFrame(columns=list('AB'), index=range(3, 7))
+        drop_indices = pd.Series(False, index=range(3, 7))
+        valid_rows = pd.DataFrame(columns=list('AB'), index=range(2))
+        num_rows = 5
+
+        # Run
+        result = sampler._get_missing_valid_rows(synthesized, drop_indices, valid_rows, num_rows)
+        missing_rows, valid_rows = result
+
+        # Check
+        assert missing_rows == 0
+        assert valid_rows.equals(pd.DataFrame(columns=list('AB'), index=range(5)))
+
+        data_navigator.assert_not_called()
+        assert data_navigator.method_calls == []
+
+        modeler.assert_not_called()
+        assert modeler.method_calls == []
+
+    @patch('sdv.sampler.get_qualified_name')
+    def test__sample_model(self, qualified_mock):
+        """_sample_model sample the number of rows from the given model."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+
+        sampler = Sampler(data_navigator, modeler)
+        model = MagicMock()
+        values = np.array([
+            [1, 1, 1],
+            [2, 2, 2],
+            [3, 3, 3]
+        ])
+
+        qualified_mock.return_value = 'package.module.full_qualified_name'
+
+        model.sample.return_value = values
+        num_rows = 3
+        columns = list('ABC')
+
+        expected_result = pd.DataFrame(values, columns=columns)
+
+        # Run
+        result = sampler._sample_model(model, num_rows, columns)
+
+        # Check
+        assert result.equals(expected_result)
+
+        qualified_mock.assert_called_once_with(model)
+        model.sample.assert_called_once_with(3)
+
+    @patch('sdv.sampler.get_qualified_name')
+    def test__sample_model_vine(self, qualified_mock):
+        """_sample_model sample the number of rows from the given model."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+
+        sampler = Sampler(data_navigator, modeler)
+        model = MagicMock()
+        values = [
+            np.array([1, 1, 1]),
+            np.array([2, 2, 2]),
+            np.array([3, 3, 3])
+        ]
+
+        qualified_mock.return_value = 'copulas.multivariate.vine.VineCopula'
+
+        model.sample.side_effect = values
+        num_rows = 3
+        columns = list('ABC')
+
+        expected_result = pd.DataFrame(values, columns=columns)
+
+        # Run
+        result = sampler._sample_model(model, num_rows, columns)
+
+        # Check
+        assert result.equals(expected_result)
+
+        qualified_mock.assert_called_once_with(model)
+        assert model.sample.call_args_list == [
+            ((3,), ),
+            ((3,), ),
+            ((3,), )
+        ]
