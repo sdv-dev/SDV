@@ -15,11 +15,11 @@ with open('HISTORY.md') as history_file:
 
 
 install_requires = [
-    'exrex>=0.10.5',
-    'numpy>=1.13.1',
-    'pandas>=0.22.0',
-    'copulas>=0.2.1',
-    'rdt>=0.1.2'
+    'exrex>=0.9.4, <0.11',
+    'numpy>=1.15.4, <1.17',
+    'pandas>=0.23.4, < 0.25',
+    'copulas>=0.2.1, <0.3',
+    'rdt>=0.1.2, <0.2'
 ]
 
 
