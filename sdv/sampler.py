@@ -410,7 +410,8 @@ class Sampler:
 
         return self.modeler.model.from_dict(model_parameters)
 
-    def _get_missing_valid_rows(self, synthesized, drop_indices, valid_rows, num_rows):
+    @staticmethod
+    def _get_missing_valid_rows(synthesized, drop_indices, valid_rows, num_rows):
         """
 
         Args:
@@ -422,9 +423,33 @@ class Sampler:
         valid_rows = pd.concat([valid_rows, synthesized[~drop_indices].copy()])
         valid_rows = valid_rows.reset_index(drop=True)
 
+        if len(valid_rows) > num_rows:
+            valid_rows = valid_rows.iloc[:num_rows]
+
         missing_rows = num_rows - valid_rows.shape[0]
 
         return missing_rows, valid_rows
+
+    @staticmethod
+    def _sample_model(model, num_rows, columns):
+        """Sample from model and format into pandas.DataFrame.
+
+        Args:
+            model(copula.multivariate.base): Fitted model.
+            num_rows(int): Number of rows to sample.
+            columns(Iterable): Column names for the sampled rows.
+
+        Returns:
+            pd.DataFrame: Sampled rows.
+
+        """
+        if get_qualified_name(model) == 'copulas.multivariate.vine.VineCopula':
+            synthesized = [model.sample(num_rows).tolist() for row in range(num_rows)]
+
+        else:
+            synthesized = model.sample(num_rows)
+
+        return pd.DataFrame(synthesized, columns=columns)
 
     def _sample_valid_rows(self, model, num_rows, table_name):
         """Sample using `model` and discard invalid values until having `num_rows`.
@@ -439,8 +464,9 @@ class Sampler:
         """
 
         if model and model.fitted:
-            synthesized = model.sample(num_rows)
-            valid_rows = pd.DataFrame(columns=synthesized.columns)
+            columns = self.modeler.tables[table_name].columns
+            synthesized = self._sample_model(model, num_rows, columns)
+            valid_rows = pd.DataFrame(columns=columns)
             drop_indices = pd.Series(False, index=synthesized.index)
 
             categorical_columns = []
@@ -460,7 +486,7 @@ class Sampler:
                 synthesized, drop_indices, valid_rows, num_rows)
 
             while missing_rows:
-                synthesized = model.sample(missing_rows)
+                synthesized = self._sample_model(model, missing_rows, columns)
                 drop_indices = pd.Series(False, index=synthesized.index)
 
                 for column_name in categorical_columns:

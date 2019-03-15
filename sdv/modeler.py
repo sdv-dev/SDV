@@ -394,17 +394,12 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
-        try:
-            for table in self.dn.tables:
-                if not self.dn.get_parents(table):
-                    self.RCPA(table)
+        for table in self.dn.tables:
+            if not self.dn.get_parents(table):
+                self.RCPA(table)
 
-            for table in self.tables:
-                clean_table = self.impute_table(self.tables[table])
-                self.models[table] = self.fit_model(clean_table)
-
-        except (ValueError, np.linalg.linalg.LinAlgError) as error:
-            raise ValueError(
-                MODELLING_ERROR_MESSAGE).with_traceback(error.__traceback__) from None
+        for table in self.tables:
+            clean_table = self.impute_table(self.tables[table])
+            self.models[table] = self.fit_model(clean_table)
 
         logger.info('Modeling Complete')
