@@ -74,6 +74,8 @@ The easiest way to use SDV is using the SDV class from the root of the package:
 ...    print(samples[dataset].head(3), '\n')
    CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
 0            0           61026.0   5.410825e+09        1017.0  FRANCE
+1            1           20166.0   7.446005e+09        1316.0      US
+2            2           11371.0   8.993345e+09        1839.0      US
 
    ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
 0         0            0       1251.0

@@ -59,7 +59,7 @@ Table details
 ^^^^^^^^^^^^^
 
 A node ``table`` should be made for each table in our dataset. It contains the configuration on
-how to handle this table. It has the following elements: 
+how to handle this table. It has the following elements:
 
 .. code-block:: python
 
@@ -102,9 +102,9 @@ Field details
     "tables": [{
         "fields": [
             {
-                "name": "CREDIT_LIMIT", 
-                "subtype": "integer", 
-                "type": "number", 
+                "name": "CREDIT_LIMIT",
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0
             },
             ...
@@ -214,12 +214,12 @@ should be included.
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID", 
-                "subtype": "integer", 
-                "type": "number", 
+                "name": "CUSTOMER_ID",
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0,
                 "regex": "^[0-9]{10}$"
-            }, 
+            },
             ...
         ],
         ...
@@ -236,15 +236,15 @@ If a field is a foreign key to another table, then it has to be specified using 
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID", 
+                "name": "CUSTOMER_ID",
                 "ref": {
-                    "field": "CUSTOMER_ID", 
+                    "field": "CUSTOMER_ID",
                     "table": "DEMO_CUSTOMERS"
-                }, 
-                "subtype": "integer", 
-                "type": "number", 
+                },
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0
-            }, 
+            },
             ...
         ],
         ...
