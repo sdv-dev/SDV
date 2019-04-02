@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/HDI-Project/sdv/issues.
+Report bugs at https://github.com/HDI-Project/SDV/issues.
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/HDI-Project/sdv/issues.
+The best way to send feedback is to file an issue at https://github.com/HDI-Project/SDV/issues.
 
 If you are proposing a feature:
 
@@ -57,18 +57,19 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `sdv` for local development.
+Ready to contribute? Here's how to set up `SDV` for local development.
 
-1. Fork the `sdv` repo on GitHub.
+1. Fork the `SDV` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/sdv.git
+    $ git clone git@github.com:your_name_here/SDV.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed,
+   this is how you set up your fork for local development::
 
-    $ mkvirtualenv sdv
-    $ cd sdv/
-    $ pip install -e .[dev]
+    $ mkvirtualenv SDV
+    $ cd SDV/
+    $ make install-develop
 
 4. Create a branch for local development::
 
@@ -86,11 +87,11 @@ Ready to contribute? Here's how to set up `sdv` for local development.
 6. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ make test-all
+    $ make lint       # Check code styling
+    $ make test-all   # Execute tests on all python versions
 
 7. Make also sure to include the necessary documentation in the code as docstrings following
-   the [google](https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments)
-   or the [numpy](https://numpydoc.readthedocs.io/en/latest/format.html) docstring style.
+   the `google docstring`_ style.
    If you want to view how your documentation will look like when it is published, you can
    generate and view the docs with this command::
 
@@ -103,6 +104,8 @@ Ready to contribute? Here's how to set up `sdv` for local development.
     $ git push origin name-of-your-bugfix-or-feature
 
 9. Submit a pull request through the GitHub website.
+
+.. _google docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 
 Pull Request Guidelines
 -----------------------
@@ -118,7 +121,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 5. The pull request should work for Python3.5 and 3.6. Check
-   https://travis-ci.org/HDI-Project/sdv/pull_requests
+   https://travis-ci.org/HDI-Project/SDV/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Unit Testing Guidelines
@@ -169,24 +172,26 @@ The process of releasing a new version involves several steps combining both ``g
 
 1. Merge what is in ``master`` branch into ``stable`` branch.
 2. Update the version in ``setup.cfg``, ``sdv/__init__.py`` and ``HISTORY.md`` files.
-3. Create a new TAG pointing at the correspoding commit in ``stable`` branch.
+3. Create a new git tag pointing at the corresponding commit in ``stable`` branch.
 4. Merge the new commit from ``stable`` into ``master``.
 5. Update the version in ``setup.cfg`` and ``sdv/__init__.py`` to open the next
    development interation.
 
-**Note:** Before starting the process, make sure that ``HISTORY.md`` has a section titled
-**Unreleased** with the list of changes that will be included in the new version, and that
-these changes are committed and available in ``master`` branch.
-Normally this is just a list of the Pull Requests that have been merged since the latest version.
+.. note:: Before starting the process, make sure that ``HISTORY.md`` has been updated with a new
+          entry that explains the changes that will be included in the new version.
+          Normally this is just a list of the Pull Requests that have been merged to master
+          since the last release.
 
-Once this is done, just run the following commands::
+Once this is done, run one of the following commands:
 
-    git checkout stable
-    git merge --no-ff master    # This creates a merge commit
-    bumpversion release   # This creates a new commit and a TAG
-    git push --tags origin stable
+1. If you are releasing a patch version::
+
     make release
-    git checkout master
-    git merge stable
-    bumpversion --no-tag patch
-    git push
+
+2. If you are releasing a minor version::
+
+    make release-minor
+
+3. If you are releasing a major version::
+
+    make release-major

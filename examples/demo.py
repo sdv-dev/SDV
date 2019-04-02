@@ -3,8 +3,8 @@ import os
 import sys
 from timeit import default_timer as timer
 
-from sdv.sdv import SDV
 from examples.utils import download_folder
+from sdv.sdv import SDV
 
 
 def get_logger():
@@ -51,17 +51,16 @@ def run_demo(folder_name):
         'demo', folder_name, folder_name.capitalize() + '_manual_meta.json')
     sdv = SDV(meta_file)
     sdv.fit()
-    sampled_rows = {}
-    LOGGER.info('Parent map: %s',
-                sdv.dn.parent_map)
-    LOGGER.info('Transformed data: %s',
-                sdv.dn.transformed_data)
-    table_list = table_dict[folder_name]
-    for table in table_list:
-        sampled_rows[table] = sdv.sample_rows(table, 1)
-        LOGGER.info('Sampled row from %s: %s', table, sampled_rows[table])
+    sampled = sdv.sample_all()
+
+    LOGGER.info('Parent map: %s', sdv.dn.parent_map)
+    LOGGER.info('Transformed data: %s', sdv.dn.transformed_data)
+
+    for name, table in sampled.items():
+        LOGGER.info('Sampled row from %s: %s', name, table.head(3).T)
+
     end = timer()
-    LOGGER.info('Total time: %s seconds', round(end-start))
+    LOGGER.info('Total time: %s seconds', round(end - start))
 
 
 if __name__ == '__main__':

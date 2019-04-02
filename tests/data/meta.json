@@ -1,31 +1,31 @@
 {
-    "path": "", 
-    "tables": [ 
+    "path": "",
+    "tables": [
         {
             "fields": [
                 {
-                    "name": "CUSTOMER_ID", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "CUSTOMER_ID",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0,
                     "regex": "^[0-9]{10}$"
-                }, 
+                },
                 {
-                    "name": "CUST_POSTAL_CODE", 
-                    "subtype": "integer", 
-                    "type": "number", 
-                    "uniques": 0
-                },  
-                {
-                    "name": "PHONE_NUMBER1", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "CUST_POSTAL_CODE",
+                    "subtype": "integer",
+                    "type": "categorical",
                     "uniques": 0
                 },
                 {
-                    "name": "CREDIT_LIMIT", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "PHONE_NUMBER1",
+                    "subtype": "integer",
+                    "type": "number",
+                    "uniques": 0
+                },
+                {
+                    "name": "CREDIT_LIMIT",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
                 },
                 {
@@ -33,87 +33,87 @@
                     "type": "categorical",
                     "uniques": 0
                 }
-            ], 
-            "headers": true, 
+            ],
+            "headers": true,
             "name": "DEMO_CUSTOMERS",
-            "path": "customers.csv", 
-            "primary_key": "CUSTOMER_ID", 
+            "path": "customers.csv",
+            "primary_key": "CUSTOMER_ID",
             "use": true
-        }, 
+        },
         {
             "fields": [
                 {
-                    "name": "ORDER_ID", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "ORDER_ID",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0,
                     "regex": "^[0-9]{2}$"
-                }, 
+                },
                 {
-                    "name": "CUSTOMER_ID", 
+                    "name": "CUSTOMER_ID",
                     "ref": {
-                        "field": "CUSTOMER_ID", 
+                        "field": "CUSTOMER_ID",
                         "table": "DEMO_CUSTOMERS"
-                    }, 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    },
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
-                }, 
+                },
                 {
-                    "name": "ORDER_TOTAL", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "ORDER_TOTAL",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
                 }
-            ], 
-            "headers": true, 
-            "name": "DEMO_ORDERS", 
+            ],
+            "headers": true,
+            "name": "DEMO_ORDERS",
             "path": "orders.csv",
-            "primary_key": "ORDER_ID", 
+            "primary_key": "ORDER_ID",
             "use": true
-        }, 
+        },
         {
             "fields": [
                 {
-                    "name": "ORDER_ITEM_ID", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "ORDER_ITEM_ID",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0,
                     "regex": "^[0-9]{3}$"
-                }, 
+                },
                 {
-                    "name": "ORDER_ID", 
+                    "name": "ORDER_ID",
                     "ref": {
-                        "field": "ORDER_ID", 
+                        "field": "ORDER_ID",
                         "table": "DEMO_ORDERS"
-                    }, 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    },
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
-                }, 
+                },
                 {
                     "name": "PRODUCT_ID",
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
-                }, 
+                },
                 {
-                    "name": "UNIT_PRICE", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "UNIT_PRICE",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
-                }, 
+                },
                 {
-                    "name": "QUANTITY", 
-                    "subtype": "integer", 
-                    "type": "number", 
+                    "name": "QUANTITY",
+                    "subtype": "integer",
+                    "type": "number",
                     "uniques": 0
                 }
-            ], 
-            "headers": true, 
+            ],
+            "headers": true,
             "name": "DEMO_ORDER_ITEMS",
-            "path": "order_items.csv", 
-            "primary_key": "ORDER_ITEM_ID", 
+            "path": "order_items.csv",
+            "primary_key": "ORDER_ITEM_ID",
             "use": true
         }
     ]
