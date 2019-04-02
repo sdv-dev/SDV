@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.modeler &mdash; SDV 0.1.0 documentation</title>
+  <title>sdv.modeler &mdash; SDV 0.1.1 documentation</title>
   
 
   
@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -79,7 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../installation.html#from-pypi">From PyPi</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../installation.html#from-sources">From sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development">Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development-setup">Development Setup</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
@@ -92,6 +94,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../usage.html#table-details">Table details</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../usage.html#field-details">Field details</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../usage.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../usage.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../usage.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -108,7 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api_reference.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../history.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../history.html">History</a></li>
 </ul>
 
             
@@ -175,37 +178,66 @@
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">copulas.multivariate</span> <span class="k">import</span> <span class="n">GaussianMultivariate</span>
+<span class="kn">from</span> <span class="nn">copulas</span> <span class="k">import</span> <span class="n">EPSILON</span><span class="p">,</span> <span class="n">get_qualified_name</span>
+<span class="kn">from</span> <span class="nn">copulas.multivariate</span> <span class="k">import</span> <span class="n">GaussianMultivariate</span><span class="p">,</span> <span class="n">TreeTypes</span>
 <span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="k">import</span> <span class="n">GaussianUnivariate</span>
+<span class="kn">from</span> <span class="nn">rdt.transformers.positive_number</span> <span class="k">import</span> <span class="n">PositiveNumberTransformer</span>
 
 <span class="c1"># Configure logger</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span>
 <span class="n">DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="n">GaussianUnivariate</span>
+<span class="n">IGNORED_DICT_KEYS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;fitted&#39;</span><span class="p">,</span> <span class="s1">&#39;distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span>
+
+<span class="n">MODELLING_ERROR_MESSAGE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;There was an error while trying to model the database. If you are using a custom &#39;</span>
+    <span class="s1">&#39;distribution or model, please try again using the default ones. If the problem persist, &#39;</span>
+    <span class="s1">&#39;please report it here:</span><span class="se">\n</span><span class="s1">https://github.com/HDI-Project/SDV/issues.</span><span class="se">\n</span><span class="s1">&#39;</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="Modeler"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler">[docs]</a><span class="k">class</span> <span class="nc">Modeler</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class responsible for modeling database.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Class responsible for modeling database.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_navigator (DataNavigator):  object for the dataset.</span>
+<span class="sd">        model (type): Class of model to use.</span>
+<span class="sd">        distribution (type): Class of distribution to use. Will be deprecated shortly.</span>
+<span class="sd">        model_kwargs (dict): Keyword arguments to pass to model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">DEFAULT_PRIMARY_KEY</span> <span class="o">=</span> <span class="s1">&#39;GENERATED_PRIMARY_KEY&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_navigator</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">DEFAULT_MODEL</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">DEFAULT_DISTRIBUTION</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_navigator</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">DEFAULT_MODEL</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Instantiates a modeler object.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            data_navigator (DataNavigator):  object for the dataset.</span>
-<span class="sd">            transformed_data (dict): transformed tables {table_name:dataframe}.</span>
-<span class="sd">            model (type): Class of model to use.</span>
-<span class="sd">            distribution (type): Class of model to use.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">child_locs</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># maps table-&gt;{child: col #}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dn</span> <span class="o">=</span> <span class="n">data_navigator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
+
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">and</span> <span class="n">model</span> <span class="o">!=</span> <span class="n">DEFAULT_MODEL</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;`distribution` argument is only suported for `GaussianMultivariate` model.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">distribution</span><span class="p">:</span>
+            <span class="n">distribution</span> <span class="o">=</span> <span class="n">get_qualified_name</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">distribution</span> <span class="o">=</span> <span class="n">get_qualified_name</span><span class="p">(</span><span class="n">DEFAULT_DISTRIBUTION</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_kwargs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="n">DEFAULT_MODEL</span><span class="p">:</span>
+                <span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distribution</span><span class="p">}</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;vine_type&#39;</span><span class="p">:</span> <span class="n">TreeTypes</span><span class="o">.</span><span class="n">REGULAR</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span>
 
 <div class="viewcode-block" id="Modeler.save"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Saves model to file destination.</span>
@@ -234,27 +266,97 @@
 
         <span class="k">return</span> <span class="n">val</span>
 
-<div class="viewcode-block" id="Modeler.flatten_model"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.flatten_model">[docs]</a>    <span class="k">def</span> <span class="nf">flatten_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_flatten_array</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nested</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a dictionary with the values of the given nested array.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nested (list, np.array): Iterable to flatten.</span>
+<span class="sd">            prefix (str): Name to append to the array indices.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nested</span><span class="p">)):</span>
+            <span class="n">prefix_key</span> <span class="o">=</span> <span class="s1">&#39;__&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nested</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_flatten_array</span><span class="p">(</span><span class="n">nested</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix_key</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">prefix_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">nested</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_flatten_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nested</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a flatten dict from a nested one.</span>
+
+<span class="sd">        This method returns a flatten version of a dictionary, concatenating key names with</span>
+<span class="sd">        double underscores, that is:</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nested (dict): Original dictionary to flatten.</span>
+<span class="sd">            prefix (str): Prefix to append to key name</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Flattened dictionary. That is, all its keys hold a primitive value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">nested</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">prefix_key</span> <span class="o">=</span> <span class="s1">&#39;__&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">else</span> <span class="n">key</span>
+
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">IGNORED_DICT_KEYS</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">continue</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_flatten_dict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">prefix_key</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_flatten_array</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">prefix_key</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">prefix_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="Modeler.flatten_model"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.flatten_model">[docs]</a>    <span class="k">def</span> <span class="nf">flatten_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Flatten a model&#39;s parameters into an array.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            model: a model object</span>
+<span class="sd">            model(self.model): Instance of model.</span>
+<span class="sd">            name (str): Prefix to the parameter name.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: parameters for model</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">covariance</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="n">DEFAULT_MODEL</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">triangle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tril</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">covariance</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">col_model</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">distribs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">col_model</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="n">col_model</span><span class="o">.</span><span class="n">mean</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">triangle</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">params</span><span class="p">)</span></div>
+            <span class="n">model</span><span class="o">.</span><span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">get_qualified_name</span><span class="p">(</span><span class="n">DEFAULT_DISTRIBUTION</span><span class="p">):</span>
+                <span class="n">transformer</span> <span class="o">=</span> <span class="n">PositiveNumberTransformer</span><span class="p">({</span>
+                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;field&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;number&#39;</span>
+                <span class="p">})</span>
+
+                <span class="k">for</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">distribs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="n">column</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">distribution</span><span class="o">.</span><span class="n">std</span><span class="p">]})</span>
+                    <span class="n">distribution</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">column</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;field&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flatten_dict</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">name</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Modeler.get_foreign_key"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.get_foreign_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">primary</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get foreign key from primary key.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            fields (dict): metadata&#39;s fields key for a given table.</span>
+<span class="sd">            fields (dict): metadata `fields` key for a given table.</span>
 <span class="sd">            primary (str): Name of primary key in original table.</span>
 
 <span class="sd">        Return:</span>
@@ -272,22 +374,33 @@
         <span class="sd">&quot;&quot;&quot;Fill in any NaN values in a table.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            table(pandas.DataFrame):</span>
+<span class="sd">            table(pandas.DataFrame): Table to fill NaN values</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">table</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">table</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()]</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">table</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                <span class="n">values</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">):</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">values</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="k">return</span> <span class="n">table</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="c1"># There is an issue when using KDEUnivariate modeler in tables with childs</span>
+        <span class="c1"># As the extension columns would have constant values, that make it crash</span>
+        <span class="c1"># This is a temporary fix while https://github.com/DAI-Lab/Copulas/issues/82 is solved.</span>
+        <span class="n">first_index</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">constant_columns</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">table</span> <span class="o">==</span> <span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">first_index</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">constant_columns</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">first_index</span><span class="p">,</span> <span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">first_index</span><span class="p">,</span> <span class="n">column</span><span class="p">]</span> <span class="o">+</span> <span class="n">EPSILON</span>
+
+        <span class="k">return</span> <span class="n">table</span></div>
 
 <div class="viewcode-block" id="Modeler.fit_model"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.fit_model">[docs]</a>    <span class="k">def</span> <span class="nf">fit_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns an instance of self.model fitted with the given data.</span>
@@ -296,45 +409,68 @@
 <span class="sd">            data (pandas.DataFrame): Data to train the model with.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            GaussianMultivariate: Fitted model.</span>
+<span class="sd">            model: Instance of self.model fitted with data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">()</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">model</span></div>
 
-    <span class="k">def</span> <span class="nf">_create_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">transformed_child_table</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the flattened model from a dataframe.&quot;&quot;&quot;</span>
-        <span class="c1"># remove column of foreign key</span>
+    <span class="k">def</span> <span class="nf">_create_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">foreign</span><span class="p">,</span> <span class="n">transformed_child_table</span><span class="p">,</span> <span class="n">table_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the flattened model from a dataframe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            foreign(pandas.DataFrame): Object with Index of elements from children table elements</span>
+<span class="sd">                                       of a given foreign_key.</span>
+<span class="sd">            transformed_child_table(pandas.DataFrame): Table of data to fil</span>
+<span class="sd">            table_info (tuple[str, str]): foreign_key and child table names.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series or None : Parameter extension if it can be generated, None elsewhere.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+        <span class="n">foreign_key</span><span class="p">,</span> <span class="n">child_name</span> <span class="o">=</span> <span class="n">table_info</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">conditional_data</span> <span class="o">=</span> <span class="n">transformed_child_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">conditional_data</span> <span class="o">=</span> <span class="n">transformed_child_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">foreign</span><span class="o">.</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">foreign_key</span> <span class="ow">in</span> <span class="n">conditional_data</span><span class="p">:</span>
+                <span class="n">conditional_data</span> <span class="o">=</span> <span class="n">conditional_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">foreign_key</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">clean_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">impute_table</span><span class="p">(</span><span class="n">conditional_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">conditional_data</span><span class="p">):</span>
+            <span class="n">clean_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">impute_table</span><span class="p">(</span><span class="n">conditional_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">clean_df</span><span class="p">),</span> <span class="n">child_name</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">clean_df</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_extension_from_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformed_child_table</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Wrapper around _create_extension to use it with pd.DataFrame.apply.&quot;&quot;&quot;</span>
-        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_extension</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">transformed_child_table</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span>
+    <span class="k">def</span> <span class="nf">_get_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">children</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate list of extension for child tables.</span>
 
-    <span class="k">def</span> <span class="nf">_get_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">children</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Generate list of extension for child tables.&quot;&quot;&quot;</span>
-        <span class="c1"># keep track of which columns belong to which child</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="sd">        Args:</span>
+<span class="sd">            pk (str): Name of the primary_key column in the parent table.</span>
+<span class="sd">            children (set[str]): Names of the children.</span>
+
+<span class="sd">        Returns: list(pandas.DataFrame)</span>
+
+<span class="sd">        Each element of the list is generated for one single children.</span>
+<span class="sd">        That dataframe should have as index.name the `foreign_key` name, and as index</span>
+<span class="sd">        it&#39;s values.</span>
+<span class="sd">        The values for a given index is generated by flattening a model fit with the related</span>
+<span class="sd">        data to that index in the children table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">extensions</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># make sure child_locs has value for table name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">child_locs</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_locs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="p">{})</span>
 
         <span class="c1"># find children that ref primary key</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
             <span class="n">child_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">child</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
             <span class="n">child_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">child</span><span class="p">]</span><span class="o">.</span><span class="n">meta</span>
+
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">child_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
+            <span class="n">fk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">pk</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fk</span><span class="p">:</span>
+                <span class="k">continue</span>
 
             <span class="c1"># check if leaf node</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
@@ -343,38 +479,47 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">transformed_child_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">child</span><span class="p">]</span>
 
-            <span class="n">fields</span> <span class="o">=</span> <span class="n">child_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
-            <span class="n">fk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">pk</span><span class="p">)</span>
+            <span class="n">table_info</span> <span class="o">=</span> <span class="p">(</span><span class="n">fk</span><span class="p">,</span> <span class="s1">&#39;__&#39;</span> <span class="o">+</span> <span class="n">child</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">fk</span><span class="p">:</span>
-                <span class="k">continue</span>
+            <span class="n">foreign_key_values</span> <span class="o">=</span> <span class="n">child_table</span><span class="p">[</span><span class="n">fk</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
 
-            <span class="n">extension</span> <span class="o">=</span> <span class="n">child_table</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">fk</span><span class="p">)</span>
-            <span class="n">extension</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extension_from_group</span><span class="p">(</span><span class="n">transformed_child_table</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">foreign_key</span> <span class="ow">in</span> <span class="n">foreign_key_values</span><span class="p">:</span>
+                <span class="n">foreign_index</span> <span class="o">=</span> <span class="n">child_table</span><span class="p">[</span><span class="n">child_table</span><span class="p">[</span><span class="n">fk</span><span class="p">]</span> <span class="o">==</span> <span class="n">foreign_key</span><span class="p">]</span>
+                <span class="n">parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_extension</span><span class="p">(</span>
+                    <span class="n">foreign_index</span><span class="p">,</span> <span class="n">transformed_child_table</span><span class="p">,</span> <span class="n">table_info</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">extension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># keep track of child column indices</span>
-                <span class="n">end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">extension</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">parameters</span><span class="p">[</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">child_locs</span><span class="p">[</span><span class="n">table_name</span><span class="p">][</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">extension</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">pk</span>
 
-                <span class="c1"># rename columns</span>
-                <span class="n">extension</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">extension</span><span class="p">):</span>
                 <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
-                <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
 
         <span class="k">return</span> <span class="n">extensions</span>
 
 <div class="viewcode-block" id="Modeler.CPA"><a class="viewcode-back" href="../../api_reference.html#sdv.Modeler.CPA">[docs]</a>    <span class="k">def</span> <span class="nf">CPA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Run CPA algorithm on a table.</span>
 
-<span class="sd">        Conditional Parameter Aggregation. It will take the tab</span>
+<span class="sd">        Conditional Parameter Aggregation. It will take the table&#39;s children and generate</span>
+<span class="sd">        extensions (parameters from modelling the related children for each foreign key)</span>
+<span class="sd">        and merge them to the original `table`.</span>
+
+<span class="sd">        After the extensions are created, `extended_table` is modified in order for the extensions</span>
+<span class="sd">        to be merged. As the extensions are returned with an index consisting of values of the</span>
+<span class="sd">        `primary_key` of the parent table, we need to make sure that same values are present in</span>
+<span class="sd">        `extended_table`. The values couldn&#39;t be present in two situations:</span>
+
+<span class="sd">        - They weren&#39;t numeric, and have been transformed.</span>
+<span class="sd">        - They weren&#39;t transformed, and therefore are not present on `extended_table`</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table (string): name of table.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            None:</span>
+<span class="sd">            None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Modeling </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
         <span class="c1"># Grab table</span>
@@ -388,11 +533,26 @@
 
         <span class="c1"># start with transformed table</span>
         <span class="n">extended_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">transformed_data</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
-        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extensions</span><span class="p">(</span><span class="n">pk</span><span class="p">,</span> <span class="n">children</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extensions</span><span class="p">(</span><span class="n">pk</span><span class="p">,</span> <span class="n">children</span><span class="p">)</span>
 
-        <span class="c1"># add extensions</span>
-        <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
-            <span class="n">extended_table</span> <span class="o">=</span> <span class="n">extended_table</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">extension</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">original_pk</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span>
+            <span class="n">transformed_pk</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">pk</span> <span class="ow">in</span> <span class="n">extended_table</span><span class="p">:</span>
+                <span class="n">transformed_pk</span> <span class="o">=</span> <span class="n">extended_table</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">pk</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extended_table</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">extended_table</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">original_pk</span><span class="p">)):</span>
+                <span class="n">extended_table</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span> <span class="o">=</span> <span class="n">original_pk</span>
+
+            <span class="c1"># add extensions</span>
+            <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+                <span class="n">extended_table</span> <span class="o">=</span> <span class="n">extended_table</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">extension</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">transformed_pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">extended_table</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span> <span class="o">=</span> <span class="n">transformed_pk</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">extended_table</span> <span class="o">=</span> <span class="n">extended_table</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">pk</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="n">extended_table</span></div>
 
@@ -432,7 +592,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab.
+        &copy; Copyright 2018, MIT Data To AI Lab
 
     </p>
   </div>
@@ -449,33 +609,16 @@
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

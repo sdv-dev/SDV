@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Usage &mdash; SDV 0.1.0 documentation</title>
+  <title>Usage &mdash; SDV 0.1.1 documentation</title>
   
 
   
@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API Reference" href="api_reference.html" />
     <link rel="prev" title="Quickstart" href="quickstart.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -81,7 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPi</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#development">Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development-setup">Development Setup</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
@@ -94,6 +96,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#table-details">Table details</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#field-details">Field details</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -110,7 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="history.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
 </ul>
 
             
@@ -185,9 +188,10 @@
 behaviors. To do so it needs the data in a format in which it can process their relationships.</p>
 <p>To prepare a dataset to work with SDV you need to do the following:</p>
 <ol class="arabic simple">
-<li>Dump your tables in <code class="docutils literal notranslate"><span class="pre">.csv</span></code> files, named after them. There have to be <strong>one single file</strong> for table.</li>
-<li>Create a <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file with the specification of your dataset.</li>
-<li>Load it with <code class="docutils literal notranslate"><span class="pre">SDV</span></code></li>
+<li><p>Dump your tables in <code class="docutils literal notranslate"><span class="pre">.csv</span></code> files, named after them. There have to be <strong>one single file</strong> for
+table.</p></li>
+<li><p>Create a <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file with the specification of your dataset.</p></li>
+<li><p>Load it with <code class="docutils literal notranslate"><span class="pre">SDV</span></code></p></li>
 </ol>
 </div>
 <div class="section" id="metadata-file-specification">
@@ -219,17 +223,15 @@ work, its base schema is as follows:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Path:</th><td class="field-body">Relative path from this file to the root folder of the datasets. Leave empty if the
-datasets are on the same folder than the <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Tables:</th><td class="field-body">List of tables in the dataset. Each table should have</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Path</dt>
+<dd class="field-odd"><p>Relative path from this file to the root folder of the datasets. Leave empty if the
+datasets are on the same folder than the <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file.</p>
+</dd>
+<dt class="field-even">Tables</dt>
+<dd class="field-even"><p>List of tables in the dataset. Each table should have</p>
+</dd>
+</dl>
 <div class="section" id="table-details">
 <h3>Table details<a class="headerlink" href="#table-details" title="Permalink to this headline">¶</a></h3>
 <p>A node <code class="docutils literal notranslate"><span class="pre">table</span></code> should be made for each table in our dataset. It contains the configuration on
@@ -247,24 +249,26 @@ how to handle this table. It has the following elements:</p>
 <span class="p">]</span>
 </pre></div>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Fields:</th><td class="field-body">List of fields of the table.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Headers:</th><td class="field-body">Whether or not load the headers from the csv file.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Name:</th><td class="field-body">Name of the table.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Path:</th><td class="field-body">Relative path to the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file from the data root folder.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Primary_key:</th><td class="field-body">Name of the field that act as a primary key of the table.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Use:</th><td class="field-body">Wheter or not use this table when sampling.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Fields</dt>
+<dd class="field-odd"><p>List of fields of the table.</p>
+</dd>
+<dt class="field-even">Headers</dt>
+<dd class="field-even"><p>Whether or not load the headers from the csv file.</p>
+</dd>
+<dt class="field-odd">Name</dt>
+<dd class="field-odd"><p>Name of the table.</p>
+</dd>
+<dt class="field-even">Path</dt>
+<dd class="field-even"><p>Relative path to the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file from the data root folder.</p>
+</dd>
+<dt class="field-odd">Primary_key</dt>
+<dd class="field-odd"><p>Name of the field that act as a primary key of the table.</p>
+</dd>
+<dt class="field-even">Use</dt>
+<dd class="field-even"><p>Wheter or not use this table when sampling.</p>
+</dd>
+</dl>
 </div>
 <div class="section" id="field-details">
 <h3>Field details<a class="headerlink" href="#field-details" title="Permalink to this headline">¶</a></h3>
@@ -282,45 +286,45 @@ how to handle this table. It has the following elements:</p>
 <span class="p">}]</span>
 </pre></div>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Name:</th><td class="field-body">Name of the field.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Uniques:</th><td class="field-body">Number of unique values in this field.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">The type of the field. See table below.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Subtype:</th><td class="field-body">The subtype of the field. See table below</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
+<dl class="field-list simple">
+<dt class="field-odd">Name</dt>
+<dd class="field-odd"><p>Name of the field.</p>
+</dd>
+<dt class="field-even">Uniques</dt>
+<dd class="field-even"><p>Number of unique values in this field.</p>
+</dd>
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>The type of the field. See table below.</p>
+</dd>
+<dt class="field-even">Subtype</dt>
+<dd class="field-even"><p>The subtype of the field. See table below</p>
+</dd>
+</dl>
+<table class="docutils align-center">
 <colgroup>
-<col width="50%" />
-<col width="50%" />
+<col style="width: 50%" />
+<col style="width: 50%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Type</th>
-<th class="head">Subtype</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Subtype</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>number</td>
-<td>integer</td>
+<tbody>
+<tr class="row-even"><td><p>number</p></td>
+<td><p>integer</p></td>
 </tr>
-<tr class="row-odd"><td>number</td>
-<td>float</td>
+<tr class="row-odd"><td><p>number</p></td>
+<td><p>float</p></td>
 </tr>
-<tr class="row-even"><td>datetime</td>
-<td>datetime</td>
+<tr class="row-even"><td><p>datetime</p></td>
+<td><p>datetime</p></td>
 </tr>
-<tr class="row-odd"><td>categorical</td>
-<td>categorical</td>
+<tr class="row-odd"><td><p>categorical</p></td>
+<td><p>categorical</p></td>
 </tr>
-<tr class="row-even"><td>categorical</td>
-<td>boolean</td>
+<tr class="row-even"><td><p>categorical</p></td>
+<td><p>boolean</p></td>
 </tr>
 </tbody>
 </table>
@@ -342,6 +346,49 @@ how to handle this table. It has the following elements:</p>
 <span class="p">}]</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="categorical-fields-data-anonymization">
+<h4>Categorical fields ( Data anonymization)<a class="headerlink" href="#categorical-fields-data-anonymization" title="Permalink to this headline">¶</a></h4>
+<p>For <code class="docutils literal notranslate"><span class="pre">categorical</span></code> types, there is an option to anonymize data labeled as Personally Identifiable
+Information, <code class="docutils literal notranslate"><span class="pre">pii</span></code>, but keeping its statistical properties. To anonymize a field, you should use
+the following keys.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;social_scurity_number&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;pii&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="c1"># expected a bool</span>
+            <span class="s1">&#39;pii_category&#39;</span><span class="p">:</span> <span class="s1">&#39;ssn&#39;</span> <span class="c1"># expected a string</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<p>The most common supported values of <code class="docutils literal notranslate"><span class="pre">pii_category</span></code> are:</p>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>name</p></td>
+</tr>
+<tr class="row-even"><td><p>first_name</p></td>
+</tr>
+<tr class="row-odd"><td><p>last_name</p></td>
+</tr>
+<tr class="row-even"><td><p>phone_number</p></td>
+</tr>
+<tr class="row-odd"><td><p>ssn</p></td>
+</tr>
+<tr class="row-even"><td><p>credit_card_number</p></td>
+</tr>
+<tr class="row-odd"><td><p>credit_card_security_code</p></td>
+</tr>
+</tbody>
+</table>
+<p>But any value supported by faker can be used. A full list can be found here: <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker</a></p>
 </div>
 <div class="section" id="primary-key-fields">
 <h4>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h4>
@@ -384,16 +431,14 @@ should be included.</p>
 <span class="p">}]</span>
 </pre></div>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">table:</th><td class="field-body">Origin table name.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">field:</th><td class="field-body">Origin table field name.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">table</dt>
+<dd class="field-odd"><p>Origin table name.</p>
+</dd>
+<dt class="field-even">field</dt>
+<dd class="field-even"><p>Origin table field name.</p>
+</dd>
+</dl>
 </div>
 </div>
 <div class="section" id="examples">
@@ -425,7 +470,7 @@ should be included.</p>
         <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="quickstart.html" class="btn btn-neutral" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -434,7 +479,7 @@ should be included.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab.
+        &copy; Copyright 2018, MIT Data To AI Lab
 
     </p>
   </div>
@@ -451,33 +496,16 @@ should be included.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

@@ -10,7 +10,8 @@ behaviors. To do so it needs the data in a format in which it can process their 
 
 To prepare a dataset to work with SDV you need to do the following:
 
-1. Dump your tables in ``.csv`` files, named after them. There have to be **one single file** for table.
+1. Dump your tables in ``.csv`` files, named after them. There have to be **one single file** for
+   table.
 2. Create a ``meta.json`` file with the specification of your dataset.
 3. Load it with ``SDV``
 
@@ -59,7 +60,7 @@ Table details
 ^^^^^^^^^^^^^
 
 A node ``table`` should be made for each table in our dataset. It contains the configuration on
-how to handle this table. It has the following elements: 
+how to handle this table. It has the following elements:
 
 .. code-block:: python
 
@@ -102,9 +103,9 @@ Field details
     "tables": [{
         "fields": [
             {
-                "name": "CREDIT_LIMIT", 
-                "subtype": "integer", 
-                "type": "number", 
+                "name": "CREDIT_LIMIT",
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0
             },
             ...
@@ -161,6 +162,49 @@ For  ``datetime`` types, a ``format`` key should be included containing the date
     }]
 
 
+Categorical fields ( Data anonymization)
+""""""""""""""""""""""""""""""""""""""""
+
+For ``categorical`` types, there is an option to anonymize data labeled as Personally Identifiable
+Information, ``pii``, but keeping its statistical properties. To anonymize a field, you should use
+the following keys.
+
+.. code-block:: python
+
+    'tables': [{
+        'fields': [
+            {
+                'name': 'social_scurity_number',
+                'type': 'categorical',
+                'pii': True, # expected a bool
+                'pii_category': 'ssn' # expected a string
+            },
+            ...
+        ],
+        ...
+    }]
+
+The most common supported values of ``pii_category`` are:
+
++---------------------------+
+| name                      |
++---------------------------+
+| first_name                |
++---------------------------+
+| last_name                 |
++---------------------------+
+| phone_number              |
++---------------------------+
+| ssn                       |
++---------------------------+
+| credit_card_number        |
++---------------------------+
+| credit_card_security_code |
++---------------------------+
+
+But any value supported by faker can be used. A full list can be found here: `Faker`_
+
+
 Primary key fields
 """"""""""""""""""
 
@@ -172,12 +216,12 @@ should be included.
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID", 
-                "subtype": "integer", 
-                "type": "number", 
+                "name": "CUSTOMER_ID",
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0,
                 "regex": "^[0-9]{10}$"
-            }, 
+            },
             ...
         ],
         ...
@@ -194,15 +238,15 @@ If a field is a foreign key to another table, then it has to be specified using 
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID", 
+                "name": "CUSTOMER_ID",
                 "ref": {
-                    "field": "CUSTOMER_ID", 
+                    "field": "CUSTOMER_ID",
                     "table": "DEMO_CUSTOMERS"
-                }, 
-                "subtype": "integer", 
-                "type": "number", 
+                },
+                "subtype": "integer",
+                "type": "number",
                 "uniques": 0
-            }, 
+            },
             ...
         ],
         ...
@@ -215,8 +259,6 @@ If a field is a foreign key to another table, then it has to be specified using 
 Examples
 ^^^^^^^^
 A full working example can be found on the `tests`_ folder.
-
-
 
 
 Sampling new data
@@ -235,3 +277,4 @@ To use SDV in a project
 .. _RDT: https://github.com/HDI-Project/RDT
 .. _strftime: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
 .. _tests: https://github.com/HDI-Project/SDV/blob/master/tests/data/meta.json
+.. _Faker: https://faker.readthedocs.io/en/master/providers.html

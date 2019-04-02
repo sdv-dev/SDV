@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Contributing &mdash; SDV 0.1.0 documentation</title>
+  <title>Contributing &mdash; SDV 0.1.1 documentation</title>
   
 
   
@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Credits" href="authors.html" />
     <link rel="prev" title="API Reference" href="api_reference.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -81,7 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPi</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#development">Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development-setup">Development Setup</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
@@ -94,6 +96,7 @@
 <li class="toctree-l3"><a class="reference internal" href="usage.html#table-details">Table details</a></li>
 <li class="toctree-l3"><a class="reference internal" href="usage.html#field-details">Field details</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="usage.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="usage.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l4"><a class="reference internal" href="usage.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -110,7 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="history.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
 </ul>
 
             
@@ -186,12 +189,12 @@ helps, and credit will always be given.</p>
 <h2>Types of Contributions<a class="headerlink" href="#types-of-contributions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="report-bugs">
 <h3>Report Bugs<a class="headerlink" href="#report-bugs" title="Permalink to this headline">¶</a></h3>
-<p>Report bugs at <a class="reference external" href="https://github.com/HDI-Project/sdv/issues">https://github.com/HDI-Project/sdv/issues</a>.</p>
+<p>Report bugs at <a class="reference external" href="https://github.com/HDI-Project/SDV/issues">https://github.com/HDI-Project/SDV/issues</a>.</p>
 <p>If you are reporting a bug, please include:</p>
 <ul class="simple">
-<li>Your operating system name and version.</li>
-<li>Any details about your local setup that might be helpful in troubleshooting.</li>
-<li>Detailed steps to reproduce the bug.</li>
+<li><p>Your operating system name and version.</p></li>
+<li><p>Any details about your local setup that might be helpful in troubleshooting.</p></li>
+<li><p>Detailed steps to reproduce the bug.</p></li>
 </ul>
 </div>
 <div class="section" id="fix-bugs">
@@ -212,41 +215,41 @@ articles, and such.</p>
 </div>
 <div class="section" id="submit-feedback">
 <h3>Submit Feedback<a class="headerlink" href="#submit-feedback" title="Permalink to this headline">¶</a></h3>
-<p>The best way to send feedback is to file an issue at <a class="reference external" href="https://github.com/HDI-Project/sdv/issues">https://github.com/HDI-Project/sdv/issues</a>.</p>
+<p>The best way to send feedback is to file an issue at <a class="reference external" href="https://github.com/HDI-Project/SDV/issues">https://github.com/HDI-Project/SDV/issues</a>.</p>
 <p>If you are proposing a feature:</p>
 <ul class="simple">
-<li>Explain in detail how it would work.</li>
-<li>Keep the scope as narrow as possible, to make it easier to implement.</li>
-<li>Remember that this is a volunteer-driven project, and that contributions
-are welcome :)</li>
+<li><p>Explain in detail how it would work.</p></li>
+<li><p>Keep the scope as narrow as possible, to make it easier to implement.</p></li>
+<li><p>Remember that this is a volunteer-driven project, and that contributions
+are welcome :)</p></li>
 </ul>
 </div>
 </div>
 <div class="section" id="get-started">
 <h2>Get Started!<a class="headerlink" href="#get-started" title="Permalink to this headline">¶</a></h2>
-<p>Ready to contribute? Here’s how to set up <cite>sdv</cite> for local development.</p>
+<p>Ready to contribute? Here’s how to set up <cite>SDV</cite> for local development.</p>
 <ol class="arabic">
-<li><p class="first">Fork the <cite>sdv</cite> repo on GitHub.</p>
-</li>
-<li><p class="first">Clone your fork locally:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:your_name_here/sdv.git
+<li><p>Fork the <cite>SDV</cite> repo on GitHub.</p></li>
+<li><p>Clone your fork locally:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:your_name_here/SDV.git
 </pre></div>
 </div>
 </li>
-<li><p class="first">Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ mkvirtualenv sdv
-$ <span class="nb">cd</span> sdv/
-$ pip install -e .<span class="o">[</span>dev<span class="o">]</span>
+<li><p>Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed,
+this is how you set up your fork for local development:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ mkvirtualenv SDV
+$ <span class="nb">cd</span> SDV/
+$ make install-develop
 </pre></div>
 </div>
 </li>
-<li><p class="first">Create a branch for local development:</p>
+<li><p>Create a branch for local development:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git checkout -b name-of-your-bugfix-or-feature
 </pre></div>
 </div>
 <p>Now you can make your changes locally.</p>
 </li>
-<li><p class="first">While hacking your changes, make sure to cover all your developments with the required
+<li><p>While hacking your changes, make sure to cover all your developments with the required
 unit tests, and that none of the old tests fail as a consequence of your changes.
 For this, make sure to run the tests suite and check the code coverage:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ make <span class="nb">test</span>       <span class="c1"># Run the tests</span>
@@ -254,74 +257,73 @@ $ make coverage   <span class="c1"># Get the coverage report</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">When you’re done making changes, check that your changes pass flake8 and the
+<li><p>When you’re done making changes, check that your changes pass flake8 and the
 tests, including testing other Python versions with tox:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ make test-all
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ make lint       <span class="c1"># Check code styling</span>
+$ make test-all   <span class="c1"># Execute tests on all python versions</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Make also sure to include the necessary documentation in the code as docstrings following
-the [google](<a class="reference external" href="https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments">https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments</a>)
-or the [numpy](<a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">https://numpydoc.readthedocs.io/en/latest/format.html</a>) docstring style.
+<li><p>Make also sure to include the necessary documentation in the code as docstrings following
+the <a class="reference external" href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html">google docstring</a> style.
 If you want to view how your documentation will look like when it is published, you can
 generate and view the docs with this command:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ make viewdocs
 </pre></div>
 </div>
 </li>
-<li><p class="first">Commit your changes and push your branch to GitHub:</p>
+<li><p>Commit your changes and push your branch to GitHub:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git add .
 $ git commit -m <span class="s2">&quot;Your detailed description of your changes.&quot;</span>
 $ git push origin name-of-your-bugfix-or-feature
 </pre></div>
 </div>
 </li>
-<li><p class="first">Submit a pull request through the GitHub website.</p>
-</li>
+<li><p>Submit a pull request through the GitHub website.</p></li>
 </ol>
 </div>
 <div class="section" id="pull-request-guidelines">
 <h2>Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permalink to this headline">¶</a></h2>
 <p>Before you submit a pull request, check that it meets these guidelines:</p>
 <ol class="arabic simple">
-<li>It resolves an open GitHub Issue and contains its reference in the title or
-the comment. If there is no associated issue, feel free to create one.</li>
-<li>Whenever possible, it resolves only <strong>one</strong> issue. If your PR resolves more than
-one issue, try to split it in more than one pull request.</li>
-<li>The pull request should include unit tests that cover all the changed code</li>
-<li>If the pull request adds functionality, the docs should be updated. Put
+<li><p>It resolves an open GitHub Issue and contains its reference in the title or
+the comment. If there is no associated issue, feel free to create one.</p></li>
+<li><p>Whenever possible, it resolves only <strong>one</strong> issue. If your PR resolves more than
+one issue, try to split it in more than one pull request.</p></li>
+<li><p>The pull request should include unit tests that cover all the changed code</p></li>
+<li><p>If the pull request adds functionality, the docs should be updated. Put
 your new functionality into a function with a docstring, and add the
-feature to the list in README.rst.</li>
-<li>The pull request should work for Python3.5 and 3.6. Check
-<a class="reference external" href="https://travis-ci.org/HDI-Project/sdv/pull_requests">https://travis-ci.org/HDI-Project/sdv/pull_requests</a>
-and make sure that the tests pass for all supported Python versions.</li>
+feature to the list in README.rst.</p></li>
+<li><p>The pull request should work for Python3.5 and 3.6. Check
+<a class="reference external" href="https://travis-ci.org/HDI-Project/SDV/pull_requests">https://travis-ci.org/HDI-Project/SDV/pull_requests</a>
+and make sure that the tests pass for all supported Python versions.</p></li>
 </ol>
 </div>
 <div class="section" id="unit-testing-guidelines">
 <h2>Unit Testing Guidelines<a class="headerlink" href="#unit-testing-guidelines" title="Permalink to this headline">¶</a></h2>
 <p>All the Unit Tests should comply with the following requirements:</p>
 <ol class="arabic simple">
-<li>Unit Tests should be based only in unittest and pytest modules.</li>
-<li>The tests that cover a module called <code class="docutils literal notranslate"><span class="pre">sdv/path/to/a_module.py</span></code> should be
+<li><p>Unit Tests should be based only in unittest and pytest modules.</p></li>
+<li><p>The tests that cover a module called <code class="docutils literal notranslate"><span class="pre">sdv/path/to/a_module.py</span></code> should be
 implemented in a separated module called <code class="docutils literal notranslate"><span class="pre">tests/sdv/path/to/test_a_module.py</span></code>.
 Note that the module name has the <code class="docutils literal notranslate"><span class="pre">test_</span></code> prefix and is located in a path similar
-to the one of the tested module, just inside te <code class="docutils literal notranslate"><span class="pre">tests</span></code> folder.</li>
-<li>Each method of the tested module should have at least one associated test method, and
-each test method should cover only <strong>one</strong> use case or scenario.</li>
-<li>Test case methods should start with the <code class="docutils literal notranslate"><span class="pre">test_</span></code> prefix and have descriptive names
+to the one of the tested module, just inside te <code class="docutils literal notranslate"><span class="pre">tests</span></code> folder.</p></li>
+<li><p>Each method of the tested module should have at least one associated test method, and
+each test method should cover only <strong>one</strong> use case or scenario.</p></li>
+<li><p>Test case methods should start with the <code class="docutils literal notranslate"><span class="pre">test_</span></code> prefix and have descriptive names
 that indicate which scenario they cover.
 Names such as <code class="docutils literal notranslate"><span class="pre">test_some_methed_input_none</span></code>, <code class="docutils literal notranslate"><span class="pre">test_some_method_value_error</span></code> or
 <code class="docutils literal notranslate"><span class="pre">test_some_method_timeout</span></code> are right, but names like <code class="docutils literal notranslate"><span class="pre">test_some_method_1</span></code>,
-<code class="docutils literal notranslate"><span class="pre">some_method</span></code> or <code class="docutils literal notranslate"><span class="pre">test_error</span></code> are not.</li>
-<li>Each test should validate only what the code of the method being tested does, and not
+<code class="docutils literal notranslate"><span class="pre">some_method</span></code> or <code class="docutils literal notranslate"><span class="pre">test_error</span></code> are not.</p></li>
+<li><p>Each test should validate only what the code of the method being tested does, and not
 cover the behavior of any third party package or tool being used, which is assumed to
-work properly as far as it is being passed the right values.</li>
-<li>Any third party tool that may have any kind of random behavior, such as some Machine
+work properly as far as it is being passed the right values.</p></li>
+<li><p>Any third party tool that may have any kind of random behavior, such as some Machine
 Learning models, databases or Web APIs, will be mocked using the <code class="docutils literal notranslate"><span class="pre">mock</span></code> library, and
-the only thing that will be tested is that our code passes the right values to them.</li>
-<li>Unit tests should not use anything from outside the test and the code being tested. This
+the only thing that will be tested is that our code passes the right values to them.</p></li>
+<li><p>Unit tests should not use anything from outside the test and the code being tested. This
 includes not reading or writting to any filesystem or database, which will be properly
-mocked.</li>
+mocked.</p></li>
 </ol>
 </div>
 <div class="section" id="tips">
@@ -336,29 +338,38 @@ mocked.</li>
 <p>The process of releasing a new version involves several steps combining both <code class="docutils literal notranslate"><span class="pre">git</span></code> and
 <code class="docutils literal notranslate"><span class="pre">bumpversion</span></code> which, briefly:</p>
 <ol class="arabic simple">
-<li>Merge what is in <code class="docutils literal notranslate"><span class="pre">master</span></code> branch into <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch.</li>
-<li>Update the version in <code class="docutils literal notranslate"><span class="pre">setup.cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">sdv/__init__.py</span></code> and <code class="docutils literal notranslate"><span class="pre">HISTORY.md</span></code> files.</li>
-<li>Create a new TAG pointing at the correspoding commit in <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch.</li>
-<li>Merge the new commit from <code class="docutils literal notranslate"><span class="pre">stable</span></code> into <code class="docutils literal notranslate"><span class="pre">master</span></code>.</li>
-<li>Update the version in <code class="docutils literal notranslate"><span class="pre">setup.cfg</span></code> and <code class="docutils literal notranslate"><span class="pre">sdv/__init__.py</span></code> to open the next
-development interation.</li>
+<li><p>Merge what is in <code class="docutils literal notranslate"><span class="pre">master</span></code> branch into <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch.</p></li>
+<li><p>Update the version in <code class="docutils literal notranslate"><span class="pre">setup.cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">sdv/__init__.py</span></code> and <code class="docutils literal notranslate"><span class="pre">HISTORY.md</span></code> files.</p></li>
+<li><p>Create a new git tag pointing at the corresponding commit in <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch.</p></li>
+<li><p>Merge the new commit from <code class="docutils literal notranslate"><span class="pre">stable</span></code> into <code class="docutils literal notranslate"><span class="pre">master</span></code>.</p></li>
+<li><p>Update the version in <code class="docutils literal notranslate"><span class="pre">setup.cfg</span></code> and <code class="docutils literal notranslate"><span class="pre">sdv/__init__.py</span></code> to open the next
+development interation.</p></li>
 </ol>
-<p><strong>Note:</strong> Before starting the process, make sure that <code class="docutils literal notranslate"><span class="pre">HISTORY.md</span></code> has a section titled
-<strong>Unreleased</strong> with the list of changes that will be included in the new version, and that
-these changes are committed and available in <code class="docutils literal notranslate"><span class="pre">master</span></code> branch.
-Normally this is just a list of the Pull Requests that have been merged since the latest version.</p>
-<p>Once this is done, just run the following commands:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git checkout stable
-git merge --no-ff master    <span class="c1"># This creates a merge commit</span>
-bumpversion release   <span class="c1"># This creates a new commit and a TAG</span>
-git push --tags origin stable
-make release
-git checkout master
-git merge stable
-bumpversion --no-tag patch
-git push
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Before starting the process, make sure that <code class="docutils literal notranslate"><span class="pre">HISTORY.md</span></code> has been updated with a new
+entry that explains the changes that will be included in the new version.
+Normally this is just a list of the Pull Requests that have been merged to master
+since the last release.</p>
+</div>
+<p>Once this is done, run one of the following commands:</p>
+<ol class="arabic">
+<li><p>If you are releasing a patch version:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make release
 </pre></div>
 </div>
+</li>
+<li><p>If you are releasing a minor version:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make release-minor
+</pre></div>
+</div>
+</li>
+<li><p>If you are releasing a major version:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make release-major
+</pre></div>
+</div>
+</li>
+</ol>
 </div>
 </div>
 
@@ -373,7 +384,7 @@ git push
         <a href="authors.html" class="btn btn-neutral float-right" title="Credits" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="api_reference.html" class="btn btn-neutral" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="api_reference.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -382,7 +393,7 @@ git push
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab.
+        &copy; Copyright 2018, MIT Data To AI Lab
 
     </p>
   </div>
@@ -399,33 +410,16 @@ git push
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
