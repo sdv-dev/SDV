@@ -74,6 +74,9 @@ make install-develop
 Below there is a short example about how to use SDV to model and sample a dataset composed of
 relational tables.
 
+**NOTE**: In order to be able to run this example, please make sure to have cloned the repository
+and execute these commands inside it, as they rely on some of the demo data included in it.
+
 ## Using the SDV class
 
 The easiest way to use SDV in Python is using the SDV class imported from the root of the package:
