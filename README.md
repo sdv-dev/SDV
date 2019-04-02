@@ -3,7 +3,6 @@
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
-
 [![PyPi][pypi-img]][pypi-url]
 [![Travis][travis-img]][travis-url]
 [![CodeCov][codecov-img]][codecov-url]
@@ -15,9 +14,7 @@
 [codecov-img]: https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/HDI-Project/SDV
 
-
 # SDV - Synthetic Data Vault
-
 
 Automated generative modeling and sampling
 
@@ -33,7 +30,6 @@ the functionality of the three core classes: the `DataNavigator`, the `Modeler` 
 Using these classes, users can get easy access to information about the relational database,
 create generative models for tables in the database and sample rows from these models to produce
 synthetic data.
-
 
 ## Installation
 
@@ -51,8 +47,26 @@ You can also clone the repository and install it from sources
 
 ```
 git clone git@github.com:HDI-Project/SDV.git
+```
+
+After cloning the repository, it's recommended that you create a virtualenv.
+In this example, we will create it using [VirtualEnvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/):
+
+```
 cd SDV
-pip install -e .
+mkvirtualenv -p $(which python3.6) -a $(pwd) sdv
+```
+
+After creating the virtualenv and activating it, you can install the project by runing the following command:
+
+```
+make install
+```
+
+For development, use the following command instead, which will install some additional dependencies for code linting and testing.
+
+```
+make install-develop
 ```
 
 ## Usage Example
@@ -60,9 +74,9 @@ pip install -e .
 Below there is a short example about how to use SDV to model and sample a dataset composed of
 relational tables.
 
-### Using the SDV class
+## Using the SDV class
 
-The easiest way to use SDV is using the SDV class from the root of the package:
+The easiest way to use SDV in Python is using the SDV class imported from the root of the package:
 
 ```python
 >>> from sdv import SDV
@@ -96,20 +110,25 @@ relations. Further explanation of how to generate this file can be found on the 
 After instantiating the class, we call to the `fit()` method in order to transform and model the
 data, and after that we are ready to sample rows, tables or the whole database.
 
-### Using each class manually
+## Using each class manually
 
-The overall flow of SDV is as follows: the DataNavigator extracts relevant information from the
-dataset, as well as applies desired transformations. This class is then passed into a `Modeler`,
-which uses the information in the `DataNavigator` to create generative models of the tables.
-Finally, a `Modeler` can be given to a `Sampler` to actual sample rows of synthetic data.
+The modelling and sampling process using SDV follows these steps:
 
-#### DataNavigator
+1. We use a `DataNavigator` instance to extract relevant information from the dataset, as well as
+   to transform their contents into numeric values.
+
+2. The `DataNavigator` is then used to create a `Modeler` instance, which uses the information in
+   the `DataNavigator` to create generative models of the tables.
+
+3. The `Modeler` instance can be passed to a `Sampler` to sample rows of synthetic data.
+
+### Using the DataNavigator
 
 The `DataNavigator` can be used to extract useful information about a dataset, such as the
-relationships between tables. It can also be used to apply transformations. Here we will use it to
-load the test data from the CSV files and apply some transformations to it.
+relationships between tables. Here we will use it to load the test data from the CSV files
+and apply some transformations to it.
 
-First, we will instantiate the `CSVDataLoader` class, that will load the data and prepare it to use it with `DataNavigator`.
+First, we will create an instance of `CSVDataLoader`, that will load the data and prepare it to use it with `DataNavigator`.
 To create an instance of the `CSVDataLoader` class, the filepath to the meta.json file must be provided.
 
 ```python
@@ -266,12 +285,12 @@ using the `load()` method:
 
 ### Using the Sampler
 
-The `Sampler` takes in a `Modeler` and `DataNavigator`. Using the mdels created in the last step,
+The `Sampler` takes in a `Modeler` and `DataNavigator`. Using the models created in the last step,
 the `Sampler` can recursively move through the tables in the dataset, and sample synthetic data.
 It can be used to sample rows from specified tables, sample an entire table at once or sample the
 whole database.
 
-Let's do an example with out dataset. First import the Sampler and create an instance of
+Let's do an example with our dataset. First import the Sampler and create an instance of
 the class.
 
 ```python
@@ -279,8 +298,8 @@ the class.
 >>> sampler = Sampler(data_navigator, modeler)
 ```
 
-To sample from a row, use the command `sample_rows()`. Note that before sampling from a child table, one of
-its parent tables must be sampled from.
+To sample from a row, use the command `sample_rows()`. Note that before sampling from a child
+table, one of its parent tables must have been sampled beforehand.
 
 ```python
 >>> sampler.sample_rows('DEMO_CUSTOMERS', 1).T
@@ -292,8 +311,8 @@ CREDIT_LIMIT              976
 COUNTRY                    US
 ```
 
-To sample a whole table use `sample_table()`. This will create as many rows as in the original
-database.
+To sample a whole table use `sample_table()`. This will create as many rows as there where in the
+original database.
 
 ```python
 >>> sampler.sample_table('DEMO_CUSTOMERS')

@@ -28,9 +28,9 @@ The easiest way to use SDV is using the ``SDV`` class from the root of the packa
 
 
 
-With this, we will be able to generate sintetic samples of data. The only argument we pass to ``SDV``
-is a path to a JSON file containing the information of the different tables, their fields and
-relations. Further explanation of how to generate this file can be found on the docs.
+With this, we will be able to generate sintetic samples of data. The only argument we pass to
+``SDV`` is a path to a JSON file containing the information of the different tables, their fields
+and relations. Further explanation of how to generate this file can be found on the docs.
 
 After instantiating the class, we call to the ``fit()`` method in order to transform and model the
 data, and after that we are ready to sample rows, tables or the whole database.

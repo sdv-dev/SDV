@@ -10,7 +10,8 @@ behaviors. To do so it needs the data in a format in which it can process their 
 
 To prepare a dataset to work with SDV you need to do the following:
 
-1. Dump your tables in ``.csv`` files, named after them. There have to be **one single file** for table.
+1. Dump your tables in ``.csv`` files, named after them. There have to be **one single file** for
+   table.
 2. Create a ``meta.json`` file with the specification of your dataset.
 3. Load it with ``SDV``
 
@@ -164,8 +165,9 @@ For  ``datetime`` types, a ``format`` key should be included containing the date
 Categorical fields ( Data anonymization)
 """"""""""""""""""""""""""""""""""""""""
 
-For ``categorical`` types, there is an option to anonymize data labeled as Personally Identifiable Information, ``pii``,
-but keeping its statistical properties. To anonymize a field, you should use the following keys.
+For ``categorical`` types, there is an option to anonymize data labeled as Personally Identifiable
+Information, ``pii``, but keeping its statistical properties. To anonymize a field, you should use
+the following keys.
 
 .. code-block:: python
 

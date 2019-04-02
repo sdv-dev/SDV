@@ -12,7 +12,7 @@ The simplest and recommended way to install SDV is using `pip`:
 
 .. code-block:: console
 
-    pip install sdv
+    $ pip install sdv
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,36 +26,50 @@ From sources
 
 The sources for SDV can be downloaded from the `Github repo`_.
 
-You can either clone the public repository:
+You can either clone the ``stable`` branch form the public repository:
 
 .. code-block:: console
 
-    git clone git://github.com/HDI-Project/sdv
+    $ git clone --branch stable git://github.com/HDI-Project/SDV
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    curl  -OL https://github.com/HDI-Project/sdv/tarball/master
+    $ curl  -OL https://github.com/HDI-Project/SDV/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
-    pip install .
+    $ make install
 
 
-.. _Github repo: https://github.com/HDI-Project/sdv
-.. _tarball: https://github.com/HDI-Project/sdv/tarball/master
+.. _Github repo: https://github.com/HDI-Project/SDV
+.. _tarball: https://github.com/HDI-Project/SDV/tarball/master
 
 
-Development
------------
+Development Setup
+-----------------
 
-If you are installing **SDV** in order to modify its code, the installation must be done
-from its sources, in the editable mode, and also including some additional dependencies in
-order to be able to run the tests and build the documentation:
+If you want to make changes in `SDV` and contribute them, you will need to prepare
+your environment to do so.
+
+These are the required steps:
+
+1. Fork the SDV `Github repo`_.
+
+2. Clone your fork locally:
 
 .. code-block:: console
 
-    pip install -e .[dev]
+    $ git clone git@github.com:your_name_here/SDV.git
+
+3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed,
+   this is how you set up your fork for local development:
+
+.. code-block:: console
+
+    $ mkvirtualenv SDV
+    $ cd SDV/
+    $ make install-develop
