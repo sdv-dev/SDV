@@ -8,6 +8,8 @@ from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
 from rdt.transformers.positive_number import PositiveNumberTransformer
 
+from sdv.data_navigator import Table
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -30,19 +32,22 @@ class Modeler:
         model (type): Class of model to use.
         distribution (type): Class of distribution to use. Will be deprecated shortly.
         model_kwargs (dict): Keyword arguments to pass to model.
+        amount_childs(bool): Wheter or not model the amount of child rows.
     """
 
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
 
-    def __init__(self, data_navigator, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
-        """Instantiates a modeler object.
-
-        """
+    def __init__(
+        self, data_navigator, model=DEFAULT_MODEL, distribution=None,
+        model_kwargs=None, amount_childs=False
+    ):
+        """Instantiates a modeler object."""
         self.tables = {}
         self.models = {}
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
         self.model = model
+        self.amount_childs = amount_childs
 
         if distribution and model != DEFAULT_MODEL:
             raise ValueError(
@@ -88,6 +93,40 @@ class Modeler:
             val = mapping[pk]
 
         return val
+
+    def _count_children_rows(self, parent_name):
+        """Append the number of children to the parent table.
+
+        Args:
+            parent_name(str): Name of the parent table.
+
+        Returns:
+            None
+
+        """
+        parent_table = self.dn.get_data(parent_name)
+        parent_meta = self.dn.get_meta_data(parent_name)
+        parent_primary = parent_meta.get('primary_key')
+        children = self.dn.get_children(parent_name)
+
+        for child_name in children:
+            child_table = self.dn.get_data(child_name)
+            child_fields = self.dn.get_meta_data(child_name)['fields']
+            child_foreign = self.get_foreign_key(child_fields, parent_primary)
+
+            foreign_related = child_table.groupby(child_foreign).count()['value'].to_frame()
+
+            # We add it to the parent table
+            parent_table = parent_table.merge(
+                foreign_related, how='left', left_on=parent_primary, right_index=True)
+
+            parent_table.value.fillna(0, inplace=True)
+            parent_table.value = parent_table.value.astype(int)
+
+            column_name = '{}__num_children'.format(child_name)
+            parent_table.rename(columns={'value': column_name}, inplace=True)
+
+        self.dn.tables[parent_table] = Table(parent_table, parent_meta)
 
     @classmethod
     def _flatten_array(cls, nested, prefix=''):
@@ -394,6 +433,10 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
+        if self.amount_childs:
+            for table in self.dn.tables:
+                self._count_children_rows(table)
+
         for table in self.dn.tables:
             if not self.dn.get_parents(table):
                 self.RCPA(table)

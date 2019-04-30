@@ -916,3 +916,82 @@ class TestModeler(TestCase):
 
         # Check
         assert result == expected_result
+
+    def test__count_children_rows_single_children(self):
+        """_count_children_rows appends a column to the parent table with the number of childs."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        parent_table = pd.DataFrame({'parent_id': list(range(1, 3))})
+        child_table = pd.DataFrame({
+            'child_id': list(range(1, 6)),
+            'parent_id': [1, 1, 2, 2, 2],
+            'value': [0.1, 0.5, 0.4, 0.2, 0.4]
+        })
+        data_navigator.get_data.side_effect = [
+            parent_table,
+            child_table
+        ]
+        data_navigator.tables = {}
+        data_navigator.get_meta_data.side_effect = [
+            {
+                'fields': {
+                    'parent_id': {
+                        'name': 'parent_id',
+                        'subtype': 'integer',
+                        'type': 'number',
+                        'regex': '^[0-9]{10}$'
+                    },
+                },
+                'headers': True,
+                'name': 'parent',
+                'path': 'parent.csv',
+                'primary_key': 'parent_id',
+            },
+            {
+                'fields': {
+                    'child_id': {
+                        'name': 'child_id',
+                        'subtype': 'integer',
+                        'type': 'number',
+                        'regex': '^[0-9]{10}$'
+                    },
+                    'parent_id': {
+                        'name': 'parent_id',
+                        'ref': {
+                            'field': 'parent_id',
+                            'table': 'parent'
+                        },
+                        'subtype': 'integer',
+                        'type': 'number',
+                    },
+                    'value': {
+                        'name': 'value',
+                        'type': 'number',
+                    },
+
+                },
+                'headers': True,
+                'name': 'children',
+                'path': 'children.csv',
+                'primary_key': 'child_id',
+                'use': True
+            }
+        ]
+        modeler = Modeler(data_navigator=data_navigator)
+        expected_result = pd.DataFrame({
+            'parent_id': list(range(1, 3)),
+            'children__num_children': [2, 3]
+        })
+
+        # Run
+        result = modeler._count_children_rows('parent')
+
+        # Check
+        assert result is None
+        assert modeler.dn.tables['parent'].data.equals(expected_result)
+        assert data_navigator.get_data.call_args_list == [
+            (('parent',), {}), (('children',), {})
+        ]
+        assert data_navigator.get_meta_data.call_args_list == [
+            (('parent',), {}), (('children',), {})
+        ]
