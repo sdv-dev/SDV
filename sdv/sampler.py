@@ -91,6 +91,43 @@ class Sampler:
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
         return covariance
 
+    def _fill_text_columns(self, row, labels, table_name):
+        """Fill in the column values for every non numeric column that isn't the primary key.
+
+        Args:
+            row (pandas.Series): row to fill text columns.
+            labels (list): Column names.
+            table_name (str): Name of the table.
+
+        Returns:
+            pd.Series: Series with text values filled.
+        """
+        fields = self.dn.tables[table_name].meta['fields']
+        for label in labels:
+            field = fields[label]
+            row_columns = list(row)
+            if field['type'] == 'id' and field['name'] not in row_columns:
+                # check foreign key
+                ref = field.get('ref')
+                if ref:
+                    # generate parent row
+                    parent_name = ref['table']
+                    parent_row = self.sample_rows(parent_name, 1)
+                    # grab value of foreign key
+                    val = parent_row[ref['field']]
+                    row.loc[:, field['name']] = val
+                else:
+                    # generate fake id
+                    regex = field['regex']
+                    row.loc[:, field['name']] = exrex.getone(regex)
+
+            elif field['type'] == 'text':
+                # generate fake text
+                regex = field['regex']
+                row.loc[:, field['name']] = exrex.getone(regex)
+
+        return row
+
     @staticmethod
     def reset_indices_tables(sampled_tables):
         """Reset the indices of sampled tables.
@@ -571,7 +608,13 @@ class Sampler:
 
         children = self.dn.get_children(parent_name)
         for child in children:
-            rows = self.sample_rows(child, num_rows)
+            if self.modeler.amount_childs:
+                col_name = '{}__num_children'.format(child)
+                amount_child_rows = parent_row[col_name].values[0]
+            else:
+                amount_child_rows = 5
+
+            rows = self.sample_rows(child, amount_child_rows)
 
             if child in sampled_data:
                 sampled_data[child] = pd.concat([sampled_data[child], rows])
@@ -613,40 +656,3 @@ class Sampler:
                     self._sample_child_rows(table, row, sampled_data)
 
         return self.reset_indices_tables(sampled_data)
-
-    def _fill_text_columns(self, row, labels, table_name):
-        """Fill in the column values for every non numeric column that isn't the primary key.
-
-        Args:
-            row (pandas.Series): row to fill text columns.
-            labels (list): Column names.
-            table_name (str): Name of the table.
-
-        Returns:
-            pd.Series: Series with text values filled.
-        """
-        fields = self.dn.tables[table_name].meta['fields']
-        for label in labels:
-            field = fields[label]
-            row_columns = list(row)
-            if field['type'] == 'id' and field['name'] not in row_columns:
-                # check foreign key
-                ref = field.get('ref')
-                if ref:
-                    # generate parent row
-                    parent_name = ref['table']
-                    parent_row = self.sample_rows(parent_name, 1)
-                    # grab value of foreign key
-                    val = parent_row[ref['field']]
-                    row.loc[:, field['name']] = val
-                else:
-                    # generate fake id
-                    regex = field['regex']
-                    row.loc[:, field['name']] = exrex.getone(regex)
-
-            elif field['type'] == 'text':
-                # generate fake text
-                regex = field['regex']
-                row.loc[:, field['name']] = exrex.getone(regex)
-
-        return row
