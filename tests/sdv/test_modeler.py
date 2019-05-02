@@ -977,6 +977,7 @@ class TestModeler(TestCase):
                 'use': True
             }
         ]
+        data_navigator.get_children.return_value = {'children'}
         modeler = Modeler(data_navigator=data_navigator)
         expected_result = pd.DataFrame({
             'parent_id': list(range(1, 3)),

@@ -126,7 +126,7 @@ class Modeler:
             column_name = '{}__num_children'.format(child_name)
             parent_table.rename(columns={'value': column_name}, inplace=True)
 
-        self.dn.tables[parent_table] = Table(parent_table, parent_meta)
+        self.dn.tables[parent_name] = Table(parent_table, parent_meta)
 
     @classmethod
     def _flatten_array(cls, nested, prefix=''):
