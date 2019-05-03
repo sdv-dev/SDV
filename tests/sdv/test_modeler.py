@@ -982,7 +982,7 @@ class TestModeler(TestCase):
         expected_result = pd.DataFrame({
             'parent_id': list(range(1, 3)),
             'children__num_children': [2, 3]
-        })
+        }, columns=['parent_id', 'children__num_children'])
 
         # Run
         result = modeler._count_children_rows('parent')
