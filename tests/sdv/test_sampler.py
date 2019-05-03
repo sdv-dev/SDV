@@ -195,6 +195,37 @@ class TestSampler(TestCase):
         assert len(unique_foreign_keys) == 1
         assert unique_foreign_keys[0] in sampled_parent['CUSTOMER_ID'].values
 
+    @patch('sdv.sampler.Sampler.sample_rows')
+    def test_sample_rows_amount_children(self, sample_mock):
+        """ """
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.get_children.side_effect = [{'children'}, {}]
+
+        modeler = MagicMock(spec=Modeler)
+        modeler.amount_childs = True
+
+        sampled_row = pd.DataFrame([{'sampled': 'rows'}])
+        sample_mock.return_value = sampled_row
+
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        parent_name = 'parent'
+        parent_row = pd.DataFrame([{'children__num_children': 3}])
+        sampled_data = {}
+
+        # Run
+        sampler._sample_child_rows(parent_name, parent_row, sampled_data)
+
+        # Check
+        assert sampled_data['children'].equals(sampled_row)
+
+        assert data_navigator.get_children.call_args_list == [
+            (('parent',), {}),
+            (('children',), {})
+        ]
+        sample_mock.assert_called_once_with('children', 3)
+
     @patch('sdv.sampler.pd.concat')
     @patch('sdv.sampler.Sampler.reset_indices_tables')
     @patch('sdv.sampler.Sampler._sample_child_rows')

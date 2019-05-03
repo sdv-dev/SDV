@@ -593,7 +593,7 @@ class Sampler:
         num_rows = self.dn.tables[table_name].data.shape[0]
         return self.sample_rows(table_name, num_rows)
 
-    def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
+    def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=None):
         """Uses parameters from parent row to synthesize child rows.
 
         Args:
@@ -608,13 +608,13 @@ class Sampler:
 
         children = self.dn.get_children(parent_name)
         for child in children:
-            if self.modeler.amount_childs:
+            if self.modeler.amount_childs and num_rows is None:
                 col_name = '{}__num_children'.format(child)
-                amount_child_rows = parent_row[col_name].values[0]
+                num_rows = parent_row.loc[0, col_name]
             else:
-                amount_child_rows = 5
+                num_rows = 5
 
-            rows = self.sample_rows(child, amount_child_rows)
+            rows = self.sample_rows(child, num_rows)
 
             if child in sampled_data:
                 sampled_data[child] = pd.concat([sampled_data[child], rows])
