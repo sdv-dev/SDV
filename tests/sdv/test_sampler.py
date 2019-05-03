@@ -702,3 +702,25 @@ class TestSampler(TestCase):
             ((3,), ),
             ((3,), )
         ]
+
+    def test_transform_synthesized_rows_unicity_primary_keys(self):
+        """Transform_synthesized_rows, preserves the unicity of primary keys between calls."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.tables = {
+            'first_table': TabError
+        }
+        modeler = MagicMock(spec=Modeler)
+
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+        synthesized = pd.DataFrame()
+        table_name = 'parent'
+        num_rows = 10
+
+        # Run
+        first_samples = sampler.transform_synthesized_rows(synthesized, table_name, num_rows)
+        second_samples = sampler.transform_synthesized_rows(synthesized, table_name, num_rows)
+
+        # Check
+        assert first_samples
+        assert second_samples
