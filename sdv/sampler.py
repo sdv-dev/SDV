@@ -106,6 +106,14 @@ class Sampler:
 
         return sampled_tables
 
+    def _reset_primary_keys_generators(self):
+        """Reset the primary keys generators."""
+        for table_name, table in self.dn.tables.items():
+            meta = self.dn.tables[table_name].meta
+            primary_key = meta.get('primary_key')
+            regex = meta['fields'][primary_key]['regex']
+            self.primary_key[table_name] = exrex.generate(regex)
+
     def transform_synthesized_rows(self, synthesized, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
 
