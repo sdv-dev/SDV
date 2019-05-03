@@ -53,7 +53,7 @@ class Modeler:
             raise ValueError(
                 '`distribution` argument is only suported for `GaussianMultivariate` model.')
 
-        if distribution:
+        if distribution is not None:
             distribution = get_qualified_name(distribution)
         else:
             distribution = get_qualified_name(DEFAULT_DISTRIBUTION)

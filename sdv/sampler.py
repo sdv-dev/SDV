@@ -596,6 +596,9 @@ class Sampler:
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=None):
         """Uses parameters from parent row to synthesize child rows.
 
+        If num_rows=None and self.modeler.amount_childs=True, the amount of children will be
+        taken from the parent row, elsewhere, it will sample only 5 rows.
+
         Args:
             parent_name (str): name of parent table
             parent_row (dataframe): synthesized parent row
