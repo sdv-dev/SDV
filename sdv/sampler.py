@@ -28,8 +28,9 @@ class Sampler:
         """Instantiate a new object."""
         self.dn = data_navigator
         self.modeler = modeler
-        self.sampled = {}  # table_name -> [(primary_key, generated_row)]
-        self.primary_key = {}
+        self.sampled = dict()  # table_name -> [(primary_key, generated_row)]
+        self.primary_key = dict()
+        self.remaining_primary_key = dict()
 
     @staticmethod
     def update_mapping_list(mapping, key, value):
@@ -112,7 +113,17 @@ class Sampler:
             meta = self.dn.tables[table_name].meta
             primary_key = meta.get('primary_key')
             regex = meta['fields'][primary_key]['regex']
+
             self.primary_key[table_name] = exrex.generate(regex)
+            self.remaining_primary_key[table_name] = exrex.count(regex)
+
+    def _check_primary_keys(self, table_name, num_rows):
+        remaining = self.remaining_primary_key[table_name]
+        if remaining < num_rows:
+            raise ValueError(
+                'Not enough unique values for primary key of table {}: There are {} remaining'
+                ' values, but {} were requested.'.format(table_name, remaining, num_rows)
+            )
 
     def transform_synthesized_rows(self, synthesized, table_name, num_rows):
         """Add primary key and reverse transform synthetized data.
@@ -138,16 +149,23 @@ class Sampler:
 
             if not generator:
                 generator = exrex.generate(regex)
+                self.primary_key[table_name] = generator
 
-            values = [x for i, x in zip(range(num_rows), generator)]
+                remaining = exrex.count(regex)
+                self.remaining_primary_key[table_name] = remaining
 
-            self.primary_key[table_name] = generator
+            else:
+                remaining = self.remaining_primary_key[table_name]
 
-            if len(values) != num_rows:
+            if remaining < num_rows:
                 raise ValueError(
                     'Not enough unique values for primary key of table {} with regex {}'
                     ' to generate {} samples.'.format(table_name, regex, num_rows)
                 )
+
+            values = [x for i, x in zip(range(num_rows), generator)]
+
+            self.remaining_primary_key[table_name] -= num_rows
 
             synthesized[primary_key] = pd.Series(values)
 
