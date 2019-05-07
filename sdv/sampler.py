@@ -531,16 +531,19 @@ class Sampler:
             parents = bool(self.dn.get_parents(table_name))
             raise ValueError(MODEL_ERROR_MESSAGES[parents])
 
-    def sample_rows(self, table_name, num_rows):
+    def sample_rows(self, table_name, num_rows, reset_pks=False):
         """Sample specified number of rows for specified table.
 
         Args:
-            table_name (str): name of table to synthesize
-            num_rows (int): number of rows to synthesize
+            table_name(str): Name of table to synthesize.
+            num_rows(int): Number of rows to synthesize.
+            reset_pks(bool): Wheter or not reset the pk generators.
 
         Returns:
-            pd.DataFrame: synthesized rows.
+            pd.DataFrame: Synthesized rows.
         """
+        if reset_pks:
+            self._reset_primary_keys_generators()
 
         pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
         parent_row = self._get_parent_row(table_name)
@@ -575,17 +578,18 @@ class Sampler:
 
         return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
-    def sample_table(self, table_name):
+    def sample_table(self, table_name, reset_pks=False):
         """Sample a table equal to the size of the original.
 
         Args:
-            table_name (str): name of table to synthesize
+            table_name(str): Name of table to synthesize.
+            reset_pks(bool): Wheter or not reset the pk generators.
 
         Returns:
             pandas.DataFrame: Synthesized table.
         """
         num_rows = self.dn.tables[table_name].data.shape[0]
-        return self.sample_rows(table_name, num_rows)
+        return self.sample_rows(table_name, num_rows, reset_pks=reset_pks)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
         """Uses parameters from parent row to synthesize child rows.
@@ -611,11 +615,12 @@ class Sampler:
 
             self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
 
-    def sample_all(self, num_rows=5):
+    def sample_all(self, num_rows=5, reset_pks=False):
         """Samples the entire database.
 
         Args:
-            num_rows (int): Number of rows to be sampled on the parent tables.
+            num_rows(int): Number of rows to be sampled on the parent tables.
+            reset_pks(bool): Wheter or not reset the pk generators.
 
         Returns:
             dict: Tables sampled.
