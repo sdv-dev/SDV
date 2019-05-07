@@ -4,24 +4,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 
-from sdv.data_navigator import CSVDataLoader, DataNavigator, Table
+from sdv.data_navigator import DataNavigator, Table
 from sdv.modeler import GaussianMultivariate, Modeler
 from sdv.sampler import Sampler
 
 
 class TestSampler(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        data_loader = CSVDataLoader('tests/data/meta.json')
-        cls.data_navigator = data_loader.load_data()
-        cls.data_navigator.transform_data()
-
-        cls.modeler = Modeler(cls.data_navigator)
-        cls.modeler.model_database()
-
-    def setUp(self):
-        self.sampler = Sampler(self.data_navigator, self.modeler)
 
     def test__square_matrix(self):
         """_square_matrix transform triagular list of list into square matrix."""
@@ -49,10 +37,8 @@ class TestSampler(TestCase):
         assert result == expected_result
 
     @patch('sdv.sampler.Sampler._fill_text_columns', autospec=True)
-    @patch('sdv.sampler.Sampler.update_mapping_list')
     @patch('sdv.sampler.Sampler._get_table_meta', autospec=True)
-    def test_transform_synthesized_rows_no_pk(
-            self, get_table_meta_mock, update_mock, fill_mock):
+    def test_transform_synthesized_rows_no_pk(self, get_table_meta_mock, fill_mock):
 
         """transform_synthesized_rows will update internal state and reverse transform rows."""
         # Setup - Class Instantiation
@@ -120,12 +106,8 @@ class TestSampler(TestCase):
         # Check - Result
         assert result.equals(expected_result)
 
-        # Check - Class internal state
-        assert sampler.sampled == update_mock.return_value
-
         # Check - Mock calls
         get_table_meta_mock.assert_called_once_with(sampler, data_navigator.meta, 'table')
-        update_mock.assert_called_once_with({}, 'table', (None, synthesized_rows))
         fill_mock.assert_called_once_with(
             sampler, synthesized_rows, ['column_A', 'column_B'], 'table')
 
@@ -160,40 +142,97 @@ class TestSampler(TestCase):
         # Check
         assert (result == expected_result).all().all()
 
-    def test_sample_rows_parent_table(self):
-        """sample_rows samples new rows for the given table."""
+    @patch('sdv.sampler.Sampler.transform_synthesized_rows', autospec=True)
+    @patch('sdv.sampler.Sampler.update_mapping_list')
+    @patch('sdv.sampler.Sampler._sample_valid_rows', autospec=True)
+    @patch('sdv.sampler.Sampler._get_parent_row', autospec=True)
+    @patch('sdv.sampler.Sampler._get_primary_keys', autospec=True)
+    def test_sample_rows_parent_table(
+        self, primary_mock, parent_mock, sample_mock, update_mock, trans_mock
+    ):
+        """sample_rows samples using modeler.models if the table hasn't parents."""
         # Setup
-        raw_data = self.modeler.dn.tables['DEMO_CUSTOMERS'].data
+        data_navigator = MagicMock(spec=DataNavigator)
+        modeler = MagicMock(spec=Modeler)
+        modeler.models = {
+            'parent_table': 'model for parent table'
+        }
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        primary_mock.return_value = ('primary_key', pd.Series(range(5)))
+        parent_mock.return_value = None
+        sample_mock.return_value = pd.DataFrame()
+        update_mock.return_value = {'table_name': 'samples'}
+        trans_mock.return_value = 'transformed rows'
 
         # Run
-        result = self.sampler.sample_rows('DEMO_CUSTOMERS', 5)
+        result = sampler.sample_rows('parent_table', 5)
 
         # Check
-        assert result.shape[0] == 5
-        assert (result.columns == raw_data.columns).all()
+        assert result == 'transformed rows'
+        assert sampler.sampled == {'table_name': 'samples'}
 
-        # Primary key columns are sampled values
-        assert len(result['CUSTOMER_ID'].unique()) != 1
+        primary_mock.assert_called_once_with(sampler, 'parent_table', 5)
+        parent_mock.assert_called_once_with(sampler, 'parent_table')
+        sample_mock.assert_called_once_with(sampler, 'model for parent table', 5, 'parent_table')
 
-    def test_sample_rows_children_table(self):
-        """sample_rows samples new rows for the given table."""
+        expected_sample_info = ('primary_key', sample_mock.return_value)
+        update_mock.assert_called_once_with({}, 'parent_table', expected_sample_info)
+        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'parent_table', 5)
+
+    @patch('sdv.sampler.Sampler.transform_synthesized_rows', autospec=True)
+    @patch('sdv.sampler.Sampler.update_mapping_list')
+    @patch('sdv.sampler.Sampler._sample_valid_rows', autospec=True)
+    @patch('sdv.sampler.Sampler.unflatten_model', autospec=True)
+    @patch('sdv.sampler.Sampler._get_parent_row', autospec=True)
+    @patch('sdv.sampler.Sampler._get_primary_keys', autospec=True)
+    def test_sample_rows_children_table(
+        self, primary_mock, parent_mock, unflatten_mock, sample_mock, update_mock, trans_mock
+    ):
+        """sample_rows samples using extensions when the table has parents."""
         # Setup
-        raw_data = self.modeler.dn.tables['DEMO_ORDERS'].data
-        # Sampling parent table.
-        self.sampler.sample_rows('DEMO_CUSTOMERS', 5)
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.foreign_keys = {
+            ('child_table', 'parent_name'): ('parent_pk', 'child_fk')
+        }
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        primary_mock.return_value = ('primary_key', pd.Series(range(5)))
+        parent_mock.return_value = (
+            'parent_name',
+            'foreign_key',
+            pd.DataFrame({'foreign_key': [0, 1, 2]})
+        )
+        unflatten_mock.return_value = 'model from extension'
+        sample_mock.return_value = pd.DataFrame()
+        update_mock.return_value = {'table_name': 'samples'}
+        trans_mock.return_value = 'transformed_rows'
 
         # Run
-        result = self.sampler.sample_rows('DEMO_ORDERS', 5)
+        result = sampler.sample_rows('child_table', 5)
 
         # Check
-        assert result.shape[0] == 5
-        assert (result.columns == raw_data.columns).all()
+        assert result == 'transformed_rows'
+        assert sampler.sampled == {'table_name': 'samples'}
 
-        # Foreign key columns are all the same
-        unique_foreign_keys = result['CUSTOMER_ID'].unique()
-        sampled_parent = self.sampler.sampled['DEMO_CUSTOMERS'][0][1]
-        assert len(unique_foreign_keys) == 1
-        assert unique_foreign_keys[0] in sampled_parent['CUSTOMER_ID'].values
+        primary_mock.assert_called_once_with(sampler, 'child_table', 5)
+        parent_mock.assert_called_once_with(sampler, 'child_table')
+        sample_mock.assert_called_once_with(sampler, 'model from extension', 5, 'child_table')
+
+        expected_sample_info = ('primary_key', sample_mock.return_value)
+        update_mock.assert_called_once_with({}, 'child_table', expected_sample_info)
+        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'child_table', 5)
+
+        call_args_list = unflatten_mock.call_args_list
+        assert len(call_args_list) == 1
+        args, kwargs = call_args_list[0]
+        assert kwargs == {}
+        assert len(args) == 4
+        assert args[0] == sampler
+        assert args[1].equals(pd.DataFrame({'foreign_key': [0]}))
+        assert args[2] == 'child_table'
+        assert args[3] == 'parent_name'
 
     @patch('sdv.sampler.pd.concat')
     @patch('sdv.sampler.Sampler.reset_indices_tables')
@@ -703,70 +742,102 @@ class TestSampler(TestCase):
             ((3,), )
         ]
 
-    @patch('sdv.sampler.Sampler._fill_text_columns')
-    @patch('sdv.sampler.Sampler._get_table_meta')
-    def test_transform_synthesized_rows_unicity_primary_keys(self, table_meta_mock, fill_mock):
-        """Transform_synthesized_rows, preserves the unicity of primary keys between calls.
-
-        We will configure an scenario where the primary key only has 10 possible values.
-        We will run a first execution to check everything works as expected, and a second one to
-        test that the exception is raised.
-        """
+    def test__reset_primary_keys_generators(self):
+        """_reset_primary_keys deletes all generators and counters."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
-        table_data = pd.DataFrame(
-            {
-                'A': list(range(10)),
-            }
-        )
-        table_meta = {
-            'fields': {
-                'A': {
-                    'regex': '[0-9]{1}',  # Only 10 possible values
-                    'type': 'number',
-                    'subtype': 'integer'
-                }
-            },
-            'primary_key': 'A'
-        }
-        data_navigator.tables = {
-            'first_table': Table(table_data, table_meta)
-        }
-        data_navigator.meta = 'data navigator metadata'
-        ht = MagicMock(
-            transformers={('first_table', 'A'): None},
-            reverse_transform_table=MagicMock())
-
-        data_navigator.ht = ht
         modeler = MagicMock(spec=Modeler)
         sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
-        table_meta_mock.return_value = 'original metadata'
-        fill_mock.side_effect = lambda x, y, z: x
-        synthesized = pd.DataFrame({
-            'A': list(range(10, 20))
-        })
-        table_name = 'first_table'
-        num_rows = 10
-        expected_result = pd.DataFrame({
-            'A': list(range(10)),
-        })
+        sampler.primary_key = {
+            'table': 'generator for table'
+        }
+        sampler.remaining_primary_key = {
+            'table': 'counter for table'
+        }
 
         # Run
-        result = sampler.transform_synthesized_rows(synthesized, table_name, num_rows)
+        sampler._reset_primary_keys_generators()
 
         # Check
-        assert result.equals(expected_result)
+        assert sampler.primary_key == dict()
+        assert sampler.remaining_primary_key == dict()
 
-        table_meta_mock.assert_called_once_with('data navigator metadata', 'first_table')
-        fill_mock.assert_called_once_with(synthesized, ['A'], 'first_table')
-        modeler.assert_not_called()
-        call_args_list = data_navigator.ht.reverse_transform_table.call_args_list
-        assert len(call_args_list) == 1
-        args, kwargs = call_args_list[0]
-        assert kwargs == {}
-        assert args[0].equals(synthesized)
-        assert args[1] == 'original metadata'
+    @patch('sdv.sampler.exrex.count', autospec=True)
+    @patch('sdv.sampler.exrex.generate', autospec=True)
+    def test__get_primary_keys_create_generator(self, exrex_gen_mock, exrex_count_mock):
+        """If there's a primary key, but no generator, a new one is created and used."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.get_meta_data.return_value = {
+            'primary_key': 'table_pk',
+            'fields': {
+                'table_pk': {
+                    'regex': 'regex for table_pk',
+                    'type': 'number',
+                    'subtype': 'integer'
+                },
+            }
+        }
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
+        exrex_gen_mock.return_value = (str(x) for x in range(10))
+        exrex_count_mock.return_value = 10
+
+        expected_primary_key = 'table_pk'
+        expected_primary_key_values = pd.Series(range(5))
+
+        # Run
+        result = sampler._get_primary_keys('table', 5)
+
+        # Check
+        primary_key, primary_key_values = result
+        assert primary_key == expected_primary_key
+        primary_key_values.equals(expected_primary_key_values)
+
+        assert sampler.primary_key['table'] == exrex_gen_mock.return_value
+        assert sampler.remaining_primary_key['table'] == 5
+
+        data_navigator.get_meta_data.assert_called_once_with('table')
+        exrex_count_mock.assert_called_once_with('regex for table_pk')
+        exrex_gen_mock.assert_called_once_with('regex for table_pk')
+
+    def test__get_primary_keys_no_pk(self):
+        """If no primary key, _get_primary_keys return a duple of None """
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.get_meta_data.return_value = {}
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        # Run
+        result = sampler._get_primary_keys('table', 5)
+
+        # Check
+        primary_key, primary_key_values = result
+        assert primary_key is None
+        assert primary_key_values is None
+
+    def test__get_primary_keys_raises_error(self):
+        """_get_primary_keys raises an exception if there aren't enough values."""
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.get_meta_data.return_value = {
+            'primary_key': 'table_pk',
+            'fields': {
+                'table_pk': {
+                    'regex': 'regex for table_pk',
+                    'type': 'number',
+                    'subtype': 'integer'
+                },
+            }
+        }
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+        sampler.primary_key['table'] = 'a generator'
+        sampler.remaining_primary_key['table'] = 0
+
+        # Run / Check
         with self.assertRaises(ValueError):
-            sampler.transform_synthesized_rows(synthesized, table_name, num_rows)
+            sampler._get_primary_keys('table', 5)

@@ -108,25 +108,12 @@ class Sampler:
         return sampled_tables
 
     def _reset_primary_keys_generators(self):
-        """Reset the primary keys generators."""
-        for table_name, table in self.dn.tables.items():
-            meta = self.dn.tables[table_name].meta
-            primary_key = meta.get('primary_key')
-            regex = meta['fields'][primary_key]['regex']
-
-            self.primary_key[table_name] = exrex.generate(regex)
-            self.remaining_primary_key[table_name] = exrex.count(regex)
-
-    def _check_primary_keys(self, table_name, num_rows):
-        remaining = self.remaining_primary_key[table_name]
-        if remaining < num_rows:
-            raise ValueError(
-                'Not enough unique values for primary key of table {}: There are {} remaining'
-                ' values, but {} were requested.'.format(table_name, remaining, num_rows)
-            )
+        """Reset the primary key generators."""
+        self.primary_key = dict()
+        self.remaining_primary_key = dict()
 
     def transform_synthesized_rows(self, synthesized, table_name, num_rows):
-        """Add primary key and reverse transform synthetized data.
+        """Reverse transform synthetized data.
 
         Args:
             synthesized(pandas.DataFrame): Generated data from model
@@ -137,43 +124,7 @@ class Sampler:
             pandas.DataFrame: Formatted synthesized data.
         """
         # get primary key column name
-        meta = self.dn.tables[table_name].meta
         orig_meta = self._get_table_meta(self.dn.meta, table_name)
-        primary_key = meta.get('primary_key')
-
-        if primary_key:
-            node = meta['fields'][primary_key]
-            regex = node['regex']
-
-            generator = self.primary_key.get(table_name)
-
-            if not generator:
-                generator = exrex.generate(regex)
-                self.primary_key[table_name] = generator
-
-                remaining = exrex.count(regex)
-                self.remaining_primary_key[table_name] = remaining
-
-            else:
-                remaining = self.remaining_primary_key[table_name]
-
-            if remaining < num_rows:
-                raise ValueError(
-                    'Not enough unique values for primary key of table {} with regex {}'
-                    ' to generate {} samples.'.format(table_name, regex, num_rows)
-                )
-
-            values = [x for i, x in zip(range(num_rows), generator)]
-
-            self.remaining_primary_key[table_name] -= num_rows
-
-            synthesized[primary_key] = pd.Series(values)
-
-            if (node['type'] == 'number') and (node['subtype'] == 'integer'):
-                synthesized[primary_key] = pd.to_numeric(synthesized[primary_key])
-
-        sample_info = (primary_key, synthesized)
-        self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
 
         # filter out parameters
         labels = list(self.dn.tables[table_name].data)
@@ -206,6 +157,55 @@ class Sampler:
         foreign_key, parent_row = random.choice(parent_rows)
 
         return random_parent, foreign_key, parent_row
+
+    def _get_primary_keys(self, table_name, num_rows):
+        """Return the primary key and amount of values for the requested table.
+
+        Args:
+            table_name(str): Name of the table to get the primary keys.
+            num_rowd(str): Number of primary_keys to generate.
+
+        Returns:
+            tuple(str,pandas.Series): If the table has a primary key.
+            tuple(None, None): If the table doesn't have a primary key.
+
+        Raises:
+            ValueError: If there aren't enough remaining values to generate.
+
+        """
+        meta = self.dn.get_meta_data(table_name)
+        primary_key = meta.get('primary_key')
+        primary_key_values = None
+
+        if primary_key:
+            node = meta['fields'][primary_key]
+            regex = node['regex']
+
+            generator = self.primary_key.get(table_name)
+
+            if generator is None:
+                generator = exrex.generate(regex)
+                self.primary_key[table_name] = generator
+
+                remaining = exrex.count(regex)
+                self.remaining_primary_key[table_name] = remaining
+
+            else:
+                remaining = self.remaining_primary_key[table_name]
+
+            if remaining < num_rows:
+                raise ValueError(
+                    'Not enough unique values for primary key of table {} with regex {}'
+                    ' to generate {} samples.'.format(table_name, regex, num_rows)
+                )
+
+            self.remaining_primary_key[table_name] -= num_rows
+            primary_key_values = pd.Series([x for i, x in zip(range(num_rows), generator)])
+
+            if (node['type'] == 'number') and (node['subtype'] == 'integer'):
+                primary_key_values = primary_key_values.astype(int)
+
+        return primary_key, primary_key_values
 
     @staticmethod
     def generate_keys(prefix=''):
@@ -542,6 +542,7 @@ class Sampler:
             pd.DataFrame: synthesized rows.
         """
 
+        pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
         parent_row = self._get_parent_row(table_name)
 
         if parent_row:
@@ -562,13 +563,17 @@ class Sampler:
             foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
             synthesized_rows[foreign_key] = fk_val
 
-            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
-
         else:    # there is no parent
             model = self.modeler.models[table_name]
             synthesized_rows = self._sample_valid_rows(model, num_rows, table_name)
 
-            return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+        if pk_name:
+            synthesized_rows[pk_name] = pk_values
+
+        sample_info = (pk_name, synthesized_rows)
+        self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
+
+        return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
     def sample_table(self, table_name):
         """Sample a table equal to the size of the original.
