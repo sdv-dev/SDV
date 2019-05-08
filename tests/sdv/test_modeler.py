@@ -189,8 +189,8 @@ class TestModeler(TestCase):
         data_navigator.get_children.assert_called_once_with('table')
         extension.reset_index.assert_called_once_with()
         extended_table.drop.assert_not_called()
-        extended_table.__setitem__.assert_called_once()
         call_args_list = extended_table.__setitem__.call_args_list
+        assert len(call_args_list) == 1
         args, kwargs = call_args_list[0]
         assert kwargs == {}
         assert len(args) == 2
