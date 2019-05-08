@@ -32,7 +32,6 @@ class Modeler:
         model (type): Class of model to use.
         distribution (type): Class of distribution to use. Will be deprecated shortly.
         model_kwargs (dict): Keyword arguments to pass to model.
-        amount_childs(bool): Wheter or not model the amount of child rows.
     """
 
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
@@ -47,7 +46,6 @@ class Modeler:
         self.child_locs = {}  # maps table->{child: col #}
         self.dn = data_navigator
         self.model = model
-        self.amount_childs = amount_childs
 
         if distribution and model != DEFAULT_MODEL:
             raise ValueError(
@@ -113,18 +111,17 @@ class Modeler:
             child_table = self.dn.get_data(child_name)
             child_fields = self.dn.get_meta_data(child_name)['fields']
             child_foreign = self.get_foreign_key(child_fields, parent_primary)
+            column_name = '{}__num_children'.format(child_name)
 
-            foreign_related = child_table.groupby(child_foreign).count()['value'].to_frame()
+            foreign_related = child_table.groupby(child_foreign).size()
+            foreign_related.name = column_name
 
             # We add it to the parent table
             parent_table = parent_table.merge(
-                foreign_related, how='left', left_on=parent_primary, right_index=True)
+                foreign_related.to_frame(), how='left', left_on=parent_primary, right_index=True)
 
-            parent_table.value.fillna(0, inplace=True)
-            parent_table.value = parent_table.value.astype(int)
-
-            column_name = '{}__num_children'.format(child_name)
-            parent_table.rename(columns={'value': column_name}, inplace=True)
+            parent_table[column_name].fillna(0, inplace=True)
+            parent_table[column_name] = parent_table[column_name].astype(int)
 
         self.dn.tables[parent_name] = Table(parent_table, parent_meta)
 
@@ -433,9 +430,8 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
-        if self.amount_childs:
-            for table in self.dn.tables:
-                self._count_children_rows(table)
+        for table in self.dn.tables:
+            self._count_children_rows(table)
 
         for table in self.dn.tables:
             if not self.dn.get_parents(table):

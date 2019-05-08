@@ -147,28 +147,51 @@ class TestModeler(TestCase):
         # Check
         assert result == expected_result
 
-    def test_CPA(self):
+    @patch('sdv.modeler.pd.DataFrame.merge', autospec=True)
+    @patch('sdv.modeler.Modeler._get_extensions', autospec=True)
+    def test_CPA(self, extensions_mock, merge_mock):
         """CPA will append extensions to the original table."""
         # Setup
-        self.modeler.model_database()
-        table_name = 'DEMO_CUSTOMERS'
+        data_navigator = MagicMock(spec=DataNavigator)
+        table = Table(
+            pd.DataFrame({'table_pk': range(5)}),
+            {'primary_key': 'table_pk'}
+        )
+        data_navigator.tables = {
+            'table': table
+        }
+
+        transformed_table = pd.DataFrame()
+        data_navigator.transformed_data = {
+            'table': transformed_table
+        }
+
+        data_navigator.get_children.return_value = 'children of table'
+        modeler = Modeler(data_navigator)
+
+        extension = MagicMock()
+        extensions_mock.return_value = [extension]
+        extended_table = MagicMock()
+        merge_mock.return_value = extended_table
+
+        table_name = 'table'
 
         # Run
-        self.modeler.CPA(table_name)
+        modeler.CPA(table_name)
 
         # Check
-        for name, table in self.modeler.tables.items():
-            with self.subTest(table=name):
-                raw_table = self.modeler.dn.tables[name].data
+        assert modeler.tables[table_name] == extended_table.drop.return_value
 
-                # When we run Conditional Parameter Aggregation we add a key on Modeler.tables
-                # for each table. It contains a not null pandas DataFrame with the computed
-                # extension.
-                assert isinstance(table, pd.DataFrame)
+        extensions_mock.assert_called_once_with(modeler, 'table_pk', 'children of table')
+        merge_mock.assert_called_once_with(
+            transformed_table, extension.reset_index(), how='left', on='table_pk')
 
-                assert raw_table.shape[0] == table.shape[0]
-                assert (raw_table.index == table.index).all()
-                assert all([column in table.columns for column in raw_table.columns])
+        data_navigator.get_children.assert_called_once_with('table')
+
+        extension
+
+
+
 
     @patch('sdv.modeler.Modeler._get_extensions')
     def test_CPA_transformed_index(self, extension_mock):
@@ -990,6 +1013,7 @@ class TestModeler(TestCase):
         # Check
         assert result is None
         assert modeler.dn.tables['parent'].data.equals(expected_result)
+
         assert data_navigator.get_data.call_args_list == [
             (('parent',), {}), (('children',), {})
         ]

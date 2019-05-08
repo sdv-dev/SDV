@@ -1,10 +1,11 @@
 import random
 
-import exrex
 import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
 from rdt.transformers.positive_number import PositiveNumberTransformer
+
+import exrex
 
 GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
 
@@ -593,7 +594,7 @@ class Sampler:
         num_rows = self.dn.tables[table_name].data.shape[0]
         return self.sample_rows(table_name, num_rows)
 
-    def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=None):
+    def _sample_child_rows(self, parent_name, parent_row, sampled_data):
         """Uses parameters from parent row to synthesize child rows.
 
         If num_rows=None and self.modeler.amount_childs=True, the amount of children will be
@@ -603,7 +604,6 @@ class Sampler:
             parent_name (str): name of parent table
             parent_row (dataframe): synthesized parent row
             sample_data (dict): maps table name to sampled data
-            num_rows (int): number of rows to synthesize per parent row
 
         Returns:
             synthesized children rows
@@ -611,11 +611,8 @@ class Sampler:
 
         children = self.dn.get_children(parent_name)
         for child in children:
-            if self.modeler.amount_childs and num_rows is None:
-                col_name = '{}__num_children'.format(child)
-                num_rows = parent_row.loc[0, col_name]
-            else:
-                num_rows = 5
+            col_name = '{}__num_children'.format(child)
+            num_rows = parent_row.loc[0, col_name]
 
             rows = self.sample_rows(child, num_rows)
 
