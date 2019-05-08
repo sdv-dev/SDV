@@ -1,11 +1,10 @@
 import random
 
+import exrex
 import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
 from rdt.transformers.positive_number import PositiveNumberTransformer
-
-import exrex
 
 GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
 
@@ -188,7 +187,8 @@ class Sampler:
         self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
 
         # filter out parameters
-        labels = list(self.dn.tables[table_name].data)
+        raw_table = self.dn.tables[table_name].data
+        labels = [label for label in raw_table if '__num_children' not in label]
         reverse_columns = [
             transformer[1] for transformer in self.dn.ht.transformers
             if table_name in transformer

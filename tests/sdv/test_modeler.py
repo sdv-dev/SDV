@@ -161,7 +161,7 @@ class TestModeler(TestCase):
             'table': table
         }
 
-        transformed_table = pd.DataFrame()
+        transformed_table = pd.DataFrame({'table_pk': range(5)})
         data_navigator.transformed_data = {
             'table': transformed_table
         }
@@ -180,18 +180,22 @@ class TestModeler(TestCase):
         modeler.CPA(table_name)
 
         # Check
-        assert modeler.tables[table_name] == extended_table.drop.return_value
+        assert modeler.tables[table_name] == extended_table
 
         extensions_mock.assert_called_once_with(modeler, 'table_pk', 'children of table')
         merge_mock.assert_called_once_with(
-            transformed_table, extension.reset_index(), how='left', on='table_pk')
+            transformed_table, extension.reset_index.return_value, how='left', on='table_pk')
 
         data_navigator.get_children.assert_called_once_with('table')
-
-        extension
-
-
-
+        extension.reset_index.assert_called_once_with()
+        extended_table.drop.assert_not_called()
+        extended_table.__setitem__.assert_called_once()
+        call_args_list = extended_table.__setitem__.call_args_list
+        args, kwargs = call_args_list[0]
+        assert kwargs == {}
+        assert len(args) == 2
+        assert args[0] == 'table_pk'
+        assert args[1].equals(transformed_table['table_pk'])
 
     @patch('sdv.modeler.Modeler._get_extensions')
     def test_CPA_transformed_index(self, extension_mock):
@@ -460,7 +464,8 @@ class TestModeler(TestCase):
     @patch('sdv.modeler.Modeler.fit_model')
     @patch('sdv.modeler.Modeler.impute_table')
     @patch('sdv.modeler.Modeler.RCPA')
-    def test_model_database(self, rcpa_mock, impute_mock, fit_mock):
+    @patch('sdv.modeler.Modeler._count_children_rows')
+    def test_model_database(self, children_mock, rcpa_mock, impute_mock, fit_mock):
         """model_database computes conditions between tables and models them."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -495,6 +500,12 @@ class TestModeler(TestCase):
             (('table_C',), ),
         ]
 
+        assert children_mock.call_args_list == [
+            (('table_A',), ),
+            (('table_B',), ),
+            (('table_C',), ),
+        ]
+
         rcpa_mock.assert_called_once_with('table_A')
         assert impute_mock.call_args_list == [
             (('table_A_dataframe', ), ),
@@ -514,7 +525,8 @@ class TestModeler(TestCase):
             'table_C': 'model_for_TABLE_C'
         }
 
-    def test_model_database_gaussian_copula_single_table(self):
+    @patch('sdv.modeler.Modeler._count_children_rows')
+    def test_model_database_gaussian_copula_single_table(self, children_mock):
         """model_database can model a single table using the gausian copula model."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -607,8 +619,10 @@ class TestModeler(TestCase):
 
         assert isinstance(samples, pd.DataFrame)
         assert samples.equals(sampler.dn.ht.reverse_transform_table.return_value)
+        children_mock.assert_called_once_with('table_name')
 
-    def test_model_database_kde_distribution(self):
+    @patch('sdv.modeler.Modeler._count_children_rows')
+    def test_model_database_kde_distribution(self, children_mock):
         """model_database works fine with kde distribution."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -694,8 +708,10 @@ class TestModeler(TestCase):
             (('table_name', ), ),
             (('table_name', ), )
         ]
+        children_mock.assert_called_once_with('table_name')
 
-    def test_model_database_vine_modeler_single_table(self):
+    @patch('sdv.modeler.Modeler._count_children_rows')
+    def test_model_database_vine_modeler_single_table(self, children_mock):
         """model_database works fine with vine modeler."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -785,6 +801,7 @@ class TestModeler(TestCase):
         samples = sampler.sample_table('table_name')
 
         assert samples.equals(reverse_transform_dataframe)
+        children_mock.assert_called_once_with('table_name')
 
     def test__flatten_dict_flat_dict(self):
         """_flatten_dict don't modify flat dicts."""

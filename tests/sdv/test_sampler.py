@@ -170,7 +170,7 @@ class TestSampler(TestCase):
 
         # Check
         assert result.shape[0] == 5
-        assert (result.columns == raw_data.columns).all()
+        assert all(column in raw_data.columns for column in result.columns)
 
         # Primary key columns are sampled values
         assert len(result['CUSTOMER_ID'].unique()) != 1
@@ -187,7 +187,7 @@ class TestSampler(TestCase):
 
         # Check
         assert result.shape[0] == 5
-        assert (result.columns == raw_data.columns).all()
+        assert all(column in raw_data.columns for column in result.columns)
 
         # Foreign key columns are all the same
         unique_foreign_keys = result['CUSTOMER_ID'].unique()
