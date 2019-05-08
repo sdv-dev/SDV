@@ -464,8 +464,8 @@ class TestModeler(TestCase):
     @patch('sdv.modeler.Modeler.fit_model')
     @patch('sdv.modeler.Modeler.impute_table')
     @patch('sdv.modeler.Modeler.RCPA')
-    @patch('sdv.modeler.Modeler._count_children_rows')
-    def test_model_database(self, children_mock, rcpa_mock, impute_mock, fit_mock):
+    @patch('sdv.modeler.Modeler._count_child_rows')
+    def test_model_database(self, child_mock, rcpa_mock, impute_mock, fit_mock):
         """model_database computes conditions between tables and models them."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -500,7 +500,7 @@ class TestModeler(TestCase):
             (('table_C',), ),
         ]
 
-        assert children_mock.call_args_list == [
+        assert child_mock.call_args_list == [
             (('table_A',), ),
             (('table_B',), ),
             (('table_C',), ),
@@ -525,8 +525,8 @@ class TestModeler(TestCase):
             'table_C': 'model_for_TABLE_C'
         }
 
-    @patch('sdv.modeler.Modeler._count_children_rows')
-    def test_model_database_gaussian_copula_single_table(self, children_mock):
+    @patch('sdv.modeler.Modeler._count_child_rows')
+    def test_model_database_gaussian_copula_single_table(self, child_mock):
         """model_database can model a single table using the gausian copula model."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -619,10 +619,10 @@ class TestModeler(TestCase):
 
         assert isinstance(samples, pd.DataFrame)
         assert samples.equals(sampler.dn.ht.reverse_transform_table.return_value)
-        children_mock.assert_called_once_with('table_name')
+        child_mock.assert_called_once_with('table_name')
 
-    @patch('sdv.modeler.Modeler._count_children_rows')
-    def test_model_database_kde_distribution(self, children_mock):
+    @patch('sdv.modeler.Modeler._count_child_rows')
+    def test_model_database_kde_distribution(self, child_mock):
         """model_database works fine with kde distribution."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -708,10 +708,10 @@ class TestModeler(TestCase):
             (('table_name', ), ),
             (('table_name', ), )
         ]
-        children_mock.assert_called_once_with('table_name')
+        child_mock.assert_called_once_with('table_name')
 
-    @patch('sdv.modeler.Modeler._count_children_rows')
-    def test_model_database_vine_modeler_single_table(self, children_mock):
+    @patch('sdv.modeler.Modeler._count_child_rows')
+    def test_model_database_vine_modeler_single_table(self, child_mock):
         """model_database works fine with vine modeler."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -801,7 +801,7 @@ class TestModeler(TestCase):
         samples = sampler.sample_table('table_name')
 
         assert samples.equals(reverse_transform_dataframe)
-        children_mock.assert_called_once_with('table_name')
+        child_mock.assert_called_once_with('table_name')
 
     def test__flatten_dict_flat_dict(self):
         """_flatten_dict don't modify flat dicts."""
@@ -957,8 +957,8 @@ class TestModeler(TestCase):
         # Check
         assert result == expected_result
 
-    def test__count_children_rows_single_children(self):
-        """_count_children_rows appends a column to the parent table with the number of childs."""
+    def test__count_child_rows_single_children(self):
+        """_count_child_rows appends a column to the parent table with the number of childs."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
         parent_table = pd.DataFrame({'parent_id': list(range(1, 3))})
@@ -1025,7 +1025,7 @@ class TestModeler(TestCase):
         }, columns=['parent_id', 'children__num_children'])
 
         # Run
-        result = modeler._count_children_rows('parent')
+        result = modeler._count_child_rows('parent')
 
         # Check
         assert result is None

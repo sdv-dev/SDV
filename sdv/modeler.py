@@ -36,10 +36,7 @@ class Modeler:
 
     DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
 
-    def __init__(
-        self, data_navigator, model=DEFAULT_MODEL, distribution=None,
-        model_kwargs=None, amount_childs=False
-    ):
+    def __init__(self, data_navigator, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
         """Instantiates a modeler object."""
         self.tables = {}
         self.models = {}
@@ -92,7 +89,7 @@ class Modeler:
 
         return val
 
-    def _count_children_rows(self, parent_name):
+    def _count_child_rows(self, parent_name):
         """Append the number of children to the parent table.
 
         Args:
@@ -431,7 +428,7 @@ class Modeler:
     def model_database(self):
         """Use RCPA and store model for database."""
         for table in self.dn.tables:
-            self._count_children_rows(table)
+            self._count_child_rows(table)
 
         for table in self.dn.tables:
             if not self.dn.get_parents(table):
