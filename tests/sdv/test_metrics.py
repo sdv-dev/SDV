@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from sdv.metrics import get_metric_values, mse, r2_score, rmse, score_stats_table
+from sdv.metrics import (
+    get_metric_values, mse, r2_score, rmse, score_categorical_coverage, score_stats_dataset,
+    score_stats_table)
 
 
 class TestGetMetricValues(TestCase):
@@ -118,3 +120,105 @@ class TestScoreStatsTable(TestCase):
             (('real_skew', 'synth_skew'), {}),
             (('real_kurt', 'synth_kurt'), {}),
         ]
+
+
+class TestScoreStatsDataset(TestCase):
+
+    def test_raises_error(self):
+        """If the table names in both datasets are not equal, an error is raised."""
+        # Setup
+        real = {
+            'a': None,
+            'b': None
+        }
+        synth = {
+            'a': None,
+            'x': None
+        }
+        metrics = []
+        scores = []
+        expected_error_message = "real and synthetic dataset must have the same tables"
+
+        try:
+            # Run
+            score_stats_dataset(real, synth, metrics=metrics, scores=scores)
+        except AssertionError as error:
+            # Check
+            assert error.args[0] == expected_error_message
+
+    @patch('sdv.metrics.score_stats_table', autospec=True)
+    def test_default_call(self, score_table_mock):
+        # Setup
+
+        score_table_mock.side_effect = [
+            'score_for_table_A',
+            'score_for_table_B'
+        ]
+
+        real = {
+            'table_A': 'real_data_for_table_A',
+            'table_B': 'real_data_for_table_B'
+        }
+        synth = {
+            'table_A': 'synth_data_for_table_A',
+            'table_B': 'synth_data_for_table_B'
+        }
+        metrics = ['metric_1', 'metric_2']
+        scores = ['score_1', 'score_2']
+
+        expected_result = {
+            'table_A': 'score_for_table_A',
+            'table_B': 'score_for_table_B'
+        }
+        expected_kwargs = dict(
+            metrics=['metric_1', 'metric_2'],
+            scores=['score_1', 'score_2']
+        )
+        # Run
+        result = score_stats_dataset(real, synth, metrics=metrics, scores=scores)
+
+        # Check
+        assert result == expected_result
+
+        score_table_mock.call_args_list == [
+            (('real_data_for_table_A', 'synth_data_for_table_A'), expected_kwargs),
+            (('real_data_for_table_B', 'synth_data_for_table_B'), expected_kwargs)
+        ]
+
+
+class TestScoreCategoricalCoverage(TestCase):
+
+    def test_same_values(self):
+        """If the same values are present on both tables the score is 1."""
+        # Setup
+        table = pd.DataFrame({
+            'A': list('ABCDE'),
+            'B': list('ZYXWT')
+        })
+        categorical_columns = ['A', 'B']
+
+        # Run
+        # Note that we pass the same table twice, that is, two identical tables.
+        result = score_categorical_coverage(table, table, categorical_columns)
+
+        # Check
+        assert result == 1
+
+    def test_raises_error(self):
+        """If one of the tables is empty an exception is raised."""
+        # Setup
+        real = pd.DataFrame()
+        synth = pd.DataFrame({
+            'A': list('ABCDE'),
+            'B': list('ZYXWT')
+        })
+        categorical_columns = ['A', 'B']
+
+        expected_message = "Can't score empty tables."
+
+        try:
+            # Run
+            score_categorical_coverage(real, synth, categorical_columns)
+        except ValueError as error:
+            # Check
+            assert error.args[0] == expected_message

@@ -105,9 +105,9 @@ def score_stats_table(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORE
         scores(list(callable)): List of scores.
 
     Return:
-        pandas.DataFrame: DataFrame whose columns are the names of the scores, as index the name
-                          of the metric, and as a values, the value of the score applied to the
-                          metric of both tables.
+        pandas.DataFrame:
+            DataFrame whose columns are the names of the scores, as index the name of the metric,
+            and as a values, the value of the score applied to the metric of both tables.
 
     """
     score_values = defaultdict(list)
@@ -121,3 +121,49 @@ def score_stats_table(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORE
             score_values[score.__name__].append(score_value)
 
     return pd.DataFrame(score_values, index=index, columns=columns)
+
+
+def score_stats_dataset(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORES):
+    """Compute stats score for all tables.
+
+        Args:
+        real(dict[str, pandas.DataFrame]): Map of names and tables of real data.
+        synth(dict[str, pandas.DataFrame]): Map of names and tables of synthesized data.
+        metrics(list(callable)): List of metrics.
+        scores(list(callable)): List of scores.
+
+    Return:
+        dict[str, pandas.DataFrame]:
+            Dictionary with the table name as keys and as values a DataFrame whose columns are
+            the names of the scores, as index the name of the metric, and as a values, the value
+            of the score applied to the metric of both tables.
+
+    """
+    assert real.keys() == synth.keys(), "real and synthetic dataset must have the same tables"
+
+    result = {}
+    for name, real_data in real.items():
+        synth_data = synth[name]
+        result[name] = score_stats_table(real_data, synth_data, metrics=metrics, scores=scores)
+
+    return result
+
+
+def score_categorical_coverage(real, synth, categorical_columns):
+    """Return the proportion of unique categorical values combination covered by synthetic data.
+
+    Args:
+        real(pandas.DataFrame): Table of real data.
+        synth(pandas.DataFrame): Table of synthesized data.
+        categorical_columns(list[str]): List of labels of categorical columns.
+
+    Returns:
+        float: Proportion of u
+    """
+    if not (real.shape[0] and synth.shape[0]):
+        raise ValueError("Can't score empty tables.")
+
+    real_unique = real.drop_duplicates(subset=categorical_columns).shape[0]
+    synth_unique = synth.drop_duplicates(subset=categorical_columns).shape[0]
+
+    return synth_unique / real_unique
