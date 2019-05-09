@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import scipy as sp
 
 
 def sum_square_diff(x, y):
@@ -71,8 +72,8 @@ DEFAULT_SCORES = (
 DEFAULT_METRICS = (
     np.mean,
     np.std,
-    np.stats.skew,
-    np.stats.kurt
+    sp.stats.skew,
+    sp.stats.kurtosis
 )
 
 
@@ -94,26 +95,29 @@ def get_metric_values(real, synth, metric):
     return real_values, synth_values
 
 
-def score_table(real, synth, scores=DEFAULT_SCORES, metrics=DEFAULT_METRICS):
+def score_stats_table(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORES):
     """Score the synthesized data using the given scores and metrics.
 
     Args:
-        real(pandas.DataFrame)
-        synth(pandas.DataFrame)
-        scores(list(callable))
-        metrics(list(callable))
+        real(pandas.DataFrame): Table of real data.
+        synth(pandas.DataFrame): Table of synthesized data.
+        metrics(list(callable)): List of metrics.
+        scores(list(callable)): List of scores.
 
     Return:
-        pandas.DataFrame
-    
+        pandas.DataFrame: DataFrame whose columns are the names of the scores, as index the name
+                          of the metric, and as a values, the value of the score applied to the
+                          metric of both tables.
+
     """
     score_values = defaultdict(list)
     index = []
+    columns = [score.__name__ for score in scores]
     for metric in metrics:
-        index.append(metric.name)
+        index.append(metric.__name__)
         real_metric, synth_metric = get_metric_values(real, synth, metric)
         for score in scores:
             score_value = score(real_metric, synth_metric)
             score_values[score.__name__].append(score_value)
 
-    return pd.DataFrame(score_values, index=index)
+    return pd.DataFrame(score_values, index=index, columns=columns)
