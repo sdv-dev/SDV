@@ -150,10 +150,10 @@ class TestScoreStatsDataset(TestCase):
     def test_default_call(self, score_table_mock):
         # Setup
 
-        score_table_mock.side_effect = [
-            'score_for_table_A',
-            'score_for_table_B'
-        ]
+        def score_side_effect(*args, **kwargs):
+            return 'score_for_table_{}'.format(args[0][-1])
+
+        score_table_mock.side_effect = score_side_effect
 
         real = {
             'table_A': 'real_data_for_table_A',
