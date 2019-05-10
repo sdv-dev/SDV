@@ -531,18 +531,18 @@ class Sampler:
             parents = bool(self.dn.get_parents(table_name))
             raise ValueError(MODEL_ERROR_MESSAGES[parents])
 
-    def sample_rows(self, table_name, num_rows, reset_pks=False):
+    def sample_rows(self, table_name, num_rows, reset_primary_keys=False):
         """Sample specified number of rows for specified table.
 
         Args:
             table_name(str): Name of table to synthesize.
             num_rows(int): Number of rows to synthesize.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the primary key generators.
 
         Returns:
             pd.DataFrame: Synthesized rows.
         """
-        if reset_pks:
+        if reset_primary_keys:
             self._reset_primary_keys_generators()
 
         pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
@@ -578,27 +578,27 @@ class Sampler:
 
         return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
 
-    def sample_table(self, table_name, reset_pks=False):
+    def sample_table(self, table_name, reset_primary_keys=False):
         """Sample a table equal to the size of the original.
 
         Args:
             table_name(str): Name of table to synthesize.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the primary key generators.
 
         Returns:
             pandas.DataFrame: Synthesized table.
         """
         num_rows = self.dn.tables[table_name].data.shape[0]
-        return self.sample_rows(table_name, num_rows, reset_pks=reset_pks)
+        return self.sample_rows(table_name, num_rows, reset_primary_keys=reset_primary_keys)
 
     def _sample_child_rows(self, parent_name, parent_row, sampled_data, num_rows=5):
         """Uses parameters from parent row to synthesize child rows.
 
         Args:
-            parent_name (str): name of parent table
-            parent_row (dataframe): synthesized parent row
-            sample_data (dict): maps table name to sampled data
-            num_rows (int): number of rows to synthesize per parent row
+            parent_name (str): name of parent table.
+            parent_row (dataframe): synthesized parent row.
+            sample_data (dict): maps table name to sampled data.
+            num_rows (int): number of rows to synthesize per parent row.
 
         Returns:
             synthesized children rows
@@ -615,12 +615,12 @@ class Sampler:
 
             self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
 
-    def sample_all(self, num_rows=5, reset_pks=False):
+    def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Samples the entire database.
 
         Args:
             num_rows(int): Number of rows to be sampled on the parent tables.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the primary key generators.
 
         Returns:
             dict: Tables sampled.
@@ -632,21 +632,21 @@ class Sampler:
         This is this way because the children tables are created modelling the relation
         thet have with their parent tables, so it's behavior may change from one table to another.
         """
+        if reset_primary_keys:
+            self._reset_primary_keys_generators()
 
         tables = self.dn.tables
         sampled_data = {}
 
         for table in tables:
             if not self.dn.get_parents(table):
+                rows = []
                 for _ in range(num_rows):
                     row = self.sample_rows(table, 1)
-
-                    if table in sampled_data:
-                        sampled_data[table] = pd.concat([sampled_data[table], row])
-                    else:
-                        sampled_data[table] = row
-
+                    rows.append(row)
                     self._sample_child_rows(table, row, sampled_data)
+
+                sampled_data[table] = pd.concat(rows)
 
         return self.reset_indices_tables(sampled_data)
 
