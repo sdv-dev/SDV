@@ -21,6 +21,7 @@ def sum_square_diff(x, y):
 
 def r2_score(expected, observed):
     """Compute R2 score.
+
     Args:
         expected(numpy.ndarray): Ground truth.
         observed(numpy.ndaraay): Observed values.
@@ -126,7 +127,7 @@ def score_stats_table(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORE
 def score_stats_dataset(real, synth, metrics=DEFAULT_METRICS, scores=DEFAULT_SCORES):
     """Compute stats score for all tables.
 
-        Args:
+    Args:
         real(dict[str, pandas.DataFrame]): Map of names and tables of real data.
         synth(dict[str, pandas.DataFrame]): Map of names and tables of synthesized data.
         metrics(list(callable)): List of metrics.
@@ -158,7 +159,8 @@ def score_categorical_coverage(real, synth, categorical_columns):
         categorical_columns(list[str]): List of labels of categorical columns.
 
     Returns:
-        float: Proportion of u
+        float: Proportion of categorical combinations.
+
     """
     if not (real.shape[0] and synth.shape[0]):
         raise ValueError("Can't score empty tables.")
