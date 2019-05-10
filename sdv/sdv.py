@@ -19,19 +19,18 @@ class SDV:
         model (type): Class of model to use.
         distribution (type): Class of distribution to use. Will be deprecated shortly.
         model_kwargs (dict): Keyword arguments to pass to model.
-        amount_childs(bool): Wheter or not model the amount of child rows.
+
     """
 
     def __init__(
         self, meta_file_name, data_loader_type='csv', model=DEFAULT_MODEL, distribution=None,
-        model_kwargs=None, amount_childs=False
+        model_kwargs=None
     ):
         self.meta_file_name = meta_file_name
         self.sampler = None
         self.model = model
         self.distribution = distribution
         self.model_kwargs = model_kwargs
-        self.amount_childs = amount_childs
 
     def _check_unsupported_dataset_structure(self):
         """Checks that no table has two parents."""
@@ -53,8 +52,10 @@ class SDV:
 
         self.dn.transform_data()
         self.modeler = Modeler(
-            self.dn, model=self.model, distribution=self.distribution,
-            model_kwargs=self.model_kwargs, amount_childs=self.amount_childs
+            data_navigator=self.dn,
+            model=self.model,
+            distribution=self.distribution,
+            model_kwargs=self.model_kwargs
         )
         self.modeler.model_database()
         self.sampler = Sampler(self.dn, self.modeler)
