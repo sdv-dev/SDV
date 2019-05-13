@@ -21,10 +21,9 @@ class TestModeler(TestCase):
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)
 
-    @patch('sdv.modeler.Modeler.flatten_model')
-    @patch('sdv.modeler.Modeler.fit_model')
+    @patch('sdv.modeler.Modeler._get_model_dict')
     @patch('sdv.modeler.Modeler.impute_table')
-    def test__create_extension(self, impute_mock, fit_mock, flatten_mock):
+    def test__create_extension(self, impute_mock, model_mock):
         """Tests that the create extension method returns correct parameters."""
         # Setup
         data_navigator = MagicMock()
@@ -42,9 +41,7 @@ class TestModeler(TestCase):
             'B': [3, 4]
         })
 
-        fit_mock.return_value = 'fitted model'
-
-        flatten_mock.return_value = pd.Series({
+        model_mock.return_value = pd.Series({
             'covariance__0__0': 0.0,
             'covariance__1__0': 0.0,
             'covariance__1__1': 1.4999999999999991,
@@ -58,7 +55,7 @@ class TestModeler(TestCase):
         result = modeler._create_extension(foreign, table, table_info)
 
         # Check
-        assert result.equals(flatten_mock.return_value)
+        assert result.equals(model_mock.return_value)
 
         df = pd.DataFrame({
             'a': [0, 1, 0, 1, 0, 1],
@@ -72,8 +69,7 @@ class TestModeler(TestCase):
         assert call_args[0][0].equals(df)
         assert call_args[1] == {}
 
-        fit_mock.assert_called_once_with(impute_mock.return_value)
-        flatten_mock.assert_called_once_with('fitted model', 'child')
+        model_mock.assert_called_once_with(impute_mock.return_value)
 
     def test__create_extension_wrong_index_return_none(self):
         """_create_extension return None if transformed_child_table can't be indexed by df."""
@@ -322,17 +318,15 @@ class TestModeler(TestCase):
         data_navigator.get_children.assert_called_once_with('parent')
         extension_mock.assert_called_once_with('parent_id', {'child'})
 
-    def test_flatten_model(self):
-        """flatten_model returns a pandas.Series with all the params to recreate a model."""
+    def test__get_model_dict(self):
+        """_get_model_dict returns a pandas.Series with all the params to recreate a model."""
         # Setup
-        model = GaussianMultivariate()
         X = np.eye(3)
-        model.fit(X)
 
-        expected_result = pd.Series({
-            'covariance__0__0': 1.5000000000000004,
+        expected_result = {
+            'covariance__0__0': 1.5000000000000009,
             'covariance__1__0': -0.7500000000000003,
-            'covariance__1__1': 1.5000000000000004,
+            'covariance__1__1': 1.5000000000000009,
             'covariance__2__0': -0.7500000000000003,
             'covariance__2__1': -0.7500000000000003,
             'covariance__2__2': 1.5000000000000007,
@@ -342,15 +336,15 @@ class TestModeler(TestCase):
             'distribs__1__std': -0.7520386983881371,
             'distribs__2__mean': 0.33333333333333331,
             'distribs__2__std': -0.7520386983881371,
-        })
+        }
         data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
 
         # Run
-        result = modeler.flatten_model(model)
+        result = modeler._get_model_dict(X)
 
         # Check
-        assert np.isclose(result, expected_result).all()
+        assert result == expected_result
 
     def test_impute_table_with_mean(self):
         """impute_table fills all NaN values the mean of values when possible."""
@@ -463,8 +457,7 @@ class TestModeler(TestCase):
     @patch('sdv.modeler.Modeler.fit_model')
     @patch('sdv.modeler.Modeler.impute_table')
     @patch('sdv.modeler.Modeler.RCPA')
-    @patch('sdv.modeler.Modeler._count_child_rows')
-    def test_model_database(self, child_mock, rcpa_mock, impute_mock, fit_mock):
+    def test_model_database(self, rcpa_mock, impute_mock, fit_mock):
         """model_database computes conditions between tables and models them."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -499,12 +492,6 @@ class TestModeler(TestCase):
             (('table_C',), ),
         ]
 
-        assert child_mock.call_args_list == [
-            (('table_A',), ),
-            (('table_B',), ),
-            (('table_C',), ),
-        ]
-
         rcpa_mock.assert_called_once_with('table_A')
         assert impute_mock.call_args_list == [
             (('table_A_dataframe', ), ),
@@ -524,8 +511,7 @@ class TestModeler(TestCase):
             'table_C': 'model_for_TABLE_C'
         }
 
-    @patch('sdv.modeler.Modeler._count_child_rows')
-    def test_model_database_gaussian_copula_single_table(self, child_mock):
+    def test_model_database_gaussian_copula_single_table(self):
         """model_database can model a single table using the gausian copula model."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -613,8 +599,7 @@ class TestModeler(TestCase):
         ]
         assert modeler.tables['table_name'].equals(modeler.dn.transformed_data['table_name'])
 
-    @patch('sdv.modeler.Modeler._count_child_rows')
-    def test_model_database_kde_distribution(self, child_mock):
+    def test_model_database_kde_distribution(self):
         """model_database works fine with kde distribution."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -700,10 +685,8 @@ class TestModeler(TestCase):
             (('table_name', ), ),
             (('table_name', ), )
         ]
-        child_mock.assert_called_once_with('table_name')
 
-    @patch('sdv.modeler.Modeler._count_child_rows')
-    def test_model_database_vine_modeler_single_table(self, child_mock):
+    def test_model_database_vine_modeler_single_table(self):
         """model_database works fine with vine modeler."""
         # Setup
         data_navigator = MagicMock(spec=DataNavigator)
@@ -942,84 +925,3 @@ class TestModeler(TestCase):
 
         # Check
         assert result == expected_result
-
-    def test__count_child_rows_single_children(self):
-        """_count_child_rows appends a column to the parent table with the number of childs."""
-        # Setup
-        data_navigator = MagicMock(spec=DataNavigator)
-        parent_table = pd.DataFrame({'parent_id': list(range(1, 3))})
-        child_table = pd.DataFrame({
-            'child_id': list(range(1, 6)),
-            'parent_id': [1, 1, 2, 2, 2],
-            'value': [0.1, 0.5, 0.4, 0.2, 0.4]
-        })
-        data_navigator.get_data.side_effect = [
-            parent_table,
-            child_table
-        ]
-        data_navigator.tables = {}
-        data_navigator.get_meta_data.side_effect = [
-            {
-                'fields': {
-                    'parent_id': {
-                        'name': 'parent_id',
-                        'subtype': 'integer',
-                        'type': 'number',
-                        'regex': '^[0-9]{10}$'
-                    },
-                },
-                'headers': True,
-                'name': 'parent',
-                'path': 'parent.csv',
-                'primary_key': 'parent_id',
-            },
-            {
-                'fields': {
-                    'child_id': {
-                        'name': 'child_id',
-                        'subtype': 'integer',
-                        'type': 'number',
-                        'regex': '^[0-9]{10}$'
-                    },
-                    'parent_id': {
-                        'name': 'parent_id',
-                        'ref': {
-                            'field': 'parent_id',
-                            'table': 'parent'
-                        },
-                        'subtype': 'integer',
-                        'type': 'number',
-                    },
-                    'value': {
-                        'name': 'value',
-                        'type': 'number',
-                    },
-
-                },
-                'headers': True,
-                'name': 'children',
-                'path': 'children.csv',
-                'primary_key': 'child_id',
-                'use': True
-            }
-        ]
-        data_navigator.get_children.return_value = {'children'}
-        modeler = Modeler(data_navigator=data_navigator)
-        expected_result = pd.DataFrame({
-            'parent_id': list(range(1, 3)),
-            'children__num_children': [2, 3]
-        }, columns=['parent_id', 'children__num_children'])
-
-        # Run
-        result = modeler._count_child_rows('parent')
-
-        # Check
-        assert result is None
-        assert modeler.dn.tables['parent'].data.equals(expected_result)
-
-        assert data_navigator.get_data.call_args_list == [
-            (('parent',), {}), (('children',), {})
-        ]
-        assert data_navigator.get_meta_data.call_args_list == [
-            (('parent',), {}), (('children',), {})
-        ]

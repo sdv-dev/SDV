@@ -8,8 +8,6 @@ from copulas.multivariate import GaussianMultivariate, TreeTypes
 from copulas.univariate import GaussianUnivariate
 from rdt.transformers.positive_number import PositiveNumberTransformer
 
-from sdv.data_navigator import Table
-
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -89,39 +87,6 @@ class Modeler:
 
         return val
 
-    def _count_child_rows(self, parent_name):
-        """Append the number of children to the parent table.
-
-        Args:
-            parent_name(str): Name of the parent table.
-
-        Returns:
-            None
-
-        """
-        parent_table = self.dn.get_data(parent_name)
-        parent_meta = self.dn.get_meta_data(parent_name)
-        parent_primary = parent_meta.get('primary_key')
-        children = self.dn.get_children(parent_name)
-
-        for child_name in children:
-            child_table = self.dn.get_data(child_name)
-            child_fields = self.dn.get_meta_data(child_name)['fields']
-            child_foreign = self.get_foreign_key(child_fields, parent_primary)
-            column_name = '{}__num_children'.format(child_name)
-
-            foreign_related = child_table.groupby(child_foreign).size()
-            foreign_related.name = column_name
-
-            # We add it to the parent table
-            parent_table = parent_table.merge(
-                foreign_related.to_frame(), how='left', left_on=parent_primary, right_index=True)
-
-            parent_table[column_name].fillna(0, inplace=True)
-            parent_table[column_name] = parent_table[column_name].astype(int)
-
-        self.dn.tables[parent_name] = Table(parent_table, parent_meta)
-
     @classmethod
     def _flatten_array(cls, nested, prefix=''):
         """Return a dictionary with the values of the given nested array.
@@ -178,16 +143,18 @@ class Modeler:
 
         return result
 
-    def flatten_model(self, model, name=''):
-        """Flatten a model's parameters into an array.
+    def _get_model_dict(self, data):
+        """Fit and  serialize  a model and flatten its parameters into an array.
 
         Args:
-            model(self.model): Instance of model.
-            name (str): Prefix to the parameter name.
+            data(pandas.DataFrame): Dataset to fit the model to.
 
         Returns:
-            pd.Series: parameters for model
+            dict: Flattened parameters for model.
+
         """
+        model = self.fit_model(data)
+
         if self.model == DEFAULT_MODEL:
             values = []
             triangle = np.tril(model.covariance)
@@ -206,7 +173,7 @@ class Modeler:
                     column = pd.DataFrame({'field': [distribution.std]})
                     distribution.std = transformer.reverse_transform(column).loc[0, 'field']
 
-        return pd.Series(self._flatten_dict(model.to_dict(), name))
+        return self._flatten_dict(model.to_dict())
 
     def get_foreign_key(self, fields, primary):
         """Get foreign key from primary key.
@@ -287,16 +254,24 @@ class Modeler:
 
         foreign_key, child_name = table_info
         try:
-            conditional_data = transformed_child_table.loc[foreign.index].copy()
-            if foreign_key in conditional_data:
-                conditional_data = conditional_data.drop(foreign_key, axis=1)
+            child_rows = transformed_child_table.loc[foreign.index].copy()
+            if foreign_key in child_rows:
+                child_rows = child_rows.drop(foreign_key, axis=1)
 
         except KeyError:
             return None
 
-        if len(conditional_data):
-            clean_df = self.impute_table(conditional_data)
-            return self.flatten_model(self.fit_model(clean_df), child_name)
+        num_child_rows = len(child_rows)
+
+        if num_child_rows:
+            clean_df = self.impute_table(child_rows)
+            extension = self._get_model_dict(clean_df)
+            extension['child_rows'] = num_child_rows
+
+            extension = pd.Series(extension)
+            extension.index = child_name + '__' + extension.index
+
+            return extension
 
         return None
 
@@ -427,9 +402,6 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
-        for table in self.dn.tables:
-            self._count_child_rows(table)
-
         for table in self.dn.tables:
             if not self.dn.get_parents(table):
                 self.RCPA(table)
