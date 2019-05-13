@@ -10,7 +10,6 @@ from copulas.univariate import KDEUnivariate
 
 from sdv.data_navigator import CSVDataLoader, DataNavigator, HyperTransformer, Table
 from sdv.modeler import Modeler
-from sdv.sampler import Sampler
 
 
 class TestModeler(TestCase):
@@ -614,13 +613,6 @@ class TestModeler(TestCase):
         ]
         assert modeler.tables['table_name'].equals(modeler.dn.transformed_data['table_name'])
 
-        sampler = Sampler(data_navigator, modeler)
-        samples = sampler.sample_table('table_name')
-
-        assert isinstance(samples, pd.DataFrame)
-        assert samples.equals(sampler.dn.ht.reverse_transform_table.return_value)
-        child_mock.assert_called_once_with('table_name')
-
     @patch('sdv.modeler.Modeler._count_child_rows')
     def test_model_database_kde_distribution(self, child_mock):
         """model_database works fine with kde distribution."""
@@ -796,12 +788,6 @@ class TestModeler(TestCase):
             (('table_name', ), )
         ]
         assert modeler.tables['table_name'].equals(modeler.dn.transformed_data['table_name'])
-
-        sampler = Sampler(data_navigator, modeler)
-        samples = sampler.sample_table('table_name')
-
-        assert samples.equals(reverse_transform_dataframe)
-        child_mock.assert_called_once_with('table_name')
 
     def test__flatten_dict_flat_dict(self):
         """_flatten_dict don't modify flat dicts."""
