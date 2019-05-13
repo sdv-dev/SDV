@@ -5,89 +5,13 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from sdv.metrics import (
-    get_metric_values, mse, r2_score, rmse, score_categorical_coverage, score_stats_dataset,
-    score_stats_table, sum_square_diff)
+from sdv.evaluation import (
+    get_descriptor_values, score_descriptors_dataset, score_descriptors_table)
+from sdv.evaluation.descriptors import score_categorical_coverage
+from sdv.evaluation.metrics import mse, r2_score, rmse
 
 
-class TestScores(TestCase):
-
-    def test_sum_square_diff(self):
-        # Setup
-        x = np.zeros(5)
-        y = np.array(range(5))
-        expected_result = 30
-
-        # Run
-        result = sum_square_diff(x, y)
-
-        # Check
-        assert result == expected_result
-
-    @patch('sdv.metrics.sum_square_diff', autospec=True)
-    def test_r2_score(self, sum_mock):
-        """If both imputs are identical, r2_score is 1."""
-        # Setup
-        expected = MagicMock()
-        expected.mean.return_value = 'mean of expected'
-        observed = 'observed'
-
-        sum_result = sum_mock.return_value
-        div_result = sum_result.__truediv__.return_value
-        div_result.__rsub__.return_value = 'result'
-
-        # Return
-        result = r2_score(expected, observed)
-
-        # Check
-        assert result == 'result'
-
-        expected.mean.assert_called_once_with()
-        assert sum_mock.call_args_list == [
-            ((expected, 'observed'), {}),
-            ((expected, 'mean of expected'), {})
-        ]
-        sum_result.__truediv__.assert_called_once_with(sum_result)
-        div_result.__rsub__.assert_called_once_with(1)
-
-    @patch('sdv.metrics.np.average', autospec=True)
-    def test_mse(self, average_mock):
-        # Setup
-        expected = MagicMock()
-        diff_mock = expected.__sub__.return_value
-        diff_mock.__pow__.return_value = 'squared differences'
-        observed = 'observed'
-
-        average_mock.return_value = 'average'
-
-        # Run
-        result = mse(expected, observed)
-
-        # Check
-        assert result == 'average'
-        expected.__sub__.assert_called_once_with('observed')
-        diff_mock.__pow__.assert_called_once_with(2)
-        average_mock.assert_called_once_with('squared differences', axis=0)
-
-    @patch('sdv.metrics.np.sqrt', autospec=True)
-    @patch('sdv.metrics.mse', autospec=True)
-    def test_rmse(self, mse_mock, sqrt_mock):
-        # Setup
-        expected = 'expected'
-        observed = 'observed'
-        mse_mock.return_value = 'mse value'
-        sqrt_mock.return_value = 'rmse'
-
-        # Run
-        result = rmse(expected, observed)
-
-        # Check
-        assert result == 'rmse'
-        mse_mock.assert_called_once_with('expected', 'observed')
-        sqrt_mock.assert_called_once_with('mse value')
-
-
-class TestGetMetricValues(TestCase):
+class TestGetDescriptorValues(TestCase):
 
     def test_single_column(self):
         # Setup
@@ -101,7 +25,7 @@ class TestGetMetricValues(TestCase):
         )
 
         # Run
-        result = get_metric_values(real, synth, metric)
+        result = get_descriptor_values(real, synth, metric)
 
         # Check
         assert result == expected_result
@@ -122,16 +46,16 @@ class TestGetMetricValues(TestCase):
         expected_synth = np.array([15.5, 5.5])
 
         # Run
-        result_real, result_synth = get_metric_values(real, synth, metric)
+        result_real, result_synth = get_descriptor_values(real, synth, metric)
 
         # Check
         np.testing.assert_equal(result_real, expected_real)
         np.testing.assert_equal(result_synth, expected_synth)
 
 
-class TestScoreStatsTable(TestCase):
+class TestScoreDescriptorsTable(TestCase):
 
-    @patch('sdv.metrics.get_metric_values', autospec=True)
+    @patch('sdv.evaluation.get_descriptor_values', autospec=True)
     def test_default_call(self, metric_mock):
         # Setup
         real = 'real_data'
@@ -158,7 +82,7 @@ class TestScoreStatsTable(TestCase):
             __name__='r2_score'
         )
 
-        scores = [mse_mock, rmse_mock, r2_mock]
+        metrics = [mse_mock, rmse_mock, r2_mock]
         columns = ['mse', 'rmse', 'r2_score']
         index = ['mean', 'std', 'skew', 'kurtosis']
         values = [
@@ -168,7 +92,7 @@ class TestScoreStatsTable(TestCase):
         expected_result = pd.DataFrame(values, columns=columns, index=index)
 
         # Run
-        result = score_stats_table(real, synth, scores=scores)
+        result = score_descriptors_table(real, synth, metrics=metrics)
 
         # Check
         assert result.equals(expected_result)
@@ -199,7 +123,7 @@ class TestScoreStatsTable(TestCase):
         ]
 
 
-class TestScoreStatsDataset(TestCase):
+class TestScoreDescriptorsDataset(TestCase):
 
     def test_raises_error(self):
         """If the table names in both datasets are not equal, an error is raised."""
@@ -213,17 +137,17 @@ class TestScoreStatsDataset(TestCase):
             'x': None
         }
         metrics = []
-        scores = []
+        descriptors = []
         expected_error_message = "real and synthetic dataset must have the same tables"
 
         try:
             # Run
-            score_stats_dataset(real, synth, metrics=metrics, scores=scores)
+            score_descriptors_dataset(real, synth, metrics=metrics, descriptors=descriptors)
         except AssertionError as error:
             # Check
             assert error.args[0] == expected_error_message
 
-    @patch('sdv.metrics.score_stats_table', autospec=True)
+    @patch('sdv.evaluation.score_descriptors_table', autospec=True)
     def test_default_call(self, score_table_mock):
         # Setup
 
@@ -241,7 +165,7 @@ class TestScoreStatsDataset(TestCase):
             'table_B': 'synth_data_for_table_B'
         }
         metrics = ['metric_1', 'metric_2']
-        scores = ['score_1', 'score_2']
+        descriptors = ['descriptor_1', 'score_2']
 
         expected_result = {
             'table_A': 'score_for_table_A',
@@ -252,7 +176,7 @@ class TestScoreStatsDataset(TestCase):
             scores=['score_1', 'score_2']
         )
         # Run
-        result = score_stats_dataset(real, synth, metrics=metrics, scores=scores)
+        result = score_descriptors_dataset(real, synth, metrics=metrics, descriptors=descriptors)
 
         # Check
         assert result == expected_result
