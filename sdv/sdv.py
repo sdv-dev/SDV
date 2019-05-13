@@ -45,42 +45,43 @@ class SDV:
         self.modeler.model_database()
         self.sampler = Sampler(self.dn, self.modeler)
 
-    def sample_rows(self, table_name, num_rows, reset_pks=False):
+    def sample_rows(self, table_name, num_rows, reset_primary_keys=False):
         """Sample `num_rows` rows from the given table.
 
         Args:
             table_name(str): Name of the table to sample from.
             num_rows(int): Amount of rows to sample.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_rows(table_name, num_rows, reset_pks=False)
+        return self.sampler.sample_rows(
+            table_name, num_rows, reset_primary_keys=reset_primary_keys)
 
-    def sample_table(self, table_name, reset_pks=False):
+    def sample_table(self, table_name, reset_primary_keys=False):
         """Samples the given table to its original size.
 
         Args:
             table_name (str): Table to sample.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_table(table_name, reset_pks=False)
+        return self.sampler.sample_table(table_name, reset_primary_keys=reset_primary_keys)
 
-    def sample_all(self, num_rows=5, reset_pks=False):
+    def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Sample the whole dataset.
 
         Args:
             num_rows (int): Amount of rows to sample.
-            reset_pks(bool): Wheter or not reset the pk generators.
+            reset_primary_keys(bool): Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_all(num_rows, reset_pks=False)
+        return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
 
     def save(self, filename):
         """Save SDV instance to file destination.
