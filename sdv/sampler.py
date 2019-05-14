@@ -149,13 +149,12 @@ class Sampler:
         self.primary_key = dict()
         self.remaining_primary_key = dict()
 
-    def transform_synthesized_rows(self, synthesized, table_name, num_rows):
+    def _transform_synthesized_rows(self, synthesized, table_name):
         """Reverse transform synthetized data.
 
         Args:
             synthesized(pandas.DataFrame): Generated data from model
             table_name(str): Name of the table.
-            num_rows(int): Number of rows sampled.
 
         Return:
             pandas.DataFrame: Formatted synthesized data.
@@ -164,8 +163,7 @@ class Sampler:
         orig_meta = self._get_table_meta(self.dn.meta, table_name)
 
         # filter out parameters
-        raw_table = self.dn.tables[table_name].data
-        labels = [label for label in raw_table if '__num_children' not in label]
+        labels = list(self.dn.tables[table_name].data)
         reverse_columns = [
             transformer[1] for transformer in self.dn.ht.transformers
             if table_name in transformer
@@ -256,6 +254,17 @@ class Sampler:
 
         return f
 
+    @staticmethod
+    def _setdefault(a_dict, key, a_type):
+        if key not in a_dict:
+            value = a_type()
+            a_dict[key] = value
+
+        else:
+            value = a_dict[key]
+
+        return value
+
     @classmethod
     def _get_sorted_keys(cls, _dict):
         result = []
@@ -288,7 +297,7 @@ class Sampler:
 
         return result
 
-    def _unflatten_dict(self, flat, table_name=''):
+    def _unflatten_dict(self, flat):
         """Transform a flattened dict into its original form.
 
         Works in exact opposite way that `sdv.Modeler._flatten_dict`.
@@ -296,65 +305,46 @@ class Sampler:
         Args:
             flat (dict): Flattened dict.
 
+        Returns:
+            dict: Nested dict (if corresponds)
+
         """
-        result = {}
-        children = self.dn.get_children(table_name)
+        unflattened = dict()
         keys = self._get_sorted_keys(flat)
 
         for key in keys:
-            path = key.split('__')
-
-            if any(['__{}__'.format(child) in key for child in children]):
-                path = [
-                    path[0],
-                    '__'.join(path[1: -1]),
-                    path[-1]
-                ]
-
             value = flat[key]
-            walked = result
-            for step, name in enumerate(path):
+            key, subkey = key.split('__', 1)
+            subkey, name = subkey.rsplit('__', 1)
 
-                if isinstance(walked, dict) and name in walked:
-                    walked = walked[name]
-                    continue
+            if name.isdigit():
+                column_index = int(name)
+                row_index = int(subkey)
 
-                elif isinstance(walked, list) and len(walked) and len(walked) - 1 >= int(name):
-                    walked = walked[int(name)]
-                    continue
+                array = self._setdefault(unflattened, key, list)
+
+                if len(array) == row_index:
+                    row = list()
+                    array.append(row)
+                elif len(array) == row_index + 1:
+                    row = array[row_index]
 
                 else:
-                    if name.isdigit():
-                        name = int(name)
+                    raise ValueError("We're focked")
 
-                    if step == len(path) - 1:
-                        if isinstance(walked, list):
-                            walked.append(value)
-                        else:
-                            walked[name] = value
+                if len(row) == column_index:
+                    row.append(value)
+                else:
+                    raise ValueError("We're focked")
 
-                    else:
-                        next_step = path[step + 1]
-                        if next_step.isdigit():
-                            if isinstance(name, int):
-                                walked.append([])
-                                while len(walked) < name + 1:
-                                    walked.append([])
+            else:
+                subdict = self._setdefault(unflattened, key, dict)
+                if subkey.isdigit():
+                    subkey = int(subkey)
+                inner = self._setdefault(subdict, subkey, dict)
+                inner[name] = value
 
-                            else:
-                                walked[name] = []
-
-                            walked = walked[name]
-
-                        else:
-                            if isinstance(name, int):
-                                walked.append({})
-                            else:
-                                walked[name] = {}
-
-                            walked = walked[name]
-
-        return result
+        return unflattened
 
     def _make_positive_definite(self, matrix):
         """Find the nearest positive-definite matrix to input
@@ -448,8 +438,8 @@ class Sampler:
 
         return model_parameters
 
-    def unflatten_model(self, parent_row, table_name, parent_name):
-        """ Takes the params from a generated parent row and creates a model from it.
+    def _get_extension(self, parent_row, table_name, parent_name):
+        """ Takes the params from a generated parent row.
 
         Args:
             parent_row (dataframe): a generated parent row
@@ -461,9 +451,11 @@ class Sampler:
         columns = [column for column in parent_row.columns if column.startswith(prefix)]
         new_columns = {column: column.replace(prefix, '') for column in columns}
         flat_parameters = parent_row.loc[:, columns]
-        flat_parameters = flat_parameters.rename(columns=new_columns).to_dict('records')[0]
+        return flat_parameters.rename(columns=new_columns).to_dict('records')[0]
 
-        model_parameters = self._unflatten_dict(flat_parameters, table_name)
+    def _get_model(self, extension):
+        """Build a model using the extension parameters."""
+        model_parameters = self._unflatten_dict(extension)
         model_name = get_qualified_name(self.modeler.model)
 
         model_parameters['fitted'] = True
@@ -569,7 +561,8 @@ class Sampler:
             parents = bool(self.dn.get_parents(table_name))
             raise ValueError(MODEL_ERROR_MESSAGES[parents])
 
-    def sample_rows(self, table_name, num_rows, reset_primary_keys=False):
+    def sample_rows(self, table_name, num_rows=None, reset_primary_keys=False,
+                    sample_children=True, sampled_data=None):
         """Sample specified number of rows for specified table.
 
         Args:
@@ -580,6 +573,10 @@ class Sampler:
         Returns:
             pd.DataFrame: Synthesized rows.
         """
+
+        if sampled_data is None:
+            sampled_data = dict()
+
         if reset_primary_keys:
             self._reset_primary_keys_generators()
 
@@ -593,7 +590,12 @@ class Sampler:
             parent_row = parent_row.loc[[0]]
 
             # get parameters from parent to make model
-            model = self.unflatten_model(parent_row, table_name, random_parent)
+            extension = self._get_extension(parent_row, table_name, random_parent)
+
+            # Build a model using the parameters from the extension
+            model = self._get_model(extension)
+            if num_rows is None:
+                num_rows = extension['num_children']
 
             synthesized_rows = self._sample_valid_rows(model, num_rows, table_name)
 
@@ -614,7 +616,20 @@ class Sampler:
         sample_info = (pk_name, synthesized_rows)
         self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
 
-        return self.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+        sampled_rows = self._transform_synthesized_rows(synthesized_rows, table_name)
+
+        sampled_table = sampled_data.get(table_name)
+        if sampled_table is not None:
+            sampled_table = pd.concat([sampled_table, sampled_rows]).reset_index(drop=True)
+            sampled_data[table_name] = sampled_table
+        else:
+            sampled_data[table_name] = sampled_rows
+
+        if sample_children:
+            for child in self.dn.get_children(table_name):
+                self.sample_rows(child, sample_children=True, sampled_data=sampled_data)
+
+        return sampled_data
 
     def sample_table(self, table_name, reset_primary_keys=False):
         """Sample a table equal to the size of the original.
@@ -627,33 +642,13 @@ class Sampler:
             pandas.DataFrame: Synthesized table.
         """
         num_rows = self.dn.tables[table_name].data.shape[0]
-        return self.sample_rows(table_name, num_rows, reset_primary_keys=reset_primary_keys)
-
-    def _sample_child_rows(self, parent_name, parent_row, sampled_data):
-        """Uses parameters from parent row to synthesize child rows.
-
-        Args:
-            parent_name(str): name of parent table.
-            parent_row(dataframe): synthesized parent row.
-            sample_data(dict): maps table name to sampled data.
-
-        Returns:
-            synthesized children rows
-        """
-
-        children = self.dn.get_children(parent_name)
-        for child in children:
-            col_name = '{}__num_children'.format(child)
-            num_rows = parent_row.loc[0, col_name]
-
-            rows = self.sample_rows(child, num_rows)
-
-            if child in sampled_data:
-                sampled_data[child] = pd.concat([sampled_data[child], rows])
-            else:
-                sampled_data[child] = rows
-
-            self._sample_child_rows(child, rows.iloc[0:1, :], sampled_data)
+        sampled_data = self.sample_rows(
+            table_name,
+            num_rows,
+            sample_children=False,
+            reset_primary_keys=reset_primary_keys
+        )
+        return sampled_data[table_name]
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Samples the entire database.
@@ -676,16 +671,10 @@ class Sampler:
             self._reset_primary_keys_generators()
 
         tables = self.dn.tables
-        sampled_data = {}
 
+        sampled_data = dict()
         for table in tables:
             if not self.dn.get_parents(table):
-                rows = []
-                for _ in range(num_rows):
-                    row = self.sample_rows(table, 1)
-                    rows.append(row)
-                    self._sample_child_rows(table, row, sampled_data)
+                self.sample_rows(table, num_rows, sampled_data=sampled_data)
 
-                sampled_data[table] = pd.concat(rows)
-
-        return self.reset_indices_tables(sampled_data)
+        return sampled_data

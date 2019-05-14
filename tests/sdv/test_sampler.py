@@ -93,7 +93,6 @@ class TestSampler(TestCase):
             'model_parameters': ['some', 'parameters']
         })
         table_name = 'table'
-        num_rows = 2
 
         expected_result = pd.DataFrame({
             'column_A': ['some', 'transformed values'],
@@ -101,7 +100,7 @@ class TestSampler(TestCase):
         })
 
         # Run
-        result = sampler.transform_synthesized_rows(synthesized_rows, table_name, num_rows)
+        result = sampler._transform_synthesized_rows(synthesized_rows, table_name)
 
         # Check - Result
         assert result.equals(expected_result)
@@ -142,7 +141,7 @@ class TestSampler(TestCase):
         # Check
         assert (result == expected_result).all().all()
 
-    @patch('sdv.sampler.Sampler.transform_synthesized_rows', autospec=True)
+    @patch('sdv.sampler.Sampler._transform_synthesized_rows', autospec=True)
     @patch('sdv.sampler.Sampler.update_mapping_list')
     @patch('sdv.sampler.Sampler._sample_valid_rows', autospec=True)
     @patch('sdv.sampler.Sampler._get_parent_row', autospec=True)
@@ -165,11 +164,13 @@ class TestSampler(TestCase):
         update_mock.return_value = {'table_name': 'samples'}
         trans_mock.return_value = 'transformed rows'
 
+        expected_result = {'parent_table': 'transformed rows'}
+
         # Run
         result = sampler.sample_rows('parent_table', 5)
 
         # Check
-        assert result == 'transformed rows'
+        assert result == expected_result
         assert sampler.sampled == {'table_name': 'samples'}
 
         primary_mock.assert_called_once_with(sampler, 'parent_table', 5)
@@ -178,16 +179,18 @@ class TestSampler(TestCase):
 
         expected_sample_info = ('primary_key', sample_mock.return_value)
         update_mock.assert_called_once_with({}, 'parent_table', expected_sample_info)
-        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'parent_table', 5)
+        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'parent_table')
 
-    @patch('sdv.sampler.Sampler.transform_synthesized_rows', autospec=True)
+    @patch('sdv.sampler.Sampler._transform_synthesized_rows', autospec=True)
     @patch('sdv.sampler.Sampler.update_mapping_list')
     @patch('sdv.sampler.Sampler._sample_valid_rows', autospec=True)
-    @patch('sdv.sampler.Sampler.unflatten_model', autospec=True)
+    @patch('sdv.sampler.Sampler._get_extension', autospec=True)
+    @patch('sdv.sampler.Sampler._get_model', autospec=True)
     @patch('sdv.sampler.Sampler._get_parent_row', autospec=True)
     @patch('sdv.sampler.Sampler._get_primary_keys', autospec=True)
     def test_sample_rows_children_table(
-        self, primary_mock, parent_mock, unflatten_mock, sample_mock, update_mock, trans_mock
+        self, primary_mock, parent_mock, model_mock, extension_mock,
+        sample_mock, update_mock, trans_mock
     ):
         """sample_rows samples using extensions when the table has parents."""
         # Setup
@@ -204,16 +207,20 @@ class TestSampler(TestCase):
             'foreign_key',
             pd.DataFrame({'foreign_key': [0, 1, 2]})
         )
-        unflatten_mock.return_value = 'model from extension'
+
+        extension_mock.return_value = 'extension'
+        model_mock.return_value = 'model from extension'
         sample_mock.return_value = pd.DataFrame()
         update_mock.return_value = {'table_name': 'samples'}
         trans_mock.return_value = 'transformed_rows'
+
+        expected_result = {'child_table': 'transformed_rows'}
 
         # Run
         result = sampler.sample_rows('child_table', 5)
 
         # Check
-        assert result == 'transformed_rows'
+        assert result == expected_result
         assert sampler.sampled == {'table_name': 'samples'}
 
         primary_mock.assert_called_once_with(sampler, 'child_table', 5)
@@ -222,9 +229,9 @@ class TestSampler(TestCase):
 
         expected_sample_info = ('primary_key', sample_mock.return_value)
         update_mock.assert_called_once_with({}, 'child_table', expected_sample_info)
-        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'child_table', 5)
+        trans_mock.assert_called_once_with(sampler, sample_mock.return_value, 'child_table')
 
-        call_args_list = unflatten_mock.call_args_list
+        call_args_list = extension_mock.call_args_list
         assert len(call_args_list) == 1
         args, kwargs = call_args_list[0]
         assert kwargs == {}
@@ -234,42 +241,10 @@ class TestSampler(TestCase):
         assert args[2] == 'child_table'
         assert args[3] == 'parent_name'
 
-    @patch('sdv.sampler.Sampler.sample_rows')
-    def test_sample_rows_amount_children(self, sample_mock):
-        """ """
-        # Setup
-        data_navigator = MagicMock(spec=DataNavigator)
-        data_navigator.get_children.side_effect = [{'children'}, {}]
+        model_mock.assert_called_once_with(sampler, 'extension')
 
-        modeler = MagicMock(spec=Modeler)
-        modeler.amount_childs = True
-
-        sampled_row = pd.DataFrame([{'sampled': 'rows'}])
-        sample_mock.return_value = sampled_row
-
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
-
-        parent_name = 'parent'
-        parent_row = pd.DataFrame([{'children__num_children': 3}])
-        sampled_data = {}
-
-        # Run
-        sampler._sample_child_rows(parent_name, parent_row, sampled_data)
-
-        # Check
-        assert sampled_data['children'].equals(sampled_row)
-
-        assert data_navigator.get_children.call_args_list == [
-            (('parent',), {}),
-            (('children',), {})
-        ]
-        sample_mock.assert_called_once_with('children', 3)
-
-    @patch('sdv.sampler.pd.concat')
-    @patch('sdv.sampler.Sampler.reset_indices_tables')
-    @patch('sdv.sampler.Sampler._sample_child_rows')
-    @patch('sdv.sampler.Sampler.sample_rows')
-    def test_sample_all(self, rows_mock, child_mock, reset_mock, concat_mock):
+    @patch('sdv.sampler.Sampler.sample_rows', autospec=True)
+    def test_sample_all(self, rows_mock):
         """Check sample_all and returns some value."""
         # Setup
         data_navigator = MagicMock()
@@ -278,25 +253,25 @@ class TestSampler(TestCase):
         modeler = MagicMock()
         sampler = Sampler(data_navigator, modeler)
 
-        def fake_dataframe(name, number):
-            return pd.DataFrame([{name: 0} for i in range(number)], index=[0] * number)
+        def fake_dataframe(*args, **kwargs):
+            kwargs['sampled_data'][args[1]] = 'sampled_data'
 
         rows_mock.side_effect = fake_dataframe
-        concat_mock.return_value = 'concatenated_dataframe'
 
         expected_get_parents_call_list = [(('TABLE_A',), {}), (('TABLE_B',), {})]
-        expected_rows_mock_call_list = [(('TABLE_A', 1), {}) for i in range(5)]
+        expected_result = {
+            'TABLE_A': 'sampled_data'
+        }
 
         # Run
         result = sampler.sample_all(num_rows=5)
 
         # Check
-        assert data_navigator.get_parents.call_args_list == expected_get_parents_call_list
-        assert result == reset_mock.return_value
+        assert result == expected_result
 
-        assert rows_mock.call_args_list == expected_rows_mock_call_list
-        assert child_mock.call_count == 5
-        reset_mock.assert_called_once_with({'TABLE_A': 'concatenated_dataframe'})
+        assert data_navigator.get_parents.call_args_list == expected_get_parents_call_list
+        rows_mock.assert_called_once_with(
+            sampler, 'TABLE_A', 5, sampled_data={'TABLE_A': 'sampled_data'})
 
     def test__unflatten_dict(self):
         """unflatten_dict restructure flatten dicts."""
@@ -305,18 +280,22 @@ class TestSampler(TestCase):
         modeler = MagicMock()
         sampler = Sampler(data_navigator, modeler)
         flat = {
-            'first_key__a': 1,
-            'first_key__b': 2,
-            'second_key__x': 0
+            'a__first_key__a': 1,
+            'a__first_key__b': 2,
+            'b__second_key__x': 0
         }
 
         expected_result = {
-            'first_key': {
-                'a': 1,
-                'b': 2
+            'a': {
+                'first_key': {
+                    'a': 1,
+                    'b': 2
+                },
             },
-            'second_key': {
-                'x': 0
+            'b': {
+                'second_key': {
+                    'x': 0
+                },
             }
         }
 
@@ -350,16 +329,16 @@ class TestSampler(TestCase):
                 [1, 0],
                 [0, 1]
             ],
-            'second_key': [
-                {
+            'second_key': {
+                0: {
                     'std': 0.5,
                     'mean': 0.5
                 },
-                {
+                1: {
                     'std': 0.25,
                     'mean': 0.25
                 }
-            ]
+            }
         }
 
         # Run
@@ -375,19 +354,19 @@ class TestSampler(TestCase):
         """unflatten_dict will respect the name of child tables."""
         # Setup
         data_navigator = MagicMock()
-        data_navigator.get_children.return_value = ['CHILD_TABLE']
         modeler = MagicMock()
         sampler = Sampler(data_navigator, modeler)
 
         flat = {
-            'first_key__a': 1,
+            'first_key__a__b': 1,
             'first_key____CHILD_TABLE__model_param': 0,
             'distribs____CHILD_TABLE__distribs__UNIT_PRICE__std__mean': 0
         }
-        table_name = 'TABLE_NAME'
         expected_result = {
             'first_key': {
-                'a': 1,
+                'a': {
+                    'b': 1
+                },
                 '__CHILD_TABLE': {
                     'model_param': 0
                 }
@@ -400,12 +379,12 @@ class TestSampler(TestCase):
         }
 
         # Run
-        result = sampler._unflatten_dict(flat, table_name)
+        result = sampler._unflatten_dict(flat)
 
         # Check
         assert result == expected_result
         modeler.assert_not_called()
-        data_navigator.get_children.assert_called_once_with('TABLE_NAME')
+        data_navigator.assert_not_called()
 
     def test__unflatten_dict_respect_covariance_matrix(self):
         """unflatten_dict restructures the covariance matrix into an square matrix."""
@@ -428,10 +407,9 @@ class TestSampler(TestCase):
             'covariance__{}__{}'.format(i, j): fake_values(i, j)
             for i in range(40) for j in range(40)
         }
-        table_name = 'TABLE_NAME'
 
         # Run
-        result = sampler._unflatten_dict(flat, table_name)
+        result = sampler._unflatten_dict(flat)
 
         # Check
         assert result == expected_result
@@ -872,3 +850,30 @@ class TestSampler(TestCase):
         # Run / Check
         with self.assertRaises(ValueError):
             sampler._get_primary_keys('table', 5)
+
+    @patch('sdv.sampler.Sampler.sample_rows', autospec=True)
+    def test_sample_table(self, rows_mock):
+        """ """
+        # Setup
+        data_navigator = MagicMock(spec=DataNavigator)
+        data_navigator.tables = {
+            'table': MagicMock(**{'data.shape': ('rows', 'columns')})
+        }
+        modeler = MagicMock(spec=Modeler)
+        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        rows_mock.return_value = {'table': 'samples'}
+
+        table_name = 'table'
+        reset_primary_keys = False
+
+        expected_result = 'samples'
+
+        # Run
+        result = sampler.sample_table(table_name, reset_primary_keys=reset_primary_keys)
+
+        # Check
+        assert result == expected_result
+
+        rows_mock.assert_called_once_with(
+            sampler, 'table', 'rows', sample_children=False, reset_primary_keys=False)
