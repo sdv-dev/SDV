@@ -1,5 +1,11 @@
-Introduction
-============
+.. figure:: images/dai-logo.png
+   :width: 300 px
+   :alt: DAI-Lab Logo
+
+   An open source project from Data to AI Lab at MIT.
+
+Overview
+========
 
 The goal of the Synthetic Data Vault (SDV) is to allow data scientists to navigate, model and
 sample relational databases. The main access point of the library is  the class `SDV`, that wraps
