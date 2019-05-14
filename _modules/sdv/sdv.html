@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.sdv &mdash; SDV 0.1.1 documentation</title>
+  <title>sdv.sdv &mdash; SDV 0.1.2-dev documentation</title>
   
 
   
@@ -222,39 +222,43 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">model_database</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample_rows"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_rows">[docs]</a>    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample_rows"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_rows">[docs]</a>    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample `num_rows` rows from the given table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name(str): Name of the table to sample from.</span>
 <span class="sd">            num_rows(int): Amount of rows to sample.</span>
+<span class="sd">            reset_primary_keys(bool): Wheter or not reset the pk generators.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_rows</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_rows</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample_table"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_table">[docs]</a>    <span class="k">def</span> <span class="nf">sample_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample_table"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_table">[docs]</a>    <span class="k">def</span> <span class="nf">sample_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Samples the given table to its original size.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str): Table to sample.</span>
+<span class="sd">            reset_primary_keys(bool): Wheter or not reset the pk generators.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample_all"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample_all"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the whole dataset.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int): Amount of rows to sample.</span>
+<span class="sd">            reset_primary_keys(bool): Wheter or not reset the pk generators.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SDV.save"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Save SDV instance to file destination.</span>

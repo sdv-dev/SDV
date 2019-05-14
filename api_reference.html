@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>API Reference &mdash; SDV 0.1.1 documentation</title>
+  <title>API Reference &mdash; SDV 0.1.2-dev documentation</title>
   
 
   
@@ -515,24 +515,28 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.sample_all">
-<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample the whole dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the pk generators.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="sdv.SDV.sample_rows">
-<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_rows" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_rows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample <cite>num_rows</cite> rows from the given table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to sample from.</p></li>
 <li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the pk generators.</p></li>
 </ul>
 </dd>
 </dl>
@@ -540,11 +544,14 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.sample_table">
-<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_table" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples the given table to its original size.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Table to sample.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Table to sample.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the pk generators.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -585,11 +592,14 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.Sampler.sample_all">
-<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples the entire database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the parent tables.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the parent tables.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Tables sampled.</p>
@@ -607,17 +617,18 @@ thet have with their parent tables, so it’s behavior may change from one table
 
 <dl class="method">
 <dt id="sdv.Sampler.sample_rows">
-<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample specified number of rows for specified table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – name of table to synthesize</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – number of rows to synthesize</p></li>
+<li><p><strong>table_name</strong> (<em>str</em>) – Name of table to synthesize.</p></li>
+<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to synthesize.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>synthesized rows.</p>
+<dd class="field-even"><p>Synthesized rows.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pd.DataFrame</p>
@@ -627,11 +638,14 @@ thet have with their parent tables, so it’s behavior may change from one table
 
 <dl class="method">
 <dt id="sdv.Sampler.sample_table">
-<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_table" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample a table equal to the size of the original.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – name of table to synthesize</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Name of table to synthesize.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Synthesized table.</p>
@@ -645,7 +659,7 @@ thet have with their parent tables, so it’s behavior may change from one table
 <dl class="method">
 <dt id="sdv.Sampler.transform_synthesized_rows">
 <code class="descname">transform_synthesized_rows</code><span class="sig-paren">(</span><em>synthesized</em>, <em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.transform_synthesized_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.transform_synthesized_rows" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add primary key and reverse transform synthetized data.</p>
+<dd><p>Reverse transform synthetized data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
