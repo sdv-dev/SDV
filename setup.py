@@ -44,7 +44,6 @@ development_requires = [
     'm2r>=0.2.0',
     'Sphinx>=1.7.1',
     'sphinx_rtd_theme>=0.2.4',
-    'recommonmark>=0.4.0',
 
     # style check
     'flake8>=3.5.0',
