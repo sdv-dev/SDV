@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# sdv documentation build configuration file, created by
+# SDV documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -17,15 +17,8 @@
 # directory, add these directories to sys.path here. If the directory is
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
-#
-import os
-import sys
 
 import sphinx_rtd_theme # For read the docs theme
-from recommonmark.parser import CommonMarkParser
-from recommonmark.transform import AutoStructify
-
-sys.path.insert(0, os.path.abspath('..'))
 
 import sdv
 
@@ -38,10 +31,11 @@ import sdv
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    'm2r',
     'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'm2r'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -51,14 +45,17 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 source_suffix = ['.rst', '.md']
 
-
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
-project = u'SDV'
-copyright = u"2018, MIT Data To AI Lab"
-author = u"MIT Data To AI Lab"
+project = 'SDV'
+slug = 'sdv'
+title = project + ' Documentation',
+copyright = '2018, MIT Data To AI Lab'
+author = 'MIT Data To AI Lab'
+description = 'Automated generative modeling and sampling.'
+user = 'HDI-Project'
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -79,14 +76,13 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['.py', '_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
 
 # -- Options for HTML output -------------------------------------------
 
@@ -99,8 +95,8 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Readthedocs additions
 html_context = {
     'display_github': True,
-    'github_user': 'HDI-Project',
-    'github_repo': 'sdv',
+    'github_user': user,
+    'github_repo': project,
     'github_version': 'master',
     'conf_py_path': '/docs/',
 }
@@ -116,13 +112,24 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
+# The name of an image file (relative to this directory) to use as a favicon of
+# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+# html_favicon = 'images/favicon.ico'
+html_favicon = 'images/dai-logo-white.ico'
+
+# If given, this must be the name of an image file (path relative to the
+# configuration directory) that is the logo of the docs. It is placed at
+# the top of the sidebar; its width should therefore not exceed 200 pixels.
+# html_logo = 'images/dai-logo.png'
+html_logo = 'images/dai-logo-white-200.png'
 
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'sdvdoc'
+htmlhelp_basename = slug + 'doc'
 
 
 # -- Options for LaTeX output ------------------------------------------
@@ -148,22 +155,26 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'sdv.tex',
-     u'SDV Documentation',
-     u'MIT Data To AI Lab', 'manual'),
-]
+latex_documents = [(
+    master_doc,
+    slug + '.tex',
+    title,
+    author,
+    'manual'
+)]
 
 
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'sdv',
-     u'SDV Documentation',
-     [author], 1)
-]
+man_pages = [(
+    master_doc,
+    slug,
+    title,
+    [author],
+    1
+)]
 
 
 # -- Options for Texinfo output ----------------------------------------
@@ -171,14 +182,12 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'sdv',
-     u'SDV Documentation',
-     author,
-     'sdv',
-     'One line description of project.',
-     'Miscellaneous'),
-]
-
-
-
+texinfo_documents = [(
+    master_doc,
+    slug,
+    title,
+    author,
+    slug,
+    description,
+    'Miscellaneous'
+)]
