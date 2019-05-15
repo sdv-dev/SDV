@@ -21,10 +21,9 @@ class TestModeler(TestCase):
         self.dn.transform_data()
         self.modeler = Modeler(self.dn)
 
-    @patch('sdv.modeler.Modeler.flatten_model')
-    @patch('sdv.modeler.Modeler.fit_model')
+    @patch('sdv.modeler.Modeler._get_model_dict')
     @patch('sdv.modeler.Modeler.impute_table')
-    def test__create_extension(self, impute_mock, fit_mock, flatten_mock):
+    def test__create_extension(self, impute_mock, model_mock):
         """Tests that the create extension method returns correct parameters."""
         # Setup
         data_navigator = MagicMock()
@@ -42,9 +41,7 @@ class TestModeler(TestCase):
             'B': [3, 4]
         })
 
-        fit_mock.return_value = 'fitted model'
-
-        flatten_mock.return_value = pd.Series({
+        model_mock.return_value = pd.Series({
             'covariance__0__0': 0.0,
             'covariance__1__0': 0.0,
             'covariance__1__1': 1.4999999999999991,
@@ -58,7 +55,7 @@ class TestModeler(TestCase):
         result = modeler._create_extension(foreign, table, table_info)
 
         # Check
-        assert result.equals(flatten_mock.return_value)
+        assert result.equals(model_mock.return_value)
 
         df = pd.DataFrame({
             'a': [0, 1, 0, 1, 0, 1],
@@ -72,8 +69,7 @@ class TestModeler(TestCase):
         assert call_args[0][0].equals(df)
         assert call_args[1] == {}
 
-        fit_mock.assert_called_once_with(impute_mock.return_value)
-        flatten_mock.assert_called_once_with('fitted model', 'child')
+        model_mock.assert_called_once_with(impute_mock.return_value)
 
     def test__create_extension_wrong_index_return_none(self):
         """_create_extension return None if transformed_child_table can't be indexed by df."""
@@ -146,28 +142,55 @@ class TestModeler(TestCase):
         # Check
         assert result == expected_result
 
-    def test_CPA(self):
+    @patch('sdv.modeler.pd.DataFrame.merge', autospec=True)
+    @patch('sdv.modeler.Modeler._get_extensions', autospec=True)
+    def test_CPA(self, extensions_mock, merge_mock):
         """CPA will append extensions to the original table."""
         # Setup
-        self.modeler.model_database()
-        table_name = 'DEMO_CUSTOMERS'
+        data_navigator = MagicMock(spec=DataNavigator)
+        table = Table(
+            pd.DataFrame({'table_pk': range(5)}),
+            {'primary_key': 'table_pk'}
+        )
+        data_navigator.tables = {
+            'table': table
+        }
+
+        transformed_table = pd.DataFrame({'table_pk': range(5)})
+        data_navigator.transformed_data = {
+            'table': transformed_table
+        }
+
+        data_navigator.get_children.return_value = 'children of table'
+        modeler = Modeler(data_navigator)
+
+        extension = MagicMock()
+        extensions_mock.return_value = [extension]
+        extended_table = MagicMock()
+        merge_mock.return_value = extended_table
+
+        table_name = 'table'
 
         # Run
-        self.modeler.CPA(table_name)
+        modeler.CPA(table_name)
 
         # Check
-        for name, table in self.modeler.tables.items():
-            with self.subTest(table=name):
-                raw_table = self.modeler.dn.tables[name].data
+        assert modeler.tables[table_name] == extended_table
 
-                # When we run Conditional Parameter Aggregation we add a key on Modeler.tables
-                # for each table. It contains a not null pandas DataFrame with the computed
-                # extension.
-                assert isinstance(table, pd.DataFrame)
+        extensions_mock.assert_called_once_with(modeler, 'table_pk', 'children of table')
+        merge_mock.assert_called_once_with(
+            transformed_table, extension.reset_index.return_value, how='left', on='table_pk')
 
-                assert raw_table.shape[0] == table.shape[0]
-                assert (raw_table.index == table.index).all()
-                assert all([column in table.columns for column in raw_table.columns])
+        data_navigator.get_children.assert_called_once_with('table')
+        extension.reset_index.assert_called_once_with()
+        extended_table.drop.assert_not_called()
+        call_args_list = extended_table.__setitem__.call_args_list
+        assert len(call_args_list) == 1
+        args, kwargs = call_args_list[0]
+        assert kwargs == {}
+        assert len(args) == 2
+        assert args[0] == 'table_pk'
+        assert args[1].equals(transformed_table['table_pk'])
 
     @patch('sdv.modeler.Modeler._get_extensions')
     def test_CPA_transformed_index(self, extension_mock):
@@ -295,17 +318,15 @@ class TestModeler(TestCase):
         data_navigator.get_children.assert_called_once_with('parent')
         extension_mock.assert_called_once_with('parent_id', {'child'})
 
-    def test_flatten_model(self):
-        """flatten_model returns a pandas.Series with all the params to recreate a model."""
+    def test__get_model_dict(self):
+        """_get_model_dict returns a pandas.Series with all the params to recreate a model."""
         # Setup
-        model = GaussianMultivariate()
         X = np.eye(3)
-        model.fit(X)
 
-        expected_result = pd.Series({
-            'covariance__0__0': 1.5000000000000004,
+        expected_result = {
+            'covariance__0__0': 1.5000000000000009,
             'covariance__1__0': -0.7500000000000003,
-            'covariance__1__1': 1.5000000000000004,
+            'covariance__1__1': 1.5000000000000009,
             'covariance__2__0': -0.7500000000000003,
             'covariance__2__1': -0.7500000000000003,
             'covariance__2__2': 1.5000000000000007,
@@ -315,15 +336,15 @@ class TestModeler(TestCase):
             'distribs__1__std': -0.7520386983881371,
             'distribs__2__mean': 0.33333333333333331,
             'distribs__2__std': -0.7520386983881371,
-        })
+        }
         data_navigator = MagicMock()
         modeler = Modeler(data_navigator)
 
         # Run
-        result = modeler.flatten_model(model)
+        result = modeler._get_model_dict(X)
 
         # Check
-        assert np.isclose(result, expected_result).all()
+        assert result == expected_result
 
     def test_impute_table_with_mean(self):
         """impute_table fills all NaN values the mean of values when possible."""
