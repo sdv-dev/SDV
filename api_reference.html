@@ -412,26 +412,6 @@ to be merged. As the extensions are returned with an index consisting of values 
 </dd></dl>
 
 <dl class="method">
-<dt id="sdv.Modeler.flatten_model">
-<code class="descname">flatten_model</code><span class="sig-paren">(</span><em>model</em>, <em>name=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.flatten_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.flatten_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flatten a model’s parameters into an array.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>self.model</em>) – Instance of model.</p></li>
-<li><p><strong>name</strong> (<em>str</em>) – Prefix to the parameter name.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>parameters for model</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.Series</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
 <dt id="sdv.Modeler.get_foreign_key">
 <code class="descname">get_foreign_key</code><span class="sig-paren">(</span><em>fields</em>, <em>primary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.get_foreign_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.get_foreign_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get foreign key from primary key.</p>
@@ -497,13 +477,16 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="class">
 <dt id="sdv.SDV">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">SDV</code><span class="sig-paren">(</span><em>meta_file_name</em>, <em>data_loader_type='csv'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">SDV</code><span class="sig-paren">(</span><em>meta_file_name</em>, <em>data_loader_type='csv'</em>, <em>model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em>distribution=None</em>, <em>model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class to do modeling and sampling all in one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>meta_file_name</strong> (<em>str</em>) – Path to the metadata file.</p></li>
 <li><p><strong>data_loader_type</strong> (<em>str</em>) – </p></li>
+<li><p><strong>model</strong> (<em>type</em>) – Class of model to use.</p></li>
+<li><p><strong>distribution</strong> (<em>type</em>) – Class of distribution to use. Will be deprecated shortly.</p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to model.</p></li>
 </ul>
 </dd>
 </dl>
@@ -514,6 +497,17 @@ to be merged. As the extensions are returned with an index consisting of values 
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – If the provided dataset has an unsupported structure.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sdv.SDV.load">
+<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a SDV instance from the given path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Path to load model.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -567,7 +561,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 <dd><p>Save SDV instance to file destination.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>file_destination</strong> (<em>string</em>) – path to store file.</p>
+<dd class="field-odd"><p><strong>file_destination</strong> (<em>str</em>) – Path to store file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -622,7 +616,7 @@ thet have with their parent tables, so it’s behavior may change from one table
 
 <dl class="method">
 <dt id="sdv.Sampler.sample_rows">
-<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows=None</em>, <em>reset_primary_keys=False</em>, <em>sample_children=True</em>, <em>sampled_data=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample specified number of rows for specified table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -657,42 +651,6 @@ thet have with their parent tables, so it’s behavior may change from one table
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="sdv.Sampler.transform_synthesized_rows">
-<code class="descname">transform_synthesized_rows</code><span class="sig-paren">(</span><em>synthesized</em>, <em>table_name</em>, <em>num_rows</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.transform_synthesized_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.transform_synthesized_rows" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reverse transform synthetized data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>synthesized</strong> (<em>pandas.DataFrame</em>) – Generated data from model</p></li>
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table.</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows sampled.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Formatted synthesized data.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="sdv.Sampler.unflatten_model">
-<code class="descname">unflatten_model</code><span class="sig-paren">(</span><em>parent_row</em>, <em>table_name</em>, <em>parent_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.unflatten_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.unflatten_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes the params from a generated parent row and creates a model from it.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parent_row</strong> (<em>dataframe</em>) – a generated parent row</p></li>
-<li><p><strong>table_name</strong> (<em>string</em>) – name of table to make model for</p></li>
-<li><p><strong>parent_name</strong> (<em>string</em>) – name of parent table</p></li>
-</ul>
 </dd>
 </dl>
 </dd></dl>
