@@ -2,32 +2,24 @@ import numpy as np
 import scipy as sp
 
 
-def score_categorical_coverage(real, synth, categorical_columns):
-    """Return the proportion of unique categorical values combination covered by synthetic data.
+def categorical_distribution(column):
+    """Compute the empirical distribution for a categorical column.
 
     Args:
-        real(pandas.DataFrame): Table of real data.
-        synth(pandas.DataFrame): Table of synthesized data.
-        categorical_columns(list[str]): List of labels of categorical columns.
+        column(pandas.Series): Column to compute the empirical distribution.
 
     Returns:
-        float: Proportion of categorical combinations.
+        pandas.Series: Serie whose index are the catogories, and their relative frequency is
+                       their value.
 
     """
-    if not (real.shape[0] and synth.shape[0]):
-        raise ValueError("Can't score empty tables.")
-
-    real_unique = real.drop_duplicates(subset=categorical_columns).shape[0]
-    synth_unique = synth.drop_duplicates(subset=categorical_columns).shape[0]
-
-    return synth_unique / real_unique
+    return column.value_counts(normalize=True)
 
 
 DESCRIPTORS = {
     'mean': np.mean,
     'std': np.std,
     'skewness': sp.stats.skew,
-    'kurtosis': sp.stats.kurtosis
+    'kurtosis': sp.stats.kurtosis,
+    'categorical_distribution': categorical_distribution
 }
-
-DEFAULT_DESCRIPTORS = list(DESCRIPTORS.values())

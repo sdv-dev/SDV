@@ -7,7 +7,6 @@ import scipy as sp
 
 from sdv.evaluation import (
     get_descriptor_values, score_descriptors_dataset, score_descriptors_table)
-from sdv.evaluation.descriptors import score_categorical_coverage
 from sdv.evaluation.metrics import mse, r2_score, rmse
 
 
@@ -19,16 +18,15 @@ class TestGetDescriptorValues(TestCase):
         synth = pd.DataFrame({'a': range(20, 10, -1)})
         metric = np.mean
 
-        expected_result = (
-            np.array([4.5]),
-            np.array([15.5])
-        )
+        expected_result = pd.DataFrame({
+            'a': [4.5, 15.5]
+        })
 
         # Run
         result = get_descriptor_values(real, synth, metric)
 
         # Check
-        assert result == expected_result
+        assert result.equals(expected_result)
 
     def test_multiple_columns(self):
         # Setup
@@ -42,16 +40,16 @@ class TestGetDescriptorValues(TestCase):
         })
         metric = np.mean
 
-        expected_real = np.array([4.5, 14.5])
-        expected_synth = np.array([15.5, 5.5])
+        expected_result = pd.DataFrame({
+            'a': [4.5, 15.5],
+            'b': [14.5, 5.5],
+        })
 
         # Run
-        result_real, result_synth = get_descriptor_values(real, synth, metric)
+        result = get_descriptor_values(real, synth, metric)
 
         # Check
-        np.testing.assert_equal(result_real, expected_real)
-        np.testing.assert_equal(result_synth, expected_synth)
-
+        assert result.equals(expected_result)
 
 class TestScoreDescriptorsTable(TestCase):
 
@@ -185,41 +183,3 @@ class TestScoreDescriptorsDataset(TestCase):
             (('real_data_for_table_A', 'synth_data_for_table_A'), expected_kwargs),
             (('real_data_for_table_B', 'synth_data_for_table_B'), expected_kwargs)
         ]
-
-
-class TestScoreCategoricalCoverage(TestCase):
-
-    def test_same_values(self):
-        """If the same values are present on both tables the score is 1."""
-        # Setup
-        table = pd.DataFrame({
-            'A': list('ABCDE'),
-            'B': list('ZYXWT')
-        })
-        categorical_columns = ['A', 'B']
-
-        # Run
-        # Note that we pass the same table twice, that is, two identical tables.
-        result = score_categorical_coverage(table, table, categorical_columns)
-
-        # Check
-        assert result == 1
-
-    def test_raises_error(self):
-        """If one of the tables is empty an exception is raised."""
-        # Setup
-        real = pd.DataFrame()
-        synth = pd.DataFrame({
-            'A': list('ABCDE'),
-            'B': list('ZYXWT')
-        })
-        categorical_columns = ['A', 'B']
-
-        expected_message = "Can't score empty tables."
-
-        try:
-            # Run
-            score_categorical_coverage(real, synth, categorical_columns)
-        except ValueError as error:
-            # Check
-            assert error.args[0] == expected_message
