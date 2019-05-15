@@ -265,37 +265,16 @@ class Sampler:
 
         return value
 
-    @classmethod
-    def _get_sorted_keys(cls, _dict):
-        result = []
-        keys = list(_dict.keys())
+    @staticmethod
+    def _key_order(key_value):
+        parts = list()
+        for part in key_value[0].split('__'):
+            if part.isdigit():
+                part = int(part)
 
-        if not keys:
-            return []
+            parts.append(part)
 
-        serie = pd.Series(keys)
-        df = pd.DataFrame(serie.str.split('__').values.tolist())
-        uniques = df[0].unique()
-
-        for value in uniques:
-            index = df[df[0] == value].index
-            _slice = df.loc[index, range(1, df.shape[1])].copy()
-
-            try:
-                for column in _slice.columns:
-                    _slice[column] = _slice[column].astype(int)
-
-            except (ValueError, TypeError):
-                pass
-
-            df.drop(index, inplace=True)
-            _slice = _slice.sort_values(list(range(1, df.shape[1])))
-            result += _slice.apply(cls.generate_keys(value), axis=1).values.tolist()
-
-        df = df.sort_values(list(range(df.shape[1])))
-        result += df.apply(cls.generate_keys(), axis=1).values.tolist()
-
-        return result
+        return parts
 
     def _unflatten_dict(self, flat):
         """Transform a flattened dict into its original form.
@@ -310,10 +289,8 @@ class Sampler:
 
         """
         unflattened = dict()
-        keys = self._get_sorted_keys(flat)
 
-        for key in keys:
-            value = flat[key]
+        for key, value in sorted(flat.items(), key=self._key_order):
             key, subkey = key.split('__', 1)
             subkey, name = subkey.rsplit('__', 1)
 
@@ -328,19 +305,19 @@ class Sampler:
                     array.append(row)
                 elif len(array) == row_index + 1:
                     row = array[row_index]
-
                 else:
-                    raise ValueError("We're focked")
+                    raise ValueError('There was an error unflattening the extension.')
 
                 if len(row) == column_index:
                     row.append(value)
                 else:
-                    raise ValueError("We're focked")
+                    raise ValueError('There was an error unflattening the extension.')
 
             else:
                 subdict = self._setdefault(unflattened, key, dict)
                 if subkey.isdigit():
                     subkey = int(subkey)
+
                 inner = self._setdefault(subdict, subkey, dict)
                 inner[name] = value
 
