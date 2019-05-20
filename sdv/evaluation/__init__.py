@@ -7,7 +7,7 @@ from sdv.evaluation.descriptors import DESCRIPTORS
 from sdv.evaluation.metrics import DEFAULT_METRICS
 
 
-def get_descriptor_values(real, synth, descriptors):
+def get_descriptor_values(real, synth, descriptor, name):
     """Compute the descriptor values for the given tables.
 
     Args:
@@ -16,25 +16,32 @@ def get_descriptor_values(real, synth, descriptors):
         descriptor(callable): Callable that accepts columns and returns real-values.
 
     Return:
-        pandas.DataFrame: It will contain the descriptor output for each column as columns, 
-                          .
+        pandas.DataFrame: It will contain the descriptor output for each column as columns.
 
     """
-    real_values = real.apply(descriptor, axis=0).to_frame().T
-    synth_values = synth.apply(descriptor, axis=0).to_frame().T
+    real_values = list()
+    synth_values = list()
+    for column_name in real:
+        described_name = '{}_{}_'.format(name, column_name)
+        described_real_column = pd.Series(descriptor(real[column_name])).add_prefix(described_name).T
+        described_synth_column = pd.Series(descriptor(synth[column_name])).add_prefix(described_name).T
+        real_values.append(described_real_column)
+        synth_values.append(described_synth_column)
 
-    return pd.concat([real_values, synth_values], axis=0, ignore_index=True)
+    real_values = pd.concat(real_values, axis=0, sort=False)
+    synth_values = pd.concat(synth_values, axis=0, sort=False)
+    return pd.concat([real_values, synth_values], axis=1, sort=True, ignore_index=True).T
 
 
 def score_descriptors_table(
-    real, synth, descriptors=DESCRIPTORS.values(), metrics=DEFAULT_METRICS
+    real, synth, descriptors=DESCRIPTORS, metrics=DEFAULT_METRICS
 ):
     """Score the synthesized data using the given metrics and descriptors.
 
     Args:
         real(pandas.DataFrame): Table of real data.
         synth(pandas.DataFrame): Table of synthesized data.
-        descriptors(list(callable)): List of descriptors.
+        descriptors(dict[str, callable]): List of descriptors.
         metrics(list(callable)): List of metrics.
 
     Return:
@@ -47,9 +54,9 @@ def score_descriptors_table(
     metric_values = defaultdict(list)
     index = []
     columns = [metric.__name__ for metric in metrics]
-    for descriptor in descriptors:
-        index.append(descriptor.__name__)
-        real_descriptor, synth_descriptor = get_descriptor_values(real, synth, descriptor)
+    for name, descriptor in descriptors.items():
+        index.append(name)
+        real_descriptor, synth_descriptor = get_descriptor_values(real, synth, descriptor, name)
         for metric in metrics:
             metric_value = metric(real_descriptor, synth_descriptor)
             metric_values[metric.__name__].append(metric_value)

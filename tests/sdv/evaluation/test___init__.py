@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -7,6 +7,7 @@ import scipy as sp
 
 from sdv.evaluation import (
     get_descriptor_values, score_descriptors_dataset, score_descriptors_table)
+from sdv.evaluation.descriptors import categorical_distribution
 from sdv.evaluation.metrics import mse, r2_score, rmse
 
 
@@ -16,14 +17,15 @@ class TestGetDescriptorValues(TestCase):
         # Setup
         real = pd.DataFrame({'a': range(10)})
         synth = pd.DataFrame({'a': range(20, 10, -1)})
-        metric = np.mean
+        descriptor = np.mean
+        name = 'mean'
 
         expected_result = pd.DataFrame({
-            'a': [4.5, 15.5]
+            'mean_a_0': [4.5, 15.5]
         })
 
         # Run
-        result = get_descriptor_values(real, synth, metric)
+        result = get_descriptor_values(real, synth, descriptor, name)
 
         # Check
         assert result.equals(expected_result)
@@ -38,32 +40,80 @@ class TestGetDescriptorValues(TestCase):
             'a': range(20, 10, -1),
             'b': range(10, 0, -1)
         })
-        metric = np.mean
+        descriptor = np.mean
+        name = 'mean'
 
         expected_result = pd.DataFrame({
-            'a': [4.5, 15.5],
-            'b': [14.5, 5.5],
+            'mean_a_0': [4.5, 15.5],
+            'mean_b_0': [14.5, 5.5],
         })
 
         # Run
-        result = get_descriptor_values(real, synth, metric)
+        result = get_descriptor_values(real, synth, descriptor, name)
 
         # Check
         assert result.equals(expected_result)
 
+    def test_multiple_columns_multiple_outputs(self):
+        # Setup
+        real = pd.DataFrame({
+            'a': list('ABCD'),
+            'b': list('WXYZ')
+        })
+        synth = pd.DataFrame({
+            'a': list('ACDE'),
+            'b': list('WUXY')
+        })
+        descriptor = categorical_distribution
+        name = 'categorical_distribution'
+
+        expected_result = pd.DataFrame([
+            {
+                'categorical_distribution_a_A': 0.25,
+                'categorical_distribution_a_B': 0.25,
+                'categorical_distribution_a_C': 0.25,
+                'categorical_distribution_a_D': 0.25,
+                'categorical_distribution_a_E': np.nan,
+                'categorical_distribution_b_U': np.nan,
+                'categorical_distribution_b_W': 0.25,
+                'categorical_distribution_b_X': 0.25,
+                'categorical_distribution_b_Y': 0.25,
+                'categorical_distribution_b_Z': 0.25
+            },
+            {
+                'categorical_distribution_a_A': 0.25,
+                'categorical_distribution_a_B': np.nan,
+                'categorical_distribution_a_C': 0.25,
+                'categorical_distribution_a_D': 0.25,
+                'categorical_distribution_a_E': 0.25,
+                'categorical_distribution_b_U': 0.25,
+                'categorical_distribution_b_W': 0.25,
+                'categorical_distribution_b_X': 0.25,
+                'categorical_distribution_b_Y': 0.25,
+                'categorical_distribution_b_Z': np.nan
+            }
+        ])
+        # Run
+        result = get_descriptor_values(real, synth, descriptor, name)
+
+        # Check
+        assert result.equals(expected_result)
+
+
 class TestScoreDescriptorsTable(TestCase):
 
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
-    def test_default_call(self, metric_mock):
+    def test_default_call(self, descriptor_mock):
         # Setup
         real = 'real_data'
         synth = 'synth_data'
 
-        metric_mock.side_effect = [
+        descriptor_mock.side_effect = [
             ('real_mean', 'synth_mean'),
             ('real_std', 'synth_std'),
             ('real_skew', 'synth_skew'),
-            ('real_kurt', 'synth_kurt')
+            ('real_kurtosis', 'synth_kurtosis'),
+            ('real_categorical', 'synth_categorical')
         ]
 
         def mock_result(name):
@@ -82,9 +132,9 @@ class TestScoreDescriptorsTable(TestCase):
 
         metrics = [mse_mock, rmse_mock, r2_mock]
         columns = ['mse', 'rmse', 'r2_score']
-        index = ['mean', 'std', 'skew', 'kurtosis']
+        index = ['mean', 'std', 'skew', 'kurtosis', 'categorical_distribution']
         values = [
-            ['{}_{}'.format(score, metric[:4]) for score in columns]
+            ['{}_{}'.format(score, metric[:11]) for score in columns]
             for metric in index
         ]
         expected_result = pd.DataFrame(values, columns=columns, index=index)
@@ -94,30 +144,33 @@ class TestScoreDescriptorsTable(TestCase):
 
         # Check
         assert result.equals(expected_result)
-        assert metric_mock.call_args_list == [
-            (('real_data', 'synth_data', np.mean), {}),
-            (('real_data', 'synth_data', np.std), {}),
-            (('real_data', 'synth_data', sp.stats.skew), {}),
-            (('real_data', 'synth_data', sp.stats.kurtosis), {}),
-
+        assert descriptor_mock.call_args_list == [
+            (('real_data', 'synth_data', np.mean, 'mean'), {}),
+            (('real_data', 'synth_data', np.std, 'std'), {}),
+            (('real_data', 'synth_data', sp.stats.skew, 'skew'), {}),
+            (('real_data', 'synth_data', sp.stats.kurtosis, 'kurtosis'), {}),
+            (('real_data', 'synth_data', categorical_distribution, 'categorical_distribution'), {})
         ]
         assert mse_mock.call_args_list == [
             (('real_mean', 'synth_mean'), {}),
             (('real_std', 'synth_std'), {}),
             (('real_skew', 'synth_skew'), {}),
-            (('real_kurt', 'synth_kurt'), {}),
+            (('real_kurtosis', 'synth_kurtosis'), {}),
+            (('real_categorical', 'synth_categorical'), {}),
         ]
         assert rmse_mock.call_args_list == [
             (('real_mean', 'synth_mean'), {}),
             (('real_std', 'synth_std'), {}),
             (('real_skew', 'synth_skew'), {}),
-            (('real_kurt', 'synth_kurt'), {}),
+            (('real_kurtosis', 'synth_kurtosis'), {}),
+            (('real_categorical', 'synth_categorical'), {}),
         ]
         assert r2_mock.call_args_list == [
             (('real_mean', 'synth_mean'), {}),
             (('real_std', 'synth_std'), {}),
             (('real_skew', 'synth_skew'), {}),
-            (('real_kurt', 'synth_kurt'), {}),
+            (('real_kurtosis', 'synth_kurtosis'), {}),
+            (('real_categorical', 'synth_categorical'), {}),
         ]
 
 

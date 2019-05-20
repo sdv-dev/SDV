@@ -19,7 +19,7 @@ def categorical_distribution(column):
 DESCRIPTORS = {
     'mean': np.mean,
     'std': np.std,
-    'skewness': sp.stats.skew,
+    'skew': sp.stats.skew,
     'kurtosis': sp.stats.kurtosis,
     'categorical_distribution': categorical_distribution
 }
