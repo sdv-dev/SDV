@@ -1,14 +1,12 @@
-from unittest import TestCase, skip
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
 import scipy as sp
 
-from sdv.evaluation import (
-    get_descriptor_values, score_descriptors_dataset, score_descriptors_table)
+from sdv.evaluation import get_descriptor_values, get_descriptors_table, score_descriptors
 from sdv.evaluation.descriptors import categorical_distribution
-from sdv.evaluation.metrics import mse, r2_score, rmse
 
 
 class TestGetDescriptorValues(TestCase):
@@ -18,14 +16,13 @@ class TestGetDescriptorValues(TestCase):
         real = pd.DataFrame({'a': range(10)})
         synth = pd.DataFrame({'a': range(20, 10, -1)})
         descriptor = np.mean
-        name = 'mean'
 
         expected_result = pd.DataFrame({
             'mean_a_0': [4.5, 15.5]
         })
 
         # Run
-        result = get_descriptor_values(real, synth, descriptor, name)
+        result = get_descriptor_values(real, synth, descriptor)
 
         # Check
         assert result.equals(expected_result)
@@ -41,7 +38,6 @@ class TestGetDescriptorValues(TestCase):
             'b': range(10, 0, -1)
         })
         descriptor = np.mean
-        name = 'mean'
 
         expected_result = pd.DataFrame({
             'mean_a_0': [4.5, 15.5],
@@ -49,7 +45,7 @@ class TestGetDescriptorValues(TestCase):
         })
 
         # Run
-        result = get_descriptor_values(real, synth, descriptor, name)
+        result = get_descriptor_values(real, synth, descriptor)
 
         # Check
         assert result.equals(expected_result)
@@ -65,7 +61,6 @@ class TestGetDescriptorValues(TestCase):
             'b': list('WUXY')
         })
         descriptor = categorical_distribution
-        name = 'categorical_distribution'
 
         expected_result = pd.DataFrame([
             {
@@ -94,13 +89,13 @@ class TestGetDescriptorValues(TestCase):
             }
         ])
         # Run
-        result = get_descriptor_values(real, synth, descriptor, name)
+        result = get_descriptor_values(real, synth, descriptor)
 
         # Check
         assert result.equals(expected_result)
 
 
-class TestScoreDescriptorsTable(TestCase):
+class TestGetDescriptorsTable(TestCase):
 
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
     def test_default_call(self, descriptor_mock):
@@ -109,72 +104,69 @@ class TestScoreDescriptorsTable(TestCase):
         synth = 'synth_data'
 
         descriptor_mock.side_effect = [
-            ('real_mean', 'synth_mean'),
-            ('real_std', 'synth_std'),
-            ('real_skew', 'synth_skew'),
-            ('real_kurtosis', 'synth_kurtosis'),
-            ('real_categorical', 'synth_categorical')
+            pd.DataFrame({'a': [0, 1], 'b': [1, 0]}),
+            pd.DataFrame({'x': [0, 1], 'y': [1, 0]}),
+            pd.DataFrame({'c': [0, 1], 'd': [1, 0]}),
+            pd.DataFrame({'u': [0, 1], 'v': [1, 0]}),
+            pd.DataFrame({'r': [0, 1], 's': [1, 0]})
         ]
 
-        def mock_result(name):
-            def f(*args):
-                return '{}_{}'.format(name, args[0].split('_')[1])
-
-            return f
-
-        mse_mock = MagicMock(spec=mse, side_effect=mock_result('mse'), __name__='mse')
-        rmse_mock = MagicMock(spec=rmse, side_effect=mock_result('rmse'), __name__='rmse')
-        r2_mock = MagicMock(
-            spec=r2_score,
-            side_effect=mock_result('r2_score'),
-            __name__='r2_score'
-        )
-
-        metrics = [mse_mock, rmse_mock, r2_mock]
-        columns = ['mse', 'rmse', 'r2_score']
-        index = ['mean', 'std', 'skew', 'kurtosis', 'categorical_distribution']
-        values = [
-            ['{}_{}'.format(score, metric[:11]) for score in columns]
-            for metric in index
-        ]
-        expected_result = pd.DataFrame(values, columns=columns, index=index)
+        expected_result = pd.DataFrame({
+            'a': [0, 1],
+            'b': [1, 0],
+            'x': [0, 1],
+            'y': [1, 0],
+            'c': [0, 1],
+            'd': [1, 0],
+            'u': [0, 1],
+            'v': [1, 0],
+            'r': [0, 1],
+            's': [1, 0]
+        })
 
         # Run
-        result = score_descriptors_table(real, synth, metrics=metrics)
+        result = get_descriptors_table(real, synth)
 
         # Check
         assert result.equals(expected_result)
         assert descriptor_mock.call_args_list == [
-            (('real_data', 'synth_data', np.mean, 'mean'), {}),
-            (('real_data', 'synth_data', np.std, 'std'), {}),
-            (('real_data', 'synth_data', sp.stats.skew, 'skew'), {}),
-            (('real_data', 'synth_data', sp.stats.kurtosis, 'kurtosis'), {}),
-            (('real_data', 'synth_data', categorical_distribution, 'categorical_distribution'), {})
-        ]
-        assert mse_mock.call_args_list == [
-            (('real_mean', 'synth_mean'), {}),
-            (('real_std', 'synth_std'), {}),
-            (('real_skew', 'synth_skew'), {}),
-            (('real_kurtosis', 'synth_kurtosis'), {}),
-            (('real_categorical', 'synth_categorical'), {}),
-        ]
-        assert rmse_mock.call_args_list == [
-            (('real_mean', 'synth_mean'), {}),
-            (('real_std', 'synth_std'), {}),
-            (('real_skew', 'synth_skew'), {}),
-            (('real_kurtosis', 'synth_kurtosis'), {}),
-            (('real_categorical', 'synth_categorical'), {}),
-        ]
-        assert r2_mock.call_args_list == [
-            (('real_mean', 'synth_mean'), {}),
-            (('real_std', 'synth_std'), {}),
-            (('real_skew', 'synth_skew'), {}),
-            (('real_kurtosis', 'synth_kurtosis'), {}),
-            (('real_categorical', 'synth_categorical'), {}),
+            (('real_data', 'synth_data', np.mean), {}),
+            (('real_data', 'synth_data', np.std), {}),
+            (('real_data', 'synth_data', sp.stats.skew), {}),
+            (('real_data', 'synth_data', sp.stats.kurtosis), {}),
+            (('real_data', 'synth_data', categorical_distribution), {})
         ]
 
+    @patch('sdv.evaluation.DESCRIPTORS')
+    @patch('sdv.evaluation.get_descriptor_values', autospec=True)
+    @patch('sdv.evaluation.pd.concat', autospec=True)
+    def test_string_descriptor(self, concat_mock, get_descriptor_mock, descriptors_mock):
+        """If a descriptor is a string it will changed by its value in DESCRIPTORS."""
+        # Setup
+        real = 'real data'
+        synth = 'synth data'
+        descriptors = [
+            'a_descriptor_string',
+        ]
+        expected_result = 'None'
 
-class TestScoreDescriptorsDataset(TestCase):
+        concat_mock.return_value = 'concatenated descriptors'
+        get_descriptor_mock.return_value = 'descriptor values'
+        descriptor_value = MagicMock(__name__='descriptor', return_value='a_descriptor_function')
+        descriptors_mock.__getitem__ = descriptor_value
+        expected_result = 'concatenated descriptors'
+
+        # Run
+        result = get_descriptors_table(real, synth, descriptors=descriptors)
+
+        # Check
+        assert result == expected_result
+        descriptors_mock.__getitem__.assert_called_once_with('a_descriptor_string')
+        get_descriptor_mock.assert_called_once_with(
+            'real data', 'synth data', 'a_descriptor_function')
+
+
+class TestScoreDescriptors(TestCase):
 
     def test_raises_error(self):
         """If the table names in both datasets are not equal, an error is raised."""
@@ -193,46 +185,61 @@ class TestScoreDescriptorsDataset(TestCase):
 
         try:
             # Run
-            score_descriptors_dataset(real, synth, metrics=metrics, descriptors=descriptors)
+            score_descriptors(real, synth, metrics=metrics, descriptors=descriptors)
         except AssertionError as error:
             # Check
             assert error.args[0] == expected_error_message
 
-    @patch('sdv.evaluation.score_descriptors_table', autospec=True)
-    def test_default_call(self, score_table_mock):
+    @patch('sdv.evaluation.get_descriptors_table', autospec=True)
+    def test_single_table(self, descriptors_mock):
         # Setup
+        descriptors_mock.return_value = pd.DataFrame([
+            {
+                'a': 1,
+                'b': 2,
+                'c': 3
+            },
+            {
+                'a': 2,
+                'b': 4,
+                'c': 6
+            },
 
-        def score_side_effect(*args, **kwargs):
-            return 'score_for_table_{}'.format(args[0][-1])
+        ])
 
-        score_table_mock.side_effect = score_side_effect
+        real = pd.DataFrame([{'a': 'value'}])
+        synth = 'synth data'
 
-        real = {
-            'table_A': 'real_data_for_table_A',
-            'table_B': 'real_data_for_table_B'
-        }
-        synth = {
-            'table_A': 'synth_data_for_table_A',
-            'table_B': 'synth_data_for_table_B'
-        }
-        metrics = ['metric_1', 'metric_2']
-        descriptors = ['descriptor_1', 'score_2']
+        metric_1 = MagicMock(return_value=0, __name__='metric_1')
+        metric_2 = MagicMock(return_value=1, __name__='metric_2')
 
-        expected_result = {
-            'table_A': 'score_for_table_A',
-            'table_B': 'score_for_table_B'
-        }
-        expected_kwargs = dict(
-            metrics=['metric_1', 'metric_2'],
-            scores=['score_1', 'score_2']
-        )
+        metrics = [metric_1, metric_2]
+        descriptors = ['descriptor_1', 'descriptors_2']
+
+        expected_result = pd.Series({
+            'metric_1': 0,
+            'metric_2': 1
+        })
+
         # Run
-        result = score_descriptors_dataset(real, synth, metrics=metrics, descriptors=descriptors)
+        result = score_descriptors(real, synth, metrics=metrics, descriptors=descriptors)
 
         # Check
-        assert result == expected_result
+        assert result.equals(expected_result)
+        descriptors_mock.assert_called_once_with(real, synth, descriptors)
 
-        score_table_mock.call_args_list == [
-            (('real_data_for_table_A', 'synth_data_for_table_A'), expected_kwargs),
-            (('real_data_for_table_B', 'synth_data_for_table_B'), expected_kwargs)
-        ]
+        call_args_list = metric_1.call_args_list
+        assert len(call_args_list) == 1
+        args, kwargs = call_args_list[0]
+        assert kwargs == {}
+        assert len(args) == 2
+        assert args[0].equals(pd.Series({'a': 1, 'b': 2, 'c': 3}, name=0))
+        assert args[1].equals(pd.Series({'a': 2, 'b': 4, 'c': 6}, name=1))
+
+        call_args_list = metric_1.call_args_list
+        assert len(call_args_list) == 1
+        args, kwargs = call_args_list[0]
+        assert kwargs == {}
+        assert len(args) == 2
+        assert args[0].equals(pd.Series({'a': 1, 'b': 2, 'c': 3}, name=0))
+        assert args[1].equals(pd.Series({'a': 2, 'b': 4, 'c': 6}, name=1))
