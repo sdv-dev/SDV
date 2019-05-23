@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -122,20 +122,21 @@ class TestGetDescriptorsTable(TestCase):
             'v': [1, 0],
             'r': [0, 1],
             's': [1, 0]
-        })
+        }, columns=list('abxycduvrs'))
 
         # Run
         result = get_descriptors_table(real, synth)
 
         # Check
         assert result.equals(expected_result)
-        assert descriptor_mock.call_args_list == [
-            (('real_data', 'synth_data', np.mean), {}),
-            (('real_data', 'synth_data', np.std), {}),
-            (('real_data', 'synth_data', sp.stats.skew), {}),
-            (('real_data', 'synth_data', sp.stats.kurtosis), {}),
-            (('real_data', 'synth_data', categorical_distribution), {})
-        ]
+        assert descriptor_mock.call_count == 5
+        descriptor_mock.assert_has_calls([
+            call('real_data', 'synth_data', np.mean),
+            call('real_data', 'synth_data', np.std),
+            call('real_data', 'synth_data', sp.stats.skew),
+            call('real_data', 'synth_data', sp.stats.kurtosis),
+            call('real_data', 'synth_data', categorical_distribution)
+        ], any_order=True)
 
     @patch('sdv.evaluation.DESCRIPTORS')
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
