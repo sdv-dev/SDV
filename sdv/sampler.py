@@ -1,5 +1,3 @@
-import random
-
 import exrex
 import numpy as np
 import pandas as pd
@@ -28,22 +26,8 @@ class Sampler:
         """Instantiate a new object."""
         self.dn = data_navigator
         self.modeler = modeler
-        self.sampled = dict()  # table_name -> [(primary_key, generated_row)]
         self.primary_key = dict()
         self.remaining_primary_key = dict()
-
-    @staticmethod
-    def update_mapping_list(mapping, key, value):
-        """Append value on mapping[key] if exists, create it otherwise."""
-        item = mapping.get(key)
-
-        if item:
-            item.append(value)
-
-        else:
-            mapping[key] = [value]
-
-        return mapping
 
     @staticmethod
     def _square_matrix(triangular_matrix):
@@ -62,22 +46,6 @@ class Sampler:
             item.extend(zero * (length - len(item)))
 
         return triangular_matrix
-
-    def _get_table_meta(self, metadata, table_name):
-        """Return metadata  get table meta for a given table name.
-
-        Args:
-            metadata (dict): Metadata for dataset.
-            table_name (str): Name of table to get metadata from.
-
-        Returns:
-            dict: Metadata for given table.
-        """
-        for table in metadata['tables']:
-            if table['name'] == table_name:
-                return table
-
-        return None
 
     def _prepare_sampled_covariance(self, covariance):
         """
@@ -129,21 +97,6 @@ class Sampler:
 
         return row
 
-    @staticmethod
-    def reset_indices_tables(sampled_tables):
-        """Reset the indices of sampled tables.
-
-        Args:
-            sampled_tables (dict): All values are dataframes for sampled tables.
-
-        Returns:
-            dict: The same dict entered, just reindexed.
-        """
-        for name, table in sampled_tables.items():
-            sampled_tables[name] = table.reset_index(drop=True)
-
-        return sampled_tables
-
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
         self.primary_key = dict()
@@ -159,11 +112,10 @@ class Sampler:
         Return:
             pandas.DataFrame: Formatted synthesized data.
         """
-        # get primary key column name
-        orig_meta = self._get_table_meta(self.dn.meta, table_name)
+        orig_meta = self.dn.get_meta_data(table_name)
 
-        # filter out parameters
-        labels = list(self.dn.tables[table_name].data)
+        labels = list(orig_meta['fields'].keys())
+
         reverse_columns = [
             transformer[1] for transformer in self.dn.ht.transformers
             if table_name in transformer
@@ -171,28 +123,30 @@ class Sampler:
 
         text_filled = self._fill_text_columns(synthesized, labels, table_name)
 
+        # This is here only because RDT expects a different meta format
+        # RDT should be fixed to work with the new format.
+        fields = list()
+        for name, values in orig_meta['fields'].items():
+            field = values.copy()
+            field['name'] = name
+            fields.append(field)
+
+        meta = {
+            'fields': fields,
+            'name': table_name
+        }
+
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], orig_meta)
+        reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], meta)
 
         synthesized.update(reversed_data)
+
+        for name, field in orig_meta['fields'].items():
+            subtype = field.get('subtype')
+            if subtype == 'integer':
+                synthesized[name] = synthesized[name].astype(int)
+
         return synthesized[labels]
-
-    def _get_parent_row(self, table_name):
-        parents = self.dn.get_parents(table_name)
-        if not parents:
-            return None
-
-        parent_rows = dict()
-        for parent in parents:
-            if parent not in self.sampled:
-                raise Exception('Parents must be synthesized first')
-
-            parent_rows[parent] = self.sampled[parent]
-
-        random_parent, parent_rows = random.choice(list(parent_rows.items()))
-        foreign_key, parent_row = random.choice(parent_rows)
-
-        return random_parent, foreign_key, parent_row
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -244,17 +198,6 @@ class Sampler:
         return primary_key, primary_key_values
 
     @staticmethod
-    def generate_keys(prefix=''):
-        def f(row):
-            parts = [str(row[key]) for key in row.keys() if row[key] is not None]
-            if prefix:
-                parts = [prefix] + parts
-
-            return '__'.join(parts)
-
-        return f
-
-    @staticmethod
     def _setdefault(a_dict, key, a_type):
         if key not in a_dict:
             value = a_type()
@@ -291,35 +234,39 @@ class Sampler:
         unflattened = dict()
 
         for key, value in sorted(flat.items(), key=self._key_order):
-            key, subkey = key.split('__', 1)
-            subkey, name = subkey.rsplit('__', 1)
+            if '__' in key:
+                key, subkey = key.split('__', 1)
+                subkey, name = subkey.rsplit('__', 1)
 
-            if name.isdigit():
-                column_index = int(name)
-                row_index = int(subkey)
+                if name.isdigit():
+                    column_index = int(name)
+                    row_index = int(subkey)
 
-                array = self._setdefault(unflattened, key, list)
+                    array = self._setdefault(unflattened, key, list)
 
-                if len(array) == row_index:
-                    row = list()
-                    array.append(row)
-                elif len(array) == row_index + 1:
-                    row = array[row_index]
+                    if len(array) == row_index:
+                        row = list()
+                        array.append(row)
+                    elif len(array) == row_index + 1:
+                        row = array[row_index]
+                    else:
+                        raise ValueError('There was an error unflattening the extension.')
+
+                    if len(row) == column_index:
+                        row.append(value)
+                    else:
+                        raise ValueError('There was an error unflattening the extension.')
+
                 else:
-                    raise ValueError('There was an error unflattening the extension.')
+                    subdict = self._setdefault(unflattened, key, dict)
+                    if subkey.isdigit():
+                        subkey = int(subkey)
 
-                if len(row) == column_index:
-                    row.append(value)
-                else:
-                    raise ValueError('There was an error unflattening the extension.')
+                    inner = self._setdefault(subdict, subkey, dict)
+                    inner[name] = value
 
             else:
-                subdict = self._setdefault(unflattened, key, dict)
-                if subkey.isdigit():
-                    subkey = int(subkey)
-
-                inner = self._setdefault(subdict, subkey, dict)
-                inner[name] = value
+                unflattened[key] = value
 
         return unflattened
 
@@ -425,10 +372,10 @@ class Sampler:
         """
 
         prefix = '__{}__'.format(table_name)
-        columns = [column for column in parent_row.columns if column.startswith(prefix)]
-        new_columns = {column: column.replace(prefix, '') for column in columns}
-        flat_parameters = parent_row.loc[:, columns]
-        return flat_parameters.rename(columns=new_columns).to_dict('records')[0]
+        keys = [key for key in parent_row.keys() if key.startswith(prefix)]
+        new_keys = {key: key.replace(prefix, '') for key in keys}
+        flat_parameters = parent_row[keys]
+        return flat_parameters.rename(new_keys).to_dict()
 
     def _get_model(self, extension):
         """Build a model using the extension parameters."""
@@ -497,17 +444,19 @@ class Sampler:
         """
 
         if model and model.fitted:
+            pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
+
             columns = self.modeler.tables[table_name].columns
             synthesized = self._sample_model(model, num_rows, columns)
             valid_rows = pd.DataFrame(columns=columns)
             drop_indices = pd.Series(False, index=synthesized.index)
 
             categorical_columns = []
-            table_metadata = self._get_table_meta(self.dn.meta, table_name)
+            # table_metadata = self._get_table_meta(self.dn.meta, table_name)
+            table_metadata = self.dn.get_meta_data(table_name)
 
-            for field in table_metadata['fields']:
+            for column_name, field in table_metadata['fields'].items():
                 if field['type'] == 'categorical':
-                    column_name = field['name']
                     categorical_columns.append(column_name)
                     column = synthesized[column_name]
                     filtered_values = ((column < 0) | (column > 1))
@@ -532,81 +481,72 @@ class Sampler:
                 missing_rows, valid_rows = self._get_missing_valid_rows(
                     synthesized, drop_indices, valid_rows, num_rows)
 
+            if pk_name:
+                valid_rows[pk_name] = pk_values
+
             return valid_rows
 
         else:
             parents = bool(self.dn.get_parents(table_name))
             raise ValueError(MODEL_ERROR_MESSAGES[parents])
 
-    def sample_rows(self, table_name, num_rows=None, reset_primary_keys=False,
+    def _sample_children(self, table_name, sampled):
+        table_rows = sampled[table_name]
+        for child_name in self.dn.get_children(table_name):
+            for _, row in table_rows.iterrows():
+                self._sample(child_name, table_name, row, sampled)
+
+    def _sample(self, table_name, parent_name, parent_row, sampled):
+        extension = self._get_extension(parent_row, table_name, parent_name)
+
+        model = self._get_model(extension)
+        num_rows = max(round(extension['child_rows']), 0)
+
+        sampled_rows = self._sample_valid_rows(model, num_rows, table_name)
+
+        parent_id, foreign_key = self.dn.foreign_keys[(table_name, parent_name)]
+        sampled_rows[foreign_key] = parent_row[parent_id]
+
+        previous = sampled.get(table_name)
+        if previous is None:
+            sampled[table_name] = sampled_rows
+        else:
+            sampled[table_name] = pd.concat([previous, sampled_rows]).reset_index(drop=True)
+
+        self._sample_children(table_name, sampled)
+
+    def sample_rows(self, table_name, num_rows, reset_primary_keys=False,
                     sample_children=True, sampled_data=None):
-        """Sample specified number of rows for specified table.
-
-        Args:
-            table_name(str): Name of table to synthesize.
-            num_rows(int): Number of rows to synthesize.
-            reset_primary_keys(bool): Wheter or not reset the primary key generators.
-
-        Returns:
-            pd.DataFrame: Synthesized rows.
-        """
-
-        if sampled_data is None:
-            sampled_data = dict()
 
         if reset_primary_keys:
             self._reset_primary_keys_generators()
 
-        pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
-        parent_row = self._get_parent_row(table_name)
+        model = self.modeler.models[table_name]
 
-        if parent_row:
-            random_parent, fk, parent_row = parent_row
+        sampled_rows = self._sample_valid_rows(model, num_rows, table_name)
 
-            # Make sure only using one row
-            parent_row = parent_row.loc[[0]]
-
-            # get parameters from parent to make model
-            extension = self._get_extension(parent_row, table_name, random_parent)
-
-            # Build a model using the parameters from the extension
-            model = self._get_model(extension)
-            if num_rows is None:
-                num_rows = extension['num_children']
-
-            synthesized_rows = self._sample_valid_rows(model, num_rows, table_name)
-
-            # add foreign key value to row
-            fk_val = parent_row.loc[0, fk]
-
-            # get foreign key name from current table
-            foreign_key = self.dn.foreign_keys[(table_name, random_parent)][1]
-            synthesized_rows[foreign_key] = fk_val
-
-        else:    # there is no parent
-            model = self.modeler.models[table_name]
-            synthesized_rows = self._sample_valid_rows(model, num_rows, table_name)
-
-        if pk_name:
-            synthesized_rows[pk_name] = pk_values
-
-        sample_info = (pk_name, synthesized_rows)
-        self.sampled = self.update_mapping_list(self.sampled, table_name, sample_info)
-
-        sampled_rows = self._transform_synthesized_rows(synthesized_rows, table_name)
-
-        sampled_table = sampled_data.get(table_name)
-        if sampled_table is not None:
-            sampled_table = pd.concat([sampled_table, sampled_rows]).reset_index(drop=True)
-            sampled_data[table_name] = sampled_table
-        else:
-            sampled_data[table_name] = sampled_rows
+        parents = self.dn.get_parents(table_name)
+        if parents:
+            parent_name = list(parents)[0]
+            foreign_key = self.dn.foreign_keys[(table_name, parent_name)][1]
+            parent_id = self._get_primary_keys(parent_name, 1)[1][0]
+            sampled_rows[foreign_key] = parent_id
 
         if sample_children:
-            for child in self.dn.get_children(table_name):
-                self.sample_rows(child, sample_children=True, sampled_data=sampled_data)
+            if sampled_data is None:
+                sampled_data = dict()
 
-        return sampled_data
+            sampled_data[table_name] = sampled_rows
+
+            self._sample_children(table_name, sampled_data)
+
+            for table, sampled_rows in sampled_data.items():
+                sampled_data[table] = self._transform_synthesized_rows(sampled_rows, table)
+
+            return sampled_data
+
+        else:
+            return self._transform_synthesized_rows(sampled_rows, table_name)
 
     def sample_table(self, table_name, reset_primary_keys=False):
         """Sample a table equal to the size of the original.
@@ -625,7 +565,7 @@ class Sampler:
             sample_children=False,
             reset_primary_keys=reset_primary_keys
         )
-        return sampled_data[table_name]
+        return sampled_data
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Samples the entire database.
