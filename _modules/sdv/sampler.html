@@ -180,9 +180,7 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.sampler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">random</span>
-
-<span class="kn">import</span> <span class="nn">exrex</span>
+<span></span><span class="kn">import</span> <span class="nn">exrex</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">copulas</span> <span class="k">import</span> <span class="n">get_qualified_name</span>
@@ -210,22 +208,8 @@
         <span class="sd">&quot;&quot;&quot;Instantiate a new object.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dn</span> <span class="o">=</span> <span class="n">data_navigator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span> <span class="o">=</span> <span class="n">modeler</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampled</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># table_name -&gt; [(primary_key, generated_row)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">remaining_primary_key</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-
-<div class="viewcode-block" id="Sampler.update_mapping_list"><a class="viewcode-back" href="../../api_reference.html#sdv.Sampler.update_mapping_list">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">update_mapping_list</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Append value on mapping[key] if exists, create it otherwise.&quot;&quot;&quot;</span>
-        <span class="n">item</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">item</span><span class="p">:</span>
-            <span class="n">item</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">mapping</span></div>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_square_matrix</span><span class="p">(</span><span class="n">triangular_matrix</span><span class="p">):</span>
@@ -244,22 +228,6 @@
             <span class="n">item</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">zero</span> <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)))</span>
 
         <span class="k">return</span> <span class="n">triangular_matrix</span>
-
-    <span class="k">def</span> <span class="nf">_get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return metadata  get table meta for a given table name.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            metadata (dict): Metadata for dataset.</span>
-<span class="sd">            table_name (str): Name of table to get metadata from.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict: Metadata for given table.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">table</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">table_name</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">table</span>
-
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">_prepare_sampled_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -311,21 +279,6 @@
 
         <span class="k">return</span> <span class="n">row</span>
 
-<div class="viewcode-block" id="Sampler.reset_indices_tables"><a class="viewcode-back" href="../../api_reference.html#sdv.Sampler.reset_indices_tables">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">reset_indices_tables</span><span class="p">(</span><span class="n">sampled_tables</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reset the indices of sampled tables.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            sampled_tables (dict): All values are dataframes for sampled tables.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict: The same dict entered, just reindexed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">sampled_tables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">sampled_tables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">sampled_tables</span></div>
-
     <span class="k">def</span> <span class="nf">_reset_primary_keys_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reset the primary key generators.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
@@ -341,11 +294,10 @@
 <span class="sd">        Return:</span>
 <span class="sd">            pandas.DataFrame: Formatted synthesized data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># get primary key column name</span>
-        <span class="n">orig_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+        <span class="n">orig_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_meta_data</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
 
-        <span class="c1"># filter out parameters</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">orig_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
         <span class="n">reverse_columns</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">transformer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">transformer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">ht</span><span class="o">.</span><span class="n">transformers</span>
             <span class="k">if</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">transformer</span>
@@ -353,28 +305,30 @@
 
         <span class="n">text_filled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fill_text_columns</span><span class="p">(</span><span class="n">synthesized</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
+        <span class="c1"># This is here only because RDT expects a different meta format</span>
+        <span class="c1"># RDT should be fixed to work with the new format.</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">orig_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">field</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">table_name</span>
+        <span class="p">}</span>
+
         <span class="c1"># reverse transform data</span>
-        <span class="n">reversed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">ht</span><span class="o">.</span><span class="n">reverse_transform_table</span><span class="p">(</span><span class="n">text_filled</span><span class="p">[</span><span class="n">reverse_columns</span><span class="p">],</span> <span class="n">orig_meta</span><span class="p">)</span>
+        <span class="n">reversed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">ht</span><span class="o">.</span><span class="n">reverse_transform_table</span><span class="p">(</span><span class="n">text_filled</span><span class="p">[</span><span class="n">reverse_columns</span><span class="p">],</span> <span class="n">meta</span><span class="p">)</span>
 
         <span class="n">synthesized</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">orig_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">subtype</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">subtype</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
+                <span class="n">synthesized</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">synthesized</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">synthesized</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">_get_parent_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="n">parents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">parents</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">parent_rows</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampled</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Parents must be synthesized first&#39;</span><span class="p">)</span>
-
-            <span class="n">parent_rows</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampled</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span>
-
-        <span class="n">random_parent</span><span class="p">,</span> <span class="n">parent_rows</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">parent_rows</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-        <span class="n">foreign_key</span><span class="p">,</span> <span class="n">parent_row</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">parent_rows</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">random_parent</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">,</span> <span class="n">parent_row</span>
 
     <span class="k">def</span> <span class="nf">_get_primary_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the primary key and amount of values for the requested table.</span>
@@ -426,17 +380,6 @@
         <span class="k">return</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">primary_key_values</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">generate_keys</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">prefix</span><span class="p">:</span>
-                <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">+</span> <span class="n">parts</span>
-
-            <span class="k">return</span> <span class="s1">&#39;__&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">f</span>
-
-    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_setdefault</span><span class="p">(</span><span class="n">a_dict</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">a_type</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">a_dict</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">a_type</span><span class="p">()</span>
@@ -473,35 +416,39 @@
         <span class="n">unflattened</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_order</span><span class="p">):</span>
-            <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">subkey</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">subkey</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;__&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">subkey</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">subkey</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                <span class="n">column_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-                <span class="n">row_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                    <span class="n">column_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">row_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
 
-                <span class="n">array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">unflattened</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                    <span class="n">array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">unflattened</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span><span class="p">:</span>
-                    <span class="n">row</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-                    <span class="n">array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">row</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">row_index</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span><span class="p">:</span>
+                        <span class="n">row</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                        <span class="n">array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">row</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">row_index</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">==</span> <span class="n">column_index</span><span class="p">:</span>
+                        <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
+
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
+                    <span class="n">subdict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">unflattened</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">subkey</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                        <span class="n">subkey</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">==</span> <span class="n">column_index</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
+                    <span class="n">inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">subdict</span><span class="p">,</span> <span class="n">subkey</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                    <span class="n">inner</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">subdict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">unflattened</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">subkey</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                    <span class="n">subkey</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
-
-                <span class="n">inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setdefault</span><span class="p">(</span><span class="n">subdict</span><span class="p">,</span> <span class="n">subkey</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-                <span class="n">inner</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">unflattened</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
         <span class="k">return</span> <span class="n">unflattened</span>
 
@@ -607,10 +554,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;__</span><span class="si">{}</span><span class="s1">__&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
-        <span class="n">new_columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">}</span>
-        <span class="n">flat_parameters</span> <span class="o">=</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">columns</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">flat_parameters</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">new_columns</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
+        <span class="n">new_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+        <span class="n">flat_parameters</span> <span class="o">=</span> <span class="n">parent_row</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">flat_parameters</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">new_keys</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Build a model using the extension parameters.&quot;&quot;&quot;</span>
@@ -679,17 +626,19 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">model</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
+            <span class="n">pk_name</span><span class="p">,</span> <span class="n">pk_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_keys</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span>
+
             <span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span>
             <span class="n">synthesized</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
             <span class="n">valid_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
             <span class="n">drop_indices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">synthesized</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
             <span class="n">categorical_columns</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">table_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+            <span class="c1"># table_metadata = self._get_table_meta(self.dn.meta, table_name)</span>
+            <span class="n">table_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_meta_data</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
-                    <span class="n">column_name</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
                     <span class="n">categorical_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
                     <span class="n">column</span> <span class="o">=</span> <span class="n">synthesized</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
                     <span class="n">filtered_values</span> <span class="o">=</span> <span class="p">((</span><span class="n">column</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">column</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">))</span>
@@ -714,81 +663,72 @@
                 <span class="n">missing_rows</span><span class="p">,</span> <span class="n">valid_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_missing_valid_rows</span><span class="p">(</span>
                     <span class="n">synthesized</span><span class="p">,</span> <span class="n">drop_indices</span><span class="p">,</span> <span class="n">valid_rows</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span>
 
+            <span class="k">if</span> <span class="n">pk_name</span><span class="p">:</span>
+                <span class="n">valid_rows</span><span class="p">[</span><span class="n">pk_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pk_values</span>
+
             <span class="k">return</span> <span class="n">valid_rows</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">parents</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">MODEL_ERROR_MESSAGES</span><span class="p">[</span><span class="n">parents</span><span class="p">])</span>
 
-<div class="viewcode-block" id="Sampler.sample_rows"><a class="viewcode-back" href="../../api_reference.html#sdv.Sampler.sample_rows">[docs]</a>    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">_sample_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sampled</span><span class="p">):</span>
+        <span class="n">table_rows</span> <span class="o">=</span> <span class="n">sampled</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">child_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">sampled</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">,</span> <span class="n">parent_row</span><span class="p">,</span> <span class="n">sampled</span><span class="p">):</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extension</span><span class="p">(</span><span class="n">parent_row</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">)</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
+        <span class="n">num_rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">extension</span><span class="p">[</span><span class="s1">&#39;child_rows&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_valid_rows</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+
+        <span class="n">parent_id</span><span class="p">,</span> <span class="n">foreign_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">[(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">)]</span>
+        <span class="n">sampled_rows</span><span class="p">[</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_row</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span>
+
+        <span class="n">previous</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">previous</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sampled</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_rows</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sampled</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">previous</span><span class="p">,</span> <span class="n">sampled_rows</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">sampled</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sampled_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample specified number of rows for specified table.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            table_name(str): Name of table to synthesize.</span>
-<span class="sd">            num_rows(int): Number of rows to synthesize.</span>
-<span class="sd">            reset_primary_keys(bool): Wheter or not reset the primary key generators.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            pd.DataFrame: Synthesized rows.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="n">sampled_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sampled_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">reset_primary_keys</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_reset_primary_keys_generators</span><span class="p">()</span>
 
-        <span class="n">pk_name</span><span class="p">,</span> <span class="n">pk_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_keys</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span>
-        <span class="n">parent_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_parent_row</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">parent_row</span><span class="p">:</span>
-            <span class="n">random_parent</span><span class="p">,</span> <span class="n">fk</span><span class="p">,</span> <span class="n">parent_row</span> <span class="o">=</span> <span class="n">parent_row</span>
+        <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_valid_rows</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
-            <span class="c1"># Make sure only using one row</span>
-            <span class="n">parent_row</span> <span class="o">=</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="mi">0</span><span class="p">]]</span>
-
-            <span class="c1"># get parameters from parent to make model</span>
-            <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extension</span><span class="p">(</span><span class="n">parent_row</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">random_parent</span><span class="p">)</span>
-
-            <span class="c1"># Build a model using the parameters from the extension</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">num_rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">num_rows</span> <span class="o">=</span> <span class="n">extension</span><span class="p">[</span><span class="s1">&#39;num_children&#39;</span><span class="p">]</span>
-
-            <span class="n">synthesized_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_valid_rows</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
-
-            <span class="c1"># add foreign key value to row</span>
-            <span class="n">fk_val</span> <span class="o">=</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">fk</span><span class="p">]</span>
-
-            <span class="c1"># get foreign key name from current table</span>
-            <span class="n">foreign_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">[(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">random_parent</span><span class="p">)][</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">synthesized_rows</span><span class="p">[</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">fk_val</span>
-
-        <span class="k">else</span><span class="p">:</span>    <span class="c1"># there is no parent</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
-            <span class="n">synthesized_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_valid_rows</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">pk_name</span><span class="p">:</span>
-            <span class="n">synthesized_rows</span><span class="p">[</span><span class="n">pk_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pk_values</span>
-
-        <span class="n">sample_info</span> <span class="o">=</span> <span class="p">(</span><span class="n">pk_name</span><span class="p">,</span> <span class="n">synthesized_rows</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_mapping_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampled</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sample_info</span><span class="p">)</span>
-
-        <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_synthesized_rows</span><span class="p">(</span><span class="n">synthesized_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
-
-        <span class="n">sampled_table</span> <span class="o">=</span> <span class="n">sampled_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sampled_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sampled_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sampled_table</span><span class="p">,</span> <span class="n">sampled_rows</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">sampled_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_table</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sampled_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_rows</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parents</span><span class="p">:</span>
+            <span class="n">parent_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">parents</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">foreign_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">[(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">)][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">parent_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_keys</span><span class="p">(</span><span class="n">parent_name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sampled_rows</span><span class="p">[</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_id</span>
 
         <span class="k">if</span> <span class="n">sample_children</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sample_rows</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sampled_data</span><span class="o">=</span><span class="n">sampled_data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sampled_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sampled_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="n">sampled_data</span></div>
+            <span class="n">sampled_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_rows</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">sampled_rows</span> <span class="ow">in</span> <span class="n">sampled_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">sampled_data</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_synthesized_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">sampled_data</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_synthesized_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Sampler.sample_table"><a class="viewcode-back" href="../../api_reference.html#sdv.Sampler.sample_table">[docs]</a>    <span class="k">def</span> <span class="nf">sample_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample a table equal to the size of the original.</span>
@@ -807,7 +747,7 @@
             <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">sampled_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">sampled_data</span></div>
 
 <div class="viewcode-block" id="Sampler.sample_all"><a class="viewcode-back" href="../../api_reference.html#sdv.Sampler.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Samples the entire database.</span>

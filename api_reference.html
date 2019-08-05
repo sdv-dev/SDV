@@ -190,11 +190,11 @@
 <p>Top-level package for SDV.</p>
 <dl class="class">
 <dt id="sdv.CSVDataLoader">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">CSVDataLoader</code><span class="sig-paren">(</span><em>meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">CSVDataLoader</code><span class="sig-paren">(</span><em class="sig-param">meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Data loader class used for loading data from csvs.</p>
 <dl class="method">
 <dt id="sdv.CSVDataLoader.load_data">
-<code class="descname">load_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader.load_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">load_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#CSVDataLoader.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.CSVDataLoader.load_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load data from csvs and returns DataNavigator.</p>
 </dd></dl>
 
@@ -202,13 +202,13 @@
 
 <dl class="class">
 <dt id="sdv.DataLoader">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">DataLoader</code><span class="sig-paren">(</span><em>meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataLoader" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">DataLoader</code><span class="sig-paren">(</span><em class="sig-param">meta_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataLoader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Abstract class responsible for loading data and returning a DataNavigator.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="sdv.DataNavigator">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">DataNavigator</code><span class="sig-paren">(</span><em>meta_filename</em>, <em>meta</em>, <em>tables</em>, <em>missing=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">DataNavigator</code><span class="sig-paren">(</span><em class="sig-param">meta_filename</em>, <em class="sig-param">meta</em>, <em class="sig-param">tables</em>, <em class="sig-param">missing=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Navigate through and transform a dataset.</p>
 <p>This class implement two main functionalities:</p>
 <ul class="simple">
@@ -236,7 +236,7 @@ by <cite>sdv.Modeler</cite>.</p>
 </dl>
 <dl class="method">
 <dt id="sdv.DataNavigator.get_children">
-<code class="descname">get_children</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_children"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_children" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_children</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_children"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_children" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return set of children of a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -253,7 +253,7 @@ by <cite>sdv.Modeler</cite>.</p>
 
 <dl class="method">
 <dt id="sdv.DataNavigator.get_data">
-<code class="descname">get_data</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return dataframe for a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -270,7 +270,7 @@ by <cite>sdv.Modeler</cite>.</p>
 
 <dl class="method">
 <dt id="sdv.DataNavigator.get_meta_data">
-<code class="descname">get_meta_data</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_meta_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_meta_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_meta_data</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_meta_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_meta_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return meta data for a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -287,7 +287,7 @@ by <cite>sdv.Modeler</cite>.</p>
 
 <dl class="method">
 <dt id="sdv.DataNavigator.get_parents">
-<code class="descname">get_parents</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_parents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_parents" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_parents</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.get_parents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.get_parents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns parents of a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -304,7 +304,7 @@ by <cite>sdv.Modeler</cite>.</p>
 
 <dl class="method">
 <dt id="sdv.DataNavigator.transform_data">
-<code class="descname">transform_data</code><span class="sig-paren">(</span><em>transformers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.transform_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.transform_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">transform_data</code><span class="sig-paren">(</span><em class="sig-param">transformers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.transform_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.transform_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies the specified transformations using an HyperTransformer and returns the new data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -321,7 +321,7 @@ by <cite>sdv.Modeler</cite>.</p>
 
 <dl class="method">
 <dt id="sdv.DataNavigator.update_mapping">
-<code class="descname">update_mapping</code><span class="sig-paren">(</span><em>mapping</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.update_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.update_mapping" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update_mapping</code><span class="sig-paren">(</span><em class="sig-param">mapping</em>, <em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/data_navigator.html#DataNavigator.update_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.DataNavigator.update_mapping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Safely updates a dict of sets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -346,7 +346,7 @@ If not, it will be created as a single-element set containing <cite>value</cite>
 
 <dl class="class">
 <dt id="sdv.Modeler">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">Modeler</code><span class="sig-paren">(</span><em>data_navigator</em>, <em>model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em>distribution=None</em>, <em>model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">Modeler</code><span class="sig-paren">(</span><em class="sig-param">data_navigator</em>, <em class="sig-param">model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em class="sig-param">distribution=None</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class responsible for modeling database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -360,7 +360,7 @@ If not, it will be created as a single-element set containing <cite>value</cite>
 </dl>
 <dl class="method">
 <dt id="sdv.Modeler.CPA">
-<code class="descname">CPA</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.CPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.CPA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">CPA</code><span class="sig-paren">(</span><em class="sig-param">table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.CPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.CPA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run CPA algorithm on a table.</p>
 <p>Conditional Parameter Aggregation. It will take the table’s children and generate
 extensions (parameters from modelling the related children for each foreign key)
@@ -385,7 +385,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.Modeler.RCPA">
-<code class="descname">RCPA</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.RCPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.RCPA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">RCPA</code><span class="sig-paren">(</span><em class="sig-param">table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.RCPA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.RCPA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Recursively calls CPA starting at table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -396,7 +396,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.Modeler.fit_model">
-<code class="descname">fit_model</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.fit_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.fit_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit_model</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.fit_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.fit_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an instance of self.model fitted with the given data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -413,7 +413,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.Modeler.get_foreign_key">
-<code class="descname">get_foreign_key</code><span class="sig-paren">(</span><em>fields</em>, <em>primary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.get_foreign_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.get_foreign_key" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_foreign_key</code><span class="sig-paren">(</span><em class="sig-param">fields</em>, <em class="sig-param">primary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.get_foreign_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.get_foreign_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get foreign key from primary key.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -431,9 +431,9 @@ to be merged. As the extensions are returned with an index consisting of values 
 </dl>
 </dd></dl>
 
-<dl class="staticmethod">
+<dl class="method">
 <dt id="sdv.Modeler.impute_table">
-<em class="property">static </em><code class="descname">impute_table</code><span class="sig-paren">(</span><em>table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.impute_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.impute_table" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">impute_table</code><span class="sig-paren">(</span><em class="sig-param">table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.impute_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.impute_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fill in any NaN values in a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -445,9 +445,9 @@ to be merged. As the extensions are returned with an index consisting of values 
 </dl>
 </dd></dl>
 
-<dl class="classmethod">
+<dl class="method">
 <dt id="sdv.Modeler.load">
-<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.load" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load model from filename.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -458,13 +458,13 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.Modeler.model_database">
-<code class="descname">model_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.model_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.model_database" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">model_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.model_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.model_database" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use RCPA and store model for database.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="sdv.Modeler.save">
-<code class="descname">save</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/modeler.html#Modeler.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Modeler.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves model to file destination.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -477,7 +477,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="class">
 <dt id="sdv.SDV">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">SDV</code><span class="sig-paren">(</span><em>meta_file_name</em>, <em>data_loader_type='csv'</em>, <em>model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em>distribution=None</em>, <em>model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">SDV</code><span class="sig-paren">(</span><em class="sig-param">meta_file_name</em>, <em class="sig-param">data_loader_type='csv'</em>, <em class="sig-param">model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em class="sig-param">distribution=None</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class to do modeling and sampling all in one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -492,7 +492,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 </dl>
 <dl class="method">
 <dt id="sdv.SDV.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform the data and model the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
@@ -501,9 +501,9 @@ to be merged. As the extensions are returned with an index consisting of values 
 </dl>
 </dd></dl>
 
-<dl class="classmethod">
+<dl class="method">
 <dt id="sdv.SDV.load">
-<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.load" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a SDV instance from the given path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -514,7 +514,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.sample_all">
-<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=5</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample the whole dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -528,7 +528,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.sample_rows">
-<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_rows" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_rows</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">num_rows</em>, <em class="sig-param">sample_children=True</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_rows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample <cite>num_rows</cite> rows from the given table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -543,7 +543,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.sample_table">
-<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples the given table to its original size.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -557,7 +557,7 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="method">
 <dt id="sdv.SDV.save">
-<code class="descname">save</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sdv.html#SDV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save SDV instance to file destination.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -570,28 +570,11 @@ to be merged. As the extensions are returned with an index consisting of values 
 
 <dl class="class">
 <dt id="sdv.Sampler">
-<em class="property">class </em><code class="descclassname">sdv.</code><code class="descname">Sampler</code><span class="sig-paren">(</span><em>data_navigator</em>, <em>modeler</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">Sampler</code><span class="sig-paren">(</span><em class="sig-param">data_navigator</em>, <em class="sig-param">modeler</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class to sample data from a model.</p>
-<dl class="staticmethod">
-<dt id="sdv.Sampler.reset_indices_tables">
-<em class="property">static </em><code class="descname">reset_indices_tables</code><span class="sig-paren">(</span><em>sampled_tables</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.reset_indices_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.reset_indices_tables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reset the indices of sampled tables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sampled_tables</strong> (<em>dict</em>) – All values are dataframes for sampled tables.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The same dict entered, just reindexed.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="method">
 <dt id="sdv.Sampler.sample_all">
-<code class="descname">sample_all</code><span class="sig-paren">(</span><em>num_rows=5</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=5</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples the entire database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -615,29 +598,8 @@ thet have with their parent tables, so it’s behavior may change from one table
 </dd></dl>
 
 <dl class="method">
-<dt id="sdv.Sampler.sample_rows">
-<code class="descname">sample_rows</code><span class="sig-paren">(</span><em>table_name</em>, <em>num_rows=None</em>, <em>reset_primary_keys=False</em>, <em>sample_children=True</em>, <em>sampled_data=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_rows" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample specified number of rows for specified table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of table to synthesize.</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to synthesize.</p></li>
-<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Synthesized rows.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
 <dt id="sdv.Sampler.sample_table">
-<code class="descname">sample_table</code><span class="sig-paren">(</span><em>table_name</em>, <em>reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.sample_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.sample_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample a table equal to the size of the original.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -653,12 +615,6 @@ thet have with their parent tables, so it’s behavior may change from one table
 <dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="sdv.Sampler.update_mapping_list">
-<em class="property">static </em><code class="descname">update_mapping_list</code><span class="sig-paren">(</span><em>mapping</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sdv/sampler.html#Sampler.update_mapping_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Sampler.update_mapping_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append value on mapping[key] if exists, create it otherwise.</p>
 </dd></dl>
 
 </dd></dl>

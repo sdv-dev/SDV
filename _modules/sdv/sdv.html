@@ -242,7 +242,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">model_database</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample_rows"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_rows">[docs]</a>    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample_rows"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_rows">[docs]</a>    <span class="k">def</span> <span class="nf">sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample `num_rows` rows from the given table.</span>
 
 <span class="sd">        Args:</span>
@@ -254,7 +254,8 @@
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_rows</span><span class="p">(</span>
-            <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
+            <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="n">sample_children</span><span class="p">,</span>
+            <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SDV.sample_table"><a class="viewcode-back" href="../../api_reference.html#sdv.SDV.sample_table">[docs]</a>    <span class="k">def</span> <span class="nf">sample_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Samples the given table to its original size.</span>
