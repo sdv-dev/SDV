@@ -354,3 +354,57 @@ table names to the generated dataframes.
 2              2         0        20.0        78.0       3.0
 
 ```
+
+## Evaluating your synthesized data
+
+After synthesizing your data, you may want to evaluate how similar the synthesized dataset is
+to the original dataset. To do so, SDV provides an evaluation module `sdv.evaluation`.
+
+The simplest way to evaluate is simply to pass your real and synthesized datasets to the function
+`score_descriptors`
+
+```python
+>>> from sdv.evaluation import score_descriptors
+>>> score_descriptors(real, samples)
+
+mse         6.040444e+32
+rmse        2.457731e+16
+r2_score   -8.577607e+15
+dtype: float64
+```
+
+`score_descriptors` works by using a series of descriptors on each column for both datasets, and
+then applying metrics on the generated descriptors.
+
+A descriptor is a function `descriptor(column: pandas.Series) -> pandas.Series` whose input and
+return value are `pandas.Series`.
+
+A metric is a function `metric(expected: numpy.ndarray, observed: numpy.ndarray) -> float` that
+takes to numpy arrays and returns a float.
+
+So, if you want to use `score_descriptors` with your custom descriptors and/or metrics, you can
+call it with:
+
+```python
+>>> def my_descriptor_function(column):
+...    # All necessary steps here
+...    return description
+
+>>> def my_custom_metric(expected, observed):
+...    # All necessary steps here
+...    return metric
+
+>>> my_descriptors = [
+...    my_descriptor_function
+... ]
+
+>>> my_metrics = [
+...    my_custom_metric
+... ]
+
+>>> score_descriptors(real, samples, descriptors=my_descriptors, metrics=my_metrics)
+
+my_custom_metric   6.040444e+32
+dtype: float64
+
+```

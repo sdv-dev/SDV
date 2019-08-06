@@ -20,11 +20,14 @@ def get_descriptor_values(real, synth, descriptor):
     real_values = list()
     synth_values = list()
     for column_name in real:
-        described_name = '{}_{}_'.format(descriptor.__name__, column_name)
-        described_real_column = pd.Series(descriptor(real[column_name]))
-        described_synth_column = pd.Series(descriptor(synth[column_name]))
-        real_values.append(described_real_column.add_prefix(described_name).T)
-        synth_values.append(described_synth_column.add_prefix(described_name).T)
+        try:
+            described_name = '{}_{}_'.format(descriptor.__name__, column_name)
+            described_real_column = pd.Series(descriptor(real[column_name]))
+            described_synth_column = pd.Series(descriptor(synth[column_name]))
+            real_values.append(described_real_column.add_prefix(described_name).T)
+            synth_values.append(described_synth_column.add_prefix(described_name).T)
+        except TypeError:
+            pass
 
     real_values = pd.concat(real_values, axis=0, sort=False)
     synth_values = pd.concat(synth_values, axis=0, sort=False)
@@ -81,7 +84,8 @@ def score_descriptors(real, synth, descriptors=DESCRIPTORS.values(), metrics=DEF
         for name, real_table in real.items():
             synth_table = synth[name]
             result.append(get_descriptors_table(real_table, synth_table, descriptors))
-        described = pd.concat(result, axis=1)
+
+        described = pd.concat(result, axis=1).fillna(0)
 
     real_descriptors = described.iloc[0, :]
     synth_descriptors = described.iloc[1, :]
