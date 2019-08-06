@@ -60,7 +60,7 @@ class SDV:
         self.modeler.model_database()
         self.sampler = Sampler(self.dn, self.modeler)
 
-    def sample_rows(self, table_name, num_rows, reset_primary_keys=False):
+    def sample_rows(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
         """Sample `num_rows` rows from the given table.
 
         Args:
@@ -72,7 +72,8 @@ class SDV:
             raise NotFittedError('SDV instance has not been fitted')
 
         return self.sampler.sample_rows(
-            table_name, num_rows, reset_primary_keys=reset_primary_keys)
+            table_name, num_rows, sample_children=sample_children,
+            reset_primary_keys=reset_primary_keys)
 
     def sample_table(self, table_name, reset_primary_keys=False):
         """Samples the given table to its original size.
