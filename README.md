@@ -6,6 +6,7 @@
 [![PyPi][pypi-img]][pypi-url]
 [![Travis][travis-img]][travis-url]
 [![CodeCov][codecov-img]][codecov-url]
+[![Downloads][downloads-img]][downloads-url]
 
 [pypi-img]: https://img.shields.io/pypi/v/sdv.svg
 [pypi-url]: https://pypi.python.org/pypi/sdv
@@ -13,6 +14,8 @@
 [travis-url]: https://travis-ci.org/HDI-Project/SDV
 [codecov-img]: https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/HDI-Project/SDV
+[downloads-img]: https://pepy.tech/badge/sdv
+[downloads-url]: https://pepy.tech/project/sdv
 
 # SDV - Synthetic Data Vault
 
@@ -354,3 +357,8 @@ table names to the generated dataframes.
 2              2         0        20.0        78.0       3.0
 
 ```
+
+## What's next?
+
+For more details about **SDV** and all its possibilities and features, please check the
+[project documentation site](https://HDI-Project.github.io/SDV/)!
