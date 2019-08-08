@@ -14,16 +14,16 @@ takes to numpy arrays and returns a float.
 So, if you want to use ``evaluate`` with your custom descriptors and/or metrics, you can
 call it with:
 
-.. code-block:: python 
+.. code-block:: python
 
     def my_descriptor_function(column):
        # All necessary steps here
        return description
-    
+
     def my_custom_metric(expected, observed):
        # All necessary steps here
        return metric
-    
+
     my_descriptors = [
        my_descriptor_function
     ]
