@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from sdv.evaluation import get_descriptor_values, get_descriptors_table, score_descriptors
+from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table
 from sdv.evaluation.descriptors import categorical_distribution
 
 
@@ -167,7 +167,7 @@ class TestGetDescriptorsTable(TestCase):
             'real data', 'synth data', 'a_descriptor_function')
 
 
-class TestScoreDescriptors(TestCase):
+class TestEvaluate(TestCase):
 
     def test_raises_error(self):
         """If the table names in both datasets are not equal, an error is raised."""
@@ -186,7 +186,7 @@ class TestScoreDescriptors(TestCase):
 
         try:
             # Run
-            score_descriptors(real, synth, metrics=metrics, descriptors=descriptors)
+            evaluate(real, synth, metrics=metrics, descriptors=descriptors)
         except AssertionError as error:
             # Check
             assert error.args[0] == expected_error_message
@@ -223,7 +223,7 @@ class TestScoreDescriptors(TestCase):
         })
 
         # Run
-        result = score_descriptors(real, synth, metrics=metrics, descriptors=descriptors)
+        result = evaluate(real, synth, metrics=metrics, descriptors=descriptors)
 
         # Check
         assert result.equals(expected_result)

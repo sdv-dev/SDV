@@ -82,13 +82,18 @@ and execute these commands inside it, as they rely on some of the demo data incl
 The easiest way to use SDV in Python is using the SDV class imported from the root of the package:
 
 ```python
->>> from sdv import SDV
+from sdv import SDV
 
->>> data_vault = SDV('tests/data/meta.json')
->>> data_vault.fit()
->>> samples = data_vault.sample_all()
->>> for dataset in samples:
-...    print(samples[dataset].head(3), '\n')
+data_vault = SDV('tests/data/meta.json')
+data_vault.fit()
+samples = data_vault.sample_all()
+```
+
+The output of `SDV.sample_all` is a dictionary with the name of the tables as keys, and
+`pandas.DataFrame` with the synthesized table as values. Below we can see a few rows of each
+table:
+
+```text
    CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
 0            0           61026.0   5.410825e+09        1017.0  FRANCE
 1            1           20166.0   7.446005e+09        1316.0      US
@@ -135,82 +140,137 @@ First, we will create an instance of `CSVDataLoader`, that will load the data an
 To create an instance of the `CSVDataLoader` class, the filepath to the meta.json file must be provided.
 
 ```python
->>> from sdv import CSVDataLoader
->>> data_loader = CSVDataLoader('tests/data/meta.json')
+from sdv import CSVDataLoader
+data_loader = CSVDataLoader('tests/data/meta.json')
 ```
 
 The `load_data()` function can then be used to create an instance of a `DataNavigator`.
 
 ```python
->>> data_navigator = data_loader.load_data()
+data_navigator = data_loader.load_data()
 ```
 
 The `DataNavigator` stores the data as a dictionary mapping the table names to a tuple of the data
 itself (represented as a `pandas.Dataframe`) and the meta information for that table. You can access
-the data using the following command:
+the data using the `DataNavigator.get_data` method:
 
 ```python
->>> customer_table = data_navigator.tables['DEMO_CUSTOMERS']
->>> customer_data = customer_table.data
->>> customer_data.head(3).T
+data_navigator.get_data('DEMO_CUSTOMERS')
+```
 
+The output of `get_data` will be a `pandas.DataFrame` containing the requested table:
+
+```text
                            0           1           2
 CUSTOMER_ID               50           4    97338810
 CUST_POSTAL_CODE       11371       63145        6096
 PHONE_NUMBER1     6175553295  8605551835  7035552143
 CREDIT_LIMIT            1000         500        1000
 COUNTRY                   UK          US      CANADA
-
->>> customers_meta = customer_table.meta
->>> customers_meta.keys()
-dict_keys(['fields', 'headers', 'name', 'path', 'primary_key', 'use'])
->>> customers_meta['fields']
-  {'CUSTOMER_ID': {'name': 'CUSTOMER_ID',
-  'subtype': 'integer',
-  'type': 'number',
-  'uniques': 0,
-  'regex': '^[0-9]{10}$'},
- 'CUST_POSTAL_CODE': {'name': 'CUST_POSTAL_CODE',
-  'subtype': 'integer',
-  'type': 'number',
-  'uniques': 0},
- 'PHONE_NUMBER1': {'name': 'PHONE_NUMBER1',
-  'subtype': 'integer',
-  'type': 'number',
-  'uniques': 0},
- 'CREDIT_LIMIT': {'name': 'CREDIT_LIMIT',
-  'subtype': 'integer',
-  'type': 'number',
-  'uniques': 0},
- 'COUNTRY': {'name': 'COUNTRY', 'type': 'categorical', 'uniques': 0}}
-
 ```
 
-You can also use the data navigator to get parents or children of a table.
+The metadata can be accessed with the analogous method `DataNavigator.get_meta_data`:
 
 ```python
->>> data_navigator.get_parents('DEMO_ORDERS')
-{'DEMO_CUSTOMERS'}
-
->>> data_navigator.get_children('DEMO_CUSTOMERS')
-{'DEMO_ORDERS'}
+data_navigator.get_meta_data('DEMO_CUSTOMERS')
 ```
+
+The output of this method is a `dict` with the metadata for given table:
+
+```text
+{
+   'fields': {
+      'CUSTOMER_ID': {
+         'name': 'CUSTOMER_ID',
+         'subtype': 'integer',
+         'type': 'number',
+         'uniques': 0,
+         'regex': '^[0-9]{10}$'
+      },
+      'CUST_POSTAL_CODE': {
+         'name': 'CUST_POSTAL_CODE',
+         'subtype': 'integer',
+         'type': 'categorical',
+         'uniques': 0
+      },
+      'PHONE_NUMBER1': {
+         'name': 'PHONE_NUMBER1',
+         'subtype': 'integer',
+         'type': 'number',
+         'uniques': 0
+      },
+      'CREDIT_LIMIT': {
+         'name': 'CREDIT_LIMIT',
+         'subtype': 'integer',
+         'type': 'number',
+         'uniques': 0
+      },
+      'COUNTRY': {
+         'name': 'COUNTRY',
+         'type': 'categorical',
+         'uniques': 0
+      }
+   },
+   'headers': True,
+   'name': 'DEMO_CUSTOMERS',
+   'path': 'customers.csv',
+   'primary_key': 'CUSTOMER_ID',
+   'use': True
+}
+```
+
+You can also use the `DataNavigator` to get parents or children of a table.
+
+```python
+data_navigator.get_parents('DEMO_ORDERS')
+```
+
+The output of `get_parents` is a `set` containing the name of the parent tables.
+Analogously, the `get_children` returns the children tables.
 
 Finally, we can use the `transform_data()` function to apply transformations from the
 [RDT library](https://github.com/HDI-Project/rdt) to our data. If no transformations are provided,
 the function will convert all categorical types and datetime types to numeric values by default.
+
+```python
+transformed_data = data_navigator.transform_data()
+```
+
 It will return a dictionary mapping the table name to the transformed data represented as a
 `pandas.Dataframe`.
 
-```python
->>> transformed_data = data_navigator.transform_data()
->>> transformed_data['DEMO_CUSTOMERS'].head(3).T
-                             0             1             2
-CUSTOMER_ID       5.000000e+01  4.000000e+00  9.733881e+07
-CUST_POSTAL_CODE  1.137100e+04  6.314500e+04  6.096000e+03
-PHONE_NUMBER1     6.175553e+09  8.605552e+09  7.035552e+09
-CREDIT_LIMIT      1.000000e+03  5.000000e+02  1.000000e+03
-COUNTRY           5.617796e-01  8.718027e-01  5.492714e-02
+```text
+{
+   'DEMO_CUSTOMERS':
+
+         CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT   COUNTRY
+      0           50          0.286191     6175553295          1000  0.610635
+      1            4          0.764276     8605551835           500  0.856004
+      2     97338810          0.087041     7035552143          1000  0.015171
+      3       630407          0.828319     7035552143          2000  0.786255
+      4       826362          0.357857     6175553295          1000  0.557042
+      5     55996144          0.534755     4045553285          1000  0.213988,
+
+   'DEMO_ORDERS':
+
+         ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
+      0         1           50         2310
+      1         2            4         1507
+      2        10     97338810          730
+      3         6     55996144          730
+      4         3     55996144          939
+      5         4           50         2380,
+
+   'DEMO_ORDER_ITEMS':
+
+         ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
+      0             100        10           7          52         8
+      1             101         8           6         125         4
+      2             102         1           6         125         4
+      3             103         4           9         125         4
+      4             104         1           9         113         4
+      5             105         9          10          87         2
+}
 ```
 
 ### Using the Modeler
@@ -231,59 +291,29 @@ use a [copulas.multivariate.Gaussian Copula](https://github.com/DAI-Lab/copulas)
 the modeler to work, the DataNavigator must have already transformed its data.
 
 ```python
->>> from sdv import Modeler
->>> modeler = Modeler(data_navigator)
+from sdv import Modeler
+modeler = Modeler(data_navigator)
 ```
 
-Then you can model the entire database. The modeler will store models for every table in the
-dataset.
+Then you can model the entire database. The `Modeler` will store models for every table in the
+dataset, but return no result.
 
 ```python
->>> modeler.model_database()
+modeler.model_database()
 ```
-
-The models that were created for each table can be accessed using the following command:
-
-```python
->>> customers_model = modeler.models['DEMO_CUSTOMERS']
->>> print(customers_model)
-CUSTOMER_ID
-==============
-Distribution Type: Gaussian
-Variable name: CUSTOMER_ID
-Mean: 22198555.57142857
-Standard deviation: 36178958.000449404
-
-CUST_POSTAL_CODE
-==============
-Distribution Type: Gaussian
-Variable name: CUST_POSTAL_CODE
-Mean: 34062.71428571428
-Standard deviation: 25473.85661931119
-
-PHONE_NUMBER1
-==============
-Distribution Type: Gaussian
-Variable name: PHONE_NUMBER1
-Mean: 6464124184.428572
-Standard deviation: 1272684276.6679976
-
-...
-```
-The output above shows the parameters that got stored for every column in the users table.
 
 The modeler can also be saved to a file using the `save()` method. This will save a pickle file
 on the specified path.
 
 ```python
->>> modeler.save('demo_model.pkl')
+modeler.save('demo_model.pkl')
 ```
 
 If you have stored a model in a previous session using the command above, you can load the model
 using the `load()` method:
 
 ```python
->>> modeler = Modeler.load('demo_model.pkl')
+modeler = Modeler.load('demo_model.pkl')
 ```
 
 ### Using the Sampler
@@ -297,28 +327,59 @@ Let's do an example with our dataset. First import the Sampler and create an ins
 the class.
 
 ```python
->>> from sdv import Sampler
->>> sampler = Sampler(data_navigator, modeler)
+from sdv import Sampler
+sampler = Sampler(data_navigator, modeler)
 ```
 
-To sample from a row, use the command `sample_rows()`. Note that before sampling from a child
-table, one of its parent tables must have been sampled beforehand.
+To sample rows from a table, and their related childs, use the method `Sampler.sample_rows`.
 
 ```python
->>> sampler.sample_rows('DEMO_CUSTOMERS', 1).T
-                            0
-CUSTOMER_ID                 0
-CUST_POSTAL_CODE        44462
-PHONE_NUMBER1     7.45576e+09
-CREDIT_LIMIT              976
-COUNTRY                    US
+sampler.sample_rows('DEMO_CUSTOMERS', 5)
 ```
 
-To sample a whole table use `sample_table()`. This will create as many rows as there where in the
+It will return a `dict` with the table name as keys and a `pandas.DataFrame` containing the
+synthesized data as values, as we can see below. Please note that not all rows are shown.
+
+```text
+{
+   'DEMO_CUSTOMERS':
+         CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
+      0            5             63145     6286474239          1778      US
+      1            6             11371     4526647758           526  FRANCE
+      2            7             11371     6027109756           958      UK
+      3            8             63145     5712861733          1965      UK
+      4            9             11371     5728456040          1383   SPAIN,
+
+   'DEMO_ORDERS':
+          ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
+      0         11            5         1331
+      1         12            5         1952
+      2         13            5         2179
+      3         14            6         1160
+      4         15            6         1069
+      5         16            7         1090
+
+   'DEMO_ORDER_ITEMS':
+           ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
+      0              189        11          11         127         0
+      1              190        11          12         122         2
+      2              191        11           8          78         2
+      3              192        11          12         233         3
+      4              193        12          11          96         6
+      5              194        12          11          65         2
+}
+```
+
+To sample a whole table use the method `Sampler.sample_table`. This will create as many rows as there where in the
 original database.
 
 ```python
->>> sampler.sample_table('DEMO_CUSTOMERS')
+sampler.sample_table('DEMO_CUSTOMERS')
+```
+
+The output of sampe_table is a `pandas.DataFrame` containing the synthesized table:
+
+```text
    CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
 0            0           27937.0   8.095336e+09        1029.0  CANADA
 1            1           18183.0   2.761015e+09         891.0  CANADA
@@ -330,29 +391,45 @@ original database.
 
 ```
 
-Finally, the entire database can be sampled using `sample_all(num_rows)`. The `num_rows` parameter
-specifies how many child rows to create per parent row. This function returns a dictionary mapping
-table names to the generated dataframes.
+Finally, the entire database can be sampled using `Sampler.sample_all(num_rows)`. The `num_rows`
+parameter specifies how many parent rows generate, the amount of child rows will be sampled based
+on the sampled parents.
 
 ```python
->>> samples = sampler.sample_all()
->>> for dataset in samples:
-...     print(samples[dataset].head(3), '\n')
-   CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
-0            0           46038.0   7.779893e+09         673.0      UK
-1            1           21063.0   6.511387e+09         808.0   SPAIN
-2            2           24494.0   5.703648e+09         757.0   SPAIN
+samples = sampler.sample_all()
+```
 
-   ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
-0         0            0       1520.0
-1         1            0       1217.0
-2         2            0       1375.0
+The variable `samples` will contain a `dict` mapping table names to the `pandas.dataFrames`
+containing the sampled data.
 
-   ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
-0              0         0        17.0        94.0       3.0
-1              1         0        14.0        44.0       3.0
-2              2         0        20.0        78.0       3.0
+```
+{
+   'DEMO_CUSTOMERS':
+         CUSTOMER_ID  CUST_POSTAL_CODE  PHONE_NUMBER1  CREDIT_LIMIT COUNTRY
+      0            5             63145     6286474239          1778      US
+      1            6             11371     4526647758           526  FRANCE
+      2            7             11371     6027109756           958      UK
+      3            8             63145     5712861733          1965      UK
+      4            9             11371     5728456040          1383   SPAIN,
 
+   'DEMO_ORDERS':
+          ORDER_ID  CUSTOMER_ID  ORDER_TOTAL
+      0         11            5         1331
+      1         12            5         1952
+      2         13            5         2179
+      3         14            6         1160
+      4         15            6         1069
+      5         16            7         1090
+
+   'DEMO_ORDER_ITEMS':
+           ORDER_ITEM_ID  ORDER_ID  PRODUCT_ID  UNIT_PRICE  QUANTITY
+      0              189        11          11         127         0
+      1              190        11          12         122         2
+      2              191        11           8          78         2
+      3              192        11          12         233         3
+      4              193        12          11          96         6
+      5              194        12          11          65         2
+}
 ```
 
 ## Evaluating your synthesized data
@@ -364,47 +441,20 @@ The simplest way to evaluate is simply to pass your real and synthesized dataset
 `score_descriptors`
 
 ```python
->>> from sdv.evaluation import score_descriptors
->>> score_descriptors(real, samples)
+from sdv.evaluation import evaluate
+result = evaluate(real, samples)
+```
 
+The result is a `pandas.Series` whose index is the diferent metrics and as values the given scores.
+
+```text
 mse         6.040444e+32
 rmse        2.457731e+16
 r2_score   -8.577607e+15
 dtype: float64
 ```
 
-`score_descriptors` works by using a series of descriptors on each column for both datasets, and
-then applying metrics on the generated descriptors.
-
-A descriptor is a function `descriptor(column: pandas.Series) -> pandas.Series` whose input and
-return value are `pandas.Series`.
-
-A metric is a function `metric(expected: numpy.ndarray, observed: numpy.ndarray) -> float` that
-takes to numpy arrays and returns a float.
-
-So, if you want to use `score_descriptors` with your custom descriptors and/or metrics, you can
-call it with:
-
-```python
->>> def my_descriptor_function(column):
-...    # All necessary steps here
-...    return description
-
->>> def my_custom_metric(expected, observed):
-...    # All necessary steps here
-...    return metric
-
->>> my_descriptors = [
-...    my_descriptor_function
-... ]
-
->>> my_metrics = [
-...    my_custom_metric
-... ]
-
->>> score_descriptors(real, samples, descriptors=my_descriptors, metrics=my_metrics)
-
-my_custom_metric   6.040444e+32
-dtype: float64
-
-```
+In the case of the default metrics, both `mse(Mean Square Error)` and
+`rmse(Root Mean Square Error)`, have 0.0 as the best possible score, and it gets worse the higher
+the value. On the other hand `r2_score` has a best possible score of 1.0 and it gets worse the
+lower it gets.

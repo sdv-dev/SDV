@@ -1,4 +1,44 @@
-"""Tools for evaluate the synthesized data."""
+"""Tools for evaluate the synthesized data.
+
+The main function in this module is `evaluate` whose usage has been shown in the README.
+
+``evaluate`` works by using a series of descriptors on each column for both datasets, and
+then applying metrics on the generated descriptors.
+
+A descriptor is a function ``descriptor(column: pandas.Series) -> pandas.Series`` whose input and
+return value are ``pandas.Series``.
+
+A metric is a function ``metric(expected: numpy.ndarray, observed: numpy.ndarray) -> float`` that
+takes to numpy arrays and returns a float.
+
+So, if you want to use ``evaluate`` with your custom descriptors and/or metrics, you can
+call it with:
+
+.. code-block:: python 
+
+    def my_descriptor_function(column):
+       # All necessary steps here
+       return description
+    
+    def my_custom_metric(expected, observed):
+       # All necessary steps here
+       return metric
+    
+    my_descriptors = [
+       my_descriptor_function
+    ]
+
+    my_metrics = [
+       my_custom_metric
+    ]
+
+    evaluate(real, samples, descriptors=my_descriptors, metrics=my_metrics)
+
+        my_custom_metric   6.040444e+32
+        dtype: float64
+
+"""
+
 import pandas as pd
 
 from sdv.evaluation.descriptors import DESCRIPTORS
@@ -57,7 +97,7 @@ def get_descriptors_table(real, synth, descriptors=DESCRIPTORS):
     return pd.concat(described, axis=1)
 
 
-def score_descriptors(real, synth, descriptors=DESCRIPTORS.values(), metrics=DEFAULT_METRICS):
+def evaluate(real, synth, descriptors=DESCRIPTORS.values(), metrics=DEFAULT_METRICS):
     """Compute stats metric for all tables.
 
     Args:
