@@ -6,6 +6,7 @@
 [![PyPi][pypi-img]][pypi-url]
 [![Travis][travis-img]][travis-url]
 [![CodeCov][codecov-img]][codecov-url]
+[![Downloads][downloads-img]][downloads-url]
 
 [pypi-img]: https://img.shields.io/pypi/v/sdv.svg
 [pypi-url]: https://pypi.python.org/pypi/sdv
@@ -13,6 +14,8 @@
 [travis-url]: https://travis-ci.org/HDI-Project/SDV
 [codecov-img]: https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/HDI-Project/SDV
+[downloads-img]: https://pepy.tech/badge/sdv
+[downloads-url]: https://pepy.tech/project/sdv
 
 # SDV - Synthetic Data Vault
 
@@ -21,7 +24,7 @@ Automated generative modeling and sampling
 - Free software: MIT license
 - Documentation: https://HDI-Project.github.io/SDV
 
-## Summary
+## Overview
 
 The goal of the Synthetic Data Vault (SDV) is to allow data scientists to navigate, model and
 sample relational databases. The main access point of the library is  the class `SDV`, that wraps
@@ -458,3 +461,8 @@ In the case of the default metrics, both `mse(Mean Square Error)` and
 `rmse(Root Mean Square Error)`, have 0.0 as the best possible score, and it gets worse the higher
 the value. On the other hand `r2_score` has a best possible score of 1.0 and it gets worse the
 lower it gets.
+
+## What's next?
+
+For more details about **SDV** and all its possibilities and features, please check the
+[project documentation site](https://HDI-Project.github.io/SDV/)!
