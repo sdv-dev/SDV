@@ -435,33 +435,6 @@ containing the sampled data.
 }
 ```
 
-## Evaluating your synthesized data
-
-After synthesizing your data, you may want to evaluate how similar the synthesized dataset is
-to the original dataset. To do so, SDV provides an evaluation module `sdv.evaluation`.
-
-The simplest way to evaluate is simply to pass your real and synthesized datasets to the function
-`score_descriptors`
-
-```python
-from sdv.evaluation import evaluate
-result = evaluate(real, samples)
-```
-
-The result is a `pandas.Series` whose index is the diferent metrics and as values the given scores.
-
-```text
-mse         6.040444e+32
-rmse        2.457731e+16
-r2_score   -8.577607e+15
-dtype: float64
-```
-
-In the case of the default metrics, both `mse(Mean Square Error)` and
-`rmse(Root Mean Square Error)`, have 0.0 as the best possible score, and it gets worse the higher
-the value. On the other hand `r2_score` has a best possible score of 1.0 and it gets worse the
-lower it gets.
-
 ## What's next?
 
 For more details about **SDV** and all its possibilities and features, please check the
