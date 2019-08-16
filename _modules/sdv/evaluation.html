@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sdv.evaluation &mdash; SDV 0.1.2-dev documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/dai-logo-white.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SDV
+          
+
+          
+            
+            <img src="../../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#from-pypi">From PyPi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#from-sources">From sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development-setup">Development Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Advanced Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../usage.html#preparation-of-the-data">Preparation of the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../usage.html#metadata-file-specification">Metadata file specification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../usage.html#table-details">Table details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../usage.html#field-details">Field details</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../usage.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../usage.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../usage.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../usage.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../usage.html#sampling-new-data">Sampling new data</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../history.html">History</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>sdv.evaluation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sdv.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Tools for evaluate the synthesized data.</span>
+
+<span class="sd">The main function in this module is `evaluate` whose usage has been shown in the README.</span>
+
+<span class="sd">``evaluate`` works by using a series of descriptors on each column for both datasets, and</span>
+<span class="sd">then applying metrics on the generated descriptors.</span>
+
+<span class="sd">A descriptor is a function ``descriptor(column: pandas.Series) -&gt; pandas.Series`` whose input and</span>
+<span class="sd">return value are ``pandas.Series``.</span>
+
+<span class="sd">A metric is a function ``metric(expected: numpy.ndarray, observed: numpy.ndarray) -&gt; float`` that</span>
+<span class="sd">takes to numpy arrays and returns a float.</span>
+
+<span class="sd">So, if you want to use ``evaluate`` with your custom descriptors and/or metrics, you can</span>
+<span class="sd">call it with:</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    def my_descriptor_function(column):</span>
+<span class="sd">       # All necessary steps here</span>
+<span class="sd">       return description</span>
+
+<span class="sd">    def my_custom_metric(expected, observed):</span>
+<span class="sd">       # All necessary steps here</span>
+<span class="sd">       return metric</span>
+
+<span class="sd">    my_descriptors = [</span>
+<span class="sd">       my_descriptor_function</span>
+<span class="sd">    ]</span>
+
+<span class="sd">    my_metrics = [</span>
+<span class="sd">       my_custom_metric</span>
+<span class="sd">    ]</span>
+
+<span class="sd">    evaluate(real, samples, descriptors=my_descriptors, metrics=my_metrics)</span>
+
+<span class="sd">        my_custom_metric   6.040444e+32</span>
+<span class="sd">        dtype: float64</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">sdv.evaluation.descriptors</span> <span class="k">import</span> <span class="n">DESCRIPTORS</span>
+<span class="kn">from</span> <span class="nn">sdv.evaluation.metrics</span> <span class="k">import</span> <span class="n">DEFAULT_METRICS</span>
+
+
+<div class="viewcode-block" id="get_descriptor_values"><a class="viewcode-back" href="../../api_reference.html#sdv.evaluation.get_descriptor_values">[docs]</a><span class="k">def</span> <span class="nf">get_descriptor_values</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute the descriptor values for the given tables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        real(pandas.DataFrame): Real data.</span>
+<span class="sd">        synth(pandas.DataFrame): Synthesized data.</span>
+<span class="sd">        descriptor(callable or str): Callable that accepts columns and returns real-values.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        pandas.DataFrame: It will contain the descriptor output for each column as columns.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">real_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">synth_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">real</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">described_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">_&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">descriptor</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">column_name</span><span class="p">)</span>
+            <span class="n">described_real_column</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">descriptor</span><span class="p">(</span><span class="n">real</span><span class="p">[</span><span class="n">column_name</span><span class="p">]))</span>
+            <span class="n">described_synth_column</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">descriptor</span><span class="p">(</span><span class="n">synth</span><span class="p">[</span><span class="n">column_name</span><span class="p">]))</span>
+            <span class="n">real_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">described_real_column</span><span class="o">.</span><span class="n">add_prefix</span><span class="p">(</span><span class="n">described_name</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">synth_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">described_synth_column</span><span class="o">.</span><span class="n">add_prefix</span><span class="p">(</span><span class="n">described_name</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">real_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">real_values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">synth_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">synth_values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">real_values</span><span class="p">,</span> <span class="n">synth_values</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+
+
+<div class="viewcode-block" id="get_descriptors_table"><a class="viewcode-back" href="../../api_reference.html#sdv.evaluation.get_descriptors_table">[docs]</a><span class="k">def</span> <span class="nf">get_descriptors_table</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="n">DESCRIPTORS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Score the synthesized data using the given metrics and descriptors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        real(pandas.DataFrame): Table of real data.</span>
+<span class="sd">        synth(pandas.DataFrame): Table of synthesized data.</span>
+<span class="sd">        descriptors(dict[str, callable]): Dictionary of descriptors.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        pandas.DataFrame:</span>
+<span class="sd">            2-column DataFrame whose index the name of the descriptors applied to the tables.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">described</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">descriptor</span> <span class="ow">in</span> <span class="n">descriptors</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">descriptor</span> <span class="o">=</span> <span class="n">DESCRIPTORS</span><span class="p">[</span><span class="n">descriptor</span><span class="p">]</span>
+
+        <span class="n">described</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_descriptor_values</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">described</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api_reference.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="n">DESCRIPTORS</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">metrics</span><span class="o">=</span><span class="n">DEFAULT_METRICS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute stats metric for all tables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        real(dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">            Map of names and tables of real data.</span>
+<span class="sd">        synth(dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">            Map of names and tables of synthesized data.</span>
+<span class="sd">        descriptors(list[callable]):</span>
+<span class="sd">            List of descriptors.</span>
+<span class="sd">        metrics(list[callable]):</span>
+<span class="sd">            List of metrics.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        pandas.Series:</span>
+<span class="sd">            It has the metrics as index, and the scores as values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">described</span> <span class="o">=</span> <span class="n">get_descriptors_table</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">==</span> <span class="n">synth</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;real and synthetic dataset must have the same tables&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">real_table</span> <span class="ow">in</span> <span class="n">real</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">synth_table</span> <span class="o">=</span> <span class="n">synth</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_descriptors_table</span><span class="p">(</span><span class="n">real_table</span><span class="p">,</span> <span class="n">synth_table</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">))</span>
+
+        <span class="n">described</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">real_descriptors</span> <span class="o">=</span> <span class="n">described</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">synth_descriptors</span> <span class="o">=</span> <span class="n">described</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="n">scores</span><span class="p">[</span><span class="n">metric</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">real_descriptors</span><span class="p">,</span> <span class="n">synth_descriptors</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
