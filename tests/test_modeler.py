@@ -8,9 +8,9 @@ from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate import KDEUnivariate
 
-from tests import utils
-from sdv.data_navigator import CSVDataLoader, DataNavigator, HyperTransformer, Table
+from sdv.data_navigator import DataNavigator, HyperTransformer, Table
 from sdv.modeler import Modeler
+from tests import utils
 
 
 class TestModeler(TestCase):

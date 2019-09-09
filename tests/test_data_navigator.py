@@ -1,12 +1,7 @@
-import unittest
-from io import StringIO
 from unittest import TestCase
 from unittest.mock import patch
 
-import pandas as pd
-
 from tests import utils
-from sdv.data_navigator import DataNavigator, Table
 
 
 class TestDataNavigator(TestCase):
@@ -127,7 +122,3 @@ class TestDataNavigator(TestCase):
             assert (table.columns == raw_table.columns).all()
             assert table.shape == raw_table.shape
             assert 'object' not in table.dtypes
-
-
-if __name__ == '__main__':
-    unittest.main()
