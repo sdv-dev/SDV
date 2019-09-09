@@ -8,6 +8,7 @@ from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate import KDEUnivariate
 
+from tests import utils
 from sdv.data_navigator import CSVDataLoader, DataNavigator, HyperTransformer, Table
 from sdv.modeler import Modeler
 
@@ -16,9 +17,21 @@ class TestModeler(TestCase):
 
     def setUp(self):
         """Set up test fixtures, if any."""
-        dl = CSVDataLoader('tests/data/meta.json')
-        self.dn = dl.load_data()
-        self.dn.transform_data()
+        meta = utils.build_meta()
+        tables = utils.build_tables()
+        with patch('sdv.data_navigator.DataNavigator._get_relationships',
+                   autospec=True) as relations_mock:
+            with patch('sdv.data_navigator.HyperTransformer') as ht_mock:
+                relations_mock.return_value = utils.get_relations_tuple()
+                ht_instance_mock = ht_mock.return_value
+                ht_instance_mock.table_dict = utils.get_ht_table_dict()
+                ht_instance_mock.fit_transform.return_value = utils.get_ht_fit_transform()
+
+                self.relations_mock = relations_mock
+                self.ht_mock = ht_mock
+                self.ht_instance_mock = ht_instance_mock  # save HyperTransformer mock
+                self.dn = utils.DummyDataNavigator('some_meta.json', meta, tables)
+
         self.modeler = Modeler(self.dn)
 
     @patch('sdv.modeler.Modeler._get_model_dict')
