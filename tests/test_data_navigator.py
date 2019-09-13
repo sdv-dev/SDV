@@ -1,124 +1,481 @@
+import unittest
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
-from tests import utils
+import pandas as pd
+
+from sdv.data_navigator import CSVDataLoader, DataLoader, DataNavigator, Table
+
+
+class TestDataLoader(TestCase):
+
+    def test_load_data(self):
+        """raise not implemented exception"""
+
+        # Setup
+
+        # Run and asserts
+        mock_data_loader = Mock()
+        with self.assertRaises(NotImplementedError):
+            DataLoader.load_data(mock_data_loader)
+
+
+class TestCSVDataLoader(TestCase):
+
+    def test__format_table_meta(self):
+        """format table meta dict"""
+
+        # Setup
+
+        # Run
+        meta = {
+            'fields': [{
+                'name': 'a_field',
+                'foo': 'foo'
+            }]
+        }
+
+        csv_data_loader_mock = Mock()
+
+        result = CSVDataLoader._format_table_meta(csv_data_loader_mock, meta)
+
+        # Asserts
+        expect = {
+            'fields': {
+                'a_field': {
+                    'name': 'a_field',
+                    'foo': 'foo'
+                }
+            }
+        }
+
+        assert result == expect
+
+    @patch('sdv.data_navigator.DataNavigator')
+    @patch('pandas.read_csv')
+    def test_load_data(self, read_mock, dn_mock):
+        """load_data to build a DataNavigator"""
+
+        # SetUp
+        meta = {
+            'path': '',
+            'tables': [{
+                'use': True,
+                'name': 'DEMO',
+                'path': 'some_path.csv',
+                'fields': [{
+                    'name': 'a_field',
+                    'foo': 'foo'
+                }]
+            }]
+        }
+        meta_filename = 'meta_filename.json'
+
+        dn_mock.return_value = Mock()
+
+        format_mock = Mock()
+        format_mock.return_value = {'some': 'meta'}
+
+        read_mock.return_value = pd.DataFrame({'foo': [0, 1]})
+
+        # Run
+        csv_data_loader_mock = Mock()
+        csv_data_loader_mock.meta = meta
+        csv_data_loader_mock.meta_filename = meta_filename
+        csv_data_loader_mock._format_table_meta = format_mock
+
+        CSVDataLoader.load_data(csv_data_loader_mock)
+
+        # Asserts
+        exp_format_args = {
+            'use': True,
+            'name': 'DEMO',
+            'path': 'some_path.csv',
+            'fields': [{
+                'name': 'a_field',
+                'foo': 'foo'
+            }]
+        }
+
+        exp_data_navigator_meta = {
+            'path': '',
+            'tables': [{
+                'use': True,
+                'name': 'DEMO',
+                'path': 'some_path.csv',
+                'fields': [{
+                    'name': 'a_field',
+                    'foo': 'foo'
+                }]
+            }]
+        }
+
+        exp_data_navigator_tables = {
+            'DEMO': Table(pd.DataFrame({'foo': [0, 1]}), {'some': 'meta'})
+        }
+
+        assert_meta_filename, assert_meta, assert_tables = dn_mock.call_args[0]
+
+        format_mock.assert_called_once_with(exp_format_args)
+
+        assert assert_meta_filename == 'meta_filename.json'
+        assert assert_meta == exp_data_navigator_meta
+        assert assert_tables.keys() == exp_data_navigator_tables.keys()
+
+        pd.testing.assert_frame_equal(
+            assert_tables['DEMO'].data,
+            exp_data_navigator_tables['DEMO'].data
+        )
 
 
 class TestDataNavigator(TestCase):
 
-    def setUp(self):
-        meta = utils.build_meta()
-        tables = utils.build_tables()
-
-        with patch('sdv.data_navigator.DataNavigator._get_relationships',
-                   autospec=True) as relations_mock:
-            with patch('sdv.data_navigator.HyperTransformer') as ht_mock:
-                relations_mock.return_value = utils.get_relations_tuple()
-                ht_instance_mock = ht_mock.return_value
-                ht_instance_mock.table_dict = utils.get_ht_table_dict()
-                ht_instance_mock.fit_transform.return_value = utils.get_ht_fit_transform()
-
-                self.relations_mock = relations_mock
-                self.ht_mock = ht_mock
-                self.ht_instance_mock = ht_instance_mock  # save HyperTransformer mock
-                self.data_navigator = utils.DummyDataNavigator('some_meta.json', meta, tables)
-
     def test__anonymize_data(self):
-        """If there are pii fields, their tables are anonymized."""
-        assert self.data_navigator.tables['DEMO_CUSTOMERS'].data.equals(
-            utils.get_table_customers_data())
-        assert self.data_navigator.tables['DEMO_ORDERS'].data.equals(
-            utils.get_table_orders_data())
-        assert self.data_navigator.tables['DEMO_ORDER_ITEMS'].data.equals(
-            utils.get_table_order_items_data())
+        """Anonymoze data in tables with pii fields"""
 
-        assert self.ht_instance_mock._get_pii_fields.call_count == 0
+        # Setup
+        anonymized_table = pd.DataFrame({
+            'a_fields': [1, 2, 3]
+        })
+        anonymized_another_table = pd.DataFrame({
+            'a_fields': [4, 5, 6]
+        })
 
-        super(utils.DummyDataNavigator, self.data_navigator)._anonymize_data()
+        ht_mock = Mock()
+        ht_mock.table_dict = {
+            'a_table': (anonymized_table, {'ht': 'meta'}),
+            'another_table': (anonymized_another_table, {'ht': 'meta'})
+        }
 
-        assert not self.data_navigator.tables['DEMO_CUSTOMERS'].data.equals(
-            utils.get_table_customers_data())
-        assert self.data_navigator.tables['DEMO_ORDERS'].data.equals(
-            utils.get_table_orders_data())
-        assert self.data_navigator.tables['DEMO_ORDER_ITEMS'].data.equals(
-            utils.get_table_order_items_data())
+        ht_mock._get_pii_fields.side_effect = [
+            ['a_fields'],
+            list(),
+        ]
 
-        assert self.ht_instance_mock._get_pii_fields.call_count == len(self.data_navigator.tables)
+        a_table = pd.DataFrame({
+            'a_field': [4, 5, 6]
+        })
+        another_table = Table(pd.DataFrame(), {'another': 'metadata'})
+        tables = {
+            'a_table': Table(a_table, {'some': 'metadata'}),
+            'another_table': another_table,
+        }
 
-    def test___init__(self):
-        """On init, relationships are built."""
-        self.ht_mock.assert_called_once_with('some_meta.json', missing=None)
-        self.relations_mock.assert_called_once_with(
-            self.data_navigator,
-            self.data_navigator.tables
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.tables = tables
+        data_navigator_mock.ht = ht_mock
+
+        DataNavigator._anonymize_data(data_navigator_mock)
+
+        # Asserts
+        exp_call_args_list = [
+            call({'ht': 'meta'}),
+            call({'ht': 'meta'}),
+        ]
+
+        assert tables['a_table'] == Table(anonymized_table, {'some': 'metadata'})
+        assert tables['another_table'] == another_table
+
+        assert ht_mock._get_pii_fields.call_args_list == exp_call_args_list
+
+    @patch('sdv.data_navigator.DataNavigator._get_relationships')
+    @patch('sdv.data_navigator.DataNavigator._anonymize_data')
+    @patch('sdv.data_navigator.HyperTransformer')
+    def test___init__(self, ht_mock, anonymize_mock, relationships_mock):
+        """__init__ without missing."""
+
+        # Setup
+        ht_mock.return_value = Mock()
+        relationships_mock.return_value = 'foo', 'bar', 'tar'
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock._anonymize_data = anonymize_mock
+        data_navigator_mock._get_relationships = relationships_mock
+
+        DataNavigator(
+            'meta_filename',
+            {'some': 'meta'},
+            {'a_table': 'table'}
         )
+
+        # Asserts
+        ht_mock.assert_called_once_with('meta_filename', missing=None)
+
+        data_navigator_mock._anonymize_data.assert_called_once()
+        data_navigator_mock._get_relationships.assert_called_once_with({'a_table': 'table'})
+
+    @patch('sdv.data_navigator.DataNavigator._get_relationships')
+    @patch('sdv.data_navigator.DataNavigator._anonymize_data')
+    @patch('sdv.data_navigator.HyperTransformer')
+    def test__init__with_missing(self, ht_mock, anonymize_mock, relationships_mock):
+        """__init__ with missing."""
+
+        # Setup
+        ht_mock.return_value = Mock()
+        relationships_mock.return_value = 'foo', 'bar', 'tar'
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock._anonymize_data = anonymize_mock
+        data_navigator_mock._get_relationships = relationships_mock
+
+        DataNavigator(
+            'meta_filename',
+            {'some': 'meta'},
+            {'a_table': 'table'}
+        )
+
+        # Asserts
+        ht_mock.assert_called_once_with('meta_filename', missing=None)
+
+        data_navigator_mock._anonymize_data.assert_called_once()
+        data_navigator_mock._get_relationships.assert_called_once_with({'a_table': 'table'})
 
     def test_get_children(self):
         """get_children returns the relational children of a table."""
+
         # Setup
-        expected_result = {'DEMO_ORDERS'}
+        childs = {
+            'DEMO': {'child_a': 'foo'}
+        }
 
         # Run
-        result = self.data_navigator.get_children('DEMO_CUSTOMERS')
+        data_navigator_mock = Mock()
+        data_navigator_mock.child_map = childs
 
-        # Check
-        assert expected_result == result
+        result = DataNavigator.get_children(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = {'child_a': 'foo'}
+
+        assert expect == result
+
+    def test_get_children_no_childrens(self):
+        """No children from the given table"""
+
+        # Setup
+        childs = {}
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.child_map = childs
+
+        result = DataNavigator.get_children(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = set()
+
+        assert expect == result
 
     def test_get_parents(self):
-        """get_children returns the relational parent of a table."""
+        """get_parents returns the relational parent of a table."""
+
         # Setup
-        expected_result = {'DEMO_ORDERS'}
+        parents = {
+            'DEMO': {'parent_a': 'foo'}
+        }
 
         # Run
-        result = self.data_navigator.get_parents('DEMO_ORDER_ITEMS')
+        data_navigator_mock = Mock()
+        data_navigator_mock.parent_map = parents
 
-        # Check
-        assert expected_result == result
+        result = DataNavigator.get_parents(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = {'parent_a': 'foo'}
+
+        assert expect == result
+
+    def test_get_parents_no_parents(self):
+        """No parents from the given table"""
+
+        # Setup
+        parents = {}
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.parent_map = parents
+
+        result = DataNavigator.get_parents(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = set()
+
+        assert expect == result
+
+    def test_get_data(self):
+        """Retrieve table data"""
+
+        # Setup
+        data = pd.DataFrame({
+            'foo': [0, 1]
+        })
+        tables = {
+            'DEMO': Table(data, 'meta')
+        }
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.tables = tables
+
+        result = DataNavigator.get_data(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = pd.DataFrame({
+            'foo': [0, 1]
+        })
+
+        pd.testing.assert_frame_equal(result, expect)
+
+    def test_get_meta_data(self):
+        """Retrieve table meta"""
+
+        # Setup
+        tables = {
+            'DEMO': Table(None, 'meta')
+        }
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.tables = tables
+
+        result = DataNavigator.get_meta_data(data_navigator_mock, 'DEMO')
+
+        # Asserts
+        expect = 'meta'
+
+        assert result == expect
+
+    def test_update_mapping_when_item(self):
+        """update_mapping when item is something"""
+
+        # Setup
+
+        # Run
+        mapping = {'foo': set(['bar'])}
+        key = 'foo'
+        value = 'tar'
+
+        data_navigator_mock = Mock()
+
+        result = DataNavigator.update_mapping(data_navigator_mock, mapping, key, value)
+
+        # Asserts
+        expect = {'foo': set(['bar', 'tar'])}
+
+        assert result == expect
+
+    def test_update_mapping_when_no_item(self):
+        """update_mapping when item is nothing"""
+
+        # Setup
+
+        # Run
+        mapping = {}
+        key = 'foo'
+        value = 'tar'
+
+        data_navigator_mock = Mock()
+
+        result = DataNavigator.update_mapping(data_navigator_mock, mapping, key, value)
+
+        # Asserts
+        expect = {'foo': set(['tar'])}
+
+        assert result == expect
 
     def test__get_relashionships(self):
         """_get_relashionships returns parents, children and foreign_keys dicts."""
+
         # Setup
-        expected_children = {
-            'DEMO_CUSTOMERS': {'DEMO_ORDERS'},
-            'DEMO_ORDERS': {'DEMO_ORDER_ITEMS'}
+        meta = {
+            'fields': {
+                'a_field': {
+                    'name': 'a_field',
+                    'ref': {
+                        'table': 'DEMO_2',
+                        'field': 'DEMO_2_ID'
+                    }
+                }
+            }
         }
-        expected_parents = {
-            'DEMO_ORDERS': {'DEMO_CUSTOMERS'},
-            'DEMO_ORDER_ITEMS': {'DEMO_ORDERS'}
+
+        tables = {
+            'DEMO': Table('data', meta)
         }
-        expected_foreign_keys = {
-            ('DEMO_ORDERS', 'DEMO_CUSTOMERS'): ('CUSTOMER_ID', 'CUSTOMER_ID'),
-            ('DEMO_ORDER_ITEMS', 'DEMO_ORDERS'): ('ORDER_ID', 'ORDER_ID')
+
+        update_mock = Mock()
+        update_mock.side_effect = [
+            'child',
+            'parent'
+        ]
+
+        # Run
+        data_navigator_mock = Mock()
+        data_navigator_mock.update_mapping = update_mock
+
+        result = DataNavigator._get_relationships(data_navigator_mock, tables)
+
+        # Asserts
+        expect = 'child', 'parent', {('DEMO', 'DEMO_2'): ('DEMO_2_ID', 'a_field')}
+        exp_args_list = [call({}, 'DEMO_2', 'DEMO'), call({}, 'DEMO', 'DEMO_2')]
+
+        assert result == expect
+        update_mock.call_args_list == exp_args_list
+
+    def test_transform_data_default_transformers(self):
+        """transform_data with default transformers."""
+
+        # Setup
+        default_transformers = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
+
+        ht_mock = Mock()
+        ht_mock.fit_transform.return_value = {
+            'some': 'data'
         }
 
         # Run
-        children, parents, foreign_keys = self.data_navigator._get_relationships(
-            self.data_navigator.tables)
+        data_navigator_mock = Mock()
+        data_navigator_mock.DEFAULT_TRANSFORMERS = default_transformers
+        data_navigator_mock.ht = ht_mock
 
-        # Check
-        assert children == expected_children
-        assert parents == expected_parents
-        assert foreign_keys == expected_foreign_keys
+        result = DataNavigator.transform_data(data_navigator_mock, None)
 
-        # All children are referenced in the parent map too.
-        for parent_name, childs in children.items():
-            for child in childs:
-                assert parent_name in parents[child]
-                assert(child, parent_name) in foreign_keys
+        # Asserts
+        expect = {'some': 'data'}
+        expect_transformers = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
 
-    def test_transform_data(self):
-        """transform_data turns all data into numeric values."""
+        assert result == expect
+
+        ht_mock.fit_transform.assert_called_once_with(transformer_list=expect_transformers)
+
+    def test_transform_data_with_transformers(self):
+        """transform_data with transformers from parameters"""
+
+        # Setup
+        transformers = ['NumberTransformer', 'DTTransformer']
+
+        ht_mock = Mock()
+        ht_mock.fit_transform.return_value = {
+            'some': 'data'
+        }
 
         # Run
-        result = self.data_navigator.transform_data()
+        data_navigator_mock = Mock()
+        data_navigator_mock.ht = ht_mock
 
-        # Check
-        assert result.keys() == self.data_navigator.tables.keys()
+        result = DataNavigator.transform_data(data_navigator_mock, transformers=transformers)
 
-        for name, table in result.items():
-            raw_table = self.data_navigator.tables[name].data
+        # Asserts
+        expect = {'some': 'data'}
+        expect_transformers = ['NumberTransformer', 'DTTransformer']
 
-            # Transformed tables must own the same columns and data dimension
-            assert (table.columns == raw_table.columns).all()
-            assert table.shape == raw_table.shape
-            assert 'object' not in table.dtypes
+        assert result == expect
+
+        ht_mock.fit_transform.assert_called_once_with(transformer_list=expect_transformers)
+
+
+if __name__ == '__main__':
+    unittest.main()
