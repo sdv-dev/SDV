@@ -175,8 +175,8 @@ class TestDataNavigator(TestCase):
         ]
 
         pd.testing.assert_frame_equal(tables['a_table'].data, anonymized_table)
+        pd.testing.assert_frame_equal(tables['another_table'].data, another_table.data)
 
-        assert tables['another_table'] == another_table
         assert ht_mock._get_pii_fields.call_args_list == exp_call_args_list
 
     @patch('sdv.data_navigator.DataNavigator._get_relationships')
