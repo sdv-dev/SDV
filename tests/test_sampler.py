@@ -1,11 +1,11 @@
 import unittest
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
-
 from rdt.hyper_transformer import HyperTransformer
+
 from sdv.data_navigator import DataNavigator, Table
 from sdv.modeler import Modeler
 from sdv.sampler import Sampler
@@ -774,9 +774,9 @@ class TestSampler(TestCase):
 
             result = sampler._transform_synthesized_rows(df, 'demo')
             assert result['tar'].tolist() == [1, 4, 7]
-            fill_mock.assert_called_once()
-            data_navigator.get_meta_data.assert_called_once()
-            ht_instance.reverse_transform_table.assert_called_once()
+            assert fill_mock.call_count == 1
+            assert data_navigator.get_meta_data.call_count == 1
+            assert ht_instance.reverse_transform_table.call_count == 1
 
     @patch('sdv.sampler.Sampler._setdefault')
     def test__unflatten_dict_raise_value_error_row_index(self, setdefault_mock):
@@ -832,15 +832,15 @@ class TestSampler(TestCase):
         sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
         expect = np.array([[1.15578924, 1.52151675, 1.88724426],
-                           [1.52151675, 2.00297177, 2.4844268 ],
-                           [1.88724426, 2.4844268 , 3.08160934]])
+                           [1.52151675, 2.00297177, 2.4844268],
+                           [1.88724426, 2.4844268, 3.08160934]])
 
         matrix = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
 
         result = sampler._make_positive_definite(matrix)
 
         assert np.array_equal(np.around(result, decimals=8), np.around(expect, decimals=8))
-        check_mock.assert_called_once()
+        assert check_mock.call_count == 1
 
     @patch('sdv.sampler.Sampler._check_matrix_symmetric_positive_definite')
     def test__make_positive_definite_iterate(self, check_mock):
@@ -852,7 +852,7 @@ class TestSampler(TestCase):
         matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         check_mock.side_effect = [False, False, True]
 
-        result = sampler._make_positive_definite(matrix)
+        sampler._make_positive_definite(matrix)
 
         assert check_mock.call_count == 3
 
@@ -868,7 +868,7 @@ class TestSampler(TestCase):
             error_mock.side_effect = np.linalg.LinAlgError
             result = sampler._check_matrix_symmetric_positive_definite(matrix)
             error_mock.assert_called_once_with(matrix)
-            assert result == False
+            assert result is False
 
     @patch('numpy.linalg.LinAlgError')
     def test__check_matrix_symmetric_positive_definite_error(self, error_mock):
@@ -881,7 +881,7 @@ class TestSampler(TestCase):
 
         result = sampler._check_matrix_symmetric_positive_definite(matrix)
         error_mock.call_count == 0
-        assert result == False
+        assert result is False
 
     def test__get_extension(self):
         """Retrieve the generated parent row extension"""
@@ -889,19 +889,18 @@ class TestSampler(TestCase):
         modeler = MagicMock(spec=Modeler)
         sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
-        parent_row = pd.DataFrame([[1, 1], [1, 1]], columns=['__demo__foo', '__demo__bar'])
+        parent_row = pd.Series([[1, 1], [1, 1]], ['__demo__foo', '__demo__bar'])
         table_name = 'demo'
         parent_name = 'parent'
 
-        expect = {'foo': {0: 1, 1: 1}, 'bar': {0: 1, 1: 1}}
-        # import ipdb; ipdb.set_trace()
+        expect = {'foo': [1, 1], 'bar': [1, 1]}
         result = sampler._get_extension(parent_row, table_name, parent_name)
 
         assert result == expect
 
     def test__get_model(self):
         """Retrieve the model with parameters"""
-        pass
+        Mock()
 
 
 if __name__ == '__main__':
