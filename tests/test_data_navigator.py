@@ -9,6 +9,23 @@ from sdv.data_navigator import CSVDataLoader, DataLoader, DataNavigator, Table
 
 class TestDataLoader(TestCase):
 
+    @patch('json.load')
+    @patch('builtins.open')
+    def test___init__(self, open_mock, load_mock):
+        """load meta on create dataloader instance"""
+
+        # Setup
+        # mock_open()
+        load_mock.return_value = {'some': 'meta'}
+
+        # Run
+        meta_filename = 'meta_filename.json'
+
+        result = DataLoader(meta_filename)
+
+        # Asserts
+        assert result.meta == {'some': 'meta'}
+
     def test_load_data(self):
         """raise not implemented exception"""
 
