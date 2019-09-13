@@ -153,7 +153,7 @@ class TestDataNavigator(TestCase):
         ]
 
         a_table = pd.DataFrame({
-            'a_field': [4, 5, 6]
+            'a_fields': [1, 2, 3]
         })
         another_table = Table(pd.DataFrame(), {'another': 'metadata'})
         tables = {
@@ -174,9 +174,9 @@ class TestDataNavigator(TestCase):
             call({'ht': 'meta'}),
         ]
 
-        assert tables['a_table'] == Table(anonymized_table, {'some': 'metadata'})
-        assert tables['another_table'] == another_table
+        pd.testing.assert_frame_equal(tables['a_table'].data, anonymized_table)
 
+        assert tables['another_table'] == another_table
         assert ht_mock._get_pii_fields.call_args_list == exp_call_args_list
 
     @patch('sdv.data_navigator.DataNavigator._get_relationships')
@@ -203,7 +203,7 @@ class TestDataNavigator(TestCase):
         # Asserts
         ht_mock.assert_called_once_with('meta_filename', missing=None)
 
-        data_navigator_mock._anonymize_data.assert_called_once()
+        data_navigator_mock._anonymize_data.assert_called_once_with()
         data_navigator_mock._get_relationships.assert_called_once_with({'a_table': 'table'})
 
     @patch('sdv.data_navigator.DataNavigator._get_relationships')
@@ -230,7 +230,7 @@ class TestDataNavigator(TestCase):
         # Asserts
         ht_mock.assert_called_once_with('meta_filename', missing=None)
 
-        data_navigator_mock._anonymize_data.assert_called_once()
+        data_navigator_mock._anonymize_data.assert_called_once_with()
         data_navigator_mock._get_relationships.assert_called_once_with({'a_table': 'table'})
 
     def test_get_children(self):
