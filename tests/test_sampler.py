@@ -92,6 +92,28 @@ class TestSampler(TestCase):
         rows_mock.assert_called_once_with(
             sampler, 'TABLE_A', 5, sampled_data={'TABLE_A': 'sampled_data'})
 
+    def test_sample_all_with_reset_primary_key(self):
+        """Check sample_all with reset_primary_keys True"""
+
+        # Setup
+        reset_primary_keys_generators_mock = Mock()
+
+        dn_mock = Mock()
+        dn_mock.tables = {
+            'DEMO': Table(pd.DataFrame(), {'some': 'meta'})
+        }
+        dn_mock.get_parents.return_value = True
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._reset_primary_keys_generators = reset_primary_keys_generators_mock
+        sampler_mock.dn = dn_mock
+
+        Sampler.sample_all(sampler_mock, reset_primary_keys=True)
+
+        # Asserts
+        reset_primary_keys_generators_mock.assert_called_once_with()
+
     def test__unflatten_dict(self):
         """unflatten_dict restructure flatten dicts."""
         # Setup
@@ -292,17 +314,10 @@ class TestSampler(TestCase):
         data_navigator.assert_not_called()
         modeler.assert_not_called()
 
-    @patch('sdv.sampler.Sampler._make_positive_definite')
-    @patch('sdv.sampler.Sampler._check_matrix_symmetric_positive_definite')
-    def test__unflatten_gaussian_copula_not_matrix_symmetric(self, mock_check, mock_make):
+    def test__unflatten_gaussian_copula_not_matrix_symmetric(self):
         """unflatte with not matrix symmetric"""
-        data_navigator = MagicMock()
-        modeler = MagicMock()
-        modeler.model_kwargs = {
-            'distribution': 'distribution_name'
-        }
-        sampler = Sampler(data_navigator, modeler)
 
+        # Setup
         model_parameters = {
             'some': 'key',
             'covariance': [
@@ -321,35 +336,34 @@ class TestSampler(TestCase):
             }
         }
 
-        expected_result = {
-            'some': 'key',
-            'distribution': 'distribution_name',
-            'covariance': [
-                [1, 0],
-                [0, 1]
-            ],
-            'distribs': {
-                0: {
-                    'type': 'distribution_name',
-                    'fitted': True,
-                    'first': 'distribution',
-                    'std': 1
-                },
-                1: {
-                    'type': 'distribution_name',
-                    'fitted': True,
-                    'second': 'distribution',
-                    'std': 1
-                }
-            }
+        modeler_mock = Mock()
+        modeler_mock.model_kwargs = {
+            'distribution': 'distribution_name'
         }
 
-        mock_check.return_value = False
-        mock_make.return_value = np.array([[1, 0], [0, 1]])
+        prepare_mock = Mock()
+        prepare_mock.return_value = [[1], [0, 1]]
 
-        result = sampler._unflatten_gaussian_copula(model_parameters)
+        check_mock = Mock()
+        check_mock.return_value = False
 
-        assert result == expected_result
+        make_mock = Mock()
+        make_mock.return_value = np.array([[1, 0], [0, 1]])
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock.modeler = modeler_mock
+        sampler_mock._prepare_sampled_covariance = prepare_mock
+        sampler_mock._check_matrix_symmetric_positive_definite = check_mock
+        sampler_mock._make_positive_definite = make_mock
+
+        result = Sampler._unflatten_gaussian_copula(sampler_mock, model_parameters)
+
+        # Asserts
+        assert result['covariance'] == [[1, 0], [0, 1]]
+        prepare_mock.assert_called_once_with([[1], [0, 1]])
+        check_mock.assert_called_once_with([[1], [0, 1]])
+        make_mock.assert_called_once_with([[1], [0, 1]])
 
     def test__unflatten_gaussian_copula_negative_std(self):
         """_unflatten_gaussian_copula will transform negative or 0 std into positive."""
@@ -687,220 +701,541 @@ class TestSampler(TestCase):
 
     def test__fill_text_columns(self):
         """Fill columns"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        data_navigator.tables = {
-            'DEMO': Table('any_data', {
-                'fields': {
-                    'id': {
-                        'name': 'id',
-                        'type': 'id',
-                        'regex': '^[0-9]{10}$'
-                    },
-                    'id2': {
-                        'name': 'id2',
-                        'type': 'id',
-                        'regex': '^[0-9]{10}$',
-                        'ref': {
-                            'table': 'DEMO_REF',
-                            'field': 'DEMO_REF_ID'
+
+        # Setup
+        data_navigator_mock = Mock()
+        data_navigator_mock.tables = {
+            'DEMO': Table(
+                pd.DataFrame(),
+                {
+                    'fields': {
+                        'a_field': {
+                            'name': 'a_field',
+                            'type': 'id',
+                            'ref': {
+                                'table': 'table_ref',
+                                'field': 'table_ref_id'
+                            }
+                        },
+                        'b_field': {
+                            'name': 'b_field',
+                            'type': 'id',
+                            'regex': '^[0-9]{10}$'
+                        },
+                        'c_field': {
+                            'name': 'c_field',
+                            'type': 'text',
+                            'regex': '^[a-z]{10}$'
                         }
-                    },
-                    'name': {
-                        'name': 'name',
-                        'type': 'text',
-                        'regex': '^[a-z]{3}$'
-                    },
+                    }
                 }
-            })
+            )
         }
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator, modeler)
-        df = pd.DataFrame(
-            [['aaa'], ['bbb'], ['ccc']],
-            index=['cobra', 'viper', 'sidewinder'],
-            columns=['name']
-        )
-        labels = ['id', 'id2', 'name']
 
-        with patch('sdv.sampler.Sampler.sample_rows', return_value={'DEMO_REF_ID': 69}):
-            sampler._fill_text_columns(df, labels, 'DEMO')
+        sample_rows_mock = Mock()
+        sample_rows_mock.return_value = {'table_ref_id': {'name': 'table_ref_id'}}
 
-            assert 'id' in df.columns
-            assert 'id2' in df.columns
-            assert not np.array_equal(df.get('name').values, np.array(['aaa', 'bbb', 'ccc']))
+        # Run
+        sampler_mock = Mock()
+        sampler_mock.dn = data_navigator_mock
+        sampler_mock.sample_rows = sample_rows_mock
+
+        row = pd.DataFrame({
+            'c_field': ['foo', 'bar', 'tar']
+        })
+        labels = ['a_field', 'b_field', 'c_field']
+        table_name = 'DEMO'
+
+        result = Sampler._fill_text_columns(sampler_mock, row, labels, table_name)
+
+        # Asserts
+        sample_rows_mock.assert_called_once_with('table_ref', 1)
 
     def test__transform_synthesized_rows(self):
         """Reverse transform synthetized data."""
 
-        transformed_table = pd.DataFrame(
-            [[1, 2, 1], [4, 5, 4], [7, 8, 7]],
-            columns=['foo', 'bar', 'tar']
-        )
+        # Setup
+        ht_mock = Mock()
+        ht_mock.transformers = ['foo', 'bar']
+        ht_mock.reverse_transform_table.return_value = pd.DataFrame({
+            'foo': [1, 2, 3],
+            'bar': ['aaa', 'bbb', 'ccc']
+        })
 
-        hyper_transformer = MagicMock(spec=HyperTransformer)
-        ht_instance = hyper_transformer.return_value
-        ht_instance.transformers = [
-            ('demo', 'foo'),
-            ('demo', 'bar'),
-            ('demo', 'tar'),
-        ]
-        ht_instance.reverse_transform_table.return_value = transformed_table
-
-        data_navigator = MagicMock(spec=DataNavigator)
-        data_navigator.ht = ht_instance
-        data_navigator.get_meta_data.return_value = {
+        dn_mock = Mock()
+        dn_mock.ht = ht_mock
+        dn_mock.get_meta_data.return_value = {
             'fields': {
                 'foo': {
-                    'name': 'foo',
                     'subtype': 'integer'
                 },
                 'bar': {
-                    'name': 'bar',
-                    'subtype': 'integer'
+                    'subtype': 'text'
                 },
-                'tar': {
-                    'name': 'tar',
-                    'subtype': 'integer'
-                }
             }
         }
 
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator, modeler)
-        df = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9]], columns=['foo', 'bar', 'tar'])
+        fill_text_mock = Mock()
+        fill_text_mock.return_value = pd.DataFrame({
+            'foo': [1, 2, 3],
+            'bar': ['aaa', 'bbb', 'ccc']
+        })
 
-        with patch('sdv.sampler.Sampler._fill_text_columns',
-                   return_value=transformed_table) as fill_mock:
+        # Run
+        sampler_mock = Mock()
+        sampler_mock.dn = dn_mock
+        sampler_mock._fill_text_columns = fill_text_mock
 
-            result = sampler._transform_synthesized_rows(df, 'demo')
-            assert result['tar'].tolist() == [1, 4, 7]
-            assert fill_mock.call_count == 1
-            assert data_navigator.get_meta_data.call_count == 1
-            assert ht_instance.reverse_transform_table.call_count == 1
+        table_name = 'DEMO'
+        synthesized = pd.DataFrame(
+            [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+            columns=['foo', 'bar', 'tar']
+        )
 
-    @patch('sdv.sampler.Sampler._setdefault')
-    def test__unflatten_dict_raise_value_error_row_index(self, setdefault_mock):
+        result = Sampler._transform_synthesized_rows(sampler_mock, synthesized, table_name)
+
+        # Asserts
+        exp_called_synthesized = pd.DataFrame({
+            'foo': [1, 2, 3],
+            'bar': ['aaa', 'bbb', 'ccc'],
+            'tar': [3, 6, 9]
+        })
+        exp_called_labels = ['foo', 'bar']
+
+        exp_called_reverse_meta = {
+            'fields': [
+                {'subtype': 'integer', 'name': 'foo'},
+                {'subtype': 'text', 'name': 'bar'}
+            ],
+            'name': 'DEMO'
+        }
+
+        dn_mock.get_meta_data.assert_called_once_with('DEMO')
+
+        fill_text_args, fill_text_kwargs = fill_text_mock.call_args
+        fill_text_data_frame, fill_text_labels, fill_text_table_name = fill_text_args
+
+        assert fill_text_mock.call_count == 1
+        assert fill_text_labels == exp_called_labels
+        assert fill_text_table_name == 'DEMO'
+
+        pd.testing.assert_frame_equal(fill_text_data_frame, exp_called_synthesized)
+
+        rt_args, rt_kwargs = ht_mock.reverse_transform_table.call_args
+        rt_arg_text_filled, rt_arg_meta = rt_args
+
+        pd.testing.assert_frame_equal(rt_arg_text_filled, pd.DataFrame(index=[0, 1, 2]))
+        assert rt_arg_meta == exp_called_reverse_meta
+
+    def test__unflatten_dict_raise_value_error_row_index(self):
         """Raises ValueError by row_index"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
+        # Setup
+        setdefault_mock = Mock()
         setdefault_mock.return_value = [1, 2, 3, 4, 5]
 
+        # Run and assert
+        sampler = Mock()
+        sampler._setdefault = setdefault_mock
+
         flat = {
             'foo__1__1': 'foo'
         }
 
         with self.assertRaises(ValueError):
-            sampler._unflatten_dict(flat)
+            Sampler._unflatten_dict(sampler, flat)
 
-    @patch('sdv.sampler.Sampler._setdefault')
-    def test__unflatten_dict_raise_value_error_column_index(self, setdefault_mock):
+    def test__unflatten_dict_raise_value_error_column_index(self):
         """Raises ValueError by column_index"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
+        # Setup
+        setdefault_mock = Mock()
         setdefault_mock.return_value = [[1, 2, 3, 4]]
 
+        # Run and assert
+        sampler = Mock()
+        sampler._setdefault = setdefault_mock
+
         flat = {
             'foo__1__1': 'foo'
         }
 
         with self.assertRaises(ValueError):
-            sampler._unflatten_dict(flat)
+            Sampler._unflatten_dict(sampler, flat)
 
     def test__unflatten_dict_alrady_unflatted(self):
         """Already unflatted dict."""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        # Setup
+
+        # Run
+        sampler = Mock()
 
         flat = {
             'foo': 'bar'
         }
 
-        result = sampler._unflatten_dict(flat)
+        result = Sampler._unflatten_dict(sampler, flat)
 
-        assert result == flat
+        # Asserts
+        exp_dict = {
+            'foo': 'bar'
+        }
+
+        assert result == exp_dict
 
     @patch('sdv.sampler.Sampler._check_matrix_symmetric_positive_definite')
     def test__make_positive_definite_no_iterate(self, check_mock):
         """Make positive when check_matrix returns True without iterate"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
-        expect = np.array([[1.15578924, 1.52151675, 1.88724426],
-                           [1.52151675, 2.00297177, 2.4844268],
-                           [1.88724426, 2.4844268, 3.08160934]])
+        # Setup
+        check_matrix_mock = Mock()
+        check_matrix_mock.return_value = True
 
-        matrix = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
-
-        result = sampler._make_positive_definite(matrix)
-
-        assert np.array_equal(np.around(result, decimals=8), np.around(expect, decimals=8))
-        assert check_mock.call_count == 1
-
-    @patch('sdv.sampler.Sampler._check_matrix_symmetric_positive_definite')
-    def test__make_positive_definite_iterate(self, check_mock):
-        """Make positive when check_matrix returns True with iterations"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._check_matrix_symmetric_positive_definite = check_matrix_mock
 
         matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        check_mock.side_effect = [False, False, True]
 
-        sampler._make_positive_definite(matrix)
+        Sampler._make_positive_definite(sampler_mock, matrix)
 
-        assert check_mock.call_count == 3
+        # Asserts
+        assert check_matrix_mock.call_count == 1
+
+    def test__make_positive_definite_iterate(self):
+        """Make positive when check_matrix returns True with iterations"""
+
+        # Setup
+        check_matrix_mock = Mock()
+        check_matrix_mock.side_effect = [False, False, True]
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._check_matrix_symmetric_positive_definite = check_matrix_mock
+
+        matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        Sampler._make_positive_definite(sampler_mock, matrix)
+
+        # Asserts
+        assert check_matrix_mock.call_count == 3
 
     def test__check_matrix_symmetric_positive_definite(self):
         """Check matrix symmetric positive return false"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
-        matrix = np.array([[-1, -2], [-4, -69]])
+        # Setup
 
-        with patch('numpy.linalg.cholesky') as error_mock:
-            error_mock.side_effect = np.linalg.LinAlgError
-            result = sampler._check_matrix_symmetric_positive_definite(matrix)
-            error_mock.assert_called_once_with(matrix)
-            assert result is False
+        # Run
+        sampler_mock = Mock()
 
-    @patch('numpy.linalg.LinAlgError')
-    def test__check_matrix_symmetric_positive_definite_error(self, error_mock):
+        matrix = np.array([-4, -69])
+
+        result = Sampler._check_matrix_symmetric_positive_definite(sampler_mock, matrix)
+
+        # Asserts
+
+        assert result == False
+
+    def test__check_matrix_symmetric_positive_definite_error(self):
         """Check matrix symmetric positive return false raise error"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
 
-        matrix = np.array([1, 1])
+        # Setup
 
-        result = sampler._check_matrix_symmetric_positive_definite(matrix)
-        error_mock.call_count == 0
-        assert result is False
+        # Run
+        sampler_mock = Mock()
+
+        matrix = np.array([[1, 1], [1, 1]])
+
+        result = Sampler._check_matrix_symmetric_positive_definite(sampler_mock, matrix)
+
+        # Asserts
+
+        assert result == False
 
     def test__get_extension(self):
         """Retrieve the generated parent row extension"""
-        data_navigator = MagicMock(spec=DataNavigator)
-        modeler = MagicMock(spec=Modeler)
-        sampler = Sampler(data_navigator=data_navigator, modeler=modeler)
+
+        # Setup
+
+        # Run
+        sampler_mock = Mock()
 
         parent_row = pd.Series([[1, 1], [1, 1]], ['__demo__foo', '__demo__bar'])
         table_name = 'demo'
         parent_name = 'parent'
 
+        result = Sampler._get_extension(sampler_mock, parent_row, table_name, parent_name)
+
+        # Asserts
         expect = {'foo': [1, 1], 'bar': [1, 1]}
-        result = sampler._get_extension(parent_row, table_name, parent_name)
 
         assert result == expect
 
-    def test__get_model(self):
+    @patch('sdv.sampler.get_qualified_name')
+    def test__get_model(self, qualified_name):
         """Retrieve the model with parameters"""
-        Mock()
+
+        # Setup
+        unflatten_dict_mock = Mock()
+        unflatten_dict_mock.return_value = dict()
+
+        qualified_name.return_value = 'copulas.multivariate.gaussian.GaussianMultivariate'
+
+        unflatten_gaussian_mock = Mock()
+        unflatten_gaussian_mock.return_value = None
+
+        model_mock = Mock()
+        model_mock.from_dict.return_value = None
+
+        modeler_mock = Mock()
+        modeler_mock.model = model_mock
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._unflatten_dict = unflatten_dict_mock
+        sampler_mock.modeler = modeler_mock
+        sampler_mock._unflatten_gaussian_copula = unflatten_gaussian_mock
+
+        Sampler._get_model(sampler_mock, None)
+
+        # Asserts
+        exp_unflatten_gaussian_called = {
+            'fitted': True,
+            'type': 'copulas.multivariate.gaussian.GaussianMultivariate'
+        }
+
+        qualified_name.assert_called_once_with(modeler_mock.model)
+        unflatten_dict_mock.assert_called_once_with(None)
+        unflatten_gaussian_mock.assert_called_once_with(exp_unflatten_gaussian_called)
+        model_mock.from_dict.assert_called_once_with(None)
+
+    def test_sample_rows_sample_children(self):
+        """sample_rows with sample_children True"""
+
+        # Setup
+        reset_pk_generators_mock = Mock()
+
+        sample_valid_rows_mock = Mock()
+        sample_valid_rows_mock.return_value = {}
+
+        get_pk_mock = Mock()
+        get_pk_mock.return_value = None
+
+        transform_mock = Mock()
+
+        modeler_mock = Mock()
+        modeler_mock.models = {
+            'DEMO': {}
+        }
+
+        dn_mock = Mock()
+        dn_mock.get_parents.return_value = {}
+        dn_mock.foreign_keys = {}
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._reset_primary_keys_generators = reset_pk_generators_mock
+        sampler_mock._sample_valid_rows = sample_valid_rows_mock
+        sampler_mock._get_primary_keys = get_pk_mock
+        sampler_mock._transform_synthesized_rows = transform_mock
+        sampler_mock.modeler = modeler_mock
+        sampler_mock.dn = dn_mock
+
+        table_name = 'DEMO'
+        num_rows = 5
+
+        Sampler.sample_rows(sampler_mock, table_name, num_rows, reset_primary_keys=True)
+
+        # Asserts
+        reset_pk_generators_mock.assert_called_once_with()
+        sample_valid_rows_mock.assert_called_once_with({}, 5, 'DEMO')
+
+    def test_sample_rows_no_sample_children(self):
+        """sample_rows with sample_children True"""
+
+        # Setup
+        reset_pk_generators_mock = Mock()
+
+        sample_valid_rows_mock = Mock()
+        sample_valid_rows_mock.return_value = {}
+
+        get_pk_mock = Mock()
+        get_pk_mock.return_value = None, ['foo']
+
+        transform_mock = Mock()
+
+        modeler_mock = Mock()
+        modeler_mock.models = {
+            'DEMO': {}
+        }
+
+        dn_mock = Mock()
+        dn_mock.get_parents.return_value = {'foo': 'bar'}
+        dn_mock.foreign_keys = {
+            ('DEMO', 'foo'): (None, 'tar')
+        }
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._reset_primary_keys_generators = reset_pk_generators_mock
+        sampler_mock._sample_valid_rows = sample_valid_rows_mock
+        sampler_mock._get_primary_keys = get_pk_mock
+        sampler_mock._transform_synthesized_rows = transform_mock
+        sampler_mock.modeler = modeler_mock
+        sampler_mock.dn = dn_mock
+
+        table_name = 'DEMO'
+        num_rows = 5
+
+        Sampler.sample_rows(sampler_mock, table_name, num_rows, sample_children=False)
+
+        # Asserts
+        transform_mock.assert_called_once_with({'tar': 'foo'}, 'DEMO')
+
+    def test__sample_without_previous(self):
+        """Check _sample without previous"""
+
+        # Setup
+        get_extension_mock = Mock()
+        get_extension_mock.return_value = {'child_rows': 0.999}
+
+        get_model_mock = Mock()
+        get_model_mock.return_value = None
+
+        sample_valid_rows_mock = Mock()
+        sample_valid_rows_mock.return_value = {}
+
+        sample_children_mock = Mock()
+
+        dn_mock = Mock()
+        dn_mock.foreign_keys = {
+            ('DEMO', 'p_name'): ('parent_id', 'foreign_key')
+        }
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._get_extension = get_extension_mock
+        sampler_mock._get_model = get_model_mock
+        sampler_mock._sample_valid_rows = sample_valid_rows_mock
+        sampler_mock._sample_children = sample_children_mock
+        sampler_mock.dn = dn_mock
+
+        table_name = 'DEMO'
+        parent_name = 'p_name'
+        parent_row = {'parent_id': 'foo'}
+        sampled = {}
+
+        Sampler._sample(sampler_mock, table_name, parent_name, parent_row, sampled)
+
+        # Asserts
+        get_extension_mock.assert_called_once_with({'parent_id': 'foo'}, 'DEMO', 'p_name')
+        get_model_mock.assert_called_once_with({'child_rows': 0.999})
+        sample_valid_rows_mock.assert_called_once_with(None, 1, 'DEMO')
+        sample_children_mock.assert_called_once_with('DEMO', {'DEMO': {'foreign_key': 'foo'}})
+
+    def test__sample_with_previous(self):
+        """Check _sample with previous"""
+
+        # Setup
+        get_extension_mock = Mock()
+        get_extension_mock.return_value = {'child_rows': 0.999}
+
+        get_model_mock = Mock()
+        get_model_mock.return_value = None
+
+        sample_valid_rows_mock = Mock()
+        sample_valid_rows_mock.return_value = pd.DataFrame({'foo': [0, 1]})
+
+        sample_children_mock = Mock()
+
+        dn_mock = Mock()
+        dn_mock.foreign_keys = {
+            ('DEMO', 'p_name'): ('parent_id', 'foreign_key')
+        }
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._get_extension = get_extension_mock
+        sampler_mock._get_model = get_model_mock
+        sampler_mock._sample_valid_rows = sample_valid_rows_mock
+        sampler_mock._sample_children = sample_children_mock
+        sampler_mock.dn = dn_mock
+
+        table_name = 'DEMO'
+        parent_name = 'p_name'
+        parent_row = {'parent_id': 'foo'}
+        sampled = {'DEMO': pd.DataFrame({
+            'bar': [1, 2]
+        })}
+
+        Sampler._sample(sampler_mock, table_name, parent_name, parent_row, sampled)
+
+        # Asserts
+        exp_dataframe_sampled = pd.DataFrame({
+            'bar': [1, 2, np.NaN, np.NaN],
+            'foo': [np.NaN, np.NaN, 0, 1],
+            'foreign_key': [np.NaN, np.NaN, 'foo', 'foo']
+        })
+        args_sample_children, kwargs_sample_children = sample_children_mock.call_args
+        exp_arg_table_name, exp_arg_sampled = args_sample_children
+
+        get_extension_mock.assert_called_once_with({'parent_id': 'foo'}, 'DEMO', 'p_name')
+        get_model_mock.assert_called_once_with({'child_rows': 0.999})
+        sample_valid_rows_mock.assert_called_once_with(None, 1, 'DEMO')
+
+        assert exp_arg_table_name == 'DEMO'
+
+        pd.testing.assert_frame_equal(exp_arg_sampled['DEMO'], exp_dataframe_sampled)
+
+    def test__sample_children(self):
+        """Sample children"""
+
+        # Setup
+        dn_mock = Mock()
+        dn_mock.get_children.return_value = ['aaa', 'bbb', 'ccc']
+
+        sample_mock = Mock()
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock.dn = dn_mock
+        sampler_mock._sample = sample_mock
+
+        table_name = 'DEMO'
+        sampled = {
+            'DEMO': pd.DataFrame({
+                'foo': [0, 1]
+            })
+        }
+
+        Sampler._sample_children(sampler_mock, table_name, sampled)
+
+        # Asserts
+        exp_sampled = {
+            'DEMO': pd.DataFrame({
+                'foo': [0, 1]
+            })
+        }
+
+        exp_sample_arguments = [
+            ('aaa', 'DEMO', pd.Series({'foo': 0}, name=0), exp_sampled),
+            ('aaa', 'DEMO', pd.Series({'foo': 1}, name=1), exp_sampled),
+            ('bbb', 'DEMO', pd.Series({'foo': 0}, name=0), exp_sampled),
+            ('bbb', 'DEMO', pd.Series({'foo': 1}, name=1), exp_sampled),
+            ('ccc', 'DEMO', pd.Series({'foo': 0}, name=0), exp_sampled),
+            ('ccc', 'DEMO', pd.Series({'foo': 1}, name=1), exp_sampled)
+        ]
+
+        dn_mock.get_children.assert_called_once_with('DEMO')
+
+        assert sample_mock.call_count == 6
+
+        for called, expected in zip(sample_mock.call_args_list, exp_sample_arguments):
+            assert called[0][0] == expected[0]
+            assert called[0][1] == expected[1]
+            pd.testing.assert_series_equal(called[0][2], expected[2])
+            pd.testing.assert_frame_equal(called[0][3]['DEMO'], expected[3]['DEMO'])
 
 
 if __name__ == '__main__':
