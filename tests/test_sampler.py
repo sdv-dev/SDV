@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
-from rdt.hyper_transformer import HyperTransformer
 
 from sdv.data_navigator import DataNavigator, Table
 from sdv.modeler import Modeler
@@ -746,7 +745,7 @@ class TestSampler(TestCase):
         labels = ['a_field', 'b_field', 'c_field']
         table_name = 'DEMO'
 
-        result = Sampler._fill_text_columns(sampler_mock, row, labels, table_name)
+        Sampler._fill_text_columns(sampler_mock, row, labels, table_name)
 
         # Asserts
         sample_rows_mock.assert_called_once_with('table_ref', 1)
@@ -792,7 +791,7 @@ class TestSampler(TestCase):
             columns=['foo', 'bar', 'tar']
         )
 
-        result = Sampler._transform_synthesized_rows(sampler_mock, synthesized, table_name)
+        Sampler._transform_synthesized_rows(sampler_mock, synthesized, table_name)
 
         # Asserts
         exp_called_synthesized = pd.DataFrame({
@@ -814,6 +813,9 @@ class TestSampler(TestCase):
 
         fill_text_args, fill_text_kwargs = fill_text_mock.call_args
         fill_text_data_frame, fill_text_labels, fill_text_table_name = fill_text_args
+
+        fill_text_data_frame.sort_index(axis=1, inplace=True)
+        exp_called_synthesized.sort_index(axis=1, inplace=True)
 
         assert fill_text_mock.call_count == 1
         assert fill_text_labels == exp_called_labels
@@ -935,7 +937,7 @@ class TestSampler(TestCase):
 
         # Asserts
 
-        assert result == False
+        assert result is False
 
     def test__check_matrix_symmetric_positive_definite_error(self):
         """Check matrix symmetric positive return false raise error"""
@@ -951,7 +953,7 @@ class TestSampler(TestCase):
 
         # Asserts
 
-        assert result == False
+        assert result is False
 
     def test__get_extension(self):
         """Retrieve the generated parent row extension"""

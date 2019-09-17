@@ -1,5 +1,7 @@
 from unittest import TestCase, mock
 
+from copulas import NotFittedError
+
 from sdv import SDV
 
 
@@ -19,3 +21,32 @@ class TestSDV(TestCase):
         # Run / Check
         with self.assertRaises(ValueError):
             instance._check_unsupported_dataset_structure()
+
+    def test_sample_rows_not_fitted(self):
+        """Check that the sample_rows raise an exception when is not fitted."""
+
+        # Setup
+
+        # Run and asserts
+        sdv_mock = mock.Mock()
+        sdv_mock.sampler = None
+
+        table_name = 'DEMO'
+        num_rows = 5
+
+        with self.assertRaises(NotFittedError):
+            SDV.sample_rows(sdv_mock, table_name, num_rows)
+
+    def test_sample_table_not_fitted(self):
+        """Check that the sample_table raise an exception when is not fitted."""
+
+        # Setup
+
+        # Run and asserts
+        sdv_mock = mock.Mock()
+        sdv_mock.sampler = None
+
+        table_name = 'DEMO'
+
+        with self.assertRaises(NotFittedError):
+            SDV.sample_table(sdv_mock, table_name)
