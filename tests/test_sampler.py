@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
+from rdt.hyper_transformer import HyperTransformer
 
 from sdv.data_navigator import DataNavigator, Table
 from sdv.modeler import Modeler
@@ -745,7 +746,7 @@ class TestSampler(TestCase):
         labels = ['a_field', 'b_field', 'c_field']
         table_name = 'DEMO'
 
-        Sampler._fill_text_columns(sampler_mock, row, labels, table_name)
+        result = Sampler._fill_text_columns(sampler_mock, row, labels, table_name)
 
         # Asserts
         sample_rows_mock.assert_called_once_with('table_ref', 1)
@@ -791,7 +792,7 @@ class TestSampler(TestCase):
             columns=['foo', 'bar', 'tar']
         )
 
-        Sampler._transform_synthesized_rows(sampler_mock, synthesized, table_name)
+        result = Sampler._transform_synthesized_rows(sampler_mock, synthesized, table_name)
 
         # Asserts
         exp_called_synthesized = pd.DataFrame({
@@ -814,17 +815,11 @@ class TestSampler(TestCase):
         fill_text_args, fill_text_kwargs = fill_text_mock.call_args
         fill_text_data_frame, fill_text_labels, fill_text_table_name = fill_text_args
 
-        fill_text_data_frame.sort_index(axis=1, inplace=True)
-        exp_called_synthesized.sort_index(axis=1, inplace=True)
-
         assert fill_text_mock.call_count == 1
-        assert sorted(fill_text_labels) == sorted(exp_called_labels)
+        assert fill_text_labels == exp_called_labels
         assert fill_text_table_name == 'DEMO'
 
-        pd.testing.assert_frame_equal(
-            fill_text_data_frame,
-            exp_called_synthesized
-        )
+        pd.testing.assert_frame_equal(fill_text_data_frame, exp_called_synthesized)
 
         rt_args, rt_kwargs = ht_mock.reverse_transform_table.call_args
         rt_arg_text_filled, rt_arg_meta = rt_args
@@ -940,7 +935,7 @@ class TestSampler(TestCase):
 
         # Asserts
 
-        assert result is False
+        assert result == False
 
     def test__check_matrix_symmetric_positive_definite_error(self):
         """Check matrix symmetric positive return false raise error"""
@@ -956,7 +951,7 @@ class TestSampler(TestCase):
 
         # Asserts
 
-        assert result is False
+        assert result == False
 
     def test__get_extension(self):
         """Retrieve the generated parent row extension"""
