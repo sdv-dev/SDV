@@ -151,6 +151,10 @@ class TestDataNavigator(TestCase):
         """Anonymoze data in tables with pii fields"""
 
         # Setup
+        def side_effect_get_pii(ht_meta):
+            if ht_meta['ht'] == 'a':
+                return ['a_fields']
+
         anonymized_table = pd.DataFrame({
             'a_fields': [1, 2, 3]
         })
@@ -160,14 +164,11 @@ class TestDataNavigator(TestCase):
 
         ht_mock = Mock()
         ht_mock.table_dict = {
-            'a_table': (anonymized_table, {'ht': 'meta'}),
-            'another_table': (anonymized_another_table, {'ht': 'meta'})
+            'a_table': (anonymized_table, {'ht': 'a'}),
+            'another_table': (anonymized_another_table, {'ht': 'b'})
         }
 
-        ht_mock._get_pii_fields.side_effect = [
-            ['a_fields'],
-            list(),
-        ]
+        ht_mock._get_pii_fields.side_effect = side_effect_get_pii
 
         a_table = pd.DataFrame({
             'a_fields': [1, 2, 3]
@@ -187,14 +188,19 @@ class TestDataNavigator(TestCase):
 
         # Asserts
         exp_call_args_list = [
-            call({'ht': 'meta'}),
-            call({'ht': 'meta'}),
+            call({'ht': 'a'}),
+            call({'ht': 'b'}),
         ]
+        exp_a_table_dataframe = pd.DataFrame({
+            'a_fields': [1, 2, 3]
+        })
+        exp_another_dataframe = pd.DataFrame()
 
-        pd.testing.assert_frame_equal(tables['a_table'].data, anonymized_table)
-        pd.testing.assert_frame_equal(tables['another_table'].data, another_table.data)
+        pd.testing.assert_frame_equal(tables['a_table'].data, exp_a_table_dataframe)
+        pd.testing.assert_frame_equal(tables['another_table'].data, exp_another_dataframe)
 
-        assert ht_mock._get_pii_fields.call_args_list == exp_call_args_list
+        for arg_item in ht_mock._get_pii_fields.call_args_list:
+            assert arg_item in exp_call_args_list
 
     @patch('sdv.data_navigator.DataNavigator._get_relationships')
     @patch('sdv.data_navigator.DataNavigator._anonymize_data')
