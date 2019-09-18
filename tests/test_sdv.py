@@ -37,6 +37,24 @@ class TestSDV(TestCase):
         with self.assertRaises(NotFittedError):
             SDV.sample_rows(sdv_mock, table_name, num_rows)
 
+    def test_sample_rows_fitted(self):
+        """Check that the sample_rows is called."""
+
+        # Setup
+
+        # Run
+        sdv_mock = mock.Mock()
+        sdv_mock.sampler = mock.Mock()
+
+        table_name = 'DEMO'
+        num_rows = 5
+
+        SDV.sample_rows(sdv_mock, table_name, num_rows)
+
+        # Asserts
+        sdv_mock.sampler.sample_rows.assert_called_once_with(
+            'DEMO', 5, sample_children=True, reset_primary_keys=False)
+
     def test_sample_table_not_fitted(self):
         """Check that the sample_table raise an exception when is not fitted."""
 
@@ -50,3 +68,20 @@ class TestSDV(TestCase):
 
         with self.assertRaises(NotFittedError):
             SDV.sample_table(sdv_mock, table_name)
+
+    def test_sample_table_fitted(self):
+        """Check that the sample_table is called."""
+
+        # Setup
+
+        # Run
+        sdv_mock = mock.Mock()
+        sdv_mock.sampler = mock.Mock()
+
+        table_name = 'DEMO'
+
+        SDV.sample_table(sdv_mock, table_name)
+
+        # Asserts
+        sdv_mock.sampler.sample_table.assert_called_once_with(
+            'DEMO', reset_primary_keys=False)
