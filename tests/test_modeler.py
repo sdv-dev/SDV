@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -8,18 +8,11 @@ from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate, VineCopula
 from copulas.univariate import KDEUnivariate
 
-from sdv.data_navigator import CSVDataLoader, DataNavigator, HyperTransformer, Table
+from sdv.data_navigator import DataNavigator, HyperTransformer, Table
 from sdv.modeler import Modeler
 
 
 class TestModeler(TestCase):
-
-    def setUp(self):
-        """Set up test fixtures, if any."""
-        dl = CSVDataLoader('tests/data/meta.json')
-        self.dn = dl.load_data()
-        self.dn.transform_data()
-        self.modeler = Modeler(self.dn)
 
     @patch('sdv.modeler.Modeler._get_model_dict')
     @patch('sdv.modeler.Modeler.impute_table')
@@ -128,7 +121,7 @@ class TestModeler(TestCase):
         # Check
         assert all([result[index].equals(expected_result[index]) for index in range(len(result))])
 
-    def test_get_extensions_no_children(self):
+    def test__get_extensions_no_children(self):
         """_get_extensions return an empty list if children is empty."""
         # Setup
         pk = 'primary_key'
@@ -137,7 +130,9 @@ class TestModeler(TestCase):
         expected_result = []
 
         # Run
-        result = self.modeler._get_extensions(pk, children)
+        modeler_mock = Mock()
+
+        result = Modeler._get_extensions(modeler_mock, pk, children)
 
         # Check
         assert result == expected_result
@@ -361,7 +356,7 @@ class TestModeler(TestCase):
         ])
 
         # Run
-        result = self.modeler.impute_table(table)
+        result = Modeler.impute_table(table)
 
         # Check
         assert result.equals(expected_result)
@@ -393,7 +388,7 @@ class TestModeler(TestCase):
         ])
 
         # Run
-        result = self.modeler.impute_table(table)
+        result = Modeler.impute_table(table)
 
         # Check
         assert result.equals(expected_result)
@@ -416,7 +411,7 @@ class TestModeler(TestCase):
         ])
 
         # Run
-        result = self.modeler.impute_table(table)
+        result = Modeler.impute_table(table)
 
         # Check
         assert result.equals(expected_result)
@@ -427,12 +422,37 @@ class TestModeler(TestCase):
     def test_get_foreign_key(self):
         """get_foreign_key returns the foreign key from a metadata and a primary key."""
         # Setup
-        fields = self.modeler.dn.get_meta_data('DEMO_ORDERS')['fields']
+        fields = {
+            'ORDER_ID': {
+                'name': 'ORDER_ID',
+                'subtype': 'integer',
+                'type': 'number',
+                'uniques': 0,
+                'regex': '^[0-9]{2}$'
+            },
+            'CUSTOMER_ID': {
+                'name': 'CUSTOMER_ID',
+                'ref': {
+                    'field': 'CUSTOMER_ID',
+                    'table': 'DEMO_CUSTOMERS'
+                },
+                'subtype': 'integer',
+                'ype': 'number',
+                'uniques': 0
+            },
+            'ORDER_TOTAL': {
+                'name': 'ORDER_TOTAL',
+                'subtype': 'integer',
+                'type': 'number',
+                'uniques': 0
+            }
+        }
         primary = 'CUSTOMER_ID'
         expected_result = 'CUSTOMER_ID'
 
         # Run
-        result = self.modeler.get_foreign_key(fields, primary)
+        modeler_mock = Mock()
+        result = Modeler.get_foreign_key(modeler_mock, fields, primary)
 
         # Check
         assert result == expected_result
