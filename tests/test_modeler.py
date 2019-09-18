@@ -945,3 +945,55 @@ class TestModeler(TestCase):
 
         # Check
         assert result == expected_result
+
+    def test___init__distribution_no_default_model(self):
+        """Check that __init__ with distribution and model is not the default raise exception"""
+
+        # Run and asserts
+
+        with self.assertRaises(ValueError):
+            Modeler(
+                data_navigator=None,
+                model=VineCopula,
+                distribution=KDEUnivariate
+            )
+
+    def test_RCPA_recursive(self):
+        """Modeler RCPA recursive"""
+
+        # Setup
+        dn_mock = Mock()
+        dn_mock.get_children.side_effect = [
+            ['iteration_1', 'iteration_2'],
+        ]
+
+        # Run
+        modeler_mock = Mock()
+        modeler_mock.dn = dn_mock
+
+        Modeler.RCPA(modeler_mock, 'TABLE_1')
+
+        # Asserts
+        assert modeler_mock.RCPA.call_count == 2
+
+    def test__create_extension_without_num_child_rows(self):
+
+
+        modeler_mock = Mock()
+        
+        foreign = pd.DataFrame({
+            'foreign_key': []
+        })
+
+        transformed_child_table = pd.DataFrame()
+
+        table_info = 'foreign_key', 'child_name'
+
+        result = Modeler._create_extension(
+            modeler_mock,
+            foreign,
+            transformed_child_table,
+            table_info
+        )
+
+        assert result is None

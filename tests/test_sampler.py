@@ -1239,6 +1239,58 @@ class TestSampler(TestCase):
             pd.testing.assert_series_equal(called[0][2], expected[2])
             pd.testing.assert_frame_equal(called[0][3]['DEMO'], expected[3]['DEMO'])
 
+    def test__sample_valid_rows_fitted(self):
+        """sample valid rows with model fitted"""
+
+        # Setup
+        pk_keys_mock = Mock()
+        pk_keys_mock.return_value = 'pk_name', [1, 2, 3, 4]
+
+        synthesized_mock = pd.DataFrame({'foo': [0, 1.1], 'bar': [1, 0]})
+
+        sample_model_mock = Mock()
+        sample_model_mock.return_value = synthesized_mock
+
+        missing_valid_rows_mock = Mock()
+        missing_valid_rows_mock.side_effect = [
+            (True, {}),
+            (False, {})
+        ]
+        missing_valid_rows_mock.return_value = False, {}
+
+        dn_mock = Mock()
+        dn_mock.get_meta_data.return_value = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                },
+                'bar': {
+                    'type': 'numeric'
+                }
+            }
+        }
+
+        tables = {
+            'DEMO': pd.DataFrame({'a_field': [1, 0], 'b_field': [0, 1]})
+        }
+
+        # Run
+        sampler_mock = Mock()
+        sampler_mock._get_primary_keys = pk_keys_mock
+        sampler_mock._sample_model = sample_model_mock
+        sampler_mock._get_missing_valid_rows = missing_valid_rows_mock
+        sampler_mock.modeler.tables = tables
+        sampler_mock.dn = dn_mock
+
+        model_mock = Mock()
+        model_mock.fitted = True
+
+        Sampler._sample_valid_rows(sampler_mock, model_mock, 5, 'DEMO')
+
+        # Asserts
+        assert missing_valid_rows_mock.call_count == 2
+        assert sample_model_mock.call_count == 2
+
 
 if __name__ == '__main__':
     unittest.main()
