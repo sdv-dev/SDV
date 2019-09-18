@@ -171,7 +171,7 @@ bumpversion-major: ## Bump the version the next major skipping the release
 	bumpversion --no-tag major
 
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-CHANGELOG_LINES := $(shell git diff HEAD..stable HISTORY.md 2>/dev/null | wc -l)
+CHANGELOG_LINES := $(shell git diff HEAD..origin/stable HISTORY.md 2>/dev/null | wc -l)
 
 .PHONY: check-release
 check-release: ## Check if the release can be made

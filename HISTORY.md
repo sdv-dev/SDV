@@ -1,8 +1,22 @@
-History
-=======
+# History
 
-0.1.1 - Anonymization of data
------------------------------
+## 0.1.2 - 2019-09-18
+
+### New Features
+
+* Add option to model the amount of child rows - Issue [93](https://github.com/HDI-Project/SDV/issues/93) by @ManuelAlvarezC
+
+### General Improvements
+
+* Add Evaluation Metrics - Issue [52](https://github.com/HDI-Project/SDV/issues/52) by @ManuelAlvarezC
+
+* Ensure unicity on primary keys on different calls - Issue [63](https://github.com/HDI-Project/SDV/issues/63) by @ManuelAlvarezC
+
+### Bugs fixed
+
+* executing readme: 'not supported between instances of 'int' and 'NoneType' - Issue [104](https://github.com/HDI-Project/SDV/issues/104) by @csala
+
+## 0.1.1 - Anonymization of data
 
 * Add warnings when trying to model an unsupported dataset structure. [GH#73](https://github.com/HDI-Project/SDV/issues/73)
 * Add option to anonymize data. [GH#51](https://github.com/HDI-Project/SDV/issues/51)
@@ -16,7 +30,6 @@ History
 * Fix inconsistent dependencies and add upper bound to dependencies. [GH#96](https://github.com/HDI-Project/SDV/issues/96)
 * Fix error when merging extension in `Modeler.CPA` when running examples. [GH#86](https://github.com/HDI-Project/SDV/issues/86)
 
-0.1.0 - First Release
----------------------
+## 0.1.0 - First Release
 
 * First release on PyPI.

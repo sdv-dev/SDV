@@ -15,11 +15,12 @@ with open('HISTORY.md') as history_file:
 
 
 install_requires = [
-    'exrex>=0.9.4, <0.11',
-    'numpy>=1.15.4, <1.17',
-    'pandas>=0.23.4, < 0.25',
-    'copulas>=0.2.1, <0.3',
-    'rdt>=0.1.2, <0.2'
+    'exrex>=0.9.4,<0.11',
+    'numpy>=1.15.4,<1.17',
+    'pandas>=0.23.4,<0.25',
+    'copulas>=0.2.3,<0.3',
+    'rdt>=0.1.2,<0.2',
+    'docutils<0.15,>=0.10',
 ]
 
 
@@ -44,7 +45,6 @@ development_requires = [
     'm2r>=0.2.0',
     'Sphinx>=1.7.1',
     'sphinx_rtd_theme>=0.2.4',
-    'recommonmark>=0.4.0',
 
     # style check
     'flake8>=3.5.0',
@@ -94,6 +94,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/HDI-Project/sdv',
-    version='0.1.1',
+    version='0.1.2-dev',
     zip_safe=False,
 )

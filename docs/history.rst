@@ -1,1 +1,1 @@
-.. include:: ../HISTORY.md
+.. mdinclude:: ../HISTORY.md
