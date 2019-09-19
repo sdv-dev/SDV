@@ -977,10 +977,13 @@ class TestModeler(TestCase):
         assert modeler_mock.RCPA.call_count == 2
 
     def test__create_extension_without_num_child_rows(self):
+        """Modeler _craete_extension with no num_child_rows"""
 
+        # Setup
 
+        # Run
         modeler_mock = Mock()
-        
+
         foreign = pd.DataFrame({
             'foreign_key': []
         })
@@ -996,4 +999,5 @@ class TestModeler(TestCase):
             table_info
         )
 
+        # Asserts
         assert result is None

@@ -818,7 +818,7 @@ class TestSampler(TestCase):
         exp_called_synthesized.sort_index(axis=1, inplace=True)
 
         assert fill_text_mock.call_count == 1
-        assert fill_text_labels == exp_called_labels
+        assert sorted(fill_text_labels) == sorted(exp_called_labels)
         assert fill_text_table_name == 'DEMO'
 
         pd.testing.assert_frame_equal(fill_text_data_frame, exp_called_synthesized)
