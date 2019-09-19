@@ -1,4 +1,5 @@
 import unittest
+from operator import itemgetter
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
@@ -825,6 +826,12 @@ class TestSampler(TestCase):
 
         rt_args, rt_kwargs = ht_mock.reverse_transform_table.call_args
         rt_arg_text_filled, rt_arg_meta = rt_args
+
+        rt_arg_meta['fields'] = sorted(rt_arg_meta['fields'], key=itemgetter('name'))
+        exp_called_reverse_meta['fields'] = sorted(
+            exp_called_reverse_meta['fields'],
+            key=itemgetter('name')
+        )
 
         pd.testing.assert_frame_equal(rt_arg_text_filled, pd.DataFrame(index=[0, 1, 2]))
         assert rt_arg_meta == exp_called_reverse_meta
