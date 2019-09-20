@@ -64,7 +64,7 @@ class Sampler:
         """Fill in the column values for every non numeric column that isn't the primary key.
 
         Args:
-            row (pandas.Series): row to fill text columns.
+            row (pandas.DataFrame): Table to fill text columns.
             labels (list): Column names.
             table_name (str): Name of the table.
 
