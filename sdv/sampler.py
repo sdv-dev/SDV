@@ -60,21 +60,25 @@ class Sampler:
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
         return covariance
 
-    def _fill_text_columns(self, row, labels, table_name):
+    def _fill_text_columns(self, data, labels, table_name):
         """Fill in the column values for every non numeric column that isn't the primary key.
 
         Args:
-            row (pandas.DataFrame): Table to fill text columns.
-            labels (list): Column names.
-            table_name (str): Name of the table.
+            data (pandas.DataFrame):
+                Table to fill text columns.
+            labels (list):
+                Column names.
+            table_name (str):
+                Name of the table.
 
         Returns:
-            pd.Series: Series with text values filled.
+            pandas.DataFrame:
+                Series with text values filled.
         """
         fields = self.dn.tables[table_name].meta['fields']
         for label in labels:
             field = fields[label]
-            row_columns = list(row)
+            row_columns = list(data)
             if field['type'] == 'id' and field['name'] not in row_columns:
                 # check foreign key
                 ref = field.get('ref')
@@ -84,18 +88,18 @@ class Sampler:
                     parent_row = self.sample_rows(parent_name, 1)
                     # grab value of foreign key
                     val = parent_row[ref['field']]
-                    row.loc[:, field['name']] = val
+                    data.loc[:, field['name']] = val
                 else:
                     # generate fake id
                     regex = field['regex']
-                    row.loc[:, field['name']] = exrex.getone(regex)
+                    data.loc[:, field['name']] = exrex.getone(regex)
 
             elif field['type'] == 'text':
                 # generate fake text
                 regex = field['regex']
-                row.loc[:, field['name']] = exrex.getone(regex)
+                data.loc[:, field['name']] = exrex.getone(regex)
 
-        return row
+        return data
 
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
