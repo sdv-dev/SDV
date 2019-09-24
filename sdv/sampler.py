@@ -73,7 +73,7 @@ class Sampler:
 
         Returns:
             pandas.DataFrame:
-                Series with text values filled.
+                Table with text columns filled.
         """
         fields = self.dn.tables[table_name].meta['fields']
         for label in labels:
