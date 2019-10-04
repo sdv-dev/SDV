@@ -147,11 +147,62 @@ class DataNavigator:
                 # one with transformed data
                 self.tables[table_name] = Table(ht_table, table.meta)
 
+    @staticmethod
+    def _get_transformer_fields(fields):
+        transformer_fields = dict()
+
+        for field in fields:
+            ftype = field['type']
+
+            if ftype == 'categorical':
+                transformer_fields[field['name']] = {
+                    'class': 'CategoricalTransformer',
+                    'kwargs': {
+                        'subtype': field['subtype'],
+                        'anonymize': field.get('pii', False)
+                    }
+                }
+
+            elif ftype == 'number':
+                transformer_fields[field['name']] = {
+                    'class': 'NumericalTransformer',
+                    'kwargs': {
+                        'nan': field.get('nan', 'mean'),
+                        'null_column': field.get('null_column', True)
+                    }
+                }
+
+            elif ftype == 'datetime':
+                transformer_fields[field['name']] = {
+                    'class': 'DateTimeTransformer',
+                    'kwargs': {
+                        'nan': field.get('nan', 'mean'),
+                        'null_column': field.get('null_column', True)
+                    }
+                }
+
+        return transformer_fields
+
+    @classmethod
+    def _get_transformer_dict(cls, meta):
+        transformer_dict = dict()
+
+        for table in meta['tables']:
+            if table['use']:
+                transformer_dict[table['name']] = cls._get_transformer_fields(table['fields'])
+
+        return transformer_dict
+
     def __init__(self, meta_filename, meta, tables, missing=None):
         self.meta = meta
         self.tables = tables
-        self.ht = HyperTransformer(meta_filename, missing=missing)
-        self._anonymize_data()
+
+        transformer_dict = self._get_transformer_dict(self.meta)
+        self.ht_list = {k: HyperTransformer(v) for k, v in transformer_dict.items()}
+
+        # self.ht = HyperTransformer(meta_filename, missing=missing)
+        # self._anonymize_data()
+
         self.transformed_data = None
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
 
@@ -208,7 +259,12 @@ class DataNavigator:
         Returns:
             dict: dict with the transformed dataframes.
         """
-        transformers = transformers or self.DEFAULT_TRANSFORMERS
-        self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
+
+        self.transformed_data = {
+            table_name: transformer.fit_transform(self.tables[table_name].data)
+            for table_name, transformer in self.ht_list.items()
+        }
+
+        # self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
 
         return self.transformed_data

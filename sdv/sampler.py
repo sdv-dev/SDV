@@ -119,10 +119,13 @@ class Sampler:
 
         labels = list(orig_meta['fields'].keys())
 
+        """
         reverse_columns = [
             transformer[1] for transformer in self.dn.ht.transformers
             if table_name in transformer
         ]
+        """
+        # new_reverse_columns = [column for column in self.dn.ht_list[table_name]]
 
         text_filled = self._fill_text_columns(synthesized, labels, table_name)
 
@@ -140,7 +143,8 @@ class Sampler:
         }
 
         # reverse transform data
-        reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], meta)
+        # reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], meta)
+        reversed_data = self.dn.ht_list[table_name].reverse_transform(text_filled)
 
         synthesized.update(reversed_data)
 
