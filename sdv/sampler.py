@@ -2,7 +2,6 @@ import exrex
 import numpy as np
 import pandas as pd
 from copulas import get_qualified_name
-from rdt.transformers.positive_number import PositiveNumberTransformer
 
 GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
 
@@ -350,12 +349,10 @@ class Sampler:
             'name': 'std',
             'type': 'number'
         }
-        transformer = PositiveNumberTransformer(metadata)
 
         for distribution in distribs.values():
             distribution.update(distribution_kwargs)
-            df = pd.DataFrame({'std': [distribution['std']]})
-            distribution['std'] = transformer.transform(df).loc[0, 'std']
+            distribution['std'] = np.exp(distribution['std'])
 
         covariance = model_parameters['covariance']
         covariance = self._prepare_sampled_covariance(covariance)
