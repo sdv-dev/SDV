@@ -75,7 +75,7 @@ class SDV:
             table_name, num_rows, sample_children=sample_children,
             reset_primary_keys=reset_primary_keys)
 
-    def sample_table(self, table_name, reset_primary_keys=False):
+    def sample_table(self, table_name, num_rows=None, reset_primary_keys=False):
         """Samples the given table to its original size.
 
         Args:
@@ -85,7 +85,8 @@ class SDV:
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_table(table_name, reset_primary_keys=reset_primary_keys)
+        return self.sampler.sample_table(table_name, num_rows,
+                                         reset_primary_keys=reset_primary_keys)
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Sample the whole dataset.

@@ -38,6 +38,30 @@ class CSVDataLoader(DataLoader):
         table_meta['fields'] = new_fields
         return table_meta
 
+    def _get_dtypes(self, table_meta):
+        dtypes = dict()
+        for name, field in table_meta['fields'].items():
+            field_type = field['type']
+            if field_type == 'categorical':
+                field_subtype = field.get('subtype', 'categorical')
+                if field_subtype == 'categorical':
+                    dtypes[name] = 'str'
+                elif field_subtype == 'bool':
+                    dtypes[name] = 'bool'
+            elif field_type == 'number':
+                field_subtype = field.get('subtype', 'float')
+                if field_subtype == 'integer':
+                    dtypes[name] = 'int'
+                elif field_subtype == 'float':
+                    dtypes[name] = 'float'
+
+        return dtypes
+
+    def _parse_datetimes(self, data, table_meta):
+        for name, field in table_meta['fields'].items():
+            if field['type'] == 'datetime':
+                data[name] = pd.to_datetime(data[name], format=field['format'])
+
     def load_data(self):
         """Load data from csvs and returns DataNavigator."""
         meta = copy.deepcopy(self.meta)
@@ -48,8 +72,10 @@ class CSVDataLoader(DataLoader):
             if table_meta['use']:
                 formatted_table_meta = self._format_table_meta(table_meta)
                 relative_path = os.path.join(prefix, meta['path'], table_meta['path'])
-                data_table = pd.read_csv(relative_path)
-                tables[table_meta['name']] = Table(data_table, formatted_table_meta)
+                dtypes = self._get_dtypes(table_meta)
+                data = pd.read_csv(relative_path, dtype=dtypes)
+                self._parse_datetimes(data, table_meta)
+                tables[table_meta['name']] = Table(data, formatted_table_meta)
 
         return DataNavigator(self.meta_filename, self.meta, tables)
 
@@ -135,73 +161,31 @@ class DataNavigator:
 
         return (child_map, parent_map, foreign_keys)
 
-    def _anonymize_data(self):
-        """Replace data with pii with anonymized data from HyperTransformer."""
-        for table_name in self.tables:
-            table = self.tables[table_name]
-            ht_table, ht_meta = self.ht.table_dict[table_name]
-
-            pii_fields = self.ht._get_pii_fields(ht_meta)
-            if pii_fields:
-                # Table is a namedtuple, which is immutable, so instantiate a new
-                # one with transformed data
-                self.tables[table_name] = Table(ht_table, table.meta)
-
     @staticmethod
-    def _get_transformer_fields(fields):
-        transformer_fields = dict()
+    def _get_pii_fields(table):
+        pii_fields = dict()
 
-        for field in fields:
-            ftype = field['type']
+        for field in table['fields']:
+            if field['type'] == 'categorical' and field.get('pii', False):
+                pii_fields[field['name']] = field['pii_category']
 
-            if ftype == 'categorical':
-                transformer_fields[field['name']] = {
-                    'class': 'CategoricalTransformer',
-                    'kwargs': {
-                        'subtype': field['subtype'],
-                        'anonymize': field.get('pii', False)
-                    }
-                }
+        return pii_fields
 
-            elif ftype == 'number':
-                transformer_fields[field['name']] = {
-                    'class': 'NumericalTransformer',
-                    'kwargs': {
-                        'nan': field.get('nan', 'mean'),
-                        'null_column': field.get('null_column', True)
-                    }
-                }
+    def _get_hyper_transformers(self):
+        hyper_transformers = dict()
 
-            elif ftype == 'datetime':
-                transformer_fields[field['name']] = {
-                    'class': 'DateTimeTransformer',
-                    'kwargs': {
-                        'nan': field.get('nan', 'mean'),
-                        'null_column': field.get('null_column', True)
-                    }
-                }
-
-        return transformer_fields
-
-    @classmethod
-    def _get_transformer_dict(cls, meta):
-        transformer_dict = dict()
-
-        for table in meta['tables']:
+        for table in self.meta['tables']:
             if table['use']:
-                transformer_dict[table['name']] = cls._get_transformer_fields(table['fields'])
+                pii_fields = self._get_pii_fields(table)
+                hyper_transformers[table['name']] = HyperTransformer(anonymize=pii_fields)
 
-        return transformer_dict
+        return hyper_transformers
 
     def __init__(self, meta_filename, meta, tables, missing=None):
         self.meta = meta
         self.tables = tables
 
-        transformer_dict = self._get_transformer_dict(self.meta)
-        self.ht_list = {k: HyperTransformer(v) for k, v in transformer_dict.items()}
-
-        # self.ht = HyperTransformer(meta_filename, missing=missing)
-        # self._anonymize_data()
+        self.hyper_transformers = self._get_hyper_transformers()
 
         self.transformed_data = None
         self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
@@ -239,6 +223,12 @@ class DataNavigator:
         """
         return self.tables[table_name].data
 
+    def get_tables(self, tables=None):
+        return {
+            table: self.get_data(table)
+            for table in tables or self.tables.keys()
+        }
+
     def get_meta_data(self, table_name):
         """Return meta data for a table.
 
@@ -262,9 +252,7 @@ class DataNavigator:
 
         self.transformed_data = {
             table_name: transformer.fit_transform(self.tables[table_name].data)
-            for table_name, transformer in self.ht_list.items()
+            for table_name, transformer in self.hyper_transformers.items()
         }
-
-        # self.transformed_data = self.ht.fit_transform(transformer_list=transformers)
 
         return self.transformed_data

@@ -3,8 +3,8 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from copulas import EPSILON, get_qualified_name
-from copulas.multivariate import GaussianMultivariate, TreeTypes
+from copulas import get_qualified_name
+from copulas.multivariate import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 
 # Configure logger
@@ -53,9 +53,6 @@ class Modeler:
         if not model_kwargs:
             if model == DEFAULT_MODEL:
                 model_kwargs = {'distribution': distribution}
-
-            else:
-                model_kwargs = {'vine_type': TreeTypes.REGULAR}
 
         self.model_kwargs = model_kwargs
 
@@ -186,39 +183,6 @@ class Modeler:
                 foreign = field['name']
                 return foreign
 
-    @staticmethod
-    def impute_table(table):
-        """Fill in any NaN values in a table.
-
-        Args:
-            table(pandas.DataFrame): Table to fill NaN values
-
-        Returns:
-            pandas.DataFrame
-        """
-        values = {}
-
-        for column in table.loc[:, table.isnull().any()].columns:
-            if table[column].dtype in [np.float64, np.int64]:
-                value = table[column].mean()
-
-            if not pd.isnull(value or np.nan):
-                values[column] = value
-            else:
-                values[column] = 0
-
-        table = table.fillna(values)
-
-        # There is an issue when using KDEUnivariate modeler in tables with childs
-        # As the extension columns would have constant values, that make it crash
-        # This is a temporary fix while https://github.com/DAI-Lab/Copulas/issues/82 is solved.
-        first_index = table.index[0]
-        constant_columns = table.loc[:, (table == table.loc[first_index]).all()].columns
-        for column in constant_columns:
-            table.loc[first_index, column] = table.loc[first_index, column] + EPSILON
-
-        return table
-
     def fit_model(self, data):
         """Returns an instance of self.model fitted with the given data.
 
@@ -258,8 +222,7 @@ class Modeler:
         num_child_rows = len(child_rows)
 
         if num_child_rows:
-            clean_df = self.impute_table(child_rows)
-            extension = self._get_model_dict(clean_df)
+            extension = self._get_model_dict(child_rows)
             extension['child_rows'] = num_child_rows
 
             extension = pd.Series(extension)
@@ -325,7 +288,7 @@ class Modeler:
 
         return extensions
 
-    def CPA(self, table):
+    def cpa(self, table_name):
         """Run CPA algorithm on a table.
 
         Conditional Parameter Aggregation. It will take the table's children and generate
@@ -341,27 +304,22 @@ class Modeler:
         - They weren't transformed, and therefore are not present on `extended_table`
 
         Args:
-            table (string): name of table.
+            table_name (string): name of table.
 
         Returns:
             None
         """
-        logger.info('Modeling %s', table)
-        # Grab table
-        tables = self.dn.tables
-        # grab table from self.tables if it is not a leaf
-        # o.w. grab from data
-        children = self.dn.get_children(table)
-        table_meta = tables[table].meta
-        # get primary key
-        pk = table_meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
+        logger.info('Modeling %s', table_name)
 
-        # start with transformed table
-        extended_table = self.dn.transformed_data[table]
+        table = self.dn.tables[table_name]
+        children = self.dn.get_children(table_name)
+        pk = table.meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
+
+        extended_table = self.dn.transformed_data[table_name]
         extensions = self._get_extensions(pk, children)
 
         if extensions:
-            original_pk = tables[table].data[pk]
+            original_pk = table.data[pk]
             transformed_pk = None
 
             if pk in extended_table:
@@ -379,9 +337,9 @@ class Modeler:
             else:
                 extended_table = extended_table.drop(pk, axis=1)
 
-        self.tables[table] = extended_table
+        self.tables[table_name] = extended_table
 
-    def RCPA(self, table):
+    def rcpa(self, table):
         """Recursively calls CPA starting at table.
 
         Args:
@@ -390,18 +348,20 @@ class Modeler:
         children = self.dn.get_children(table)
 
         for child in children:
-            self.RCPA(child)
+            self.rcpa(child)
 
-        self.CPA(table)
+        self.cpa(table)
 
     def model_database(self):
         """Use RCPA and store model for database."""
         for table in self.dn.tables:
             if not self.dn.get_parents(table):
-                self.RCPA(table)
+                self.rcpa(table)
 
-        for table in self.tables:
-            clean_table = self.impute_table(self.tables[table])
-            self.models[table] = self.fit_model(clean_table)
+        for name, data in self.tables.items():
+            for column in data:
+                data[column] = data[column].fillna(data[column].mean())
+
+            self.models[name] = self.fit_model(data)
 
         logger.info('Modeling Complete')

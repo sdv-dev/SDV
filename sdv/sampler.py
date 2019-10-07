@@ -75,10 +75,10 @@ class Sampler:
                 Table with text columns filled.
         """
         fields = self.dn.tables[table_name].meta['fields']
-        for label in labels:
-            field = fields[label]
+        for name in labels:
+            field = fields[name]
             row_columns = list(data)
-            if field['type'] == 'id' and field['name'] not in row_columns:
+            if field['type'] == 'id' and name not in row_columns:
                 # check foreign key
                 ref = field.get('ref')
                 if ref:
@@ -87,16 +87,16 @@ class Sampler:
                     parent_row = self.sample_rows(parent_name, 1)
                     # grab value of foreign key
                     val = parent_row[ref['field']]
-                    data.loc[:, field['name']] = val
+                    data.loc[:, name] = val
                 else:
                     # generate fake id
                     regex = field['regex']
-                    data.loc[:, field['name']] = exrex.getone(regex)
+                    data.loc[:, name] = exrex.getone(regex)
 
             elif field['type'] == 'text':
                 # generate fake text
                 regex = field['regex']
-                data.loc[:, field['name']] = exrex.getone(regex)
+                data.loc[:, name] = exrex.getone(regex)
 
         return data
 
@@ -116,44 +116,13 @@ class Sampler:
             pandas.DataFrame: Formatted synthesized data.
         """
         orig_meta = self.dn.get_meta_data(table_name)
-
         labels = list(orig_meta['fields'].keys())
-
-        """
-        reverse_columns = [
-            transformer[1] for transformer in self.dn.ht.transformers
-            if table_name in transformer
-        ]
-        """
-        # new_reverse_columns = [column for column in self.dn.ht_list[table_name]]
-
         text_filled = self._fill_text_columns(synthesized, labels, table_name)
 
-        # This is here only because RDT expects a different meta format
-        # RDT should be fixed to work with the new format.
-        fields = list()
-        for name, values in orig_meta['fields'].items():
-            field = values.copy()
-            field['name'] = name
-            fields.append(field)
+        hyper_transformer = self.dn.hyper_transformers[table_name]
+        reversed_data = hyper_transformer.reverse_transform(text_filled)
 
-        meta = {
-            'fields': fields,
-            'name': table_name
-        }
-
-        # reverse transform data
-        # reversed_data = self.dn.ht.reverse_transform_table(text_filled[reverse_columns], meta)
-        reversed_data = self.dn.ht_list[table_name].reverse_transform(text_filled)
-
-        synthesized.update(reversed_data)
-
-        for name, field in orig_meta['fields'].items():
-            subtype = field.get('subtype')
-            if subtype == 'integer':
-                synthesized[name] = synthesized[name].astype(int)
-
-        return synthesized[labels]
+        return reversed_data[labels]
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -349,11 +318,6 @@ class Sampler:
         model_parameters['distribution'] = distribution_name
 
         distribs = model_parameters['distribs']
-        metadata = {
-            'name': 'std',
-            'type': 'number'
-        }
-
         for distribution in distribs.values():
             distribution.update(distribution_kwargs)
             distribution['std'] = np.exp(distribution['std'])
@@ -395,119 +359,43 @@ class Sampler:
 
         return self.modeler.model.from_dict(model_parameters)
 
-    @staticmethod
-    def _get_missing_valid_rows(synthesized, drop_indices, valid_rows, num_rows):
-        """
+    def _sample_rows(self, model, num_rows, table_name):
+        """Sample `num_rows` from `model`.
 
         Args:
-            synthesized (pandas.DataFrame)
+            model (copula.multivariate.base):
+                Fitted model.
+            num_rows (int):
+                Number of rows to sample.
+            table_name (str):
+                Name of the table to sample from.
 
         Returns:
-            tuple[int, pandas.DataFrame]: Amount of missing values and actual valid rows
+            pandas.DataFrame:
+                Sampled rows, shape (, num_rows)
         """
-        valid_rows = pd.concat([valid_rows, synthesized[~drop_indices].copy()])
-        valid_rows = valid_rows.reset_index(drop=True)
+        pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
 
-        if len(valid_rows) > num_rows:
-            valid_rows = valid_rows.iloc[:num_rows]
+        columns = self.modeler.tables[table_name].columns
+        sampled = model.sample(num_rows)
+        if pk_name:
+            sampled[pk_name] = pk_values
 
-        missing_rows = num_rows - valid_rows.shape[0]
-
-        return missing_rows, valid_rows
-
-    @staticmethod
-    def _sample_model(model, num_rows, columns):
-        """Sample from model and format into pandas.DataFrame.
-
-        Args:
-            model(copula.multivariate.base): Fitted model.
-            num_rows(int): Number of rows to sample.
-            columns(Iterable): Column names for the sampled rows.
-
-        Returns:
-            pd.DataFrame: Sampled rows.
-
-        """
-        if get_qualified_name(model) == 'copulas.multivariate.vine.VineCopula':
-            synthesized = [model.sample(num_rows).tolist() for row in range(num_rows)]
-
-        else:
-            synthesized = model.sample(num_rows)
-
-        return pd.DataFrame(synthesized, columns=columns)
-
-    def _sample_valid_rows(self, model, num_rows, table_name):
-        """Sample using `model` and discard invalid values until having `num_rows`.
-
-        Args:
-            model (copula.multivariate.base): Fitted model.
-            num_rows (int): Number of rows to sample.
-            table_name (str): name of table to synthesize.
-
-        Returns:
-            pandas.DataFrame: Sampled rows, shape (, num_rows)
-        """
-
-        if model and model.fitted:
-            pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
-
-            columns = self.modeler.tables[table_name].columns
-            synthesized = self._sample_model(model, num_rows, columns)
-            valid_rows = pd.DataFrame(columns=columns)
-            drop_indices = pd.Series(False, index=synthesized.index)
-
-            categorical_columns = []
-            # table_metadata = self._get_table_meta(self.dn.meta, table_name)
-            table_metadata = self.dn.get_meta_data(table_name)
-
-            for column_name, field in table_metadata['fields'].items():
-                if field['type'] == 'categorical':
-                    categorical_columns.append(column_name)
-                    column = synthesized[column_name]
-                    filtered_values = ((column < 0) | (column > 1))
-
-                    if filtered_values.any():
-                        drop_indices |= filtered_values
-
-            missing_rows, valid_rows = self._get_missing_valid_rows(
-                synthesized, drop_indices, valid_rows, num_rows)
-
-            while missing_rows:
-                synthesized = self._sample_model(model, missing_rows, columns)
-                drop_indices = pd.Series(False, index=synthesized.index)
-
-                for column_name in categorical_columns:
-                    column = synthesized[column_name]
-                    filtered_values = ((column < 0) | (column > 1))
-
-                    if filtered_values.any():
-                        drop_indices |= filtered_values
-
-                missing_rows, valid_rows = self._get_missing_valid_rows(
-                    synthesized, drop_indices, valid_rows, num_rows)
-
-            if pk_name:
-                valid_rows[pk_name] = pk_values
-
-            return valid_rows
-
-        else:
-            parents = bool(self.dn.get_parents(table_name))
-            raise ValueError(MODEL_ERROR_MESSAGES[parents])
+        return sampled
 
     def _sample_children(self, table_name, sampled):
         table_rows = sampled[table_name]
         for child_name in self.dn.get_children(table_name):
             for _, row in table_rows.iterrows():
-                self._sample(child_name, table_name, row, sampled)
+                self._sample_table(child_name, table_name, row, sampled)
 
-    def _sample(self, table_name, parent_name, parent_row, sampled):
+    def _sample_table(self, table_name, parent_name, parent_row, sampled):
         extension = self._get_extension(parent_row, table_name, parent_name)
 
         model = self._get_model(extension)
         num_rows = max(round(extension['child_rows']), 0)
 
-        sampled_rows = self._sample_valid_rows(model, num_rows, table_name)
+        sampled_rows = self._sample_rows(model, num_rows, table_name)
 
         parent_id, foreign_key = self.dn.foreign_keys[(table_name, parent_name)]
         sampled_rows[foreign_key] = parent_row[parent_id]
@@ -528,7 +416,7 @@ class Sampler:
 
         model = self.modeler.models[table_name]
 
-        sampled_rows = self._sample_valid_rows(model, num_rows, table_name)
+        sampled_rows = self._sample_rows(model, num_rows, table_name)
 
         parents = self.dn.get_parents(table_name)
         if parents:
@@ -553,8 +441,8 @@ class Sampler:
         else:
             return self._transform_synthesized_rows(sampled_rows, table_name)
 
-    def sample_table(self, table_name, reset_primary_keys=False):
-        """Sample a table equal to the size of the original.
+    def sample_table(self, table_name, num_rows=None, reset_primary_keys=False):
+        """Sample a table.
 
         Args:
             table_name(str): Name of table to synthesize.
@@ -563,7 +451,9 @@ class Sampler:
         Returns:
             pandas.DataFrame: Synthesized table.
         """
-        num_rows = self.dn.tables[table_name].data.shape[0]
+        if num_rows is None:
+            num_rows = self.dn.tables[table_name].data.shape[0]
+
         sampled_data = self.sample_rows(
             table_name,
             num_rows,
