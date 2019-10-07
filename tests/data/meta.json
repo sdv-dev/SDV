@@ -12,7 +12,6 @@
                 },
                 {
                     "name": "CUST_POSTAL_CODE",
-                    "subtype": "integer",
                     "type": "categorical",
                     "uniques": 0
                 },

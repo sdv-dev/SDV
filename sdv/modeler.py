@@ -176,8 +176,7 @@ class Modeler:
         Return:
             str: Name of foreign key in current table.
         """
-        for field_key in fields:
-            field = fields[field_key]
+        for field in fields:
             ref = field.get('ref')
             if ref and ref['field'] == primary:
                 foreign = field['name']
@@ -251,8 +250,8 @@ class Modeler:
 
         # find children that ref primary key
         for child in children:
-            child_table = self.dn.tables[child].data
-            child_meta = self.dn.tables[child].meta
+            child_table = self.dn.tables[child]
+            child_meta = self.dn.get_table_meta(child)
 
             fields = child_meta['fields']
             fk = self.get_foreign_key(fields, pk)
@@ -313,13 +312,13 @@ class Modeler:
 
         table = self.dn.tables[table_name]
         children = self.dn.get_children(table_name)
-        pk = table.meta.get('primary_key', self.DEFAULT_PRIMARY_KEY)
+        pk = self.dn.get_table_meta(table_name).get('primary_key', self.DEFAULT_PRIMARY_KEY)
 
         extended_table = self.dn.transformed_data[table_name]
         extensions = self._get_extensions(pk, children)
 
         if extensions:
-            original_pk = table.data[pk]
+            original_pk = table[pk]
             transformed_pk = None
 
             if pk in extended_table:
@@ -352,6 +351,19 @@ class Modeler:
 
         self.cpa(table)
 
+    @staticmethod
+    def _impute(data):
+        for column in data:
+            column_data = data[column]
+            if column_data.dtype in (np.int, np.float):
+                fill_value = column_data.mean()
+            else:
+                fill_value = column_data.mode()[0]
+
+            data[column] = data[column].fillna(fill_value)
+
+        return data
+
     def model_database(self):
         """Use RCPA and store model for database."""
         for table in self.dn.tables:
@@ -359,9 +371,7 @@ class Modeler:
                 self.rcpa(table)
 
         for name, data in self.tables.items():
-            for column in data:
-                data[column] = data[column].fillna(data[column].mean())
-
+            data = self._impute(data)
             self.models[name] = self.fit_model(data)
 
         logger.info('Modeling Complete')

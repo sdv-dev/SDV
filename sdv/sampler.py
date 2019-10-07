@@ -59,13 +59,13 @@ class Sampler:
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
         return covariance
 
-    def _fill_text_columns(self, data, labels, table_name):
+    def _fill_text_columns(self, data, columns, table_name):
         """Fill in the column values for every non numeric column that isn't the primary key.
 
         Args:
             data (pandas.DataFrame):
                 Table to fill text columns.
-            labels (list):
+            columns (list):
                 Column names.
             table_name (str):
                 Name of the table.
@@ -74,9 +74,8 @@ class Sampler:
             pandas.DataFrame:
                 Table with text columns filled.
         """
-        fields = self.dn.tables[table_name].meta['fields']
-        for name in labels:
-            field = fields[name]
+        for name in columns:
+            field = self.dn.get_column_meta(table_name, name)
             row_columns = list(data)
             if field['type'] == 'id' and name not in row_columns:
                 # check foreign key
@@ -115,14 +114,13 @@ class Sampler:
         Return:
             pandas.DataFrame: Formatted synthesized data.
         """
-        orig_meta = self.dn.get_meta_data(table_name)
-        labels = list(orig_meta['fields'].keys())
-        text_filled = self._fill_text_columns(synthesized, labels, table_name)
+        columns = self.dn.get_table_columns(table_name)
+        text_filled = self._fill_text_columns(synthesized, columns, table_name)
 
         hyper_transformer = self.dn.hyper_transformers[table_name]
         reversed_data = hyper_transformer.reverse_transform(text_filled)
 
-        return reversed_data[labels]
+        return reversed_data[columns]
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -139,12 +137,12 @@ class Sampler:
             ValueError: If there aren't enough remaining values to generate.
 
         """
-        meta = self.dn.get_meta_data(table_name)
+        meta = self.dn.get_table_meta(table_name)
         primary_key = meta.get('primary_key')
         primary_key_values = None
 
         if primary_key:
-            node = meta['fields'][primary_key]
+            node = self.dn.get_column_meta(table_name, primary_key)
             regex = node['regex']
 
             generator = self.primary_key.get(table_name)

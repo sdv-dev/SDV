@@ -3,11 +3,9 @@ import json
 import os
 from collections import namedtuple
 
+import numpy as np
 import pandas as pd
 from rdt.hyper_transformer import HyperTransformer
-
-"""NamedTuple that represents a table object."""
-Table = namedtuple('Table', 'data meta')
 
 
 class DataLoader:
@@ -29,6 +27,7 @@ class CSVDataLoader(DataLoader):
 
     def _format_table_meta(self, table_meta):
         """Format table meta to turn fields into dictionary."""
+        table_meta = copy.deepcopy(table_meta)
         new_fields = {}
 
         for field in table_meta['fields']:
@@ -39,43 +38,67 @@ class CSVDataLoader(DataLoader):
         return table_meta
 
     def _get_dtypes(self, table_meta):
-        dtypes = dict()
-        for name, field in table_meta['fields'].items():
+        parse_dtypes = dict()
+        dtypes = list()
+        for field in table_meta['fields']:
+            name = field['name']
             field_type = field['type']
             if field_type == 'categorical':
                 field_subtype = field.get('subtype', 'categorical')
                 if field_subtype == 'categorical':
-                    dtypes[name] = 'str'
+                    parse_dtypes[name] = str
+                    dtypes.append(np.object)
                 elif field_subtype == 'bool':
-                    dtypes[name] = 'bool'
+                    dtypes.append(bool)
+                else:
+                    raise ValueError(
+                        'Invalid {} subtype: {}'.format(
+                            field_type,
+                            field_subtype
+                        )
+                    )
             elif field_type == 'number':
                 field_subtype = field.get('subtype', 'float')
                 if field_subtype == 'integer':
-                    dtypes[name] = 'int'
+                    parse_dtypes[name] = 'float'
+                    dtypes.append(int)
                 elif field_subtype == 'float':
-                    dtypes[name] = 'float'
+                    parse_dtypes[name] = 'float'
+                    dtypes.append(float)
+                else:
+                    raise ValueError(
+                        'Invalid {} subtype: {}'.format(
+                            field_type,
+                            field_subtype
+                        )
+                    )
+            elif field_type == 'datetime':
+                dtypes.append(np.datetime64)
 
-        return dtypes
+        return parse_dtypes, dtypes
 
-    def _parse_datetimes(self, data, table_meta):
-        for name, field in table_meta['fields'].items():
-            if field['type'] == 'datetime':
+    def _parse_dtypes(self, data, table_meta):
+        for field in table_meta['fields']:
+            name = field['name']
+            field_type = field['type']
+            if field_type == 'datetime':
                 data[name] = pd.to_datetime(data[name], format=field['format'])
+            elif field_type == 'number' and field.get('subtype') == 'integer':
+                data[name] = data[name].dropna().astype(int)
 
     def load_data(self):
         """Load data from csvs and returns DataNavigator."""
-        meta = copy.deepcopy(self.meta)
         tables = {}
         prefix = os.path.dirname(self.meta_filename)
 
-        for table_meta in meta['tables']:
+        for table_meta in self.meta['tables']:
             if table_meta['use']:
-                formatted_table_meta = self._format_table_meta(table_meta)
-                relative_path = os.path.join(prefix, meta['path'], table_meta['path'])
-                dtypes = self._get_dtypes(table_meta)
-                data = pd.read_csv(relative_path, dtype=dtypes)
-                self._parse_datetimes(data, table_meta)
-                tables[table_meta['name']] = Table(data, formatted_table_meta)
+                relative_path = os.path.join(prefix, self.meta['path'], table_meta['path'])
+                parse_dtypes, dtypes = self._get_dtypes(table_meta)
+                data = pd.read_csv(relative_path, dtype=parse_dtypes)
+                self._parse_dtypes(data, table_meta)
+                table_meta['dtypes'] = dtypes
+                tables[table_meta['name']] = data
 
         return DataNavigator(self.meta_filename, self.meta, tables)
 
@@ -95,8 +118,7 @@ class DataNavigator:
     Args:
         meta_filename (str): Path to the metadata file.
         meta (dict): Metadata for the dataset.
-        tables (dict[str, Table]): Mapping of table names to their values and metadata.
-        missing (bool): Wheter or not handle missing values when transforming data.
+        tables (dict[str, pd.DataFrame]): Mapping of table names to their values and metadata.
 
     """
 
@@ -126,11 +148,8 @@ class DataNavigator:
 
         return mapping
 
-    def _get_relationships(self, tables):
+    def _get_relationships(self):
         """Map table name to names of child tables.
-
-        Arguments:
-            tables (dict): table_name -> Table.
 
         Returns:
             tuple: dicts of children, parents and foreign_keys.
@@ -142,9 +161,9 @@ class DataNavigator:
         parent_map = {}
         foreign_keys = {}  # {(child, parent) -> (parent pk, fk)}
 
-        for table in tables:
-            table_meta = tables[table].meta
-            for field_meta in table_meta['fields'].values():
+        for table_meta in self.meta['tables']:
+            table = table_meta['name']
+            for field_meta in table_meta['fields']:
                 ref = field_meta.get('ref')
                 if ref:
                     parent = ref['table']
@@ -177,18 +196,19 @@ class DataNavigator:
         for table in self.meta['tables']:
             if table['use']:
                 pii_fields = self._get_pii_fields(table)
-                hyper_transformers[table['name']] = HyperTransformer(anonymize=pii_fields)
+                hyper_transformers[table['name']] = HyperTransformer(
+                    anonymize=pii_fields, dtypes=table['dtypes'])
 
         return hyper_transformers
 
-    def __init__(self, meta_filename, meta, tables, missing=None):
+    def __init__(self, meta_filename, meta, tables):
         self.meta = meta
         self.tables = tables
 
         self.hyper_transformers = self._get_hyper_transformers()
 
         self.transformed_data = None
-        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships(self.tables)
+        self.child_map, self.parent_map, self.foreign_keys = self._get_relationships()
 
     def get_children(self, table_name):
         """Return set of children of a table.
@@ -221,15 +241,15 @@ class DataNavigator:
         Returns:
             pandas.DataFrame: DataFrame with the contents of table_name
         """
-        return self.tables[table_name].data
+        return self.tables[table_name]
 
     def get_tables(self, tables=None):
         return {
-            table: self.get_data(table)
+            table: self.tables[table]
             for table in tables or self.tables.keys()
         }
 
-    def get_meta_data(self, table_name):
+    def get_table_meta(self, table_name):
         """Return meta data for a table.
 
         Args:
@@ -238,7 +258,43 @@ class DataNavigator:
         Returns:
             dict: metadata for table_name
         """
-        return self.tables[table_name].meta
+        for table in self.meta['tables']:
+            if table_name == table['name']:
+                return table
+
+    def get_table_columns(self, table_name):
+        """Return table column names.
+
+        Args:
+            table_name (str):
+                Name of table to get data for.
+
+        Returns:
+            list:
+                table column names
+        """
+        for table in self.meta['tables']:
+            if table_name == table['name']:
+                return [field['name'] for field in table['fields']]
+
+    def get_column_meta(self, table_name, column_name):
+        """Return column metadata.
+
+        Args:
+            table_name (str):
+                Name of table to get meta data for.
+            column_name (str):
+                Name of column to get meta data for.
+
+        Returns:
+            dict:
+                column metadata
+        """
+        for table in self.meta['tables']:
+            if table_name == table['name']:
+                for field in table['fields']:
+                    if field['name'] == column_name:
+                        return field
 
     def transform_data(self, transformers=None):
         """Applies the specified transformations using an HyperTransformer and returns the new data
@@ -251,7 +307,7 @@ class DataNavigator:
         """
 
         self.transformed_data = {
-            table_name: transformer.fit_transform(self.tables[table_name].data)
+            table_name: transformer.fit_transform(self.tables[table_name])
             for table_name, transformer in self.hyper_transformers.items()
         }
 

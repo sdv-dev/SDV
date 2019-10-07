@@ -100,6 +100,11 @@ class SDV:
 
         return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
 
+    def evaluate(self):
+        real = self.dn.get_tableS()
+        sampled = self.sample_all()
+        keys = self.dn.get_keys()
+
     def save(self, filename):
         """Save SDV instance to file destination.
 
