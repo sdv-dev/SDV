@@ -21,9 +21,9 @@ MODEL_ERROR_MESSAGES = {
 class Sampler:
     """Class to sample data from a model."""
 
-    def __init__(self, data_navigator, modeler):
+    def __init__(self, metadata, modeler):
         """Instantiate a new object."""
-        self.dn = data_navigator
+        self.metadata = metadata
         self.modeler = modeler
         self.primary_key = dict()
         self.remaining_primary_key = dict()
@@ -75,9 +75,8 @@ class Sampler:
                 Table with text columns filled.
         """
         for name in columns:
-            field = self.dn.get_column_meta(table_name, name)
-            row_columns = list(data)
-            if field['type'] == 'id' and name not in row_columns:
+            field = self.metadata.get_field_meta(table_name, name)
+            if field['type'] == 'id' and name not in data.columns:
                 # check foreign key
                 ref = field.get('ref')
                 if ref:
@@ -114,11 +113,10 @@ class Sampler:
         Return:
             pandas.DataFrame: Formatted synthesized data.
         """
-        columns = self.dn.get_table_columns(table_name)
+        columns = self.metadata.get_field_names(table_name)
         text_filled = self._fill_text_columns(synthesized, columns, table_name)
 
-        hyper_transformer = self.dn.hyper_transformers[table_name]
-        reversed_data = hyper_transformer.reverse_transform(text_filled)
+        reversed_data = self.metadata.reverse_transform(table_name, text_filled)
 
         return reversed_data[columns]
 
@@ -137,12 +135,11 @@ class Sampler:
             ValueError: If there aren't enough remaining values to generate.
 
         """
-        meta = self.dn.get_table_meta(table_name)
-        primary_key = meta.get('primary_key')
+        primary_key = self.metadata.get_primary_key(table_name)
         primary_key_values = None
 
         if primary_key:
-            node = self.dn.get_column_meta(table_name, primary_key)
+            node = self.metadata.get_field_meta(table_name, primary_key)
             regex = node['regex']
 
             generator = self.primary_key.get(table_name)
@@ -383,7 +380,7 @@ class Sampler:
 
     def _sample_children(self, table_name, sampled):
         table_rows = sampled[table_name]
-        for child_name in self.dn.get_children(table_name):
+        for child_name in self.metadata.get_children(table_name):
             for _, row in table_rows.iterrows():
                 self._sample_table(child_name, table_name, row, sampled)
 
@@ -395,7 +392,7 @@ class Sampler:
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)
 
-        parent_id, foreign_key = self.dn.foreign_keys[(table_name, parent_name)]
+        parent_id, foreign_key = self.metadata.foreign_keys[(table_name, parent_name)]
         sampled_rows[foreign_key] = parent_row[parent_id]
 
         previous = sampled.get(table_name)
@@ -416,10 +413,10 @@ class Sampler:
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)
 
-        parents = self.dn.get_parents(table_name)
+        parents = self.metadata.get_parents(table_name)
         if parents:
             parent_name = list(parents)[0]
-            foreign_key = self.dn.foreign_keys[(table_name, parent_name)][1]
+            foreign_key = self.metadata.foreign_keys[(table_name, parent_name)][1]
             parent_id = self._get_primary_keys(parent_name, 1)[1][0]
             sampled_rows[foreign_key] = parent_id
 
@@ -439,7 +436,7 @@ class Sampler:
         else:
             return self._transform_synthesized_rows(sampled_rows, table_name)
 
-    def sample_table(self, table_name, num_rows=None, reset_primary_keys=False):
+    def sample_table(self, table_name, num_rows=5, reset_primary_keys=False):
         """Sample a table.
 
         Args:
@@ -449,9 +446,6 @@ class Sampler:
         Returns:
             pandas.DataFrame: Synthesized table.
         """
-        if num_rows is None:
-            num_rows = self.dn.tables[table_name].data.shape[0]
-
         sampled_data = self.sample_rows(
             table_name,
             num_rows,
@@ -480,11 +474,9 @@ class Sampler:
         if reset_primary_keys:
             self._reset_primary_keys_generators()
 
-        tables = self.dn.tables
-
         sampled_data = dict()
-        for table in tables:
-            if not self.dn.get_parents(table):
+        for table in self.metadata.get_table_names():
+            if not self.metadata.get_parents(table):
                 self.sample_rows(table, num_rows, sampled_data=sampled_data)
 
         return sampled_data

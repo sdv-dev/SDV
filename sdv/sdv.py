@@ -5,7 +5,7 @@ import pickle
 
 from copulas import NotFittedError
 
-from sdv.data_navigator import CSVDataLoader
+from sdv.metadata import Metadata
 from sdv.modeler import DEFAULT_MODEL, Modeler
 from sdv.sampler import Sampler
 
@@ -14,19 +14,15 @@ class SDV:
     """Class to do modeling and sampling all in one.
 
     Args:
-        meta_file_name (str): Path to the metadata file.
-        data_loader_type (str):
-        model (type): Class of model to use.
-        distribution (type): Class of distribution to use. Will be deprecated shortly.
-        model_kwargs (dict): Keyword arguments to pass to model.
-
+        model (type):
+            Class of model to use.
+        distribution (type):
+            Class of distribution to use. Will be deprecated shortly.
+        model_kwargs (dict):
+            Keyword arguments to pass to model.
     """
 
-    def __init__(
-        self, meta_file_name, data_loader_type='csv', model=DEFAULT_MODEL, distribution=None,
-        model_kwargs=None
-    ):
-        self.meta_file_name = meta_file_name
+    def __init__(self, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
         self.sampler = None
         self.model = model
         self.distribution = distribution
@@ -34,31 +30,33 @@ class SDV:
 
     def _check_unsupported_dataset_structure(self):
         """Checks that no table has two parents."""
-        tables = self.dn.tables.keys()
-        amount_parents = [len(self.dn.get_parents(table)) <= 1 for table in tables]
-        if not all(amount_parents):
-            raise ValueError('Some tables have multiple parents, which is not supported yet.')
+        for table in self.metadata.get_table_names():
+            if len(self.metadata.get_parents(table)) > 1:
+                raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
-    def fit(self):
+    def fit(self, metadata, root_path=None):
         """Transform the data and model the database.
 
-        Raises:
-            ValueError: If the provided dataset has an unsupported structure.
+        Args:
+            metadata (dict or str):
+                Metadata dict or path to the metadata JSON file.
+            root_path (str or None):
+                Path to the dataset directory. If ``None`` and metadata is
+                a path, the metadata dirname is used. If ``None`` and
+                metadata is a dict, `'.'` is used.
         """
-        data_loader = CSVDataLoader(self.meta_file_name)
-        self.dn = data_loader.load_data()
 
+        self.metadata = Metadata(metadata, root_path)
         self._check_unsupported_dataset_structure()
 
-        self.dn.transform_data()
         self.modeler = Modeler(
-            data_navigator=self.dn,
+            metadata=self.metadata,
             model=self.model,
             distribution=self.distribution,
             model_kwargs=self.model_kwargs
         )
         self.modeler.model_database()
-        self.sampler = Sampler(self.dn, self.modeler)
+        self.sampler = Sampler(self.metadata, self.modeler)
 
     def sample_rows(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
         """Sample `num_rows` rows from the given table.
@@ -85,8 +83,8 @@ class SDV:
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_table(table_name, num_rows,
-                                         reset_primary_keys=reset_primary_keys)
+        return self.sampler.sample_table(
+            table_name, num_rows, reset_primary_keys=reset_primary_keys)
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Sample the whole dataset.
@@ -99,11 +97,6 @@ class SDV:
             raise NotFittedError('SDV instance has not been fitted')
 
         return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
-
-    def evaluate(self):
-        real = self.dn.get_tableS()
-        sampled = self.sample_all()
-        keys = self.dn.get_keys()
 
     def save(self, filename):
         """Save SDV instance to file destination.
