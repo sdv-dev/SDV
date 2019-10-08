@@ -371,7 +371,7 @@ class Sampler:
         """
         pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
 
-        columns = self.modeler.tables[table_name].columns
+        columns = self.metadata.get_field_names(table_name)
         sampled = model.sample(num_rows)
         if pk_name:
             sampled[pk_name] = pk_values

@@ -255,25 +255,15 @@ class Modeler:
         extensions = []
 
         for child in children:
-            child_table = self.metadata.get_table_data(child)
-
             foreign_key = self.metadata.get_foreign_key(parent, child)
+            child_table = tables[child]
 
-            # check if leaf node
-            if not self.metadata.get_children(child):
-                child_table_data = self.metadata.get_table_data(child, transform=True)
-            else:
-                child_table_data = tables[child]
-
+            parameters = dict()
             table_info = (foreign_key, '__' + child)
 
-            foreign_key_values = child_table[foreign_key].unique()
-            parameters = {}
-
-            for foreign_key_value in foreign_key_values:
+            for foreign_key_value in child_table[foreign_key].unique():
                 foreign_index = child_table[child_table[foreign_key] == foreign_key_value]
-                parameter = self._create_extension(
-                    foreign_index, child_table_data, table_info)
+                parameter = self._create_extension(foreign_index, child_table, table_info)
 
                 if parameter is not None:
                     parameters[foreign_key_value] = parameter.to_dict()
@@ -360,12 +350,12 @@ class Modeler:
 
     def model_database(self):
         """Use RCPA and store model for database."""
-        self.tables = dict()
+        tables = dict()
         for table_name in self.metadata.get_table_names():
             if not self.metadata.get_parents(table_name):
-                self.rcpa(table_name, self.tables)
+                self.rcpa(table_name, tables)
 
-        for name, data in self.tables.items():
+        for name, data in tables.items():
             data = self._impute(data)
             self.models[name] = self.fit_model(data)
 
