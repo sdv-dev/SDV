@@ -17,10 +17,10 @@ class TestSDV(TestCase):
         sdv = SDV()
 
         # Asserts
-        self.assertIsNone(sdv.sampler, "Expected default sdv.sampler as None")
-        self.assertEqual(sdv.model, DEFAULT_MODEL)
-        self.assertIsNone(sdv.distribution)
-        self.assertIsNone(sdv.model_kwargs)
+        assert sdv.sampler is None
+        assert sdv.model == DEFAULT_MODEL
+        assert sdv.distribution is None
+        assert sdv.model_kwargs is None
 
     def test__check_unsupported_dataset_structure_no_error(self):
         """Test that any error is raised with a supported structure"""
@@ -37,7 +37,7 @@ class TestSDV(TestCase):
 
         # Asserts
         expect_get_parents_call_count = 3
-        self.assertEqual(sdv.metadata.get_parents.call_count, expect_get_parents_call_count)
+        assert sdv.metadata.get_parents.call_count == expect_get_parents_call_count
 
     def test__check_unsupported_dataset_structure_raise_error(self):
         """Test that a ValueError is raised because the bad structure"""
@@ -50,7 +50,7 @@ class TestSDV(TestCase):
         sdv.metadata.get_table_names.return_value = table_names
         sdv.metadata.get_parents.side_effect = parents
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             SDV._check_unsupported_dataset_structure(sdv)
 
     @patch('sdv.sdv.Sampler')
@@ -105,7 +105,7 @@ class TestSDV(TestCase):
         table_name = 'DEMO'
         num_rows = 5
 
-        with self.assertRaises(NotFittedError):
+        with pytest.raises(NotFittedError):
             SDV.sample_rows(sdv, table_name, num_rows)
 
     def test_sample_table_fitted(self):
@@ -127,7 +127,7 @@ class TestSDV(TestCase):
         sdv.sampler = None
         table_name = 'DEMO'
 
-        with self.assertRaises(NotFittedError):
+        with pytest.raises(NotFittedError):
             SDV.sample_table(sdv, table_name)
 
     def test_sample_all_fitted(self):
@@ -146,7 +146,7 @@ class TestSDV(TestCase):
         sdv = Mock()
         sdv.sampler = None
 
-        with self.assertRaises(NotFittedError):
+        with pytest.raises(NotFittedError):
             SDV.sample_all(sdv)
 
     @pytest.mark.skip(reason="currently not implemented")

@@ -34,8 +34,6 @@ class Modeler:
             Keyword arguments to pass to model.
     """
 
-    DEFAULT_PRIMARY_KEY = 'GENERATED_PRIMARY_KEY'
-
     def __init__(self, metadata, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
         """Instantiates a modeler object."""
         self.models = dict()
@@ -75,14 +73,6 @@ class Modeler:
         """
         with open(file_name, 'rb') as input:
             return pickle.load(input)
-
-    def get_primary_key_value(self, primary_key, index, mapping):
-        if primary_key == self.DEFAULT_PRIMARY_KEY:
-            val = primary_key + str(index)
-        else:
-            val = mapping[primary_key]
-
-        return val
 
     @classmethod
     def _flatten_array(cls, nested, prefix=''):
@@ -296,27 +286,11 @@ class Modeler:
         table = self.metadata.get_table_data(table_name, transform=True)
 
         children = self.metadata.get_children(table_name)
-        primary_key = self.metadata.get_primary_key(table_name) or self.DEFAULT_PRIMARY_KEY
+        primary_key = self.metadata.get_primary_key(table_name)
 
         extensions = self._get_extensions(table_name, children, tables)
-        if extensions:
-            original_primary_key = table[primary_key]
-            transformed_primary_key = None
-
-            if primary_key in table:
-                transformed_primary_key = table[primary_key].copy()
-
-            if (primary_key not in table) or (not table[primary_key].equals(original_primary_key)):
-                table[primary_key] = original_primary_key
-
-            # add extensions
-            for extension in extensions:
-                table = table.merge(extension, how='left', left_on=primary_key, right_index=True)
-
-            if transformed_primary_key is not None:
-                table[primary_key] = transformed_primary_key
-            else:
-                table = table.drop(primary_key, axis=1)
+        for extension in extensions:
+            table = table.merge(extension, how='left', left_on=primary_key, right_index=True)
 
         return table
 
