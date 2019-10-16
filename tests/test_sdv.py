@@ -1,8 +1,7 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-
 from copulas import NotFittedError
 
 from sdv import SDV

@@ -1,13 +1,10 @@
-from collections import OrderedDict
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
-import numpy as np
 import pandas as pd
 import pytest
-from copulas import EPSILON
-from copulas.multivariate import GaussianMultivariate, VineCopula
-from copulas.univariate import GaussianUnivariate, KDEUnivariate
+from copulas.multivariate import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 
 from sdv.modeler import Modeler
 
@@ -62,7 +59,7 @@ class TestModeler(TestCase):
         # Run
         nested = [['foo', 'bar'], 'tar']
         prefix = 'test'
-        
+
         result = Modeler._flatten_array(nested, prefix=prefix)
 
         # Asserts
@@ -118,7 +115,7 @@ class TestModeler(TestCase):
         std = Mock()
         std.std = 0.2
         mock_model = Mock()
-        mock_model.covariance = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+        mock_model.covariance = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         mock_model.distribs = {'x': std, 'y': std, 'z': std}
 
         model_kwargs = {'distribution': 'foo'}
@@ -261,7 +258,7 @@ class TestModeler(TestCase):
         modeler.metadata.get_table_data.assert_called_once_with('test', transform=True)
         modeler.metadata.get_children.assert_called_once_with('test')
         modeler.metadata.get_primary_key.assert_called_once_with('test')
-        pd.testing.assert_frame_equal(result, expect)
+        pd.testing.assert_frame_equal(result.sort_index(axis=1), expect.sort_index(axis=1))
 
     def test_rcpa(self):
         """Test RCPA"""

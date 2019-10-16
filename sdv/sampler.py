@@ -330,9 +330,12 @@ class Sampler:
         """ Takes the params from a generated parent row.
 
         Args:
-            parent_row (dataframe): a generated parent row
-            table_name (string): name of table to make model for
-            parent_name (string): name of parent table
+            parent_row (pandas.Series):
+                a generated parent row
+            table_name (str):
+                name of table to make model for
+            parent_name (str):
+                name of parent table
         """
 
         prefix = '__{}__'.format(table_name)
@@ -371,7 +374,6 @@ class Sampler:
         """
         pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
 
-        columns = self.metadata.get_field_names(table_name)
         sampled = model.sample(num_rows)
         if pk_name:
             sampled[pk_name] = pk_values
