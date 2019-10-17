@@ -9,6 +9,33 @@ from copulas.univariate import GaussianUnivariate
 from sdv.modeler import Modeler
 
 
+def test_save_and_load(tmp_path):
+    """Test save and load a SDV instance"""
+    # Setup
+    metadata = tmp_path / "instance.pkl"
+    modeler = Modeler(None)
+
+    # Run "save"
+    Modeler.save(modeler, str(metadata))
+
+    # Asserts "save"
+    assert metadata.exists()
+    assert metadata.is_file()
+
+    # Run "load"
+    instance = Modeler.load(str(metadata))
+
+    # Asserts "load"
+    assert isinstance(instance, Modeler)
+
+    assert modeler.models == dict()
+    assert modeler.metadata is None
+    assert modeler.model == GaussianMultivariate
+    assert modeler.model_kwargs == {
+        'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
+    }
+
+
 class TestModeler(TestCase):
 
     @patch('sdv.modeler.get_qualified_name')
@@ -43,16 +70,6 @@ class TestModeler(TestCase):
         # Run & asserts
         with pytest.raises(ValueError):
             Modeler(None, model=Mock(), distribution=Mock())
-
-    @pytest.mark.skip(reason="currently not implemented")
-    def test_save(self):
-        """Test save Modeler instance"""
-        pass
-
-    @pytest.mark.skip(reason="currently not implemented")
-    def test_load(self):
-        """Test load Modeler instance"""
-        pass
 
     def test__flatten_array(self):
         """Test get flatten array"""
