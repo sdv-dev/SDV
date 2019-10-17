@@ -8,6 +8,23 @@ from sdv import SDV
 from sdv.modeler import DEFAULT_MODEL
 
 
+def test_save_and_load(tmp_path):
+    """Test save and load a SDV instance"""
+    metadata = tmp_path / "save.pkl"
+
+    sdv = SDV()
+    SDV.save(sdv, str(metadata))
+
+    instance = SDV.load(metadata)
+
+    assert isinstance(instance, SDV)
+
+    assert sdv.sampler == instance.sampler
+    assert sdv.model == instance.model
+    assert sdv.distribution == instance.distribution
+    assert sdv.model_kwargs == instance.model_kwargs
+
+
 class TestSDV(TestCase):
 
     def test____init__(self):
@@ -147,13 +164,3 @@ class TestSDV(TestCase):
 
         with pytest.raises(NotFittedError):
             SDV.sample_all(sdv)
-
-    @pytest.mark.skip(reason="currently not implemented")
-    def test_save(self):
-        """Test save SDV instance"""
-        pass
-
-    @pytest.mark.skip(reason="currently not implemented")
-    def test_load(self):
-        """Test load SDV instance"""
-        pass
