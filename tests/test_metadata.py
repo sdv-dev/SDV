@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.metadata import Metadata, _parse_dtypes, _read_csv_dtypes
+from sdv.metadata import Metadata, _parse_dtypes, _read_csv_dtypes, load_csv
 
 
 def test__read_csv_dtypes():
@@ -61,6 +61,29 @@ def test__parse_dtypes():
     })
 
     pd.testing.assert_frame_equal(result, expect)
+
+
+def test_load_csv(tmp_path):
+    """Test load csv"""
+    # Setup
+    metadata = tmp_path / 'load_csv.csv'
+    metadata.write_text('some,fake,data')
+
+    root_path = str(tmp_path)
+    table_meta = {
+        'path': 'load_csv.csv'
+    }
+
+    # Run and asserts
+    with patch('sdv.metadata._read_csv_dtypes') as mock_read, \
+            patch('sdv.metadata._parse_dtypes') as mock_parse:
+
+        mock_read.return_value = []
+
+        load_csv(root_path, table_meta)
+
+        mock_read.assert_called_once_with({'path': 'load_csv.csv'})
+        assert mock_parse.call_count == 1
 
 
 def test___init__default_metadata_string(tmp_path):
