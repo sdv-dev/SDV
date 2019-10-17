@@ -208,19 +208,36 @@ class TestModeler(TestCase):
         modeler.model.assert_called_once_with(foo=expect_foo)
         model_mock.fit.assert_called_once_with(expect_fit_call)
 
-    @pytest.mark.skip(reason="can't test this case properly")
-    def test__create_extension_key_error(self, mock_error):
+    def test__create_extension_key_error(self):
         """Test create extension, but an exception return a none"""
-        pass
-
-    def test__create_extension_zero_num_child_rows(self):
-        """Test create extension, num_child_rows length is zero."""
         # Run
         modeler = Mock()
+
         foreign = pd.DataFrame({'foreign_key': []})
         child_table_data = pd.DataFrame({'bar': []})
         table_info = ('foreign_key', 'child_name')
 
+        result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
+
+        # Asserts
+        assert result is None
+
+    @patch('pandas.DataFrame.copy')
+    def test__create_extension_zero_num_child_rows(self, mock_df):
+        """Test create extension, num_child_rows length is zero."""
+        # Setup
+        def mock_side_effect():
+            raise KeyError
+
+        mock_df.side_effect = mock_side_effect
+
+        # Run
+        modeler = Mock()
+        foreign = pd.DataFrame({'foreign_key': [0, 1]})
+        child_table_data = pd.DataFrame({'bar': [1, 0]})
+        table_info = ('foreign_key', 'child_name')
+
+        # import ipdb; ipdb.set_trace()
         result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
 
         # Asserts
@@ -244,10 +261,65 @@ class TestModeler(TestCase):
         # Asserts
         assert result is not None
 
-    @pytest.mark.skip(reason="TODO")
     def test__get_extensions(self):
         """Test get list of extensions from childs"""
-        pass
+        # Setup
+        metadata_foreign_key = [
+            'foreign_a'
+        ]
+        create_extension = [
+            None, pd.Series([7, 6])
+        ]
+
+        # Run
+        modeler = Mock()
+        modeler.metadata.get_foreign_key.side_effect = metadata_foreign_key
+        modeler._create_extension.side_effect = create_extension
+
+        parent = 'parent_table'
+        child = {'child_a'}
+        tables = {
+            'child_a': pd.DataFrame({'foreign_a': [0, 1]}),
+        }
+
+        result = Modeler._get_extensions(modeler, parent, child, tables)
+
+        # Asserts
+        expect = [
+            pd.DataFrame({0: [7], 1: [6]}, index=[1])
+        ]
+        expect_foreign_key_call_count = 1
+        expect_foreign_key_call_args_list = [
+            call('parent_table', 'child_a')
+        ]
+
+        expect_create_extension_call_count = 2
+        expect_create_extension_call_args_list = [
+            [
+                pd.DataFrame({'foreign_a': [0]}, index=[0]),
+                pd.DataFrame({'foreign_a': [0, 1]}, index=range(2)),
+                ('foreign_a', '__child_a')
+            ],
+            [
+                pd.DataFrame({'foreign_a': [1]}, index=[1]),
+                pd.DataFrame({'foreign_a': [0, 1]}, index=range(2)),
+                ('foreign_a', '__child_a')
+            ]
+        ]
+
+        assert modeler.metadata.get_foreign_key.call_count == expect_foreign_key_call_count
+        assert modeler.metadata.get_foreign_key.call_args_list == expect_foreign_key_call_args_list
+
+        assert modeler._create_extension.call_count == expect_create_extension_call_count
+        for result_item, expect_item in zip(
+                modeler._create_extension.call_args_list, expect_create_extension_call_args_list):
+            pd.testing.assert_frame_equal(result_item[0][0], expect_item[0])
+            pd.testing.assert_frame_equal(result_item[0][1], expect_item[1])
+            assert result_item[0][2] == expect_item[2]
+
+        assert len(result) == 1
+        assert len(result) == len(expect)
+        pd.testing.assert_frame_equal(result[0], expect[0])
 
     def test_cpa(self):
         """Test CPA with extensions"""

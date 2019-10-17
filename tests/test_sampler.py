@@ -617,3 +617,70 @@ class TestSampler(TestCase):
         assert sampler._reset_primary_keys_generators.call_count == 1
         pd.testing.assert_frame_equal(result['table a'], pd.DataFrame({'foo': range(num_rows)}))
         pd.testing.assert_frame_equal(result['table c'], pd.DataFrame({'foo': range(num_rows)}))
+
+    @pytest.mark.skip(reason="WIP, make the result deterministic")
+    def test_sample_rows_with_parents(self):
+        """Test sample rows with parents"""
+        # Setup
+        models = {
+            'test': 'Model'
+        }
+
+        metadata_get_parents = {'parent a', 'parent b'}
+
+        metadata_foreign_key = {
+            ('test', 'parent a'): (None, 'foreign_a'),
+            ('test', 'parent b'): (None, 'foreign_b')
+        }
+
+        primary_keys = [None, [1]]
+
+        sample_rows = dict()
+
+        # Run
+        sampler = Mock()
+        sampler.modeler.models = models
+        sampler.metadata.get_parents.return_value = metadata_get_parents
+        sampler.metadata.foreign_keys = metadata_foreign_key
+        sampler._sample_rows.return_value = sample_rows
+        sampler._get_primary_keys.return_value = primary_keys
+
+        table_name = 'test'
+        num_rows = 5
+        reset_primary_keys = True
+        sample_children = True
+        sampled_data = None
+
+        Sampler.sample_rows(
+            sampler,
+            table_name,
+            num_rows,
+            reset_primary_keys=reset_primary_keys,
+            sample_children=sample_children,
+            sampled_data=sampled_data
+        )
+
+        # Asserts
+        assert sampler._reset_primary_keys_generators.call_count == 1
+        sampler._sample_rows.assert_called_once_with('Model', 5, 'test')
+        sampler.metadata.get_parents.assert_called_once_with('test')
+        sampler._get_primary_keys.assert_called_once_with('parent b', 1)
+        sampler._transform_synthesized_rows.call_count == 2
+
+    def test_sample_rows_no_sample_children(self):
+        """Test sample_rows no sample children"""
+        # Setup
+        models = {'test': 'model'}
+
+        # Run
+        sampler = Mock()
+        sampler.modeler.models = models
+        sampler.metadata.get_parents.return_value = None
+
+        table_name = 'test'
+        num_rows = 5
+        sample_children = False
+
+        Sampler.sample_rows(sampler, table_name, num_rows, sample_children=sample_children)
+
+        # Asserts
