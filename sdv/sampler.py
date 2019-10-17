@@ -33,10 +33,12 @@ class Sampler:
         """Fill with zeros a triangular matrix to reshape it to a square one.
 
         Args:
-            triangular_matrix (list[list[float]]): Array of arrays of
+            triangular_matrix (list [list [float]]):
+                Array of arrays of
 
         Returns:
-            list: Square matrix.
+            list:
+                Square matrix.
         """
         length = len(triangular_matrix)
         zero = [0.0]
@@ -50,10 +52,12 @@ class Sampler:
         """
 
         Args:
-            covariance (list): covariance after unflattening model parameters.
+            covariance (list):
+                covariance after unflattening model parameters.
 
         Result:
-            list[list]: symmetric Positive semi-definite matrix.
+            list[list]:
+                symmetric Positive semi-definite matrix.
         """
         covariance = np.array(self._square_matrix(covariance))
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
@@ -107,11 +111,14 @@ class Sampler:
         """Reverse transform synthetized data.
 
         Args:
-            synthesized(pandas.DataFrame): Generated data from model
-            table_name(str): Name of the table.
+            synthesized (pandas.DataFrame):
+                Generated data from model
+            table_name (str):
+                Name of the table.
 
         Return:
-            pandas.DataFrame: Formatted synthesized data.
+            pandas.DataFrame:
+                Formatted synthesized data.
         """
         columns = self.metadata.get_field_names(table_name)
         text_filled = self._fill_text_columns(synthesized, columns, table_name)
@@ -124,16 +131,20 @@ class Sampler:
         """Return the primary key and amount of values for the requested table.
 
         Args:
-            table_name(str): Name of the table to get the primary keys.
-            num_rowd(str): Number of primary_keys to generate.
+            table_name (str):
+                Name of the table to get the primary keys.
+            num_rowd (str):
+                Number of primary_keys to generate.
 
         Returns:
-            tuple(str,pandas.Series): If the table has a primary key.
-            tuple(None, None): If the table doesn't have a primary key.
+            tuple (str, pandas.Series):
+                If the table has a primary key.
+            tuple (None, None):
+                If the table doesn't have a primary key.
 
         Raises:
-            ValueError: If there aren't enough remaining values to generate.
-
+            ValueError:
+                If there aren't enough remaining values to generate.
         """
         primary_key = self.metadata.get_primary_key(table_name)
         primary_key_values = None
@@ -193,14 +204,15 @@ class Sampler:
     def _unflatten_dict(self, flat):
         """Transform a flattened dict into its original form.
 
-        Works in exact opposite way that `sdv.Modeler._flatten_dict`.
+        Works in exact opposite way that ``sdv.Modeler._flatten_dict``.
 
         Args:
-            flat (dict): Flattened dict.
+            flat (dict):
+                Flattened dict.
 
         Returns:
-            dict: Nested dict (if corresponds)
-
+            dict:
+                Nested dict (if corresponds)
         """
         unflattened = dict()
 
@@ -245,10 +257,12 @@ class Sampler:
         """Find the nearest positive-definite matrix to input
 
         Args:
-            matrix (numpy.ndarray): Matrix to transform
+            matrix (numpy.ndarray):
+                Matrix to transform
 
         Returns:
-            numpy.ndarray: Closest symetric positive-definite matrix.
+            numpy.ndarray:
+                Closest symetric positive-definite matrix.
         """
         symetric_matrix = (matrix + matrix.T) / 2
         _, s, V = np.linalg.svd(symetric_matrix)
@@ -273,7 +287,8 @@ class Sampler:
         """Checks if a matrix is symmetric positive-definite.
 
         Args:
-            matrix (list or np.ndarray): Matrix to evaluate.
+            matrix (list or numpy.ndarray):
+                Matrix to evaluate.
 
         Returns:
             bool
@@ -296,13 +311,15 @@ class Sampler:
         - Transform sampled negative standard deviations from distributions into positive numbers
         - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
         - Add string parameters kept inside the class (as they can't be modelled),
-          like `distribution_type`.
+          like ``distribution_type``.
 
         Args:
-            model_parameters (dict): Sampled and reestructured model parameters.
+            model_parameters (dict):
+                Sampled and reestructured model parameters.
 
         Returns:
-            dict: Model parameters ready to recreate the model.
+            dict:
+                Model parameters ready to recreate the model.
         """
 
         distribution_name = self.modeler.model_kwargs['distribution']
@@ -358,7 +375,7 @@ class Sampler:
         return self.modeler.model.from_dict(model_parameters)
 
     def _sample_rows(self, model, num_rows, table_name):
-        """Sample `num_rows` from `model`.
+        """Sample ``num_rows`` from ``model``.
 
         Args:
             model (copula.multivariate.base):
@@ -442,11 +459,14 @@ class Sampler:
         """Sample a table.
 
         Args:
-            table_name(str): Name of table to synthesize.
-            reset_primary_keys(bool): Wheter or not reset the primary key generators.
+            table_name (str):
+                Name of table to synthesize.
+            reset_primary_keys (bool):
+                Wheter or not reset the primary key generators.
 
         Returns:
-            pandas.DataFrame: Synthesized table.
+            pandas.DataFrame:
+                Synthesized table.
         """
         sampled_data = self.sample_rows(
             table_name,
@@ -459,19 +479,22 @@ class Sampler:
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Samples the entire database.
 
-        Args:
-            num_rows(int): Number of rows to be sampled on the parent tables.
-            reset_primary_keys(bool): Wheter or not reset the primary key generators.
-
-        Returns:
-            dict: Tables sampled.
-
-        `sample_all` returns a dictionary with all the tables of the dataset sampled.
+        ``sample_all`` returns a dictionary with all the tables of the dataset sampled.
         The amount of rows sampled will depend from table to table, and is only guaranteed
-        to match `num_rows` on tables without parents.
+        to match ``num_rows`` on tables without parents.
 
         This is this way because the children tables are created modelling the relation
         thet have with their parent tables, so it's behavior may change from one table to another.
+
+        Args:
+            num_rows (int):
+                Number of rows to be sampled on the parent tables.
+            reset_primary_keys (bool):
+                Wheter or not reset the primary key generators.
+
+        Returns:
+            dict:
+                Tables sampled.
         """
         if reset_primary_keys:
             self._reset_primary_keys_generators()

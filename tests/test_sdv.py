@@ -10,13 +10,21 @@ from sdv.modeler import DEFAULT_MODEL
 
 def test_save_and_load(tmp_path):
     """Test save and load a SDV instance"""
+    # Setup
     metadata = tmp_path / "save.pkl"
-
     sdv = SDV()
+
+    # Run "save"
     SDV.save(sdv, str(metadata))
 
-    instance = SDV.load(metadata)
+    # Asserts "save"
+    assert metadata.exists()
+    assert metadata.is_file()
 
+    # Run "load"
+    instance = SDV.load(str(metadata))
+
+    # Asserts "load"
     assert isinstance(instance, SDV)
 
     assert sdv.sampler == instance.sampler
@@ -27,7 +35,7 @@ def test_save_and_load(tmp_path):
 
 class TestSDV(TestCase):
 
-    def test____init__(self):
+    def test____init__default(self):
         """Create default instance"""
         # Run
         sdv = SDV()

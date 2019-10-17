@@ -59,7 +59,8 @@ class Modeler:
         """Saves model to file destination.
 
         Args:
-            file_name (string): path to store file
+            file_name (string):
+                path to store file
         """
         with open(file_name, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
@@ -69,7 +70,8 @@ class Modeler:
         """Load model from filename.
 
         Args:
-            file_name (string): path of file to load
+            file_name (str):
+                path of file to load
         """
         with open(file_name, 'rb') as input:
             return pickle.load(input)
@@ -79,8 +81,10 @@ class Modeler:
         """Return a dictionary with the values of the given nested array.
 
         Args:
-            nested (list, np.array): Iterable to flatten.
-            prefix (str): Name to append to the array indices.
+            nested (list, numpy.array):
+                Iterable to flatten.
+            prefix (str):
+                Name to append to the array indices.
 
         Returns:
             dict
@@ -105,11 +109,14 @@ class Modeler:
         double underscores, that is:
 
         Args:
-            nested (dict): Original dictionary to flatten.
-            prefix (str): Prefix to append to key name
+            nested (dict):
+                Original dictionary to flatten.
+            prefix (str):
+                Prefix to append to key name
 
         Returns:
-            dict: Flattened dictionary. That is, all its keys hold a primitive value.
+            dict:
+                Flattened dictionary. That is, all its keys hold a primitive value.
         """
         result = {}
 
@@ -134,11 +141,12 @@ class Modeler:
         """Fit and  serialize  a model and flatten its parameters into an array.
 
         Args:
-            data(pandas.DataFrame): Dataset to fit the model to.
+            data (pandas.DataFrame):
+                Dataset to fit the model to.
 
         Returns:
-            dict: Flattened parameters for model.
-
+            dict:
+                Flattened parameters for model.
         """
         model = self.fit_model(data)
 
@@ -162,12 +170,13 @@ class Modeler:
 
         Args:
             fields (dict):
-                metadata `fields` key for a given table.
+                metadata ``fields`` key for a given table.
             primary (str):
                 Name of primary key in original table.
 
         Return:
-            str: Name of foreign key in current table.
+            str:
+                Name of foreign key in current table.
         """
         for field in fields.values():
             ref = field.get('ref')
@@ -176,13 +185,15 @@ class Modeler:
                 return foreign
 
     def fit_model(self, data):
-        """Returns an instance of self.model fitted with the given data.
+        """Returns an instance of ``self.model`` fitted with the given data.
 
         Args:
-            data (pandas.DataFrame): Data to train the model with.
+            data (pandas.DataFrame):
+                Data to train the model with.
 
         Returns:
-            model: Instance of self.model fitted with data.
+            model:
+                Instance of ``self.model`` fitted with data.
         """
         model = self.model(**self.model_kwargs)
         model.fit(data)
@@ -190,17 +201,20 @@ class Modeler:
         return model
 
     def _create_extension(self, foreign, child_table_data, table_info):
-        """Return the flattened model from a dataframe.
+        """Return the flattened model from a ``pandas.DataFrame``.
 
         Args:
-            foreign(pandas.DataFrame): Object with Index of elements from children table elements
-                                       of a given foreign_key.
-            child_table_data(pandas.DataFrame): Table of data to fil
-            table_info (tuple[str, str]): foreign_key and child table names.
+            foreign (pandas.DataFrame):
+                Object with Index of elements from children table elements of a given ``foreign``.
+            child_table_data (pandas.DataFrame):
+                Table of data to fil
+            table_info (tuple[str, str]):
+                ``foreign`` and child table names.
 
         Returns:
-            pd.Series or None : Parameter extension if it can be generated, None elsewhere.
-            """
+            pandas.Series or None:
+                Parameter extension if it can be generated, ``None`` elsewhere.
+        """
 
         foreign_key, child_name = table_info
         try:
@@ -228,7 +242,7 @@ class Modeler:
         """Generate list of extension for child tables.
 
         Each element of the list is generated for one single children.
-        That dataframe should have as index.name the `foreign_key` name, and as index
+        That dataframe should have as ``index.name`` the ``foreign_key`` name, and as index
         it's values.
 
         The values for a given index are generated by flattening a model fitted with
@@ -273,7 +287,7 @@ class Modeler:
         and merge them into the original table.
 
         Args:
-            table_name (string):
+            table_name (str):
                 name of table.
             tables (dict):
                 previously processed tables.
@@ -298,7 +312,7 @@ class Modeler:
         """Recursively calls CPA starting at table.
 
         Args:
-            table_name (string):
+            table_name (str):
                 name of table to start from.
         """
         children = self.metadata.get_children(table_name)

@@ -43,7 +43,7 @@ class SDV:
             root_path (str or None):
                 Path to the dataset directory. If ``None`` and metadata is
                 a path, the metadata dirname is used. If ``None`` and
-                metadata is a dict, `'.'` is used.
+                metadata is a dict, ``'.'`` is used.
         """
 
         self.metadata = Metadata(metadata, root_path)
@@ -59,12 +59,15 @@ class SDV:
         self.sampler = Sampler(self.metadata, self.modeler)
 
     def sample_rows(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
-        """Sample `num_rows` rows from the given table.
+        """Sample ``num_rows`` rows from the given table.
 
         Args:
-            table_name(str): Name of the table to sample from.
-            num_rows(int): Amount of rows to sample.
-            reset_primary_keys(bool): Wheter or not reset the pk generators.
+            table_name(str):
+                Name of the table to sample from.
+            num_rows(int):
+                Amount of rows to sample.
+            reset_primary_keys(bool):
+                Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
@@ -77,8 +80,10 @@ class SDV:
         """Samples the given table to its original size.
 
         Args:
-            table_name (str): Table to sample.
-            reset_primary_keys(bool): Wheter or not reset the pk generators.
+            table_name (str):
+                Table to sample.
+            reset_primary_keys(bool):
+                Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
@@ -90,8 +95,10 @@ class SDV:
         """Sample the whole dataset.
 
         Args:
-            num_rows(int): Amount of rows to sample.
-            reset_primary_keys(bool): Wheter or not reset the pk generators.
+            num_rows(int):
+                Amount of rows to sample.
+            reset_primary_keys(bool):
+                Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
@@ -102,7 +109,8 @@ class SDV:
         """Save SDV instance to file destination.
 
         Args:
-            file_destination(str): Path to store file.
+            file_destination(str):
+                Path to store file.
         """
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
@@ -112,8 +120,8 @@ class SDV:
         """Load a SDV instance from the given path.
 
         Args:
-            filename(str): Path to load model.
-
+            filename(str):
+                Path to load model.
         """
         with open(filename, 'rb') as f:
             instance = pickle.load(f)

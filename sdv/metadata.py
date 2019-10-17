@@ -52,23 +52,26 @@ class Metadata:
         Given a table, it allows to move though its relations and acces its data and metadata.
 
     - Transform data
-        Transform the dataset using `rdt.HyperTransformer` in a format that is supported
-        by `sdv.Modeler`.
+        Transform the dataset using ``rdt.HyperTransformer`` in a format that is supported
+        by ``sdv.Modeler``.
 
     Args:
-        meta_filename (str): Path to the metadata file.
-        meta (dict): Metadata for the dataset.
-        tables (dict[str, pd.DataFrame]): Mapping of table names to their values and metadata.
-
+        meta_filename (str):
+            Path to the metadata file.
+        meta (dict):
+            Metadata for the dataset.
+        tables (dict[str, pandas.DataFrame]):
+            Mapping of table names to their values and metadata.
     """
 
     def _get_relationships(self):
         """Map table name to names of child tables.
 
         Returns:
-            tuple: dicts of children, parents and foreign_keys.
+            tuple:
+                dicts of children, parents and foreign_keys.
 
-        This method is what allow `DataNavigator` to be aware of the different tables and the
+        This method is what allow ``DataNavigator`` to be aware of the different tables and the
         relations between them.
         """
         self._child_map = defaultdict(set)
@@ -154,7 +157,8 @@ class Metadata:
             table_name (str): Name of table to get data for.
 
         Returns:
-            dict: metadata for table_name
+            dict:
+                metadata for table_name
         """
         return self._metadata['tables'][table_name]
 
@@ -162,10 +166,12 @@ class Metadata:
         """Return dataframe for a table.
 
         Args:
-            table_name (str): Name of table to get data for.
+            table_name (str):
+                Name of table to get data for.
 
         Returns:
-            pandas.DataFrame: DataFrame with the contents of table_name
+            pandas.DataFrame:
+                DataFrame with the contents of table_name
         """
         LOGGER.info('Loading table %s', table_name)
         table_meta = self.get_table_meta(table_name)
