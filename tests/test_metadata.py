@@ -20,6 +20,9 @@ def test__read_csv_dtypes():
             'b_field': {
                 'type': 'categorical',
                 'subtype': 'bool'
+            },
+            'c_field': {
+                'type': 'datetime',
             }
         }
     }
@@ -27,9 +30,9 @@ def test__read_csv_dtypes():
     result = _read_csv_dtypes(table_meta)
 
     # Asserts
-    expect = {'a_field': str}
+    expected = {'a_field': str}
 
-    assert result == expect
+    assert result == expected
 
 
 def test__parse_dtypes():
@@ -55,19 +58,19 @@ def test__parse_dtypes():
     result = _parse_dtypes(data, table_meta)
 
     # Asserts
-    expect = pd.DataFrame({
+    expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
         'b_field': [7, 14]
     })
 
-    pd.testing.assert_frame_equal(result, expect)
+    pd.testing.assert_frame_equal(result, expected)
 
 
 def test_load_csv(tmp_path):
     """Test load csv"""
     # Setup
     metadata = tmp_path / 'load_csv.csv'
-    metadata.write_text('some,fake,data')
+    metadata.write_text('some, fake, data')
 
     root_path = str(tmp_path)
     table_meta = {
@@ -95,30 +98,16 @@ def test___init__default_metadata_string(tmp_path):
     with patch('sdv.metadata.Metadata._dict_metadata') as mock_meta, \
             patch('sdv.metadata.Metadata._get_relationships') as mock_relationships:
 
-        metadata = Metadata(str(metadata_path))
+        metadata = Metadata(str(metadata_path), root_path=None)
         mock_meta.assert_called_once_with({'some': 'meta'})
-        assert mock_relationships.call_count == 1
+        mock_relationships.assert_called_once_with()
 
-    assert metadata.root_path == '.'
+    assert metadata.root_path == str(tmp_path)  # We ensure that root_path is the tmp file.
     assert metadata._hyper_transformers == dict()
 
 
 class TestMetadata(TestCase):
-
-    def test___init__default_metadata_dict(self):
-        """Test create Metadata instance default with a dict"""
-        # Run and asserts
-        metadata_dict = {'some': 'meta'}
-
-        with patch('sdv.metadata.Metadata._dict_metadata') as mock_meta, \
-                patch('sdv.metadata.Metadata._get_relationships') as mock_relationships:
-
-            metadata = Metadata(metadata_dict)
-
-            mock_meta.assert_called_once_with({'some': 'meta'})
-            assert mock_relationships.call_count == 1
-            assert metadata.root_path == '.'
-            assert metadata._hyper_transformers == dict()
+    """Test Metadata class."""
 
     def test__get_relationships(self):
         """Test get relationships"""
@@ -134,6 +123,16 @@ class TestMetadata(TestCase):
                             'name': 'test_field'
                         }
                     }
+                },
+                'test_not_use': {
+                    'use': False,
+                    'name': 'test_not_use',
+                    'fields': {
+                        'test_field_not_use': {
+                            'ref': {'table': 'table_ref', 'field': 'field_ref'},
+                            'name': 'test_field_not_use'
+                        }
+                    }
                 }
             }
         }
@@ -145,13 +144,13 @@ class TestMetadata(TestCase):
         Metadata._get_relationships(metadata)
 
         # Asserts
-        expect__child_map = {'table_ref': {'test'}}
-        expect__parent_map = {'test': {'table_ref'}}
-        expect_foreign_keys = {('test', 'table_ref'): ('field_ref', 'test_field')}
+        expected__child_map = {'table_ref': {'test'}}
+        expected__parent_map = {'test': {'table_ref'}}
+        expected_foreign_keys = {('test', 'table_ref'): ('field_ref', 'test_field')}
 
-        assert metadata._child_map == expect__child_map
-        assert metadata._parent_map == expect__parent_map
-        assert metadata.foreign_keys == expect_foreign_keys
+        assert metadata._child_map == expected__child_map
+        assert metadata._parent_map == expected__parent_map
+        assert metadata.foreign_keys == expected_foreign_keys
 
     def test__dict_metadata(self):
         """Test dict_metadata"""
@@ -170,7 +169,7 @@ class TestMetadata(TestCase):
         result = Metadata._dict_metadata(metadata)
 
         # Asserts
-        expect = {
+        expected = {
             'tables': {
                 'test': {
                     'use': True,
@@ -185,14 +184,28 @@ class TestMetadata(TestCase):
             }
         }
 
-        assert result == expect
+        assert result == expected
+
+    @patch('sdv.metadata.Metadata._get_relationships')
+    @patch('sdv.metadata.Metadata._dict_metadata')
+    def test___init__default_metadata_dict(self, mock_meta, mock_relationships):
+        """Test create Metadata instance default with a dict"""
+        # Run
+        metadata_dict = {'some': 'meta'}
+        metadata = Metadata(metadata_dict)
+
+        # Asserts
+        mock_meta.assert_called_once_with({'some': 'meta'})
+        mock_relationships.assert_called_once_with()
+        assert metadata.root_path == '.'
+        assert metadata._hyper_transformers == dict()
 
     def test_get_children(self):
         """Test get children"""
         # Run
         metadata = Mock()
         metadata._child_map = {
-            'test': {'child_table'}
+            'test': 'child_table'
         }
 
         table_name = 'test'
@@ -200,16 +213,14 @@ class TestMetadata(TestCase):
         result = Metadata.get_children(metadata, table_name)
 
         # Asserts
-        expect = {'child_table'}
-
-        assert result == expect
+        assert result == 'child_table'
 
     def test_get_parents(self):
         """Test get parents"""
         # Run
         metadata = Mock()
         metadata._parent_map = {
-            'test': {'parent_table'}
+            'test': 'parent_table'
         }
 
         table_name = 'test'
@@ -217,9 +228,7 @@ class TestMetadata(TestCase):
         result = Metadata.get_parents(metadata, table_name)
 
         # Asserts
-        expect = {'parent_table'}
-
-        assert result == expect
+        assert result == 'parent_table'
 
     def test_get_table_meta(self):
         """Test get table meta"""
@@ -236,9 +245,9 @@ class TestMetadata(TestCase):
         result = Metadata.get_table_meta(metadata, table_name)
 
         # Asserts
-        expect = {'some': 'data'}
+        expected = {'some': 'data'}
 
-        assert result == expect
+        assert result == expected
 
     @patch('sdv.metadata.load_csv')
     def test_load_table(self, mock_load_csv):
@@ -251,14 +260,16 @@ class TestMetadata(TestCase):
         metadata = Mock()
         metadata.root_path = root_path
         metadata.get_table_meta.return_value = table_meta
+        mock_load_csv.return_value = 'data'
 
         table_name = 'test'
 
-        Metadata.load_table(metadata, table_name)
+        result = Metadata.load_table(metadata, table_name)
 
         # Asserts
         metadata.get_table_meta.assert_called_once_with('test')
         mock_load_csv.assert_called_once_with('.', {'some': 'data'})
+        assert result == 'data'
 
     def test__get_dtypes(self):
         """Test get data types"""
@@ -280,11 +291,10 @@ class TestMetadata(TestCase):
         result = Metadata._get_dtypes(metadata, table_name)
 
         # Asserts
-        expect = [int, float, np.object, bool, np.datetime64]
+        expected = [int, float, np.object, bool, np.datetime64]
 
-        for item in result:
-            assert item in expect
-        assert len(result) == len(expect)
+        assert all([item in expected for item in result])
+        assert len(result) == len(expected)
 
     def test__get_dtypes_error_subtype_categorical(self):
         """Test get data types with an invalid categorical subtype"""
@@ -326,6 +336,10 @@ class TestMetadata(TestCase):
                 'type': 'categorical',
                 'pii': True,
                 'pii_category': 'email'
+            },
+            'bar': {
+                'type': 'categorical',
+                'pii_category': 'email'
             }
         }
 
@@ -338,9 +352,9 @@ class TestMetadata(TestCase):
         result = Metadata._get_pii_fields(metadata, table_name)
 
         # Asserts
-        expect = {'foo': 'email'}
+        expected = {'foo': 'email'}
 
-        assert result == expect
+        assert result == expected
 
     @patch('sdv.metadata.HyperTransformer')
     def test__load_hyper_transformer(self, mock_ht):
@@ -353,15 +367,17 @@ class TestMetadata(TestCase):
         metadata = Mock()
         metadata._get_dtypes.return_value = dtypes
         metadata._get_pii_fields.return_value = pii_fields
+        mock_ht.return_value = 'hypertransformer'
 
         table_name = 'test'
 
-        Metadata._load_hyper_transformer(metadata, table_name)
+        result = Metadata._load_hyper_transformer(metadata, table_name)
 
         # Asserts
         metadata._get_dtypes.assert_called_once_with('test')
         metadata._get_pii_fields.assert_called_once_with('test')
         mock_ht.assert_called_once_with(anonymize=dict(), dtypes=list())
+        assert result == 'hypertransformer'
 
     def test_get_table_data_transform(self):
         """Test get table data with hyper transformer and transform"""
@@ -369,6 +385,7 @@ class TestMetadata(TestCase):
         load_table = pd.DataFrame({'foo': [0, 1]})
         _hyper_transformers = dict()
         hyper_transformer = Mock()
+        hyper_transformer.transform.return_value = 'transformed'
 
         # Run
         metadata = Mock()
@@ -379,7 +396,7 @@ class TestMetadata(TestCase):
         table_name = 'test'
         transform = True
 
-        Metadata.get_table_data(metadata, table_name, transform=transform)
+        result = Metadata.get_table_data(metadata, table_name, transform=transform)
 
         # Asserts
         metadata.load_table.assert_called_once_with('test')
@@ -394,6 +411,8 @@ class TestMetadata(TestCase):
             hyper_transformer.transform.call_args[0][0],
             pd.DataFrame({'foo': [0, 1]})
         )
+
+        assert result == 'transformed'
 
     def test_get_table_data_no_transform(self):
         """Test get table data with hyper transformer and no transform"""
@@ -414,20 +433,17 @@ class TestMetadata(TestCase):
         result = Metadata.get_table_data(metadata, table_name, transform=transform)
 
         # Asserts
-        expect = pd.DataFrame({'foo': [0, 1]})
+        expected = pd.DataFrame({'foo': [0, 1]})
 
         metadata.load_table.assert_called_once_with('test')
         metadata._load_hyper_transformer.assert_called_once_with('test')
 
         pd.testing.assert_frame_equal(
             hyper_transformer.fit.call_args[0][0],
-            expect
+            expected
         )
 
-        pd.testing.assert_frame_equal(
-            result,
-            expect
-        )
+        pd.testing.assert_frame_equal(result, expected)
 
         assert hyper_transformer.transform.call_count == 0
 
@@ -449,9 +465,9 @@ class TestMetadata(TestCase):
         result = Metadata.get_table_names(metadata)
 
         # Asserts
-        expect = ['table 1', 'table 2', 'table 3']
+        expected = ['table 1', 'table 2', 'table 3']
 
-        assert sorted(result) == sorted(expect)
+        assert sorted(result) == sorted(expected)
 
     def test_get_tables(self):
         """Test get tables"""
@@ -471,16 +487,16 @@ class TestMetadata(TestCase):
         result = Metadata.get_tables(metadata, tables=tables)
 
         # Asserts
-        expect = {
+        expected = {
             'table 1': pd.DataFrame({'foo': [1, 2]}),
             'table 2': pd.DataFrame({'bar': [3, 4]}),
             'table 3': pd.DataFrame({'tar': [5, 6]})
         }
 
-        assert result.keys() == expect.keys()
+        assert result.keys() == expected.keys()
 
         for k, v in result.items():
-            pd.testing.assert_frame_equal(v, expect[k])
+            pd.testing.assert_frame_equal(v, expected[k])
 
     def test_get_fields(self):
         """Test get fields"""
@@ -501,11 +517,11 @@ class TestMetadata(TestCase):
         result = Metadata.get_fields(metadata, table_name)
 
         # Asserts
-        expect = {'a_field': 'some data', 'b_field': 'other data'}
+        expected = {'a_field': 'some data', 'b_field': 'other data'}
 
         metadata.get_table_meta.assert_called_once_with('test')
 
-        assert result == expect
+        assert result == expected
 
     def test_get_field_names(self):
         """Test get field names"""
@@ -524,11 +540,11 @@ class TestMetadata(TestCase):
         result = Metadata.get_field_names(metadata, table_name)
 
         # Asserts
-        expect = ['a_field', 'b_field']
+        expected = ['a_field', 'b_field']
 
         metadata.get_fields.assert_called_once_with('test')
 
-        assert sorted(result) == sorted(expect)
+        assert sorted(result) == sorted(expected)
 
     def test_get_field_meta(self):
         """Test get field meta"""
@@ -547,11 +563,11 @@ class TestMetadata(TestCase):
         result = Metadata.get_field_meta(metadata, table_name, field_name)
 
         # Asserts
-        expect = {'some': 'data'}
+        expected = {'some': 'data'}
 
         metadata.get_fields.assert_called_once_with('test')
 
-        assert result == expect
+        assert result == expected
 
     def test_get_primary_key(self):
         """Test get primary key"""
@@ -569,11 +585,11 @@ class TestMetadata(TestCase):
         result = Metadata.get_primary_key(metadata, table_name)
 
         # Asserts
-        expect = 'pk'
+        expected = 'pk'
 
         metadata.get_table_meta.assert_called_once_with('test')
 
-        assert result == expect
+        assert result == expected
 
     def test_get_foreign_key(self):
         """Test get foreign key"""
@@ -585,6 +601,12 @@ class TestMetadata(TestCase):
                     'field': 'pk'
                 },
                 'name': 'a_field'
+            },
+            'p_field': {
+                'ref': {
+                    'field': 'kk'
+                },
+                'name': 'p_field'
             }
         }
 
@@ -599,12 +621,12 @@ class TestMetadata(TestCase):
         result = Metadata.get_foreign_key(metadata, parent, child)
 
         # Asserts
-        expect = 'a_field'
+        expected = 'a_field'
 
         metadata.get_primary_key.assert_called_once_with('parent_table')
         metadata.get_fields.assert_called_once_with('child_table')
 
-        assert result == expect
+        assert result == expected
 
     def test_reverse_transform(self):
         """Test reverse transform"""
@@ -624,8 +646,8 @@ class TestMetadata(TestCase):
         Metadata.reverse_transform(metadata, table_name, data)
 
         # Asserts
-        expect_call = pd.DataFrame({'foo': [0, 1]})
+        expected_call = pd.DataFrame({'foo': [0, 1]})
         pd.testing.assert_frame_equal(
             ht_mock.reverse_transform.call_args[0][0],
-            expect_call
+            expected_call
         )

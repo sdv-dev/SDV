@@ -255,6 +255,8 @@ class Modeler:
                 Names of the children.
             tables (dict):
                 Previously processed tables.
+        Returns:
+            pandas.DataFrame
         """
         extensions = []
 
@@ -293,7 +295,7 @@ class Modeler:
                 previously processed tables.
 
         Returns:
-            None
+            pandas.DataFrame
         """
         LOGGER.info('Modeling %s', table_name)
 

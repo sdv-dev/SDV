@@ -42,13 +42,14 @@ class TestModeler(TestCase):
     def test___init__default(self, mock_copulas):
         """Test create new Modeler instance with default values"""
         # Run
-        modeler = Modeler(None)
+        modeler = Modeler('test')
 
         # Asserts
-        expect_model_kwargs = {'distribution': mock_copulas.return_value}
+        expected_model_kwargs = {'distribution': mock_copulas.return_value}
 
         mock_copulas.assert_called_once_with(GaussianUnivariate)
-        assert modeler.model_kwargs == expect_model_kwargs
+        assert modeler.model_kwargs == expected_model_kwargs
+        assert modeler.metadata == 'test'
 
     @patch('sdv.modeler.get_qualified_name', return_value='foo')
     def test___init__distribution(self, mock_copulas):
@@ -57,13 +58,14 @@ class TestModeler(TestCase):
         distribution = Mock()
 
         # Run
-        modeler = Modeler(None, distribution=distribution)
+        modeler = Modeler('test', distribution=distribution)
 
         # Asserts
-        expect_model_kwargs = {'distribution': 'foo'}
+        expected_model_kwargs = {'distribution': 'foo'}
 
         mock_copulas.assert_called_once_with(distribution)
-        assert modeler.model_kwargs == expect_model_kwargs
+        assert modeler.model_kwargs == expected_model_kwargs
+        assert modeler.metadata == 'test'
 
     def test___init__raise_error(self):
         """Test create new Modeler instance raise a ValueError"""
@@ -80,13 +82,13 @@ class TestModeler(TestCase):
         result = Modeler._flatten_array(nested, prefix=prefix)
 
         # Asserts
-        expect = {
+        expected = {
             'test__0__0': 'foo',
             'test__0__1': 'bar',
             'test__1': 'tar'
         }
 
-        assert result == expect
+        assert result == expected
 
     def test__flatten_dict_of_ignored_keys(self):
         """Test get flatten dict of ignored keys"""
@@ -101,8 +103,8 @@ class TestModeler(TestCase):
         result = Modeler._flatten_dict(nested, prefix=prefix)
 
         # Asserts
-        expect = {}
-        assert result == expect
+        expected = {}
+        assert result == expected
 
     def test__flatten_dict(self):
         """Test get flatten dict with some result"""
@@ -116,24 +118,29 @@ class TestModeler(TestCase):
         result = Modeler._flatten_dict(nested, prefix='test')
 
         # Asserts
-        expect = {
+        expected = {
             'test__foo': 'value',
             'test__bar__bar_dict': 'value_bar_dict',
             'test__tar__0': 'value_tar_list'
         }
 
-        assert result == expect
+        assert result == expected
 
     @patch('numpy.log')
     @patch('sdv.modeler.get_qualified_name', return_value='foo')
     def test__get_model_dict_default_model(self, mock_copulas, mock_np):
         """Test get flatten model dict with default model"""
         # Setup
-        std = Mock()
-        std.std = 0.2
+        x = Mock()
+        x.std = 0.2
+        y = Mock()
+        y.std = 0.2
+        z = Mock()
+        z.std = 0.2
+
         mock_model = Mock()
         mock_model.covariance = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
-        mock_model.distribs = {'x': std, 'y': std, 'z': std}
+        mock_model.distribs = {'x': x, 'y': y, 'z': z}
 
         model_kwargs = {'distribution': 'foo'}
 
@@ -142,15 +149,19 @@ class TestModeler(TestCase):
         modeler.fit_model.return_value = mock_model
         modeler.model = GaussianMultivariate
         modeler.model_kwargs = model_kwargs
+        modeler._flatten_dict.return_value = 'dict'
 
-        Modeler._get_model_dict(modeler, None)
+        result = Modeler._get_model_dict(modeler, None)
 
         # Asserts
-        expect_copulas_call_count = 1
-        expect_numpy_call_count = 3
+        expected_copulas_call_count = 1
+        expected_numpy_call_count = 3
 
-        assert mock_copulas.call_count == expect_copulas_call_count
-        assert mock_np.call_count == expect_numpy_call_count
+        assert mock_copulas.call_count == expected_copulas_call_count
+        assert all([_call == call(0.2) for _call in mock_np.call_args_list])
+        assert mock_np.call_count == expected_numpy_call_count
+        modeler._flatten_dict.assert_called_once_with(mock_model.to_dict.return_value)
+        assert result == 'dict'
 
     @patch('sdv.modeler.get_qualified_name')
     def test__get_model_dict_not_default_model(self, mock_copulas):
@@ -158,12 +169,13 @@ class TestModeler(TestCase):
         # Run
         modeler = Mock()
         modeler.model = None
+        modeler._flatten_dict.return_value = 'dict'
 
-        Modeler._get_model_dict(modeler, None)
+        result = Modeler._get_model_dict(modeler, None)
 
         # Asserts
-        expect_copulas_call_count = 0
-        assert mock_copulas.call_count == expect_copulas_call_count
+        mock_copulas.assert_not_called()
+        assert result == 'dict'
 
     def test_get_foreign_key_not_exist(self):
         """Test try to find a foreign key, but is not exist"""
@@ -187,8 +199,8 @@ class TestModeler(TestCase):
         result = Modeler.get_foreign_key(modeler, fields, primary)
 
         # Asserts
-        expect = 'foreign key'
-        assert result == expect
+        expected = 'foreign key'
+        assert result == expected
 
     def test_fit_model(self):
         """Test fit model"""
@@ -202,11 +214,11 @@ class TestModeler(TestCase):
         Modeler.fit_model(modeler, None)
 
         # Asserts
-        expect_foo = 'bar'
-        expect_fit_call = None
+        expected_foo = 'bar'
+        expected_fit_call = None
 
-        modeler.model.assert_called_once_with(foo=expect_foo)
-        model_mock.fit.assert_called_once_with(expect_fit_call)
+        modeler.model.assert_called_once_with(foo=expected_foo)
+        model_mock.fit.assert_called_once_with(expected_fit_call)
 
     def test__create_extension_key_error(self):
         """Test create extension, but an exception return a none"""
@@ -237,7 +249,6 @@ class TestModeler(TestCase):
         child_table_data = pd.DataFrame({'bar': [1, 0]})
         table_info = ('foreign_key', 'child_name')
 
-        # import ipdb; ipdb.set_trace()
         result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
 
         # Asserts
@@ -259,17 +270,14 @@ class TestModeler(TestCase):
         result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
 
         # Asserts
-        assert result is not None
+        expected = pd.Series({'child_name__child_rows': 2})
+        assert all(result == expected)
 
     def test__get_extensions(self):
         """Test get list of extensions from childs"""
         # Setup
-        metadata_foreign_key = [
-            'foreign_a'
-        ]
-        create_extension = [
-            None, pd.Series([7, 6])
-        ]
+        metadata_foreign_key = ['foreign_a']
+        create_extension = [None, pd.Series([7, 6])]
 
         # Run
         modeler = Mock()
@@ -285,16 +293,15 @@ class TestModeler(TestCase):
         result = Modeler._get_extensions(modeler, parent, child, tables)
 
         # Asserts
-        expect = [
+        expected = [
             pd.DataFrame({0: [7], 1: [6]}, index=[1])
         ]
-        expect_foreign_key_call_count = 1
-        expect_foreign_key_call_args_list = [
+
+        expected_foreign_key_call = [
             call('parent_table', 'child_a')
         ]
 
-        expect_create_extension_call_count = 2
-        expect_create_extension_call_args_list = [
+        expected_create_extension_calls = [
             [
                 pd.DataFrame({'foreign_a': [0]}, index=[0]),
                 pd.DataFrame({'foreign_a': [0, 1]}, index=range(2)),
@@ -307,19 +314,17 @@ class TestModeler(TestCase):
             ]
         ]
 
-        assert modeler.metadata.get_foreign_key.call_count == expect_foreign_key_call_count
-        assert modeler.metadata.get_foreign_key.call_args_list == expect_foreign_key_call_args_list
+        assert modeler.metadata.get_foreign_key.call_args_list == expected_foreign_key_call
 
-        assert modeler._create_extension.call_count == expect_create_extension_call_count
-        for result_item, expect_item in zip(
-                modeler._create_extension.call_args_list, expect_create_extension_call_args_list):
-            pd.testing.assert_frame_equal(result_item[0][0], expect_item[0])
-            pd.testing.assert_frame_equal(result_item[0][1], expect_item[1])
-            assert result_item[0][2] == expect_item[2]
+        for result_item, expected_item in zip(
+                modeler._create_extension.call_args_list, expected_create_extension_calls):
+            pd.testing.assert_frame_equal(result_item[0][0], expected_item[0])
+            pd.testing.assert_frame_equal(result_item[0][1], expected_item[1])
+            assert result_item[0][2] == expected_item[2]
 
         assert len(result) == 1
-        assert len(result) == len(expect)
-        pd.testing.assert_frame_equal(result[0], expect[0])
+        assert len(result) == len(expected)
+        pd.testing.assert_frame_equal(result[0], expected[0])
 
     def test_cpa(self):
         """Test CPA with extensions"""
@@ -342,12 +347,12 @@ class TestModeler(TestCase):
         result = Modeler.cpa(modeler, table_name, tables)
 
         # Asserts
-        expect = pd.DataFrame({'pk_field': [0, 1], 'foo': [1, 0]})
+        expected = pd.DataFrame({'pk_field': [0, 1], 'foo': [1, 0]})
 
         modeler.metadata.get_table_data.assert_called_once_with('test', transform=True)
         modeler.metadata.get_children.assert_called_once_with('test')
         modeler.metadata.get_primary_key.assert_called_once_with('test')
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expect.sort_index(axis=1))
+        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
 
     def test_rcpa(self):
         """Test RCPA"""
@@ -363,16 +368,14 @@ class TestModeler(TestCase):
         Modeler.rcpa(modeler, table_name, tables)
 
         # Asserts
-        expect_tables = {'test': modeler.cpa()}
-        expect_call_count = 3
-        expect_call_args_list = [
-            call('child 1', expect_tables),
-            call(['child 2.1', 'child 2.2'], expect_tables),
-            call('child 3', expect_tables)
+        expected_tables = {'test': modeler.cpa()}
+        expected_call_args_list = [
+            call('child 1', expected_tables),
+            call(['child 2.1', 'child 2.2'], expected_tables),
+            call('child 3', expected_tables)
         ]
 
-        assert modeler.rcpa.call_count == expect_call_count
-        assert modeler.rcpa.call_args_list == expect_call_args_list
+        assert modeler.rcpa.call_args_list == expected_call_args_list
 
     def test__impute(self):
         """Test _impute data"""
@@ -383,9 +386,9 @@ class TestModeler(TestCase):
         result = Modeler._impute(data)
 
         # Asserts
-        expect = pd.DataFrame({'foo': [0, 0.5, 1], 'bar': ['a', 'a', 'b']})
+        expected = pd.DataFrame({'foo': [0, 0.5, 1], 'bar': ['a', 'a', 'b']})
 
-        pd.testing.assert_frame_equal(result, expect)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test_model_database(self):
         """Test model using RCPA"""
@@ -394,11 +397,7 @@ class TestModeler(TestCase):
             tables[table_name] = table_name
 
         metadata_table_names = ['foo', 'bar', 'tar']
-        metadata_parents = [
-            None,
-            'bar_parent',
-            None
-        ]
+        metadata_parents = [None, 'bar_parent', None]
 
         # Run
         modeler = Mock()
@@ -410,8 +409,8 @@ class TestModeler(TestCase):
         Modeler.model_database(modeler)
 
         # Asserts
-        expect_metadata_parents_call_count = 3
-        expect_metadata_parents_call_arg_list = [call('foo'), call('bar'), call('tar')]
+        expected_metadata_parents_call_count = 3
+        expected_metadata_parents_call = [call('foo'), call('bar'), call('tar')]
 
-        assert modeler.metadata.get_parents.call_count == expect_metadata_parents_call_count
-        assert modeler.metadata.get_parents.call_args_list == expect_metadata_parents_call_arg_list
+        assert modeler.metadata.get_parents.call_count == expected_metadata_parents_call_count
+        assert modeler.metadata.get_parents.call_args_list == expected_metadata_parents_call

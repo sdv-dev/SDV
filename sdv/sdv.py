@@ -22,8 +22,9 @@ class SDV:
             Keyword arguments to pass to model.
     """
 
+    sampler = None
+
     def __init__(self, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
-        self.sampler = None
         self.model = model
         self.distribution = distribution
         self.model_kwargs = model_kwargs
@@ -73,8 +74,11 @@ class SDV:
             raise NotFittedError('SDV instance has not been fitted')
 
         return self.sampler.sample_rows(
-            table_name, num_rows, sample_children=sample_children,
-            reset_primary_keys=reset_primary_keys)
+            table_name,
+            num_rows,
+            sample_children=sample_children,
+            reset_primary_keys=reset_primary_keys
+        )
 
     def sample_table(self, table_name, num_rows=None, reset_primary_keys=False):
         """Samples the given table to its original size.
