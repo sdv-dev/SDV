@@ -10,12 +10,14 @@ from sdv.sampler import Sampler
 
 class TestSampler(TestCase):
 
-    def test___init__default(self):
+    def test___init__(self):
         """Test create a default instance of Sampler class"""
         # Run
-        sampler = Sampler(None, None)
+        sampler = Sampler('test_metadata', 'test_modeler')
 
         # Asserts
+        assert sampler.metadata == 'test_metadata'
+        assert sampler.modeler == 'test_modeler'
         assert sampler.primary_key == dict()
         assert sampler.remaining_primary_key == dict()
 
@@ -27,26 +29,24 @@ class TestSampler(TestCase):
         result = Sampler._square_matrix(matrix)
 
         # Asserts
-        expect = [[0.1, 0.5], [0.3, 0.0]]
+        expected = [[0.1, 0.5], [0.3, 0.0]]
 
-        assert result == expect
+        assert result == expected
 
-    def test__prepare_sampler_covariance(self):
+    def test__prepare_sampled_covariance(self):
         """Test prepare_sampler_covariante"""
         # Run
-        sampler = Mock()
-        sampler._square_matrix.return_value = [[0.4, 0.1], [0.1, 0.0]]
         covariance = [[0.4, 0.1], [0.1]]
 
-        result = Sampler._prepare_sampled_covariance(sampler, covariance)
+        result = Sampler(None, None)._prepare_sampled_covariance(covariance)
 
         # Asserts
-        expect = np.array([[0.4, 0.2], [0.2, 0.0]])
+        expected = np.array([[0.4, 0.2], [0.2, 0.0]])
 
-        np.testing.assert_equal(result, expect)
+        np.testing.assert_equal(result, expected)
 
     @patch('exrex.getone')
-    def test__fill_test_columns(self, mock_exrex):
+    def test__fill_text_columns(self, mock_exrex):
         """Test fill text columns"""
         # Setup
         mock_exrex.side_effect = ['fake id 1', 'fake id 2']
@@ -71,13 +71,13 @@ class TestSampler(TestCase):
         result = Sampler._fill_text_columns(sampler, data, columns, table_name)
 
         # Asserts
-        expect = pd.DataFrame({
+        expected = pd.DataFrame({
             'foo': ['some value', 'some value', 'some value'],
             'bar': ['fake id 1', 'fake id 1', 'fake id 1'],
             'tar': ['fake id 2', 'fake id 2', 'fake id 2'],
         })
 
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expect.sort_index(axis=1))
+        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
 
     def test__reset_primary_keys_generators(self):
         """Test reset values"""
@@ -108,9 +108,9 @@ class TestSampler(TestCase):
         result = Sampler._transform_synthesized_rows(sampler, synthesized, table_name)
 
         # Asserts
-        expect = pd.DataFrame({'foo': [0, 1], 'bar': [2, 3]})
+        expected = pd.DataFrame({'foo': [0, 1], 'bar': [2, 3]})
 
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expect.sort_index(axis=1))
+        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
 
     def test__get_primary_keys_none(self):
         """Test returns a tuple of none when a table doesn't have a primary key"""
@@ -124,8 +124,8 @@ class TestSampler(TestCase):
         result = Sampler._get_primary_keys(sampler, table_name, num_rows)
 
         # Asserts
-        expect = (None, None)
-        assert result == expect
+        expected = (None, None)
+        assert result == expected
 
     def test__get_primary_keys_raise_value_error(self):
         """Test a ValueError is raised trying to get the primary keys"""
@@ -178,10 +178,10 @@ class TestSampler(TestCase):
         result = Sampler._get_primary_keys(sampler, table_name, num_rows)
 
         # Asserts
-        expect = ('pk', pd.Series([11, 22, 33, 44, 55]))
+        expected = ('pk', pd.Series([11, 22, 33, 44, 55]))
 
-        assert result[0] == expect[0]
-        pd.testing.assert_series_equal(result[1], expect[1])
+        assert result[0] == expected[0]
+        pd.testing.assert_series_equal(result[1], expected[1])
 
     def test__setdefault_key_in_dict(self):
         """Test setdefault with key in dict"""
@@ -193,9 +193,9 @@ class TestSampler(TestCase):
         result = Sampler._setdefault(a_dict, key, a_type)
 
         # Asserts
-        expect = 'bar'
+        expected = 'bar'
 
-        assert result == expect
+        assert result == expected
 
     def test__setdefault_key_not_in_dict(self):
         """Test setdefault with key not in dict"""
@@ -207,9 +207,9 @@ class TestSampler(TestCase):
         result = Sampler._setdefault(a_dict, key, a_type)
 
         # Asserts
-        expect = 0
+        expected = 0
 
-        assert result == expect
+        assert result == expected
 
     def test__key_order(self):
         """Test key order"""
@@ -219,9 +219,9 @@ class TestSampler(TestCase):
         result = Sampler._key_order(key_value)
 
         # Asserts
-        expect = ['foo', 0, 1]
+        expected = ['foo', 0, 1]
 
-        assert result == expect
+        assert result == expected
 
     def test__unflatten_dict_raises_error_row_index(self):
         """Test unflatten dict raises error row_index"""
@@ -279,9 +279,9 @@ class TestSampler(TestCase):
         result = Sampler._unflatten_dict(sampler, flat)
 
         # Asserts
-        expect = {'tar': 'some value'}
+        expected = {'tar': 'some value'}
 
-        assert result == expect
+        assert result == expected
 
     def test__make_positive_definite(self):
         """Test find the nearest positive-definite matrix"""
@@ -294,9 +294,9 @@ class TestSampler(TestCase):
         result = Sampler._make_positive_definite(sampler, matrix)
 
         # Asserts
-        expect = np.array([[0.5, 0.5], [0.5, 0.5]])
+        expected = np.array([[0.5, 0.5], [0.5, 0.5]])
 
-        np.testing.assert_equal(result, expect)
+        np.testing.assert_equal(result, expected)
         assert sampler._check_matrix_symmetric_positive_definite.call_count == 1
 
     def test__make_positive_definite_iterate(self):
@@ -312,9 +312,9 @@ class TestSampler(TestCase):
         result = Sampler._make_positive_definite(sampler, matrix)
 
         # Asserts
-        expect = np.array([[0.8, -0.4], [-0.4, 0.2]])
+        expected = np.array([[0.8, -0.4], [-0.4, 0.2]])
 
-        np.testing.assert_array_almost_equal(result, expect)
+        np.testing.assert_array_almost_equal(result, expected)
         assert sampler._check_matrix_symmetric_positive_definite.call_count == 3
 
     def test__check_matrix_symmetric_positive_definite_shape_error(self):
@@ -326,9 +326,9 @@ class TestSampler(TestCase):
         result = Sampler._check_matrix_symmetric_positive_definite(sampler, matrix)
 
         # Asserts
-        expect = False
+        expected = False
 
-        assert result is expect
+        assert result == expected
 
     def test__check_matrix_symmetric_positive_definite_np_error(self):
         """Test check matrix numpy raise error"""
@@ -339,9 +339,9 @@ class TestSampler(TestCase):
         result = Sampler._check_matrix_symmetric_positive_definite(sampler, matrix)
 
         # Asserts
-        expect = False
+        expected = False
 
-        assert result is expect
+        assert result == expected
 
     def test__check_matrix_symmetric_positive_definite(self):
         """Test check matrix numpy"""
@@ -352,9 +352,9 @@ class TestSampler(TestCase):
         result = Sampler._check_matrix_symmetric_positive_definite(sampler, matrix)
 
         # Asserts
-        expect = True
+        expected = True
 
-        assert result is expect
+        assert result is expected
 
     def test__unflatten_gaussian_copula(self):
         """Test unflatte gaussian copula"""
@@ -383,7 +383,7 @@ class TestSampler(TestCase):
         result = Sampler._unflatten_gaussian_copula(sampler, model_parameters)
 
         # Asserts
-        expect = {
+        expected = {
             'distribs': {
                 'foo': {
                     'fitted': True,
@@ -395,7 +395,7 @@ class TestSampler(TestCase):
             'covariance': [[0.5, 0.5], [0.5, 0.5]]
         }
 
-        assert result == expect
+        assert result == expected
 
     def test__get_extension(self):
         """Test get extension"""
@@ -409,9 +409,9 @@ class TestSampler(TestCase):
         result = Sampler._get_extension(sampler, parent_row, table_name, parent_name)
 
         # Asserts
-        expect = {'field': [0, 1], 'field2': [1, 0]}
+        expected = {'field': [0, 1], 'field2': [1, 0]}
 
-        assert result == expect
+        assert result == expected
 
     @patch('sdv.sampler.get_qualified_name')
     def test__get_model(self, mock_qualified_name):
@@ -432,19 +432,20 @@ class TestSampler(TestCase):
         Sampler._get_model(sampler, extension)
 
         # Asserts
-        expect_unflatten_dict_call = {'extension': 'dict'}
-        expect_qualified_name_call_count = 1
-        expect_unflatten_gaussian_call = {
+        expected_unflatten_dict_call = {'extension': 'dict'}
+        expected_qualified_name_call_count = 1
+        expected_unflatten_gaussian_call = {
             'unflatten': 'dict',
             'fitted': True,
             'type': 'copulas.multivariate.gaussian.GaussianMultivariate'
         }
-        expect_from_dict_call = {'unflatten': 'gaussian'}
+        expected_from_dict_call = {'unflatten': 'gaussian'}
 
-        sampler._unflatten_dict.assert_called_once_with(expect_unflatten_dict_call)
-        assert mock_qualified_name.call_count == expect_qualified_name_call_count
-        sampler._unflatten_gaussian_copula.assert_called_once_with(expect_unflatten_gaussian_call)
-        sampler.modeler.model.from_dict.assert_called_once_with(expect_from_dict_call)
+        sampler._unflatten_dict.assert_called_once_with(expected_unflatten_dict_call)
+        assert mock_qualified_name.call_count == expected_qualified_name_call_count
+        sampler._unflatten_gaussian_copula.assert_called_once_with(
+            expected_unflatten_gaussian_call)
+        sampler.modeler.model.from_dict.assert_called_once_with(expected_from_dict_call)
 
     def test__sample_rows(self):
         """Test sample rows from model"""
@@ -464,9 +465,9 @@ class TestSampler(TestCase):
         result = Sampler._sample_rows(sampler, model, num_rows, table_name)
 
         # Asserts
-        expect = {'pk': [1, 2, 3, 4]}
+        expected = {'pk': [1, 2, 3, 4]}
 
-        assert result == expect
+        assert result == expected
         sampler._get_primary_keys.assert_called_once_with('test', 5)
         model.sample.called_once_with(5)
 
@@ -487,7 +488,7 @@ class TestSampler(TestCase):
         Sampler._sample_children(sampler, table_name, sampled)
 
         # Asserts
-        expect_sample_table_call_args = [
+        expected_sample_table_call_args = [
             ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled],
             ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled],
             ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled],
@@ -501,12 +502,12 @@ class TestSampler(TestCase):
 
         sampler.metadata.get_children.assert_called_once_with('test')
 
-        for result_call, expect_call in zip(
-                sampler._sample_table.call_args_list, expect_sample_table_call_args):
-            assert result_call[0][0] == expect_call[0]
-            assert result_call[0][1] == expect_call[1]
-            assert result_call[0][3] == expect_call[3]
-            pd.testing.assert_series_equal(result_call[0][2], expect_call[2])
+        for result_call, expected_call in zip(
+                sampler._sample_table.call_args_list, expected_sample_table_call_args):
+            assert result_call[0][0] == expected_call[0]
+            assert result_call[0][1] == expected_call[1]
+            assert result_call[0][3] == expected_call[3]
+            pd.testing.assert_series_equal(result_call[0][2], expected_call[2])
 
     def test__sample_table_sampled_tablename_none(self):
         """Test sample table with sampled table_name None"""
