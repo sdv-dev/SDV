@@ -1,30 +1,17 @@
+import itertools
+
 import exrex
 import numpy as np
 import pandas as pd
-from copulas import get_qualified_name
-
-GAUSSIAN_COPULA = 'copulas.multivariate.gaussian.GaussianMultivariate'
-
-
-MODEL_ERROR_MESSAGES = {
-    True: (
-        'There was an error recreating models from parameters. '
-        'Sampling could not continue.'
-    ),
-    False: (
-        'Modeler hasn\'t been fitted. '
-        'Please call Modeler.model_database() before sampling'
-    )
-}
 
 
 class Sampler:
     """Class to sample data from a model."""
 
-    def __init__(self, metadata, modeler):
+    def __init__(self, metadata, models):
         """Instantiate a new object."""
         self.metadata = metadata
-        self.modeler = modeler
+        self.models = models
         self.primary_key = dict()
         self.remaining_primary_key = dict()
 
@@ -61,7 +48,11 @@ class Sampler:
         """
         covariance = np.array(self._square_matrix(covariance))
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
-        return covariance
+
+        if not self._check_matrix_symmetric_positive_definite(covariance):
+            covariance = self._make_positive_definite(covariance)
+
+        return covariance.tolist()
 
     def _fill_text_columns(self, data, columns, table_name):
         """Fill in the column values for every non numeric column that isn't the primary key.
@@ -86,7 +77,7 @@ class Sampler:
                 if ref:
                     # generate parent row
                     parent_name = ref['table']
-                    parent_row = self.sample_rows(parent_name, 1)
+                    parent_row = self.sample(parent_name, 1)
                     # grab value of foreign key
                     val = parent_row[ref['field']]
                     data.loc[:, name] = val
@@ -151,15 +142,19 @@ class Sampler:
 
         if primary_key:
             node = self.metadata.get_field_meta(table_name, primary_key)
-            regex = node['regex']
 
             generator = self.primary_key.get(table_name)
 
             if generator is None:
-                generator = exrex.generate(regex)
-                self.primary_key[table_name] = generator
+                if node['type'] == 'number':
+                    generator = itertools.count()
+                    remaining = np.inf
+                else:
+                    regex = node.get('regex')
+                    generator = exrex.generate(regex)
+                    remaining = exrex.count(regex)
 
-                remaining = exrex.count(regex)
+                self.primary_key[table_name] = generator
                 self.remaining_primary_key[table_name] = remaining
 
             else:
@@ -167,8 +162,8 @@ class Sampler:
 
             if remaining < num_rows:
                 raise ValueError(
-                    'Not enough unique values for primary key of table {} with regex {}'
-                    ' to generate {} samples.'.format(table_name, regex, num_rows)
+                    'Not enough unique values for primary key of table {}'
+                    ' to generate {} samples.'.format(table_name, num_rows)
                 )
 
             self.remaining_primary_key[table_name] -= num_rows
@@ -322,12 +317,10 @@ class Sampler:
                 Model parameters ready to recreate the model.
         """
 
-        distribution_name = self.modeler.model_kwargs['distribution']
         distribution_kwargs = {
             'fitted': True,
-            'type': distribution_name
+            'type': model_parameters['distribution']
         }
-        model_parameters['distribution'] = distribution_name
 
         distribs = model_parameters['distribs']
         for distribution in distribs.values():
@@ -335,11 +328,7 @@ class Sampler:
             distribution['std'] = np.exp(distribution['std'])
 
         covariance = model_parameters['covariance']
-        covariance = self._prepare_sampled_covariance(covariance)
-        if not self._check_matrix_symmetric_positive_definite(covariance):
-            covariance = self._make_positive_definite(covariance)
-
-        model_parameters['covariance'] = covariance.tolist()
+        model_parameters['covariance'] = self._prepare_sampled_covariance(covariance)
 
         return model_parameters
 
@@ -361,18 +350,17 @@ class Sampler:
         flat_parameters = parent_row[keys]
         return flat_parameters.rename(new_keys).to_dict()
 
-    def _get_model(self, extension):
+    def _get_model(self, extension, table_model):
         """Build a model using the extension parameters."""
+        table_model_parameters = table_model.to_dict()
+
         model_parameters = self._unflatten_dict(extension)
-        model_name = get_qualified_name(self.modeler.model)
-
         model_parameters['fitted'] = True
-        model_parameters['type'] = model_name
+        model_parameters['distribution'] = table_model_parameters['distribution']
 
-        if model_name == GAUSSIAN_COPULA:
-            model_parameters = self._unflatten_gaussian_copula(model_parameters)
+        model_parameters = self._unflatten_gaussian_copula(model_parameters)
 
-        return self.modeler.model.from_dict(model_parameters)
+        return table_model.from_dict(model_parameters)
 
     def _sample_rows(self, model, num_rows, table_name):
         """Sample ``num_rows`` from ``model``.
@@ -406,7 +394,8 @@ class Sampler:
     def _sample_table(self, table_name, parent_name, parent_row, sampled):
         extension = self._get_extension(parent_row, table_name, parent_name)
 
-        model = self._get_model(extension)
+        table_model = self.models[table_name]
+        model = self._get_model(extension, table_model)
         num_rows = max(round(extension['child_rows']), 0)
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)
@@ -422,13 +411,13 @@ class Sampler:
 
         self._sample_children(table_name, sampled)
 
-    def sample_rows(self, table_name, num_rows, reset_primary_keys=False,
-                    sample_children=True, sampled_data=None):
+    def sample(self, table_name, num_rows, reset_primary_keys=False,
+               sample_children=True, sampled_data=None):
 
         if reset_primary_keys:
             self._reset_primary_keys_generators()
 
-        model = self.modeler.models[table_name]
+        model = self.models[table_name]
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)
 
@@ -454,27 +443,6 @@ class Sampler:
 
         else:
             return self._transform_synthesized_rows(sampled_rows, table_name)
-
-    def sample_table(self, table_name, num_rows=5, reset_primary_keys=False):
-        """Sample a table.
-
-        Args:
-            table_name (str):
-                Name of table to synthesize.
-            reset_primary_keys (bool):
-                Wheter or not reset the primary key generators.
-
-        Returns:
-            pandas.DataFrame:
-                Synthesized table.
-        """
-        sampled_data = self.sample_rows(
-            table_name,
-            num_rows,
-            sample_children=False,
-            reset_primary_keys=reset_primary_keys
-        )
-        return sampled_data
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
         """Samples the entire database.
@@ -502,6 +470,6 @@ class Sampler:
         sampled_data = dict()
         for table in self.metadata.get_table_names():
             if not self.metadata.get_parents(table):
-                self.sample_rows(table, num_rows, sampled_data=sampled_data)
+                self.sample(table, num_rows, sampled_data=sampled_data)
 
         return sampled_data

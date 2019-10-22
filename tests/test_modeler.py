@@ -2,76 +2,45 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-import pytest
 from copulas.multivariate import GaussianMultivariate
-from copulas.univariate import GaussianUnivariate
 
+from sdv.metadata import Metadata
 from sdv.modeler import Modeler
-
-
-def test_save_and_load(tmp_path):
-    """Test save and load a SDV instance"""
-    # Setup
-    metadata = tmp_path / "instance.pkl"
-    modeler = Modeler(None)
-
-    # Run "save"
-    Modeler.save(modeler, str(metadata))
-
-    # Asserts "save"
-    assert metadata.exists()
-    assert metadata.is_file()
-
-    # Run "load"
-    instance = Modeler.load(str(metadata))
-
-    # Asserts "load"
-    assert isinstance(instance, Modeler)
-
-    assert modeler.models == dict()
-    assert modeler.metadata is None
-    assert modeler.model == GaussianMultivariate
-    assert modeler.model_kwargs == {
-        'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
-    }
 
 
 class TestModeler(TestCase):
 
-    @patch('sdv.modeler.get_qualified_name')
-    def test___init__default(self, mock_copulas):
+    @patch('sdv.modeler.open')
+    @patch('sdv.modeler.pickle')
+    def test_save(self, pickle_mock, open_mock):
+        metadata = Mock(autopsec=Metadata)
+        modeler = Modeler(metadata)
+        modeler.save('save/path.pkl')
+
+        open_mock.assert_called_once_with('save/path.pkl', 'wb')
+        output = open_mock.return_value.__enter__.return_value
+        pickle_mock.dump.assert_called_once_with(modeler, output)
+
+    @patch('sdv.modeler.open')
+    @patch('sdv.modeler.pickle')
+    def test_load(self, pickle_mock, open_mock):
+        returned = Modeler.load('save/path.pkl')
+
+        open_mock.assert_called_once_with('save/path.pkl', 'rb')
+        output = open_mock.return_value.__enter__.return_value
+        pickle_mock.load.assert_called_once_with(output)
+        assert returned is pickle_mock.load.return_value
+
+    def test___init__default(self):
         """Test create new Modeler instance with default values"""
         # Run
         modeler = Modeler('test')
 
         # Asserts
-        expected_model_kwargs = {'distribution': mock_copulas.return_value}
-
-        mock_copulas.assert_called_once_with(GaussianUnivariate)
-        assert modeler.model_kwargs == expected_model_kwargs
+        assert modeler.models == dict()
         assert modeler.metadata == 'test'
-
-    @patch('sdv.modeler.get_qualified_name', return_value='foo')
-    def test___init__distribution(self, mock_copulas):
-        """Test create new Modeler instance with distribution"""
-        # Setup
-        distribution = Mock()
-
-        # Run
-        modeler = Modeler('test', distribution=distribution)
-
-        # Asserts
-        expected_model_kwargs = {'distribution': 'foo'}
-
-        mock_copulas.assert_called_once_with(distribution)
-        assert modeler.model_kwargs == expected_model_kwargs
-        assert modeler.metadata == 'test'
-
-    def test___init__raise_error(self):
-        """Test create new Modeler instance raise a ValueError"""
-        # Run & asserts
-        with pytest.raises(ValueError):
-            Modeler(None, model=Mock(), distribution=Mock())
+        assert modeler.model == GaussianMultivariate
+        assert modeler.model_kwargs == dict()
 
     def test__flatten_array(self):
         """Test get flatten array"""
@@ -127,8 +96,7 @@ class TestModeler(TestCase):
         assert result == expected
 
     @patch('numpy.log')
-    @patch('sdv.modeler.get_qualified_name', return_value='foo')
-    def test__get_model_dict_default_model(self, mock_copulas, mock_np):
+    def test__get_model_dict_default_model(self, log_mock):
         """Test get flatten model dict with default model"""
         # Setup
         x = Mock()
@@ -154,27 +122,15 @@ class TestModeler(TestCase):
         result = Modeler._get_model_dict(modeler, None)
 
         # Asserts
-        expected_copulas_call_count = 1
-        expected_numpy_call_count = 3
+        expected_log_calls = [
+            call(0.2),
+            call(0.2),
+            call(0.2),
+        ]
 
-        assert mock_copulas.call_count == expected_copulas_call_count
-        assert all([_call == call(0.2) for _call in mock_np.call_args_list])
-        assert mock_np.call_count == expected_numpy_call_count
+        assert log_mock.call_args_list == expected_log_calls
+
         modeler._flatten_dict.assert_called_once_with(mock_model.to_dict.return_value)
-        assert result == 'dict'
-
-    @patch('sdv.modeler.get_qualified_name')
-    def test__get_model_dict_not_default_model(self, mock_copulas):
-        """Test get flatten model dict without default model"""
-        # Run
-        modeler = Mock()
-        modeler.model = None
-        modeler._flatten_dict.return_value = 'dict'
-
-        result = Modeler._get_model_dict(modeler, None)
-
-        # Asserts
-        mock_copulas.assert_not_called()
         assert result == 'dict'
 
     def test_get_foreign_key_not_exist(self):

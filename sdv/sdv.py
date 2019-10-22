@@ -3,34 +3,36 @@
 """Main module."""
 import pickle
 
-from copulas import NotFittedError
+from copulas.multivariate import GaussianMultivariate
 
 from sdv.metadata import Metadata
-from sdv.modeler import DEFAULT_MODEL, Modeler
+from sdv.modeler import Modeler
 from sdv.sampler import Sampler
+
+DEFAULT_MODEL = GaussianMultivariate
+DEFAULT_MODEL_KWARGS = {
+    'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
+}
+
+
+class NotFittedError(Exception):
+    pass
 
 
 class SDV:
-    """Class to do modeling and sampling all in one.
-
-    Args:
-        model (type):
-            Class of model to use.
-        distribution (type):
-            Class of distribution to use. Will be deprecated shortly.
-        model_kwargs (dict):
-            Keyword arguments to pass to model.
-    """
+    """Class to do modeling and sampling all in one."""
 
     sampler = None
 
-    def __init__(self, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
+    def __init__(self, model=DEFAULT_MODEL, model_kwargs=None):
         self.model = model
-        self.distribution = distribution
-        self.model_kwargs = model_kwargs
+        if model_kwargs is None:
+            self.model_kwargs = DEFAULT_MODEL_KWARGS.copy()
+        else:
+            self.model_kwargs = model_kwargs
 
-    def _check_unsupported_dataset_structure(self):
-        """Checks that no table has two parents."""
+    def _validate_dataset_structure(self):
+        """Checks any table has two parents."""
         for table in self.metadata.get_table_names():
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
@@ -48,60 +50,42 @@ class SDV:
         """
 
         self.metadata = Metadata(metadata, root_path)
-        self._check_unsupported_dataset_structure()
+        self._validate_dataset_structure()
 
-        self.modeler = Modeler(
-            metadata=self.metadata,
-            model=self.model,
-            distribution=self.distribution,
-            model_kwargs=self.model_kwargs
-        )
+        self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
         self.modeler.model_database()
-        self.sampler = Sampler(self.metadata, self.modeler)
+        self.sampler = Sampler(self.metadata, self.modeler.models)
 
-    def sample_rows(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
+    def sample(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
         """Sample ``num_rows`` rows from the given table.
 
         Args:
-            table_name(str):
+            table_name (str):
                 Name of the table to sample from.
-            num_rows(int):
+            num_rows (int):
                 Amount of rows to sample.
-            reset_primary_keys(bool):
+            sample_children (bool):
+                Whether to sample children tables.
+            reset_primary_keys (bool):
                 Wheter or not reset the pk generators.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample_rows(
+        return self.sampler.sample(
             table_name,
             num_rows,
             sample_children=sample_children,
             reset_primary_keys=reset_primary_keys
         )
 
-    def sample_table(self, table_name, num_rows=None, reset_primary_keys=False):
-        """Samples the given table to its original size.
-
-        Args:
-            table_name (str):
-                Table to sample.
-            reset_primary_keys(bool):
-                Wheter or not reset the pk generators.
-        """
-        if self.sampler is None:
-            raise NotFittedError('SDV instance has not been fitted')
-
-        return self.sampler.sample_table(
-            table_name, num_rows, reset_primary_keys=reset_primary_keys)
-
     def sample_all(self, num_rows=5, reset_primary_keys=False):
-        """Sample the whole dataset.
+        """Sample the entire database.
 
         Args:
-            num_rows(int):
+            num_rows (int):
                 Amount of rows to sample.
-            reset_primary_keys(bool):
+            reset_primary_keys (bool):
                 Wheter or not reset the pk generators.
         """
         if self.sampler is None:
@@ -113,7 +97,7 @@ class SDV:
         """Save SDV instance to file destination.
 
         Args:
-            file_destination(str):
+            filename (str):
                 Path to store file.
         """
         with open(filename, 'wb') as output:
@@ -124,8 +108,8 @@ class SDV:
         """Load a SDV instance from the given path.
 
         Args:
-            filename(str):
-                Path to load model.
+            filename (str):
+                Path to the save file.
         """
         with open(filename, 'rb') as f:
             instance = pickle.load(f)

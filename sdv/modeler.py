@@ -3,21 +3,11 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from copulas import get_qualified_name
 from copulas.multivariate import GaussianMultivariate
-from copulas.univariate import GaussianUnivariate
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_MODEL = GaussianMultivariate
-DEFAULT_DISTRIBUTION = GaussianUnivariate
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
-
-MODELLING_ERROR_MESSAGE = (
-    'There was an error while trying to model the database. If you are using a custom '
-    'distribution or model, please try again using the default ones. If the problem persist, '
-    'please report it here:\nhttps://github.com/HDI-Project/SDV/issues.\n'
-)
 
 
 class Modeler:
@@ -28,32 +18,16 @@ class Modeler:
             Dataset Metadata.
         model (type):
             Class of model to use.
-        distribution (type):
-            Class of distribution to use. Will be deprecated shortly.
         model_kwargs (dict):
             Keyword arguments to pass to model.
     """
 
-    def __init__(self, metadata, model=DEFAULT_MODEL, distribution=None, model_kwargs=None):
+    def __init__(self, metadata, model=GaussianMultivariate, model_kwargs=None):
         """Instantiates a modeler object."""
         self.models = dict()
         self.metadata = metadata
         self.model = model
-
-        if distribution and model != DEFAULT_MODEL:
-            raise ValueError(
-                '`distribution` argument is only suported for `GaussianMultivariate` model.')
-
-        if distribution is not None:
-            distribution = get_qualified_name(distribution)
-        else:
-            distribution = get_qualified_name(DEFAULT_DISTRIBUTION)
-
-        if not model_kwargs:
-            if model == DEFAULT_MODEL:
-                model_kwargs = {'distribution': distribution}
-
-        self.model_kwargs = model_kwargs
+        self.model_kwargs = dict() if model_kwargs is None else model_kwargs
 
     def save(self, file_name):
         """Saves model to file destination.
@@ -63,7 +37,7 @@ class Modeler:
                 path to store file
         """
         with open(file_name, 'wb') as output:
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self, output)
 
     @classmethod
     def load(cls, file_name):
@@ -150,18 +124,16 @@ class Modeler:
         """
         model = self.fit_model(data)
 
-        if self.model == DEFAULT_MODEL:
-            values = []
-            triangle = np.tril(model.covariance)
+        values = []
+        triangle = np.tril(model.covariance)
 
-            for index, row in enumerate(triangle.tolist()):
-                values.append(row[:index + 1])
+        for index, row in enumerate(triangle.tolist()):
+            values.append(row[:index + 1])
 
-            model.covariance = np.array(values)
-            if self.model_kwargs['distribution'] == get_qualified_name(DEFAULT_DISTRIBUTION):
-
-                for distribution in model.distribs.values():
-                    distribution.std = np.log(distribution.std)
+        model.covariance = np.array(values)
+        for distribution in model.distribs.values():
+            if distribution.std is not None:
+                distribution.std = np.log(distribution.std)
 
         return self._flatten_dict(model.to_dict())
 

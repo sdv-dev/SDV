@@ -13,11 +13,12 @@ class TestSampler(TestCase):
     def test___init__(self):
         """Test create a default instance of Sampler class"""
         # Run
-        sampler = Sampler('test_metadata', 'test_modeler')
+        models = {'test': Mock()}
+        sampler = Sampler('test_metadata', models)
 
         # Asserts
         assert sampler.metadata == 'test_metadata'
-        assert sampler.modeler == 'test_modeler'
+        assert sampler.models == models
         assert sampler.primary_key == dict()
         assert sampler.remaining_primary_key == dict()
 
@@ -36,14 +37,14 @@ class TestSampler(TestCase):
     def test__prepare_sampled_covariance(self):
         """Test prepare_sampler_covariante"""
         # Run
-        covariance = [[0.4, 0.1], [0.1]]
+        covariance = [[0, 1], [1]]
 
         result = Sampler(None, None)._prepare_sampled_covariance(covariance)
 
         # Asserts
-        expected = np.array([[0.4, 0.2], [0.2, 0.0]])
+        expected = np.array([[1., 1.], [1., 1.0]])
 
-        np.testing.assert_equal(result, expected)
+        np.testing.assert_almost_equal(result, expected)
 
     @patch('exrex.getone')
     def test__fill_text_columns(self, mock_exrex):
@@ -57,17 +58,15 @@ class TestSampler(TestCase):
             {'type': 'text', 'regex': '^[0-9]{10}$'}
         ]
 
-        sample_rows = {'ref_field': 'some value'}
-
-        # Run
         sampler = Mock()
         sampler.metadata.get_field_meta.side_effect = metadata_field_meta
-        sampler.sample_rows.return_value = sample_rows
+        sampler.sample.return_value = {'ref_field': 'some value'}
 
         data = pd.DataFrame({'tar': ['a', 'b', 'c']})
         columns = ['foo', 'bar', 'tar']
         table_name = 'test'
 
+        # Run
         result = Sampler._fill_text_columns(sampler, data, columns, table_name)
 
         # Asserts
@@ -148,16 +147,44 @@ class TestSampler(TestCase):
         with pytest.raises(ValueError):
             Sampler._get_primary_keys(sampler, table_name, num_rows)
 
+    def test__get_primary_keys_with_int_values(self):
+        """Test return a tuple with a string and a pandas.Series"""
+        # Setup
+        metadata_primary_key = 'pk'
+        metadata_field_meta = {
+            'type': 'number',
+            'subtype': 'integer'
+        }
+        primary_key = {}
+        remaining_primary_key = {}
+
+        # Run & asserts
+        sampler = Mock()
+        sampler.metadata.get_primary_key.return_value = metadata_primary_key
+        sampler.metadata.get_field_meta.return_value = metadata_field_meta
+        sampler.primary_key = primary_key
+        sampler.remaining_primary_key = remaining_primary_key
+
+        table_name = 'test'
+        num_rows = 5
+
+        result = Sampler._get_primary_keys(sampler, table_name, num_rows)
+
+        # Asserts
+        expected = ('pk', pd.Series([0, 1, 2, 3, 4]))
+
+        assert result[0] == expected[0]
+        pd.testing.assert_series_equal(result[1], expected[1])
+
     @patch('exrex.count')
     @patch('exrex.generate')
-    def test__get_primary_keys_with_values(self, mock_exrex_generate, mock_exrex_count):
+    def test__get_primary_keys_with_str_values(self, mock_exrex_generate, mock_exrex_count):
         """Test return a tuple with a string and a pandas.Series"""
         # Setup
         metadata_primary_key = 'pk'
         metadata_field_meta = {
             'regex': '^[0-9]{10}$',
-            'type': 'number',
-            'subtype': 'integer'
+            'type': 'text'
         }
         primary_key = {}
         remaining_primary_key = {}
@@ -359,27 +386,17 @@ class TestSampler(TestCase):
     def test__unflatten_gaussian_copula(self):
         """Test unflatte gaussian copula"""
         # Setup
-        model_kwargs = {
-            'distribution': 'Gaussian'
-        }
-        sampled_covariance = None
-        check_matrix = False
-        make_positive = np.array([[0.5, 0.5], [0.5, 0.5]])
-
-        # Run
-        sampler = Mock()
-        sampler.modeler.model_kwargs = model_kwargs
-        sampler._prepare_sampled_covariance.return_value = sampled_covariance
-        sampler._check_matrix_symmetric_positive_definite.return_value = check_matrix
-        sampler._make_positive_definite.return_value = make_positive
+        fixed_covariance = [[0.4, 0.2], [0.2, 0.0]]
+        sampler = Mock(autospec=Sampler)
+        sampler._prepare_sampled_covariance.return_value = fixed_covariance
 
         model_parameters = {
             'distribs': {
                 'foo': {'std': 0.5}
             },
-            'covariance': None
+            'covariance': [[0.4, 0.1], [0.1]],
+            'distribution': 'GaussianUnivariate'
         }
-
         result = Sampler._unflatten_gaussian_copula(sampler, model_parameters)
 
         # Asserts
@@ -388,13 +405,12 @@ class TestSampler(TestCase):
                 'foo': {
                     'fitted': True,
                     'std': 1.6487212707001282,
-                    'type': 'Gaussian'
+                    'type': 'GaussianUnivariate'
                 }
             },
-            'distribution': 'Gaussian',
-            'covariance': [[0.5, 0.5], [0.5, 0.5]]
+            'distribution': 'GaussianUnivariate',
+            'covariance': [[0.4, 0.2], [0.2, 0.0]]
         }
-
         assert result == expected
 
     def test__get_extension(self):
@@ -413,39 +429,37 @@ class TestSampler(TestCase):
 
         assert result == expected
 
-    @patch('sdv.sampler.get_qualified_name')
-    def test__get_model(self, mock_qualified_name):
+    def test__get_model(self):
         """Test get model"""
         # Setup
         unflatten_dict = {'unflatten': 'dict'}
         unflatten_gaussian = {'unflatten': 'gaussian'}
 
-        mock_qualified_name.return_value = 'copulas.multivariate.gaussian.GaussianMultivariate'
-
-        # Run
         sampler = Mock()
         sampler._unflatten_dict.return_value = unflatten_dict
         sampler._unflatten_gaussian_copula.return_value = unflatten_gaussian
+        table_model = Mock()
+        table_model.to_dict.return_value = {
+            'distribution': 'copulas.multivariate.gaussian.GaussianMultivariate'
+        }
 
+        # Run
         extension = {'extension': 'dict'}
-
-        Sampler._get_model(sampler, extension)
+        Sampler._get_model(sampler, extension, table_model)
 
         # Asserts
         expected_unflatten_dict_call = {'extension': 'dict'}
-        expected_qualified_name_call_count = 1
         expected_unflatten_gaussian_call = {
             'unflatten': 'dict',
             'fitted': True,
-            'type': 'copulas.multivariate.gaussian.GaussianMultivariate'
+            'distribution': 'copulas.multivariate.gaussian.GaussianMultivariate'
         }
         expected_from_dict_call = {'unflatten': 'gaussian'}
 
         sampler._unflatten_dict.assert_called_once_with(expected_unflatten_dict_call)
-        assert mock_qualified_name.call_count == expected_qualified_name_call_count
         sampler._unflatten_gaussian_copula.assert_called_once_with(
             expected_unflatten_gaussian_call)
-        sampler.modeler.model.from_dict.assert_called_once_with(expected_from_dict_call)
+        table_model.from_dict.assert_called_once_with(expected_from_dict_call)
 
     def test__sample_rows(self):
         """Test sample rows from model"""
@@ -488,7 +502,7 @@ class TestSampler(TestCase):
         Sampler._sample_children(sampler, table_name, sampled)
 
         # Asserts
-        expected_sample_table_call_args = [
+        expected__sample_table_call_args = [
             ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled],
             ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled],
             ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled],
@@ -503,7 +517,7 @@ class TestSampler(TestCase):
         sampler.metadata.get_children.assert_called_once_with('test')
 
         for result_call, expected_call in zip(
-                sampler._sample_table.call_args_list, expected_sample_table_call_args):
+                sampler._sample_table.call_args_list, expected__sample_table_call_args):
             assert result_call[0][0] == expected_call[0]
             assert result_call[0][1] == expected_call[1]
             assert result_call[0][3] == expected_call[3]
@@ -512,27 +526,19 @@ class TestSampler(TestCase):
     def test__sample_table_sampled_tablename_none(self):
         """Test sample table with sampled table_name None"""
         # Setup
-        get_extension = {
-            'child_rows': 5
-        }
-
-        get_model = dict()
-
-        sample_rows = dict()
-        metadata_foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
-
-        # Run
         sampler = Mock()
-        sampler._get_extension.return_value = get_extension
-        sampler._get_model.return_value = get_model
-        sampler._sample_rows.return_value = sample_rows
-        sampler.metadata.foreign_keys = metadata_foreign_keys
+        sampler._get_extension.return_value = {'child_rows': 5}
+        sampler._get_model.return_value = dict()
+        sampler._sample_rows.return_value = dict()
+        sampler.metadata.foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
+        sampler.models = {'test': Mock()}
 
         table_name = 'test'
         parent_name = 'test_parent'
         parent_row = {'parent_id': 'value parent id'}
         sampled = dict()
 
+        # Run
         Sampler._sample_table(sampler, table_name, parent_name, parent_row, sampled)
 
         # Asserts
@@ -544,27 +550,19 @@ class TestSampler(TestCase):
     def test__sample_table_sampled_tablename_not_none(self):
         """Test sample table with sampled table_name not None"""
         # Setup
-        get_extension = {
-            'child_rows': 5
-        }
-
-        get_model = dict()
-
-        sample_rows = pd.Series()
-        metadata_foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
-
-        # Run
         sampler = Mock()
-        sampler._get_extension.return_value = get_extension
-        sampler._get_model.return_value = get_model
-        sampler._sample_rows.return_value = sample_rows
-        sampler.metadata.foreign_keys = metadata_foreign_keys
+        sampler._get_extension.return_value = {'child_rows': 5}
+        sampler._get_model.return_value = dict()
+        sampler._sample_rows.return_value = pd.Series()
+        sampler.metadata.foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
+        sampler.models = {'test': Mock()}
 
         table_name = 'test'
         parent_name = 'test_parent'
         parent_row = {'parent_id': 69}
         sampled = {'test': pd.Series([9, 8, 7])}
 
+        # Run
         Sampler._sample_table(sampler, table_name, parent_name, parent_row, sampled)
 
         # Asserts
@@ -577,24 +575,10 @@ class TestSampler(TestCase):
             pd.Series([9, 8, 7, 69])
         )
 
-    def test_sample_table(self):
-        """Test sample table"""
-        # Run
-        sampler = Mock()
-        table_name = 'test'
-
-        result = Sampler.sample_table(sampler, table_name)
-
-        # Asserts
-        sampler.sample_rows.assert_called_once_with(
-            'test', 5, sample_children=False, reset_primary_keys=False)
-
-        assert result == sampler.sample_rows.return_value
-
     def test_sample_all(self):
         """Test sample all regenerating the primary keys"""
         # Setup
-        def sample_rows_side_effect(table, num_rows, sampled_data):
+        def sample_side_effect(table, num_rows, sampled_data):
             sampled_data[table] = pd.DataFrame({'foo': range(num_rows)})
 
         metadata_parents_side_effect = [False, True, False]
@@ -605,7 +589,7 @@ class TestSampler(TestCase):
         sampler = Mock()
         sampler.metadata.get_table_names.return_value = metadata_table_names
         sampler.metadata.get_parents.side_effect = metadata_parents_side_effect
-        sampler.sample_rows.side_effect = sample_rows_side_effect
+        sampler.sample.side_effect = sample_side_effect
 
         num_rows = 3
         reset_primary_keys = True
@@ -619,69 +603,18 @@ class TestSampler(TestCase):
         pd.testing.assert_frame_equal(result['table a'], pd.DataFrame({'foo': range(num_rows)}))
         pd.testing.assert_frame_equal(result['table c'], pd.DataFrame({'foo': range(num_rows)}))
 
-    @pytest.mark.skip(reason="WIP, make the result deterministic")
-    def test_sample_rows_with_parents(self):
-        """Test sample rows with parents"""
-        # Setup
-        models = {
-            'test': 'Model'
-        }
-
-        metadata_get_parents = {'parent a', 'parent b'}
-
-        metadata_foreign_key = {
-            ('test', 'parent a'): (None, 'foreign_a'),
-            ('test', 'parent b'): (None, 'foreign_b')
-        }
-
-        primary_keys = [None, [1]]
-
-        sample_rows = dict()
-
-        # Run
-        sampler = Mock()
-        sampler.modeler.models = models
-        sampler.metadata.get_parents.return_value = metadata_get_parents
-        sampler.metadata.foreign_keys = metadata_foreign_key
-        sampler._sample_rows.return_value = sample_rows
-        sampler._get_primary_keys.return_value = primary_keys
-
-        table_name = 'test'
-        num_rows = 5
-        reset_primary_keys = True
-        sample_children = True
-        sampled_data = None
-
-        Sampler.sample_rows(
-            sampler,
-            table_name,
-            num_rows,
-            reset_primary_keys=reset_primary_keys,
-            sample_children=sample_children,
-            sampled_data=sampled_data
-        )
-
-        # Asserts
-        assert sampler._reset_primary_keys_generators.call_count == 1
-        sampler._sample_rows.assert_called_once_with('Model', 5, 'test')
-        sampler.metadata.get_parents.assert_called_once_with('test')
-        sampler._get_primary_keys.assert_called_once_with('parent b', 1)
-        sampler._transform_synthesized_rows.call_count == 2
-
-    def test_sample_rows_no_sample_children(self):
-        """Test sample_rows no sample children"""
+    def test_sample_no_sample_children(self):
+        """Test sample no sample children"""
         # Setup
         models = {'test': 'model'}
 
         # Run
         sampler = Mock()
-        sampler.modeler.models = models
+        sampler.models = models
         sampler.metadata.get_parents.return_value = None
 
         table_name = 'test'
         num_rows = 5
-        sample_children = False
-
-        Sampler.sample_rows(sampler, table_name, num_rows, sample_children=sample_children)
+        Sampler.sample(sampler, table_name, num_rows, sample_children=False)
 
         # Asserts
