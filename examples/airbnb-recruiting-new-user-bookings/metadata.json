@@ -10,8 +10,8 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "number",
-                    "subtype": "integer"
+                    "type": "id",
+                    "subtype": "number"
                 },
                 {
                     "name": "date_account_created",
@@ -102,8 +102,8 @@
                         "field": "id",
                         "table": "users"
                     },
-                    "type": "number",
-                    "subtype": "integer"
+                    "type": "id",
+                    "subtype": "number"
                 },
                 {
                     "name": "action",
