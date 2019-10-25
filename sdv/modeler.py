@@ -124,7 +124,7 @@ class Modeler:
 
         return data
 
-    def _fit_model(self, table_name, data):
+    def _fit_model(self, data):
         """Returns an instance of ``self.model`` fitted with the given data.
 
         Args:
@@ -152,7 +152,7 @@ class Modeler:
             dict:
                 Flattened parameters for model.
         """
-        model = self._fit_model(table_name, data)
+        model = self._fit_model(data)
 
         values = []
         triangle = np.tril(model.covariance)
@@ -239,7 +239,7 @@ class Modeler:
                                           right_index=True, left_index=True)
                 extended['__' + child_name + '__child_rows'].fillna(0, inplace=True)
 
-        self.models[table_name] = self._fit_model(table_name, extended)
+        self.models[table_name] = self._fit_model(extended)
 
         if primary_key:
             extended.reset_index(inplace=True)
