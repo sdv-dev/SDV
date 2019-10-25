@@ -37,7 +37,7 @@ class SDV:
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
-    def fit(self, metadata, root_path=None):
+    def fit(self, metadata, tables=None, root_path=None):
         """Transform the data and model the database.
 
         Args:
@@ -53,7 +53,7 @@ class SDV:
         self._validate_dataset_structure()
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
-        self.modeler.model_database()
+        self.modeler.model_database(tables)
         self.sampler = Sampler(self.metadata, self.modeler.models)
 
     def sample(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):

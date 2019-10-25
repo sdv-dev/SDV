@@ -54,45 +54,6 @@ class Sampler:
 
         return covariance.tolist()
 
-    def _fill_text_columns(self, data, columns, table_name):
-        """Fill in the column values for every non numeric column that isn't the primary key.
-
-        Args:
-            data (pandas.DataFrame):
-                Table to fill text columns.
-            columns (list):
-                Column names.
-            table_name (str):
-                Name of the table.
-
-        Returns:
-            pandas.DataFrame:
-                Table with text columns filled.
-        """
-        for name in columns:
-            field = self.metadata.get_field_meta(table_name, name)
-            if field['type'] == 'id' and name not in data.columns:
-                # check foreign key
-                ref = field.get('ref')
-                if ref:
-                    # generate parent row
-                    parent_name = ref['table']
-                    parent_row = self.sample(parent_name, 1)
-                    # grab value of foreign key
-                    val = parent_row[ref['field']]
-                    data.loc[:, name] = val
-                else:
-                    # generate fake id
-                    regex = field['regex']
-                    data.loc[:, name] = exrex.getone(regex)
-
-            elif field['type'] == 'text':
-                # generate fake text
-                regex = field['regex']
-                data.loc[:, name] = exrex.getone(regex)
-
-        return data
-
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
         self.primary_key = dict()
@@ -111,12 +72,11 @@ class Sampler:
             pandas.DataFrame:
                 Formatted synthesized data.
         """
-        columns = self.metadata.get_field_names(table_name)
-        text_filled = self._fill_text_columns(synthesized, columns, table_name)
+        reversed_data = self.metadata.reverse_transform(table_name, synthesized)
 
-        reversed_data = self.metadata.reverse_transform(table_name, text_filled)
+        fields = self.metadata.get_fields(table_name)
 
-        return reversed_data[columns]
+        return reversed_data[list(fields.keys())]
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -141,18 +101,26 @@ class Sampler:
         primary_key_values = None
 
         if primary_key:
-            node = self.metadata.get_field_meta(table_name, primary_key)
+            field = self.metadata.get_fields(table_name)[primary_key]
 
             generator = self.primary_key.get(table_name)
 
             if generator is None:
-                if node['type'] == 'number':
+                if field['type'] != 'id':
+                    raise ValueError('Only columns with type `id` can be primary keys')
+
+                subtype = field['subtype']
+                if subtype == 'number':
                     generator = itertools.count()
                     remaining = np.inf
-                else:
-                    regex = node.get('regex')
+                elif subtype == 'string':
+                    regex = field.get('regex', r'^[a-zA-Z]+$')
                     generator = exrex.generate(regex)
                     remaining = exrex.count(regex)
+                elif subtype == 'datetime':
+                    raise NotImplementedError('Datetime ids are not yet supported')
+                else:
+                    raise ValueError('Only `number` or `string` id columns are supported.')
 
                 self.primary_key[table_name] = generator
                 self.remaining_primary_key[table_name] = remaining
@@ -168,9 +136,6 @@ class Sampler:
 
             self.remaining_primary_key[table_name] -= num_rows
             primary_key_values = pd.Series([x for i, x in zip(range(num_rows), generator)])
-
-            if (node['type'] == 'number') and (node['subtype'] == 'integer'):
-                primary_key_values = primary_key_values.astype(int)
 
         return primary_key, primary_key_values
 

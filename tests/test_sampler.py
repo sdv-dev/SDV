@@ -152,8 +152,8 @@ class TestSampler(TestCase):
         # Setup
         metadata_primary_key = 'pk'
         metadata_field_meta = {
-            'type': 'number',
-            'subtype': 'integer'
+            'type': 'id',
+            'subtype': 'number'
         }
         primary_key = {}
         remaining_primary_key = {}
@@ -184,7 +184,8 @@ class TestSampler(TestCase):
         metadata_primary_key = 'pk'
         metadata_field_meta = {
             'regex': '^[0-9]{10}$',
-            'type': 'text'
+            'type': 'id',
+            'subtype': 'string'
         }
         primary_key = {}
         remaining_primary_key = {}
