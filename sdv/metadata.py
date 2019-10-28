@@ -181,6 +181,22 @@ class Metadata:
         return load_csv(self.root_path, table_meta)
 
     def _get_dtypes(self, table_name, ids=False):
+        """Get dictionaty with the data type for each table field.
+
+        Args:
+            table_name (str):
+                Table name to get their fields metadata.
+            ids (bool):
+                Whether or not include the id fields. Defaults to ``False``.
+
+        Returns:
+            dict:
+                Dictionary which contains the field names and data types from a table.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when a field has an invalid subtype.
+        """
         dtypes = dict()
         for name, field in self.get_table_meta(table_name)['fields'].items():
             field_type = field['type']
@@ -217,6 +233,16 @@ class Metadata:
         return dtypes
 
     def _get_pii_fields(self, table_name):
+        """Get dictionary with the categorical types for each table field.
+
+        Args:
+            table_name (str):
+                Table name to get their fields metadata.
+
+        Returns:
+            dict:
+                Dictionary which contains the field names and categorical types from a table.
+        """
         pii_fields = dict()
         for name, field in self.get_table_meta(table_name)['fields'].items():
             if field['type'] == 'categorical' and field.get('pii', False):
@@ -252,6 +278,19 @@ class Metadata:
         return transformers_dict
 
     def _load_hyper_transformer(self, table_name):
+        """Create and return a new ``rdt.HyperTransformer`` instance for a table.
+
+        First, get the data types and pii fields from a given table.
+        After that, use them to build a transformer dictionary to pass it to the
+        ``HyperTransformer``.
+
+        Args:
+            table_name (str):
+                Table name to get their data types and pii fields.
+
+        Returns:
+            rdt.HyperTransformer
+        """
         dtypes = self._get_dtypes(table_name)
         pii_fields = self._get_pii_fields(table_name)
         transformers_dict = self._get_transformers(dtypes, pii_fields)
@@ -273,6 +312,20 @@ class Metadata:
         return list(self._metadata['tables'].keys())
 
     def get_tables(self, tables=None):
+        """Get a dictionary with the ``pandas.DataFrame`` for each table.
+
+        Tables can be specified in ``tables`` or it will use the output from
+        ``self.get_table_names()``.
+
+        Args:
+            tables (list):
+                List with the table names to load. Defaults to None.
+
+        Returns:
+            dict:
+                Dictionary which contains the table names and their corresponding
+                ``pandas.DataFrame``.
+        """
         return {
             table_name: self.load_table(table_name)
             for table_name in tables or self.get_table_names()
@@ -303,6 +356,20 @@ class Metadata:
                 return field['name']
 
     def reverse_transform(self, table_name, data):
+        """Reverse the transformed data for a given table.
+
+        Call to the ``HyperTransformer.reverse_data()`` for the given table and get the table
+        data types to set the original data type.
+
+        Args:
+            table_name (str):
+                Table name to reverse the transformed data.
+            data (pandas.DataFrame):
+                Table data to be reversed.
+
+        Returns:
+            pandas.DataFrame
+        """
         hyper_transformer = self._hyper_transformers[table_name]
         reversed_data = hyper_transformer.reverse_transform(data)
 

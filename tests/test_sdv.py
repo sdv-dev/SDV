@@ -82,29 +82,6 @@ class TestSDV(TestCase):
         with pytest.raises(ValueError):
             SDV._validate_dataset_structure(sdv)
 
-    @patch('sdv.sdv.Sampler')
-    @patch('sdv.sdv.Modeler')
-    @patch('sdv.sdv.Metadata')
-    def test_fit(self, metadata_mock, modeler_mock, sampler_mock):
-        """Test fit without the root_path argument"""
-        sdv_mock = Mock()
-
-        # Run
-        SDV.fit(sdv_mock, '/path/to/metadata', 'test/path')
-
-        # Asserts
-        metadata_mock.assert_called_once_with('/path/to/metadata', 'test/path')
-        modeler_mock.assert_called_once_with(
-            metadata_mock.return_value,
-            sdv_mock.model,
-            sdv_mock.model_kwargs
-        )
-        modeler_mock.return_value.model_database.assert_called_once_with()
-        sampler_mock.assert_called_once_with(
-            metadata_mock.return_value,
-            modeler_mock.return_value.models
-        )
-
     def test_sample_fitted(self):
         """Check that the sample is called."""
         # Run
