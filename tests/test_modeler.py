@@ -2,8 +2,8 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-
 from copulas.multivariate import GaussianMultivariate
+
 from sdv import Metadata, Modeler
 
 

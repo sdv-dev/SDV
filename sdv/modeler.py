@@ -3,7 +3,6 @@ import pickle
 
 import numpy as np
 import pandas as pd
-
 from copulas.multivariate import GaussianMultivariate
 
 LOGGER = logging.getLogger(__name__)

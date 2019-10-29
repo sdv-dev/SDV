@@ -6,7 +6,6 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-
 from rdt import HyperTransformer, transformers
 
 LOGGER = logging.getLogger(__name__)
