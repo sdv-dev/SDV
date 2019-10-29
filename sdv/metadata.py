@@ -254,7 +254,18 @@ class Metadata:
     def _get_transformers(dtypes, pii_fields):
         """Build a ``dict`` with column names and transformers from a given ``pandas.DataFrame``.
 
-        Temporary drop-in replacement of HyperTransformer._analyze method, before RDT catches up.
+        Temporary drop-in replacement of ``HyperTransformer._analyze`` method,
+        before RDT catches up.
+
+        Args:
+            dtypes (dict):
+                Data type dict per field to get their transformers.
+            pii_fields (dict):
+                Fields to be anonymized with the ``CategoricalTransformer``.
+
+        Returns:
+            dict:
+                Transformers dictionary.
         """
         transformers_dict = dict()
         for name, dtype in dtypes.items():
@@ -297,6 +308,20 @@ class Metadata:
         return HyperTransformer(transformers=transformers_dict)
 
     def transform(self, table_name, data):
+        """Returns transformed data for a table.
+
+        If the ``HyperTransformer`` for a table is ``None``, then its created.
+
+        Args:
+            table_name (str):
+                Name of the table to transform the data.
+            data (pandas.DataFrame):
+                Table to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
         hyper_transformer = self._hyper_transformers.get(table_name)
         if hyper_transformer is None:
             hyper_transformer = self._load_hyper_transformer(table_name)
@@ -309,6 +334,12 @@ class Metadata:
         return hyper_transformer.transform(data[fields])
 
     def get_table_names(self):
+        """Returns list of table names.
+
+        Returns:
+            list:
+                List of table names.
+        """
         return list(self._metadata['tables'].keys())
 
     def get_tables(self, tables=None):
@@ -345,9 +376,31 @@ class Metadata:
         return self.get_table_meta(table_name)['fields']
 
     def get_primary_key(self, table_name):
+        """Return table primary key field name.
+
+        Args:
+            table_name (str):
+                Name of table to get data for.
+
+        Returns:
+            str or None:
+                Primary key field name or ``None`` if the table doesn't have primary key.
+        """
         return self.get_table_meta(table_name).get('primary_key')
 
     def get_foreign_key(self, parent, child):
+        """Return table foreign key field name.
+
+        Args:
+            parent (str):
+                Name of parent table to get the primary key field name.
+            child (str):
+                Name of child table to get the foreign key field name.
+
+        Returns:
+            str or None:
+                Foreign key field name of ``None`` if the child table doesn't have foreign key.
+        """
         primary = self.get_primary_key(parent)
 
         for field in self.get_fields(child).values():

@@ -43,6 +43,9 @@ class SDV:
         Args:
             metadata (dict or str):
                 Metadata dict or path to the metadata JSON file.
+            tables (dict):
+                Dictionary with the table dataframes. If ``None`` tables will be loaded from files.
+                Defaults to ``None``.
             root_path (str or None):
                 Path to the dataset directory. If ``None`` and metadata is
                 a path, the metadata dirname is used. If ``None`` and
@@ -65,9 +68,9 @@ class SDV:
             num_rows (int):
                 Amount of rows to sample.
             sample_children (bool):
-                Whether to sample children tables.
+                Whether to sample children tables. Defaults to ``True``.
             reset_primary_keys (bool):
-                Wheter or not reset the pk generators.
+                Wheter or not reset the pk generators. Defaults to ``True``.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
@@ -84,9 +87,9 @@ class SDV:
 
         Args:
             num_rows (int):
-                Amount of rows to sample.
+                Amount of rows to sample. Defaults to ``5``.
             reset_primary_keys (bool):
-                Wheter or not reset the pk generators.
+                Wheter or not reset the pk generators. Defaults to ``False``.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
