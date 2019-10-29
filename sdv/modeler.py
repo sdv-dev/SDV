@@ -141,7 +141,7 @@ class Modeler:
 
         return model
 
-    def _get_model_dict(self, table_name, data):
+    def _get_model_dict(self, data):
         """Fit and  serialize  a model and flatten its parameters into an array.
 
         Args:
@@ -193,7 +193,7 @@ class Modeler:
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
             num_child_rows = len(child_rows)
-            row = self._get_model_dict(child_name, child_rows)
+            row = self._get_model_dict(child_rows)
             row['child_rows'] = num_child_rows
 
             row = pd.Series(row)

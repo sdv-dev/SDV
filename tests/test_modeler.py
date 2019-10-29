@@ -100,37 +100,52 @@ class TestModeler(TestCase):
     def test__get_model_dict_default_model(self, log_mock):
         """Test get flatten model dict with default model"""
         # Setup
-        model_fitted = None
+        model_fitted = Mock()
+        model_fitted.covariance = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]
+
+        distrib1 = Mock()
+        distrib1.std = 0.2
+        distrib2 = Mock()
+        distrib2.std = None
+        distrib3 = Mock()
+        distrib3.std = 0.5
+        distrib4 = Mock()
+        distrib4.std = 0.3
+
+        model_fitted.distribs = {
+            'distrib1': distrib1,
+            'distrib2': distrib2,
+            'distrib3': distrib3,
+            'distrib4': distrib4
+        }
 
         # Run
         modeler = Mock(spec=Modeler)
         modeler._fit_model.return_value = model_fitted
-        modeler._flatten_dict.return_value = dict()
+        modeler._flatten_dict.return_value = 'result'
 
-        data = pd.DataFrame()
+        data = pd.DataFrame({'data': [1, 2, 3]})
 
-        result = Modeler._get_model_dict(modeler, 'test', data)
-
-        # Asserts
-        assert result == 'dict'
-
-    def test_fit_model(self):
-        """Test fit model"""
-        # Setup
-        model_mock = Mock()
-
-        # Run
-        modeler = Mock()
-        modeler.model_kwargs = {'foo': 'bar'}
-        modeler.model.return_value = model_mock
-        Modeler.fit_model(modeler, None)
+        result = Modeler._get_model_dict(modeler, data)
 
         # Asserts
-        expected_foo = 'bar'
-        expected_fit_call = None
+        expected_log_mock_call = [
+            call(0.2),
+            call(0.5),
+            call(0.3)
+        ]
 
-        modeler.model.assert_called_once_with(foo=expected_foo)
-        model_mock.fit.assert_called_once_with(expected_fit_call)
+        assert result == 'result'
+        assert log_mock.call_args_list == expected_log_mock_call
+
+        pd.testing.assert_frame_equal(
+            modeler._fit_model.call_args[0][0],
+            pd.DataFrame({'data': [1, 2, 3]})
+        )
 
     def test__get_extensions(self):
         """Test get list of extensions from childs"""
@@ -159,33 +174,34 @@ class TestModeler(TestCase):
         pd.testing.assert_frame_equal(result, expected)
         assert modeler._get_model_dict.call_count == 3
 
-    def test_cpa(self):
-        """Test CPA with extensions"""
-        # Setup
-        metadata_table_data = pd.DataFrame({'pk_field': [0, 1]})
-        metadata_primary_key = 'pk_field'
-        extensions = [pd.Series([1, 0], name='foo')]
-
+    def test_cpa_with_tables_no_primary_key(self):
+        """Test CPA with tables and no primary key."""
         # Run
-        modeler = Mock()
-        modeler.metadata.get_table_data.return_value = metadata_table_data
-        modeler.metadata.get_primary_key.return_value = metadata_primary_key
-        modeler._get_extensions.return_value = extensions
+        modeler = Mock(spec=Modeler)
 
-        table_name = 'test'
-        tables = {
-            'test': None
-        }
+        modeler.metadata = Mock(spec=Metadata)
+        modeler.models = dict()
 
-        result = Modeler.cpa(modeler, table_name, tables)
+        modeler.metadata.transform.return_value = pd.DataFrame({'data': [1, 2, 3]})
+        modeler.metadata.get_primary_key.return_value = None
+        modeler._fit_model.return_value = 'fitted model'
+
+        tables = {'test': pd.DataFrame({'data': ['a', 'b', 'c']})}
+
+        result = Modeler.cpa(modeler, 'test', tables)
 
         # Asserts
-        expected = pd.DataFrame({'pk_field': [0, 1], 'foo': [1, 0]})
+        expected = pd.DataFrame({'data': [1, 2, 3]})
+        expected_transform_call = pd.DataFrame({'data': ['a', 'b', 'c']})
 
-        modeler.metadata.get_table_data.assert_called_once_with('test', transform=True)
-        modeler.metadata.get_children.assert_called_once_with('test')
-        modeler.metadata.get_primary_key.assert_called_once_with('test')
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
+        assert modeler.metadata.load_table.call_count == 0
+        assert modeler.metadata.transform.call_args[0][0] == 'test'
+        pd.testing.assert_frame_equal(
+            modeler.metadata.transform.call_args[0][1],
+            expected_transform_call
+        )
+        pd.testing.assert_frame_equal(modeler._fit_model.call_args[0][0], expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__impute(self):
         """Test _impute data"""
