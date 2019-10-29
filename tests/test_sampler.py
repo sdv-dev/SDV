@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.sampler import Sampler
+from sdv import Sampler
+from sdv import Metadata
 
 
 class TestSampler(TestCase):
@@ -46,38 +47,6 @@ class TestSampler(TestCase):
 
         np.testing.assert_almost_equal(result, expected)
 
-    @patch('exrex.getone')
-    def test__fill_text_columns(self, mock_exrex):
-        """Test fill text columns"""
-        # Setup
-        mock_exrex.side_effect = ['fake id 1', 'fake id 2']
-
-        metadata_field_meta = [
-            {'type': 'id', 'ref': {'table': 'ref_table', 'field': 'ref_field'}},
-            {'type': 'id', 'regex': '^[0-9]{10}$'},
-            {'type': 'text', 'regex': '^[0-9]{10}$'}
-        ]
-
-        sampler = Mock()
-        sampler.metadata.get_field_meta.side_effect = metadata_field_meta
-        sampler.sample.return_value = {'ref_field': 'some value'}
-
-        data = pd.DataFrame({'tar': ['a', 'b', 'c']})
-        columns = ['foo', 'bar', 'tar']
-        table_name = 'test'
-
-        # Run
-        result = Sampler._fill_text_columns(sampler, data, columns, table_name)
-
-        # Asserts
-        expected = pd.DataFrame({
-            'foo': ['some value', 'some value', 'some value'],
-            'bar': ['fake id 1', 'fake id 1', 'fake id 1'],
-            'tar': ['fake id 2', 'fake id 2', 'fake id 2'],
-        })
-
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
-
     def test__reset_primary_keys_generators(self):
         """Test reset values"""
         # Run
@@ -94,122 +63,91 @@ class TestSampler(TestCase):
     def test__transform_synthesized_rows(self):
         """Test transform synthesized rows"""
         # Setup
-        metadata_field_names = ['foo', 'bar']
         metadata_reverse_transform = pd.DataFrame({'foo': [0, 1], 'bar': [2, 3], 'tar': [4, 5]})
 
         # Run
-        sampler = Mock()
-        sampler.metadata.get_field_names.return_value = metadata_field_names
-        sampler.metadata.reverse_transform.return_value = metadata_reverse_transform
-        synthesized = None
-        table_name = 'test'
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
 
-        result = Sampler._transform_synthesized_rows(sampler, synthesized, table_name)
+        sampler.metadata.reverse_transform.return_value = metadata_reverse_transform
+        sampler.metadata.get_fields.return_value = {'foo': 'some data', 'tar': 'some data'}
+
+        synthesized = pd.DataFrame({'data': [1, 2, 3]})
+
+        result = Sampler._transform_synthesized_rows(sampler, synthesized, 'test')
 
         # Asserts
-        expected = pd.DataFrame({'foo': [0, 1], 'bar': [2, 3]})
+        expected = pd.DataFrame({'foo': [0, 1], 'tar': [4, 5]})
 
         pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
 
     def test__get_primary_keys_none(self):
         """Test returns a tuple of none when a table doesn't have a primary key"""
         # Run
-        sampler = Mock()
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
         sampler.metadata.get_primary_key.return_value = None
 
-        table_name = 'test'
-        num_rows = 5
-
-        result = Sampler._get_primary_keys(sampler, table_name, num_rows)
+        result = Sampler._get_primary_keys(sampler, 'test', 5)
 
         # Asserts
         expected = (None, None)
         assert result == expected
 
-    def test__get_primary_keys_raise_value_error(self):
-        """Test a ValueError is raised trying to get the primary keys"""
-        # Setup
-        metadata_primary_key = 'pk'
-        metadata_field_meta = {'regex': '^[0-9]{10}$'}
-        primary_key = {'test': 'pk'}
-        remaining_primary_key = {'test': 4}
-
+    def test__get_primary_keys_raise_value_error_field_not_id(self):
+        """Test a ValueError is raised when generator is None and field type not id."""
         # Run & asserts
-        sampler = Mock()
-        sampler.metadata.get_primary_key.return_value = metadata_primary_key
-        sampler.metadata.get_field_meta.return_value = metadata_field_meta
-        sampler.primary_key = primary_key
-        sampler.remaining_primary_key = remaining_primary_key
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
 
-        table_name = 'test'
-        num_rows = 5
+        sampler.metadata.get_primary_key.return_value = 'pk_field'
+        sampler.metadata.get_fields.return_value = {'pk_field': {'type': 'not id'}}
+        sampler.primary_key = {'test': None}
 
         with pytest.raises(ValueError):
-            Sampler._get_primary_keys(sampler, table_name, num_rows)
+            Sampler._get_primary_keys(sampler, 'test', 5)
 
-    def test__get_primary_keys_with_int_values(self):
-        """Test return a tuple with a string and a pandas.Series"""
-        # Setup
-        metadata_primary_key = 'pk'
-        metadata_field_meta = {
-            'type': 'id',
-            'subtype': 'number'
-        }
-        primary_key = {}
-        remaining_primary_key = {}
-
+    def test__get_primary_keys_raise_value_error_field_not_supported(self):
+        """Test a ValueError is raised when a field subtype is not supported."""
         # Run & asserts
-        sampler = Mock()
-        sampler.metadata.get_primary_key.return_value = metadata_primary_key
-        sampler.metadata.get_field_meta.return_value = metadata_field_meta
-        sampler.primary_key = primary_key
-        sampler.remaining_primary_key = remaining_primary_key
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
 
-        table_name = 'test'
-        num_rows = 5
+        sampler.metadata.get_primary_key.return_value = 'pk_field'
+        sampler.metadata.get_fields.return_value = {'pk_field': {'type': 'id', 'subtype': 'X'}}
+        sampler.primary_key = {'test': None}
 
-        result = Sampler._get_primary_keys(sampler, table_name, num_rows)
+        with pytest.raises(ValueError):
+            Sampler._get_primary_keys(sampler, 'test', 5)
 
-        # Asserts
-        expected = ('pk', pd.Series([0, 1, 2, 3, 4]))
-
-        assert result[0] == expected[0]
-        pd.testing.assert_series_equal(result[1], expected[1])
-
-    @patch('exrex.count')
-    @patch('exrex.generate')
-    def test__get_primary_keys_with_str_values(self, mock_exrex_generate, mock_exrex_count):
-        """Test return a tuple with a string and a pandas.Series"""
-        # Setup
-        metadata_primary_key = 'pk'
-        metadata_field_meta = {
-            'regex': '^[0-9]{10}$',
-            'type': 'id',
-            'subtype': 'string'
-        }
-        primary_key = {}
-        remaining_primary_key = {}
-
-        mock_exrex_count.return_value = 7
-        mock_exrex_generate.return_value = [11, 22, 33, 44, 55]
-
+    def test__get_primary_keys_raises_not_implemented_error_datetime(self):
+        """Test a NotImplementedError is raised when pk field is datetime."""
         # Run & asserts
-        sampler = Mock()
-        sampler.metadata.get_primary_key.return_value = metadata_primary_key
-        sampler.metadata.get_field_meta.return_value = metadata_field_meta
-        sampler.primary_key = primary_key
-        sampler.remaining_primary_key = remaining_primary_key
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
 
-        table_name = 'test'
-        num_rows = 5
+        sampler.metadata.get_primary_key.return_value = 'pk_field'
+        sampler.metadata.get_fields.return_value = {
+            'pk_field': {'type': 'id', 'subtype': 'datetime'}}
+        sampler.primary_key = {'test': None}
 
-        result = Sampler._get_primary_keys(sampler, table_name, num_rows)
+        with pytest.raises(NotImplementedError):
+            Sampler._get_primary_keys(sampler, 'test', 5)
 
-        # Asserts
-        expected = ('pk', pd.Series([11, 22, 33, 44, 55]))
+    def test__get_primary_keys_raises_value_error_remaining(self):
+        """Test a ValueError is raised when there are not enough uniques values"""
+        # Run & asserts
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
 
-        assert result[0] == expected[0]
-        pd.testing.assert_series_equal(result[1], expected[1])
+        sampler.metadata.get_primary_key.return_value = 'pk_field'
+        sampler.metadata.get_fields.return_value = {
+            'pk_field': {'type': 'id', 'subtype': 'datetime'}}
+        sampler.primary_key = {'test': 'generator'}
+        sampler.remaining_primary_key = {'test': 4}
+
+        with pytest.raises(ValueError):
+            Sampler._get_primary_keys(sampler, 'test', 5)
 
     def test__setdefault_key_in_dict(self):
         """Test setdefault with key in dict"""
@@ -421,9 +359,8 @@ class TestSampler(TestCase):
 
         parent_row = pd.Series([[0, 1], [1, 0]], index=['__foo__field', '__foo__field2'])
         table_name = 'foo'
-        parent_name = 'bar'
 
-        result = Sampler._get_extension(sampler, parent_row, table_name, parent_name)
+        result = Sampler._get_extension(sampler, parent_row, table_name)
 
         # Asserts
         expected = {'field': [0, 1], 'field2': [1, 0]}

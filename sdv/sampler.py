@@ -297,7 +297,7 @@ class Sampler:
 
         return model_parameters
 
-    def _get_extension(self, parent_row, table_name, parent_name):
+    def _get_extension(self, parent_row, table_name):
         """ Takes the params from a generated parent row.
 
         Args:
@@ -305,8 +305,6 @@ class Sampler:
                 a generated parent row
             table_name (str):
                 name of table to make model for
-            parent_name (str):
-                name of parent table
         """
 
         prefix = '__{}__'.format(table_name)
@@ -357,7 +355,7 @@ class Sampler:
                 self._sample_table(child_name, table_name, row, sampled)
 
     def _sample_table(self, table_name, parent_name, parent_row, sampled):
-        extension = self._get_extension(parent_row, table_name, parent_name)
+        extension = self._get_extension(parent_row, table_name)
 
         table_model = self.models[table_name]
         model = self._get_model(extension, table_model)
