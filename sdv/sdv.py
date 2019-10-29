@@ -4,7 +4,6 @@
 import pickle
 
 from copulas.multivariate import GaussianMultivariate
-
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
 from sdv.sampler import Sampler

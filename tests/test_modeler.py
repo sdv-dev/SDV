@@ -1,12 +1,10 @@
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
-import numpy as np
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
 
-from sdv.metadata import Metadata
-from sdv.modeler import Modeler
+from copulas.multivariate import GaussianMultivariate
+from sdv import Metadata, Modeler
 
 
 class TestModeler(TestCase):
@@ -140,7 +138,7 @@ class TestModeler(TestCase):
         ]
 
         assert result == 'result'
-        assert log_mock.call_args_list == expected_log_mock_call
+        assert sorted(log_mock.call_args_list) == sorted(expected_log_mock_call)
 
         pd.testing.assert_frame_equal(
             modeler._fit_model.call_args[0][0],
