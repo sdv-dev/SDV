@@ -6,7 +6,17 @@ import pandas as pd
 
 
 class Sampler:
-    """Class to sample data from a model."""
+    """Class to sample data from a model.
+
+    Sampler allow to the user sample a simple table (including childs or not) and sample all the
+    tables from the dataset.
+
+    Args:
+        metadata (Metadata):
+            Dataset Metadata.
+        models (dict):
+            Tables models.
+    """
 
     def __init__(self, metadata, models):
         """Instantiate a new object."""
@@ -36,7 +46,11 @@ class Sampler:
         return triangular_matrix
 
     def _prepare_sampled_covariance(self, covariance):
-        """
+        """Prepare a covariance matrix.
+
+        If the computed matrix returns ``False`` when calls to
+        ``Sampler._check_matrix_symmetric_positive_definite`` compute the matrix until it
+        returns ``True``.
 
         Args:
             covariance (list):
@@ -54,45 +68,6 @@ class Sampler:
 
         return covariance.tolist()
 
-    def _fill_text_columns(self, data, columns, table_name):
-        """Fill in the column values for every non numeric column that isn't the primary key.
-
-        Args:
-            data (pandas.DataFrame):
-                Table to fill text columns.
-            columns (list):
-                Column names.
-            table_name (str):
-                Name of the table.
-
-        Returns:
-            pandas.DataFrame:
-                Table with text columns filled.
-        """
-        for name in columns:
-            field = self.metadata.get_field_meta(table_name, name)
-            if field['type'] == 'id' and name not in data.columns:
-                # check foreign key
-                ref = field.get('ref')
-                if ref:
-                    # generate parent row
-                    parent_name = ref['table']
-                    parent_row = self.sample(parent_name, 1)
-                    # grab value of foreign key
-                    val = parent_row[ref['field']]
-                    data.loc[:, name] = val
-                else:
-                    # generate fake id
-                    regex = field['regex']
-                    data.loc[:, name] = exrex.getone(regex)
-
-            elif field['type'] == 'text':
-                # generate fake text
-                regex = field['regex']
-                data.loc[:, name] = exrex.getone(regex)
-
-        return data
-
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
         self.primary_key = dict()
@@ -100,6 +75,8 @@ class Sampler:
 
     def _transform_synthesized_rows(self, synthesized, table_name):
         """Reverse transform synthetized data.
+
+        Only returns the transformed data, ``RDT`` generated columns are dropped.
 
         Args:
             synthesized (pandas.DataFrame):
@@ -111,12 +88,11 @@ class Sampler:
             pandas.DataFrame:
                 Formatted synthesized data.
         """
-        columns = self.metadata.get_field_names(table_name)
-        text_filled = self._fill_text_columns(synthesized, columns, table_name)
+        reversed_data = self.metadata.reverse_transform(table_name, synthesized)
 
-        reversed_data = self.metadata.reverse_transform(table_name, text_filled)
+        fields = self.metadata.get_fields(table_name)
 
-        return reversed_data[columns]
+        return reversed_data[list(fields.keys())]
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -135,24 +111,37 @@ class Sampler:
 
         Raises:
             ValueError:
-                If there aren't enough remaining values to generate.
+                A ``ValueError`` is raised when:
+                - The primary key field is not an ``id`` type.
+                - A primary key with an unsupported subtype is defined.
+                - There are not enough uniques values to sample.
+            NotImplementedError:
+                A ``NotImplementedError`` is raised when the primary key subtype is a ``datetime``.
         """
         primary_key = self.metadata.get_primary_key(table_name)
         primary_key_values = None
 
         if primary_key:
-            node = self.metadata.get_field_meta(table_name, primary_key)
+            field = self.metadata.get_fields(table_name)[primary_key]
 
             generator = self.primary_key.get(table_name)
 
             if generator is None:
-                if node['type'] == 'number':
+                if field['type'] != 'id':
+                    raise ValueError('Only columns with type `id` can be primary keys')
+
+                subtype = field['subtype']
+                if subtype == 'number':
                     generator = itertools.count()
                     remaining = np.inf
-                else:
-                    regex = node.get('regex')
+                elif subtype == 'string':
+                    regex = field.get('regex', r'^[a-zA-Z]+$')
                     generator = exrex.generate(regex)
                     remaining = exrex.count(regex)
+                elif subtype == 'datetime':
+                    raise NotImplementedError('Datetime ids are not yet supported')
+                else:
+                    raise ValueError('Only `number` or `string` id columns are supported.')
 
                 self.primary_key[table_name] = generator
                 self.remaining_primary_key[table_name] = remaining
@@ -168,9 +157,6 @@ class Sampler:
 
             self.remaining_primary_key[table_name] -= num_rows
             primary_key_values = pd.Series([x for i, x in zip(range(num_rows), generator)])
-
-            if (node['type'] == 'number') and (node['subtype'] == 'integer'):
-                primary_key_values = primary_key_values.astype(int)
 
         return primary_key, primary_key_values
 
@@ -208,6 +194,10 @@ class Sampler:
         Returns:
             dict:
                 Nested dict (if corresponds)
+
+        Raises:
+            ValueError:
+            A ``ValueError`` is raised when there are an error unflatting the extension key name.
         """
         unflattened = dict()
 
@@ -249,7 +239,7 @@ class Sampler:
         return unflattened
 
     def _make_positive_definite(self, matrix):
-        """Find the nearest positive-definite matrix to input
+        """Find the nearest positive-definite matrix to input.
 
         Args:
             matrix (numpy.ndarray):
@@ -332,7 +322,7 @@ class Sampler:
 
         return model_parameters
 
-    def _get_extension(self, parent_row, table_name, parent_name):
+    def _get_extension(self, parent_row, table_name):
         """ Takes the params from a generated parent row.
 
         Args:
@@ -340,8 +330,6 @@ class Sampler:
                 a generated parent row
             table_name (str):
                 name of table to make model for
-            parent_name (str):
-                name of parent table
         """
 
         prefix = '__{}__'.format(table_name)
@@ -392,7 +380,7 @@ class Sampler:
                 self._sample_table(child_name, table_name, row, sampled)
 
     def _sample_table(self, table_name, parent_name, parent_row, sampled):
-        extension = self._get_extension(parent_row, table_name, parent_name)
+        extension = self._get_extension(parent_row, table_name)
 
         table_model = self.models[table_name]
         model = self._get_model(extension, table_model)
@@ -413,6 +401,31 @@ class Sampler:
 
     def sample(self, table_name, num_rows, reset_primary_keys=False,
                sample_children=True, sampled_data=None):
+        """Sample one table.
+
+        Child tables will be sampled when ``sample_children`` is ``True``.
+        If a ``sampled_data`` is provided then append the sampled child tables there, if not
+        create a new dict to fill.
+
+        Args:
+            table_name (str):
+                Table name to sample.
+            num_rows (int):
+                Amount of rows to sample.
+            reset_primary_keys (bool):
+                Whether or not reset the primary keys generators. Defaults to ``False``.
+            sample_children (bool):
+                Whether or not sample child tables. Defaults to ``True``.
+            sampled_data (dict):
+                Dict which contains the sampled tables to append the child table sampled data
+                when needed.
+
+        Returns:
+            dict or pandas.DataFrame:
+                - Returns a ``dict`` when ``sample_children`` is ``True`` with the sampled table
+                and child tables.
+                - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
+        """
 
         if reset_primary_keys:
             self._reset_primary_keys_generators()

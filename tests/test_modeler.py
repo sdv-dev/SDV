@@ -2,10 +2,9 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
+from copulas.multivariate import GaussianMultivariate, VineCopula
 
-from sdv.metadata import Metadata
-from sdv.modeler import Modeler
+from sdv import Metadata, Modeler
 
 
 class TestModeler(TestCase):
@@ -41,6 +40,16 @@ class TestModeler(TestCase):
         assert modeler.metadata == 'test'
         assert modeler.model == GaussianMultivariate
         assert modeler.model_kwargs == dict()
+
+    def test___init__with_arguments(self):
+        # Run
+        modeler = Modeler({'some': 'metadata'}, model=VineCopula, model_kwargs={'some': 'kwargs'})
+
+        # Asserts
+        assert modeler.models == dict()
+        assert modeler.metadata == {'some': 'metadata'}
+        assert modeler.model == VineCopula
+        assert modeler.model_kwargs == {'some': 'kwargs'}
 
     def test__flatten_array(self):
         """Test get flatten array"""
@@ -99,239 +108,108 @@ class TestModeler(TestCase):
     def test__get_model_dict_default_model(self, log_mock):
         """Test get flatten model dict with default model"""
         # Setup
-        x = Mock()
-        x.std = 0.2
-        y = Mock()
-        y.std = 0.2
-        z = Mock()
-        z.std = 0.2
-
-        mock_model = Mock()
-        mock_model.covariance = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
-        mock_model.distribs = {'x': x, 'y': y, 'z': z}
-
-        model_kwargs = {'distribution': 'foo'}
-
-        # Run
-        modeler = Mock()
-        modeler.fit_model.return_value = mock_model
-        modeler.model = GaussianMultivariate
-        modeler.model_kwargs = model_kwargs
-        modeler._flatten_dict.return_value = 'dict'
-
-        result = Modeler._get_model_dict(modeler, None)
-
-        # Asserts
-        expected_log_calls = [
-            call(0.2),
-            call(0.2),
-            call(0.2),
+        model_fitted = Mock()
+        model_fitted.covariance = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
         ]
 
-        assert log_mock.call_args_list == expected_log_calls
+        distrib1 = Mock()
+        distrib1.std = 0.2
+        distrib2 = Mock()
+        distrib2.std = None
+        distrib3 = Mock()
+        distrib3.std = 0.5
+        distrib4 = Mock()
+        distrib4.std = 0.3
 
-        modeler._flatten_dict.assert_called_once_with(mock_model.to_dict.return_value)
-        assert result == 'dict'
-
-    def test_get_foreign_key_not_exist(self):
-        """Test try to find a foreign key, but is not exist"""
-        # Run
-        modeler = Mock()
-        fields = {'foo': {'ref': {'field': 'a'}}}
-        primary = 'b'
-
-        result = Modeler.get_foreign_key(modeler, fields, primary)
-
-        # Asserts
-        assert result is None
-
-    def test_get_foreign_key_exists(self):
-        """Test try to find a foreign key, exist"""
-        # Run
-        modeler = Mock()
-        fields = {'foo': {'ref': {'field': 'a'}, 'name': 'foreign key'}}
-        primary = 'a'
-
-        result = Modeler.get_foreign_key(modeler, fields, primary)
-
-        # Asserts
-        expected = 'foreign key'
-        assert result == expected
-
-    def test_fit_model(self):
-        """Test fit model"""
-        # Setup
-        model_mock = Mock()
+        model_fitted.distribs = {
+            'distrib1': distrib1,
+            'distrib2': distrib2,
+            'distrib3': distrib3,
+            'distrib4': distrib4
+        }
 
         # Run
-        modeler = Mock()
-        modeler.model_kwargs = {'foo': 'bar'}
-        modeler.model.return_value = model_mock
-        Modeler.fit_model(modeler, None)
+        modeler = Mock(spec=Modeler)
+        modeler._fit_model.return_value = model_fitted
+        modeler._flatten_dict.return_value = 'result'
+
+        data = pd.DataFrame({'data': [1, 2, 3]})
+
+        result = Modeler._get_model_dict(modeler, data)
 
         # Asserts
-        expected_foo = 'bar'
-        expected_fit_call = None
+        expected_log_mock_call = [
+            call(0.2),
+            call(0.5),
+            call(0.3)
+        ]
 
-        modeler.model.assert_called_once_with(foo=expected_foo)
-        model_mock.fit.assert_called_once_with(expected_fit_call)
+        assert result == 'result'
+        assert sorted(log_mock.call_args_list) == sorted(expected_log_mock_call)
 
-    def test__create_extension_key_error(self):
-        """Test create extension, but an exception return a none"""
-        # Run
-        modeler = Mock()
-
-        foreign = pd.DataFrame({'foreign_key': []})
-        child_table_data = pd.DataFrame({'bar': []})
-        table_info = ('foreign_key', 'child_name')
-
-        result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
-
-        # Asserts
-        assert result is None
-
-    @patch('pandas.DataFrame.copy')
-    def test__create_extension_zero_num_child_rows(self, mock_df):
-        """Test create extension, num_child_rows length is zero."""
-        # Setup
-        def mock_side_effect():
-            raise KeyError
-
-        mock_df.side_effect = mock_side_effect
-
-        # Run
-        modeler = Mock()
-        foreign = pd.DataFrame({'foreign_key': [0, 1]})
-        child_table_data = pd.DataFrame({'bar': [1, 0]})
-        table_info = ('foreign_key', 'child_name')
-
-        result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
-
-        # Asserts
-        assert result is None
-
-    def test___create_extension_not_none(self):
-        """Test create extension, num_child_rows length not zero."""
-        # Setup
-        model_dict = {}
-
-        # Run
-        modeler = Mock()
-        modeler._get_model_dict.return_value = model_dict
-
-        foreign = pd.DataFrame({'foreign_key': [1, 0]})
-        child_table_data = pd.DataFrame({'bar': [0, 1]})
-        table_info = ('bar', 'child_name')
-
-        result = Modeler._create_extension(modeler, foreign, child_table_data, table_info)
-
-        # Asserts
-        expected = pd.Series({'child_name__child_rows': 2})
-        assert all(result == expected)
+        pd.testing.assert_frame_equal(
+            modeler._fit_model.call_args[0][0],
+            pd.DataFrame({'data': [1, 2, 3]})
+        )
 
     def test__get_extensions(self):
         """Test get list of extensions from childs"""
         # Setup
-        metadata_foreign_key = ['foreign_a']
-        create_extension = [None, pd.Series([7, 6])]
+        model_dict = [
+            {'model': 'data 1'},
+            {'model': 'data 2'},
+            {'model': 'data 3'}
+        ]
 
         # Run
         modeler = Mock()
-        modeler.metadata.get_foreign_key.side_effect = metadata_foreign_key
-        modeler._create_extension.side_effect = create_extension
+        modeler._get_model_dict.side_effect = model_dict
 
-        parent = 'parent_table'
-        child = {'child_a'}
-        tables = {
-            'child_a': pd.DataFrame({'foreign_a': [0, 1]}),
-        }
+        child_name = 'some_name'
+        child_table = pd.DataFrame({'foo': ['aaa', 'bbb', 'ccc']})
 
-        result = Modeler._get_extensions(modeler, parent, child, tables)
+        result = Modeler._get_extension(modeler, child_name, child_table, 'foo')
 
         # Asserts
-        expected = [
-            pd.DataFrame({0: [7], 1: [6]}, index=[1])
-        ]
+        expected = pd.DataFrame({
+            '__some_name__model': ['data 1', 'data 2', 'data 3'],
+            '__some_name__child_rows': [1, 1, 1]
+        }, index=['aaa', 'bbb', 'ccc'])
 
-        expected_foreign_key_call = [
-            call('parent_table', 'child_a')
-        ]
+        pd.testing.assert_frame_equal(result, expected)
+        assert modeler._get_model_dict.call_count == 3
 
-        expected_create_extension_calls = [
-            [
-                pd.DataFrame({'foreign_a': [0]}, index=[0]),
-                pd.DataFrame({'foreign_a': [0, 1]}, index=range(2)),
-                ('foreign_a', '__child_a')
-            ],
-            [
-                pd.DataFrame({'foreign_a': [1]}, index=[1]),
-                pd.DataFrame({'foreign_a': [0, 1]}, index=range(2)),
-                ('foreign_a', '__child_a')
-            ]
-        ]
-
-        assert modeler.metadata.get_foreign_key.call_args_list == expected_foreign_key_call
-
-        for result_item, expected_item in zip(
-                modeler._create_extension.call_args_list, expected_create_extension_calls):
-            pd.testing.assert_frame_equal(result_item[0][0], expected_item[0])
-            pd.testing.assert_frame_equal(result_item[0][1], expected_item[1])
-            assert result_item[0][2] == expected_item[2]
-
-        assert len(result) == 1
-        assert len(result) == len(expected)
-        pd.testing.assert_frame_equal(result[0], expected[0])
-
-    def test_cpa(self):
-        """Test CPA with extensions"""
-        # Setup
-        metadata_table_data = pd.DataFrame({'pk_field': [0, 1]})
-        metadata_primary_key = 'pk_field'
-        extensions = [pd.Series([1, 0], name='foo')]
-
+    def test_cpa_with_tables_no_primary_key(self):
+        """Test CPA with tables and no primary key."""
         # Run
-        modeler = Mock()
-        modeler.metadata.get_table_data.return_value = metadata_table_data
-        modeler.metadata.get_primary_key.return_value = metadata_primary_key
-        modeler._get_extensions.return_value = extensions
+        modeler = Mock(spec=Modeler)
 
-        table_name = 'test'
-        tables = {
-            'test': None
-        }
+        modeler.metadata = Mock(spec=Metadata)
+        modeler.models = dict()
 
-        result = Modeler.cpa(modeler, table_name, tables)
+        modeler.metadata.transform.return_value = pd.DataFrame({'data': [1, 2, 3]})
+        modeler.metadata.get_primary_key.return_value = None
+        modeler._fit_model.return_value = 'fitted model'
 
-        # Asserts
-        expected = pd.DataFrame({'pk_field': [0, 1], 'foo': [1, 0]})
+        tables = {'test': pd.DataFrame({'data': ['a', 'b', 'c']})}
 
-        modeler.metadata.get_table_data.assert_called_once_with('test', transform=True)
-        modeler.metadata.get_children.assert_called_once_with('test')
-        modeler.metadata.get_primary_key.assert_called_once_with('test')
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
-
-    def test_rcpa(self):
-        """Test RCPA"""
-        # Setup
-        metadata_children = ['child 1', ['child 2.1', 'child 2.2'], 'child 3']
-
-        # Run
-        modeler = Mock()
-        modeler.metadata.get_children.return_value = metadata_children
-        table_name = 'test'
-        tables = {'test': 'data'}
-
-        Modeler.rcpa(modeler, table_name, tables)
+        result = Modeler.cpa(modeler, 'test', tables)
 
         # Asserts
-        expected_tables = {'test': modeler.cpa()}
-        expected_call_args_list = [
-            call('child 1', expected_tables),
-            call(['child 2.1', 'child 2.2'], expected_tables),
-            call('child 3', expected_tables)
-        ]
+        expected = pd.DataFrame({'data': [1, 2, 3]})
+        expected_transform_call = pd.DataFrame({'data': ['a', 'b', 'c']})
 
-        assert modeler.rcpa.call_args_list == expected_call_args_list
+        assert modeler.metadata.load_table.call_count == 0
+        assert modeler.metadata.transform.call_args[0][0] == 'test'
+        pd.testing.assert_frame_equal(
+            modeler.metadata.transform.call_args[0][1],
+            expected_transform_call
+        )
+        pd.testing.assert_frame_equal(modeler._fit_model.call_args[0][0], expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__impute(self):
         """Test _impute data"""

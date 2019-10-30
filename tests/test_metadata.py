@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -23,6 +23,14 @@ def test__read_csv_dtypes():
             },
             'c_field': {
                 'type': 'datetime',
+            },
+            'd_field': {
+                'type': 'id',
+                'subtype': 'string'
+            },
+            'e_field': {
+                'type': 'id',
+                'subtype': 'integer'
             }
         }
     }
@@ -30,7 +38,7 @@ def test__read_csv_dtypes():
     result = _read_csv_dtypes(table_meta)
 
     # Asserts
-    expected = {'a_field': str}
+    expected = {'a_field': str, 'd_field': str}
 
     assert result == expected
 
@@ -40,7 +48,9 @@ def test__parse_dtypes():
     # Run
     data = pd.DataFrame({
         'a_field': ['1996-10-17', '1965-05-23'],
-        'b_field': ['7', '14']
+        'b_field': ['7', '14'],
+        'c_field': ['1', '2'],
+        'd_field': ['other', 'data']
     })
     table_meta = {
         'fields': {
@@ -51,6 +61,13 @@ def test__parse_dtypes():
             'b_field': {
                 'type': 'number',
                 'subtype': 'integer'
+            },
+            'c_field': {
+                'type': 'id',
+                'subtype': 'number'
+            },
+            'd_field': {
+                'type': 'other'
             }
         }
     }
@@ -60,7 +77,9 @@ def test__parse_dtypes():
     # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
-        'b_field': [7, 14]
+        'b_field': [7, 14],
+        'c_field': [1, 2],
+        'd_field': ['other', 'data']
     })
 
     pd.testing.assert_frame_equal(result, expected)
@@ -271,81 +290,140 @@ class TestMetadata(TestCase):
         mock_load_csv.assert_called_once_with('.', {'some': 'data'})
         assert result == 'data'
 
-    def test__get_dtypes(self):
-        """Test get data types"""
+    def test__get_dtypes_with_ids(self):
+        """Test get data types including ids."""
         # Setup
-        fields = {
-            'item 1': {'type': 'number', 'subtype': 'integer'},
-            'item 2': {'type': 'number', 'subtype': 'float'},
-            'item 3': {'type': 'categorical', 'subtype': 'categorical'},
-            'item 4': {'type': 'categorical', 'subtype': 'bool'},
-            'item 5': {'type': 'datetime'}
-        }
-
-        # Run
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
-
-        table_name = 'test'
-
-        result = Metadata._get_dtypes(metadata, table_name)
-
-        # Asserts
-        expected = [int, float, np.object, bool, np.datetime64]
-
-        assert all([item in expected for item in result])
-        assert len(result) == len(expected)
-
-    def test__get_dtypes_error_subtype_categorical(self):
-        """Test get data types with an invalid categorical subtype"""
-        # Setup
-        fields = {
-            'item': {'type': 'categorical', 'subtype': 'integer'}
-        }
-
-        # Run and asserts
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
-
-        table_name = 'test'
-
-        with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, table_name)
-
-    def test__get_dtypes_error_subtype_numerical(self):
-        """Test get data types with an invalid numerical subtype"""
-        # Setup
-        fields = {
-            'item': {'type': 'number', 'subtype': 'bool'}
-        }
-
-        # Run and asserts
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
-
-        table_name = 'test'
-
-        with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, table_name)
-
-    def test__get_pii_fields(self):
-        """Test get pii fields"""
-        # Setup
-        fields = {
-            'foo': {
-                'type': 'categorical',
-                'pii': True,
-                'pii_category': 'email'
-            },
-            'bar': {
-                'type': 'categorical',
-                'pii_category': 'email'
+        table_meta = {
+            'fields': {
+                'item 1': {'type': 'number', 'subtype': 'integer'},
+                'item 2': {'type': 'number', 'subtype': 'float'},
+                'item 3': {'type': 'categorical', 'subtype': 'categorical'},
+                'item 4': {'type': 'categorical', 'subtype': 'bool'},
+                'item 5': {'type': 'datetime'},
+                'item 6': {'type': 'id', 'subtype': 'number'},
+                'item 7': {'type': 'id', 'subtype': 'string'},
             }
         }
 
         # Run
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        result = Metadata._get_dtypes(metadata, 'test', ids=True)
+
+        # Asserts
+        expected = {
+            'item 1': int,
+            'item 2': float,
+            'item 3': np.object,
+            'item 4': bool,
+            'item 5': np.datetime64,
+            'item 6': int,
+            'item 7': str,
+        }
+
+        assert result == expected
+
+    def test__get_dtypes_no_ids(self):
+        """Test get data types excluding ids."""
+        # Setup
+        table_meta = {
+            'fields': {
+                'item 1': {'type': 'number', 'subtype': 'integer'},
+                'item 2': {'type': 'number', 'subtype': 'float'},
+                'item 3': {'type': 'categorical', 'subtype': 'categorical'},
+                'item 4': {'type': 'categorical', 'subtype': 'bool'},
+                'item 5': {'type': 'datetime'},
+                'item 6': {'type': 'id', 'subtype': 'number'},
+                'item 7': {'type': 'id', 'subtype': 'string'},
+            }
+        }
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        result = Metadata._get_dtypes(metadata, 'test')
+
+        # Asserts
+        expected = {
+            'item 1': int,
+            'item 2': float,
+            'item 3': np.object,
+            'item 4': bool,
+            'item 5': np.datetime64,
+        }
+
+        assert result == expected
+
+    def test__get_dtypes_error_subtype_categorical(self):
+        """Test get data types with an invalid categorical subtype."""
+        # Setup
+        table_meta = {
+            'fields': {
+                'item': {'type': 'categorical', 'subtype': 'integer'}
+            }
+        }
+
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        with pytest.raises(ValueError):
+            Metadata._get_dtypes(metadata, 'test')
+
+    def test__get_dtypes_error_subtype_numerical(self):
+        """Test get data types with an invalid numerical subtype."""
+        # Setup
+        table_meta = {
+            'fields': {
+                'item': {'type': 'number', 'subtype': 'bool'}
+            }
+        }
+
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        with pytest.raises(ValueError):
+            Metadata._get_dtypes(metadata, 'test')
+
+    def test__get_dtypes_error_subtype_id(self):
+        """Test get data types with an invalid id subtype."""
+        # Setup
+        table_meta = {
+            'fields': {
+                'item': {'type': 'id', 'subtype': 'bool'}
+            }
+        }
+
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        with pytest.raises(ValueError):
+            Metadata._get_dtypes(metadata, 'test', ids=True)
+
+    def test__get_pii_fields(self):
+        """Test get pii fields"""
+        # Setup
+        table_meta = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'email'
+                },
+                'bar': {
+                    'type': 'categorical',
+                    'pii_category': 'email'
+                }
+            }
+        }
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
 
         table_name = 'test'
 
@@ -356,17 +434,67 @@ class TestMetadata(TestCase):
 
         assert result == expected
 
+    @patch('sdv.metadata.transformers.DatetimeTransformer')
+    @patch('sdv.metadata.transformers.BooleanTransformer')
+    @patch('sdv.metadata.transformers.CategoricalTransformer')
+    @patch('sdv.metadata.transformers.NumericalTransformer')
+    def test__get_transformers_no_error(
+            self, numerical_mock, categorical_mock, boolean_mock, datetime_mock):
+        """Test get transformers dict for each data type."""
+        # Setup
+        numerical_mock.return_value = 'NumericalTransformer'
+        categorical_mock.return_value = 'CategoricalTransformer'
+        boolean_mock.return_value = 'BooleanTransformer'
+        datetime_mock.return_value = 'DatetimeTransformer'
+
+        # Run
+        dtypes = {
+            'integer': int,
+            'float': float,
+            'categorical': np.object,
+            'boolean': bool,
+            'datetime': np.datetime64
+        }
+
+        pii_fields = {
+            'categorical': 'email'
+        }
+
+        result = Metadata._get_transformers(dtypes, pii_fields)
+
+        # Asserts
+        expected = {
+            'integer': 'NumericalTransformer',
+            'float': 'NumericalTransformer',
+            'categorical': 'CategoricalTransformer',
+            'boolean': 'BooleanTransformer',
+            'datetime': 'DatetimeTransformer'
+        }
+
+        assert result == expected
+        assert numerical_mock.call_args_list == [call(dtype=int), call(dtype=float)]
+        assert categorical_mock.call_args == call(anonymize='email')
+        assert boolean_mock.call_args == call()
+        assert datetime_mock.call_args == call()
+
+    def test__get_transformers_raise_valueerror(self):
+        """Test get transformers dict raise ValueError."""
+        # Run
+        dtypes = {
+            'string': str
+        }
+
+        with pytest.raises(ValueError):
+            Metadata._get_transformers(dtypes, None)
+
     @patch('sdv.metadata.HyperTransformer')
     def test__load_hyper_transformer(self, mock_ht):
         """Test load HyperTransformer"""
-        # Setup
-        dtypes = list()
-        pii_fields = dict()
-
         # Run
-        metadata = Mock()
-        metadata._get_dtypes.return_value = dtypes
-        metadata._get_pii_fields.return_value = pii_fields
+        metadata = Mock(spec=Metadata)
+        metadata._get_dtypes.return_value = {'meta': 'dtypes'}
+        metadata._get_pii_fields.return_value = {'meta': 'pii_fields'}
+        metadata._get_transformers.return_value = {'meta': 'transformers'}
         mock_ht.return_value = 'hypertransformer'
 
         table_name = 'test'
@@ -376,76 +504,12 @@ class TestMetadata(TestCase):
         # Asserts
         metadata._get_dtypes.assert_called_once_with('test')
         metadata._get_pii_fields.assert_called_once_with('test')
-        mock_ht.assert_called_once_with(anonymize=dict(), dtypes=list())
+
+        metadata._get_transformers.assert_called_once_with(
+            {'meta': 'dtypes'}, {'meta': 'pii_fields'})
+
+        mock_ht.assert_called_once_with(transformers={'meta': 'transformers'})
         assert result == 'hypertransformer'
-
-    def test_get_table_data_transform(self):
-        """Test get table data with hyper transformer and transform"""
-        # Setup
-        load_table = pd.DataFrame({'foo': [0, 1]})
-        _hyper_transformers = dict()
-        hyper_transformer = Mock()
-        hyper_transformer.transform.return_value = 'transformed'
-
-        # Run
-        metadata = Mock()
-        metadata.load_table.return_value = load_table
-        metadata._hyper_transformers = _hyper_transformers
-        metadata._load_hyper_transformer.return_value = hyper_transformer
-
-        table_name = 'test'
-        transform = True
-
-        result = Metadata.get_table_data(metadata, table_name, transform=transform)
-
-        # Asserts
-        metadata.load_table.assert_called_once_with('test')
-        metadata._load_hyper_transformer.assert_called_once_with('test')
-
-        pd.testing.assert_frame_equal(
-            hyper_transformer.fit.call_args[0][0],
-            pd.DataFrame({'foo': [0, 1]})
-        )
-
-        pd.testing.assert_frame_equal(
-            hyper_transformer.transform.call_args[0][0],
-            pd.DataFrame({'foo': [0, 1]})
-        )
-
-        assert result == 'transformed'
-
-    def test_get_table_data_no_transform(self):
-        """Test get table data with hyper transformer and no transform"""
-        # Setup
-        load_table = pd.DataFrame({'foo': [0, 1]})
-        _hyper_transformers = dict()
-        hyper_transformer = Mock()
-
-        # Run
-        metadata = Mock()
-        metadata.load_table.return_value = load_table
-        metadata._hyper_transformers = _hyper_transformers
-        metadata._load_hyper_transformer.return_value = hyper_transformer
-
-        table_name = 'test'
-        transform = False
-
-        result = Metadata.get_table_data(metadata, table_name, transform=transform)
-
-        # Asserts
-        expected = pd.DataFrame({'foo': [0, 1]})
-
-        metadata.load_table.assert_called_once_with('test')
-        metadata._load_hyper_transformer.assert_called_once_with('test')
-
-        pd.testing.assert_frame_equal(
-            hyper_transformer.fit.call_args[0][0],
-            expected
-        )
-
-        pd.testing.assert_frame_equal(result, expected)
-
-        assert hyper_transformer.transform.call_count == 0
 
     def test_get_table_names(self):
         """Test get table names"""
@@ -472,6 +536,7 @@ class TestMetadata(TestCase):
     def test_get_tables(self):
         """Test get tables"""
         # Setup
+        table_names = ['foo', 'bar', 'tar']
         table_data = [
             pd.DataFrame({'foo': [1, 2]}),
             pd.DataFrame({'bar': [3, 4]}),
@@ -479,8 +544,9 @@ class TestMetadata(TestCase):
         ]
 
         # Run
-        metadata = Mock()
-        metadata.get_table_data.side_effect = table_data
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.side_effect = table_names
+        metadata.load_table.side_effect = table_data
 
         tables = ['table 1', 'table 2', 'table 3']
 
@@ -520,52 +586,6 @@ class TestMetadata(TestCase):
         expected = {'a_field': 'some data', 'b_field': 'other data'}
 
         metadata.get_table_meta.assert_called_once_with('test')
-
-        assert result == expected
-
-    def test_get_field_names(self):
-        """Test get field names"""
-        # Setup
-        fields = {
-            'a_field': 'some data',
-            'b_field': 'other data'
-        }
-
-        # Run
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
-
-        table_name = 'test'
-
-        result = Metadata.get_field_names(metadata, table_name)
-
-        # Asserts
-        expected = ['a_field', 'b_field']
-
-        metadata.get_fields.assert_called_once_with('test')
-
-        assert sorted(result) == sorted(expected)
-
-    def test_get_field_meta(self):
-        """Test get field meta"""
-        # Setup
-        fields = {
-            'a_field': {'some': 'data'}
-        }
-
-        # Run
-        metadata = Mock()
-        metadata.get_fields.return_value = fields
-
-        table_name = 'test'
-        field_name = 'a_field'
-
-        result = Metadata.get_field_meta(metadata, table_name, field_name)
-
-        # Asserts
-        expected = {'some': 'data'}
-
-        metadata.get_fields.assert_called_once_with('test')
 
         assert result == expected
 
@@ -631,7 +651,21 @@ class TestMetadata(TestCase):
     def test_reverse_transform(self):
         """Test reverse transform"""
         # Setup
+        data_types = {
+            'item 1': int,
+            'item 2': float,
+            'item 3': np.object,
+            'item 4': bool,
+        }
+
         ht_mock = Mock()
+        ht_mock.reverse_transform.return_value = {
+            'item 1': pd.Series([1.0, 2.0, None, 4.0, 5.0]),
+            'item 2': pd.Series([1.1, None, 3.3, None, 5.5]),
+            'item 3': pd.Series([None, 'bbb', 'ccc', 'ddd', None]),
+            'item 4': pd.Series([True, False, None, False, True])
+        }
+
         _hyper_transformers = {
             'test': ht_mock
         }
@@ -639,6 +673,7 @@ class TestMetadata(TestCase):
         # Run
         metadata = Mock()
         metadata._hyper_transformers = _hyper_transformers
+        metadata._get_dtypes.return_value = data_types
 
         table_name = 'test'
         data = pd.DataFrame({'foo': [0, 1]})

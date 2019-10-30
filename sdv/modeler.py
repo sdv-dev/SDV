@@ -13,13 +13,16 @@ IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 class Modeler:
     """Class responsible for modeling database.
 
+    The ``Modeler.model_database`` applies the CPA algorithm to generate the extended table.
+    Required before sampling data.
+
     Args:
-        metadata (DataNavigator):
+        metadata (Metadata):
             Dataset Metadata.
         model (type):
-            Class of model to use.
+            Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
         model_kwargs (dict):
-            Keyword arguments to pass to model.
+            Keyword arguments to pass to model. Defaults to ``None``.
     """
 
     def __init__(self, metadata, model=GaussianMultivariate, model_kwargs=None):
@@ -58,7 +61,7 @@ class Modeler:
             nested (list, numpy.array):
                 Iterable to flatten.
             prefix (str):
-                Name to append to the array indices.
+                Name to append to the array indices. Defaults to ``''``.
 
         Returns:
             dict
@@ -86,7 +89,7 @@ class Modeler:
             nested (dict):
                 Original dictionary to flatten.
             prefix (str):
-                Prefix to append to key name
+                Prefix to append to key name. Defaults to ``''``.
 
         Returns:
             dict:
@@ -111,6 +114,36 @@ class Modeler:
 
         return result
 
+    @staticmethod
+    def _impute(data):
+        for column in data:
+            column_data = data[column]
+            if column_data.dtype in (np.int, np.float):
+                fill_value = column_data.mean()
+            else:
+                fill_value = column_data.mode()[0]
+
+            data[column] = data[column].fillna(fill_value)
+
+        return data
+
+    def _fit_model(self, data):
+        """Returns an instance of ``self.model`` fitted with the given data.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to train the model with.
+
+        Returns:
+            model:
+                Instance of ``self.model`` fitted with data.
+        """
+        data = self._impute(data)
+        model = self.model(**self.model_kwargs)
+        model.fit(data)
+
+        return model
+
     def _get_model_dict(self, data):
         """Fit and  serialize  a model and flatten its parameters into an array.
 
@@ -122,7 +155,7 @@ class Modeler:
             dict:
                 Flattened parameters for model.
         """
-        model = self.fit_model(data)
+        model = self._fit_model(data)
 
         values = []
         triangle = np.tril(model.covariance)
@@ -137,80 +170,7 @@ class Modeler:
 
         return self._flatten_dict(model.to_dict())
 
-    def get_foreign_key(self, fields, primary):
-        """Get foreign key from primary key.
-
-        Args:
-            fields (dict):
-                metadata ``fields`` key for a given table.
-            primary (str):
-                Name of primary key in original table.
-
-        Return:
-            str:
-                Name of foreign key in current table.
-        """
-        for field in fields.values():
-            ref = field.get('ref')
-            if ref and ref['field'] == primary:
-                foreign = field['name']
-                return foreign
-
-    def fit_model(self, data):
-        """Returns an instance of ``self.model`` fitted with the given data.
-
-        Args:
-            data (pandas.DataFrame):
-                Data to train the model with.
-
-        Returns:
-            model:
-                Instance of ``self.model`` fitted with data.
-        """
-        model = self.model(**self.model_kwargs)
-        model.fit(data)
-
-        return model
-
-    def _create_extension(self, foreign, child_table_data, table_info):
-        """Return the flattened model from a ``pandas.DataFrame``.
-
-        Args:
-            foreign (pandas.DataFrame):
-                Object with Index of elements from children table elements of a given ``foreign``.
-            child_table_data (pandas.DataFrame):
-                Table of data to fil
-            table_info (tuple[str, str]):
-                ``foreign`` and child table names.
-
-        Returns:
-            pandas.Series or None:
-                Parameter extension if it can be generated, ``None`` elsewhere.
-        """
-
-        foreign_key, child_name = table_info
-        try:
-            child_rows = child_table_data.loc[foreign.index].copy()
-            if foreign_key in child_rows:
-                child_rows = child_rows.drop(foreign_key, axis=1)
-
-        except KeyError:
-            return None
-
-        num_child_rows = len(child_rows)
-
-        if num_child_rows:
-            extension = self._get_model_dict(child_rows)
-            extension['child_rows'] = num_child_rows
-
-            extension = pd.Series(extension)
-            extension.index = child_name + '__' + extension.index
-
-            return extension
-
-        return None
-
-    def _get_extensions(self, parent, children, tables):
+    def _get_extension(self, child_name, child_table, foreign_key):
         """Generate list of extension for child tables.
 
         Each element of the list is generated for one single children.
@@ -230,95 +190,74 @@ class Modeler:
         Returns:
             pandas.DataFrame
         """
-        extensions = []
+        extension_rows = list()
+        foreign_key_values = child_table[foreign_key].unique()
+        child_table = child_table.set_index(foreign_key)
+        for foreign_key_value in foreign_key_values:
+            child_rows = child_table.loc[[foreign_key_value]]
+            num_child_rows = len(child_rows)
+            row = self._get_model_dict(child_rows)
+            row['child_rows'] = num_child_rows
 
-        for child in children:
-            foreign_key = self.metadata.get_foreign_key(parent, child)
-            child_table = tables[child]
+            row = pd.Series(row)
+            row.index = '__' + child_name + '__' + row.index
+            extension_rows.append(row)
 
-            parameters = dict()
-            table_info = (foreign_key, '__' + child)
+        return pd.DataFrame(extension_rows, index=foreign_key_values)
 
-            for foreign_key_value in child_table[foreign_key].unique():
-                foreign_index = child_table[child_table[foreign_key] == foreign_key_value]
-                parameter = self._create_extension(foreign_index, child_table, table_info)
+    def cpa(self, table_name, tables, foreign_key=None):
+        """Run CPA algorithm.
 
-                if parameter is not None:
-                    parameters[foreign_key_value] = parameter.to_dict()
-
-            extension = pd.DataFrame(parameters).T
-
-            if len(extension):
-                extensions.append(extension)
-
-        return extensions
-
-    def cpa(self, table_name, tables):
-        """Run CPA algorithm on a table.
-
-        Conditional Parameter Aggregation. It will take the table children and generate
-        extensions (parameters from modelling the related children for each foreign key)
-        and merge them into the original table.
+        If ``tables`` is not loaded, load the current table.
+        If the table we are processing have childs call ``cpa`` and generate extensions.
+        After iterate over the childs, fit the model and return the extended table.
 
         Args:
             table_name (str):
-                name of table.
+                Name of table.
             tables (dict):
-                previously processed tables.
+                Dict of tables to process.
+            foreign_key (str):
+                Name of the foreign key that references this table. Used only when applying
+                CPA on a child table.
 
         Returns:
             pandas.DataFrame
         """
         LOGGER.info('Modeling %s', table_name)
 
-        table = self.metadata.get_table_data(table_name, transform=True)
+        if tables:
+            table = tables[table_name]
+        else:
+            table = self.metadata.load_table(table_name)
 
-        children = self.metadata.get_children(table_name)
+        extended = self.metadata.transform(table_name, table)
+
         primary_key = self.metadata.get_primary_key(table_name)
+        if primary_key:
+            extended.index = table[primary_key]
+            for child_name in self.metadata.get_children(table_name):
+                child_key = self.metadata.get_foreign_key(table_name, child_name)
+                child_table = self.cpa(child_name, tables, child_key)
+                extension = self._get_extension(child_name, child_table, child_key)
+                extended = extended.merge(extension, how='left',
+                                          right_index=True, left_index=True)
+                extended['__' + child_name + '__child_rows'].fillna(0, inplace=True)
 
-        extensions = self._get_extensions(table_name, children, tables)
-        for extension in extensions:
-            table = table.merge(extension, how='left', left_on=primary_key, right_index=True)
+        self.models[table_name] = self._fit_model(extended)
 
-        return table
+        if primary_key:
+            extended.reset_index(inplace=True)
 
-    def rcpa(self, table_name, tables):
-        """Recursively calls CPA starting at table.
+        if foreign_key:
+            extended[foreign_key] = table[foreign_key]
 
-        Args:
-            table_name (str):
-                name of table to start from.
-        """
-        children = self.metadata.get_children(table_name)
+        return extended
 
-        for child in children:
-            self.rcpa(child, tables)
-
-        table = self.cpa(table_name, tables)
-        tables[table_name] = table
-
-    @staticmethod
-    def _impute(data):
-        for column in data:
-            column_data = data[column]
-            if column_data.dtype in (np.int, np.float):
-                fill_value = column_data.mean()
-            else:
-                fill_value = column_data.mode()[0]
-
-            data[column] = data[column].fillna(fill_value)
-
-        return data
-
-    def model_database(self):
-        """Use RCPA and store model for database."""
-        tables = dict()
+    def model_database(self, tables=None):
+        """Run CPA algorithm on all tables."""
         for table_name in self.metadata.get_table_names():
             if not self.metadata.get_parents(table_name):
-                self.rcpa(table_name, tables)
-
-        for name, data in tables.items():
-            data = self._impute(data)
-            self.models[name] = self.fit_model(data)
+                self.cpa(table_name, tables)
 
         LOGGER.info('Modeling Complete')

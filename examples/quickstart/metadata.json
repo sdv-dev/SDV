@@ -1,0 +1,105 @@
+{
+    "path": "",
+    "tables": [
+        {
+            "fields": [
+                {
+                    "name": "customer_id",
+                    "type": "id",
+                    "subtype": "number"
+                },
+                {
+                    "name": "cust_postal_code",
+                    "type": "categorical",
+                    "subtype": "categorical"
+                },
+                {
+                    "name": "phone_number1",
+                    "type": "number",
+                    "subtype": "integer"
+                },
+                {
+                    "name": "credit_limit",
+                    "type": "number",
+                    "subtype": "integer"
+                },
+                {
+                    "name": "country",
+                    "type": "categorical",
+                    "subtype": "categorical"
+                }
+            ],
+            "headers": true,
+            "name": "customers",
+            "path": "customers.csv",
+            "primary_key": "customer_id",
+            "use": true
+        },
+        {
+            "fields": [
+                {
+                    "name": "order_id",
+                    "type": "id",
+                    "subtype": "number"
+                },
+                {
+                    "name": "customer_id",
+                    "ref": {
+                        "field": "customer_id",
+                        "table": "customers"
+                    },
+                    "type": "id",
+                    "subtype": "number"
+                },
+                {
+                    "name": "order_total",
+                    "type": "number",
+                    "subtype": "integer"
+                }
+            ],
+            "headers": true,
+            "name": "orders",
+            "path": "orders.csv",
+            "primary_key": "order_id",
+            "use": true
+        },
+        {
+            "fields": [
+                {
+                    "name": "order_item_id",
+                    "type": "id",
+                    "subtype": "number"
+                },
+                {
+                    "name": "order_id",
+                    "ref": {
+                        "field": "order_id",
+                        "table": "orders"
+                    },
+                    "type": "id",
+                    "subtype": "number"
+                },
+                {
+                    "name": "product_id",
+                    "type": "categorical",
+                    "subtype": "categorical"
+                },
+                {
+                    "name": "unit_price",
+                    "type": "number",
+                    "subtype": "integer"
+                },
+                {
+                    "name": "quantity",
+                    "type": "number",
+                    "subtype": "integer"
+                }
+            ],
+            "headers": true,
+            "name": "order_items",
+            "path": "order_items.csv",
+            "primary_key": "order_item_id",
+            "use": true
+        }
+    ]
+}
