@@ -20,7 +20,18 @@ class NotFittedError(Exception):
 
 
 class SDV:
-    """Class to do modeling and sampling all in one."""
+    """Automated generative modeling and sampling tool.
+
+    Allows the users to generate synthetic data after creating generative models for their data.
+
+    Currently, tables that have multiparents are not supported.
+
+    Args:
+        model (type):
+            Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
+        model_kwargs (dict):
+            Keyword arguments to pass to model. Defaults to ``None``.
+    """
 
     sampler = None
 
@@ -39,6 +50,10 @@ class SDV:
 
     def fit(self, metadata, tables=None, root_path=None):
         """Transform the data and model the database.
+
+        First, create the ``Metadata`` object and validate the data structure.
+        After that, create the ``Modeler`` object and model the database.
+        Finaly, create the ``Sampler`` object.
 
         Args:
             metadata (dict or str):
@@ -71,6 +86,14 @@ class SDV:
                 Whether to sample children tables. Defaults to ``True``.
             reset_primary_keys (bool):
                 Wheter or not reset the pk generators. Defaults to ``True``.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data with the number of rows specified in ``num_rows``.
+
+        Raises:
+            NotFittedError:
+                A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')
@@ -90,6 +113,14 @@ class SDV:
                 Amount of rows to sample. Defaults to ``5``.
             reset_primary_keys (bool):
                 Wheter or not reset the pk generators. Defaults to ``False``.
+
+        Returns:
+            dict:
+                Tables sampled.
+
+        Raises:
+            NotFittedError:
+                A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
         if self.sampler is None:
             raise NotFittedError('SDV instance has not been fitted')

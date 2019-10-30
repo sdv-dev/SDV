@@ -13,13 +13,16 @@ IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 class Modeler:
     """Class responsible for modeling database.
 
+    The ``Modeler.model_database`` applies the CPA algorithm to generate the extended table.
+    Required before sampling data.
+
     Args:
-        metadata (DataNavigator):
+        metadata (Metadata):
             Dataset Metadata.
         model (type):
-            Class of model to use.
+            Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
         model_kwargs (dict):
-            Keyword arguments to pass to model.
+            Keyword arguments to pass to model. Defaults to ``None``.
     """
 
     def __init__(self, metadata, model=GaussianMultivariate, model_kwargs=None):
@@ -58,7 +61,7 @@ class Modeler:
             nested (list, numpy.array):
                 Iterable to flatten.
             prefix (str):
-                Name to append to the array indices.
+                Name to append to the array indices. Defaults to ``''``.
 
         Returns:
             dict
@@ -86,7 +89,7 @@ class Modeler:
             nested (dict):
                 Original dictionary to flatten.
             prefix (str):
-                Prefix to append to key name
+                Prefix to append to key name. Defaults to ``''``.
 
         Returns:
             dict:
@@ -203,15 +206,17 @@ class Modeler:
         return pd.DataFrame(extension_rows, index=foreign_key_values)
 
     def cpa(self, table_name, tables, foreign_key=None):
-        """Run CPA algorithm on a table.
+        """Run CPA algorithm.
 
-        Conditional Parameter Aggregation. It will take the table children and generate
-        extensions (parameters from modelling the related children for each foreign key)
-        and merge them into the original table.
+        If ``tables`` is not loaded, load the current table.
+        If the table we are processing have childs call ``cpa`` and generate extensions.
+        After iterate over the childs, fit the model and return the extended table.
 
         Args:
             table_name (str):
                 Name of table.
+            tables (dict):
+                Dict of tables to process.
             foreign_key (str):
                 Name of the foreign key that references this table. Used only when applying
                 CPA on a child table.

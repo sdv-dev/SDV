@@ -6,7 +6,17 @@ import pandas as pd
 
 
 class Sampler:
-    """Class to sample data from a model."""
+    """Class to sample data from a model.
+
+    Sampler allow to the user sample a simple table (including childs or not) and sample all the
+    tables from the dataset.
+
+    Args:
+        metadata (Metadata):
+            Dataset Metadata.
+        models (dict):
+            Tables models.
+    """
 
     def __init__(self, metadata, models):
         """Instantiate a new object."""
@@ -36,7 +46,11 @@ class Sampler:
         return triangular_matrix
 
     def _prepare_sampled_covariance(self, covariance):
-        """
+        """Prepare a covariance matrix.
+
+        If the computed matrix returns ``False`` when calls to
+        ``Sampler._check_matrix_symmetric_positive_definite`` compute the matrix until it
+        returns ``True``.
 
         Args:
             covariance (list):
@@ -61,6 +75,8 @@ class Sampler:
 
     def _transform_synthesized_rows(self, synthesized, table_name):
         """Reverse transform synthetized data.
+
+        Only returns the transformed data, ``RDT`` generated columns are dropped.
 
         Args:
             synthesized (pandas.DataFrame):
@@ -95,7 +111,12 @@ class Sampler:
 
         Raises:
             ValueError:
-                If there aren't enough remaining values to generate.
+                A ``ValueError`` is raised when:
+                - The primary key field is not an ``id`` type.
+                - A primary key with an unsupported subtype is defined.
+                - There are not enough uniques values to sample.
+            NotImplementedError:
+                A ``NotImplementedError`` is raised when the primary key subtype is a ``datetime``.
         """
         primary_key = self.metadata.get_primary_key(table_name)
         primary_key_values = None
@@ -173,6 +194,10 @@ class Sampler:
         Returns:
             dict:
                 Nested dict (if corresponds)
+
+        Raises:
+            ValueError:
+            A ``ValueError`` is raised when there are an error unflatting the extension key name.
         """
         unflattened = dict()
 
@@ -214,7 +239,7 @@ class Sampler:
         return unflattened
 
     def _make_positive_definite(self, matrix):
-        """Find the nearest positive-definite matrix to input
+        """Find the nearest positive-definite matrix to input.
 
         Args:
             matrix (numpy.ndarray):
@@ -376,6 +401,31 @@ class Sampler:
 
     def sample(self, table_name, num_rows, reset_primary_keys=False,
                sample_children=True, sampled_data=None):
+        """Sample one table.
+
+        Child tables will be sampled when ``sample_children`` is ``True``.
+        If a ``sampled_data`` is provided then append the sampled child tables there, if not
+        create a new dict to fill.
+
+        Args:
+            table_name (str):
+                Table name to sample.
+            num_rows (int):
+                Amount of rows to sample.
+            reset_primary_keys (bool):
+                Whether or not reset the primary keys generators. Defaults to ``False``.
+            sample_children (bool):
+                Whether or not sample child tables. Defaults to ``True``.
+            sampled_data (dict):
+                Dict which contains the sampled tables to append the child table sampled data
+                when needed.
+
+        Returns:
+            dict or pandas.DataFrame:
+                - Returns a ``dict`` when ``sample_children`` is ``True`` with the sampled table
+                and child tables.
+                - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
+        """
 
         if reset_primary_keys:
             self._reset_primary_keys_generators()

@@ -70,12 +70,10 @@ class Metadata:
     def _get_relationships(self):
         """Map table name to names of child tables.
 
-        Returns:
-            tuple:
-                dicts of children, parents and foreign_keys.
-
-        This method is what allow ``DataNavigator`` to be aware of the different tables and the
-        relations between them.
+        Don't return nothing, but append data to the following variables:
+        - ``self._child_map``: defaultdict of sets with child tables per table.
+        - ``self._parent_map``: defaultdict of sets with parent tables per table.
+        - ``self.foreign_keys``: dict of tupples with parent primary key and primary key per table.
         """
         self._child_map = defaultdict(set)
         self._parent_map = defaultdict(set)
@@ -97,6 +95,18 @@ class Metadata:
 
     @staticmethod
     def _dict_metadata(metadata):
+        """Get a metadata dict formated to use in SDV.
+
+        For each table create a dict of fields from a previous list of fields.
+
+        Args:
+            metadata (dict):
+                Original metadata to format.
+
+        Returns:
+            dict:
+                Formated metadata dict.
+        """
         new_metadata = copy.deepcopy(metadata)
         tables = new_metadata['tables']
         new_tables = dict()
