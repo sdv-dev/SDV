@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -23,6 +23,14 @@ def test__read_csv_dtypes():
             },
             'c_field': {
                 'type': 'datetime',
+            },
+            'd_field': {
+                'type': 'id',
+                'subtype': 'string'
+            },
+            'e_field': {
+                'type': 'id',
+                'subtype': 'integer'
             }
         }
     }
@@ -30,7 +38,7 @@ def test__read_csv_dtypes():
     result = _read_csv_dtypes(table_meta)
 
     # Asserts
-    expected = {'a_field': str}
+    expected = {'a_field': str, 'd_field': str}
 
     assert result == expected
 
@@ -40,7 +48,9 @@ def test__parse_dtypes():
     # Run
     data = pd.DataFrame({
         'a_field': ['1996-10-17', '1965-05-23'],
-        'b_field': ['7', '14']
+        'b_field': ['7', '14'],
+        'c_field': ['1', '2'],
+        'd_field': ['other', 'data']
     })
     table_meta = {
         'fields': {
@@ -51,6 +61,13 @@ def test__parse_dtypes():
             'b_field': {
                 'type': 'number',
                 'subtype': 'integer'
+            },
+            'c_field': {
+                'type': 'id',
+                'subtype': 'number'
+            },
+            'd_field': {
+                'type': 'other'
             }
         }
     }
@@ -60,7 +77,9 @@ def test__parse_dtypes():
     # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
-        'b_field': [7, 14]
+        'b_field': [7, 14],
+        'c_field': [1, 2],
+        'd_field': ['other', 'data']
     })
 
     pd.testing.assert_frame_equal(result, expected)
@@ -414,6 +433,59 @@ class TestMetadata(TestCase):
         expected = {'foo': 'email'}
 
         assert result == expected
+
+    @patch('sdv.metadata.transformers.DatetimeTransformer')
+    @patch('sdv.metadata.transformers.BooleanTransformer')
+    @patch('sdv.metadata.transformers.CategoricalTransformer')
+    @patch('sdv.metadata.transformers.NumericalTransformer')
+    def test__get_transformers_no_error(
+            self, numerical_mock, categorical_mock, boolean_mock, datetime_mock):
+        """Test get transformers dict for each data type."""
+        # Setup
+        numerical_mock.return_value = 'NumericalTransformer'
+        categorical_mock.return_value = 'CategoricalTransformer'
+        boolean_mock.return_value = 'BooleanTransformer'
+        datetime_mock.return_value = 'DatetimeTransformer'
+
+        # Run
+        dtypes = {
+            'integer': int,
+            'float': float,
+            'categorical': np.object,
+            'boolean': bool,
+            'datetime': np.datetime64
+        }
+
+        pii_fields = {
+            'categorical': 'email'
+        }
+
+        result = Metadata._get_transformers(dtypes, pii_fields)
+
+        # Asserts
+        expected = {
+            'integer': 'NumericalTransformer',
+            'float': 'NumericalTransformer',
+            'categorical': 'CategoricalTransformer',
+            'boolean': 'BooleanTransformer',
+            'datetime': 'DatetimeTransformer'
+        }
+
+        assert result == expected
+        assert numerical_mock.call_args_list == [call(dtype=int), call(dtype=float)]
+        assert categorical_mock.call_args == call(anonymize='email')
+        assert boolean_mock.call_args == call()
+        assert datetime_mock.call_args == call()
+
+    def test__get_transformers_raise_valueerror(self):
+        """Test get transformers dict raise ValueError."""
+        # Run
+        dtypes = {
+            'string': str
+        }
+
+        with pytest.raises(ValueError):
+            Metadata._get_transformers(dtypes, None)
 
     @patch('sdv.metadata.HyperTransformer')
     def test__load_hyper_transformer(self, mock_ht):

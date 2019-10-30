@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
+from copulas.multivariate import GaussianMultivariate, VineCopula
 
 from sdv import Metadata, Modeler
 
@@ -40,6 +40,16 @@ class TestModeler(TestCase):
         assert modeler.metadata == 'test'
         assert modeler.model == GaussianMultivariate
         assert modeler.model_kwargs == dict()
+
+    def test___init__with_arguments(self):
+        # Run
+        modeler = Modeler({'some': 'metadata'}, model=VineCopula, model_kwargs={'some': 'kwargs'})
+
+        # Asserts
+        assert modeler.models == dict()
+        assert modeler.metadata == {'some': 'metadata'}
+        assert modeler.model == VineCopula
+        assert modeler.model_kwargs == {'some': 'kwargs'}
 
     def test__flatten_array(self):
         """Test get flatten array"""
