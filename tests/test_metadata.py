@@ -470,9 +470,12 @@ class TestMetadata(TestCase):
             'boolean': 'BooleanTransformer',
             'datetime': 'DatetimeTransformer'
         }
+        expected_numerical_calls = [call(dtype=int), call(dtype=float)]
 
         assert result == expected
-        assert numerical_mock.call_args_list == [call(dtype=int), call(dtype=float)]
+        assert len(numerical_mock.call_args_list) == len(expected_numerical_calls)
+        for item in numerical_mock.call_args_list:
+            assert item in expected_numerical_calls
         assert categorical_mock.call_args == call(anonymize='email')
         assert boolean_mock.call_args == call()
         assert datetime_mock.call_args == call()
