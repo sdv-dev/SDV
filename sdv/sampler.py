@@ -8,8 +8,8 @@ import pandas as pd
 class Sampler:
     """Class to sample data from a model.
 
-    Sampler allow to the user sample a simple table (including childs or not) and sample all the
-    tables from the dataset.
+    The Sampler class allows the user to sample one or more tables, allowing the user to sample
+    relational tables from a given dataset.
 
     Args:
         metadata (Metadata):
@@ -17,9 +17,7 @@ class Sampler:
         models (dict):
             Tables models.
     """
-
     def __init__(self, metadata, models):
-        """Instantiate a new object."""
         self.metadata = metadata
         self.models = models
         self.primary_key = dict()
@@ -76,8 +74,6 @@ class Sampler:
     def _transform_synthesized_rows(self, synthesized, table_name):
         """Reverse transform synthetized data.
 
-        Only returns the transformed data, ``RDT`` generated columns are dropped.
-
         Args:
             synthesized (pandas.DataFrame):
                 Generated data from model
@@ -99,9 +95,9 @@ class Sampler:
 
         Args:
             table_name (str):
-                Name of the table to get the primary keys.
-            num_rowd (str):
-                Number of primary_keys to generate.
+                Name of the table to get the primary keys from.
+            num_rows (str):
+                Number of ``primary_keys`` to generate.
 
         Returns:
             tuple (str, pandas.Series):
@@ -185,8 +181,6 @@ class Sampler:
     def _unflatten_dict(self, flat):
         """Transform a flattened dict into its original form.
 
-        Works in exact opposite way that ``sdv.Modeler._flatten_dict``.
-
         Args:
             flat (dict):
                 Flattened dict.
@@ -197,7 +191,8 @@ class Sampler:
 
         Raises:
             ValueError:
-            A ``ValueError`` is raised when there are an error unflatting the extension key name.
+                A ``ValueError`` is raised when there are an error unflatting the extension key
+                name.
         """
         unflattened = dict()
 
@@ -293,10 +288,14 @@ class Sampler:
         """Prepare unflattened model params to recreate Gaussian Multivariate instance.
 
         The preparations consist basically in:
-        - Transform sampled negative standard deviations from distributions into positive numbers
-        - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
-        - Add string parameters kept inside the class (as they can't be modelled),
-          like ``distribution_type``.
+
+            - Transform sampled negative standard deviations from distributions into positive
+              numbers
+
+            - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
+
+            - Add string parameters kept inside the class (as they can't be modelled),
+              like ``distribution_type``.
 
         Args:
             model_parameters (dict):
@@ -323,13 +322,13 @@ class Sampler:
         return model_parameters
 
     def _get_extension(self, parent_row, table_name):
-        """ Takes the params from a generated parent row.
+        """Get the params from a generated parent row.
 
         Args:
             parent_row (pandas.Series):
-                a generated parent row
+                A generated parent row.
             table_name (str):
-                name of table to make model for
+                Name of the table to make the model for.
         """
 
         prefix = '__{}__'.format(table_name)
@@ -418,12 +417,12 @@ class Sampler:
                 Whether or not sample child tables. Defaults to ``True``.
             sampled_data (dict):
                 Dict which contains the sampled tables to append the child table sampled data
-                when needed.
+                when needed. Defaults to ``None``.
 
         Returns:
             dict or pandas.DataFrame:
                 - Returns a ``dict`` when ``sample_children`` is ``True`` with the sampled table
-                and child tables.
+                  and child tables.
                 - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
         """
 
@@ -458,14 +457,14 @@ class Sampler:
             return self._transform_synthesized_rows(sampled_rows, table_name)
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
-        """Samples the entire database.
+        """Samples the entire dataset.
 
         ``sample_all`` returns a dictionary with all the tables of the dataset sampled.
         The amount of rows sampled will depend from table to table, and is only guaranteed
         to match ``num_rows`` on tables without parents.
 
-        This is this way because the children tables are created modelling the relation
-        thet have with their parent tables, so it's behavior may change from one table to another.
+        This is because the children tables are created modelling the relation that they have
+        with their parent tables, so its behavior may change from one table to another.
 
         Args:
             num_rows (int):
@@ -475,7 +474,8 @@ class Sampler:
 
         Returns:
             dict:
-                Tables sampled.
+                A dictionary containing as keys the names of the tables and as values the
+                sampled datatables as ``pandas.DataFrame``.
         """
         if reset_primary_keys:
             self._reset_primary_keys_generators()

@@ -22,7 +22,7 @@ class Modeler:
         model (type):
             Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
         model_kwargs (dict):
-            Keyword arguments to pass to model. Defaults to ``None``.
+            Keyword arguments to pass to the model. Defaults to ``None``.
     """
 
     def __init__(self, metadata, model=GaussianMultivariate, model_kwargs=None):
@@ -37,7 +37,7 @@ class Modeler:
 
         Args:
             file_name (string):
-                path to store file
+                path where to store the file.
         """
         with open(file_name, 'wb') as output:
             pickle.dump(self, output)
@@ -48,7 +48,7 @@ class Modeler:
 
         Args:
             file_name (str):
-                path of file to load
+                path from where to load.
         """
         with open(file_name, 'rb') as input:
             return pickle.load(input)
@@ -83,7 +83,7 @@ class Modeler:
         """Return a flatten dict from a nested one.
 
         This method returns a flatten version of a dictionary, concatenating key names with
-        double underscores, that is:
+        double underscores.
 
         Args:
             nested (dict):
@@ -93,7 +93,7 @@ class Modeler:
 
         Returns:
             dict:
-                Flattened dictionary. That is, all its keys hold a primitive value.
+                Flattened dictionary, where all its keys hold a primitive value.
         """
         result = {}
 
@@ -132,7 +132,7 @@ class Modeler:
 
         Args:
             data (pandas.DataFrame):
-                Data to train the model with.
+                Data to fit the model with.
 
         Returns:
             model:
@@ -145,7 +145,7 @@ class Modeler:
         return model
 
     def _get_model_dict(self, data):
-        """Fit and  serialize  a model and flatten its parameters into an array.
+        """Fit and serialize a model and flatten its parameters into an array.
 
         Args:
             data (pandas.DataFrame):

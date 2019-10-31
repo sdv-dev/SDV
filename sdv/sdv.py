@@ -24,13 +24,12 @@ class SDV:
 
     Allows the users to generate synthetic data after creating generative models for their data.
 
-    Currently, tables that have multiparents are not supported.
-
     Args:
         model (type):
-            Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
+            Class of a ``copula`` to use. Defaults to
+            ``copulas.multivariate.GaussianMultivariate``.
         model_kwargs (dict):
-            Keyword arguments to pass to model. Defaults to ``None``.
+            Keyword arguments to pass to the model. Defaults to ``None``.
     """
 
     sampler = None
@@ -43,28 +42,29 @@ class SDV:
             self.model_kwargs = model_kwargs
 
     def _validate_dataset_structure(self):
-        """Checks any table has two parents."""
+        """Check if any table has two parents."""
         for table in self.metadata.get_table_names():
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
     def fit(self, metadata, tables=None, root_path=None):
-        """Transform the data and model the database.
+        """Fit the ``model`` with to be able to sample data.
 
-        First, create the ``Metadata`` object and validate the data structure.
-        After that, create the ``Modeler`` object and model the database.
-        Finaly, create the ``Sampler`` object.
+        This method creates a ``sdv.Metadata`` object and validates the data structure. Once
+        this validation has passed, an instace of ``sdv.Modeler`` which will model the dataset.
+        Then a ``sdv.Sampler`` object is being created in order to be used for sampling.
 
         Args:
             metadata (dict or str):
                 Metadata dict or path to the metadata JSON file.
             tables (dict):
-                Dictionary with the table dataframes. If ``None`` tables will be loaded from files.
+                Dictionary with the table name as key and ``pandas.DataFrame`` as value.
+                If ``None`` tables will be loaded from the paths indicated in ``metadata``.
                 Defaults to ``None``.
             root_path (str or None):
                 Path to the dataset directory. If ``None`` and metadata is
-                a path, the metadata dirname is used. If ``None`` and
-                metadata is a dict, ``'.'`` is used.
+                a path, the metadata location is used. If ``None`` and
+                metadata is a dict, the current working directory is used.
         """
 
         self.metadata = Metadata(metadata, root_path)
@@ -83,7 +83,7 @@ class SDV:
             num_rows (int):
                 Amount of rows to sample.
             sample_children (bool):
-                Whether to sample children tables. Defaults to ``True``.
+                Whether or not to sample children tables. Defaults to ``True``.
             reset_primary_keys (bool):
                 Wheter or not reset the pk generators. Defaults to ``True``.
 
@@ -112,7 +112,7 @@ class SDV:
             num_rows (int):
                 Amount of rows to sample. Defaults to ``5``.
             reset_primary_keys (bool):
-                Wheter or not reset the pk generators. Defaults to ``False``.
+                Wheter or not reset the primary key generators. Defaults to ``False``.
 
         Returns:
             dict:
@@ -128,22 +128,22 @@ class SDV:
         return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
 
     def save(self, filename):
-        """Save SDV instance to file destination.
+        """Save SDV instance to a file destination.
 
         Args:
             filename (str):
-                Path to store file.
+                Path where to store the SDV instance.
         """
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
     @classmethod
     def load(cls, filename):
-        """Load a SDV instance from the given path.
+        """Load a SDV instance from a given path.
 
         Args:
             filename (str):
-                Path to the save file.
+                Path to the saved SDV instance to be loaded.
         """
         with open(filename, 'rb') as f:
             instance = pickle.load(f)

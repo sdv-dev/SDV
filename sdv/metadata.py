@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+
 from rdt import HyperTransformer, transformers
 
 LOGGER = logging.getLogger(__name__)
@@ -49,28 +50,28 @@ def load_csv(root_path, table_meta):
 class Metadata:
     """Navigate through and transform a dataset.
 
-    This class implement two main functionalities:
+    This class implements two main functionalities:
 
     - Navigation through the dataset
-        Given a table, it allows to move though its relations and acces its data and metadata.
+        Given a table, it allows you to move through its relations and acces its data and metadata.
 
     - Transform data
         Transform the dataset using ``rdt.HyperTransformer`` in a format that is supported
         by ``sdv.Modeler``.
 
     Args:
-        meta_filename (str):
-            Path to the metadata file.
-        meta (dict):
-            Metadata for the dataset.
-        tables (dict[str, pandas.DataFrame]):
-            Mapping of table names to their values and metadata.
+        metadata (str or dict):
+            Path to a ``json`` file that contains the metadata or a ``dict`` representation
+            of ``metadata`` following the same structure.
+
+        root_path (str):
+            The path where the ``metadata.json`` is located. Defaults to ``None``.
     """
 
     def _get_relationships(self):
         """Map table name to names of child tables.
 
-        Don't return nothing, but append data to the following variables:
+        Creates the following attributes:
         - ``self._child_map``: defaultdict of sets with child tables per table.
         - ``self._parent_map``: defaultdict of sets with parent tables per table.
         - ``self.foreign_keys``: dict of tupples with parent primary key and primary key per table.
@@ -95,7 +96,7 @@ class Metadata:
 
     @staticmethod
     def _dict_metadata(metadata):
-        """Get a metadata dict formated to use in SDV.
+        """Get a metadata ``dict`` with SDV format.
 
         For each table create a dict of fields from a previous list of fields.
 
@@ -151,7 +152,7 @@ class Metadata:
         return self._child_map[table_name]
 
     def get_parents(self, table_name):
-        """Returns parents of a table.
+        """Get the parents of a table.
 
         Args:
             table_name (str):
@@ -164,10 +165,11 @@ class Metadata:
         return self._parent_map[table_name]
 
     def get_table_meta(self, table_name):
-        """Return meta data for a table.
+        """Get ``metadata`` for a table.
 
         Args:
-            table_name (str): Name of table to get data for.
+            table_name (str):
+                Name of table to get data for.
 
         Returns:
             dict:
@@ -176,11 +178,11 @@ class Metadata:
         return self._metadata['tables'][table_name]
 
     def load_table(self, table_name):
-        """Return dataframe for a table.
+        """Load a dataframe for a table.
 
         Args:
             table_name (str):
-                Name of table to get data for.
+                Name of the table that we want to load.
 
         Returns:
             pandas.DataFrame:
@@ -191,17 +193,17 @@ class Metadata:
         return load_csv(self.root_path, table_meta)
 
     def _get_dtypes(self, table_name, ids=False):
-        """Get dictionaty with the data type for each table field.
+        """Get a ``dict`` with the ``dtypes`` for each field of a given table.
 
         Args:
             table_name (str):
-                Table name to get their fields metadata.
+                Table name that we want to retrive its ``dtypes``.
             ids (bool):
                 Whether or not include the id fields. Defaults to ``False``.
 
         Returns:
             dict:
-                Dictionary which contains the field names and data types from a table.
+                Dictionary that contains the field names and data types from a table.
 
         Raises:
             ValueError:
@@ -243,7 +245,7 @@ class Metadata:
         return dtypes
 
     def _get_pii_fields(self, table_name):
-        """Get dictionary with the categorical types for each table field.
+        """Get a ``dict`` with the categorical types for each field in a table.
 
         Args:
             table_name (str):
@@ -251,7 +253,7 @@ class Metadata:
 
         Returns:
             dict:
-                Dictionary which contains the field names and categorical types from a table.
+                Dictionary that contains the field names and categorical types from a table.
         """
         pii_fields = dict()
         for name, field in self.get_table_meta(table_name)['fields'].items():
@@ -269,13 +271,14 @@ class Metadata:
 
         Args:
             dtypes (dict):
-                Data type dict per field to get their transformers.
+                Data type dict for each field to get their transformers.
             pii_fields (dict):
                 Fields to be anonymized with the ``CategoricalTransformer``.
 
         Returns:
             dict:
-                Transformers dictionary.
+                Dictionary that contains the name of the field and the ``transformer``
+                for that field.
         """
         transformers_dict = dict()
         for name, dtype in dtypes.items():
@@ -301,16 +304,16 @@ class Metadata:
     def _load_hyper_transformer(self, table_name):
         """Create and return a new ``rdt.HyperTransformer`` instance for a table.
 
-        First, get the data types and pii fields from a given table.
-        After that, use them to build a transformer dictionary to pass it to the
-        ``HyperTransformer``.
+        First get the ``dtypes`` and ``pii fields`` from a given table, then use those to build a
+        transformer dictionary to be used by the ``HyperTransformer``.
 
         Args:
             table_name (str):
                 Table name to get their data types and pii fields.
 
         Returns:
-            rdt.HyperTransformer
+            rdt.HyperTransformer:
+                Instance of ``rdt.HyperTransformer`` for the given table.
         """
         dtypes = self._get_dtypes(table_name)
         pii_fields = self._get_pii_fields(table_name)
@@ -318,7 +321,7 @@ class Metadata:
         return HyperTransformer(transformers=transformers_dict)
 
     def transform(self, table_name, data):
-        """Returns transformed data for a table.
+        """Transform data for a given table.
 
         If the ``HyperTransformer`` for a table is ``None``, then its created.
 
@@ -344,7 +347,7 @@ class Metadata:
         return hyper_transformer.transform(data[fields])
 
     def get_table_names(self):
-        """Returns list of table names.
+        """Get a list of table names contained in ``metadata``.
 
         Returns:
             list:
@@ -360,7 +363,7 @@ class Metadata:
 
         Args:
             tables (list):
-                List with the table names to load. Defaults to None.
+                List with the table names to load. Defaults to ``None``.
 
         Returns:
             dict:
@@ -373,24 +376,24 @@ class Metadata:
         }
 
     def get_fields(self, table_name):
-        """Return table fields metadata.
+        """Get table fields metadata.
 
         Args:
             table_name (str):
-                Name of table to get data for.
+                Name of the table to get the fields from.
 
         Returns:
             dict:
-                table fields metadata
+                Fields metadata
         """
         return self.get_table_meta(table_name)['fields']
 
     def get_primary_key(self, table_name):
-        """Return table primary key field name.
+        """Get the table its primary key field name.
 
         Args:
             table_name (str):
-                Name of table to get data for.
+                Name of table to get the primary key field.
 
         Returns:
             str or None:
@@ -399,7 +402,7 @@ class Metadata:
         return self.get_table_meta(table_name).get('primary_key')
 
     def get_foreign_key(self, parent, child):
-        """Return table foreign key field name.
+        """Get table foreign key field name.
 
         Args:
             parent (str):
@@ -422,7 +425,7 @@ class Metadata:
         """Reverse the transformed data for a given table.
 
         Call to the ``HyperTransformer.reverse_data()`` for the given table and get the table
-        data types to set the original data type.
+        data types to the original data type.
 
         Args:
             table_name (str):
