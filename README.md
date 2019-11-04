@@ -86,53 +86,66 @@ for more details about this process.
 
 # Data Requirements
 
-In order to work with **SDV** you will need to generate a `MetaData` that contains information
-about the tables that you would like to sample and also provide those tables.
+**SDV** allows the users to sample single tables, multi-tables or relantional tables. In the case
+of the relational tables, **bear in mind** that only one parent is supported at the moment. If you
+have a table with more than one parent this will produce a controlled exception.
 
-## Metadata
+There are two ways of passing the data to **SDV**:
 
-The `Metadata` can be a python `dict` or a `json` file consisting of multiple parts. At the highest
-level of the object, there is information about the path to the dataset and a list of table
-objects each representing a data table in the dataset. Each table object contains information
-about its row and other important information. The structure of the meta.json object is described
-below.
+## Datasets in memory
 
-### Meta Object
+One way to fulfill **SDV**'s data requierements is to pass your data as a python `dict` where
+the `key` is the `name` of the table and the `value` is a `pandas.DataFrame` instance of this
+table.
 
-- **path** - A string representing the path to the dataset.
+## Datasets in CSV format
+
+The other way to fulfill **SDV**'s data requierements is to have your datatables in `.csv` format
+separated by `,`. The path tho this `csv` files must be specified in the `metadata` file or `dict`,
+more about metadata in the following [section](#metadata).
+
+# Metadata
+
+The `metadata` is requiered by **SDV** in order to obtain information for the datasets and the
+relations between them if there is any. This information can be given to **SDV** as a python `dict`
+or a `json` file consisting of multiple parts. At the highest level of the object, there is
+information about the path to the dataset and a list of table objects each representing a data
+table in the dataset. Each table object contains information about its row and other important
+information. The structure of the meta.json object is described below.
+
+## Meta Object
+
 - **tables** - A list of table objects.
 
-### Table Object
+## Table Object
 
 - **path** - A string containing the path to the table's `csv` file.
 - **name** - A string representing the name of the table for reference.
 - **primary_key** - A string containing the name of the primary key column.
-- **headers** - Boolean that represents wheither or not the table contains a header row.
-- **use** - Boolean that represents wheither or not to use this table.
 - **fields** - A list of field objects in the table.
 
-### Field Object
+## Field Object
 
 - **name** - A string representing the name of the field.
-- **type** - A string representing the type of the field.
-- **subtype** - A string representing the subtype.
+- **type** - A string representing the type of the field. Those types are as follow:
+    - boolean
+    - categorical
+    - datetime
+    - numerical
+- **subtype** - A string representing the subtype. Only the following subtypes are present:
+    - Numerical:
+        - Integer
+        - Float
 - **ref** - An object that represennts a foreign key, a reference to another table's primary key.
 
-### Ref Object
+## Ref Object
 
 - **table** - A string representing the name of the table that's primary key is being referenced.
 - **field** - A string representing the name of the field that is the primary key.
 
-**Bear in mind** that primary keys can only be of `type` `id` and subtype `number` or
-`categorical`. More detailed information about how to generate a more proper `metadata` can be
-found at the [project documentation site](https://HDI-Project.github.io/SDV/).
-
-## Dataset / Datatable
-
-In order to work with `SDV` you will need your tables to be a `.csv` file separeted with `,` and
-it's path specified in the `metadata` as described above. Also, you can create a python `dict`
-object containing as `key` the given `name` in the `metadata` and as value an instance of
-a `pandas.DataFrame`.
+**Bear in mind** that primary keys can only be of `type` `id` and those can only be `int` values.
+More detailed information about how to generate a proper `metadata` can be found at the
+[project documentation site](https://HDI-Project.github.io/SDV/).
 
 # Quickstart
 
@@ -146,17 +159,88 @@ to work with **SDV**. In this example, we will use the function `get_demo` from 
 This will return us `metadata` and `tables`.
 
 ```python
-from sdv.demo import get_demo
+from sdv import load_demo
 
-metadata, tables = get_demo()
+metadata, tables = load_demo()
 ```
 
 The returned objects contain the following information:
 
 - `tables`: python `dict` that contains three tables (`users`, `sessions` and `transactions`).
+    ```
+    {
+        'users':
+                user_id country gender  age
+              0        0     USA      M   34
+              1        1      UK      F   23
+              2        2      ES   None   44
+              3        3      UK      M   22
+              4        4     USA      F   54
+              5        5      DE      M   57
+              6        6      BG      F   45
+              7        7      ES   None   41
+              8        8      FR      F   23
+              9        9      UK   None   30,
+      'sessions':
+              session_id  user_id  device       os
+              0           0        0  mobile  android
+              1           1        1  tablet      ios
+              2           2        1  tablet  android
+              3           3        2  mobile  android
+              4           4        4  mobile      ios
+              5           5        5  mobile  android
+              6           6        6  mobile      ios
+              7           7        6  tablet      ios
+              8           8        6  mobile      ios
+              9           9        8  tablet      ios,
+      'transactions':
+              transaction_id  session_id           timestamp  amount  approved
+              0               0           0 2019-01-01 12:34:32   100.0      True
+              1               1           0 2019-01-01 12:42:21    55.3      True
+              2               2           1 2019-01-07 17:23:11    79.5      True
+              3               3           3 2019-01-10 11:08:57   112.1     False
+              4               4           5 2019-01-10 21:54:08   110.0     False
+              5               5           5 2019-01-11 11:21:20    76.3      True
+              6               6           7 2019-01-22 14:44:10    89.5      True
+              7               7           8 2019-01-23 10:14:09   132.1     False
+              8               8           9 2019-01-27 16:09:17    68.0      True
+              9               9           9 2019-01-29 12:10:48    99.9      True
+    }
+    ```
 - `metadata`: python `dict` that contains the information about the fields, primary keys and
 foreign keys for those tables as described in the [metadata section](#metadata).
-
+    ```
+    {'tables': [{'fields': [{'name': 'user_id', 'type': 'id'},
+                        {'name': 'country', 'type': 'categorical'},
+                        {'name': 'gender', 'type': 'categorical'},
+                        {'name': 'age',
+                         'subtype': 'integer',
+                         'type': 'numerical'}],
+             'name': 'users',
+             'primary_key': 'user_id'},
+            {'fields': [{'name': 'session_id', 'type': 'id'},
+                        {'name': 'user_id',
+                         'ref': {'field': 'user_id', 'table': 'users'},
+                         'type': 'id'},
+                        {'name': 'device', 'type': 'categorical'},
+                        {'name': 'os', 'type': 'categorical'}],
+             'name': 'sessions',
+             'primary_key': 'session_id'},
+            {'fields': [{'name': 'transaction_id', 'type': 'id'},
+                        {'name': 'session_id',
+                         'ref': {'field': 'session_id', 'table': 'sessions'},
+                         'type': 'id'},
+                        {'format': '%Y-%m-%d',
+                         'name': 'timestamp',
+                         'type': 'datetime'},
+                        {'name': 'amount',
+                         'subtype': 'float',
+                         'type': 'numerical'},
+                        {'name': 'approved', 'type': 'boolean'}],
+             'name': 'transactions',
+             'primary_key': 'transaction_id'}]
+    }
+    ```
 
 ### 2. Create SDV instance and fit
 
@@ -170,18 +254,21 @@ sdv = SDV()
 sdv.fit(metadata, tables)
 ```
 
-Once we start the fitting process, logger messages with the status will be displayed:
+Once we start the fitting process, logger messages with the status will be displayed, if those
+are allowed:
 
 ```
 INFO - modeler - Modeling data
 INFO - modeler - Modeling Complete
 ```
 
-Once `Modeling Complete` is displayed, we can process to sample data.
+Once `Modeling Complete` is displayed, or the process of fitting is completed, we can process to
+sample data.
 
 ### 3. Sample data
 
-Sampling data once we have fitted our `sdv` instance is as simple as:
+Sampling data once we have fitted our `sdv` instance is as simple as calling the `sample_all`
+method with the desired amount of samples, by default is `5`:
 
 ```python
 samples = sdv.sample_all()
@@ -194,37 +281,49 @@ ones shown below.
 ```
 samples['users']
 
-   user_id  country gender  age
-0        0   Canada      F   60
-1        1  Germany      M   45
-2        2   France      F   44
-3        3  Germany      F   40
-4        4   Canada      M   46
+   user_id country gender  age
+0        0      FR    NaN   59
+1        1     USA      F   42
+2        2      ES      F   38
+3        3      ES      M   44
+4        4     USA      M   30
 ```
 
 ```
 samples['sessions']
 
-   session_id  user_id device_type operative_system
-0           0        0      mobile          windows
-1           1        1      mobile          windows
-2           2        1      mobile          android
-3           3        2      tablet              ios
-4           4        2      tablet              ios
+   session_id  user_id  device       os
+0           0        0  mobile      ios
+1           1        1  tablet      ios
+2           2        3  mobile      ios
+3           3        4  tablet  android
 ```
 
 ```
 samples['transactions']
 
-   transaction_id  session_id                      datetime      amount  approved
-0               0           0 2018-04-13 10:01:25.053699072  701.361518      True
-1               1           0 2018-04-13 10:01:25.053699072  699.960940      True
-2               2           0 2018-04-13 10:01:25.053699072  700.801190      True
-3               3           0 2018-04-13 10:01:25.053699072  700.932238      True
-4               4           1                           NaT  558.657914      True
+    transaction_id  session_id                     timestamp      amount  approved
+0                0           0 2019-01-04 13:17:04.294821120   93.705583      True
+1                1           0 2019-01-04 13:17:03.939597824  111.825632      True
+2                2           1 2019-01-15 22:57:00.760709376  107.607127      True
+3                3           1 2019-01-15 23:08:28.680436224   64.862206      True
+4                4           1 2019-01-15 23:03:14.034901504  113.418620      True
+5                5           1 2019-01-15 23:16:01.957336320   63.494097      True
+6                6           0 2019-01-04 13:17:04.215221248  101.454611      True
+7                7           1 2019-01-15 23:22:02.995152128   94.099341      True
+8                8           1 2019-01-15 23:13:38.940339968   91.468082      True
+9                9           1 2019-01-15 23:09:28.751503616   77.090736      True
 ```
+
+**Notice that** as there is a relation between the tables, `SDV`, may generate different amounts
+of rows for the `child` tables. When the tables are related between them, `SDV` learns this
+distribution and generates similar output. Only the parent table is ensured to have as many rows
+as we specified.
 
 # What's next?
 
-For more details about **SDV** and all its possibilities and features, please check the
-[project documentation site](https://HDI-Project.github.io/SDV/)!
+If you would like to see more usage examples, please head to
+[examples](https://github.com/HDI-Project/SDV/tree/master/examples).
+
+However, if you would like more details about **SDV** and all its possibilities and features,
+please check the [project documentation site](https://HDI-Project.github.io/SDV/)!

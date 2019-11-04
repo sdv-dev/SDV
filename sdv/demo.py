@@ -92,6 +92,7 @@ def load_demo():
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
     three simple tables:
+
         * users: user data including country, gender and age.
         * sessions: sessions data with a foreign key to user.
         * transactions: transactions data with a foreign key to sessions.
@@ -110,7 +111,7 @@ def load_demo():
         'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'user_id': [0, 1, 1, 2, 4, 5, 6, 6, 6, 8],
         'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
-                   'mobile', 'mobile', 'table', 'mobile', 'tablet'],
+                   'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
         'os': ['android', 'ios', 'android', 'android', 'ios',
                'android', 'ios', 'ios', 'ios', 'ios']
     })
