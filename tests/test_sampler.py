@@ -455,7 +455,7 @@ class TestSampler(TestCase):
         expected_sampled = pd.DataFrame({
             'value': [1, 2, 3, 4, 5],
             'parent_id': [0, 0, 0, 0, 0]
-        })
+        }, columns=['value', 'parent_id'])
         pd.testing.assert_frame_equal(
             sampler._sample_children.call_args[0][1]['test'],
             expected_sampled
