@@ -6,16 +6,13 @@ import pandas as pd
 
 
 class Sampler:
-    """Class to sample data from a model.
-
-    The Sampler class allows the user to sample one or more tables, allowing the user to sample
-    relational tables from a given dataset.
+    """Sampler class.
 
     Args:
         metadata (Metadata):
             Dataset Metadata.
         models (dict):
-            Tables models.
+            Table models.
     """
     def __init__(self, metadata, models):
         self.metadata = metadata
@@ -43,12 +40,59 @@ class Sampler:
 
         return triangular_matrix
 
+    def _check_matrix_symmetric_positive_definite(self, matrix):
+        """Check if a matrix is symmetric positive-definite.
+
+        Args:
+            matrix (list or numpy.ndarray):
+                Matrix to evaluate.
+
+        Returns:
+            bool
+        """
+        try:
+            if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+                # Not 2-dimensional or square, so not simmetric.
+                return False
+
+            np.linalg.cholesky(matrix)
+            return True
+
+        except np.linalg.LinAlgError:
+            return False
+
+    def _make_positive_definite(self, matrix):
+        """Find the nearest positive-definite matrix to input.
+
+        Args:
+            matrix (numpy.ndarray):
+                Matrix to transform
+
+        Returns:
+            numpy.ndarray:
+                Closest symetric positive-definite matrix.
+        """
+        symetric_matrix = (matrix + matrix.T) / 2
+        _, s, V = np.linalg.svd(symetric_matrix)
+        symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
+        A2 = (symetric_matrix + symmetric_polar) / 2
+        A3 = (A2 + A2.T) / 2
+
+        if self._check_matrix_symmetric_positive_definite(A3):
+            return A3
+
+        spacing = np.spacing(np.linalg.norm(matrix))
+        identity = np.eye(matrix.shape[0])
+        iterations = 1
+        while not self._check_matrix_symmetric_positive_definite(A3):
+            min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
+            A3 += identity * (-min_eigenvals * iterations**2 + spacing)
+            iterations += 1
+
+        return A3
+
     def _prepare_sampled_covariance(self, covariance):
         """Prepare a covariance matrix.
-
-        If the computed matrix returns ``False`` when calls to
-        ``Sampler._check_matrix_symmetric_positive_definite`` compute the matrix until it
-        returns ``True``.
 
         Args:
             covariance (list):
@@ -101,18 +145,15 @@ class Sampler:
 
         Returns:
             tuple (str, pandas.Series):
-                If the table has a primary key.
-            tuple (None, None):
-                If the table doesn't have a primary key.
+                primary key name and primary key values. If the table has no primary
+                key, ``(None, None)`` is returned.
 
         Raises:
             ValueError:
-                A ``ValueError`` is raised when:
-                - The primary key field is not an ``id`` type.
-                - A primary key with an unsupported subtype is defined.
-                - There are not enough uniques values to sample.
+                If the ``metadata`` contains invalid types or subtypes, or if
+                there are not enough primary keys left on any of the generators.
             NotImplementedError:
-                A ``NotImplementedError`` is raised when the primary key subtype is a ``datetime``.
+                If the primary key subtype is a ``datetime``.
         """
         primary_key = self.metadata.get_primary_key(table_name)
         primary_key_values = None
@@ -126,8 +167,8 @@ class Sampler:
                 if field['type'] != 'id':
                     raise ValueError('Only columns with type `id` can be primary keys')
 
-                subtype = field['subtype']
-                if subtype == 'number':
+                subtype = field.get('subtype', 'integer')
+                if subtype == 'integer':
                     generator = itertools.count()
                     remaining = np.inf
                 elif subtype == 'string':
@@ -137,7 +178,7 @@ class Sampler:
                 elif subtype == 'datetime':
                     raise NotImplementedError('Datetime ids are not yet supported')
                 else:
-                    raise ValueError('Only `number` or `string` id columns are supported.')
+                    raise ValueError('Only `integer` or `string` id columns are supported.')
 
                 self.primary_key[table_name] = generator
                 self.remaining_primary_key[table_name] = remaining
@@ -155,17 +196,6 @@ class Sampler:
             primary_key_values = pd.Series([x for i, x in zip(range(num_rows), generator)])
 
         return primary_key, primary_key_values
-
-    @staticmethod
-    def _setdefault(a_dict, key, a_type):
-        if key not in a_dict:
-            value = a_type()
-            a_dict[key] = value
-
-        else:
-            value = a_dict[key]
-
-        return value
 
     @staticmethod
     def _key_order(key_value):
@@ -188,11 +218,6 @@ class Sampler:
         Returns:
             dict:
                 Nested dict (if corresponds)
-
-        Raises:
-            ValueError:
-                A ``ValueError`` is raised when there are an error unflatting the extension key
-                name.
         """
         unflattened = dict()
 
@@ -205,7 +230,7 @@ class Sampler:
                     column_index = int(name)
                     row_index = int(subkey)
 
-                    array = self._setdefault(unflattened, key, list)
+                    array = unflattened.setdefault(key, list())
 
                     if len(array) == row_index:
                         row = list()
@@ -213,76 +238,27 @@ class Sampler:
                     elif len(array) == row_index + 1:
                         row = array[row_index]
                     else:
+                        # This should never happen
                         raise ValueError('There was an error unflattening the extension.')
 
                     if len(row) == column_index:
                         row.append(value)
                     else:
+                        # This should never happen
                         raise ValueError('There was an error unflattening the extension.')
 
                 else:
-                    subdict = self._setdefault(unflattened, key, dict)
+                    subdict = unflattened.setdefault(key, dict())
                     if subkey.isdigit():
                         subkey = int(subkey)
 
-                    inner = self._setdefault(subdict, subkey, dict)
+                    inner = subdict.setdefault(subkey, dict())
                     inner[name] = value
 
             else:
                 unflattened[key] = value
 
         return unflattened
-
-    def _make_positive_definite(self, matrix):
-        """Find the nearest positive-definite matrix to input.
-
-        Args:
-            matrix (numpy.ndarray):
-                Matrix to transform
-
-        Returns:
-            numpy.ndarray:
-                Closest symetric positive-definite matrix.
-        """
-        symetric_matrix = (matrix + matrix.T) / 2
-        _, s, V = np.linalg.svd(symetric_matrix)
-        symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
-        A2 = (symetric_matrix + symmetric_polar) / 2
-        A3 = (A2 + A2.T) / 2
-
-        if self._check_matrix_symmetric_positive_definite(A3):
-            return A3
-
-        spacing = np.spacing(np.linalg.norm(matrix))
-        identity = np.eye(matrix.shape[0])
-        iterations = 1
-        while not self._check_matrix_symmetric_positive_definite(A3):
-            min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
-            A3 += identity * (-min_eigenvals * iterations**2 + spacing)
-            iterations += 1
-
-        return A3
-
-    def _check_matrix_symmetric_positive_definite(self, matrix):
-        """Checks if a matrix is symmetric positive-definite.
-
-        Args:
-            matrix (list or numpy.ndarray):
-                Matrix to evaluate.
-
-        Returns:
-            bool
-        """
-        try:
-            if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
-                # Not 2-dimensional or square, so not simmetric.
-                return False
-
-            np.linalg.cholesky(matrix)
-            return True
-
-        except np.linalg.LinAlgError:
-            return False
 
     def _unflatten_gaussian_copula(self, model_parameters):
         """Prepare unflattened model params to recreate Gaussian Multivariate instance.
@@ -364,11 +340,11 @@ class Sampler:
             pandas.DataFrame:
                 Sampled rows, shape (, num_rows)
         """
-        pk_name, pk_values = self._get_primary_keys(table_name, num_rows)
+        primary_key_name, primary_key_values = self._get_primary_keys(table_name, num_rows)
 
         sampled = model.sample(num_rows)
-        if pk_name:
-            sampled[pk_name] = pk_values
+        if primary_key_name:
+            sampled[primary_key_name] = primary_key_values
 
         return sampled
 
@@ -387,8 +363,9 @@ class Sampler:
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)
 
-        parent_id, foreign_key = self.metadata.foreign_keys[(table_name, parent_name)]
-        sampled_rows[foreign_key] = parent_row[parent_id]
+        parent_key = self.metadata.get_primary_key(parent_name)
+        foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
+        sampled_rows[foreign_key] = parent_row[parent_key]
 
         previous = sampled.get(table_name)
         if previous is None:
@@ -398,12 +375,11 @@ class Sampler:
 
         self._sample_children(table_name, sampled)
 
-    def sample(self, table_name, num_rows, reset_primary_keys=False,
-               sample_children=True, sampled_data=None):
+    def sample(self, table_name, num_rows, reset_primary_keys=False, sample_children=True):
         """Sample one table.
 
         Child tables will be sampled when ``sample_children`` is ``True``.
-        If a ``sampled_data`` is provided then append the sampled child tables there, if not
+        If ``sampled_data`` is provided then append the sampled child tables there, if not
         create a new dict to fill.
 
         Args:
@@ -415,9 +391,6 @@ class Sampler:
                 Whether or not reset the primary keys generators. Defaults to ``False``.
             sample_children (bool):
                 Whether or not sample child tables. Defaults to ``True``.
-            sampled_data (dict):
-                Dict which contains the sampled tables to append the child table sampled data
-                when needed. Defaults to ``None``.
 
         Returns:
             dict or pandas.DataFrame:
@@ -441,10 +414,9 @@ class Sampler:
             sampled_rows[foreign_key] = parent_id
 
         if sample_children:
-            if sampled_data is None:
-                sampled_data = dict()
-
-            sampled_data[table_name] = sampled_rows
+            sampled_data = {
+                table_name: sampled_rows
+            }
 
             self._sample_children(table_name, sampled_data)
 
@@ -483,6 +455,6 @@ class Sampler:
         sampled_data = dict()
         for table in self.metadata.get_table_names():
             if not self.metadata.get_parents(table):
-                self.sample(table, num_rows, sampled_data=sampled_data)
+                sampled_data.update(self.sample(table, num_rows))
 
         return sampled_data

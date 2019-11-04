@@ -1,17 +1,14 @@
 {
-    "path": "",
     "tables": [
         {
             "headers": true,
             "name": "users",
             "path": "users_sample.csv",
             "primary_key": "id",
-            "use": true,
             "fields": [
                 {
                     "name": "id",
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "date_account_created",
@@ -30,63 +27,52 @@
                 },
                 {
                     "name": "gender",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "age",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 },
                 {
                     "name": "signup_method",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "signup_flow",
-                    "subtype": "categorical",
                     "type": "categorical"
                 },
                 {
                     "name": "language",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "affiliate_channel",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "affiliate_provider",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "first_affiliate_tracked",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "signup_app",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "first_device_type",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "first_browser",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "country_destination",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 }
             ]
         },
@@ -94,7 +80,6 @@
             "headers": true,
             "name": "sessions",
             "path": "sessions_sample.csv",
-            "use": true,
             "fields": [
                 {
                     "name": "user_id",
@@ -102,32 +87,27 @@
                         "field": "id",
                         "table": "users"
                     },
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "action",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "action_type",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "action_detail",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "device_type",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "secs_elapsed",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 }
             ]

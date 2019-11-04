@@ -26,7 +26,7 @@ class SDV:
 
     Args:
         model (type):
-            Class of a ``copula`` to use. Defaults to
+            Class of the ``copula`` to use. Defaults to
             ``copulas.multivariate.GaussianMultivariate``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. Defaults to ``None``.
@@ -42,25 +42,21 @@ class SDV:
             self.model_kwargs = model_kwargs
 
     def _validate_dataset_structure(self):
-        """Check if any table has two parents."""
+        """Make sure that all the tables have at most one parent."""
         for table in self.metadata.get_table_names():
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
     def fit(self, metadata, tables=None, root_path=None):
-        """Fit the ``model`` with to be able to sample data.
-
-        This method creates a ``sdv.Metadata`` object and validates the data structure. Once
-        this validation has passed, an instace of ``sdv.Modeler`` which will model the dataset.
-        Then a ``sdv.Sampler`` object is being created in order to be used for sampling.
+        """Fit this SDV instance to the dataset data.
 
         Args:
             metadata (dict or str):
                 Metadata dict or path to the metadata JSON file.
             tables (dict):
-                Dictionary with the table name as key and ``pandas.DataFrame`` as value.
-                If ``None`` tables will be loaded from the paths indicated in ``metadata``.
-                Defaults to ``None``.
+                Dictionary with the table names as key and ``pandas.DataFrame`` instances as
+                values.  If ``None`` is given, the tables will be loaded from the paths
+                indicated in ``metadata``. Defaults to ``None``.
             root_path (str or None):
                 Path to the dataset directory. If ``None`` and metadata is
                 a path, the metadata location is used. If ``None`` and
@@ -75,7 +71,7 @@ class SDV:
         self.sampler = Sampler(self.metadata, self.modeler.models)
 
     def sample(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
-        """Sample ``num_rows`` rows from the given table.
+        """Sample ``num_rows`` rows from the indicated table.
 
         Args:
             table_name (str):
@@ -85,7 +81,7 @@ class SDV:
             sample_children (bool):
                 Whether or not to sample children tables. Defaults to ``True``.
             reset_primary_keys (bool):
-                Wheter or not reset the pk generators. Defaults to ``True``.
+                Wheter or not reset the primary key generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame:
@@ -106,7 +102,7 @@ class SDV:
         )
 
     def sample_all(self, num_rows=5, reset_primary_keys=False):
-        """Sample the entire database.
+        """Sample the entire dataset.
 
         Args:
             num_rows (int):
@@ -127,25 +123,23 @@ class SDV:
 
         return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
 
-    def save(self, filename):
-        """Save SDV instance to a file destination.
+    def save(self, path):
+        """Save this SDV instance to the given path using pickle.
 
         Args:
-            filename (str):
-                Path where to store the SDV instance.
+            path (str):
+                Path where the SDV instance will be serialized.
         """
-        with open(filename, 'wb') as output:
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+        with open(path, 'wb') as output:
+            pickle.dump(self, output)
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, path):
         """Load a SDV instance from a given path.
 
         Args:
-            filename (str):
-                Path to the saved SDV instance to be loaded.
+            path (str):
+                Path from which to load the SDV instance.
         """
-        with open(filename, 'rb') as f:
-            instance = pickle.load(f)
-
-        return instance
+        with open(path, 'rb') as f:
+            return pickle.load(f)

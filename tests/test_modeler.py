@@ -4,31 +4,11 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 from copulas.multivariate import GaussianMultivariate, VineCopula
 
-from sdv import Metadata, Modeler
+from sdv.metadata import Metadata
+from sdv.modeler import Modeler
 
 
 class TestModeler(TestCase):
-
-    @patch('sdv.modeler.open')
-    @patch('sdv.modeler.pickle')
-    def test_save(self, pickle_mock, open_mock):
-        metadata = Mock(autopsec=Metadata)
-        modeler = Modeler(metadata)
-        modeler.save('save/path.pkl')
-
-        open_mock.assert_called_once_with('save/path.pkl', 'wb')
-        output = open_mock.return_value.__enter__.return_value
-        pickle_mock.dump.assert_called_once_with(modeler, output)
-
-    @patch('sdv.modeler.open')
-    @patch('sdv.modeler.pickle')
-    def test_load(self, pickle_mock, open_mock):
-        returned = Modeler.load('save/path.pkl')
-
-        open_mock.assert_called_once_with('save/path.pkl', 'rb')
-        output = open_mock.return_value.__enter__.return_value
-        pickle_mock.load.assert_called_once_with(output)
-        assert returned is pickle_mock.load.return_value
 
     def test___init__default(self):
         """Test create new Modeler instance with default values"""
@@ -68,29 +48,16 @@ class TestModeler(TestCase):
 
         assert result == expected
 
-    def test__flatten_dict_of_ignored_keys(self):
-        """Test get flatten dict of ignored keys"""
-        # Run
-        nested = {
-            'fitted': 'value_1',
-            'distribution': 'value_2',
-            'type': 'value_3'
-        }
-        prefix = 'test'
-
-        result = Modeler._flatten_dict(nested, prefix=prefix)
-
-        # Asserts
-        expected = {}
-        assert result == expected
-
     def test__flatten_dict(self):
         """Test get flatten dict with some result"""
         # Run
         nested = {
             'foo': 'value',
             'bar': {'bar_dict': 'value_bar_dict'},
-            'tar': ['value_tar_list']
+            'tar': ['value_tar_list_0', 'value_tar_list_1'],
+            'fitted': 'value_1',
+            'distribution': 'value_2',
+            'type': 'value_3'
         }
 
         result = Modeler._flatten_dict(nested, prefix='test')
@@ -99,7 +66,8 @@ class TestModeler(TestCase):
         expected = {
             'test__foo': 'value',
             'test__bar__bar_dict': 'value_bar_dict',
-            'test__tar__0': 'value_tar_list'
+            'test__tar__0': 'value_tar_list_0',
+            'test__tar__1': 'value_tar_list_1'
         }
 
         assert result == expected

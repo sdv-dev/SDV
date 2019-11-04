@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv import Metadata, Sampler
+from sdv.metadata import Metadata
+from sdv.sampler import Sampler
 
 
 class TestSampler(TestCase):
@@ -148,34 +149,6 @@ class TestSampler(TestCase):
         with pytest.raises(ValueError):
             Sampler._get_primary_keys(sampler, 'test', 5)
 
-    def test__setdefault_key_in_dict(self):
-        """Test setdefault with key in dict"""
-        # Run
-        a_dict = {'foo': 'bar'}
-        key = 'foo'
-        a_type = None
-
-        result = Sampler._setdefault(a_dict, key, a_type)
-
-        # Asserts
-        expected = 'bar'
-
-        assert result == expected
-
-    def test__setdefault_key_not_in_dict(self):
-        """Test setdefault with key not in dict"""
-        # Run
-        a_dict = {}
-        key = 'foo'
-        a_type = int
-
-        result = Sampler._setdefault(a_dict, key, a_type)
-
-        # Asserts
-        expected = 0
-
-        assert result == expected
-
     def test__key_order(self):
         """Test key order"""
         # Run
@@ -191,60 +164,50 @@ class TestSampler(TestCase):
     def test__unflatten_dict_raises_error_row_index(self):
         """Test unflatten dict raises error row_index"""
         # Setup
-        setdefault = [1, 2, 3, 4, 5]
-
-        # Run & asserts
-        sampler = Mock()
-        sampler._key_order = None
-        sampler._setdefault.return_value = setdefault
+        sampler = Mock(autospec=Sampler)
 
         flat = {
             'foo__0__1': 'some value'
         }
 
+        # Run
         with pytest.raises(ValueError):
             Sampler._unflatten_dict(sampler, flat)
 
     def test__unflatten_dict_raises_error_column_index(self):
         """Test unflatten dict raises error column_index"""
         # Setup
-        setdefault = []
-
-        # Run & asserts
         sampler = Mock()
-        sampler._key_order = None
-        sampler._setdefault.return_value = setdefault
 
         flat = {
-            'foo__0__1': 'some value'
+            'foo__1__0': 'some value'
         }
 
+        # Run
         with pytest.raises(ValueError):
             Sampler._unflatten_dict(sampler, flat)
 
-    def test__unflatten_dict_no_error(self):
-        """Test unflatten dict doesn't raise an error and return unflatten data"""
+    def test__unflatten_dict(self):
+        """Test unflatten_dict"""
         # Setup
-        setdefault = [
-            [[], [1]],  # bar__1__1
-            [{}], {}  # foo__0__foo
-        ]
-
-        # Run
         sampler = Mock()
         sampler._key_order = None
-        sampler._setdefault.side_effect = setdefault
 
         flat = {
-            'foo__0__foo': 'some value',
-            'bar__1__1': 'some value',
-            'tar': 'some value'
+            'foo__0__foo': 'foo value',
+            'bar__0__0': 'bar value',
+            'tar': 'tar value'
         }
 
+        # Run
         result = Sampler._unflatten_dict(sampler, flat)
 
         # Asserts
-        expected = {'tar': 'some value'}
+        expected = {
+            'foo': {0: {'foo': 'foo value'}},
+            'bar': [['bar value']],
+            'tar': 'tar value',
+        }
 
         assert result == expected
 
@@ -460,63 +423,92 @@ class TestSampler(TestCase):
             assert result_call[0][3] == expected_call[3]
             pd.testing.assert_series_equal(result_call[0][2], expected_call[2])
 
-    def test__sample_table_sampled_tablename_none(self):
-        """Test sample table with sampled table_name None"""
+    def test__sample_table_sampled_empty(self):
+        """Test sample table when sampled is still an empty dict."""
         # Setup
-        sampler = Mock()
+        sampler = Mock(autospec=Sampler)
         sampler._get_extension.return_value = {'child_rows': 5}
-        sampler._get_model.return_value = dict()
-        sampler._sample_rows.return_value = dict()
-        sampler.metadata.foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
-        sampler.models = {'test': Mock()}
+        table_model_mock = Mock()
+        sampler.models = {'test': table_model_mock}
+        model_mock = Mock()
+        sampler._get_model.return_value = model_mock
+        sampler._sample_rows.return_value = pd.DataFrame({
+            'value': [1, 2, 3, 4, 5]
+        })
 
-        table_name = 'test'
-        parent_name = 'test_parent'
-        parent_row = {'parent_id': 'value parent id'}
-        sampled = dict()
+        sampler.metadata.get_primary_key.return_value = 'id'
+        sampler.metadata.get_foreign_key.return_value = 'parent_id'
 
         # Run
-        Sampler._sample_table(sampler, table_name, parent_name, parent_row, sampled)
+        parent_row = pd.Series({'id': 0})
+        sampled = dict()
+        Sampler._sample_table(sampler, 'test', 'parent', parent_row, sampled)
 
         # Asserts
-        sampler._sample_rows.assert_called_once_with(dict(), 5, 'test')
-        sampler._sample_children.assert_called_once_with(
-            'test', {'test': {'foreign_key': 'value parent id'}}
+        sampler._get_extension.assert_called_once_with(parent_row, 'test')
+        sampler._get_model.assert_called_once_with({'child_rows': 5}, table_model_mock)
+        sampler._sample_rows.assert_called_once_with(model_mock, 5, 'test')
+
+        assert sampler._sample_children.call_count == 1
+        assert sampler._sample_children.call_args[0][0] == 'test'
+
+        expected_sampled = pd.DataFrame({
+            'value': [1, 2, 3, 4, 5],
+            'parent_id': [0, 0, 0, 0, 0]
+        })
+        pd.testing.assert_frame_equal(
+            sampler._sample_children.call_args[0][1]['test'],
+            expected_sampled
         )
 
-    def test__sample_table_sampled_tablename_not_none(self):
-        """Test sample table with sampled table_name not None"""
+    def test__sample_table_sampled_not_empty(self):
+        """Test sample table when sampled previous sampled rows exist."""
         # Setup
-        sampler = Mock()
+        sampler = Mock(autospec=Sampler)
         sampler._get_extension.return_value = {'child_rows': 5}
-        sampler._get_model.return_value = dict()
-        sampler._sample_rows.return_value = pd.Series()
-        sampler.metadata.foreign_keys = {('test', 'test_parent'): ('parent_id', 'foreign_key')}
-        sampler.models = {'test': Mock()}
+        table_model_mock = Mock()
+        sampler.models = {'test': table_model_mock}
+        model_mock = Mock()
+        sampler._get_model.return_value = model_mock
+        sampler._sample_rows.return_value = pd.DataFrame({
+            'value': [6, 7, 8, 9, 10]
+        })
 
-        table_name = 'test'
-        parent_name = 'test_parent'
-        parent_row = {'parent_id': 69}
-        sampled = {'test': pd.Series([9, 8, 7])}
+        sampler.metadata.get_primary_key.return_value = 'id'
+        sampler.metadata.get_foreign_key.return_value = 'parent_id'
 
         # Run
-        Sampler._sample_table(sampler, table_name, parent_name, parent_row, sampled)
+        parent_row = pd.Series({'id': 1})
+        sampled = {
+            'test': pd.DataFrame({
+                'value': [1, 2, 3, 4, 5],
+                'parent_id': [0, 0, 0, 0, 0]
+            })
+        }
+        Sampler._sample_table(sampler, 'test', 'parent', parent_row, sampled)
 
         # Asserts
-        sampler._sample_rows.assert_called_once_with(dict(), 5, 'test')
-        assert sampler._sample_children.call_count == 1
-        assert sampler._sample_children.call_args_list[0][0][0] == 'test'
+        sampler._get_extension.assert_called_once_with(parent_row, 'test')
+        sampler._get_model.assert_called_once_with({'child_rows': 5}, table_model_mock)
+        sampler._sample_rows.assert_called_once_with(model_mock, 5, 'test')
 
-        pd.testing.assert_series_equal(
-            sampler._sample_children.call_args_list[0][0][1]['test'],
-            pd.Series([9, 8, 7, 69])
+        assert sampler._sample_children.call_count == 1
+        assert sampler._sample_children.call_args[0][0] == 'test'
+
+        expected_sampled = pd.DataFrame({
+            'value': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'parent_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        })
+        pd.testing.assert_frame_equal(
+            sampler._sample_children.call_args[0][1]['test'],
+            expected_sampled
         )
 
     def test_sample_all(self):
         """Test sample all regenerating the primary keys"""
         # Setup
-        def sample_side_effect(table, num_rows, sampled_data):
-            sampled_data[table] = pd.DataFrame({'foo': range(num_rows)})
+        def sample_side_effect(table, num_rows):
+            return {table: pd.DataFrame({'foo': range(num_rows)})}
 
         metadata_parents_side_effect = [False, True, False]
 

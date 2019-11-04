@@ -1,5 +1,4 @@
 import logging
-import pickle
 
 import numpy as np
 import pandas as pd
@@ -11,10 +10,10 @@ IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 
 class Modeler:
-    """Class responsible for modeling database.
+    """Modeler class.
 
-    The ``Modeler.model_database`` applies the CPA algorithm to generate the extended table.
-    Required before sampling data.
+    The Modeler class applies the CPA algorithm recursively over all the tables
+    from the dataset.
 
     Args:
         metadata (Metadata):
@@ -26,36 +25,14 @@ class Modeler:
     """
 
     def __init__(self, metadata, model=GaussianMultivariate, model_kwargs=None):
-        """Instantiates a modeler object."""
         self.models = dict()
         self.metadata = metadata
         self.model = model
         self.model_kwargs = dict() if model_kwargs is None else model_kwargs
 
-    def save(self, file_name):
-        """Saves model to file destination.
-
-        Args:
-            file_name (string):
-                path where to store the file.
-        """
-        with open(file_name, 'wb') as output:
-            pickle.dump(self, output)
-
-    @classmethod
-    def load(cls, file_name):
-        """Load model from filename.
-
-        Args:
-            file_name (str):
-                path from where to load.
-        """
-        with open(file_name, 'rb') as input:
-            return pickle.load(input)
-
     @classmethod
     def _flatten_array(cls, nested, prefix=''):
-        """Return a dictionary with the values of the given nested array.
+        """Flatten an array as a dict.
 
         Args:
             nested (list, numpy.array):
@@ -64,9 +41,10 @@ class Modeler:
                 Name to append to the array indices. Defaults to ``''``.
 
         Returns:
-            dict
+            dict:
+                Flattened array.
         """
-        result = {}
+        result = dict()
         for index in range(len(nested)):
             prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
 
@@ -80,7 +58,7 @@ class Modeler:
 
     @classmethod
     def _flatten_dict(cls, nested, prefix=''):
-        """Return a flatten dict from a nested one.
+        """Flatten a dictionary.
 
         This method returns a flatten version of a dictionary, concatenating key names with
         double underscores.
@@ -93,9 +71,9 @@ class Modeler:
 
         Returns:
             dict:
-                Flattened dictionary, where all its keys hold a primitive value.
+                Flattened dictionary.
         """
-        result = {}
+        result = dict()
 
         for key, value in nested.items():
             prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
@@ -128,11 +106,11 @@ class Modeler:
         return data
 
     def _fit_model(self, data):
-        """Returns an instance of ``self.model`` fitted with the given data.
+        """Fit a model to the given data.
 
         Args:
             data (pandas.DataFrame):
-                Data to fit the model with.
+                Data to fit the model to.
 
         Returns:
             model:
@@ -149,15 +127,15 @@ class Modeler:
 
         Args:
             data (pandas.DataFrame):
-                Dataset to fit the model to.
+                Data to fit the model to.
 
         Returns:
             dict:
-                Flattened parameters for model.
+                Flattened parameters for the fitted model.
         """
         model = self._fit_model(data)
 
-        values = []
+        values = list()
         triangle = np.tril(model.covariance)
 
         for index, row in enumerate(triangle.tolist()):
@@ -206,23 +184,20 @@ class Modeler:
         return pd.DataFrame(extension_rows, index=foreign_key_values)
 
     def cpa(self, table_name, tables, foreign_key=None):
-        """Run CPA algorithm.
-
-        If ``tables`` is not loaded, load the current table.
-        If the table we are processing have childs call ``cpa`` and generate extensions.
-        After iterate over the childs, fit the model and return the extended table.
+        """Run the CPA algorithm over the indicated table and its children.
 
         Args:
             table_name (str):
-                Name of table.
+                Name of the table to model.
             tables (dict):
-                Dict of tables to process.
+                Dict of tables tha have been already modeled.
             foreign_key (str):
                 Name of the foreign key that references this table. Used only when applying
                 CPA on a child table.
 
         Returns:
-            pandas.DataFrame
+            pandas.DataFrame:
+                table data with the extensions created while modeling its children.
         """
         LOGGER.info('Modeling %s', table_name)
 
@@ -255,7 +230,14 @@ class Modeler:
         return extended
 
     def model_database(self, tables=None):
-        """Run CPA algorithm on all tables."""
+        """Run CPA algorithm on all the tables of this dataset.
+
+        Args:
+            tables (dict):
+                Optional. Dictinary containing the tables of this dataset.
+                If not given, the tables will be loaded using the dataset
+                metadata specification.
+        """
         for table_name in self.metadata.get_table_names():
             if not self.metadata.get_parents(table_name):
                 self.cpa(table_name, tables)

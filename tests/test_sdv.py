@@ -1,36 +1,32 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from sdv.sdv import DEFAULT_MODEL, DEFAULT_MODEL_KWARGS, SDV, NotFittedError
 
 
-def test_save_and_load(tmp_path):
-    """Test save and load a SDV instance"""
-    # Setup
-    metadata = tmp_path / 'save.pkl'
-    sdv = SDV()
-
-    # Run "save"
-    SDV.save(sdv, str(metadata))
-
-    # Asserts "save"
-    assert metadata.exists()
-    assert metadata.is_file()
-
-    # Run "load"
-    instance = SDV.load(str(metadata))
-
-    # Asserts "load"
-    assert isinstance(instance, SDV)
-
-    assert sdv.sampler == instance.sampler
-    assert sdv.model == instance.model
-    assert sdv.model_kwargs == instance.model_kwargs
-
-
 class TestSDV(TestCase):
+
+    @patch('sdv.sdv.open')
+    @patch('sdv.sdv.pickle')
+    def test_save(self, pickle_mock, open_mock):
+        sdv = SDV()
+        sdv.save('save/path.pkl')
+
+        open_mock.assert_called_once_with('save/path.pkl', 'wb')
+        output = open_mock.return_value.__enter__.return_value
+        pickle_mock.dump.assert_called_once_with(sdv, output)
+
+    @patch('sdv.sdv.open')
+    @patch('sdv.sdv.pickle')
+    def test_load(self, pickle_mock, open_mock):
+        returned = SDV.load('save/path.pkl')
+
+        open_mock.assert_called_once_with('save/path.pkl', 'rb')
+        output = open_mock.return_value.__enter__.return_value
+        pickle_mock.load.assert_called_once_with(output)
+        assert returned is pickle_mock.load.return_value
 
     def test____init__default(self):
         """Create default instance"""

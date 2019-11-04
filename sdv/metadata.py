@@ -12,31 +12,34 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _read_csv_dtypes(table_meta):
+    """Get the dtypes specification that needs to be passed to read_csv."""
     dtypes = dict()
     for name, field in table_meta['fields'].items():
         field_type = field['type']
-        if field_type == 'categorical' and field.get('subtype', 'categorical') == 'categorical':
+        if field_type == 'categorical':
             dtypes[name] = str
-        elif field_type == 'id' and field.get('subtype') == 'string':
+        elif field_type == 'id' and field.get('subtype', 'integer') == 'string':
             dtypes[name] = str
 
     return dtypes
 
 
 def _parse_dtypes(data, table_meta):
+    """Convert the data columns to the right dtype after loading the CSV."""
     for name, field in table_meta['fields'].items():
         field_type = field['type']
         if field_type == 'datetime':
             data[name] = pd.to_datetime(data[name], format=field['format'], exact=False)
-        elif field_type == 'number' and field.get('subtype') == 'integer':
+        elif field_type == 'numerical' and field.get('subtype') == 'integer':
             data[name] = data[name].dropna().astype(int)
-        elif field_type == 'id' and field.get('subtype') == 'number':
+        elif field_type == 'id' and field.get('subtype', 'integer') == 'integer':
             data[name] = data[name].dropna().astype(int)
 
     return data
 
 
-def load_csv(root_path, table_meta):
+def _load_csv(root_path, table_meta):
+    """Load a CSV with the right dtypes and then parse the columns."""
     relative_path = os.path.join(root_path, table_meta['path'])
     dtypes = _read_csv_dtypes(table_meta)
 
@@ -47,16 +50,11 @@ def load_csv(root_path, table_meta):
 
 
 class Metadata:
-    """Navigate through and transform a dataset.
+    """Dataset Metadata.
 
-    This class implements two main functionalities:
-
-    - Navigation through the dataset
-        Given a table, it allows you to move through its relations and acces its data and metadata.
-
-    - Transform data
-        Transform the dataset using ``rdt.HyperTransformer`` in a format that is supported
-        by ``sdv.Modeler``.
+    The Metadata class provides a unified layer of abstraction over the dataset
+    metadata, which includes both the necessary details to load the data from
+    the hdd and to know how to parse and transform it to numerical data.
 
     Args:
         metadata (str or dict):
@@ -68,30 +66,24 @@ class Metadata:
     """
 
     def _get_relationships(self):
-        """Map table name to names of child tables.
+        """Exttract information about child-parent relationships.
 
         Creates the following attributes:
-        - ``self._child_map``: defaultdict of sets with child tables per table.
-        - ``self._parent_map``: defaultdict of sets with parent tables per table.
-        - ``self.foreign_keys``: dict of tupples with parent primary key and primary key per table.
+            * ``_child_map``: set of child tables that each table has.
+            * ``_parent_map``: set ot parents that each table has.
         """
         self._child_map = defaultdict(set)
         self._parent_map = defaultdict(set)
-        self.foreign_keys = dict()
 
         for table_meta in self._metadata['tables'].values():
-            if table_meta['use']:
+            if table_meta.get('use', True):
                 table = table_meta['name']
                 for field_meta in table_meta['fields'].values():
                     ref = field_meta.get('ref')
                     if ref:
                         parent = ref['table']
-                        parent_pk = ref['field']
-                        fk = field_meta['name']
-
                         self._child_map[parent].add(table)
                         self._parent_map[table].add(parent)
-                        self.foreign_keys[(table, parent)] = (parent_pk, fk)
 
     @staticmethod
     def _dict_metadata(metadata):
@@ -138,7 +130,7 @@ class Metadata:
         self._get_relationships()
 
     def get_children(self, table_name):
-        """Return set of children of a table.
+        """Get table children.
 
         Args:
             table_name (str):
@@ -151,7 +143,7 @@ class Metadata:
         return self._child_map[table_name]
 
     def get_parents(self, table_name):
-        """Get the parents of a table.
+        """Get table parents.
 
         Args:
             table_name (str):
@@ -164,7 +156,7 @@ class Metadata:
         return self._parent_map[table_name]
 
     def get_table_meta(self, table_name):
-        """Get ``metadata`` for a table.
+        """Get the metadata  dict for a table.
 
         Args:
             table_name (str):
@@ -172,12 +164,12 @@ class Metadata:
 
         Returns:
             dict:
-                metadata for table_name
+                table metadata
         """
         return self._metadata['tables'][table_name]
 
     def load_table(self, table_name):
-        """Load a dataframe for a table.
+        """Load table data.
 
         Args:
             table_name (str):
@@ -185,18 +177,18 @@ class Metadata:
 
         Returns:
             pandas.DataFrame:
-                DataFrame with the contents of table_name
+                DataFrame with the contents of the table.
         """
         LOGGER.info('Loading table %s', table_name)
         table_meta = self.get_table_meta(table_name)
-        return load_csv(self.root_path, table_meta)
+        return _load_csv(self.root_path, table_meta)
 
     def _get_dtypes(self, table_name, ids=False):
         """Get a ``dict`` with the ``dtypes`` for each field of a given table.
 
         Args:
             table_name (str):
-                Table name that we want to retrive its ``dtypes``.
+                Table name for which to retrive the ``dtypes``.
             ids (bool):
                 Whether or not include the id fields. Defaults to ``False``.
 
@@ -206,53 +198,61 @@ class Metadata:
 
         Raises:
             ValueError:
-                A ``ValueError`` is raised when a field has an invalid subtype.
+                If a field has an invalid type or subtype.
         """
         dtypes = dict()
-        for name, field in self.get_table_meta(table_name)['fields'].items():
+        table_meta = self.get_table_meta(table_name)
+        for name, field in table_meta['fields'].items():
             field_type = field['type']
             if field_type == 'categorical':
-                field_subtype = field.get('subtype', 'categorical')
-                if field_subtype == 'categorical':
-                    dtypes[name] = np.object
-                elif field_subtype == 'bool':
-                    dtypes[name] = bool
-                else:
-                    raise ValueError('Invalid {} subtype: {}'.format(field_type, field_subtype))
+                dtypes[name] = np.object
 
-            elif field_type == 'number':
+            elif field_type == 'boolean':
+                dtypes[name] = bool
+
+            elif field_type == 'numerical':
                 field_subtype = field.get('subtype', 'float')
                 if field_subtype == 'integer':
                     dtypes[name] = int
                 elif field_subtype == 'float':
                     dtypes[name] = float
                 else:
-                    raise ValueError('Invalid {} subtype: {}'.format(field_type, field_subtype))
+                    raise ValueError('Invalid {} subtype {} - {}'.format(
+                        field_type, field_subtype, name))
 
             elif field_type == 'datetime':
                 dtypes[name] = np.datetime64
 
-            elif ids and field_type == 'id':
-                field_subtype = field.get('subtype', 'string')
-                if field_subtype == 'number':
-                    dtypes[name] = int
-                elif field_subtype == 'string':
-                    dtypes[name] = str
-                else:
-                    raise ValueError('Invalid {} subtype: {}'.format(field_type, field_subtype))
+            elif field_type == 'id':
+                if ids:
+                    if (name != table_meta.get('primary_key')) and not field.get('ref'):
+                        raise ValueError(
+                            'id field `{}` is neither a primary or a foreign key'.format(name))
+
+                    field_subtype = field.get('subtype', 'integer')
+                    if field_subtype == 'integer':
+                        dtypes[name] = int
+                    elif field_subtype == 'string':
+                        dtypes[name] = str
+                    else:
+                        raise ValueError('Invalid {} subtype: {} - {}'.format(
+                            field_type, field_subtype, name))
+
+            else:
+                raise ValueError('Invalid field type: {} - '.format(field_type, name))
 
         return dtypes
 
     def _get_pii_fields(self, table_name):
-        """Get a ``dict`` with the categorical types for each field in a table.
+        """Get the ``pii_category`` for each field that contains PII.
 
         Args:
             table_name (str):
-                Table name to get their fields metadata.
+                Table name for which to get the pii fields.
 
         Returns:
             dict:
-                Dictionary that contains the field names and categorical types from a table.
+                pii field names and categories.
         """
         pii_fields = dict()
         for name, field in self.get_table_meta(table_name)['fields'].items():
@@ -263,21 +263,20 @@ class Metadata:
 
     @staticmethod
     def _get_transformers(dtypes, pii_fields):
-        """Build a ``dict`` with column names and transformers from a given ``pandas.DataFrame``.
+        """Create the transformer instances needed to process the given dtypes.
 
         Temporary drop-in replacement of ``HyperTransformer._analyze`` method,
         before RDT catches up.
 
         Args:
             dtypes (dict):
-                Data type dict for each field to get their transformers.
+                mapping of field names and dtypes.
             pii_fields (dict):
-                Fields to be anonymized with the ``CategoricalTransformer``.
+                mapping of pii field names and categories.
 
         Returns:
             dict:
-                Dictionary that contains the name of the field and the ``transformer``
-                for that field.
+                mapping of field names and transformer instances.
         """
         transformers_dict = dict()
         for name, dtype in dtypes.items():
@@ -296,6 +295,8 @@ class Metadata:
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
 
+            LOGGER.info('Loading transformer %s for field %s',
+                        transformer.__class__.__name__, name)
             transformers_dict[name] = transformer
 
         return transformers_dict
@@ -303,12 +304,12 @@ class Metadata:
     def _load_hyper_transformer(self, table_name):
         """Create and return a new ``rdt.HyperTransformer`` instance for a table.
 
-        First get the ``dtypes`` and ``pii fields`` from a given table, then use those to build a
-        transformer dictionary to be used by the ``HyperTransformer``.
+        First get the ``dtypes`` and ``pii fields`` from a given table, then use
+        those to build a transformer dictionary to be used by the ``HyperTransformer``.
 
         Args:
             table_name (str):
-                Table name to get their data types and pii fields.
+                Table name for which to load the HyperTransformer.
 
         Returns:
             rdt.HyperTransformer:
@@ -322,13 +323,13 @@ class Metadata:
     def transform(self, table_name, data):
         """Transform data for a given table.
 
-        If the ``HyperTransformer`` for a table is ``None``, then its created.
+        If the ``HyperTransformer`` for a table is ``None`` it is created.
 
         Args:
             table_name (str):
-                Name of the table to transform the data.
+                Name of the table that is being transformer.
             data (pandas.DataFrame):
-                Table to be transformed.
+                Table data.
 
         Returns:
             pandas.DataFrame:
@@ -346,28 +347,27 @@ class Metadata:
         return hyper_transformer.transform(data[fields])
 
     def get_table_names(self):
-        """Get a list of table names contained in ``metadata``.
+        """Get the list of table names.
 
         Returns:
             list:
-                List of table names.
+                table names.
         """
         return list(self._metadata['tables'].keys())
 
     def get_tables(self, tables=None):
-        """Get a dictionary with the ``pandas.DataFrame`` for each table.
+        """Get a dictionary with data from multiple tables.
 
-        Tables can be specified in ``tables`` or it will use the output from
-        ``self.get_table_names()``.
+        If a ``tables`` list is given, only load the indicated tables.
+        Otherwise, load all the tables from this metadata.
 
         Args:
             tables (list):
-                List with the table names to load. Defaults to ``None``.
+                List of table names. Defaults to ``None``.
 
         Returns:
-            dict:
-                Dictionary which contains the table names and their corresponding
-                ``pandas.DataFrame``.
+            dict(str, pandasd.DataFrame):
+                mapping of table names and their data loaded as ``pandas.DataFrame`` instances.
         """
         return {
             table_name: self.load_table(table_name)
@@ -383,20 +383,20 @@ class Metadata:
 
         Returns:
             dict:
-                Fields metadata
+                Mapping of field names and their metadata dicts.
         """
         return self.get_table_meta(table_name)['fields']
 
     def get_primary_key(self, table_name):
-        """Get the table its primary key field name.
+        """Get the primary key name of the indicated table.
 
         Args:
             table_name (str):
-                Name of table to get the primary key field.
+                Name of table for which to get the primary key field.
 
         Returns:
             str or None:
-                Primary key field name or ``None`` if the table doesn't have primary key.
+                Primary key field name. ``None`` if the table has no primary key.
         """
         return self.get_table_meta(table_name).get('primary_key')
 
@@ -405,13 +405,17 @@ class Metadata:
 
         Args:
             parent (str):
-                Name of parent table to get the primary key field name.
+                Name of the parent table.
             child (str):
-                Name of child table to get the foreign key field name.
+                Name of the child table.
 
         Returns:
             str or None:
-                Foreign key field name of ``None`` if the child table doesn't have foreign key.
+                Foreign key field name.
+
+        Raises:
+            ValueError:
+                If the relationship does not exist.
         """
         primary = self.get_primary_key(parent)
 
@@ -420,17 +424,16 @@ class Metadata:
             if ref and ref['field'] == primary:
                 return field['name']
 
+        raise ValueError('{} is not parent of {}'.format(parent, child))
+
     def reverse_transform(self, table_name, data):
         """Reverse the transformed data for a given table.
 
-        Call to the ``HyperTransformer.reverse_data()`` for the given table and get the table
-        data types to the original data type.
-
         Args:
             table_name (str):
-                Table name to reverse the transformed data.
+                Name of the table to reverse transform.
             data (pandas.DataFrame):
-                Table data to be reversed.
+                Data to be reversed.
 
         Returns:
             pandas.DataFrame

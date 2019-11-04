@@ -1,32 +1,28 @@
 {
-    "path": "",
     "tables": [
         {
             "fields": [
                 {
                     "name": "customer_id",
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "cust_postal_code",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "phone_number1",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 },
                 {
                     "name": "credit_limit",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 },
                 {
                     "name": "country",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 }
             ],
             "headers": true,
@@ -39,8 +35,7 @@
             "fields": [
                 {
                     "name": "order_id",
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "customer_id",
@@ -48,12 +43,11 @@
                         "field": "customer_id",
                         "table": "customers"
                     },
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "order_total",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 }
             ],
@@ -67,8 +61,7 @@
             "fields": [
                 {
                     "name": "order_item_id",
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "order_id",
@@ -76,22 +69,20 @@
                         "field": "order_id",
                         "table": "orders"
                     },
-                    "type": "id",
-                    "subtype": "number"
+                    "type": "id"
                 },
                 {
                     "name": "product_id",
-                    "type": "categorical",
-                    "subtype": "categorical"
+                    "type": "categorical"
                 },
                 {
                     "name": "unit_price",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 },
                 {
                     "name": "quantity",
-                    "type": "number",
+                    "type": "numerical",
                     "subtype": "integer"
                 }
             ],

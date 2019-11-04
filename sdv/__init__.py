@@ -8,14 +8,12 @@ __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
 __version__ = '0.1.3-dev'
 
+from sdv.demo import load_demo
 from sdv.metadata import Metadata
-from sdv.modeler import Modeler
-from sdv.sampler import Sampler
 from sdv.sdv import SDV
 
 __all__ = (
+    'load_demo',
     'Metadata',
-    'Modeler',
     'SDV',
-    'Sampler',
 )

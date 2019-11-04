@@ -19,14 +19,14 @@
 
 <h1>SDV - Synthetic Data Vault</h1>
 
-- License: MIT
+- Free Software: MIT License
 - Documentation: https://HDI-Project.github.io/SDV
 - Homepage: https://github.com/HDI-Project/SDV
 
-## Overview
+# Overview
 
 **SDV** is an automated generative modeling and sampling tool that allows the users to generate
-synthetic data after creating generative models for their data.
+synthetic data after creating generative models for multi-table, relational datasets.
 
 # Install
 
@@ -84,7 +84,7 @@ for development.
 Please head to the [Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started)
 for more details about this process.
 
-# Data Format
+# Data Requirements
 
 In order to work with **SDV** you will need to generate a `MetaData` that contains information
 about the tables that you would like to sample and also provide those tables.

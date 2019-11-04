@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.metadata import Metadata, _parse_dtypes, _read_csv_dtypes, load_csv
+from sdv.metadata import Metadata, _parse_dtypes, _read_csv_dtypes
 
 
 def test__read_csv_dtypes():
@@ -14,12 +14,10 @@ def test__read_csv_dtypes():
     table_meta = {
         'fields': {
             'a_field': {
-                'type': 'categorical',
-                'subtype': 'categorical'
+                'type': 'categorical'
             },
             'b_field': {
-                'type': 'categorical',
-                'subtype': 'bool'
+                'type': 'boolean'
             },
             'c_field': {
                 'type': 'datetime',
@@ -59,12 +57,12 @@ def test__parse_dtypes():
                 'format': '%Y-%m-%d'
             },
             'b_field': {
-                'type': 'number',
+                'type': 'numerical',
                 'subtype': 'integer'
             },
             'c_field': {
                 'type': 'id',
-                'subtype': 'number'
+                'subtype': 'integer'
             },
             'd_field': {
                 'type': 'other'
@@ -83,46 +81,6 @@ def test__parse_dtypes():
     })
 
     pd.testing.assert_frame_equal(result, expected)
-
-
-def test_load_csv(tmp_path):
-    """Test load csv"""
-    # Setup
-    metadata = tmp_path / 'load_csv.csv'
-    metadata.write_text('some, fake, data')
-
-    root_path = str(tmp_path)
-    table_meta = {
-        'path': 'load_csv.csv'
-    }
-
-    # Run and asserts
-    with patch('sdv.metadata._read_csv_dtypes') as mock_read, \
-            patch('sdv.metadata._parse_dtypes') as mock_parse:
-
-        mock_read.return_value = []
-
-        load_csv(root_path, table_meta)
-
-        mock_read.assert_called_once_with({'path': 'load_csv.csv'})
-        assert mock_parse.call_count == 1
-
-
-def test___init__default_metadata_string(tmp_path):
-    """Test create Metadata instance default with a string"""
-    # Run and asserts
-    metadata_path = tmp_path / 'meta.json'
-    metadata_path.write_text('{"some": "meta"}')
-
-    with patch('sdv.metadata.Metadata._dict_metadata') as mock_meta, \
-            patch('sdv.metadata.Metadata._get_relationships') as mock_relationships:
-
-        metadata = Metadata(str(metadata_path), root_path=None)
-        mock_meta.assert_called_once_with({'some': 'meta'})
-        mock_relationships.assert_called_once_with()
-
-    assert metadata.root_path == str(tmp_path)  # We ensure that root_path is the tmp file.
-    assert metadata._hyper_transformers == dict()
 
 
 class TestMetadata(TestCase):
@@ -165,11 +123,9 @@ class TestMetadata(TestCase):
         # Asserts
         expected__child_map = {'table_ref': {'test'}}
         expected__parent_map = {'test': {'table_ref'}}
-        expected_foreign_keys = {('test', 'table_ref'): ('field_ref', 'test_field')}
 
         assert metadata._child_map == expected__child_map
         assert metadata._parent_map == expected__parent_map
-        assert metadata.foreign_keys == expected_foreign_keys
 
     def test__dict_metadata(self):
         """Test dict_metadata"""
@@ -268,7 +224,7 @@ class TestMetadata(TestCase):
 
         assert result == expected
 
-    @patch('sdv.metadata.load_csv')
+    @patch('sdv.metadata._load_csv')
     def test_load_table(self, mock_load_csv):
         """Test load table"""
         # Setup
@@ -295,14 +251,14 @@ class TestMetadata(TestCase):
         # Setup
         table_meta = {
             'fields': {
-                'item 1': {'type': 'number', 'subtype': 'integer'},
-                'item 2': {'type': 'number', 'subtype': 'float'},
-                'item 3': {'type': 'categorical', 'subtype': 'categorical'},
-                'item 4': {'type': 'categorical', 'subtype': 'bool'},
-                'item 5': {'type': 'datetime'},
-                'item 6': {'type': 'id', 'subtype': 'number'},
-                'item 7': {'type': 'id', 'subtype': 'string'},
-            }
+                'item 0': {'type': 'id', 'subtype': 'integer'},
+                'item 1': {'type': 'numerical', 'subtype': 'integer'},
+                'item 2': {'type': 'numerical', 'subtype': 'float'},
+                'item 3': {'type': 'categorical'},
+                'item 4': {'type': 'boolean'},
+                'item 5': {'type': 'datetime'}
+            },
+            'primary_key': 'item 0'
         }
 
         # Run
@@ -313,13 +269,12 @@ class TestMetadata(TestCase):
 
         # Asserts
         expected = {
+            'item 0': int,
             'item 1': int,
             'item 2': float,
             'item 3': np.object,
             'item 4': bool,
             'item 5': np.datetime64,
-            'item 6': int,
-            'item 7': str,
         }
 
         assert result == expected
@@ -329,13 +284,12 @@ class TestMetadata(TestCase):
         # Setup
         table_meta = {
             'fields': {
-                'item 1': {'type': 'number', 'subtype': 'integer'},
-                'item 2': {'type': 'number', 'subtype': 'float'},
-                'item 3': {'type': 'categorical', 'subtype': 'categorical'},
-                'item 4': {'type': 'categorical', 'subtype': 'bool'},
+                'item 0': {'type': 'id', 'subtype': 'integer'},
+                'item 1': {'type': 'numerical', 'subtype': 'integer'},
+                'item 2': {'type': 'numerical', 'subtype': 'float'},
+                'item 3': {'type': 'categorical'},
+                'item 4': {'type': 'boolean'},
                 'item 5': {'type': 'datetime'},
-                'item 6': {'type': 'id', 'subtype': 'number'},
-                'item 7': {'type': 'id', 'subtype': 'string'},
             }
         }
 
@@ -356,12 +310,12 @@ class TestMetadata(TestCase):
 
         assert result == expected
 
-    def test__get_dtypes_error_subtype_categorical(self):
-        """Test get data types with an invalid categorical subtype."""
+    def test__get_dtypes_error_invalid_type(self):
+        """Test get data types with an invalid type."""
         # Setup
         table_meta = {
             'fields': {
-                'item': {'type': 'categorical', 'subtype': 'integer'}
+                'item': {'type': 'unknown'}
             }
         }
 
@@ -372,12 +326,28 @@ class TestMetadata(TestCase):
         with pytest.raises(ValueError):
             Metadata._get_dtypes(metadata, 'test')
 
+    def test__get_dtypes_error_id(self):
+        """Test get data types with an id that is not a primary or foreign key."""
+        # Setup
+        table_meta = {
+            'fields': {
+                'item': {'type': 'id'}
+            }
+        }
+
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_meta.return_value = table_meta
+
+        with pytest.raises(ValueError):
+            Metadata._get_dtypes(metadata, 'test', ids=True)
+
     def test__get_dtypes_error_subtype_numerical(self):
         """Test get data types with an invalid numerical subtype."""
         # Setup
         table_meta = {
             'fields': {
-                'item': {'type': 'number', 'subtype': 'bool'}
+                'item': {'type': 'numerical', 'subtype': 'boolean'}
             }
         }
 
@@ -393,7 +363,7 @@ class TestMetadata(TestCase):
         # Setup
         table_meta = {
             'fields': {
-                'item': {'type': 'id', 'subtype': 'bool'}
+                'item': {'type': 'id', 'subtype': 'boolean'}
             }
         }
 
