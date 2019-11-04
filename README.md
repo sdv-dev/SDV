@@ -87,8 +87,7 @@ for more details about this process.
 # Data Requirements
 
 **SDV** allows the users to sample single tables, multi-tables or relantional tables. In the case
-of the relational tables, **bear in mind** that only one parent is supported at the moment. If you
-have a table with more than one parent this will produce a controlled exception.
+of the relational tables **only one parent is supported at the moment**.
 
 There are two ways of passing the data to **SDV**:
 
