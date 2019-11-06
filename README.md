@@ -3,27 +3,18 @@
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
-[![PyPi][pypi-img]][pypi-url]
-[![Travis][travis-img]][travis-url]
-[![CodeCov][codecov-img]][codecov-url]
-[![Downloads][downloads-img]][downloads-url]
+[![PyPi Shield](https://img.shields.io/pypi/v/SDV.svg)](https://pypi.python.org/pypi/SDV)
+[![Travis CI Shield](https://travis-ci.org/HDI-Project/SDV.svg?branch=master)](https://travis-ci.org/HDI-Project/SDV)
+[![Coverage Status](https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/SDV)
+[![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
 
-[pypi-img]: https://img.shields.io/pypi/v/sdv.svg
-[pypi-url]: https://pypi.python.org/pypi/sdv
-[travis-img]: https://travis-ci.org/HDI-Project/SDV.svg?branch=master
-[travis-url]: https://travis-ci.org/HDI-Project/SDV
-[codecov-img]: https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/HDI-Project/SDV
-[downloads-img]: https://pepy.tech/badge/sdv
-[downloads-url]: https://pepy.tech/project/sdv
+# SDV - Synthetic Data Vault
 
-<h1>SDV - Synthetic Data Vault</h1>
+* Free Software: MIT License
+* Documentation: https://HDI-Project.github.io/SDV
+* Homepage: https://github.com/HDI-Project/SDV
 
-- Free Software: MIT License
-- Documentation: https://HDI-Project.github.io/SDV
-- Homepage: https://github.com/HDI-Project/SDV
-
-# Overview
+## Overview
 
 **SDV** is an automated generative modeling and sampling tool that allows the users to generate
 synthetic data after creating generative models for multi-table, relational datasets.
@@ -102,8 +93,8 @@ comply with the following data requirements:
 Alongside the actual tables, **SDV** needs to be provided some metadata about the dataset,
 which can either be provided as a python `dict` object or as a JSON file.
 
-For more details about the Metadata format, please refer to the corresponding section
-of the documentation.
+For more details about the Metadata format, please refer to [the corresponding section
+of the documentation](https://hdi-project.github.io/SDV/metadata.html)
 
 # Quickstart
 
@@ -213,7 +204,7 @@ The returned objects contain the following information:
 }
 ```
 
-### 2. Create and fit an SDV instance
+## 2. Create and fit an SDV instance
 
 Before sampling, **SDV** needs to learn about your data in a process called *Database Modeling*.
 
@@ -230,7 +221,7 @@ sdv = SDV()
 sdv.fit(metadata, tables)
 ```
 
-### 3. Sample data
+## 3. Sample data
 
 Once the modeling has finished, we can sample new data using our fitted `SDV` instance.
 
@@ -248,8 +239,9 @@ but filled with synthetic data instead of the real one.
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.
 
-# What's next?
+## What's next?
 
-If you would like to see more usage examples, please have a look at the [examples folder](examples).
+If you would like to see more usage examples, please have a look at the [examples folder](
+https://github.com/HDI-Project/SDV/tree/master/examples).
 
 Also do not forget to check the [project documentation site](https://HDI-Project.github.io/SDV/)!

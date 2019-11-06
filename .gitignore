@@ -64,6 +64,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
 
 # PyBuilder
 target/
@@ -101,5 +102,5 @@ ENV/
 # mypy
 .mypy_cache/
 
-# vim
+# Vim
 .*.swp

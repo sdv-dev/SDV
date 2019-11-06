@@ -1,63 +1,70 @@
-=====
-Usage
-=====
+Metadata
+========
 
-Preparation of the data
------------------------
-
-SDV is used to model and sample data from relational datasets along with their relational
-behaviors. To do so it needs the data in a format in which it can process their relationships.
-
-To prepare a dataset to work with SDV you need to do the following:
-
-1. Dump your tables in ``.csv`` files, named after them. There have to be **one single file** for
-   table.
-2. Create a ``meta.json`` file with the specification of your dataset.
-3. Load it with ``SDV``
-
-
-Metadata file specification
----------------------------
-
-The ``meta.json`` is a file containing a single JSON with all the information SDV requires to
-work, its base schema is as follows:
+In order to have **SDV** process your dataset, you will need its **Metadata**:
 
 .. code-block:: python
 
     {
-        "path": "",
         "tables": [
             {
                 "fields": [
-                    {
-                        "name": "CUSTOMER_ID",
-                        "subtype": "integer",
-                        "type": "number",
-                        "uniques": 0,
-                        "regex": "^[0-9]{10}$"
-                    },
-                    ...
+                    {"name": "user_id", "type": "id"},
+                    {"name": "country", "type": "categorical"},
+                    {"name": "gender", "type": "categorical"},
+                    {"name": "age", "type": "numerical", "subtype": "integer"}
                 ],
-                "headers": true,
-                "name": "DEMO_CUSTOMERS",
-                "path": "customers.csv",
-                "primary_key": "CUSTOMER_ID",
-                "use": true
+                "headers": True,
+                "name": "users",
+                "path": "users.csv",
+                "primary_key": "user_id"
             },
-            ...
+            {
+                "fields": [
+                    {"name": "session_id", "type": "id"},
+                    {"name": "user_id", "type": "id", "ref": {
+                        "field": "user_id", "table": "users"},
+                    },
+                    {"name": "device", "type": "categorical"},
+                    {"name": "os", "type": "categorical"}
+                ],
+                "headers": True,
+                "name": "sessions",
+                "path": "sessions.csv",
+                "primary_key": "session_id"
+            },
+            {
+                "fields": [
+                    {"name": "transaction_id", "type": "id"},
+                    {"name": "session_id", "type": "id", "ref": {
+                        "field": "session_id", "table": "sessions"},
+                    },
+                    {"name": "timestamp", "format": "%Y-%m-%d", "type": "datetime"},
+                    {"name": "amount", "type": "numerical", "subtype": "float"},
+                    {"name": "approved", "type": "boolean"}
+                ],
+                "headers": True,
+                "name": "transactions",
+                "path": "transactions.csv",
+                "primary_key": "transaction_id"
+            }
         ]
     }
 
 
-:Path:
-    Relative path from this file to the root folder of the datasets. Leave empty if the
-    datasets are on the same folder than the ``meta.json`` file.
+This can either be provided as a python `dict` object or as a JSON file, and it
+mush have the following schema:
+
+Top Level
+^^^^^^^^^
+
+At the topmost level of the **Metadata** dictionary, there is only one element:
 
 :Tables:
-    List of tables in the dataset. Each table should have
+    List of tables in the dataset, each one represented as a subdocument.
 
-Table details
-^^^^^^^^^^^^^
+Table
+^^^^^
 
 A node ``table`` should be made for each table in our dataset. It contains the configuration on
 how to handle this table. It has the following elements:
@@ -68,10 +75,9 @@ how to handle this table. It has the following elements:
         {
             "fields": [...],
             "headers": true,
-            "name": "DEMO_CUSTOMERS",
-            "path": "customers.csv",
-            "primary_key": "CUSTOMER_ID",
-            "use": true
+            "name": "users",
+            "path": "users.csv",
+            "primary_key": "user_id"
         },
         ...
     ]
@@ -80,33 +86,56 @@ how to handle this table. It has the following elements:
     List of fields of the table.
 
 :Headers:
-    Whether or not load the headers from the csv file.
+    Whether or not load the headers from the csv file. This can be skipped if the
+    data is being passed as ``pandas.DataFrames``.
 
 :Name:
     Name of the table.
 
 :Path:
-    Relative path to the ``.csv`` file from the data root folder.
+    Relative path to the ``.csv`` file from the data root folder. This can be skipped if the
+    data is being passed as ``pandas.DataFrames``.
 
 :Primary_key:
     Name of the field that act as a primary key of the table.
 
 :Use:
-    Wheter or not use this table when sampling.
+    Optional. If set to false, skip this table when modeling and sampling the dataset.
 
 
 Field details
 ^^^^^^^^^^^^^
+
+Each field within a table needs to have its name, its type and sometimes its subtype
+specified.
+
+The available types and subtypes are in this table:
+
++---------------+---------------+
+| Type          | Subtype       |
++===============+===============+
+| numerical     | integer       |
++---------------+---------------+
+| numerical     | float         |
++---------------+---------------+
+| datetime      | datetime      |
++---------------+---------------+
+| categorical   |               |
++---------------+---------------+
+| boolean       |               |
++---------------+---------------+
+| id            | integer       |
++---------------+---------------+
+| id            | string        |
++---------------+---------------+
 
 .. code-block:: python
 
     "tables": [{
         "fields": [
             {
-                "name": "CREDIT_LIMIT",
-                "subtype": "integer",
-                "type": "number",
-                "uniques": 0
+                "name": "country",
+                "type": "categorical"
             },
             ...
         ],
@@ -116,29 +145,11 @@ Field details
 :Name:
     Name of the field.
 
-:Uniques:
-    Number of unique values in this field.
-
 :Type:
-    The type of the field. See table below.
+    The type of the field.
 
 :Subtype:
-    The subtype of the field. See table below
-
-
-+---------------+---------------+
-| Type          | Subtype       |
-+===============+===============+
-| number        | integer       |
-+---------------+---------------+
-| number        | float         |
-+---------------+---------------+
-| datetime      | datetime      |
-+---------------+---------------+
-| categorical   | categorical   |
-+---------------+---------------+
-| categorical   | boolean       |
-+---------------+---------------+
+    Optional. The subtype of the field.
 
 Datetime fields
 """""""""""""""
@@ -151,10 +162,9 @@ For  ``datetime`` types, a ``format`` key should be included containing the date
     "tables": [{
         "fields": [
             {
-                "name": "timestamp_first_active",
+                "name": "timestamp",
                 "type": "datetime",
-                "format": "%Y%m%d%H%M%S",
-                "uniques": 213451
+                "format": "%Y-%m-%d"
             },
             ...
         ],
@@ -176,15 +186,16 @@ the following keys.
             {
                 'name': 'social_scurity_number',
                 'type': 'categorical',
-                'pii': True, # expected a bool
-                'pii_category': 'ssn' # expected a string
+                'pii': True,
+                'pii_category': 'ssn'
             },
             ...
         ],
         ...
     }]
 
-The most common supported values of ``pii_category`` are:
+The most common supported values of ``pii_category`` are in the following table,
+but any value supported by faker can be used:
 
 +---------------------------+
 | name                      |
@@ -202,25 +213,42 @@ The most common supported values of ``pii_category`` are:
 | credit_card_security_code |
 +---------------------------+
 
-But any value supported by faker can be used. A full list can be found here: `Faker`_
+For a full list of available categories please check the `Faker documentation site`_
 
+.. note:: Sometime ``Faker`` categories admit a `type`, which can be passed as an additional
+          argument. If that is the case, you set a ``list`` containing both the category and
+          the type instead of only the string: ``'pii_category': ['credict_card_number', 'visa']``
 
 Primary key fields
 """"""""""""""""""
 
-If a field is specified as a ``primary_key`` of the table, then a key ``regex`` matching its format
-should be included.
+If a field is specified as a ``primary_key`` of the table, then the field must be of type ``id``:
 
 .. code-block:: python
 
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID",
-                "subtype": "integer",
-                "type": "number",
-                "uniques": 0,
-                "regex": "^[0-9]{10}$"
+                "name": "user_id",
+                "type": "id"
+            },
+            ...
+        ],
+        ...
+    }]
+
+If the subtype of the primary key is integer, an optional regular expression can be passed to
+generate keys that match it:
+
+.. code-block:: python
+
+    "tables": [{
+        "fields": [
+            {
+                "name": "user_id",
+                "type": "id",
+                "subtype": "string",
+                "regex": "[a-zA-Z]{10}"
             },
             ...
         ],
@@ -231,50 +259,29 @@ should be included.
 Foreign key fields
 """"""""""""""""""
 
-If a field is a foreign key to another table, then it has to be specified using the ``ref``.
+If a field is a foreign key to another table, then it has to also be of type ``id``, and
+define define a relationship using the ``ref`` field:
 
 .. code-block:: python
 
     "tables": [{
         "fields": [
             {
-                "name": "CUSTOMER_ID",
+                "name": "user_id",
                 "ref": {
-                    "field": "CUSTOMER_ID",
-                    "table": "DEMO_CUSTOMERS"
+                    "field": "user_id",
+                    "table": "users"
                 },
-                "subtype": "integer",
-                "type": "number",
-                "uniques": 0
+                "type": "id"
             },
             ...
         ],
         ...
     }]
 
-:table: Origin table name.
-:field: Origin table field name.
+:table: Parent table name.
+:field: Parent table field name.
 
 
-Examples
-^^^^^^^^
-A full working example can be found on the `tests`_ folder.
-
-
-Sampling new data
------------------
-To use SDV in a project
-
-.. code-block:: python
-
-    >>> from sdv import SDV
-
-    >>> vault = SDV('meta.json')
-    >>> vault.fit()
-    >>> vault.sample()
-
-
-.. _RDT: https://github.com/HDI-Project/RDT
 .. _strftime: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
-.. _tests: https://github.com/HDI-Project/SDV/blob/master/tests/data/meta.json
-.. _Faker: https://faker.readthedocs.io/en/master/providers.html
+.. _Faker documentation site: https://faker.readthedocs.io/en/master/providers.html
