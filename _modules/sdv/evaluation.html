@@ -231,12 +231,16 @@
     <span class="sd">&quot;&quot;&quot;Compute the descriptor values for the given tables.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        real(pandas.DataFrame): Real data.</span>
-<span class="sd">        synth(pandas.DataFrame): Synthesized data.</span>
-<span class="sd">        descriptor(callable or str): Callable that accepts columns and returns real-values.</span>
+<span class="sd">        real (pandas.DataFrame):</span>
+<span class="sd">            Real data.</span>
+<span class="sd">        synth (pandas.DataFrame):</span>
+<span class="sd">            Synthesized data.</span>
+<span class="sd">        descriptor (callable or str):</span>
+<span class="sd">            Callable that accepts columns and returns real-values.</span>
 
 <span class="sd">    Return:</span>
-<span class="sd">        pandas.DataFrame: It will contain the descriptor output for each column as columns.</span>
+<span class="sd">        pandas.DataFrame:</span>
+<span class="sd">            It will contain the descriptor output for each column as columns.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">real_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -260,9 +264,12 @@
     <span class="sd">&quot;&quot;&quot;Score the synthesized data using the given metrics and descriptors.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        real(pandas.DataFrame): Table of real data.</span>
-<span class="sd">        synth(pandas.DataFrame): Table of synthesized data.</span>
-<span class="sd">        descriptors(dict[str, callable]): Dictionary of descriptors.</span>
+<span class="sd">        real (pandas.DataFrame):</span>
+<span class="sd">            Table of real data.</span>
+<span class="sd">        synth (pandas.DataFrame):</span>
+<span class="sd">            Table of synthesized data.</span>
+<span class="sd">        descriptors (dict[str, callable]):</span>
+<span class="sd">            Dictionary of descriptors.</span>
 
 <span class="sd">    Return:</span>
 <span class="sd">        pandas.DataFrame:</span>
@@ -283,13 +290,13 @@
     <span class="sd">&quot;&quot;&quot;Compute stats metric for all tables.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        real(dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">        real (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
 <span class="sd">            Map of names and tables of real data.</span>
-<span class="sd">        synth(dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
 <span class="sd">            Map of names and tables of synthesized data.</span>
-<span class="sd">        descriptors(list[callable]):</span>
+<span class="sd">        descriptors (list[callable]):</span>
 <span class="sd">            List of descriptors.</span>
-<span class="sd">        metrics(list[callable]):</span>
+<span class="sd">        metrics (list[callable]):</span>
 <span class="sd">            List of metrics.</span>
 
 <span class="sd">    Return:</span>
