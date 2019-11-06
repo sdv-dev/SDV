@@ -8,20 +8,12 @@ __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
 __version__ = '0.1.3-dev'
 
-import logging
-
-from sdv.data_navigator import CSVDataLoader, DataLoader, DataNavigator
-from sdv.modeler import Modeler
-from sdv.sampler import Sampler
+from sdv.demo import load_demo
+from sdv.metadata import Metadata
 from sdv.sdv import SDV
 
 __all__ = (
-    'CSVDataLoader',
-    'DataLoader',
-    'DataNavigator',
-    'Modeler',
+    'load_demo',
+    'Metadata',
     'SDV',
-    'Sampler',
 )
-
-logging.getLogger('btb').addHandler(logging.NullHandler())

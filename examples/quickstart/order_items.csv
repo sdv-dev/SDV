@@ -1,4 +1,4 @@
-ORDER_ITEM_ID,ORDER_ID,PRODUCT_ID,UNIT_PRICE,QUANTITY
+order_item_id,order_id,product_id,unit_price,quantity
 100,10,7,52,8
 101,8,6,125,4
 102,1,6,125,4
