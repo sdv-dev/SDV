@@ -10,7 +10,7 @@
    :caption: Advanced Usage
    :maxdepth: 3
 
-   usage
+   metadata
 
 .. toctree::
    :caption: Resources
