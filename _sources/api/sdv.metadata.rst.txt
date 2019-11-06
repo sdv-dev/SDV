@@ -1,0 +1,7 @@
+sdv.metadata module
+===================
+
+.. automodule:: sdv.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:

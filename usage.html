@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Usage &mdash; SDV 0.1.3-dev documentation</title>
+  <title>Metadata &mdash; SDV 0.1.3-dev documentation</title>
   
 
   
@@ -37,8 +37,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="api_reference.html" />
-    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+    <link rel="next" title="sdv package" href="api/sdv.html" />
+    <link rel="prev" title="SDV - Synthetic Data Vault" href="readme.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,43 +82,97 @@
               
             
             
-              <p class="caption"><span class="caption-text">Getting Started</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPi</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#development-setup">Development Setup</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">SDV - Synthetic Data Vault</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#overview">Overview</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#install">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-with-pip">Install with pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-from-source">Install from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-for-development">Install for Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#data-requirements">Data Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#metadata">Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#load-some-data">1. Load some data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#create-and-fit-an-sdv-instance">2. Create and fit an SDV instance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#sample-data">3. Sample data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#what-s-next">What’s next?</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#preparation-of-the-data">Preparation of the data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#metadata-file-specification">Metadata file specification</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#table-details">Table details</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#field-details">Field details</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#primary-key-fields">Primary key fields</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#foreign-key-fields">Foreign key fields</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#sampling-new-data">Sampling new data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#top-level">Top Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#field-details">Field details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#foreign-key-fields">Foreign key fields</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption"><span class="caption-text">References</span></p>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Resources</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/sdv.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.evaluation.html">sdv.evaluation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.evaluation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.metadata.html">sdv.metadata module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.modeler.html">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.sampler.html">sdv.sampler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.sdv.html">sdv.sdv module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#module-sdv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#types-of-contributions">Types of Contributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#report-bugs">Report Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#fix-bugs">Fix Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#implement-features">Implement Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#write-documentation">Write Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#submit-feedback">Submit Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#get-started">Get Started!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#release-workflow">Release Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contributing.html#release-candidates">Release Candidates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="history.html#id1">0.1.2 - 2019-09-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="history.html#new-features">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="history.html#general-improvements">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="history.html#bugs-fixed">Bugs fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history.html#first-release">0.1.0 - First Release</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -164,7 +218,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Usage</li>
+      <li>Metadata</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -185,70 +239,78 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="preparation-of-the-data">
-<h2>Preparation of the data<a class="headerlink" href="#preparation-of-the-data" title="Permalink to this headline">¶</a></h2>
-<p>SDV is used to model and sample data from relational datasets along with their relational
-behaviors. To do so it needs the data in a format in which it can process their relationships.</p>
-<p>To prepare a dataset to work with SDV you need to do the following:</p>
-<ol class="arabic simple">
-<li><p>Dump your tables in <code class="docutils literal notranslate"><span class="pre">.csv</span></code> files, named after them. There have to be <strong>one single file</strong> for
-table.</p></li>
-<li><p>Create a <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file with the specification of your dataset.</p></li>
-<li><p>Load it with <code class="docutils literal notranslate"><span class="pre">SDV</span></code></p></li>
-</ol>
-</div>
-<div class="section" id="metadata-file-specification">
-<h2>Metadata file specification<a class="headerlink" href="#metadata-file-specification" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> is a file containing a single JSON with all the information SDV requires to
-work, its base schema is as follows:</p>
+  <div class="section" id="metadata">
+<h1>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h1>
+<p>In order to have <strong>SDV</strong> process your dataset, you will need its <strong>Metadata</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span>
             <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="s2">&quot;regex&quot;</span><span class="p">:</span> <span class="s2">&quot;^[0-9]{10}$&quot;</span>
-                <span class="p">},</span>
-                <span class="o">...</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;gender&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;numerical&quot;</span><span class="p">,</span> <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">}</span>
             <span class="p">],</span>
-            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;customers.csv&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;use&quot;</span><span class="p">:</span> <span class="n">true</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;users&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;users.csv&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span>
         <span class="p">},</span>
-        <span class="o">...</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;session_id&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;ref&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;users&quot;</span><span class="p">},</span>
+                <span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;device&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;os&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sessions&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;sessions.csv&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;session_id&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;transaction_id&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;session_id&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;ref&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;session_id&quot;</span><span class="p">,</span> <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;sessions&quot;</span><span class="p">},</span>
+                <span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;amount&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;numerical&quot;</span><span class="p">,</span> <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;boolean&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;transactions&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;transactions.csv&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;transaction_id&quot;</span>
+        <span class="p">}</span>
     <span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>This can either be provided as a python <cite>dict</cite> object or as a JSON file, and it
+mush have the following schema:</p>
+<div class="section" id="top-level">
+<h2>Top Level<a class="headerlink" href="#top-level" title="Permalink to this headline">¶</a></h2>
+<p>At the topmost level of the <strong>Metadata</strong> dictionary, there is only one element:</p>
 <dl class="field-list simple">
-<dt class="field-odd">Path</dt>
-<dd class="field-odd"><p>Relative path from this file to the root folder of the datasets. Leave empty if the
-datasets are on the same folder than the <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> file.</p>
-</dd>
-<dt class="field-even">Tables</dt>
-<dd class="field-even"><p>List of tables in the dataset. Each table should have</p>
+<dt class="field-odd">Tables</dt>
+<dd class="field-odd"><p>List of tables in the dataset, each one represented as a subdocument.</p>
 </dd>
 </dl>
-<div class="section" id="table-details">
-<h3>Table details<a class="headerlink" href="#table-details" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="table">
+<h2>Table<a class="headerlink" href="#table" title="Permalink to this headline">¶</a></h2>
 <p>A node <code class="docutils literal notranslate"><span class="pre">table</span></code> should be made for each table in our dataset. It contains the configuration on
 how to handle this table. It has the following elements:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
         <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
         <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;customers.csv&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;use&quot;</span><span class="p">:</span> <span class="n">true</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;users&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;users.csv&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;primary_key&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span>
     <span class="p">},</span>
     <span class="o">...</span>
 <span class="p">]</span>
@@ -259,52 +321,29 @@ how to handle this table. It has the following elements:</p>
 <dd class="field-odd"><p>List of fields of the table.</p>
 </dd>
 <dt class="field-even">Headers</dt>
-<dd class="field-even"><p>Whether or not load the headers from the csv file.</p>
+<dd class="field-even"><p>Whether or not load the headers from the csv file. This can be skipped if the
+data is being passed as <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code>.</p>
 </dd>
 <dt class="field-odd">Name</dt>
 <dd class="field-odd"><p>Name of the table.</p>
 </dd>
 <dt class="field-even">Path</dt>
-<dd class="field-even"><p>Relative path to the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file from the data root folder.</p>
+<dd class="field-even"><p>Relative path to the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> file from the data root folder. This can be skipped if the
+data is being passed as <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code>.</p>
 </dd>
 <dt class="field-odd">Primary_key</dt>
 <dd class="field-odd"><p>Name of the field that act as a primary key of the table.</p>
 </dd>
 <dt class="field-even">Use</dt>
-<dd class="field-even"><p>Wheter or not use this table when sampling.</p>
+<dd class="field-even"><p>Optional. If set to false, skip this table when modeling and sampling the dataset.</p>
 </dd>
 </dl>
 </div>
 <div class="section" id="field-details">
-<h3>Field details<a class="headerlink" href="#field-details" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
-    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CREDIT_LIMIT&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="p">},</span>
-        <span class="o">...</span>
-    <span class="p">],</span>
-    <span class="o">...</span>
-<span class="p">}]</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Name</dt>
-<dd class="field-odd"><p>Name of the field.</p>
-</dd>
-<dt class="field-even">Uniques</dt>
-<dd class="field-even"><p>Number of unique values in this field.</p>
-</dd>
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>The type of the field. See table below.</p>
-</dd>
-<dt class="field-even">Subtype</dt>
-<dd class="field-even"><p>The subtype of the field. See table below</p>
-</dd>
-</dl>
+<h2>Field details<a class="headerlink" href="#field-details" title="Permalink to this headline">¶</a></h2>
+<p>Each field within a table needs to have its name, its type and sometimes its subtype
+specified.</p>
+<p>The available types and subtypes are in this table:</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 50%" />
@@ -316,34 +355,62 @@ how to handle this table. It has the following elements:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>number</p></td>
+<tr class="row-even"><td><p>numerical</p></td>
 <td><p>integer</p></td>
 </tr>
-<tr class="row-odd"><td><p>number</p></td>
+<tr class="row-odd"><td><p>numerical</p></td>
 <td><p>float</p></td>
 </tr>
 <tr class="row-even"><td><p>datetime</p></td>
 <td><p>datetime</p></td>
 </tr>
 <tr class="row-odd"><td><p>categorical</p></td>
-<td><p>categorical</p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p>categorical</p></td>
-<td><p>boolean</p></td>
+<tr class="row-even"><td><p>boolean</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>id</p></td>
+<td><p>integer</p></td>
+</tr>
+<tr class="row-even"><td><p>id</p></td>
+<td><p>string</p></td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;country&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Name</dt>
+<dd class="field-odd"><p>Name of the field.</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>The type of the field.</p>
+</dd>
+<dt class="field-odd">Subtype</dt>
+<dd class="field-odd"><p>Optional. The subtype of the field.</p>
+</dd>
+</dl>
 <div class="section" id="datetime-fields">
-<h4>Datetime fields<a class="headerlink" href="#datetime-fields" title="Permalink to this headline">¶</a></h4>
+<h3>Datetime fields<a class="headerlink" href="#datetime-fields" title="Permalink to this headline">¶</a></h3>
 <p>For  <code class="docutils literal notranslate"><span class="pre">datetime</span></code> types, a <code class="docutils literal notranslate"><span class="pre">format</span></code> key should be included containing the date format using
 <a class="reference external" href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior">strftime</a> format.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
     <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp_first_active&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">213451</span>
+            <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span>
         <span class="p">},</span>
         <span class="o">...</span>
     <span class="p">],</span>
@@ -353,7 +420,7 @@ how to handle this table. It has the following elements:</p>
 </div>
 </div>
 <div class="section" id="categorical-fields-data-anonymization">
-<h4>Categorical fields ( Data anonymization)<a class="headerlink" href="#categorical-fields-data-anonymization" title="Permalink to this headline">¶</a></h4>
+<h3>Categorical fields ( Data anonymization)<a class="headerlink" href="#categorical-fields-data-anonymization" title="Permalink to this headline">¶</a></h3>
 <p>For <code class="docutils literal notranslate"><span class="pre">categorical</span></code> types, there is an option to anonymize data labeled as Personally Identifiable
 Information, <code class="docutils literal notranslate"><span class="pre">pii</span></code>, but keeping its statistical properties. To anonymize a field, you should use
 the following keys.</p>
@@ -362,8 +429,8 @@ the following keys.</p>
         <span class="p">{</span>
             <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;social_scurity_number&#39;</span><span class="p">,</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;pii&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="c1"># expected a bool</span>
-            <span class="s1">&#39;pii_category&#39;</span><span class="p">:</span> <span class="s1">&#39;ssn&#39;</span> <span class="c1"># expected a string</span>
+            <span class="s1">&#39;pii&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="s1">&#39;pii_category&#39;</span><span class="p">:</span> <span class="s1">&#39;ssn&#39;</span>
         <span class="p">},</span>
         <span class="o">...</span>
     <span class="p">],</span>
@@ -371,7 +438,8 @@ the following keys.</p>
 <span class="p">}]</span>
 </pre></div>
 </div>
-<p>The most common supported values of <code class="docutils literal notranslate"><span class="pre">pii_category</span></code> are:</p>
+<p>The most common supported values of <code class="docutils literal notranslate"><span class="pre">pii_category</span></code> are in the following table,
+but any value supported by faker can be used:</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 100%" />
@@ -393,20 +461,38 @@ the following keys.</p>
 </tr>
 </tbody>
 </table>
-<p>But any value supported by faker can be used. A full list can be found here: <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker</a></p>
+<p>For a full list of available categories please check the <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker documentation site</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Sometime <code class="docutils literal notranslate"><span class="pre">Faker</span></code> categories admit a <cite>type</cite>, which can be passed as an additional
+argument. If that is the case, you set a <code class="docutils literal notranslate"><span class="pre">list</span></code> containing both the category and
+the type instead of only the string: <code class="docutils literal notranslate"><span class="pre">'pii_category':</span> <span class="pre">['credict_card_number',</span> <span class="pre">'visa']</span></code></p>
+</div>
 </div>
 <div class="section" id="primary-key-fields">
-<h4>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h4>
-<p>If a field is specified as a <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> of the table, then a key <code class="docutils literal notranslate"><span class="pre">regex</span></code> matching its format
-should be included.</p>
+<h3>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h3>
+<p>If a field is specified as a <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> of the table, then the field must be of type <code class="docutils literal notranslate"><span class="pre">id</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
     <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="s2">&quot;regex&quot;</span><span class="p">:</span> <span class="s2">&quot;^[0-9]{10}$&quot;</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="o">...</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<p>If the subtype of the primary key is integer, an optional regular expression can be passed to
+generate keys that match it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;regex&quot;</span><span class="p">:</span> <span class="s2">&quot;[a-zA-Z]{10}&quot;</span>
         <span class="p">},</span>
         <span class="o">...</span>
     <span class="p">],</span>
@@ -416,19 +502,18 @@ should be included.</p>
 </div>
 </div>
 <div class="section" id="foreign-key-fields">
-<h4>Foreign key fields<a class="headerlink" href="#foreign-key-fields" title="Permalink to this headline">¶</a></h4>
-<p>If a field is a foreign key to another table, then it has to be specified using the <code class="docutils literal notranslate"><span class="pre">ref</span></code>.</p>
+<h3>Foreign key fields<a class="headerlink" href="#foreign-key-fields" title="Permalink to this headline">¶</a></h3>
+<p>If a field is a foreign key to another table, then it has to also be of type <code class="docutils literal notranslate"><span class="pre">id</span></code>, and
+define define a relationship using the <code class="docutils literal notranslate"><span class="pre">ref</span></code> field:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">[{</span>
     <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span>
             <span class="s2">&quot;ref&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;CUSTOMER_ID&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;DEMO_CUSTOMERS&quot;</span>
+                <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;users&quot;</span>
             <span class="p">},</span>
-            <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;uniques&quot;</span><span class="p">:</span> <span class="mi">0</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span>
         <span class="p">},</span>
         <span class="o">...</span>
     <span class="p">],</span>
@@ -438,28 +523,12 @@ should be included.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">table</dt>
-<dd class="field-odd"><p>Origin table name.</p>
+<dd class="field-odd"><p>Parent table name.</p>
 </dd>
 <dt class="field-even">field</dt>
-<dd class="field-even"><p>Origin table field name.</p>
+<dd class="field-even"><p>Parent table field name.</p>
 </dd>
 </dl>
-</div>
-</div>
-<div class="section" id="examples">
-<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
-<p>A full working example can be found on the <a class="reference external" href="https://github.com/HDI-Project/SDV/blob/master/tests/data/meta.json">tests</a> folder.</p>
-</div>
-</div>
-<div class="section" id="sampling-new-data">
-<h2>Sampling new data<a class="headerlink" href="#sampling-new-data" title="Permalink to this headline">¶</a></h2>
-<p>To use SDV in a project</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">(</span><span class="s1">&#39;meta.json&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vault</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
-</pre></div>
 </div>
 </div>
 </div>
@@ -472,10 +541,10 @@ should be included.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="api/sdv.html" class="btn btn-neutral float-right" title="sdv package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="readme.html" class="btn btn-neutral float-left" title="SDV - Synthetic Data Vault" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

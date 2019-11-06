@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sdv.evaluation package &mdash; SDV 0.1.3-dev documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../_static/dai-logo-white.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdv.evaluation.descriptors module" href="sdv.evaluation.descriptors.html" />
+    <link rel="prev" title="sdv package" href="sdv.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SDV
+          
+
+          
+            
+            <img src="../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">SDV - Synthetic Data Vault</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#install">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-with-pip">Install with pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-from-source">Install from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-for-development">Install for Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#data-requirements">Data Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#metadata">Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#load-some-data">1. Load some data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#create-and-fit-an-sdv-instance">2. Create and fit an SDV instance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#sample-data">3. Sample data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#what-s-next">What’s next?</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Advanced Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#top-level">Top Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#field-details">Field details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Resources</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.evaluation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sdv.evaluation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.sdv.html">sdv.sdv module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#module-sdv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#types-of-contributions">Types of Contributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#report-bugs">Report Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#fix-bugs">Fix Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#implement-features">Implement Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#write-documentation">Write Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#submit-feedback">Submit Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#get-started">Get Started!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#release-workflow">Release Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#release-candidates">Release Candidates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id1">0.1.2 - 2019-09-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#new-features">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#general-improvements">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#bugs-fixed">Bugs fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#first-release">0.1.0 - First Release</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="sdv.html">sdv package</a> &raquo;</li>
+        
+      <li>sdv.evaluation package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.evaluation.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="sdv-evaluation-package">
+<h1>sdv.evaluation package<a class="headerlink" href="#sdv-evaluation-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.descriptors.html">sdv.evaluation.descriptors module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.metrics.html">sdv.evaluation.metrics module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-sdv.evaluation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sdv.evaluation" title="Permalink to this headline">¶</a></h2>
+<p>Tools for evaluate the synthesized data.</p>
+<p>The main function in this module is <cite>evaluate</cite> whose usage has been shown in the README.</p>
+<p><code class="docutils literal notranslate"><span class="pre">evaluate</span></code> works by using a series of descriptors on each column for both datasets, and
+then applying metrics on the generated descriptors.</p>
+<p>A descriptor is a function <code class="docutils literal notranslate"><span class="pre">descriptor(column:</span> <span class="pre">pandas.Series)</span> <span class="pre">-&gt;</span> <span class="pre">pandas.Series</span></code> whose input and
+return value are <code class="docutils literal notranslate"><span class="pre">pandas.Series</span></code>.</p>
+<p>A metric is a function <code class="docutils literal notranslate"><span class="pre">metric(expected:</span> <span class="pre">numpy.ndarray,</span> <span class="pre">observed:</span> <span class="pre">numpy.ndarray)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code> that
+takes to numpy arrays and returns a float.</p>
+<p>So, if you want to use <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> with your custom descriptors and/or metrics, you can
+call it with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_descriptor_function</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
+   <span class="c1"># All necessary steps here</span>
+   <span class="k">return</span> <span class="n">description</span>
+
+<span class="k">def</span> <span class="nf">my_custom_metric</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">):</span>
+   <span class="c1"># All necessary steps here</span>
+   <span class="k">return</span> <span class="n">metric</span>
+
+<span class="n">my_descriptors</span> <span class="o">=</span> <span class="p">[</span>
+   <span class="n">my_descriptor_function</span>
+<span class="p">]</span>
+
+<span class="n">my_metrics</span> <span class="o">=</span> <span class="p">[</span>
+   <span class="n">my_custom_metric</span>
+<span class="p">]</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="n">my_descriptors</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">my_metrics</span><span class="p">)</span>
+
+    <span class="n">my_custom_metric</span>   <span class="mf">6.040444e+32</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+</pre></div>
+</div>
+<p><strong>Functions</strong></p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.evaluate" title="sdv.evaluation.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(real, synth[, descriptors, metrics])</p></td>
+<td><p>Compute stats metric for all tables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.evaluation.get_descriptor_values" title="sdv.evaluation.get_descriptor_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_descriptor_values</span></code></a>(real, synth, descriptor)</p></td>
+<td><p>Compute the descriptor values for the given tables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.get_descriptors_table" title="sdv.evaluation.get_descriptors_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_descriptors_table</span></code></a>(real, synth[, descriptors])</p></td>
+<td><p>Score the synthesized data using the given metrics and descriptors.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="function">
+<dt id="sdv.evaluation.evaluate">
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptors=dict_values([&lt;function mean&gt;</em>, <em class="sig-param">&lt;function std&gt;</em>, <em class="sig-param">&lt;function skew&gt;</em>, <em class="sig-param">&lt;function kurtosis&gt;</em>, <em class="sig-param">&lt;function categorical_distribution&gt;])</em>, <em class="sig-param">metrics=(&lt;function mse&gt;</em>, <em class="sig-param">&lt;function rmse&gt;</em>, <em class="sig-param">&lt;function r2_score&gt;)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute stats metric for all tables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>real</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data.</p></li>
+<li><p><strong>synth</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data.</p></li>
+<li><p><strong>descriptors</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of descriptors.</p></li>
+<li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of metrics.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>It has the metrics as index, and the scores as values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdv.evaluation.get_descriptor_values">
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">get_descriptor_values</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#get_descriptor_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.get_descriptor_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the descriptor values for the given tables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>real</strong> (<em>pandas.DataFrame</em>) – Real data.</p></li>
+<li><p><strong>synth</strong> (<em>pandas.DataFrame</em>) – Synthesized data.</p></li>
+<li><p><strong>descriptor</strong> (<em>callable</em><em> or </em><em>str</em>) – Callable that accepts columns and returns real-values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>It will contain the descriptor output for each column as columns.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdv.evaluation.get_descriptors_table">
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">get_descriptors_table</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptors={'categorical_distribution': &lt;function categorical_distribution&gt;</em>, <em class="sig-param">'kurtosis': &lt;function kurtosis&gt;</em>, <em class="sig-param">'mean': &lt;function mean&gt;</em>, <em class="sig-param">'skew': &lt;function skew&gt;</em>, <em class="sig-param">'std': &lt;function std&gt;}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#get_descriptors_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.get_descriptors_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Score the synthesized data using the given metrics and descriptors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>real</strong> (<em>pandas.DataFrame</em>) – Table of real data.</p></li>
+<li><p><strong>synth</strong> (<em>pandas.DataFrame</em>) – Table of synthesized data.</p></li>
+<li><p><strong>descriptors</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>callable</em><em>]</em>) – Dictionary of descriptors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2-column DataFrame whose index the name of the descriptors applied to the tables.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sdv.evaluation.descriptors.html" class="btn btn-neutral float-right" title="sdv.evaluation.descriptors module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sdv.html" class="btn btn-neutral float-left" title="sdv package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

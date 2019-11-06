@@ -1,0 +1,18 @@
+sdv.evaluation package
+======================
+
+Submodules
+----------
+
+.. toctree::
+
+   sdv.evaluation.descriptors
+   sdv.evaluation.metrics
+
+Module contents
+---------------
+
+.. automodule:: sdv.evaluation
+   :members:
+   :undoc-members:
+   :show-inheritance:

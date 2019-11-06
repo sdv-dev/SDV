@@ -1,0 +1,7 @@
+sdv.demo module
+===============
+
+.. automodule:: sdv.demo
+   :members:
+   :undoc-members:
+   :show-inheritance:

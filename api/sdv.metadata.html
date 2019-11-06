@@ -1,0 +1,566 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sdv.metadata module &mdash; SDV 0.1.3-dev documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../_static/dai-logo-white.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdv.modeler module" href="sdv.modeler.html" />
+    <link rel="prev" title="sdv.demo module" href="sdv.demo.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SDV
+          
+
+          
+            
+            <img src="../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">SDV - Synthetic Data Vault</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#install">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-with-pip">Install with pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-from-source">Install from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-for-development">Install for Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#data-requirements">Data Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#metadata">Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#load-some-data">1. Load some data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#create-and-fit-an-sdv-instance">2. Create and fit an SDV instance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#sample-data">3. Sample data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#what-s-next">What’s next?</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Advanced Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#top-level">Top Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#field-details">Field details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../usage.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Resources</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.metadata module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.sdv.html">sdv.sdv module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#module-sdv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#types-of-contributions">Types of Contributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#report-bugs">Report Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#fix-bugs">Fix Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#implement-features">Implement Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#write-documentation">Write Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#submit-feedback">Submit Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#get-started">Get Started!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#release-workflow">Release Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#release-candidates">Release Candidates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id1">0.1.2 - 2019-09-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#new-features">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#general-improvements">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#bugs-fixed">Bugs fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#first-release">0.1.0 - First Release</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="sdv.html">sdv package</a> &raquo;</li>
+        
+      <li>sdv.metadata module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.metadata.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sdv.metadata">
+<span id="sdv-metadata-module"></span><h1>sdv.metadata module<a class="headerlink" href="#module-sdv.metadata" title="Permalink to this headline">¶</a></h1>
+<p><strong>Classes</strong></p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata" title="sdv.metadata.Metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Metadata</span></code></a>(metadata[, root_path])</p></td>
+<td><p>Dataset Metadata.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="sdv.metadata.Metadata">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.metadata.</code><code class="sig-name descname">Metadata</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">root_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Dataset Metadata.</p>
+<p>The Metadata class provides a unified layer of abstraction over the dataset
+metadata, which includes both the necessary details to load the data from
+the hdd and to know how to parse and transform it to numerical data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metadata</strong> (<em>str</em><em> or </em><em>dict</em>) – Path to a <code class="docutils literal notranslate"><span class="pre">json</span></code> file that contains the metadata or a <code class="docutils literal notranslate"><span class="pre">dict</span></code> representation
+of <code class="docutils literal notranslate"><span class="pre">metadata</span></code> following the same structure.</p></li>
+<li><p><strong>root_path</strong> (<em>str</em>) – The path where the <code class="docutils literal notranslate"><span class="pre">metadata.json</span></code> is located. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Methods</strong></p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_children" title="sdv.metadata.Metadata.get_children"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_children</span></code></a>(table_name)</p></td>
+<td><p>Get table children.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_fields" title="sdv.metadata.Metadata.get_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fields</span></code></a>(table_name)</p></td>
+<td><p>Get table fields metadata.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_foreign_key" title="sdv.metadata.Metadata.get_foreign_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_foreign_key</span></code></a>(parent, child)</p></td>
+<td><p>Get table foreign key field name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_parents" title="sdv.metadata.Metadata.get_parents"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parents</span></code></a>(table_name)</p></td>
+<td><p>Get table parents.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_primary_key" title="sdv.metadata.Metadata.get_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_primary_key</span></code></a>(table_name)</p></td>
+<td><p>Get the primary key name of the indicated table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_table_meta" title="sdv.metadata.Metadata.get_table_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_meta</span></code></a>(table_name)</p></td>
+<td><p>Get the metadata  dict for a table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_table_names" title="sdv.metadata.Metadata.get_table_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_names</span></code></a>()</p></td>
+<td><p>Get the list of table names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_tables" title="sdv.metadata.Metadata.get_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tables</span></code></a>([tables])</p></td>
+<td><p>Get a dictionary with data from multiple tables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.load_table" title="sdv.metadata.Metadata.load_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_table</span></code></a>(table_name)</p></td>
+<td><p>Load table data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.reverse_transform" title="sdv.metadata.Metadata.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(table_name, data)</p></td>
+<td><p>Reverse the transformed data for a given table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.transform" title="sdv.metadata.Metadata.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_name, data)</p></td>
+<td><p>Transform data for a given table.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_children">
+<code class="sig-name descname">get_children</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_children"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get table children.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of the table from which to get the children.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Set of children for the given table.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_fields">
+<code class="sig-name descname">get_fields</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_fields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get table fields metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of the table to get the fields from.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Mapping of field names and their metadata dicts.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_foreign_key">
+<code class="sig-name descname">get_foreign_key</code><span class="sig-paren">(</span><em class="sig-param">parent</em>, <em class="sig-param">child</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_foreign_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_foreign_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get table foreign key field name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<em>str</em>) – Name of the parent table.</p></li>
+<li><p><strong>child</strong> (<em>str</em>) – Name of the child table.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Foreign key field name.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the relationship does not exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_parents">
+<code class="sig-name descname">get_parents</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_parents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_parents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get table parents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of the table from which to get the parents.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Set of parents for the given table.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_primary_key">
+<code class="sig-name descname">get_primary_key</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_primary_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_primary_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the primary key name of the indicated table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of table for which to get the primary key field.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Primary key field name. <code class="docutils literal notranslate"><span class="pre">None</span></code> if the table has no primary key.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_table_meta">
+<code class="sig-name descname">get_table_meta</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_table_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_table_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the metadata  dict for a table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of table to get data for.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>table metadata</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_table_names">
+<code class="sig-name descname">get_table_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_table_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_table_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of table names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>table names.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_tables">
+<code class="sig-name descname">get_tables</code><span class="sig-paren">(</span><em class="sig-param">tables=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dictionary with data from multiple tables.</p>
+<p>If a <code class="docutils literal notranslate"><span class="pre">tables</span></code> list is given, only load the indicated tables.
+Otherwise, load all the tables from this metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tables</strong> (<em>list</em>) – List of table names. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>mapping of table names and their data loaded as <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instances.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict(str, pandasd.DataFrame)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.load_table">
+<code class="sig-name descname">load_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.load_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.load_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load table data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Name of the table that we want to load.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DataFrame with the contents of the table.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.reverse_transform">
+<code class="sig-name descname">reverse_transform</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.reverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.reverse_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reverse the transformed data for a given table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to reverse transform.</p></li>
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Data to be reversed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform data for a given table.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">HyperTransformer</span></code> for a table is <code class="docutils literal notranslate"><span class="pre">None</span></code> it is created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table that is being transformer.</p></li>
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Table data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Transformed data.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sdv.modeler.html" class="btn btn-neutral float-right" title="sdv.modeler module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sdv.demo.html" class="btn btn-neutral float-left" title="sdv.demo module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

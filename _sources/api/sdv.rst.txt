@@ -1,0 +1,28 @@
+sdv package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+
+   sdv.evaluation
+
+Submodules
+----------
+
+.. toctree::
+
+   sdv.demo
+   sdv.metadata
+   sdv.modeler
+   sdv.sampler
+   sdv.sdv
+
+Module contents
+---------------
+
+.. automodule:: sdv
+   :members:
+   :undoc-members:
+   :show-inheritance:
