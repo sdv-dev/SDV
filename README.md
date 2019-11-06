@@ -141,9 +141,8 @@ This will return two objects:
         {
             "fields": [
                 {"name": "session_id", "type": "id"},
-                {"name": "user_id", "ref": {
+                {"name": "user_id", "type": "id", "ref": {
                     "field": "user_id", "table": "users"},
-                    "type": "id"
                 },
                 {"name": "device", "type": "categorical"},
                 {"name": "os", "type": "categorical"}
@@ -154,9 +153,8 @@ This will return two objects:
         {
             "fields": [
                 {"name": "transaction_id", "type": "id"},
-                {"name": "session_id", "ref": {
+                {"name": "session_id", "type": "id", "ref": {
                     "field": "session_id", "table": "sessions"},
-                    "type": "id"
                 },
                 {"name": "timestamp", "format": "%Y-%m-%d", "type": "datetime"},
                 {"name": "amount", "type": "numerical", "subtype": "float"},
