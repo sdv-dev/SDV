@@ -90,11 +90,11 @@ for more details about this process.
 comply with the following data requirements:
 
 * All the data columns must be either numerical, categorical, boolean or datatimes. Mixed value
-  types are not supported.
-* All the tables in the dataset can have at most one primary key, which can either be numerical or
-  categorical. Datetime indexes might be supported in future versions.
-* All the tables can have at most one foreign key to a parent table, meaning that each table can
-  have at most **one parent**.
+  types are not supported, but columns **can have null values**.
+* All the tables in the dataset can have **at most one primary key**, which can either be
+  numerical or categorical. Datetime indexes might be supported in future versions.
+* All the tables can have **at most one foreign key to a parent table**, meaning that each table
+  can have at most **one parent**.
 * Tables are either loaded as `pandas.DataFrame` objects or stored as CSV files.
 
 ## Metadata
