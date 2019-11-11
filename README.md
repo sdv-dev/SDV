@@ -10,7 +10,7 @@
 
 # SDV - Synthetic Data Vault
 
-* Free Software: MIT License
+* License: [MIT](https://github.com/HDI-Project/SDV/blob/master/LICENSE)
 * Documentation: https://HDI-Project.github.io/SDV
 * Homepage: https://github.com/HDI-Project/SDV
 
@@ -29,25 +29,9 @@ Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
 interfering with other software installed in the system where **SDV** is run.
 
-These are the minimum commands needed to create a virtualenv using python3.6 for **SDV**:
-
-```bash
-pip install virtualenv
-virtualenv -p $(which python3.6) sdv-venv
-```
-
-Afterwards, you have to execute this command to have the virtualenv activated:
-
-```bash
-source sdv-venv/bin/activate
-```
-
-Remember about executing it every time you start a new console to work on **SDV**!
-
 ## Install with pip
 
-After creating the virtualenv and activating it, we recommend using
-[pip](https://pip.pypa.io/en/stable/) in order to install **SDV**:
+The easiest and recommended way to install **SDV** is using [pip](https://pip.pypa.io/en/stable/):
 
 ```bash
 pip install sdv
@@ -55,53 +39,16 @@ pip install sdv
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
-## Install from source
+If you want to install from source or contribute to the project please read the
+[Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started).
 
-With your virtualenv activated, you can clone the repository and install it from
-source by running `make install` on the `stable` branch:
-
-```bash
-git clone git@github.com:HDI-Project/SDV.git
-cd SDV
-git checkout stable
-make install
-```
-
-## Install for Development
-
-If you want to contribute to the project, a few more steps are required to make the project ready
-for development.
-
-Please head to the [Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started)
-for more details about this process.
-
-# Data Requirements
-
-**SDV** can work with both single table and multi table, relational datasets, as far as they
-comply with the following data requirements:
-
-* All the data columns must be either numerical, categorical, boolean or datatimes. Mixed value
-  types are not supported, but columns **can have null values**.
-* All the tables in the dataset can have **at most one primary key**, which can either be
-  numerical or categorical. Datetime indexes might be supported in future versions.
-* All the tables can have **at most one foreign key to a parent table**, meaning that each table
-  can have at most **one parent**.
-* Tables are either loaded as `pandas.DataFrame` objects or stored as CSV files.
-
-## Metadata
-
-Alongside the actual tables, **SDV** needs to be provided some metadata about the dataset,
-which can either be provided as a python `dict` object or as a JSON file.
-
-For more details about the Metadata format, please refer to [the corresponding section
-of the documentation](https://hdi-project.github.io/SDV/metadata.html)
 
 # Quickstart
 
 In this short tutorial we will guide you through a series of steps that will help you
 getting started using **SDV**.
 
-## 1. Load some data
+## 1. Load example data
 
 **SDV** comes with a toy dataset to play with, which can be loaded using the `sdv.load_demo`
 function:
@@ -158,6 +105,9 @@ This will return two objects:
 }
 ```
 
+For more details about the Metadata format, please refer to [the corresponding section
+of the documentation](https://hdi-project.github.io/SDV/metadata.html)
+
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
 metadata dictionary.
 
@@ -204,15 +154,15 @@ The returned objects contain the following information:
 }
 ```
 
-## 2. Create and fit an SDV instance
+## 2. Model the database using SDV
 
-Before sampling, **SDV** needs to learn about your data in a process called *Database Modeling*.
 
-During this process, **SDV** will walk across all the tables in your dataset learning
-about the table relationships and the probability distributions of their values.
+First, we build a hierarchical statistical model of the data using **SDV**. For this we will
+create an instance of the `sdv.SDV` class and use its `fit` method.
 
-To do this, we create an instance of the `sdv.SDV` class and call its `fit`
-method passing it both the `metadata` and `tables` that we obtained before:
+During this process, **SDV** will traverse across all the tables in your dataset following the
+primary key-foreign key relationships and learn the probability distributions of the values in
+the columns.
 
 ```python
 from sdv import SDV
@@ -221,12 +171,28 @@ sdv = SDV()
 sdv.fit(metadata, tables)
 ```
 
-## 3. Sample data
+Once the modeling has finished, you can save your fitted `SDV` instance for later usage
+using the `save` method of your instance.
 
-Once the modeling has finished, we can sample new data using our fitted `SDV` instance.
+```python
+sdv.save('path/to/sdv.pkl')
+```
 
-In order to do this, we call its `sample_all` method passing the number of rows that we
-want to sample.
+The generated `pkl` file will not include any of the original data in it, so it can be
+safely sent to where the synthetic data will be generated without any privacy concerns.
+
+## 3. Sample data from the model
+
+In order to sample data from the fitted model, we will first need to load it from its
+`pkl` file. Note that you can skip this step if you are running all the steps sequentially
+within the same python session.
+
+```python
+sdv = SDV.load('path/to/sdv.pkl')
+```
+
+After loading the instance, we can sample synthetic data using its `sample_all` method,
+passing the number of rows that we want to generate.
 
 ```python
 samples = sdv.sample_all(5)
@@ -235,13 +201,40 @@ samples = sdv.sample_all(5)
 The output will be a dictionary with the same structure as the original `tables` dict,
 but filled with synthetic data instead of the real one.
 
-**Notice** that only the parent tables of your dataset will have the specified number of rows,
+**Note** that only the parent tables of your dataset will have the specified number of rows,
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.
 
-## What's next?
+# Join out community
 
-If you would like to see more usage examples, please have a look at the [examples folder](
-https://github.com/HDI-Project/SDV/tree/master/examples).
+1 If you would like to see more usage examples, please have a look at the [examples folder](
+https://github.com/HDI-Project/SDV/tree/master/examples) or the repository. Please contact us
+if you have a usage example that you would want to share with the community.
+2. Please head to the [Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started)
+for more details about this process.
+3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
+https://github.com/HDI-Project/SDV/issues)
+4. Also do not forget to check the [project documentation site](https://HDI-Project.github.io/SDV/)!
 
-Also do not forget to check the [project documentation site](https://HDI-Project.github.io/SDV/)!
+# Citation
+
+If you use **SDV** for your research, please consider citing the following paper:
+
+Neha Patki, Roy Wedge, Kalyan Veeramachaneni. [The Synthetic Data Vault](https://dai.lids.mit.edu/wp-content/uploads/2018/03/SDV.pdf). [IEEE DSAA 2016](https://ieeexplore.ieee.org/document/7796926).
+
+```
+@inproceedings{
+    7796926,
+    author={N. {Patki} and R. {Wedge} and K. {Veeramachaneni}},
+    booktitle={2016 IEEE International Conference on Data Science and Advanced Analytics (DSAA)},
+    title={The Synthetic Data Vault},
+    year={2016},
+    volume={},
+    number={},
+    pages={399-410},
+    keywords={data analysis;relational databases;synthetic data vault;SDV;generative model;relational database;multivariate modelling;predictive model;data analysis;data science;Data models;Databases;Computational modeling;Predictive models;Hidden Markov models;Numerical models;Synthetic data generation;crowd sourcing;data science;predictive modeling},
+    doi={10.1109/DSAA.2016.49},
+    ISSN={},
+    month={Oct}
+}
+```
