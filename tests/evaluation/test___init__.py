@@ -1,12 +1,12 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
 import scipy as sp
 
 from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table
-from sdv.evaluation.descriptors import categorical_distribution
+from sdv.evaluation.descriptors import DESCRIPTORS, categorical_distribution
 
 
 class TestGetDescriptorValues(TestCase):
@@ -93,6 +93,39 @@ class TestGetDescriptorValues(TestCase):
 
         # Check
         assert result.equals(expected_result)
+
+    @patch('pandas.concat')
+    def test_raise_type_error(self, concat_mock):
+        """get_descriptor_values raise type error"""
+
+        # Setup
+        def side_effect_descriptor():
+            raise TypeError
+
+        aux = Mock()
+        aux.T = None
+        concat_mock.return_value = aux
+
+        # Run
+        real = pd.DataFrame({'a': [0, 1], 'b': [1, 0]})
+        synth = pd.DataFrame({'a': [0, 1], 'b': [1, 0]})
+
+        descriptor = Mock()
+        descriptor.__name__ = 'foo'
+        descriptor.side_effect = side_effect_descriptor
+
+        get_descriptor_values(real, synth, descriptor)
+
+        # Asserts
+        exp_concat_args = [
+            call([], axis=0, sort=False),
+            call([], axis=0, sort=False),
+            call([aux, aux], axis=1, sort=True, ignore_index=True)
+        ]
+
+        assert descriptor.call_count == 2
+        assert concat_mock.call_count == 3
+        assert concat_mock.call_args_list == exp_concat_args
 
 
 class TestGetDescriptorsTable(TestCase):
@@ -244,3 +277,39 @@ class TestEvaluate(TestCase):
         assert len(args) == 2
         assert args[0].equals(pd.Series({'a': 1, 'b': 2, 'c': 3}, name=0))
         assert args[1].equals(pd.Series({'a': 2, 'b': 4, 'c': 6}, name=1))
+
+    @patch('sdv.evaluation.get_descriptors_table')
+    def test_evaluate_dict_instance(self, descriptors_table_mock):
+        """evaluate with dict instances"""
+
+        # Setup
+        descriptors_table_mock.return_value = pd.DataFrame({
+            'foo': [1, 0]
+        })
+
+        # Run
+        real = {
+            'a': [1, 0],
+            'b': [1, 0]
+        }
+
+        synth = {
+            'a': [0, 1],
+            'b': [0, 1]
+        }
+
+        result = evaluate(real, synth)
+
+        # Asserts
+        assert descriptors_table_mock.call_count == 2
+
+        descriptors_table_mock.call_args_list == [
+            call([1, 0], [0, 1], DESCRIPTORS.values()),
+            call([1, 0], [0, 1], DESCRIPTORS.values())
+        ]
+
+        pd.testing.assert_series_equal(result, pd.Series({
+            'mse': 1.0,
+            'rmse': 1.0,
+            'r2_score': -float("Inf")
+        }))

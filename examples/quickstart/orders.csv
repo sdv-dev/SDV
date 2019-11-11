@@ -1,4 +1,4 @@
-ORDER_ID,CUSTOMER_ID,ORDER_TOTAL
+order_id,customer_id,order_total
 1,50,2310
 2,4,1507
 10,97338810,730

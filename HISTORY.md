@@ -1,5 +1,21 @@
 # History
 
+## 0.2.0 - 2019-10-11
+
+### New Features
+
+* compatibility with rdt issue 72 - [Issue #120](https://github.com/HDI-Project/SDV/issues/120) by @csala @JDTheRipperPC
+
+### General Improvements
+
+* Error docstring sampler.__fill_text_columns - [Issue #144](https://github.com/HDI-Project/SDV/issues/114) by @JDTheRipperPC
+* Reach 90% coverage - [Issue #112](https://github.com/HDI-Project/SDV/issues/112) by @JDTheRipperPC
+* Review unittests - [Issue #111](https://github.com/HDI-Project/SDV/issues/111) by @JDTheRipperPC
+
+### Bugs Fixed
+
+* Time required for sample_all function? - [Issue #118](https://github.com/HDI-Project/SDV/issues/118) by @csala @JDTheRipperPC
+
 ## 0.1.2 - 2019-09-18
 
 ### New Features

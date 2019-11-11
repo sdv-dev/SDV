@@ -49,12 +49,16 @@ def get_descriptor_values(real, synth, descriptor):
     """Compute the descriptor values for the given tables.
 
     Args:
-        real(pandas.DataFrame): Real data.
-        synth(pandas.DataFrame): Synthesized data.
-        descriptor(callable or str): Callable that accepts columns and returns real-values.
+        real (pandas.DataFrame):
+            Real data.
+        synth (pandas.DataFrame):
+            Synthesized data.
+        descriptor (callable or str):
+            Callable that accepts columns and returns real-values.
 
     Return:
-        pandas.DataFrame: It will contain the descriptor output for each column as columns.
+        pandas.DataFrame:
+            It will contain the descriptor output for each column as columns.
 
     """
     real_values = list()
@@ -78,9 +82,12 @@ def get_descriptors_table(real, synth, descriptors=DESCRIPTORS):
     """Score the synthesized data using the given metrics and descriptors.
 
     Args:
-        real(pandas.DataFrame): Table of real data.
-        synth(pandas.DataFrame): Table of synthesized data.
-        descriptors(dict[str, callable]): Dictionary of descriptors.
+        real (pandas.DataFrame):
+            Table of real data.
+        synth (pandas.DataFrame):
+            Table of synthesized data.
+        descriptors (dict[str, callable]):
+            Dictionary of descriptors.
 
     Return:
         pandas.DataFrame:
@@ -101,13 +108,13 @@ def evaluate(real, synth, descriptors=DESCRIPTORS.values(), metrics=DEFAULT_METR
     """Compute stats metric for all tables.
 
     Args:
-        real(dict[str, pandas.DataFrame] or pandas.DataFrame):
+        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of real data.
-        synth(dict[str, pandas.DataFrame] or pandas.DataFrame):
+        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of synthesized data.
-        descriptors(list[callable]):
+        descriptors (list[callable]):
             List of descriptors.
-        metrics(list[callable]):
+        metrics (list[callable]):
             List of metrics.
 
     Return:
