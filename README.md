@@ -207,7 +207,7 @@ the original distribution of your dataset.
 
 # Join out community
 
-1 If you would like to see more usage examples, please have a look at the [examples folder](
+1. If you would like to see more usage examples, please have a look at the [examples folder](
 https://github.com/HDI-Project/SDV/tree/master/examples) or the repository. Please contact us
 if you have a usage example that you would want to share with the community.
 2. Please head to the [Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started)
