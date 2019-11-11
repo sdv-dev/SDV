@@ -90,21 +90,16 @@
 <li class="toctree-l1"><a class="reference internal" href="#install">Install</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-pip">Install with pip</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-from-source">Install from source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-for-development">Install for Development</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#data-requirements">Data Requirements</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#metadata">Metadata</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#load-some-data">1. Load some data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#create-and-fit-an-sdv-instance">2. Create and fit an SDV instance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#sample-data">3. Sample data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#what-s-next">What’s next?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#load-example-data">1. Load example data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-the-database-using-sdv">2. Model the database using SDV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sample-data-from-the-model">3. Sample data from the model</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="#join-out-community">Join out community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#citation">Citation</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
@@ -249,7 +244,7 @@
 <div class="section" id="sdv-synthetic-data-vault">
 <h1>SDV - Synthetic Data Vault<a class="headerlink" href="#sdv-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><p>Free Software: MIT License</p></li>
+<li><p>License: <a class="reference external" href="https://github.com/HDI-Project/SDV/blob/master/LICENSE">MIT</a></p></li>
 <li><p>Documentation: <a class="reference external" href="https://HDI-Project.github.io/SDV">https://HDI-Project.github.io/SDV</a></p></li>
 <li><p>Homepage: <a class="reference external" href="https://github.com/HDI-Project/SDV">https://github.com/HDI-Project/SDV</a></p></li>
 </ul>
@@ -267,72 +262,24 @@ synthetic data after creating generative models for multi-table, relational data
 <p>Also, although it is not strictly required, the usage of a
 <a class="reference external" href="https://virtualenv.pypa.io/en/latest/">virtualenv</a> is highly recommended in order to avoid
 interfering with other software installed in the system where <strong>SDV</strong> is run.</p>
-<p>These are the minimum commands needed to create a virtualenv using python3.6 for <strong>SDV</strong>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install virtualenv
-virtualenv -p <span class="k">$(</span>which python3.6<span class="k">)</span> sdv-venv
-</pre></div>
-</div>
-<p>Afterwards, you have to execute this command to have the virtualenv activated:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> sdv-venv/bin/activate
-</pre></div>
-</div>
-<p>Remember about executing it every time you start a new console to work on <strong>SDV</strong>!</p>
 </div>
 <div class="section" id="install-with-pip">
 <h2>Install with pip<a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
-<p>After creating the virtualenv and activating it, we recommend using
-<a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a> in order to install <strong>SDV</strong>:</p>
+<p>The easiest and recommended way to install <strong>SDV</strong> is using <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sdv
 </pre></div>
 </div>
 <p>This will pull and install the latest stable release from <a class="reference external" href="https://pypi.org/">PyPi</a>.</p>
-</div>
-<div class="section" id="install-from-source">
-<h2>Install from source<a class="headerlink" href="#install-from-source" title="Permalink to this headline">¶</a></h2>
-<p>With your virtualenv activated, you can clone the repository and install it from
-source by running <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> on the <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:HDI-Project/SDV.git
-<span class="nb">cd</span> SDV
-git checkout stable
-make install
-</pre></div>
-</div>
-</div>
-<div class="section" id="install-for-development">
-<h2>Install for Development<a class="headerlink" href="#install-for-development" title="Permalink to this headline">¶</a></h2>
-<p>If you want to contribute to the project, a few more steps are required to make the project ready
-for development.</p>
-<p>Please head to the <a class="reference external" href="https://HDI-Project.github.io/SDV/contributing.html#get-started">Contributing Guide</a>
-for more details about this process.</p>
-</div>
-</div>
-<div class="section" id="data-requirements">
-<h1>Data Requirements<a class="headerlink" href="#data-requirements" title="Permalink to this headline">¶</a></h1>
-<p><strong>SDV</strong> can work with both single table and multi table, relational datasets, as far as they
-comply with the following data requirements:</p>
-<ul class="simple">
-<li><p>All the data columns must be either numerical, categorical, boolean or datatimes. Mixed value
-types are not supported, but columns <strong>can have null values</strong>.</p></li>
-<li><p>All the tables in the dataset can have <strong>at most one primary key</strong>, which can either be
-numerical or categorical. Datetime indexes might be supported in future versions.</p></li>
-<li><p>All the tables can have <strong>at most one foreign key to a parent table</strong>, meaning that each table
-can have at most <strong>one parent</strong>.</p></li>
-<li><p>Tables are either loaded as <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> objects or stored as CSV files.</p></li>
-</ul>
-<div class="section" id="metadata">
-<h2>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h2>
-<p>Alongside the actual tables, <strong>SDV</strong> needs to be provided some metadata about the dataset,
-which can either be provided as a python <code class="docutils literal notranslate"><span class="pre">dict</span></code> object or as a JSON file.</p>
-<p>For more details about the Metadata format, please refer to <a class="reference external" href="https://hdi-project.github.io/SDV/metadata.html">the corresponding section
-of the documentation</a></p>
+<p>If you want to install from source or contribute to the project please read the
+<a class="reference external" href="https://HDI-Project.github.io/SDV/contributing.html#get-started">Contributing Guide</a>.</p>
 </div>
 </div>
 <div class="section" id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <p>In this short tutorial we will guide you through a series of steps that will help you
 getting started using <strong>SDV</strong>.</p>
-<div class="section" id="load-some-data">
-<h2>1. Load some data<a class="headerlink" href="#load-some-data" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="load-example-data">
+<h2>1. Load example data<a class="headerlink" href="#load-example-data" title="Permalink to this headline">¶</a></h2>
 <p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code>
 function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
@@ -385,6 +332,8 @@ function:</p>
 }
 </pre></div>
 </div>
+<p>For more details about the Metadata format, please refer to <a class="reference external" href="https://hdi-project.github.io/SDV/metadata.html">the corresponding section
+of the documentation</a></p>
 <ol class="arabic simple">
 <li><p>A dictionary containing three <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code> with the tables described in the
 metadata dictionary.</p></li>
@@ -431,38 +380,77 @@ metadata dictionary.</p></li>
 </pre></div>
 </div>
 </div>
-<div class="section" id="create-and-fit-an-sdv-instance">
-<h2>2. Create and fit an SDV instance<a class="headerlink" href="#create-and-fit-an-sdv-instance" title="Permalink to this headline">¶</a></h2>
-<p>Before sampling, <strong>SDV</strong> needs to learn about your data in a process called <em>Database Modeling</em>.</p>
-<p>During this process, <strong>SDV</strong> will walk across all the tables in your dataset learning
-about the table relationships and the probability distributions of their values.</p>
-<p>To do this, we create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class and call its <code class="docutils literal notranslate"><span class="pre">fit</span></code>
-method passing it both the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> and <code class="docutils literal notranslate"><span class="pre">tables</span></code> that we obtained before:</p>
+<div class="section" id="model-the-database-using-sdv">
+<h2>2. Model the database using SDV<a class="headerlink" href="#model-the-database-using-sdv" title="Permalink to this headline">¶</a></h2>
+<p>First, we build a hierarchical statistical model of the data using <strong>SDV</strong>. For this we will
+create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class and use its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
+<p>During this process, <strong>SDV</strong> will traverse across all the tables in your dataset following the
+primary key-foreign key relationships and learn the probability distributions of the values in
+the columns.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
 
 <span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">()</span>
 <span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Once the modeling has finished, you can save your fitted <code class="docutils literal notranslate"><span class="pre">SDV</span></code> instance for later usage
+using the <code class="docutils literal notranslate"><span class="pre">save</span></code> method of your instance.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;path/to/sdv.pkl&#39;</span><span class="p">)</span>
+</pre></div>
 </div>
-<div class="section" id="sample-data">
-<h2>3. Sample data<a class="headerlink" href="#sample-data" title="Permalink to this headline">¶</a></h2>
-<p>Once the modeling has finished, we can sample new data using our fitted <code class="docutils literal notranslate"><span class="pre">SDV</span></code> instance.</p>
-<p>In order to do this, we call its <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method passing the number of rows that we
-want to sample.</p>
+<p>The generated <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file will not include any of the original data in it, so it can be
+safely sent to where the synthetic data will be generated without any privacy concerns.</p>
+</div>
+<div class="section" id="sample-data-from-the-model">
+<h2>3. Sample data from the model<a class="headerlink" href="#sample-data-from-the-model" title="Permalink to this headline">¶</a></h2>
+<p>In order to sample data from the fitted model, we will first need to load it from its
+<code class="docutils literal notranslate"><span class="pre">pkl</span></code> file. Note that you can skip this step if you are running all the steps sequentially
+within the same python session.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/sdv.pkl&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After loading the instance, we can sample synthetic data using its <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method,
+passing the number of rows that we want to generate.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The output will be a dictionary with the same structure as the original <code class="docutils literal notranslate"><span class="pre">tables</span></code> dict,
 but filled with synthetic data instead of the real one.</p>
-<p><strong>Notice</strong> that only the parent tables of your dataset will have the specified number of rows,
+<p><strong>Note</strong> that only the parent tables of your dataset will have the specified number of rows,
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.</p>
 </div>
-<div class="section" id="what-s-next">
-<h2>What’s next?<a class="headerlink" href="#what-s-next" title="Permalink to this headline">¶</a></h2>
-<p>If you would like to see more usage examples, please have a look at the <a class="reference external" href="https://github.com/HDI-Project/SDV/tree/master/examples">examples folder</a>.</p>
-<p>Also do not forget to check the <a class="reference external" href="https://HDI-Project.github.io/SDV/">project documentation site</a>!</p>
+</div>
+<div class="section" id="join-out-community">
+<h1>Join out community<a class="headerlink" href="#join-out-community" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>If you would like to see more usage examples, please have a look at the <a class="reference external" href="https://github.com/HDI-Project/SDV/tree/master/examples">examples folder</a> or the repository. Please contact us
+if you have a usage example that you would want to share with the community.</p></li>
+<li><p>Please head to the <a class="reference external" href="https://HDI-Project.github.io/SDV/contributing.html#get-started">Contributing Guide</a>
+for more details about this process.</p></li>
+<li><p>If you have any doubts, feature requests or detect an error, please <a class="reference external" href="https://github.com/HDI-Project/SDV/issues">open an issue on github</a></p></li>
+<li><p>Also do not forget to check the <a class="reference external" href="https://HDI-Project.github.io/SDV/">project documentation site</a>!</p></li>
+</ol>
+</div>
+<div class="section" id="citation">
+<h1>Citation<a class="headerlink" href="#citation" title="Permalink to this headline">¶</a></h1>
+<p>If you use <strong>SDV</strong> for your research, please consider citing the following paper:</p>
+<p>Neha Patki, Roy Wedge, Kalyan Veeramachaneni. <a class="reference external" href="https://dai.lids.mit.edu/wp-content/uploads/2018/03/SDV.pdf">The Synthetic Data Vault</a>. <a class="reference external" href="https://ieeexplore.ieee.org/document/7796926">IEEE DSAA 2016</a>.</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>@inproceedings{
+    7796926,
+    author={N. {Patki} and R. {Wedge} and K. {Veeramachaneni}},
+    booktitle={2016 IEEE International Conference on Data Science and Advanced Analytics (DSAA)},
+    title={The Synthetic Data Vault},
+    year={2016},
+    volume={},
+    number={},
+    pages={399-410},
+    keywords={data analysis;relational databases;synthetic data vault;SDV;generative model;relational database;multivariate modelling;predictive model;data analysis;data science;Data models;Databases;Computational modeling;Predictive models;Hidden Markov models;Numerical models;Synthetic data generation;crowd sourcing;data science;predictive modeling},
+    doi={10.1109/DSAA.2016.49},
+    ISSN={},
+    month={Oct}
+}
+</pre></div>
 </div>
 </div>
 
