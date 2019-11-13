@@ -93,9 +93,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#load-example-data">1. Load example data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#model-the-database-using-sdv">2. Model the database using SDV</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#sample-data-from-the-model">3. Sample data from the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-load-example-data">Step 1: Load example data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#join-out-community">Join out community</a></li>
@@ -256,8 +259,13 @@
 </ul>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p><strong>SDV</strong> is an automated generative modeling and sampling tool that allows the users to generate
-synthetic data after creating generative models for multi-table, relational datasets.</p>
+<p>The Synthetic Data Vault (SDV) is a tool that allows users to statistically model an entire
+multi-table, relational dataset. Users can then use the statistical model to generate a
+synthetic dataset. Synthetic data can be used to supplement, augment and in some cases replace
+real data when training machine learning models. Additionally, it enables the testing of machine
+learning or other data dependent software systems without the risk of exposure that comes with
+data disclosure. Underneath the hood it uses a unique hierarchical generative modeling and
+recursive sampling techniques.</p>
 </div>
 </div>
 <div class="section" id="install">
@@ -284,8 +292,13 @@ interfering with other software installed in the system where <strong>SDV</stron
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <p>In this short tutorial we will guide you through a series of steps that will help you
 getting started using <strong>SDV</strong>.</p>
-<div class="section" id="load-example-data">
-<h2>1. Load example data<a class="headerlink" href="#load-example-data" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="model-the-dataset-using-sdv">
+<h2>1. Model the dataset using SDV<a class="headerlink" href="#model-the-dataset-using-sdv" title="Permalink to this headline">¶</a></h2>
+<p>To model a multi table, relational dataset, we follow two steps. In the first step, we will load
+the data and configures the meta data. In the second step, we will use the sdv API to fit and
+save a hierarchical model. We will cover these two steps in this section using an example dataset.</p>
+<div class="section" id="step-1-load-example-data">
+<h3>Step 1: Load example data<a class="headerlink" href="#step-1-load-example-data" title="Permalink to this headline">¶</a></h3>
 <p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code>
 function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
@@ -386,8 +399,8 @@ metadata dictionary.</p></li>
 </pre></div>
 </div>
 </div>
-<div class="section" id="model-the-database-using-sdv">
-<h2>2. Model the database using SDV<a class="headerlink" href="#model-the-database-using-sdv" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="fit-a-model-using-the-sdv-api">
+<h3>2. Fit a model using the SDV API.<a class="headerlink" href="#fit-a-model-using-the-sdv-api" title="Permalink to this headline">¶</a></h3>
 <p>First, we build a hierarchical statistical model of the data using <strong>SDV</strong>. For this we will
 create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class and use its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
 <p>During this process, <strong>SDV</strong> will traverse across all the tables in your dataset following the
@@ -407,8 +420,9 @@ using the <code class="docutils literal notranslate"><span class="pre">save</spa
 <p>The generated <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file will not include any of the original data in it, so it can be
 safely sent to where the synthetic data will be generated without any privacy concerns.</p>
 </div>
-<div class="section" id="sample-data-from-the-model">
-<h2>3. Sample data from the model<a class="headerlink" href="#sample-data-from-the-model" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="sample-data-from-the-fitted-model">
+<h2>2. Sample data from the fitted model<a class="headerlink" href="#sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h2>
 <p>In order to sample data from the fitted model, we will first need to load it from its
 <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file. Note that you can skip this step if you are running all the steps sequentially
 within the same python session.</p>
