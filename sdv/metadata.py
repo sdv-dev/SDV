@@ -447,6 +447,27 @@ class Metadata:
         return reversed_data
 
     def _analyze(data, columns=None):
+        """Get a dictionary with the metadata analyzed from a dictionary.
+
+        Analyze a ``pandas.DataFrame`` to build a ``dict`` with the name of the column, and
+        their data type and subtype. If ``columns`` are provided, only those columns will be
+        analyzed.
+
+        Args:
+            data (pandas.DataFrame):
+                Table to be analyzed.
+            columns(list):
+                List of columns used to specify which fields analyze from the data.
+
+        Returns:
+            dict:
+                Generated metadata from a ``pandas.DataFrame``.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when a column from the data analyzed is an unsupported
+                data type.
+        """
         fields = dict()
         for column in fields or data.columns:
             dtype = data[column].dtype
@@ -454,11 +475,11 @@ class Metadata:
 
             if dtype.kind == 'i':
                 fields[column]['type'] = 'numerical'
-                fields[column]['type'] = 'integer'
+                fields[column]['subtype'] = 'integer'
 
             elif dtype.kind == 'f':
                 fields[column]['type'] = 'numerical'
-                fields[column]['type'] = 'float'
+                fields[column]['subtype'] = 'float'
 
             elif dtype.kind == 'O':
                 fields[column]['type'] = 'categorical'
@@ -551,17 +572,6 @@ class Metadata:
 
         self.add_relationship(name, parent, foreign_key)
 
-        # parent_meta = self.get_table_meta(parent)
-        # foreign_field = {
-        #     'name': foreign_key,
-        #     'type': 'id',
-        #     'ref': {
-        #         'field': foreign_key,
-        #         'table': parent
-        #     }
-        # }
-        # self.get_fields(name)[foreign_key] = foreign_field
-
     def remove_table(self, table):
         """Remove a table, their childrens and their relationships.
 
@@ -572,7 +582,8 @@ class Metadata:
             table (str):
                 Table to be removed.
         """
-        self._assert_table_exists(table)
+        if table not in self.get_table_names():
+            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
 
         childrens = self.get_children(table)
         for children in list(childrens):
@@ -667,6 +678,9 @@ class Metadata:
         First, assert that the ``table`` exists and the ``field`` does not.
         Then, validate the ``field_details`` format. Finally, add the field.
 
+        The error message displayed, when the ``ValueError`` is raised because the ``fields``
+        already exists in the table, recommends you to use the ``update_fields`` instead.
+
         Args:
             table (str):
                 Table name to add the new field, it must exist.
@@ -674,6 +688,11 @@ class Metadata:
                 Field name to be added, it must not exist.
             field_details (dict):
                 Dictionary with the details for the new table field.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the ``table`` doesn't exists or the ``field``
+                exists in the table.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
@@ -686,7 +705,17 @@ class Metadata:
 
         field_details['name'] = field
         self._validate_field(field_details)
+
+        type_id = field_details.get('type')
+        field_ref = field_details.get('ref')
         self.get_fields(table)[field] = field_details
+
+        if type_id and field_ref:
+            # add foreign key
+            pass
+
+        if type_id and not field_ref:
+            self.get_table_meta(table)['primary_key'] = field
 
     def update_field(self, table, field, field_details):
         """Update a field from a gibven table.
@@ -701,6 +730,11 @@ class Metadata:
                 Field name to be updated, it must exist.
             field_details (dict):
                 Dictionary with the details to be updated.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the ``table`` doesn't exists or the ``field``
+                doesn't exists in the table.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
@@ -708,22 +742,57 @@ class Metadata:
         if field not in self.get_fields(table).keys():
             raise ValueError('Table {}, field {} doesn\'t exists.'.format(table, field))
 
-        self._validate_field(field_details)
-        self.get_fields(table)[field].update(field_details)
+        # Rename childrens field reference
+        new_name = field_details.get('name', field)
+        renamed = field != new_name
+        if renamed and new_name in self.get_fields(table).keys():
+            raise ValueError(
+                'Table {}, field {} already exists. Can\'t be renamed.'.format(table, new_name)
+            )
+
+        primary_key = self.get_primary_key(table)
+        if field == primary_key and renamed:
+            childrens = self.get_children(table)
+            for children in list(childrens):
+                foreign_key = self.get_foreign_key(table, children)
+                self.get_fields(children)[foreign_key]['ref']['field'] = new_name
+
+            # Update table "primary_key"
+            self.get_table_meta(table)['primary_key'] = new_name
+
+        # Protect edit the relationships directly
+        if field_details.get('ref'):
+            del field_details['ref']
+
+        fields = self.get_fields(table)
+
+        # Create the renamed field, remove the old one and
+        # replace the field name to update it with the field_details
+        if renamed:
+            fields[field_details['name']] = fields[field]
+            del fields[field]
+            field = field_details['name']
+
+        fields[field].update(field_details)
+        self._validate_field(fields[field])
 
     def remove_field(self, table, field):
         """Remove a field from a given table.
 
         First, assert that the ``table`` and``field`` exists.
-        Finally, remove the field.
-
-        If the field to be removed is the reference on other table, remove their relationship.
+        If the field to be removed is the primary key, get their childrens and remove their
+        reference field. Finally, remove the field and recomptue the tables relationships.
 
         Args:
             table (str):
                 Table name to remove the field, it must exist.
             field (str):
                 Field name to be removed, it must exist.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the ``table`` doesn't exists or the ``field``
+                doesn't exists in the table.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
@@ -733,20 +802,18 @@ class Metadata:
 
         primary_key = self.get_primary_key(table)
         if field == primary_key:
-            # TODO: remove relationship
-            print("TODO: remove relationship from primary_key")
-            return
+            childrens = self.get_children(table)
+            for children in list(childrens):
+                foreign_key = self.get_foreign_key(table, children)
+                self.remove_field(children, foreign_key)
 
-        for parent in list(self.get_parents(table)):
-            if self.get_foreign_key(parent, table) == field:
-                # TODO: remove relationship
-                print("TODO: remove relationship from foreign_key")
-                return
+            del self.get_table_meta(table)['primary_key']
 
         del self.get_fields(table)[field]
+        self._get_relationships()
 
     def to_dict(self):
-        return self._metadata
+        return copy.deepcopy(self._metadata)
 
     def to_json(self):
         pass
