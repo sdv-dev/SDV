@@ -400,6 +400,17 @@ class Metadata:
         """
         return self.get_table_meta(table_name).get('primary_key')
 
+    def set_primary_key(self, table_name, field_name):
+        """Set the primary key name of the indicated table.
+
+        Args:
+            table_name (str):
+                Name of table for which to set the primary key field.
+            field_name (str):
+                Name of field to set as the primary key field.
+        """
+        self.get_table_meta(table_name)['primary_key'] = field_name
+
     def get_foreign_key(self, parent, child):
         """Get table foreign key field name.
 
@@ -469,7 +480,7 @@ class Metadata:
                 data type.
         """
         fields = dict()
-        for column in fields or data.columns:
+        for column in columns or data.columns:
             dtype = data[column].dtype
             fields[column] = {'name': column}
 
@@ -542,35 +553,34 @@ class Metadata:
             parent (str):
             foreign_key (str):
         """
-        if table_name in self.get_table_names():
+        if name in self.get_table_names():
             raise ValueError('Table "{}" already exists.'.format(name))
 
         table = {'name': name, 'fields': dict()}
 
-        if primary_key:
+        if primary_key:  # pk must be in fields or data.columns?
             table['primary_key'] = primary_key
 
         if isinstance(fields, dict):
             for field_key, field_value in fields.items():
-                # fields[field_key]['name'] = field_key
                 self._validate_field(field_value)
-                self.add_field(field[field_key])
-            # table['fields'] = fields
 
-        elif data and (not fields or isinstance(fields, list)):
+        elif data is not None and (not fields or isinstance(fields, list)):
             if isinstance(data, str):
                 data = data if os.path.exists(data) else os.path.join(root_path, data)
                 data = pd.read_csv(data)
 
-            table['fields'] = Metadata._analyze(data, columns=fields)
+            fields = Metadata._analyze(data, columns=fields)
 
+        elif not data and isinstance(fields, list):
+            fields = dict()
+
+        table['fields'] = fields or dict()
         self._metadata['tables'][name] = table
 
         # Add relationship
-        if not parent or not foreign_key:
-            return
-
-        self.add_relationship(name, parent, foreign_key)
+        if parent and foreign_key:
+            self.add_relationship(name, parent, foreign_key)
 
     def remove_table(self, table):
         """Remove a table, their childrens and their relationships.
@@ -590,12 +600,10 @@ class Metadata:
             self.remove_table(children)
 
         parents = self.get_parents(table)
-        for parent in parents:
-            self.get_children(parent).discard(table)
+        self.remove_relationship(table, list(parents)[0])
 
         del self._metadata['tables'][table]
-        childrens.clear()
-        parents.clear()
+        self._get_relationships()
 
     def add_relationship(self, table, parent, foreign_key):
         """Add a new relationship between a 2 tables.
@@ -633,7 +641,7 @@ class Metadata:
             raise ValueError('Parent table {} have not primary key.'.format(primary_key))
 
         ref = {'field': primary_key, 'table': parent}
-        field = {'name': foreign_key, 'type': 'id', 'ref': ref}
+        field = {'name': foreign_key, 'type': 'id', 'ref': ref}  # ¿subtype?
         self.add_field(table, foreign_key, field)
         self._get_relationships()
 
@@ -660,17 +668,31 @@ class Metadata:
         if parent not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(parent))
 
-        parents = self.get_parents(table)
-        if parent in parents:
-            parents.discard(parent)
+        if parent in self.get_children(table):
+            self._delete_foreign_key(table, parent)
 
-        childrens = self.get_children(parent)
-        if table in childrens:
-            childrens.discard(table)
+        if table in self.get_children(parent):
+            self._delete_foreign_key(parent, table)
 
-        foreign_key = self.get_foreign_key(parent, table)
-        fields = self.get_fields(table)
-        del fields[foreign_key]['ref']
+        self._get_relationships()
+
+    def add_primary_key(self, table, field):
+        if table not in self.get_table_names():
+            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
+
+        if field in self.get_fields(table).keys():
+            raise ValueError('Table {}, field {} already exists.'.format(table, field))
+
+        if self.get_primary_key(table):
+            raise ValueError('Table {} already have primary_key.'.format(table))
+
+        field_details = {
+            'name': field,
+            'type': 'id'
+        }
+
+        self.get_fields(table)[field] = field_details
+        self.set_primary_key(table, field)
 
     def add_field(self, table, field, field_details):
         """Add a new field into a given table.
@@ -706,16 +728,48 @@ class Metadata:
         field_details['name'] = field
         self._validate_field(field_details)
 
-        type_id = field_details.get('type')
-        field_ref = field_details.get('ref')
-        self.get_fields(table)[field] = field_details
+        has_id = field_details['type'] == 'id'
+        has_ref = field_details.get('ref') is not None
 
-        if type_id and field_ref:
-            # add foreign key
-            pass
+        if has_id and not has_ref:
+            self.add_primary_key(table, field)
 
-        if type_id and not field_ref:
-            self.get_table_meta(table)['primary_key'] = field
+        elif has_id and has_ref:
+            self.get_fields(table)[field] = field_details
+            self._get_relationships()
+
+        else:
+            self.get_fields(table)[field] = field_details
+
+    def add_fields(self, data):
+        """Add a list or dict of fields into tables.
+
+        List format:
+        [{
+            'table': 'table_name',
+            'field': 'field_name',
+            'field_details': {...}
+        }, ...]
+
+        Dictionary format:
+        {
+            ('table_name', 'field_name'): {...},
+            ...
+        }
+        """
+        if isinstance(data, list):
+            for item in data:
+                self.add_field(item['table'], item['field'], item['field_details'])
+            return
+
+        if isinstance(data, dict):
+            for key, value in data.items():
+                add_field[key[0], key[1], value]
+            return
+
+        raise TypeError(
+            'Invalid data type {}, only list and dict are supported.'.format(type(data))
+        )
 
     def update_field(self, table, field, field_details):
         """Update a field from a gibven table.
@@ -742,37 +796,7 @@ class Metadata:
         if field not in self.get_fields(table).keys():
             raise ValueError('Table {}, field {} doesn\'t exists.'.format(table, field))
 
-        # Rename childrens field reference
-        new_name = field_details.get('name', field)
-        renamed = field != new_name
-        if renamed and new_name in self.get_fields(table).keys():
-            raise ValueError(
-                'Table {}, field {} already exists. Can\'t be renamed.'.format(table, new_name)
-            )
-
-        primary_key = self.get_primary_key(table)
-        if field == primary_key and renamed:
-            childrens = self.get_children(table)
-            for children in list(childrens):
-                foreign_key = self.get_foreign_key(table, children)
-                self.get_fields(children)[foreign_key]['ref']['field'] = new_name
-
-            # Update table "primary_key"
-            self.get_table_meta(table)['primary_key'] = new_name
-
-        # Protect edit the relationships directly
-        if field_details.get('ref'):
-            del field_details['ref']
-
         fields = self.get_fields(table)
-
-        # Create the renamed field, remove the old one and
-        # replace the field name to update it with the field_details
-        if renamed:
-            fields[field_details['name']] = fields[field]
-            del fields[field]
-            field = field_details['name']
-
         fields[field].update(field_details)
         self._validate_field(fields[field])
 
@@ -797,20 +821,25 @@ class Metadata:
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
 
-        if field not in self.get_fields(table).keys():
+        fields = self.get_fields(table)
+        if field not in fields.keys():
             raise ValueError('Table {}, field {} doesn\'t exists.'.format(table, field))
 
         primary_key = self.get_primary_key(table)
         if field == primary_key:
-            childrens = self.get_children(table)
-            for children in list(childrens):
-                foreign_key = self.get_foreign_key(table, children)
-                self.remove_field(children, foreign_key)
-
+            self._delete_foreign_key_to(table)
             del self.get_table_meta(table)['primary_key']
 
-        del self.get_fields(table)[field]
+        del fields[field]
         self._get_relationships()
+
+    def _delete_foreign_key(self, parent, child):
+        foreign_key = self.get_foreign_key(parent, child)
+        del self.get_fields(child)[foreign_key]
+
+    def _delete_foreign_key_to(self, table_name):
+        for children in list(self.get_children(table_name)):
+            self._delete_foreign_key(table_name, children)
 
     def to_dict(self):
         return copy.deepcopy(self._metadata)
