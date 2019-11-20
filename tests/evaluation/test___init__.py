@@ -6,7 +6,7 @@ import pandas as pd
 import scipy as sp
 
 from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table
-from sdv.evaluation.descriptors import DESCRIPTORS, categorical_distribution
+from sdv.evaluation.descriptors import categorical_distribution
 
 
 class TestGetDescriptorValues(TestCase):
@@ -117,15 +117,9 @@ class TestGetDescriptorValues(TestCase):
         get_descriptor_values(real, synth, descriptor)
 
         # Asserts
-        exp_concat_args = [
-            call([], axis=0, sort=False),
-            call([], axis=0, sort=False),
-            call([aux, aux], axis=1, sort=True, ignore_index=True)
-        ]
-
         assert descriptor.call_count == 2
-        assert concat_mock.call_count == 3
-        assert concat_mock.call_args_list == exp_concat_args
+        assert concat_mock.call_count == 1
+        pd.testing.assert_frame_equal(concat_mock.call_args[0][0][0], pd.DataFrame())
 
 
 class TestGetDescriptorsTable(TestCase):
@@ -205,6 +199,8 @@ class TestEvaluate(TestCase):
     def test_raises_error(self):
         """If the table names in both datasets are not equal, an error is raised."""
         # Setup
+        metadata = dict()
+
         real = {
             'a': None,
             'b': None
@@ -219,7 +215,7 @@ class TestEvaluate(TestCase):
 
         try:
             # Run
-            evaluate(real, synth, metrics=metrics, descriptors=descriptors)
+            evaluate(metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
         except AssertionError as error:
             # Check
             assert error.args[0] == expected_error_message
@@ -241,8 +237,12 @@ class TestEvaluate(TestCase):
 
         ])
 
-        real = pd.DataFrame([{'a': 'value'}])
-        synth = 'synth data'
+        metadata = {
+            'fields': dict()
+        }
+
+        real = pd.DataFrame({'a': [1, 0]})
+        synth = pd.DataFrame({'a': [0, 1]})
 
         metric_1 = MagicMock(return_value=0, __name__='metric_1')
         metric_2 = MagicMock(return_value=1, __name__='metric_2')
@@ -256,7 +256,7 @@ class TestEvaluate(TestCase):
         })
 
         # Run
-        result = evaluate(real, synth, metrics=metrics, descriptors=descriptors)
+        result = evaluate(metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
 
         # Check
         assert result.equals(expected_result)
@@ -278,8 +278,9 @@ class TestEvaluate(TestCase):
         assert args[0].equals(pd.Series({'a': 1, 'b': 2, 'c': 3}, name=0))
         assert args[1].equals(pd.Series({'a': 2, 'b': 4, 'c': 6}, name=1))
 
+    @patch('pandas.DataFrame.drop')
     @patch('sdv.evaluation.get_descriptors_table')
-    def test_evaluate_dict_instance(self, descriptors_table_mock):
+    def test_evaluate_dict_instance(self, descriptors_table_mock, pandas_drop_mock):
         """evaluate with dict instances"""
 
         # Setup
@@ -288,25 +289,74 @@ class TestEvaluate(TestCase):
         })
 
         # Run
+
+        metadata = {
+            'tables': [
+                {
+                    'name': 'a',
+                    'fields': [
+                        {
+                            'name': 'a_pk_field',
+                            'type': 'id'
+                        }, {
+                            'name': 'a_field',
+                            'type': 'numerical',
+                            'subtype': 'integer'
+                        }
+                    ]
+                }, {
+                    'name': 'b',
+                    'fields': [
+                        {
+                            'name': 'b_fk_field',
+                            'ref': {'field': 'a_pk_field', 'table': 'a'},
+                            'type': 'id'
+                        }, {
+                            'name': 'b_field',
+                            'type': 'numerical',
+                            'subtype': 'float'
+                        }
+                    ]
+                }
+            ]
+        }
+
         real = {
-            'a': [1, 0],
-            'b': [1, 0]
+            'a': pd.DataFrame({
+                'a_pk_field': [1, 2, 3, 4],
+                'a_field': [10, 14, 11, 9]
+            }),
+            'b': pd.DataFrame({
+                'b_fk_field': [1, 2, 3, 4],
+                'b_field': [3.4, 1.1, 2.5, 4.1]
+            })
         }
 
         synth = {
-            'a': [0, 1],
-            'b': [0, 1]
+            'a': pd.DataFrame({
+                'a_pk_field': [1, 2, 3, 4],
+                'a_field': [10, 14, 11, 9]
+            }),
+            'b': pd.DataFrame({
+                'b_fk_field': [1, 2, 3, 4],
+                'b_field': [3.4, 1.1, 2.5, 4.1]
+            })
         }
 
-        result = evaluate(real, synth)
+        result = evaluate(metadata, synth, real)
 
         # Asserts
+        expected_drop_ids = [
+            call(['a_pk_field'], axis=1, inplace=True),
+            call(['a_pk_field'], axis=1, inplace=True),
+            call(['b_fk_field'], axis=1, inplace=True),
+            call(['b_fk_field'], axis=1, inplace=True)
+        ]
+
         assert descriptors_table_mock.call_count == 2
 
-        descriptors_table_mock.call_args_list == [
-            call([1, 0], [0, 1], DESCRIPTORS.values()),
-            call([1, 0], [0, 1], DESCRIPTORS.values())
-        ]
+        for res, exp in zip(sorted(pandas_drop_mock.call_args_list), sorted(expected_drop_ids)):
+            assert res == exp
 
         pd.testing.assert_series_equal(result, pd.Series({
             'mse': 1.0,
