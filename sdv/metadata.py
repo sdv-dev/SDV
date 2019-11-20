@@ -560,7 +560,8 @@ class Metadata:
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
 
-        if field in self.get_fields(table).keys():
+        fields = self.get_fields(table)
+        if field in fields:
             raise ValueError(
                 'Table {}, field {} already exists. Use "update_field()" to modify it.'
                 .format(table, field)
@@ -579,7 +580,7 @@ class Metadata:
             for property_name, property_value in properties.items():
                 field_details[property_name] = property_value
 
-        self.get_fields(table)[field] = field_details
+        fields[field] = field_details
 
     def add_primary_key(self, table, field):
         """Add a primary key into a given table.
@@ -686,6 +687,7 @@ class Metadata:
 
         if isinstance(fields, dict):
             for field_key, field_value in fields.items():
+                field_value['name'] = field_key
                 self._validate_field(field_value)
 
         if isinstance(fields, list) and data is None:

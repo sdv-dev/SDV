@@ -659,3 +659,340 @@ class TestMetadata(TestCase):
             ht_mock.reverse_transform.call_args[0][0],
             expected_call
         )
+
+    def test_add_table_already_exist(self):
+        """Try to add a new table that already exist"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+
+        with pytest.raises(ValueError):
+            Metadata.add_table(metadata, 'a_table')
+
+    def test_add_table_only_name(self):
+        """Add table with only the name"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        Metadata.add_table(metadata, 'x_table')
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': dict()
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.add_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
+    def test_add_table_with_primary_key(self):
+        """Add table with primary key"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        Metadata.add_table(metadata, 'x_table', primary_key='id')
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': dict()
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.add_primary_key.assert_called_once_with('x_table', 'id')
+        metadata.add_relationship.call_count == 0
+
+    def test_add_table_with_foreign_key(self):
+        """Add table with foreign key"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        Metadata.add_table(metadata, 'x_table', parent='users')
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': dict()
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.add_primary_key.call_count == 0
+        metadata.add_relationship.assert_called_once_with('x_table', 'users', None)
+
+    def test_add_table_with_fields_dict(self):
+        """Add table with fields(dict)"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        fields = {
+            'a_field': {'type': 'numerical', 'subtype': 'integer'}
+        }
+
+        Metadata.add_table(metadata, 'x_table', fields=fields)
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': {
+                'a_field': {'name': 'a_field', 'type': 'numerical', 'subtype': 'integer'}
+            }
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        assert metadata._validate_field.call_args_list == [
+            call({'name': 'a_field', 'type': 'numerical', 'subtype': 'integer'})
+        ]
+
+        metadata.add_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
+    def test_add_table_with_field_list_no_data(self):
+        """Add table with fields(list) no data"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        fields = ['a_field', 'b_field']
+
+        with pytest.raises(ValueError):
+            Metadata.add_table(metadata, 'x_table', fields=fields)
+
+    def test_add_table_with_field_list_data(self):
+        """Add table with fields(list) data"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        fields = ['a_field', 'b_field']
+        data = pd.DataFrame({'a_field': [0, 1], 'b_field': [True, False], 'c_field': ['a', 'b']})
+
+        Metadata.add_table(metadata, 'x_table', fields=fields, data=data)
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': {
+                'a_field': {'name': 'a_field', 'type': 'numerical', 'subtype': 'integer'},
+                'b_field': {'name': 'b_field', 'type': 'boolean'}
+            }
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.add_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
+    def test_add_table_with_data_analyze(self):
+        """Add table with data to analyze all"""
+        # Setup
+        table_names = ['a_table', 'b_table']
+
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = table_names
+        metadata._metadata = {'tables': dict()}
+
+        data = pd.DataFrame({'a_field': [0, 1], 'b_field': [True, False], 'c_field': ['a', 'b']})
+
+        Metadata.add_table(metadata, 'x_table', data=data)
+
+        # Asserts
+        expected_table_meta = {
+            'name': 'x_table',
+            'fields': {
+                'a_field': {'name': 'a_field', 'type': 'numerical', 'subtype': 'integer'},
+                'b_field': {'name': 'b_field', 'type': 'boolean'},
+                'c_field': {'name': 'c_field', 'type': 'categorical'}
+            }
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.add_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
+    def test_add_relationship_table_no_exist(self):
+        """Add relationship table no exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = list()
+
+        with pytest.raises(ValueError):
+            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+    def test_add_relationship_parent_no_exist(self):
+        """Add relationship table no exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+
+        with pytest.raises(ValueError):
+            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+    def test_add_relationship_already_exist(self):
+        """Add relationship already exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table', 'b_table']
+        metadata.get_parents.return_value = set(['b_table'])
+
+        with pytest.raises(ValueError):
+            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+    def test_add_relationship_parent_is_child_of_table(self):
+        """Add relationship parent is child of table"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table', 'b_table']
+        metadata.get_parents.return_value = set()
+        metadata.get_children.return_value = set(['b_table'])
+
+        with pytest.raises(ValueError):
+            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+    def test_add_relationship_parent_no_primary_key(self):
+        """Add relationship parent no primary key"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table', 'b_table']
+        metadata.get_parents.return_value = set()
+        metadata.get_children.return_value = set()
+        metadata.get_primary_key.return_value = None
+
+        with pytest.raises(ValueError):
+            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+    def test_add_relationship_valid(self):
+        """Add relationship valid"""
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table', 'b_table']
+        metadata.get_parents.return_value = set()
+        metadata.get_children.return_value = set()
+        metadata.get_primary_key.return_value = 'pk_field'
+
+        Metadata.add_relationship(metadata, 'a_table', 'b_table')
+
+        # Asserts
+        metadata._validate_circular_relationships.assert_called_once_with('b_table', set())
+        metadata.add_field.assert_called_once_with(
+            'a_table', 'pk_field', 'id', None, {'ref': {'field': 'pk_field', 'table': 'b_table'}}
+        )
+        metadata._get_relationships.assert_called_once_with()
+
+    def test_add_primary_key_table_no_exist(self):
+        """Add primary key table no exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = list()
+
+        with pytest.raises(ValueError):
+            Metadata.add_primary_key(metadata, 'a_table', 'a_field')
+
+    def test_add_primary_key_field_exist(self):
+        """Add primary key field exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+        metadata.get_fields.return_value = dict()
+
+        with pytest.raises(ValueError):
+            Metadata.add_primary_key(metadata, 'a_table', 'a_field')
+
+    def test_add_primary_key_primary_key_exist(self):
+        """Add primary key primary key exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+        metadata.get_fields.return_value = {'a_field': dict()}
+        metadata.get_primary_key.return_value = 'some_primary_key'
+
+        with pytest.raises(ValueError):
+            Metadata.add_primary_key(metadata, 'a_table', 'a_field')
+
+    def test_add_primary_key_valid(self):
+        """Add primary key valid"""
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+        metadata.get_fields.return_value = dict()
+        metadata.get_primary_key.return_value = None
+        metadata.get_table_meta.return_value = dict()
+
+        Metadata.add_primary_key(metadata, 'a_table', 'a_field')
+
+        # Asserts
+        metadata.get_table_names.assert_called_once_with()
+        metadata.get_fields.assert_called_once_with('a_table')
+        metadata.get_primary_key.assert_called_once_with('a_table')
+
+        metadata.get_table_meta.assert_called_once_with('a_table')
+        metadata.add_field.assert_called_once_with('a_table', 'a_field', 'id', None, None)
+
+    def test_add_field_table_no_exist(self):
+        """Add field table no exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = list()
+
+        with pytest.raises(ValueError):
+            Metadata.add_field(metadata, 'a_table', 'a_field', 'id', None, None)
+
+    def test_add_field_field_exist(self):
+        """Add field already exist"""
+        # Run and asserts
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+        metadata.get_fields.return_value = {'a_field': dict()}
+
+        with pytest.raises(ValueError):
+            Metadata.add_field(metadata, 'a_table', 'a_field', 'id', None, None)
+
+    def test_add_field_valid(self):
+        """Add valid field"""
+        # Run
+        metadata = Mock(spec=Metadata)
+        metadata.get_table_names.return_value = ['a_table']
+        metadata.get_fields.return_value = dict()
+
+        Metadata.add_field(metadata, 'a_table', 'a_field', 'numerical', 'integer', {'min': 0})
+
+        # Asserts
+        metadata.get_table_names.assert_called_once_with()
+        metadata.get_fields.assert_called_once_with('a_table')
