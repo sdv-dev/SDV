@@ -621,7 +621,8 @@ class Metadata:
         """Add a new relationship between a 2 tables.
 
         By a given ``table`` and ``parent`` add a new relationship using ``foreign_key``
-        to reference the parent field.
+        to reference the parent field, when ``foreign_key`` is ``None`` use the primary key
+        field name as foreign key.
 
         First, assert that the ``table`` and ``parent`` exists.
         Then, assert if already exists a relationship between both tables.
@@ -636,6 +637,12 @@ class Metadata:
             foreign_key (str):
                 Field name from the parent table to create the reference in the children table.
                 Defaults to ``None``.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when ``table`` or ``parent`` don't exist,
+                the relationship already exists, ``parent`` is child of ``table`` of
+                ``parent`` table does not have primary key.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
@@ -664,30 +671,42 @@ class Metadata:
         data = data if os.path.exists(data) else os.path.join(self.root_path, data)
         return pd.read_csv(data)
 
-    def add_table(self, name, primary_key=None, fields=dict(), data=None, parent=None,
+    def add_table(self, name, primary_key=None, fields=None, data=None, parent=None,
                   foreign_key=None):
         """Add a new table to the metadata.
 
-        First, assert that the ``name`` table exists.
-        Create the table with the table name and an empty fields.
-        If ``primary_key`` is defined add it to the table.
+        First, validate that the ``name`` table already exists.
 
-        When ``fields`` is a ``dict``, use it to set the ``fields`` key from the table
-        (fields are validated).
-        When ``data`` is provided and ``fields`` is not or it's a ``list`` type,
-        analyze the data for all the columns or just the ``fields`` columns.
-        If the ``data`` is a ``str`` it should point to a csv file with the data to analazy.
-        It may be the relative path, if it's then concat the ``root_path`` with the ``data`` path.
+        When ``fields`` is a ``dict``, ignore ``data`` and validate those fields.
+        When ``fields`` is a ``list`` and ``data`` is ``None``, raise a ``ValueError``.
+        When ``fields`` is a ``list`` and ``data`` is not ``None``, analyze data columns in list.
+        When ``fields`` is ``None`` and ``data`` is not ``None``, analyze all columns.
 
-        Finally, if ``parent`` and ``foreign_key`` are provided, create their relationship.
+        Use the ``fields`` to create the table and add primary key or relationship if needed.
 
         Args:
             name (str):
+                Table name to be created, it must not exists.
             primary_key (str):
+                Field name to add as primary key, it must not exists. Defaults to ``None``.
             fields (dict or list):
+                If it's a ``dict``, data is ignored.
+                If it's a ``list``, indicate which columns will be analized.
+                Defaults to ``None``.
             data (str or pandas.DataFrame):
+                Table to be analyzed or path to the csv file.
+                If it's a relative path, use ``root_path`` to find the file.
+                Only used if fields is a ``list`` or ``None``.
+                Defaults to ``None``.
             parent (str):
+                Table name to refere a foreign key field. Defaults to ``None``.
             foreign_key (str):
+                Foreing key field name to ``parent`` table primary key. Defaults to ``None``.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the table ``name`` already exists
+                or ``fields`` is a ``list`` and ``data`` is ``None``
         """
         if name in self.get_table_names():
             raise ValueError('Table "{}" already exists.'.format(name))
@@ -712,7 +731,7 @@ class Metadata:
 
             fields = Metadata._analyze(data)
 
-        table = {'name': name, 'fields': fields}
+        table = {'name': name, 'fields': fields or dict()}
         self._metadata['tables'][name] = table
 
         if primary_key:
