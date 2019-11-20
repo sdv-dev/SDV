@@ -535,11 +535,11 @@ class Metadata:
         for grandchild in children:
             self._validate_circular_relationships(parent, self.get_children(grandchild))
 
-    def add_field(self, table, field, type, subtype, properties):
+    def add_field(self, table, field, type, subtype=None, properties=dict()):
         """Add a new field into a given table.
 
-        First, assert that the ``table`` exists and the ``field`` does not.
-        Then, validate the ``field_details`` format. Finally, add the field.
+        Before add the field validate the ``table`` already exists, the ``field`` does not exist,
+        ``type`` and ``subtype`` supporteds, and ``properties`` valid properties.
 
         The error message displayed, when the ``ValueError`` is raised because the ``fields``
         already exists in the table, recommends you to use the ``update_fields`` instead.
@@ -549,8 +549,13 @@ class Metadata:
                 Table name to add the new field, it must exist.
             field (str):
                 Field name to be added, it must not exist.
-            field_details (dict):
-                Dictionary with the details for the new table field.
+            type (str):
+                Data type of field to be added. Required.
+            subtype (str):
+                Data subtype of field to be added. Not required. Defaults to ``None``.
+            properties (dict):
+                Extra properties of field like: ref, format, min, max, etc. Not required.
+                Defaults to ``dict()``.
 
         Raises:
             ValueError:
@@ -567,7 +572,6 @@ class Metadata:
                 .format(table, field)
             )
 
-        # Validate type, subtype and properties
         field_details = {
             'name': field,
             'type': type
@@ -579,6 +583,8 @@ class Metadata:
         if properties:
             for property_name, property_value in properties.items():
                 field_details[property_name] = property_value
+
+        self._validate_field(field_details)
 
         fields[field] = field_details
 
@@ -629,6 +635,7 @@ class Metadata:
                 Table name to add a new relationship with a children table.
             foreign_key (str):
                 Field name from the parent table to create the reference in the children table.
+                Defaults to ``None``.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
@@ -720,4 +727,4 @@ class Metadata:
         return copy.deepcopy(self._metadata)
 
     def to_json(self):
-        pass
+        return json.dumps(self._metadata, indent=4)
