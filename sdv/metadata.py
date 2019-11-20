@@ -400,17 +400,6 @@ class Metadata:
         """
         return self.get_table_meta(table_name).get('primary_key')
 
-    def set_primary_key(self, table_name, field_name):
-        """Set the primary key name of the indicated table.
-
-        Args:
-            table_name (str):
-                Name of table for which to set the primary key field.
-            field_name (str):
-                Name of field to set as the primary key field.
-        """
-        self.get_table_meta(table_name)['primary_key'] = field_name
-
     def get_foreign_key(self, parent, child):
         """Get table foreign key field name.
 
@@ -482,27 +471,35 @@ class Metadata:
         fields = dict()
         for column in columns or data.columns:
             dtype = data[column].dtype
-            fields[column] = {'name': column}
+            subtype = None
 
             if dtype.kind == 'i':
-                fields[column]['type'] = 'numerical'
-                fields[column]['subtype'] = 'integer'
+                type = 'numerical'
+                subtype = 'integer'
 
             elif dtype.kind == 'f':
-                fields[column]['type'] = 'numerical'
-                fields[column]['subtype'] = 'float'
+                type = 'numerical'
+                subtype = 'float'
 
             elif dtype.kind == 'O':
-                fields[column]['type'] = 'categorical'
+                type = 'categorical'
 
             elif dtype.kind == 'b':
-                fields[column]['type'] = 'boolean'
+                type = 'boolean'
 
             elif dtype.kind == 'M':
-                fields[column]['type'] = 'datetime'
+                type = 'datetime'
 
             else:
                 raise ValueError('Unsupported dtype: {} in column {}'.format(dtype, column))
+
+            fields[column] = {
+                'name': column,
+                'type': type
+            }
+
+            if subtype:
+                fields[column]['subtype'] = subtype
 
         return fields
 
@@ -528,84 +525,92 @@ class Metadata:
         else:
             raise ValueError('Type {} is not supported.'.format(dtype))
 
-    def add_table(self, name, primary_key=None, fields=None, data=None, parent=None,
-                  foreign_key=None):
-        """Add a new table to the metadata.
+    def _validate_circular_relationships(self, parent, children=None):
+        if children is None:
+            children = self.get_children(parent)
 
-        First, assert that the ``name`` table exists.
-        Create the table with the table name and an empty fields.
-        If ``primary_key`` is defined add it to the table.
-        
-        When ``fields`` is a ``dict``, use it to set the ``fields`` key from the table
-        (fields are validated).
-        When ``data`` is provided and ``fields`` is not or it's a ``list`` type,
-        analyze the data for all the columns or just the ``fields`` columns.
-        If the ``data`` is a ``str`` it should point to a csv file with the data to analazy.
-        It may be the relative path, if it's then concat the ``root_path`` with the ``data`` path.
+        if parent in children:
+            raise ValueError('Circular relationship not supported')
 
-        Finally, if ``parent`` and ``foreign_key`` are provided, create their relationship.
+        for grandchild in children:
+            self._validate_circular_relationships(parent, self.get_children(grandchild))
 
-        Args:
-            name (str):
-            primary_key (str):
-            fields (dict or list):
-            data (str or pandas.DataFrame):
-            parent (str):
-            foreign_key (str):
-        """
-        if name in self.get_table_names():
-            raise ValueError('Table "{}" already exists.'.format(name))
+    def add_field(self, table, field, type, subtype, properties):
+        """Add a new field into a given table.
 
-        table = {'name': name, 'fields': dict()}
+        First, assert that the ``table`` exists and the ``field`` does not.
+        Then, validate the ``field_details`` format. Finally, add the field.
 
-        if primary_key:  # pk must be in fields or data.columns?
-            table['primary_key'] = primary_key
-
-        if isinstance(fields, dict):
-            for field_key, field_value in fields.items():
-                self._validate_field(field_value)
-
-        elif data is not None and (not fields or isinstance(fields, list)):
-            if isinstance(data, str):
-                data = data if os.path.exists(data) else os.path.join(root_path, data)
-                data = pd.read_csv(data)
-
-            fields = Metadata._analyze(data, columns=fields)
-
-        elif not data and isinstance(fields, list):
-            fields = dict()
-
-        table['fields'] = fields or dict()
-        self._metadata['tables'][name] = table
-
-        # Add relationship
-        if parent and foreign_key:
-            self.add_relationship(name, parent, foreign_key)
-
-    def remove_table(self, table):
-        """Remove a table, their childrens and their relationships.
-
-        First, assert that the ``table`` exists. Then, get their childrens and remove them too,
-        including their relationships. Finally, remove the given ``table``.
+        The error message displayed, when the ``ValueError`` is raised because the ``fields``
+        already exists in the table, recommends you to use the ``update_fields`` instead.
 
         Args:
             table (str):
-                Table to be removed.
+                Table name to add the new field, it must exist.
+            field (str):
+                Field name to be added, it must not exist.
+            field_details (dict):
+                Dictionary with the details for the new table field.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the ``table`` doesn't exists or the ``field``
+                exists in the table.
         """
         if table not in self.get_table_names():
             raise ValueError('Table "{}" doesn\'t exists.'.format(table))
 
-        childrens = self.get_children(table)
-        for children in list(childrens):
-            self.remove_table(children)
+        if field in self.get_fields(table).keys():
+            raise ValueError(
+                'Table {}, field {} already exists. Use "update_field()" to modify it.'
+                .format(table, field)
+            )
 
-        parents = self.get_parents(table)
-        self.remove_relationship(table, list(parents)[0])
+        # Validate type, subtype and properties
+        field_details = {
+            'name': field,
+            'type': type
+        }
 
-        del self._metadata['tables'][table]
-        self._get_relationships()
+        if subtype:
+            field_details['subtype'] = subtype
 
-    def add_relationship(self, table, parent, foreign_key):
+        if properties:
+            for property_name, property_value in properties.items():
+                field_details[property_name] = property_value
+
+        self.get_fields(table)[field] = field_details
+
+    def add_primary_key(self, table, field):
+        """Add a primary key into a given table.
+
+        First, assert that the ``table`` exists and the ``field`` does not.
+        Then, assert that the ``table`` doesn't have primary key. Finally, add primary key.
+
+        Args:
+            table (str):
+                Table name to add the new primary key, it must exist.
+            field (str):
+                Field name to be the new primary key, it must not exist.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised when the table not exist,
+                the field already exist or the primary key already exist.
+        """
+        if table not in self.get_table_names():
+            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
+
+        if field in self.get_fields(table).keys():
+            raise ValueError('Table {}, field {} already exists.'.format(table, field))
+
+        if self.get_primary_key(table):
+            raise ValueError('Table {} already have primary key.'.format(table))
+
+        self.get_table_meta(table)['primary_key'] = field
+        self.add_field(table, field, 'id', None, None)
+
+    def add_relationship(self, table, parent, foreign_key=None):
         """Add a new relationship between a 2 tables.
 
         By a given ``table`` and ``parent`` add a new relationship using ``foreign_key``
@@ -640,9 +645,96 @@ class Metadata:
         if not primary_key:
             raise ValueError('Parent table {} have not primary key.'.format(primary_key))
 
-        ref = {'field': primary_key, 'table': parent}
-        field = {'name': foreign_key, 'type': 'id', 'ref': ref}  # ¿subtype?
-        self.add_field(table, foreign_key, field)
+        self._validate_circular_relationships(parent, self.get_children(table))
+
+        properties = {'ref': {'field': primary_key, 'table': parent}}
+        self.add_field(table, foreign_key or primary_key, 'id', None, properties)
+
+        self._get_relationships()
+
+    def _add_table_load_data(self, data):
+        data = data if os.path.exists(data) else os.path.join(self.root_path, data)
+        return pd.read_csv(data)
+
+    def add_table(self, name, primary_key=None, fields=dict(), data=None, parent=None,
+                  foreign_key=None):
+        """Add a new table to the metadata.
+
+        First, assert that the ``name`` table exists.
+        Create the table with the table name and an empty fields.
+        If ``primary_key`` is defined add it to the table.
+
+        When ``fields`` is a ``dict``, use it to set the ``fields`` key from the table
+        (fields are validated).
+        When ``data`` is provided and ``fields`` is not or it's a ``list`` type,
+        analyze the data for all the columns or just the ``fields`` columns.
+        If the ``data`` is a ``str`` it should point to a csv file with the data to analazy.
+        It may be the relative path, if it's then concat the ``root_path`` with the ``data`` path.
+
+        Finally, if ``parent`` and ``foreign_key`` are provided, create their relationship.
+
+        Args:
+            name (str):
+            primary_key (str):
+            fields (dict or list):
+            data (str or pandas.DataFrame):
+            parent (str):
+            foreign_key (str):
+        """
+        if name in self.get_table_names():
+            raise ValueError('Table "{}" already exists.'.format(name))
+
+        if isinstance(fields, dict):
+            for field_key, field_value in fields.items():
+                self._validate_field(field_value)
+
+        if isinstance(fields, list) and data is None:
+            raise ValueError()
+
+        if isinstance(fields, list) and data is not None:
+            if isinstance(data, str):
+                data = self._add_table_load_data(data)
+
+            fields = Metadata._analyze(data, columns=fields)
+
+        if not fields and data is not None:
+            if isinstance(data, str):
+                data = self._add_table_load_data(data)
+
+            fields = Metadata._analyze(data)
+
+        table = {'name': name, 'fields': fields}
+        self._metadata['tables'][name] = table
+
+        if primary_key:
+            self.add_primary_key(name, primary_key)
+            # table['primary_key'] = primary_key
+
+        # Add relationship
+        if parent:
+            self.add_relationship(name, parent, foreign_key)
+
+    def remove_table(self, table):
+        """Remove a table, their childrens and their relationships.
+
+        First, assert that the ``table`` exists. Then, get their childrens and remove them too,
+        including their relationships. Finally, remove the given ``table``.
+
+        Args:
+            table (str):
+                Table to be removed.
+        """
+        if table not in self.get_table_names():
+            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
+
+        childrens = self.get_children(table)
+        for children in list(childrens):
+            self.remove_table(children)
+
+        parents = self.get_parents(table)
+        self.remove_relationship(table, list(parents)[0])
+
+        del self._metadata['tables'][table]
         self._get_relationships()
 
     def remove_relationship(self, table, parent):
@@ -675,101 +767,6 @@ class Metadata:
             self._delete_foreign_key(parent, table)
 
         self._get_relationships()
-
-    def add_primary_key(self, table, field):
-        if table not in self.get_table_names():
-            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
-
-        if field in self.get_fields(table).keys():
-            raise ValueError('Table {}, field {} already exists.'.format(table, field))
-
-        if self.get_primary_key(table):
-            raise ValueError('Table {} already have primary_key.'.format(table))
-
-        field_details = {
-            'name': field,
-            'type': 'id'
-        }
-
-        self.get_fields(table)[field] = field_details
-        self.set_primary_key(table, field)
-
-    def add_field(self, table, field, field_details):
-        """Add a new field into a given table.
-
-        First, assert that the ``table`` exists and the ``field`` does not.
-        Then, validate the ``field_details`` format. Finally, add the field.
-
-        The error message displayed, when the ``ValueError`` is raised because the ``fields``
-        already exists in the table, recommends you to use the ``update_fields`` instead.
-
-        Args:
-            table (str):
-                Table name to add the new field, it must exist.
-            field (str):
-                Field name to be added, it must not exist.
-            field_details (dict):
-                Dictionary with the details for the new table field.
-
-        Raises:
-            ValueError:
-                A ``ValueError`` is raised when the ``table`` doesn't exists or the ``field``
-                exists in the table.
-        """
-        if table not in self.get_table_names():
-            raise ValueError('Table "{}" doesn\'t exists.'.format(table))
-
-        if field in self.get_fields(table).keys():
-            raise ValueError(
-                'Table {}, field {} already exists. Use "update_field()" to modify it.' \
-                .format(table, field)
-            )
-
-        field_details['name'] = field
-        self._validate_field(field_details)
-
-        has_id = field_details['type'] == 'id'
-        has_ref = field_details.get('ref') is not None
-
-        if has_id and not has_ref:
-            self.add_primary_key(table, field)
-
-        elif has_id and has_ref:
-            self.get_fields(table)[field] = field_details
-            self._get_relationships()
-
-        else:
-            self.get_fields(table)[field] = field_details
-
-    def add_fields(self, data):
-        """Add a list or dict of fields into tables.
-
-        List format:
-        [{
-            'table': 'table_name',
-            'field': 'field_name',
-            'field_details': {...}
-        }, ...]
-
-        Dictionary format:
-        {
-            ('table_name', 'field_name'): {...},
-            ...
-        }
-        """
-        if isinstance(data, list):
-            for item in data:
-                self.add_field(item['table'], item['field'], item['field_details'])
-            return
-
-        if isinstance(data, dict):
-            for key, value in data.items():
-                add_field[key[0], key[1], value]
-            return
-
-        raise TypeError(
-            'Invalid data type {}, only list and dict are supported.'.format(type(data))
-        )
 
     def update_field(self, table, field, field_details):
         """Update a field from a gibven table.
