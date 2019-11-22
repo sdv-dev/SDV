@@ -14,6 +14,11 @@ class Sampler:
         models (dict):
             Table models.
     """
+    metadata = None
+    models = None
+    primary_key = None
+    remaining_primary_key = None
+
     def __init__(self, metadata, models):
         self.metadata = metadata
         self.models = models
@@ -453,7 +458,7 @@ class Sampler:
             self._reset_primary_keys_generators()
 
         sampled_data = dict()
-        for table in self.metadata.get_table_names():
+        for table in self.metadata.get_tables():
             if not self.metadata.get_parents(table):
                 sampled_data.update(self.sample(table, num_rows))
 

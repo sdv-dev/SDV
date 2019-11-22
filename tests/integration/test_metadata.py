@@ -1,122 +1,57 @@
-import pandas as pd
-import pytest
-
-from sdv import Metadata
+from sdv import Metadata, load_demo
 
 
-def get_metadata():
-    return Metadata({'tables': dict()})
+def test_build_demo_metadata_from_tables():
+    """Build metadata from the demo tables.
 
+    Then compare the built metadata with the demo one
+    to make sure that they are the same.
+    """
+    metadata, tables = load_demo()
 
-def test_add_fields_and_primary_key():
-    metadata = get_metadata()
-
-    metadata.add_table('a_table')
-
-    metadata.add_field('a_table', 'categoricals', 'categorical')
-    metadata.add_field('a_table', 'integers', 'numerical', 'integer', {'min': 0, 'max': 10})
-    metadata.add_field('a_table', 'floats', 'numerical', 'float')
-    metadata.add_field('a_table', 'booleans', 'boolean')
-
-    metadata.add_primary_key('a_table', 'index')
-
-    expected_metadata = {
-        'tables': {
-            'a_table': {
-                'name': 'a_table',
-                'primary_key': 'index',
-                'fields': {
-                    'categoricals': {
-                        'name': 'categoricals',
-                        'type': 'categorical'
-                    },
-                    'integers': {
-                        'name': 'integers',
-                        'type': 'numerical',
-                        'subtype': 'integer',
-                        'min': 0,
-                        'max': 10
-                    },
-                    'floats': {
-                        'name': 'floats',
-                        'type': 'numerical',
-                        'subtype': 'float'
-                    },
-                    'booleans': {
-                        'name': 'booleans',
-                        'type': 'boolean'
-                    },
-                    'index': {
-                        'name': 'index',
-                        'type': 'id'
-                    }
-                }
-            }
+    new_meta = Metadata()
+    new_meta.add_table('users', data=tables['users'], primary_key='user_id')
+    new_meta.add_table('sessions', data=tables['sessions'], primary_key='session_id',
+                       parent='users', foreign_key='user_id')
+    transactions_fields = {
+        'timestamp': {
+            'type': 'datetime',
+            'format': '%Y-%m-%d'
         }
     }
+    new_meta.add_table('transactions', tables['transactions'],
+                       fields_metadata=transactions_fields,
+                       primary_key='transaction_id', parent='sessions')
 
-    assert metadata._metadata == expected_metadata
-
-
-def test_add_table_analyze_all():
-    metadata = get_metadata()
-
-    data = pd.DataFrame({
-        'a_field': [0, 1, 2],
-        'b_field': ['a', 'b', 'c'],
-        'c_field': [True, False, False],
-        'd_field': [0., 1., 2.]
-    })
-
-    metadata.add_table('a_table', data=data)
-
-    expected_metadata = {
-        'tables': {
-            'a_table': {
-                'name': 'a_table',
-                'fields': {
-                    'a_field': {
-                        'name': 'a_field',
-                        'type': 'numerical',
-                        'subtype': 'integer'
-                    },
-                    'b_field': {
-                        'name': 'b_field',
-                        'type': 'categorical'
-                    },
-                    'c_field': {
-                        'name': 'c_field',
-                        'type': 'boolean'
-                    },
-                    'd_field': {
-                        'name': 'd_field',
-                        'type': 'numerical',
-                        'subtype': 'float'
-                    }
-                }
-            }
-        }
-    }
-
-    assert metadata._metadata == expected_metadata
+    assert metadata == new_meta.to_dict()
 
 
-def test_add_relationships():
-    metadata = get_metadata()
+def test_build_demo_metadata_without_tables():
+    metadata = Metadata()
 
-    metadata.add_table('foo', primary_key='index_foo')
-    metadata.add_table('bar', primary_key='index_bar', parent='foo')
+    metadata.add_table('users')
+    metadata.add_field('users', 'user_id', 'id', 'integer')
+    metadata.add_field('users', 'country', 'categorical')
+    metadata.add_field('users', 'gender', 'categorical')
+    metadata.add_field('users', 'age', 'numerical', 'integer')
+    metadata.set_primary_key('users', 'user_id')
 
-    assert metadata.get_children('foo') == set(['bar'])
-    assert metadata.get_parents('bar') == set(['foo'])
+    metadata.add_table('sessions')
+    metadata.add_field('sessions', 'session_id', 'id', 'integer')
+    metadata.add_field('sessions', 'user_id', 'id', 'integer')
+    metadata.add_field('sessions', 'device', 'categorical')
+    metadata.add_field('sessions', 'os', 'categorical')
+    metadata.set_primary_key('sessions', 'session_id')
+    metadata.add_relationship('users', 'sessions')
 
+    metadata.add_table('transactions')
+    metadata.add_field('transactions', 'transaction_id', 'id', 'integer')
+    metadata.add_field('transactions', 'session_id', 'id', 'integer')
+    metadata.add_field('transactions', 'timestamp', 'datetime', properties={'format': '%Y-%m-%d'})
+    metadata.add_field('transactions', 'amount', 'numerical', 'float')
+    metadata.add_field('transactions', 'approved', 'boolean')
+    metadata.set_primary_key('transactions', 'transaction_id')
+    metadata.add_relationship('sessions', 'transactions')
 
-def test_cirtular_dependence_validation():
-    metadata = get_metadata()
-
-    metadata.add_table('foo', primary_key='index_foo')
-    metadata.add_table('bar', primary_key='index_bar', parent='foo')
-    metadata.add_table('tar', primary_key='index_tar', parent='bar')
-
-    with pytest.raises(ValueError):
-        metadata.add_relationship('foo', 'tar')
+    demo_metadata = load_demo()[0]
+    assert demo_metadata == metadata.to_dict()

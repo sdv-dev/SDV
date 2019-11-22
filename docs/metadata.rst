@@ -118,7 +118,7 @@ The available types and subtypes are in this table:
 +---------------+---------------+
 | numerical     | float         |
 +---------------+---------------+
-| datetime      | datetime      |
+| datetime      |               |
 +---------------+---------------+
 | categorical   |               |
 +---------------+---------------+

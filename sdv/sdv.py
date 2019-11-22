@@ -43,7 +43,7 @@ class SDV:
 
     def _validate_dataset_structure(self):
         """Make sure that all the tables have at most one parent."""
-        for table in self.metadata.get_table_names():
+        for table in self.metadata.get_tables():
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 

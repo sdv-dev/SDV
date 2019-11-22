@@ -1,89 +1,78 @@
 import pandas as pd
 
 DEMO_METADATA = {
-    'tables': [
-        {
-            'name': 'users',
+    'tables': {
+        'users': {
             'primary_key': 'user_id',
-            'fields': [
-                {
-                    'name': 'user_id',
+            'fields': {
+                'user_id': {
                     'type': 'id',
+                    'subtype': 'integer'
                 },
-                {
-                    'name': 'country',
-                    'type': 'categorical',
+                'country': {
+                    'type': 'categorical'
                 },
-                {
-                    'name': 'gender',
-                    'type': 'categorical',
+                'gender': {
+                    'type': 'categorical'
                 },
-                {
-                    'name': 'age',
+                'age': {
                     'type': 'numerical',
                     'subtype': 'integer'
                 }
-            ]
+            }
         },
-        {
-            'name': 'sessions',
+        'sessions': {
             'primary_key': 'session_id',
-            'fields': [
-                {
-                    'name': 'session_id',
+            'fields': {
+                'session_id': {
                     'type': 'id',
+                    'subtype': 'integer'
                 },
-                {
-                    'name': 'user_id',
+                'user_id': {
                     'ref': {
                         'field': 'user_id',
                         'table': 'users'
                     },
                     'type': 'id',
+                    'subtype': 'integer'
                 },
-                {
-                    'name': 'device',
-                    'type': 'categorical',
+                'device': {
+                    'type': 'categorical'
                 },
-                {
-                    'name': 'os',
-                    'type': 'categorical',
+                'os': {
+                    'type': 'categorical'
                 }
-            ]
+            }
         },
-        {
-            'name': 'transactions',
+        'transactions': {
             'primary_key': 'transaction_id',
-            'fields': [
-                {
-                    'name': 'transaction_id',
+            'fields': {
+                'transaction_id': {
                     'type': 'id',
+                    'subtype': 'integer'
                 },
-                {
-                    'name': 'session_id',
+                'session_id': {
                     'ref': {
                         'field': 'session_id',
                         'table': 'sessions'
                     },
                     'type': 'id',
+                    'subtype': 'integer'
                 },
-                {
-                    'name': 'timestamp',
+                'timestamp': {
                     'type': 'datetime',
                     'format': '%Y-%m-%d'
                 },
-                {
-                    'name': 'amount',
+                'amount': {
                     'type': 'numerical',
                     'subtype': 'float'
                 },
-                {
-                    'name': 'approved',
+                'approved': {
                     'type': 'boolean'
                 }
-            ]
+            }
         }
-    ]
+    }
 }
 
 
