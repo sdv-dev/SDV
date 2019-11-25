@@ -51,8 +51,8 @@ class SDV:
         """Fit this SDV instance to the dataset data.
 
         Args:
-            metadata (dict or str):
-                Metadata dict or path to the metadata JSON file.
+            metadata (dict, str or Metadata):
+                Metadata dict, path to the metadata JSON file or Metadata instance itself.
             tables (dict):
                 Dictionary with the table names as key and ``pandas.DataFrame`` instances as
                 values.  If ``None`` is given, the tables will be loaded from the paths
