@@ -106,11 +106,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -302,59 +312,18 @@ save a hierarchical model. We will cover these two steps in this section using a
 function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
 
-<span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">()</span>
+<span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This will return two objects:</p>
 <ol class="arabic simple">
-<li><p>A <code class="docutils literal notranslate"><span class="pre">metadata</span></code> dictionary with all the information that <strong>SDV</strong> needs to know about the dataset:</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object with all the information that <strong>SDV</strong> needs to know about the dataset.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>{
-    &quot;tables&quot;: [
-        {
-            &quot;fields&quot;: [
-                {&quot;name&quot;: &quot;user_id&quot;, &quot;type&quot;: &quot;id&quot;},
-                {&quot;name&quot;: &quot;country&quot;, &quot;type&quot;: &quot;categorical&quot;},
-                {&quot;name&quot;: &quot;gender&quot;, &quot;type&quot;: &quot;categorical&quot;},
-                {&quot;name&quot;: &quot;age&quot;, &quot;type&quot;: &quot;numerical&quot;, &quot;subtype&quot;: &quot;integer&quot;}
-            ],
-            &quot;name&quot;: &quot;users&quot;,
-            &quot;primary_key&quot;: &quot;user_id&quot;
-        },
-        {
-            &quot;fields&quot;: [
-                {&quot;name&quot;: &quot;session_id&quot;, &quot;type&quot;: &quot;id&quot;},
-                {&quot;name&quot;: &quot;user_id&quot;, &quot;type&quot;: &quot;id&quot;, &quot;ref&quot;: {
-                    &quot;field&quot;: &quot;user_id&quot;, &quot;table&quot;: &quot;users&quot;},
-                },
-                {&quot;name&quot;: &quot;device&quot;, &quot;type&quot;: &quot;categorical&quot;},
-                {&quot;name&quot;: &quot;os&quot;, &quot;type&quot;: &quot;categorical&quot;}
-            ],
-            &quot;name&quot;: &quot;sessions&quot;,
-            &quot;primary_key&quot;: &quot;session_id&quot;
-        },
-        {
-            &quot;fields&quot;: [
-                {&quot;name&quot;: &quot;transaction_id&quot;, &quot;type&quot;: &quot;id&quot;},
-                {&quot;name&quot;: &quot;session_id&quot;, &quot;type&quot;: &quot;id&quot;, &quot;ref&quot;: {
-                    &quot;field&quot;: &quot;session_id&quot;, &quot;table&quot;: &quot;sessions&quot;},
-                },
-                {&quot;name&quot;: &quot;timestamp&quot;, &quot;format&quot;: &quot;%Y-%m-%d&quot;, &quot;type&quot;: &quot;datetime&quot;},
-                {&quot;name&quot;: &quot;amount&quot;, &quot;type&quot;: &quot;numerical&quot;, &quot;subtype&quot;: &quot;float&quot;},
-                {&quot;name&quot;: &quot;approved&quot;, &quot;type&quot;: &quot;boolean&quot;}
-            ],
-            &quot;name&quot;: &quot;transactions&quot;,
-            &quot;primary_key&quot;: &quot;transaction_id&quot;
-        }
-    ]
-}
-</pre></div>
-</div>
-<p>For more details about the Metadata format, please refer to <a class="reference external" href="https://hdi-project.github.io/SDV/metadata.html">the corresponding section
-of the documentation</a></p>
+<p>For more details about how to build the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> for your own dataset, please refer to the
+<a class="reference external" href="https://hdi-project.github.io/SDV/metadata.html">Metadata</a> section of the documentation.</p>
 <ol class="arabic simple">
 <li><p>A dictionary containing three <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code> with the tables described in the
-metadata dictionary.</p></li>
+metadata object.</p></li>
 </ol>
 <p>The returned objects contain the following information:</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>{
@@ -477,11 +446,21 @@ for more details about this process.</p></li>
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>

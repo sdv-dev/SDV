@@ -107,11 +107,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -324,7 +334,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata</strong> (<em>dict</em><em> or </em><em>str</em>) – Metadata dict or path to the metadata JSON file.</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>, </em><em>str</em><em> or </em><a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Metadata dict, path to the metadata JSON file or Metadata instance itself.</p></li>
 <li><p><strong>tables</strong> (<em>dict</em>) – Dictionary with the table names as key and <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instances as
 values.  If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the tables will be loaded from the paths
 indicated in <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>

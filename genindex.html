@@ -106,11 +106,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -246,18 +256,46 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#C"><strong>C</strong></a>
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#C"><strong>C</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  
 </div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.html#sdv.Metadata.add_field">add_field() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.add_field">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/sdv.html#sdv.Metadata.add_relationship">add_relationship() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.add_relationship">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.html#sdv.Metadata.add_table">add_table() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.add_table">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -315,14 +353,14 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_foreign_key">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.Metadata.get_parents">get_parents() (sdv.Metadata method)</a>
 
       <ul>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_parents">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.Metadata.get_primary_key">get_primary_key() (sdv.Metadata method)</a>
 
       <ul>
@@ -333,12 +371,6 @@
 
       <ul>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_table_meta">(sdv.metadata.Metadata method)</a>
-</li>
-      </ul></li>
-      <li><a href="api/sdv.html#sdv.Metadata.get_table_names">get_table_names() (sdv.Metadata method)</a>
-
-      <ul>
-        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_table_names">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
       <li><a href="api/sdv.html#sdv.Metadata.get_tables">get_tables() (sdv.Metadata method)</a>
@@ -373,6 +405,12 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.load_table">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.html#sdv.Metadata.load_tables">load_tables() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.load_tables">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -385,11 +423,15 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata">(class in sdv.metadata)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.metadata">metadata (sdv.sampler.Sampler attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler.model_database">model_database() (sdv.modeler.Modeler method)</a>
 </li>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler">Modeler (class in sdv.modeler)</a>
+</li>
+      <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.models">models (sdv.sampler.Sampler attribute)</a>
 </li>
       <li><a href="api/sdv.evaluation.metrics.html#sdv.evaluation.metrics.mse">mse() (in module sdv.evaluation.metrics)</a>
 </li>
@@ -404,19 +446,29 @@
   </ul></td>
 </tr></table>
 
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.primary_key">primary_key (sdv.sampler.Sampler attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.evaluation.metrics.html#sdv.evaluation.metrics.r2_score">r2_score() (in module sdv.evaluation.metrics)</a>
 </li>
+      <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.remaining_primary_key">remaining_primary_key (sdv.sampler.Sampler attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.Metadata.reverse_transform">reverse_transform() (sdv.Metadata method)</a>
 
       <ul>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.reverse_transform">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.evaluation.metrics.html#sdv.evaluation.metrics.rmse">rmse() (in module sdv.evaluation.metrics)</a>
 </li>
   </ul></td>
@@ -455,14 +507,14 @@
         <li><a href="api/sdv.sdv.html#sdv.sdv.SDV.save">(sdv.sdv.SDV method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.SDV">SDV (class in sdv)</a>
 
       <ul>
         <li><a href="api/sdv.sdv.html#sdv.sdv.SDV">(class in sdv.sdv)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#module-sdv">sdv (module)</a>
 </li>
       <li><a href="api/sdv.demo.html#module-sdv.demo">sdv.demo (module)</a>
@@ -481,6 +533,12 @@
 </li>
       <li><a href="api/sdv.sdv.html#module-sdv.sdv">sdv.sdv (module)</a>
 </li>
+      <li><a href="api/sdv.html#sdv.Metadata.set_primary_key">set_primary_key() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.set_primary_key">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.evaluation.metrics.html#sdv.evaluation.metrics.sum_square_diff">sum_square_diff() (in module sdv.evaluation.metrics)</a>
 </li>
   </ul></td>
@@ -488,6 +546,20 @@
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.html#sdv.Metadata.to_dict">to_dict() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.to_dict">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/sdv.html#sdv.Metadata.to_json">to_json() (sdv.Metadata method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.to_json">(sdv.metadata.Metadata method)</a>
+</li>
+      </ul></li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.Metadata.transform">transform() (sdv.Metadata method)</a>
 

@@ -105,11 +105,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -269,7 +279,8 @@
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="n">field</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">],</span> <span class="n">exact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">datetime_format</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;format&#39;</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="n">datetime_format</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;numerical&#39;</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
             <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
@@ -305,8 +316,39 @@
 <span class="sd">            The path where the ``metadata.json`` is located. Defaults to ``None``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_get_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Exttract information about child-parent relationships.</span>
+    <span class="n">_FIELD_TEMPLATES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;boolean&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;datetime&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">_DTYPES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">object</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">):</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span> <span class="nb">str</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_analyze_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract information about child-parent relationships.</span>
 
 <span class="sd">        Creates the following attributes:</span>
 <span class="sd">            * ``_child_map``: set of child tables that each table has.</span>
@@ -315,9 +357,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_child_map</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parent_map</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">table_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">table_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
-                <span class="n">table</span> <span class="o">=</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                     <span class="n">ref</span> <span class="o">=</span> <span class="n">field_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">ref</span><span class="p">:</span>
@@ -341,23 +382,31 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
         <span class="n">tables</span> <span class="o">=</span> <span class="n">new_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">new_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">table</span><span class="p">:</span> <span class="n">meta</span>
+                <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">tables</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">new_metadata</span>
+
         <span class="n">new_tables</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-
         <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
-            <span class="n">new_tables</span><span class="p">[</span><span class="n">table</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">table</span>
+            <span class="k">if</span> <span class="n">table</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+                <span class="n">new_tables</span><span class="p">[</span><span class="n">table</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">table</span>
 
-            <span class="n">fields</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
-            <span class="n">new_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-                <span class="n">new_fields</span><span class="p">[</span><span class="n">field</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span>
+                <span class="n">fields</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
+                <span class="n">new_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+                    <span class="n">new_fields</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">field</span>
 
-            <span class="n">table</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_fields</span>
+                <span class="n">table</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_fields</span>
 
         <span class="n">new_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_tables</span>
 
         <span class="k">return</span> <span class="n">new_metadata</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">root_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="k">as</span> <span class="n">metadata_file</span><span class="p">:</span>
@@ -365,12 +414,16 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">root_path</span> <span class="ow">or</span> <span class="s1">&#39;.&#39;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_get_relationships</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Metadata.get_children"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table children.</span>
+        <span class="sd">&quot;&quot;&quot;Get tables for which the given table is parent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -383,7 +436,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Metadata.get_parents"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table parents.</span>
+        <span class="sd">&quot;&quot;&quot;Get tables for with the given table is child.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -396,7 +449,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Metadata.get_table_meta"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_table_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the metadata  dict for a table.</span>
+        <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -405,23 +458,123 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
 <span class="sd">                table metadata</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If table does not exist in this metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">table_name</span><span class="p">]</span></div>
+        <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Table &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Metadata.get_tables"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the list of table names.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list:</span>
+<span class="sd">                table names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get table fields metadata.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_name (str):</span>
+<span class="sd">                Name of the table to get the fields from.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                Mapping of field names and their metadata dicts.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If table does not exist in this metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Metadata.get_primary_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the primary key name of the indicated table.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_name (str):</span>
+<span class="sd">                Name of table for which to get the primary key field.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str or None:</span>
+<span class="sd">                Primary key field name. ``None`` if the table has no primary key.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If table does not exist in this metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Metadata.get_foreign_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_foreign_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get table foreign key field name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parent (str):</span>
+<span class="sd">                Name of the parent table.</span>
+<span class="sd">            child (str):</span>
+<span class="sd">                Name of the child table.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str or None:</span>
+<span class="sd">                Foreign key field name.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If the relationship does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">primary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ref</span> <span class="ow">and</span> <span class="n">ref</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">primary</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">name</span>
+
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not parent of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Metadata.load_table"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.load_table">[docs]</a>    <span class="k">def</span> <span class="nf">load_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Load table data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
-<span class="sd">                Name of the table that we want to load.</span>
+<span class="sd">                Name of the table to load.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                DataFrame with the contents of the table.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If table does not exist in this metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
         <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_load_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Metadata.load_tables"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.load_tables">[docs]</a>    <span class="k">def</span> <span class="nf">load_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a dictionary with data from multiple tables.</span>
+
+<span class="sd">        If a ``tables`` list is given, only load the indicated tables.</span>
+<span class="sd">        Otherwise, load all the tables from this metadata.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tables (list):</span>
+<span class="sd">                List of table names. Defaults to ``None``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict(str, pandasd.DataFrame):</span>
+<span class="sd">                mapping of table names and their data loaded as ``pandas.DataFrame`` instances.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">table_name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
+        <span class="p">}</span></div>
 
     <span class="k">def</span> <span class="nf">_get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
@@ -438,48 +591,28 @@
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError:</span>
-<span class="sd">                If a field has an invalid type or subtype.</span>
+<span class="sd">                If a field has an invalid type or subtype or if the table does not</span>
+<span class="sd">                exist in this metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
-                <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">object</span>
+            <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DTYPES</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dtype</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;Invalid type and subtype combination for field </span><span class="si">{}</span><span class="s1">: (</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">name</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">)</span>
+                <span class="p">)</span>
 
-            <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;boolean&#39;</span><span class="p">:</span>
-                <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span>
+            <span class="k">if</span> <span class="n">ids</span> <span class="ow">and</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s1">&#39;id field `</span><span class="si">{}</span><span class="s1">` is neither a primary or a foreign key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
 
-            <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;numerical&#39;</span><span class="p">:</span>
-                <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">field_subtype</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
-                    <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span>
-                <span class="k">elif</span> <span class="n">field_subtype</span> <span class="o">==</span> <span class="s1">&#39;float&#39;</span><span class="p">:</span>
-                    <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid </span><span class="si">{}</span><span class="s1"> subtype </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
-
-            <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
-                <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span>
-
-            <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">):</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="s1">&#39;id field `</span><span class="si">{}</span><span class="s1">` is neither a primary or a foreign key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-
-                    <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">field_subtype</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
-                        <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span>
-                    <span class="k">elif</span> <span class="n">field_subtype</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
-                        <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid </span><span class="si">{}</span><span class="s1"> subtype: </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                            <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid field type: </span><span class="si">{}</span><span class="s1"> - &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_type</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
+                <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
 
         <span class="k">return</span> <span class="n">dtypes</span>
 
@@ -586,86 +719,6 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hyper_transformer</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Metadata.get_table_names"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_table_names">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the list of table names.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            list:</span>
-<span class="sd">                table names.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
-
-<div class="viewcode-block" id="Metadata.get_tables"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a dictionary with data from multiple tables.</span>
-
-<span class="sd">        If a ``tables`` list is given, only load the indicated tables.</span>
-<span class="sd">        Otherwise, load all the tables from this metadata.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            tables (list):</span>
-<span class="sd">                List of table names. Defaults to ``None``.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict(str, pandasd.DataFrame):</span>
-<span class="sd">                mapping of table names and their data loaded as ``pandas.DataFrame`` instances.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">table_name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_names</span><span class="p">()</span>
-        <span class="p">}</span></div>
-
-<div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table fields metadata.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            table_name (str):</span>
-<span class="sd">                Name of the table to get the fields from.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict:</span>
-<span class="sd">                Mapping of field names and their metadata dicts.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span></div>
-
-<div class="viewcode-block" id="Metadata.get_primary_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the primary key name of the indicated table.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            table_name (str):</span>
-<span class="sd">                Name of table for which to get the primary key field.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str or None:</span>
-<span class="sd">                Primary key field name. ``None`` if the table has no primary key.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Metadata.get_foreign_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_foreign_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table foreign key field name.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            parent (str):</span>
-<span class="sd">                Name of the parent table.</span>
-<span class="sd">            child (str):</span>
-<span class="sd">                Name of the child table.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str or None:</span>
-<span class="sd">                Foreign key field name.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError:</span>
-<span class="sd">                If the relationship does not exist.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">primary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">ref</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">ref</span> <span class="ow">and</span> <span class="n">ref</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">primary</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
-
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not parent of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">))</span></div>
-
 <div class="viewcode-block" id="Metadata.reverse_transform"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reverse the transformed data for a given table.</span>
 
@@ -684,7 +737,299 @@
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">reversed_data</span></div></div>
+        <span class="k">return</span> <span class="n">reversed_data</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate the existance of the table and existance (or not) of field.&quot;&quot;&quot;</span>
+        <span class="n">table_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exists</span> <span class="ow">and</span> <span class="p">(</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_fields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Field &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist in table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">table</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span> <span class="ow">and</span> <span class="p">(</span><span class="n">field</span> <span class="ow">in</span> <span class="n">table_fields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Field &quot;</span><span class="si">{}</span><span class="s1">&quot; already exists in table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">table</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Metadata.add_field"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_field">[docs]</a>    <span class="k">def</span> <span class="nf">add_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a new field to the indicated table.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table (str):</span>
+<span class="sd">                Table name to add the new field, it must exist.</span>
+<span class="sd">            field (str):</span>
+<span class="sd">                Field name to be added, it must not exist.</span>
+<span class="sd">            field_type (str):</span>
+<span class="sd">                Data type of field to be added. Required.</span>
+<span class="sd">            field_subtype (str):</span>
+<span class="sd">                Data subtype of field to be added. Optional.</span>
+<span class="sd">                Defaults to ``None``.</span>
+<span class="sd">            properties (dict):</span>
+<span class="sd">                Extra properties of field like: ref, format, min, max, etc. Optional.</span>
+<span class="sd">                Defaults to ``None``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If the table does not exist or it already contains the field.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_field</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">field_details</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">field_type</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">field_subtype</span><span class="p">:</span>
+            <span class="n">field_details</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_subtype</span>
+
+        <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
+            <span class="n">field_details</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">properties</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">table</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_details</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_key_subtype</span><span class="p">(</span><span class="n">field_meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
+        <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
+            <span class="n">field_subtype</span> <span class="o">=</span> <span class="s1">&#39;string&#39;</span>
+        <span class="k">elif</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
+            <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">field_subtype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;Invalid field &quot;subtype&quot; for key field: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_subtype</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Invalid field &quot;type&quot; for key field: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_type</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">field_subtype</span>
+
+<div class="viewcode-block" id="Metadata.set_primary_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.set_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the primary key field of the indicated table.</span>
+
+<span class="sd">        The field must exist and either be an integer or categorical field.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table (str):</span>
+<span class="sd">                Name of the table where the primary key will be set.</span>
+<span class="sd">            field (str):</span>
+<span class="sd">                Field to be used as the new primary key.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If the table or the field do not exist or if the field has an</span>
+<span class="sd">                invalid type or subtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_field</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">field_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="n">field_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">field_meta</span><span class="p">)</span>
+
+        <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">table</span><span class="p">]</span>
+        <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="n">field_subtype</span>
+        <span class="p">}</span>
+        <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;primary_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span></div>
+
+    <span class="k">def</span> <span class="nf">_validate_circular_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate that there is no circular relatioship in the metadata.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">children</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Circular relationship found for table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Metadata.add_relationship"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a new relationship between the parent and child tables.</span>
+
+<span class="sd">        The relationship is created by adding a reference (``ref``) on the ``foreign_key``</span>
+<span class="sd">        field of the ``child`` table pointing at the ``parent`` primary key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parent (str):</span>
+<span class="sd">                Name of the parent table.</span>
+<span class="sd">            child (str):</span>
+<span class="sd">                Name of the child table.</span>
+<span class="sd">            foreign_key (str):</span>
+<span class="sd">                Field in the child table through which the relationship is created.</span>
+<span class="sd">                If ``None``, use the parent primary key name.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If any of the following happens:</span>
+<span class="sd">                    * The parent table does not exist.</span>
+<span class="sd">                    * The child table does not exist.</span>
+<span class="sd">                    * The parent table does not have a primary key.</span>
+<span class="sd">                    * The foreign_key field already exists in the child table.</span>
+<span class="sd">                    * The child table already has a parent.</span>
+<span class="sd">                    * The new relationship closes a relationship circle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate table and field names</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">primary_key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parent table &quot;</span><span class="si">{}</span><span class="s1">&quot; does not have a primary key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">foreign_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">foreign_key</span> <span class="o">=</span> <span class="n">primary_key</span>
+
+        <span class="c1"># Validate relationships</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Table &quot;</span><span class="si">{}</span><span class="s1">&quot; already has a parent&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+
+        <span class="n">grandchildren</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">grandchildren</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">grandchildren</span><span class="p">)</span>
+
+        <span class="c1"># Copy primary key details over to the foreign key</span>
+        <span class="n">foreign_key_details</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">parent</span><span class="p">)[</span><span class="n">primary_key</span><span class="p">])</span>
+        <span class="n">foreign_key_details</span><span class="p">[</span><span class="s1">&#39;ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="n">parent</span><span class="p">,</span>
+            <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="n">primary_key</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Make sure that key subtypes are the same</span>
+        <span class="n">foreign_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">foreign_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">foreign_meta</span><span class="p">:</span>
+            <span class="n">foreign_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">foreign_meta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">foreign_subtype</span> <span class="o">!=</span> <span class="n">foreign_key_details</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Primary and Foreign key subtypes mismatch&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">child</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">foreign_key_details</span>
+
+        <span class="c1"># Re-analyze the relationships</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_field_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get or build all the fields metadata.</span>
+
+<span class="sd">        Analyze a ``pandas.DataFrame`` to build a ``dict`` with the name of the column, and</span>
+<span class="sd">        their data type and subtype. If ``columns`` are provided, only those columns will be</span>
+<span class="sd">        analyzed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (pandas.DataFrame):</span>
+<span class="sd">                Table to be analyzed.</span>
+<span class="sd">            fields (set):</span>
+<span class="sd">                Set of field names or field specifications.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                Dict of valid fields.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError:</span>
+<span class="sd">                If a field specification is not a str or a dict.</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If a column from the data analyzed is an unsupported data type or</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fields_metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">field_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FIELD_TEMPLATES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">field_template</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported dtype </span><span class="si">{}</span><span class="s1"> in column </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
+
+            <span class="n">field_details</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">field_template</span><span class="p">)</span>
+            <span class="n">fields_metadata</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_details</span>
+
+        <span class="k">return</span> <span class="n">fields_metadata</span>
+
+<div class="viewcode-block" id="Metadata.add_table"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_table">[docs]</a>    <span class="k">def</span> <span class="nf">add_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a new table to this metadata.</span>
+
+<span class="sd">        ``fields`` list can be a mixture of field names, which will be build automatically</span>
+<span class="sd">        from the data, or dictionaries specifying the field details. If a field needs to be</span>
+<span class="sd">        analyzed, data has to be also passed.</span>
+
+<span class="sd">        If ``parent`` is given, a relationship will be established between this table</span>
+<span class="sd">        and the specified parent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str):</span>
+<span class="sd">                Name of the new table.</span>
+<span class="sd">            data (str or pandas.DataFrame):</span>
+<span class="sd">                Table to be analyzed or path to the csv file.</span>
+<span class="sd">                If it&#39;s a relative path, use ``root_path`` to find the file.</span>
+<span class="sd">                Only used if fields is not ``None``.</span>
+<span class="sd">                Defaults to ``None``.</span>
+<span class="sd">            fields (list):</span>
+<span class="sd">                List of field names to build. If ``None`` is given, all the fields</span>
+<span class="sd">                found in the data will be used.</span>
+<span class="sd">                Defaults to ``None``.</span>
+<span class="sd">            fields_metadata (dict):</span>
+<span class="sd">                Metadata to be used when creating fields. This will overwrite the</span>
+<span class="sd">                metadata built from the fields found in data.</span>
+<span class="sd">                Defaults to ``None``.</span>
+<span class="sd">            primary_key (str):</span>
+<span class="sd">                Field name to add as primary key, it must not exists. Defaults to ``None``.</span>
+<span class="sd">            parent (str):</span>
+<span class="sd">                Table name to refere a foreign key field. Defaults to ``None``.</span>
+<span class="sd">            foreign_key (str):</span>
+<span class="sd">                Foreing key field name to ``parent`` table primary key. Defaults to ``None``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If the table ``name`` already exists or ``data`` is not passed and</span>
+<span class="sd">                fields need to be built from it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Table &quot;</span><span class="si">{}</span><span class="s1">&quot; already exists.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+                <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="n">fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fields_metadata</span><span class="p">:</span>
+                <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields_metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fields_metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+            <span class="n">fields_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_field_details</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fields</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">fields_metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fields_metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">fields_metadata</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">primary_key</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_primary_key</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># Cleanup</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Metadata.to_dict"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                dict representation of this metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Metadata.to_json"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str):</span>
+<span class="sd">                Path of the JSON file where this metadata will be stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

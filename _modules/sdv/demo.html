@@ -105,11 +105,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -240,94 +250,85 @@
   <h1>Source code for sdv.demo</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
+<span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="k">import</span> <span class="n">Metadata</span>
+
 <span class="n">DEMO_METADATA</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;users&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;users&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;country&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;gender&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;age&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">}</span>
-            <span class="p">]</span>
+            <span class="p">}</span>
         <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;sessions&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sessions&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
                         <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="s1">&#39;users&#39;</span>
                     <span class="p">},</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;device&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;os&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span>
                 <span class="p">}</span>
-            <span class="p">]</span>
+            <span class="p">}</span>
         <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;transactions&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;transaction_id&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;transaction_id&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;transaction_id&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
                         <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="s1">&#39;sessions&#39;</span>
                     <span class="p">},</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;datetime&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;amount&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span>
                 <span class="p">},</span>
-                <span class="p">{</span>
-                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;approved&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;approved&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;boolean&#39;</span>
                 <span class="p">}</span>
-            <span class="p">]</span>
+            <span class="p">}</span>
         <span class="p">}</span>
-    <span class="p">]</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">():</span>
+<div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Load demo data.</span>
 
 <span class="sd">    The demo data consists of the metadata and tables dict for a a toy dataset with</span>
@@ -373,7 +374,10 @@
         <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">transactions</span>
     <span class="p">}</span>
 
-    <span class="k">return</span> <span class="n">DEMO_METADATA</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">tables</span></div>
+    <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
+
+    <span class="k">return</span> <span class="n">tables</span></div>
 </pre></div>
 
            </div>

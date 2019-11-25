@@ -105,11 +105,21 @@
 <p class="caption"><span class="caption-text">Advanced Usage</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#metadata-schema">Metadata Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#top-level">Top Level</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#table">Table</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../metadata.html#field-details">Field details</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields ( Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#primary-key-fields">Primary key fields</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../metadata.html#foreign-key-fields">Foreign key fields</a></li>
 </ul>
@@ -283,7 +293,7 @@
 
     <span class="k">def</span> <span class="nf">_validate_dataset_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Make sure that all the tables have at most one parent.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_table_names</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Some tables have multiple parents, which is not supported yet.&#39;</span><span class="p">)</span>
 
@@ -291,8 +301,8 @@
         <span class="sd">&quot;&quot;&quot;Fit this SDV instance to the dataset data.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            metadata (dict or str):</span>
-<span class="sd">                Metadata dict or path to the metadata JSON file.</span>
+<span class="sd">            metadata (dict, str or Metadata):</span>
+<span class="sd">                Metadata dict, path to the metadata JSON file or Metadata instance itself.</span>
 <span class="sd">            tables (dict):</span>
 <span class="sd">                Dictionary with the table names as key and ``pandas.DataFrame`` instances as</span>
 <span class="sd">                values.  If ``None`` is given, the tables will be loaded from the paths</span>
@@ -303,7 +313,11 @@
 <span class="sd">                metadata is a dict, the current working directory is used.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">Metadata</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_dataset_structure</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span> <span class="o">=</span> <span class="n">Modeler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
