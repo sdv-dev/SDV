@@ -1,5 +1,7 @@
 import pandas as pd
 
+from sdv.metadata import Metadata
+
 DEMO_METADATA = {
     'tables': {
         'users': {
@@ -123,6 +125,6 @@ def load_demo(metadata=False):
     }
 
     if metadata:
-        return DEMO_METADATA.copy(), tables
+        return Metadata(DEMO_METADATA), tables
 
     return tables

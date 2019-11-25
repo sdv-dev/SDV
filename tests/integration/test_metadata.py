@@ -1,4 +1,5 @@
 from sdv import Metadata, load_demo
+from sdv.demo import DEMO_METADATA
 
 
 def test_build_demo_metadata_from_tables():
@@ -7,7 +8,7 @@ def test_build_demo_metadata_from_tables():
     Then compare the built metadata with the demo one
     to make sure that they are the same.
     """
-    metadata, tables = load_demo(metadata=True)
+    tables = load_demo(metadata=False)
 
     new_meta = Metadata()
     new_meta.add_table('users', data=tables['users'], primary_key='user_id')
@@ -23,7 +24,7 @@ def test_build_demo_metadata_from_tables():
                        fields_metadata=transactions_fields,
                        primary_key='transaction_id', parent='sessions')
 
-    assert metadata == new_meta.to_dict()
+    assert DEMO_METADATA == new_meta.to_dict()
 
 
 def test_build_demo_metadata_without_tables():
@@ -53,5 +54,4 @@ def test_build_demo_metadata_without_tables():
     metadata.set_primary_key('transactions', 'transaction_id')
     metadata.add_relationship('sessions', 'transactions')
 
-    demo_metadata = load_demo(metadata=True)[0]
-    assert demo_metadata == metadata.to_dict()
+    assert DEMO_METADATA == metadata.to_dict()

@@ -110,7 +110,7 @@ the datetime format specified.
 
 
 Store your Metadata in a JSON file
-*********************************
+**********************************
 
 Once you have finished configuring your ``Metadata`` instance, you can use it with ``SDV``.
 
