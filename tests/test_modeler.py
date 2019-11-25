@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate, VineCopula
+from copulas.multivariate import GaussianMultivariate
 
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
@@ -23,21 +23,20 @@ class TestModeler(TestCase):
 
     def test___init__with_arguments(self):
         # Run
-        modeler = Modeler({'some': 'metadata'}, model=VineCopula, model_kwargs={'some': 'kwargs'})
+        model = Mock()
+        modeler = Modeler({'some': 'metadata'}, model=model, model_kwargs={'some': 'kwargs'})
 
         # Asserts
         assert modeler.models == dict()
         assert modeler.metadata == {'some': 'metadata'}
-        assert modeler.model == VineCopula
+        assert modeler.model == model
         assert modeler.model_kwargs == {'some': 'kwargs'}
 
     def test__flatten_array(self):
         """Test get flatten array"""
         # Run
         nested = [['foo', 'bar'], 'tar']
-        prefix = 'test'
-
-        result = Modeler._flatten_array(nested, prefix=prefix)
+        result = Modeler._flatten_array(nested, prefix='test')
 
         # Asserts
         expected = {
@@ -45,7 +44,6 @@ class TestModeler(TestCase):
             'test__0__1': 'bar',
             'test__1': 'tar'
         }
-
         assert result == expected
 
     def test__flatten_dict(self):
@@ -59,7 +57,6 @@ class TestModeler(TestCase):
             'distribution': 'value_2',
             'type': 'value_3'
         }
-
         result = Modeler._flatten_dict(nested, prefix='test')
 
         # Asserts
@@ -69,7 +66,6 @@ class TestModeler(TestCase):
             'test__tar__0': 'value_tar_list_0',
             'test__tar__1': 'value_tar_list_1'
         }
-
         assert result == expected
 
     @patch('numpy.log')
@@ -99,23 +95,21 @@ class TestModeler(TestCase):
             'distrib4': distrib4
         }
 
-        # Run
         modeler = Mock(spec=Modeler)
         modeler._fit_model.return_value = model_fitted
-        modeler._flatten_dict.return_value = 'result'
 
+        # Run
         data = pd.DataFrame({'data': [1, 2, 3]})
-
         result = Modeler._get_model_dict(modeler, data)
 
         # Asserts
+        assert result == modeler._flatten_dict.return_value
+
         expected_log_mock_call = [
             call(0.2),
             call(0.5),
             call(0.3)
         ]
-
-        assert result == 'result'
         assert sorted(log_mock.call_args_list) == sorted(expected_log_mock_call)
 
         pd.testing.assert_frame_equal(
@@ -126,44 +120,38 @@ class TestModeler(TestCase):
     def test__get_extensions(self):
         """Test get list of extensions from childs"""
         # Setup
+        modeler = Mock()
         model_dict = [
             {'model': 'data 1'},
             {'model': 'data 2'},
             {'model': 'data 3'}
         ]
-
-        # Run
-        modeler = Mock()
         modeler._get_model_dict.side_effect = model_dict
 
-        child_name = 'some_name'
+        # Run
         child_table = pd.DataFrame({'foo': ['aaa', 'bbb', 'ccc']})
-
-        result = Modeler._get_extension(modeler, child_name, child_table, 'foo')
+        result = Modeler._get_extension(modeler, 'some_name', child_table, 'foo')
 
         # Asserts
         expected = pd.DataFrame({
             '__some_name__model': ['data 1', 'data 2', 'data 3'],
             '__some_name__child_rows': [1, 1, 1]
         }, index=['aaa', 'bbb', 'ccc'])
-
         pd.testing.assert_frame_equal(result, expected)
         assert modeler._get_model_dict.call_count == 3
 
     def test_cpa_with_tables_no_primary_key(self):
         """Test CPA with tables and no primary key."""
-        # Run
+        # Setup
         modeler = Mock(spec=Modeler)
-
         modeler.metadata = Mock(spec=Metadata)
         modeler.models = dict()
-
         modeler.metadata.transform.return_value = pd.DataFrame({'data': [1, 2, 3]})
         modeler.metadata.get_primary_key.return_value = None
         modeler._fit_model.return_value = 'fitted model'
 
+        # Run
         tables = {'test': pd.DataFrame({'data': ['a', 'b', 'c']})}
-
         result = Modeler.cpa(modeler, 'test', tables)
 
         # Asserts
@@ -189,7 +177,6 @@ class TestModeler(TestCase):
 
         # Asserts
         expected = pd.DataFrame({'foo': [0, 0.5, 1], 'bar': ['a', 'a', 'b']})
-
         pd.testing.assert_frame_equal(result, expected)
 
     def test_model_database(self):
@@ -201,18 +188,17 @@ class TestModeler(TestCase):
         metadata_table_names = ['foo', 'bar', 'tar']
         metadata_parents = [None, 'bar_parent', None]
 
-        # Run
         modeler = Mock()
-        modeler.metadata.get_table_names.return_value = metadata_table_names
+        modeler.metadata.get_tables.return_value = metadata_table_names
         modeler.metadata.get_parents.side_effect = metadata_parents
         modeler.rcpa.side_effect = rcpa_side_effect
         modeler.models = dict()
 
+        # Run
         Modeler.model_database(modeler)
 
         # Asserts
         expected_metadata_parents_call_count = 3
         expected_metadata_parents_call = [call('foo'), call('bar'), call('tar')]
-
         assert modeler.metadata.get_parents.call_count == expected_metadata_parents_call_count
         assert modeler.metadata.get_parents.call_args_list == expected_metadata_parents_call

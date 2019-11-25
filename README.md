@@ -67,60 +67,18 @@ function:
 ```python
 from sdv import load_demo
 
-metadata, tables = load_demo()
+metadata, tables = load_demo(metadata=True)
 ```
 
 This will return two objects:
 
-1. A `metadata` dictionary with all the information that **SDV** needs to know about the dataset:
+1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
-```
-{
-    "tables": [
-        {
-            "fields": [
-                {"name": "user_id", "type": "id"},
-                {"name": "country", "type": "categorical"},
-                {"name": "gender", "type": "categorical"},
-                {"name": "age", "type": "numerical", "subtype": "integer"}
-            ],
-            "name": "users",
-            "primary_key": "user_id"
-        },
-        {
-            "fields": [
-                {"name": "session_id", "type": "id"},
-                {"name": "user_id", "type": "id", "ref": {
-                    "field": "user_id", "table": "users"},
-                },
-                {"name": "device", "type": "categorical"},
-                {"name": "os", "type": "categorical"}
-            ],
-            "name": "sessions",
-            "primary_key": "session_id"
-        },
-        {
-            "fields": [
-                {"name": "transaction_id", "type": "id"},
-                {"name": "session_id", "type": "id", "ref": {
-                    "field": "session_id", "table": "sessions"},
-                },
-                {"name": "timestamp", "format": "%Y-%m-%d", "type": "datetime"},
-                {"name": "amount", "type": "numerical", "subtype": "float"},
-                {"name": "approved", "type": "boolean"}
-            ],
-            "name": "transactions",
-            "primary_key": "transaction_id"
-        }
-    ]
-}
-```
-
-For more details about the Metadata format, please refer to [the corresponding section
-of the documentation](https://hdi-project.github.io/SDV/metadata.html)
+For more details about how to build the `Metadata` for your own dataset, please refer to the
+[Metadata](https://hdi-project.github.io/SDV/metadata.html) section of the documentation.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
-metadata dictionary.
+metadata object.
 
 The returned objects contain the following information:
 
