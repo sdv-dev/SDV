@@ -164,7 +164,9 @@ class Metadata:
         else:
             self.root_path = root_path or '.'
 
-        if metadata is not None:
+        if isinstance(metadata, Metadata):
+            self._metadata = metadata
+        elif metadata is not None:
             self._metadata = self._dict_metadata(metadata)
         else:
             self._metadata = {'tables': {}}

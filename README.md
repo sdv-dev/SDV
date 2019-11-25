@@ -67,7 +67,7 @@ function:
 ```python
 from sdv import load_demo
 
-metadata, tables = load_demo()
+metadata, tables = load_demo(metadata=True)
 ```
 
 This will return two objects:

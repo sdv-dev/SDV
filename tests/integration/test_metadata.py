@@ -7,7 +7,7 @@ def test_build_demo_metadata_from_tables():
     Then compare the built metadata with the demo one
     to make sure that they are the same.
     """
-    metadata, tables = load_demo()
+    metadata, tables = load_demo(metadata=True)
 
     new_meta = Metadata()
     new_meta.add_table('users', data=tables['users'], primary_key='user_id')
@@ -53,5 +53,5 @@ def test_build_demo_metadata_without_tables():
     metadata.set_primary_key('transactions', 'transaction_id')
     metadata.add_relationship('sessions', 'transactions')
 
-    demo_metadata = load_demo()[0]
+    demo_metadata = load_demo(metadata=True)[0]
     assert demo_metadata == metadata.to_dict()

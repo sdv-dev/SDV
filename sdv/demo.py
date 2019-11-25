@@ -76,7 +76,7 @@ DEMO_METADATA = {
 }
 
 
-def load_demo():
+def load_demo(metadata=False):
     """Load demo data.
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
@@ -122,4 +122,7 @@ def load_demo():
         'transactions': transactions
     }
 
-    return DEMO_METADATA.copy(), tables
+    if metadata:
+        return DEMO_METADATA.copy(), tables
+
+    return tables
