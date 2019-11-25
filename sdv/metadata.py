@@ -165,7 +165,7 @@ class Metadata:
             self.root_path = root_path or '.'
 
         if isinstance(metadata, Metadata):
-            self._metadata = metadata
+            self._metadata = metadata._metadata
         elif metadata is not None:
             self._metadata = self._dict_metadata(metadata)
         else:
