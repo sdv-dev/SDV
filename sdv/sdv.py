@@ -63,7 +63,11 @@ class SDV:
                 metadata is a dict, the current working directory is used.
         """
 
-        self.metadata = Metadata(metadata, root_path)
+        if isinstance(metadata, Metadata):
+            self.metadata = metadata
+        else:
+            self.metadata = Metadata(metadata, root_path)
+
         self._validate_dataset_structure()
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
