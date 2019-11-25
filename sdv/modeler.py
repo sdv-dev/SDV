@@ -238,7 +238,7 @@ class Modeler:
                 If not given, the tables will be loaded using the dataset
                 metadata specification.
         """
-        for table_name in self.metadata.get_table_names():
+        for table_name in self.metadata.get_tables():
             if not self.metadata.get_parents(table_name):
                 self.cpa(table_name, tables)
 
