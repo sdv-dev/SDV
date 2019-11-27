@@ -1,3 +1,7 @@
+import io
+import urllib
+from zipfile import ZipFile
+
 import pandas as pd
 
 from sdv.metadata import Metadata
@@ -78,7 +82,35 @@ DEMO_METADATA = {
 }
 
 
-def load_demo(metadata=False):
+DATA_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'data'
+)
+DATA_URL = 'http://sdv-datasets.s3.amazonaws.com/{}.zip'
+
+
+def _download(dataset_name, dataset_path):
+    url = DATA_URL.format(dataset_name)
+
+    response = urllib.request.urlopen(url)
+    bytes_io = io.BytesIO(response.read())
+
+    with ZipFile(bytes_io) as zf:
+        zf.extractall(dataset_path)
+
+
+def _load(dataset_name):
+    if not os.path.exists(DATA_PATH):
+        os.makedirs(DATA_PATH)
+
+    dataset_path = os.path.join(DATA_PATH, dataset_name)
+    if not os.path.exists(dataset_path):
+        _download(dataset_name, dataset_path)
+
+    return dataset_path
+
+
+def load_demo(dataset_name=None, metadata=False):
     """Load demo data.
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
@@ -92,6 +124,11 @@ def load_demo(metadata=False):
         tuple:
             metadata and tables dict.
     """
+    if dataset_name:
+        dataset_path = _load(dataset_name)
+        # TODO: load csv and return data
+        return None
+
     users = pd.DataFrame({
         'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'country': ['USA', 'UK', 'ES', 'UK', 'USA', 'DE', 'BG', 'ES', 'FR', 'UK'],
