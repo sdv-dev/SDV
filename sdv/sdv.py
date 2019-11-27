@@ -43,7 +43,7 @@ class SDV:
 
     def _validate_dataset_structure(self):
         """Make sure that all the tables have at most one parent."""
-        for table in self.metadata.get_table_names():
+        for table in self.metadata.get_tables():
             if len(self.metadata.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
@@ -51,8 +51,8 @@ class SDV:
         """Fit this SDV instance to the dataset data.
 
         Args:
-            metadata (dict or str):
-                Metadata dict or path to the metadata JSON file.
+            metadata (dict, str or Metadata):
+                Metadata dict, path to the metadata JSON file or Metadata instance itself.
             tables (dict):
                 Dictionary with the table names as key and ``pandas.DataFrame`` instances as
                 values.  If ``None`` is given, the tables will be loaded from the paths
@@ -63,7 +63,11 @@ class SDV:
                 metadata is a dict, the current working directory is used.
         """
 
-        self.metadata = Metadata(metadata, root_path)
+        if isinstance(metadata, Metadata):
+            self.metadata = metadata
+        else:
+            self.metadata = Metadata(metadata, root_path)
+
         self._validate_dataset_structure()
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)

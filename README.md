@@ -16,8 +16,13 @@
 
 ## Overview
 
-**SDV** is an automated generative modeling and sampling tool that allows the users to generate
-synthetic data after creating generative models for multi-table, relational datasets.
+The Synthetic Data Vault (SDV) is a tool that allows users to statistically model an entire
+multi-table, relational dataset. Users can then use the statistical model to generate a
+synthetic dataset. Synthetic data can be used to supplement, augment and in some cases replace
+real data when training machine learning models. Additionally, it enables the testing of machine
+learning or other data dependent software systems without the risk of exposure that comes with
+data disclosure. Underneath the hood it uses a unique hierarchical generative modeling and
+recursive sampling techniques.
 
 # Install
 
@@ -48,7 +53,13 @@ If you want to install from source or contribute to the project please read the
 In this short tutorial we will guide you through a series of steps that will help you
 getting started using **SDV**.
 
-## 1. Load example data
+## 1. Model the dataset using SDV
+
+To model a multi table, relational dataset, we follow two steps. In the first step, we will load
+the data and configures the meta data. In the second step, we will use the sdv API to fit and
+save a hierarchical model. We will cover these two steps in this section using an example dataset.
+
+### Step 1: Load example data
 
 **SDV** comes with a toy dataset to play with, which can be loaded using the `sdv.load_demo`
 function:
@@ -56,60 +67,18 @@ function:
 ```python
 from sdv import load_demo
 
-metadata, tables = load_demo()
+metadata, tables = load_demo(metadata=True)
 ```
 
 This will return two objects:
 
-1. A `metadata` dictionary with all the information that **SDV** needs to know about the dataset:
+1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
-```
-{
-    "tables": [
-        {
-            "fields": [
-                {"name": "user_id", "type": "id"},
-                {"name": "country", "type": "categorical"},
-                {"name": "gender", "type": "categorical"},
-                {"name": "age", "type": "numerical", "subtype": "integer"}
-            ],
-            "name": "users",
-            "primary_key": "user_id"
-        },
-        {
-            "fields": [
-                {"name": "session_id", "type": "id"},
-                {"name": "user_id", "type": "id", "ref": {
-                    "field": "user_id", "table": "users"},
-                },
-                {"name": "device", "type": "categorical"},
-                {"name": "os", "type": "categorical"}
-            ],
-            "name": "sessions",
-            "primary_key": "session_id"
-        },
-        {
-            "fields": [
-                {"name": "transaction_id", "type": "id"},
-                {"name": "session_id", "type": "id", "ref": {
-                    "field": "session_id", "table": "sessions"},
-                },
-                {"name": "timestamp", "format": "%Y-%m-%d", "type": "datetime"},
-                {"name": "amount", "type": "numerical", "subtype": "float"},
-                {"name": "approved", "type": "boolean"}
-            ],
-            "name": "transactions",
-            "primary_key": "transaction_id"
-        }
-    ]
-}
-```
-
-For more details about the Metadata format, please refer to [the corresponding section
-of the documentation](https://hdi-project.github.io/SDV/metadata.html)
+For more details about how to build the `Metadata` for your own dataset, please refer to the
+[Metadata](https://hdi-project.github.io/SDV/metadata.html) section of the documentation.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
-metadata dictionary.
+metadata object.
 
 The returned objects contain the following information:
 
@@ -154,8 +123,7 @@ The returned objects contain the following information:
 }
 ```
 
-## 2. Model the database using SDV
-
+### 2. Fit a model using the SDV API.
 
 First, we build a hierarchical statistical model of the data using **SDV**. For this we will
 create an instance of the `sdv.SDV` class and use its `fit` method.
@@ -181,7 +149,7 @@ sdv.save('path/to/sdv.pkl')
 The generated `pkl` file will not include any of the original data in it, so it can be
 safely sent to where the synthetic data will be generated without any privacy concerns.
 
-## 3. Sample data from the model
+## 2. Sample data from the fitted model
 
 In order to sample data from the fitted model, we will first need to load it from its
 `pkl` file. Note that you can skip this step if you are running all the steps sequentially

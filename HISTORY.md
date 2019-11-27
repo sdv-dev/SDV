@@ -1,5 +1,11 @@
 # History
 
+## 0.2.1 - 2019-11-25
+
+### New Features
+
+* Methods to generate Metadata from DataFrames - [Issue #126](https://github.com/HDI-Project/SDV/issues/126) by @csala @JDTheRipperPC
+
 ## 0.2.0 - 2019-10-11
 
 ### New Features

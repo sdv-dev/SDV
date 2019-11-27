@@ -29,7 +29,8 @@ def _parse_dtypes(data, table_meta):
     for name, field in table_meta['fields'].items():
         field_type = field['type']
         if field_type == 'datetime':
-            data[name] = pd.to_datetime(data[name], format=field['format'], exact=False)
+            datetime_format = field.get('format')
+            data[name] = pd.to_datetime(data[name], format=datetime_format, exact=False)
         elif field_type == 'numerical' and field.get('subtype') == 'integer':
             data[name] = data[name].dropna().astype(int)
         elif field_type == 'id' and field.get('subtype', 'integer') == 'integer':
@@ -65,8 +66,39 @@ class Metadata:
             The path where the ``metadata.json`` is located. Defaults to ``None``.
     """
 
-    def _get_relationships(self):
-        """Exttract information about child-parent relationships.
+    _FIELD_TEMPLATES = {
+        'i': {
+            'type': 'numerical',
+            'subtype': 'integer',
+        },
+        'f': {
+            'type': 'numerical',
+            'subtype': 'float',
+        },
+        'O': {
+            'type': 'categorical',
+        },
+        'b': {
+            'type': 'boolean',
+        },
+        'M': {
+            'type': 'datetime',
+        }
+    }
+    _DTYPES = {
+        ('categorical', None): np.object,
+        ('boolean', None): bool,
+        ('numerical', None): float,
+        ('numerical', 'float'): float,
+        ('numerical', 'integer'): int,
+        ('datetime', None): np.datetime64,
+        ('id', None): int,
+        ('id', 'integer'): int,
+        ('id', 'string'): str
+    }
+
+    def _analyze_relationships(self):
+        """Extract information about child-parent relationships.
 
         Creates the following attributes:
             * ``_child_map``: set of child tables that each table has.
@@ -75,9 +107,8 @@ class Metadata:
         self._child_map = defaultdict(set)
         self._parent_map = defaultdict(set)
 
-        for table_meta in self._metadata['tables'].values():
+        for table, table_meta in self._metadata['tables'].items():
             if table_meta.get('use', True):
-                table = table_meta['name']
                 for field_meta in table_meta['fields'].values():
                     ref = field_meta.get('ref')
                     if ref:
@@ -101,23 +132,31 @@ class Metadata:
         """
         new_metadata = copy.deepcopy(metadata)
         tables = new_metadata['tables']
+        if isinstance(tables, dict):
+            new_metadata['tables'] = {
+                table: meta
+                for table, meta in tables.items()
+                if meta.pop('use', True)
+            }
+            return new_metadata
+
         new_tables = dict()
-
         for table in tables:
-            new_tables[table['name']] = table
+            if table.pop('use', True):
+                new_tables[table.pop('name')] = table
 
-            fields = table['fields']
-            new_fields = dict()
-            for field in fields:
-                new_fields[field['name']] = field
+                fields = table['fields']
+                new_fields = dict()
+                for field in fields:
+                    new_fields[field.pop('name')] = field
 
-            table['fields'] = new_fields
+                table['fields'] = new_fields
 
         new_metadata['tables'] = new_tables
 
         return new_metadata
 
-    def __init__(self, metadata, root_path=None):
+    def __init__(self, metadata=None, root_path=None):
         if isinstance(metadata, str):
             self.root_path = root_path or os.path.dirname(metadata)
             with open(metadata) as metadata_file:
@@ -125,12 +164,16 @@ class Metadata:
         else:
             self.root_path = root_path or '.'
 
-        self._metadata = self._dict_metadata(metadata)
+        if metadata is not None:
+            self._metadata = self._dict_metadata(metadata)
+        else:
+            self._metadata = {'tables': {}}
+
         self._hyper_transformers = dict()
-        self._get_relationships()
+        self._analyze_relationships()
 
     def get_children(self, table_name):
-        """Get table children.
+        """Get tables for which the given table is parent.
 
         Args:
             table_name (str):
@@ -143,7 +186,7 @@ class Metadata:
         return self._child_map[table_name]
 
     def get_parents(self, table_name):
-        """Get table parents.
+        """Get tables for with the given table is child.
 
         Args:
             table_name (str):
@@ -156,7 +199,7 @@ class Metadata:
         return self._parent_map[table_name]
 
     def get_table_meta(self, table_name):
-        """Get the metadata  dict for a table.
+        """Get the metadata dict for a table.
 
         Args:
             table_name (str):
@@ -165,23 +208,123 @@ class Metadata:
         Returns:
             dict:
                 table metadata
+
+        Raises:
+            ValueError:
+                If table does not exist in this metadata.
         """
-        return self._metadata['tables'][table_name]
+        table = self._metadata['tables'].get(table_name)
+        if table is None:
+            raise ValueError('Table "{}" does not exist'.format(table_name))
+
+        return copy.deepcopy(table)
+
+    def get_tables(self):
+        """Get the list of table names.
+
+        Returns:
+            list:
+                table names.
+        """
+        return list(self._metadata['tables'].keys())
+
+    def get_fields(self, table_name):
+        """Get table fields metadata.
+
+        Args:
+            table_name (str):
+                Name of the table to get the fields from.
+
+        Returns:
+            dict:
+                Mapping of field names and their metadata dicts.
+
+        Raises:
+            ValueError:
+                If table does not exist in this metadata.
+        """
+        return self.get_table_meta(table_name)['fields']
+
+    def get_primary_key(self, table_name):
+        """Get the primary key name of the indicated table.
+
+        Args:
+            table_name (str):
+                Name of table for which to get the primary key field.
+
+        Returns:
+            str or None:
+                Primary key field name. ``None`` if the table has no primary key.
+
+        Raises:
+            ValueError:
+                If table does not exist in this metadata.
+        """
+        return self.get_table_meta(table_name).get('primary_key')
+
+    def get_foreign_key(self, parent, child):
+        """Get table foreign key field name.
+
+        Args:
+            parent (str):
+                Name of the parent table.
+            child (str):
+                Name of the child table.
+
+        Returns:
+            str or None:
+                Foreign key field name.
+
+        Raises:
+            ValueError:
+                If the relationship does not exist.
+        """
+        primary = self.get_primary_key(parent)
+
+        for name, field in self.get_fields(child).items():
+            ref = field.get('ref')
+            if ref and ref['field'] == primary:
+                return name
+
+        raise ValueError('{} is not parent of {}'.format(parent, child))
 
     def load_table(self, table_name):
         """Load table data.
 
         Args:
             table_name (str):
-                Name of the table that we want to load.
+                Name of the table to load.
 
         Returns:
             pandas.DataFrame:
                 DataFrame with the contents of the table.
+
+        Raises:
+            ValueError:
+                If table does not exist in this metadata.
         """
         LOGGER.info('Loading table %s', table_name)
         table_meta = self.get_table_meta(table_name)
         return _load_csv(self.root_path, table_meta)
+
+    def load_tables(self, tables=None):
+        """Get a dictionary with data from multiple tables.
+
+        If a ``tables`` list is given, only load the indicated tables.
+        Otherwise, load all the tables from this metadata.
+
+        Args:
+            tables (list):
+                List of table names. Defaults to ``None``.
+
+        Returns:
+            dict(str, pandasd.DataFrame):
+                mapping of table names and their data loaded as ``pandas.DataFrame`` instances.
+        """
+        return {
+            table_name: self.load_table(table_name)
+            for table_name in tables or self.get_tables()
+        }
 
     def _get_dtypes(self, table_name, ids=False):
         """Get a ``dict`` with the ``dtypes`` for each field of a given table.
@@ -198,48 +341,28 @@ class Metadata:
 
         Raises:
             ValueError:
-                If a field has an invalid type or subtype.
+                If a field has an invalid type or subtype or if the table does not
+                exist in this metadata.
         """
         dtypes = dict()
         table_meta = self.get_table_meta(table_name)
         for name, field in table_meta['fields'].items():
             field_type = field['type']
-            if field_type == 'categorical':
-                dtypes[name] = np.object
+            field_subtype = field.get('subtype')
+            dtype = self._DTYPES.get((field_type, field_subtype))
+            if not dtype:
+                raise ValueError(
+                    'Invalid type and subtype combination for field {}: ({}, {})'.format(
+                        name, field_type, field_subtype)
+                )
 
-            elif field_type == 'boolean':
-                dtypes[name] = bool
+            if ids and field_type == 'id':
+                if (name != table_meta.get('primary_key')) and not field.get('ref'):
+                    raise ValueError(
+                        'id field `{}` is neither a primary or a foreign key'.format(name))
 
-            elif field_type == 'numerical':
-                field_subtype = field.get('subtype', 'float')
-                if field_subtype == 'integer':
-                    dtypes[name] = int
-                elif field_subtype == 'float':
-                    dtypes[name] = float
-                else:
-                    raise ValueError('Invalid {} subtype {} - {}'.format(
-                        field_type, field_subtype, name))
-
-            elif field_type == 'datetime':
-                dtypes[name] = np.datetime64
-
-            elif field_type == 'id':
-                if ids:
-                    if (name != table_meta.get('primary_key')) and not field.get('ref'):
-                        raise ValueError(
-                            'id field `{}` is neither a primary or a foreign key'.format(name))
-
-                    field_subtype = field.get('subtype', 'integer')
-                    if field_subtype == 'integer':
-                        dtypes[name] = int
-                    elif field_subtype == 'string':
-                        dtypes[name] = str
-                    else:
-                        raise ValueError('Invalid {} subtype: {} - {}'.format(
-                            field_type, field_subtype, name))
-
-            else:
-                raise ValueError('Invalid field type: {} - '.format(field_type, name))
+            if ids or (field_type != 'id'):
+                dtypes[name] = dtype
 
         return dtypes
 
@@ -346,86 +469,6 @@ class Metadata:
         fields = list(hyper_transformer.transformers.keys())
         return hyper_transformer.transform(data[fields])
 
-    def get_table_names(self):
-        """Get the list of table names.
-
-        Returns:
-            list:
-                table names.
-        """
-        return list(self._metadata['tables'].keys())
-
-    def get_tables(self, tables=None):
-        """Get a dictionary with data from multiple tables.
-
-        If a ``tables`` list is given, only load the indicated tables.
-        Otherwise, load all the tables from this metadata.
-
-        Args:
-            tables (list):
-                List of table names. Defaults to ``None``.
-
-        Returns:
-            dict(str, pandasd.DataFrame):
-                mapping of table names and their data loaded as ``pandas.DataFrame`` instances.
-        """
-        return {
-            table_name: self.load_table(table_name)
-            for table_name in tables or self.get_table_names()
-        }
-
-    def get_fields(self, table_name):
-        """Get table fields metadata.
-
-        Args:
-            table_name (str):
-                Name of the table to get the fields from.
-
-        Returns:
-            dict:
-                Mapping of field names and their metadata dicts.
-        """
-        return self.get_table_meta(table_name)['fields']
-
-    def get_primary_key(self, table_name):
-        """Get the primary key name of the indicated table.
-
-        Args:
-            table_name (str):
-                Name of table for which to get the primary key field.
-
-        Returns:
-            str or None:
-                Primary key field name. ``None`` if the table has no primary key.
-        """
-        return self.get_table_meta(table_name).get('primary_key')
-
-    def get_foreign_key(self, parent, child):
-        """Get table foreign key field name.
-
-        Args:
-            parent (str):
-                Name of the parent table.
-            child (str):
-                Name of the child table.
-
-        Returns:
-            str or None:
-                Foreign key field name.
-
-        Raises:
-            ValueError:
-                If the relationship does not exist.
-        """
-        primary = self.get_primary_key(parent)
-
-        for field in self.get_fields(child).values():
-            ref = field.get('ref')
-            if ref and ref['field'] == primary:
-                return field['name']
-
-        raise ValueError('{} is not parent of {}'.format(parent, child))
-
     def reverse_transform(self, table_name, data):
         """Reverse the transformed data for a given table.
 
@@ -445,3 +488,295 @@ class Metadata:
             reversed_data[name] = reversed_data[name].dropna().astype(dtype)
 
         return reversed_data
+
+    def _check_field(self, table, field, exists=False):
+        """Validate the existance of the table and existance (or not) of field."""
+        table_fields = self.get_fields(table)
+        if exists and (field not in table_fields):
+            raise ValueError('Field "{}" does not exist in table "{}"'.format(field, table))
+
+        if not exists and (field in table_fields):
+            raise ValueError('Field "{}" already exists in table "{}"'.format(field, table))
+
+    def add_field(self, table, field, field_type, field_subtype=None, properties=None):
+        """Add a new field to the indicated table.
+
+        Args:
+            table (str):
+                Table name to add the new field, it must exist.
+            field (str):
+                Field name to be added, it must not exist.
+            field_type (str):
+                Data type of field to be added. Required.
+            field_subtype (str):
+                Data subtype of field to be added. Optional.
+                Defaults to ``None``.
+            properties (dict):
+                Extra properties of field like: ref, format, min, max, etc. Optional.
+                Defaults to ``None``.
+
+        Raises:
+            ValueError:
+                If the table does not exist or it already contains the field.
+        """
+        self._check_field(table, field, exists=False)
+
+        field_details = {
+            'type': field_type
+        }
+
+        if field_subtype:
+            field_details['subtype'] = field_subtype
+
+        if properties:
+            field_details.update(properties)
+
+        self._metadata['tables'][table]['fields'][field] = field_details
+
+    @staticmethod
+    def _get_key_subtype(field_meta):
+        """Get the appropriate key subtype."""
+        field_type = field_meta['type']
+        if field_type == 'categorical':
+            field_subtype = 'string'
+        elif field_type in ('numerical', 'id'):
+            field_subtype = field_meta['subtype']
+            if field_subtype not in ('integer', 'string'):
+                raise ValueError(
+                    'Invalid field "subtype" for key field: "{}"'.format(field_subtype)
+                )
+        else:
+            raise ValueError(
+                'Invalid field "type" for key field: "{}"'.format(field_type)
+            )
+
+        return field_subtype
+
+    def set_primary_key(self, table, field):
+        """Set the primary key field of the indicated table.
+
+        The field must exist and either be an integer or categorical field.
+
+        Args:
+            table (str):
+                Name of the table where the primary key will be set.
+            field (str):
+                Field to be used as the new primary key.
+
+        Raises:
+            ValueError:
+                If the table or the field do not exist or if the field has an
+                invalid type or subtype.
+        """
+        self._check_field(table, field, exists=True)
+
+        field_meta = self.get_fields(table).get(field)
+        field_subtype = self._get_key_subtype(field_meta)
+
+        table_meta = self._metadata['tables'][table]
+        table_meta['fields'][field] = {
+            'type': 'id',
+            'subtype': field_subtype
+        }
+        table_meta['primary_key'] = field
+
+    def _validate_circular_relationships(self, parent, children=None):
+        """Validate that there is no circular relatioship in the metadata."""
+        if children is None:
+            children = self.get_children(parent)
+
+        if parent in children:
+            raise ValueError('Circular relationship found for table "{}"'.format(parent))
+
+        for child in children:
+            self._validate_circular_relationships(parent, self.get_children(child))
+
+    def add_relationship(self, parent, child, foreign_key=None):
+        """Add a new relationship between the parent and child tables.
+
+        The relationship is created by adding a reference (``ref``) on the ``foreign_key``
+        field of the ``child`` table pointing at the ``parent`` primary key.
+
+        Args:
+            parent (str):
+                Name of the parent table.
+            child (str):
+                Name of the child table.
+            foreign_key (str):
+                Field in the child table through which the relationship is created.
+                If ``None``, use the parent primary key name.
+
+        Raises:
+            ValueError:
+                If any of the following happens:
+                    * The parent table does not exist.
+                    * The child table does not exist.
+                    * The parent table does not have a primary key.
+                    * The foreign_key field already exists in the child table.
+                    * The child table already has a parent.
+                    * The new relationship closes a relationship circle.
+        """
+        # Validate table and field names
+        primary_key = self.get_primary_key(parent)
+        if not primary_key:
+            raise ValueError('Parent table "{}" does not have a primary key'.format(parent))
+
+        if foreign_key is None:
+            foreign_key = primary_key
+
+        # Validate relationships
+        if self.get_parents(child):
+            raise ValueError('Table "{}" already has a parent'.format(child))
+
+        grandchildren = self.get_children(child)
+        if grandchildren:
+            self._validate_circular_relationships(parent, grandchildren)
+
+        # Copy primary key details over to the foreign key
+        foreign_key_details = copy.deepcopy(self.get_fields(parent)[primary_key])
+        foreign_key_details['ref'] = {
+            'table': parent,
+            'field': primary_key
+        }
+
+        # Make sure that key subtypes are the same
+        foreign_meta = self.get_fields(child).get(foreign_key)
+        if foreign_meta:
+            foreign_subtype = self._get_key_subtype(foreign_meta)
+            if foreign_subtype != foreign_key_details['subtype']:
+                raise ValueError('Primary and Foreign key subtypes mismatch')
+
+        self._metadata['tables'][child]['fields'][foreign_key] = foreign_key_details
+
+        # Re-analyze the relationships
+        self._analyze_relationships()
+
+    def _get_field_details(self, data, fields):
+        """Get or build all the fields metadata.
+
+        Analyze a ``pandas.DataFrame`` to build a ``dict`` with the name of the column, and
+        their data type and subtype. If ``columns`` are provided, only those columns will be
+        analyzed.
+
+        Args:
+            data (pandas.DataFrame):
+                Table to be analyzed.
+            fields (set):
+                Set of field names or field specifications.
+
+        Returns:
+            dict:
+                Dict of valid fields.
+
+        Raises:
+            TypeError:
+                If a field specification is not a str or a dict.
+            ValueError:
+                If a column from the data analyzed is an unsupported data type or
+        """
+        fields_metadata = dict()
+        for field in fields:
+            dtype = data[field].dtype
+            field_template = self._FIELD_TEMPLATES.get(dtype.kind)
+            if not field_template:
+                raise ValueError('Unsupported dtype {} in column {}'.format(dtype, field))
+
+            field_details = copy.deepcopy(field_template)
+            fields_metadata[field] = field_details
+
+        return fields_metadata
+
+    def add_table(self, name, data=None, fields=None, fields_metadata=None,
+                  primary_key=None, parent=None, foreign_key=None):
+        """Add a new table to this metadata.
+
+        ``fields`` list can be a mixture of field names, which will be build automatically
+        from the data, or dictionaries specifying the field details. If a field needs to be
+        analyzed, data has to be also passed.
+
+        If ``parent`` is given, a relationship will be established between this table
+        and the specified parent.
+
+        Args:
+            name (str):
+                Name of the new table.
+            data (str or pandas.DataFrame):
+                Table to be analyzed or path to the csv file.
+                If it's a relative path, use ``root_path`` to find the file.
+                Only used if fields is not ``None``.
+                Defaults to ``None``.
+            fields (list):
+                List of field names to build. If ``None`` is given, all the fields
+                found in the data will be used.
+                Defaults to ``None``.
+            fields_metadata (dict):
+                Metadata to be used when creating fields. This will overwrite the
+                metadata built from the fields found in data.
+                Defaults to ``None``.
+            primary_key (str):
+                Field name to add as primary key, it must not exists. Defaults to ``None``.
+            parent (str):
+                Table name to refere a foreign key field. Defaults to ``None``.
+            foreign_key (str):
+                Foreing key field name to ``parent`` table primary key. Defaults to ``None``.
+
+        Raises:
+            ValueError:
+                If the table ``name`` already exists or ``data`` is not passed and
+                fields need to be built from it.
+        """
+        if name in self.get_tables():
+            raise ValueError('Table "{}" already exists.'.format(name))
+
+        if data is not None:
+            if isinstance(data, str):
+                if not os.path.isabs(data):
+                    data = os.path.join(self.root_path, data)
+
+                data = pd.read_csv(data)
+
+            fields = set(fields or data.columns)
+            if fields_metadata:
+                fields = fields - set(fields_metadata.keys())
+            else:
+                fields_metadata = dict()
+
+            fields_metadata.update(self._get_field_details(data, fields))
+
+        elif fields_metadata is None:
+            fields_metadata = dict()
+
+        self._metadata['tables'][name] = {
+            'fields': fields_metadata
+        }
+
+        try:
+            if primary_key:
+                self.set_primary_key(name, primary_key)
+
+            if parent:
+                self.add_relationship(parent, name, foreign_key)
+
+        except ValueError:
+            # Cleanup
+            del self._metadata['tables'][name]
+            raise
+
+    def to_dict(self):
+        """Get a dict representation of this metadata.
+
+        Returns:
+            dict:
+                dict representation of this metadata.
+        """
+        return copy.deepcopy(self._metadata)
+
+    def to_json(self, path):
+        """Dump this metadata into a JSON file.
+
+        Args:
+            path (str):
+                Path of the JSON file where this metadata will be stored.
+        """
+        with open(path, 'w') as out_file:
+            json.dump(self._metadata, out_file, indent=4)
