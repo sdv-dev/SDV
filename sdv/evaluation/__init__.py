@@ -130,7 +130,7 @@ def get_descriptors_table(real, synth, metadata, descriptors=DESCRIPTORS, table_
             table_dtypes = metadata.get_dtypes(table_name)
             cols = [k for k, v in table_dtypes.items() if _dtype_in_dtypes(v, dtypes)]
         else:
-            cols = real.columns
+            cols = list(real.columns)
 
         if cols:
             described.append(
@@ -141,7 +141,7 @@ def get_descriptors_table(real, synth, metadata, descriptors=DESCRIPTORS, table_
 
 
 def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(),
-             metrics=DEFAULT_METRICS, root_path=None):
+             metrics=DEFAULT_METRICS, root_path=None, table_name=None):
     """Compute stats metric for all tables.
 
     Args:
@@ -164,7 +164,7 @@ def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(),
         metadata = Metadata(metadata, root_path)
 
     if isinstance(real, pd.DataFrame):
-        described = get_descriptors_table(real, synth, metadata, descriptors)
+        described = get_descriptors_table(real, synth, metadata, descriptors, table_name)
 
     if isinstance(real, dict):
         if not set(real.keys()) == set(synth.keys()):
