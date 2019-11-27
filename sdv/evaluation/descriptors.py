@@ -1,5 +1,18 @@
+import enum
 import numpy as np
 import scipy as sp
+
+
+class DTypes(enum.Enum):
+    INT = 'int'
+    FLOAT = 'float'
+    STR = 'str'
+    BOOL = 'bool'
+    DATETIME = 'datetime64'
+
+    @staticmethod
+    def values():
+        return [item.value for item in list(DTypes)]
 
 
 def categorical_distribution(column):
@@ -13,13 +26,13 @@ def categorical_distribution(column):
                        their value.
 
     """
-    return column.value_counts(normalize=True)
+    return column.value_counts(normalize=True).sort_index()
 
 
 DESCRIPTORS = {
-    'mean': np.mean,
-    'std': np.std,
-    'skew': sp.stats.skew,
-    'kurtosis': sp.stats.kurtosis,
-    'categorical_distribution': categorical_distribution
+    'mean': (np.mean, (DTypes.INT, DTypes.FLOAT, DTypes.BOOL)),
+    'std': (np.std, (DTypes.INT, DTypes.FLOAT, DTypes.BOOL)),
+    'skew': (sp.stats.skew, (DTypes.INT, DTypes.FLOAT, DTypes.BOOL)),
+    'kurtosis': (sp.stats.kurtosis, (DTypes.INT, DTypes.FLOAT, DTypes.BOOL)),
+    'categorical_distribution': (categorical_distribution, (DTypes.STR, DTypes.BOOL))
 }

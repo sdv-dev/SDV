@@ -38,16 +38,15 @@ call it with:
         dtype: float64
 
 """
-import json
-import os
 
 import pandas as pd
 
-from sdv.evaluation.descriptors import DESCRIPTORS
+from sdv.metadata import Metadata
+from sdv.evaluation.descriptors import DESCRIPTORS, DTypes
 from sdv.evaluation.metrics import DEFAULT_METRICS
 
 
-def get_descriptor_values(real, synth, descriptor):
+def get_descriptor_values(real, synth, descriptor, table_name=None):
     """Compute the descriptor values for the given tables.
 
     Args:
@@ -65,22 +64,43 @@ def get_descriptor_values(real, synth, descriptor):
     """
     real_values = list()
     synth_values = list()
+
     for column_name in real:
         try:
-            described_name = '{}_{}_'.format(descriptor.__name__, column_name)
             described_real_column = pd.Series(descriptor(real[column_name]))
             described_synth_column = pd.Series(descriptor(synth[column_name]))
-            real_values.append(described_real_column.add_prefix(described_name).T)
-            synth_values.append(described_synth_column.add_prefix(described_name).T)
+
+            if table_name:
+                column_name = '{}_{}'.format(table_name, column_name)
+
+            described_name = '{}_{}'.format(descriptor.__name__, column_name)
+            if len(described_real_column) > 1:
+                described_name = described_name + '_'
+                described_real_column = described_real_column.add_prefix(described_name)
+                described_synth_column = described_synth_column.add_prefix(described_name)
+            else:
+                described_real_column.index = [described_name]
+                described_synth_column.index = [described_name]
+
+            real_values.append(described_real_column.T)
+            synth_values.append(described_synth_column.T)
         except TypeError:
             pass
 
-    real_values = pd.concat(real_values, axis=0, sort=False) if real_values else pd.DataFrame()
-    synth_values = pd.concat(synth_values, axis=0, sort=False) if synth_values else pd.DataFrame()
+    real_values = pd.concat(real_values, axis=0, sort=False)
+    synth_values = pd.concat(synth_values, axis=0, sort=False)
     return pd.concat([real_values, synth_values], axis=1, sort=True, ignore_index=True).T
 
 
-def get_descriptors_table(real, synth, descriptors=DESCRIPTORS):
+def _dtype_in_dtypes(a, b):
+    for item in b:
+        if a == item.value:
+            return True
+
+    return False
+
+
+def get_descriptors_table(real, synth, metadata, descriptors=DESCRIPTORS, table_name=None):
     """Score the synthesized data using the given metrics and descriptors.
 
     Args:
@@ -96,82 +116,65 @@ def get_descriptors_table(real, synth, descriptors=DESCRIPTORS):
             2-column DataFrame whose index the name of the descriptors applied to the tables.
 
     """
+
     described = list()
     for descriptor in descriptors:
         if isinstance(descriptor, str):
-            descriptor = DESCRIPTORS[descriptor]
+            descriptor, dtypes = DESCRIPTORS[descriptor]
+        elif isinstance(descriptor, tuple):
+            descriptor, dtypes = descriptor
+        else:
+            dtypes = DTypes.values()
 
-        described.append(get_descriptor_values(real, synth, descriptor))
+        if table_name:
+            table_dtypes = metadata.get_dtypes(table_name)
+            cols = [k for k, v in table_dtypes.items() if _dtype_in_dtypes(v, dtypes)]
+        else:
+            cols = real.columns
+
+        if cols:
+            described.append(
+                get_descriptor_values(real.get(cols), synth.get(cols), descriptor, table_name)
+            )
 
     return pd.concat(described, axis=1)
 
 
-def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(), metrics=DEFAULT_METRICS,
-             root_path='.'):
+def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(),
+             metrics=DEFAULT_METRICS, root_path=None):
     """Compute stats metric for all tables.
 
     Args:
-        metadata (dict or str):
-            Metadata dict or path to the metadata file to be loaded.
+        metadata (str, dict or Metadata):
+            ...
+        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
+            Map of names and tables of real data.
         synth (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of synthesized data.
-        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
-            Map of names and tables of real data. When it is ``None``, read the metadata tables
-            files. Defaults to ``None``.
         descriptors (list[callable]):
             List of descriptors.
         metrics (list[callable]):
             List of metrics.
-        root_path (str):
-            Path to search the csv files described in the metadata. Defaults to ``'.'``.
 
     Return:
         pandas.Series:
             It has the metrics as index, and the scores as values.
     """
-    if isinstance(metadata, str):
-        with open(metadata) as metadata_file:
-            metadata = json.load(metadata_file)
+    if not isinstance(metadata, Metadata):
+        metadata = Metadata(metadata, root_path)
 
-    if real is None:
-        real = dict()
-        for table in metadata['tables']:
-            real[table['name']] = pd.read_csv(os.path.join(root_path, table['path']))
+    if isinstance(real, pd.DataFrame):
+        described = get_descriptors_table(real, synth, metadata, descriptors)
 
-    if isinstance(synth, pd.DataFrame):
-        drop_ids = [
-            field['name']
-            for field in metadata['fields'].values()
-            if field['type'] == 'id' or field.get('reg')
-        ]
-        real_copy = real.copy()
-        synth_copy = real.copy()
+    if isinstance(real, dict):
+        if not set(real.keys()) == set(synth.keys()):
+            raise ValueError('real and synthetic dataset must have the same tables')
 
-        real_copy.drop(drop_ids, axis=1, inplace=True)
-        synth_copy.drop(drop_ids, axis=1, inplace=True)
-        described = get_descriptors_table(real, synth, descriptors)
-
-    if isinstance(synth, dict):
-        assert real.keys() == synth.keys(), "real and synthetic dataset must have the same tables"
         result = list()
-        drop_ids = {
-            table['name']: [
-                field['name']
-                for field in table['fields']
-                if field['type'] == 'id' or field.get('reg')
-            ]
-            for table in metadata['tables']
-        }
-
-        for name, table in real.items():
-            synth_table = synth[name].copy()
-            real_table = table.copy()
-
-            if drop_ids.get(name):
-                real_table.drop(drop_ids[name], axis=1, inplace=True)
-                synth_table.drop(drop_ids[name], axis=1, inplace=True)
-
-            result.append(get_descriptors_table(real_table, synth_table, descriptors))
+        for name, real_table in real.items():
+            synth_table = synth[name]
+            result.append(get_descriptors_table(real_table, synth_table, metadata,
+                                                descriptors, name))
 
         described = pd.concat(result, axis=1).fillna(0)
 
@@ -182,4 +185,4 @@ def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(), metri
     for metric in metrics:
         scores[metric.__name__] = metric(real_descriptors, synth_descriptors)
 
-    return pd.Series(scores)
+    return pd.Series(scores), real_descriptors, synth_descriptors
