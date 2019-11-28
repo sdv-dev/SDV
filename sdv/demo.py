@@ -1,10 +1,15 @@
 import io
+import logging
+import os
 import urllib
 from zipfile import ZipFile
 
 import pandas as pd
 
 from sdv.metadata import Metadata
+
+LOGGER = logging.getLogger(__name__)
+
 
 DEMO_METADATA = {
     'tables': {
@@ -92,25 +97,27 @@ DATA_URL = 'http://sdv-datasets.s3.amazonaws.com/{}.zip'
 def _download(dataset_name, dataset_path):
     url = DATA_URL.format(dataset_name)
 
+    LOGGER.info('Downloading dataset {} from {}'.format(dataset_name, url))
     response = urllib.request.urlopen(url)
     bytes_io = io.BytesIO(response.read())
 
+    LOGGER.info('Extracting dataset into {}'.format(dataset_path))
     with ZipFile(bytes_io) as zf:
         zf.extractall(dataset_path)
 
 
-def _load(dataset_name):
+def _load(dataset_name, dataset_path):
     if not os.path.exists(DATA_PATH):
         os.makedirs(DATA_PATH)
 
-    dataset_path = os.path.join(DATA_PATH, dataset_name)
+    dataset_path = os.path.join(dataset_path, dataset_name)
     if not os.path.exists(dataset_path):
         _download(dataset_name, dataset_path)
 
     return dataset_path
 
 
-def load_demo(dataset_name=None, metadata=False):
+def load_demo(dataset_name=None, dataset_path=DATA_PATH, metadata=False):
     """Load demo data.
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
@@ -125,7 +132,8 @@ def load_demo(dataset_name=None, metadata=False):
             metadata and tables dict.
     """
     if dataset_name:
-        dataset_path = _load(dataset_name)
+        dataset_path = _load(dataset_name, dataset_path)
+        # meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
         # TODO: load csv and return data
         return None
 
