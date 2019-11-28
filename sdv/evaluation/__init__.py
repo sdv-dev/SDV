@@ -41,9 +41,9 @@ call it with:
 
 import pandas as pd
 
-from sdv.metadata import Metadata
 from sdv.evaluation.descriptors import DESCRIPTORS, DTypes
 from sdv.evaluation.metrics import DEFAULT_METRICS
+from sdv.metadata import Metadata
 
 
 def get_descriptor_values(real, synth, descriptor, table_name=None):

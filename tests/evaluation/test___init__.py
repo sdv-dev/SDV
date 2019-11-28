@@ -3,10 +3,12 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 import scipy as sp
 
+from sdv import Metadata
 from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table
-from sdv.evaluation.descriptors import categorical_distribution
+from sdv.evaluation.descriptors import DTypes, categorical_distribution
 
 
 class TestGetDescriptorValues(TestCase):
@@ -18,7 +20,7 @@ class TestGetDescriptorValues(TestCase):
         descriptor = np.mean
 
         expected_result = pd.DataFrame({
-            'mean_a_0': [4.5, 15.5]
+            'mean_a': [4.5, 15.5]
         })
 
         # Run
@@ -40,8 +42,8 @@ class TestGetDescriptorValues(TestCase):
         descriptor = np.mean
 
         expected_result = pd.DataFrame({
-            'mean_a_0': [4.5, 15.5],
-            'mean_b_0': [14.5, 5.5],
+            'mean_a': [4.5, 15.5],
+            'mean_b': [14.5, 5.5],
         })
 
         # Run
@@ -102,11 +104,9 @@ class TestGetDescriptorValues(TestCase):
         def side_effect_descriptor():
             raise TypeError
 
-        aux = Mock()
-        aux.T = None
+        aux = pd.DataFrame()
         concat_mock.return_value = aux
 
-        # Run
         real = pd.DataFrame({'a': [0, 1], 'b': [1, 0]})
         synth = pd.DataFrame({'a': [0, 1], 'b': [1, 0]})
 
@@ -114,12 +114,15 @@ class TestGetDescriptorValues(TestCase):
         descriptor.__name__ = 'foo'
         descriptor.side_effect = side_effect_descriptor
 
+        # Run
         get_descriptor_values(real, synth, descriptor)
 
         # Asserts
         assert descriptor.call_count == 2
-        assert concat_mock.call_count == 1
-        pd.testing.assert_frame_equal(concat_mock.call_args[0][0][0], pd.DataFrame())
+        assert concat_mock.call_count == 3
+
+        assert concat_mock.call_args_list[2][0][0][0].empty
+        assert concat_mock.call_args_list[2][0][0][1].empty
 
 
 class TestGetDescriptorsTable(TestCase):
@@ -127,8 +130,12 @@ class TestGetDescriptorsTable(TestCase):
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
     def test_default_call(self, descriptor_mock):
         # Setup
-        real = 'real_data'
-        synth = 'synth_data'
+        # real = 'real_data'
+        real = Mock(spec=pd.DataFrame)
+        real.columns = ['a']
+        # synth = 'synth_data'
+        synth = Mock(spec=pd.DataFrame)
+        synth.columns = ['a']
 
         descriptor_mock.side_effect = [
             pd.DataFrame({'a': [0, 1], 'b': [1, 0]}),
@@ -151,18 +158,21 @@ class TestGetDescriptorsTable(TestCase):
             's': [1, 0]
         }, columns=list('abxycduvrs'))
 
+        metadata = Mock(spec=Metadata)
+
         # Run
-        result = get_descriptors_table(real, synth)
+        result = get_descriptors_table(real, synth, metadata)
 
         # Check
         assert result.equals(expected_result)
         assert descriptor_mock.call_count == 5
+
         descriptor_mock.assert_has_calls([
-            call('real_data', 'synth_data', np.mean),
-            call('real_data', 'synth_data', np.std),
-            call('real_data', 'synth_data', sp.stats.skew),
-            call('real_data', 'synth_data', sp.stats.kurtosis),
-            call('real_data', 'synth_data', categorical_distribution)
+            call(real.get(), synth.get(), np.mean, None),
+            call(real.get(), synth.get(), np.std, None),
+            call(real.get(), synth.get(), sp.stats.skew, None),
+            call(real.get(), synth.get(), sp.stats.kurtosis, None),
+            call(real.get(), synth.get(), categorical_distribution, None)
         ], any_order=True)
 
     @patch('sdv.evaluation.DESCRIPTORS')
@@ -171,8 +181,10 @@ class TestGetDescriptorsTable(TestCase):
     def test_string_descriptor(self, concat_mock, get_descriptor_mock, descriptors_mock):
         """If a descriptor is a string it will changed by its value in DESCRIPTORS."""
         # Setup
-        real = 'real data'
-        synth = 'synth data'
+        real = Mock(spec=pd.DataFrame)
+        real.columns = ['a']
+        synth = Mock(spec=pd.DataFrame)
+        synth.columns = ['a']
         descriptors = [
             'a_descriptor_string',
         ]
@@ -180,18 +192,23 @@ class TestGetDescriptorsTable(TestCase):
 
         concat_mock.return_value = 'concatenated descriptors'
         get_descriptor_mock.return_value = 'descriptor values'
-        descriptor_value = MagicMock(__name__='descriptor', return_value='a_descriptor_function')
+        descriptor_value = MagicMock(
+            __name__='descriptor',
+            return_value=('a_descriptor_function', (DTypes.INT, DTypes.FLOAT))
+        )
         descriptors_mock.__getitem__ = descriptor_value
         expected_result = 'concatenated descriptors'
 
+        metadata = Mock(spec=Metadata)
+
         # Run
-        result = get_descriptors_table(real, synth, descriptors=descriptors)
+        result = get_descriptors_table(real, synth, metadata, descriptors=descriptors)
 
         # Check
         assert result == expected_result
         descriptors_mock.__getitem__.assert_called_once_with('a_descriptor_string')
         get_descriptor_mock.assert_called_once_with(
-            'real data', 'synth data', 'a_descriptor_function')
+            real.get(), synth.get(), 'a_descriptor_function', None)
 
 
 class TestEvaluate(TestCase):
@@ -199,7 +216,7 @@ class TestEvaluate(TestCase):
     def test_raises_error(self):
         """If the table names in both datasets are not equal, an error is raised."""
         # Setup
-        metadata = dict()
+        metadata = Mock(spec=Metadata)
 
         real = {
             'a': None,
@@ -211,14 +228,9 @@ class TestEvaluate(TestCase):
         }
         metrics = []
         descriptors = []
-        expected_error_message = "real and synthetic dataset must have the same tables"
 
-        try:
-            # Run
+        with pytest.raises(ValueError):
             evaluate(metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
-        except AssertionError as error:
-            # Check
-            assert error.args[0] == expected_error_message
 
     @patch('sdv.evaluation.get_descriptors_table', autospec=True)
     def test_single_table(self, descriptors_mock):
@@ -237,9 +249,7 @@ class TestEvaluate(TestCase):
 
         ])
 
-        metadata = {
-            'fields': dict()
-        }
+        metadata = Mock(spec=Metadata)
 
         real = pd.DataFrame({'a': [1, 0]})
         synth = pd.DataFrame({'a': [0, 1]})
@@ -256,11 +266,15 @@ class TestEvaluate(TestCase):
         })
 
         # Run
-        result = evaluate(metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
+        result_score, result_reald, result_synthd = evaluate(
+            metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
 
         # Check
-        assert result.equals(expected_result)
-        descriptors_mock.assert_called_once_with(real, synth, descriptors)
+        assert result_score.equals(expected_result)
+        pd.testing.assert_frame_equal(descriptors_mock.call_args[0][0], real)
+        pd.testing.assert_frame_equal(descriptors_mock.call_args[0][1], synth)
+
+        # descriptors_mock.assert_called_once_with(real, synth, descriptors, None)
 
         call_args_list = metric_1.call_args_list
         assert len(call_args_list) == 1
@@ -343,7 +357,7 @@ class TestEvaluate(TestCase):
             })
         }
 
-        result = evaluate(metadata, synth, real)
+        result_scores, result_reald, result_synthd = evaluate(metadata, synth, real)
 
         # Asserts
         expected_drop_ids = [
@@ -358,7 +372,7 @@ class TestEvaluate(TestCase):
         for res, exp in zip(sorted(pandas_drop_mock.call_args_list), sorted(expected_drop_ids)):
             assert res == exp
 
-        pd.testing.assert_series_equal(result, pd.Series({
+        pd.testing.assert_series_equal(result_scores, pd.Series({
             'mse': 1.0,
             'rmse': 1.0,
             'r2_score': -float("Inf")
