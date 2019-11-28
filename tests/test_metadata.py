@@ -293,7 +293,7 @@ class TestMetadata(TestCase):
         metadata.get_table_meta.assert_called_once_with('test')
         mock_load_csv.assert_called_once_with('a/path', {'some': 'data'})
 
-    def test__get_dtypes_with_ids(self):
+    def test_get_dtypes_with_ids(self):
         """Test get data types including ids."""
         # Setup
         table_meta = {
@@ -312,20 +312,20 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        result = Metadata._get_dtypes(metadata, 'test', ids=True)
+        result = Metadata.get_dtypes(metadata, 'test', ids=True)
 
         # Asserts
         expected = {
-            'item 0': int,
-            'item 1': int,
-            'item 2': float,
-            'item 3': np.object,
-            'item 4': bool,
-            'item 5': np.datetime64,
+            'item 0': 'int',
+            'item 1': 'int',
+            'item 2': 'float',
+            'item 3': 'str',
+            'item 4': 'bool',
+            'item 5': 'datetime64',
         }
         assert result == expected
 
-    def test__get_dtypes_no_ids(self):
+    def test_get_dtypes_no_ids(self):
         """Test get data types excluding ids."""
         # Setup
         table_meta = {
@@ -343,19 +343,19 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        result = Metadata._get_dtypes(metadata, 'test')
+        result = Metadata.get_dtypes(metadata, 'test')
 
         # Asserts
         expected = {
-            'item 1': int,
-            'item 2': float,
-            'item 3': np.object,
-            'item 4': bool,
-            'item 5': np.datetime64,
+            'item 1': 'int',
+            'item 2': 'float',
+            'item 3': 'str',
+            'item 4': 'bool',
+            'item 5': 'datetime64',
         }
         assert result == expected
 
-    def test__get_dtypes_error_invalid_type(self):
+    def test_get_dtypes_error_invalid_type(self):
         """Test get data types with an invalid type."""
         # Setup
         table_meta = {
@@ -369,9 +369,9 @@ class TestMetadata(TestCase):
 
         # Run
         with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, 'test')
+            Metadata.get_dtypes(metadata, 'test')
 
-    def test__get_dtypes_error_id(self):
+    def test_get_dtypes_error_id(self):
         """Test get data types with an id that is not a primary or foreign key."""
         # Setup
         table_meta = {
@@ -385,9 +385,9 @@ class TestMetadata(TestCase):
 
         # Run
         with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, 'test', ids=True)
+            Metadata.get_dtypes(metadata, 'test', ids=True)
 
-    def test__get_dtypes_error_subtype_numerical(self):
+    def test_get_dtypes_error_subtype_numerical(self):
         """Test get data types with an invalid numerical subtype."""
         # Setup
         table_meta = {
@@ -401,9 +401,9 @@ class TestMetadata(TestCase):
 
         # Run
         with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, 'test')
+            Metadata.get_dtypes(metadata, 'test')
 
-    def test__get_dtypes_error_subtype_id(self):
+    def test_get_dtypes_error_subtype_id(self):
         """Test get data types with an invalid id subtype."""
         # Setup
         table_meta = {
@@ -417,7 +417,7 @@ class TestMetadata(TestCase):
 
         # Run
         with pytest.raises(ValueError):
-            Metadata._get_dtypes(metadata, 'test', ids=True)
+            Metadata.get_dtypes(metadata, 'test', ids=True)
 
     def test__get_pii_fields(self):
         """Test get pii fields"""
@@ -459,11 +459,11 @@ class TestMetadata(TestCase):
 
         # Run
         dtypes = {
-            'integer': int,
-            'float': float,
-            'categorical': np.object,
-            'boolean': bool,
-            'datetime': np.datetime64
+            'integer': 'int',
+            'float': 'float',
+            'categorical': 'str',
+            'boolean': 'bool',
+            'datetime': 'datetime64'
         }
         pii_fields = {
             'categorical': 'email'
@@ -493,7 +493,7 @@ class TestMetadata(TestCase):
         """Test get transformers dict raise ValueError."""
         # Run
         dtypes = {
-            'string': str
+            'void': 'void'
         }
         with pytest.raises(ValueError):
             Metadata._get_transformers(dtypes, None)
@@ -503,7 +503,7 @@ class TestMetadata(TestCase):
         """Test load HyperTransformer"""
         # Setup
         metadata = Mock(spec=Metadata)
-        metadata._get_dtypes.return_value = {'meta': 'dtypes'}
+        metadata.get_dtypes.return_value = {'meta': 'dtypes'}
         metadata._get_pii_fields.return_value = {'meta': 'pii_fields'}
         metadata._get_transformers.return_value = {'meta': 'transformers'}
         mock_ht.return_value = 'hypertransformer'
@@ -513,7 +513,7 @@ class TestMetadata(TestCase):
 
         # Asserts
         assert result == 'hypertransformer'
-        metadata._get_dtypes.assert_called_once_with('test')
+        metadata.get_dtypes.assert_called_once_with('test')
         metadata._get_pii_fields.assert_called_once_with('test')
         metadata._get_transformers.assert_called_once_with(
             {'meta': 'dtypes'},
@@ -650,11 +650,11 @@ class TestMetadata(TestCase):
         metadata._hyper_transformers = {
             'test': ht_mock
         }
-        metadata._get_dtypes.return_value = {
-            'item 1': int,
-            'item 2': float,
-            'item 3': np.object,
-            'item 4': bool,
+        metadata.get_dtypes.return_value = {
+            'item 1': 'int',
+            'item 2': 'float',
+            'item 3': 'str',
+            'item 4': 'bool',
         }
 
         # Run
