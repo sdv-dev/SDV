@@ -142,29 +142,6 @@ class TestGetDescriptorValues(TestCase):
         assert concat_mock.call_args_list[2][0][0][1].empty
 
 
-# @pytest.mark.parametrize(
-#     "descriptors,table_name, desc_call,expected",
-#     [(["mean"], None, np.mean, pd.DataFrame({'a': [0, 1]})),
-#      ([(np.mean, (DTypes.INT, DTypes.FLOAT))], None, np.mean, pd.DataFrame({'a': [0, 1]})),
-#      ([np.mean], None, np.mean, pd.DataFrame({'a': [0, 1]}))])
-# @patch('sdv.evaluation.get_descriptor_values', autospec=True)
-# def test_get_descriptors_tables(descriptor_mock, descriptors, table_name, desc_call, expected):
-#     real = Mock(spec=pd.DataFrame)
-#     real.columns = ['a']
-#     synth = Mock(spec=pd.DataFrame)
-#     synth.columns = ['a']
-
-#     descriptor_mock.return_value = pd.DataFrame({'a': [0, 1]})
-
-#     metadata = Mock(spec=Metadata)
-#     metadata.get_dtypes.return_value = {'a': (DTypes.INT, DTypes.FLOAT)}
-
-#     result = get_descriptors_table(real, synth, metadata, descriptors, table_name)
-
-#     assert result.equals(expected)
-#     descriptor_mock.assert_called_once_with(real.get(), synth.get(), desc_call, table_name)
-
-
 class TestGetDescriptorsTable(TestCase):
 
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
