@@ -7,7 +7,7 @@ import pytest
 import scipy as sp
 
 from sdv import Metadata
-from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table, _dtype_in_dtypes
+from sdv.evaluation import _dtype_in_dtypes, evaluate, get_descriptor_values, get_descriptors_table
 from sdv.evaluation.descriptors import DTypes, categorical_distribution
 
 
