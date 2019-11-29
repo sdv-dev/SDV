@@ -124,7 +124,7 @@ def get_descriptors_table(real, synth, metadata, descriptors=DESCRIPTORS, table_
         elif isinstance(descriptor, tuple):
             descriptor, dtypes = descriptor
         else:
-            dtypes = DTypes.values()
+            dtypes = list(DTypes)
 
         if table_name:
             table_dtypes = metadata.get_dtypes(table_name)
