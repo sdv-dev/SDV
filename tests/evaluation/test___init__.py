@@ -7,8 +7,8 @@ import pytest
 import scipy as sp
 
 from sdv import Metadata
-from sdv.evaluation import _dtype_in_dtypes, evaluate, get_descriptor_values, get_descriptors_table
-from sdv.evaluation.descriptors import DTypes, categorical_distribution
+from sdv.evaluation import evaluate, get_descriptor_values, get_descriptors_table
+from sdv.evaluation.descriptors import categorical_distribution
 
 
 class TestGetDescriptorValues(TestCase):
@@ -155,16 +155,17 @@ class TestGetDescriptorsTable(TestCase):
         descriptor_mock.return_value = pd.DataFrame({'a': [0, 1]})
 
         metadata = Mock(spec=Metadata)
+        metadata.get_dtypes.return_value = {'a': 'int'}
 
         # Run
         result = get_descriptors_table(
-            real, synth, metadata, [(np.mean, (DTypes.INT, DTypes.FLOAT))])
+            real, synth, metadata, 'demo', [(np.mean, ('int', 'float'))])
 
         # Asserts
         expected = pd.DataFrame({'a': [0, 1]})
 
         assert result.equals(expected)
-        descriptor_mock.assert_called_once_with(real.get(), synth.get(), np.mean, None)
+        descriptor_mock.assert_called_once_with(real.get(), synth.get(), np.mean, 'demo')
 
     @patch('sdv.evaluation.get_descriptor_values', autospec=True)
     def test_descriptors_callable(self, descriptor_mock):
@@ -181,7 +182,7 @@ class TestGetDescriptorsTable(TestCase):
 
         # Run
         result = get_descriptors_table(
-            real, synth, metadata, descriptors=[np.mean], table_name='table_demo')
+            real, synth, metadata, 'table_demo', descriptors=[np.mean])
 
         # Asserts
         expected = pd.DataFrame({'a': [0, 1]})
@@ -208,9 +209,13 @@ class TestGetDescriptorsTable(TestCase):
         ]
 
         metadata = Mock(spec=Metadata)
+        metadata.get_dtypes.return_value = {
+            'a': 'int', 'b': 'int', 'c': 'int', 'd': 'int', 'x': 'int', 'y': 'int',
+            'u': 'int', 'v': 'int'
+        }
 
         # Run
-        result = get_descriptors_table(real, synth, metadata)
+        result = get_descriptors_table(real, synth, metadata, 'demo')
 
         # Check
         expected_result = pd.DataFrame({
@@ -221,20 +226,17 @@ class TestGetDescriptorsTable(TestCase):
             'c': [0, 1],
             'd': [1, 0],
             'u': [0, 1],
-            'v': [1, 0],
-            'r': [0, 1],
-            's': [1, 0]
-        }, columns=list('abxycduvrs'))
+            'v': [1, 0]
+        }, columns=list('abxycduv'))
 
         assert result.equals(expected_result)
-        assert descriptor_mock.call_count == 5
+        assert descriptor_mock.call_count == 4
 
         descriptor_mock.assert_has_calls([
-            call(real.get(), synth.get(), np.mean, None),
-            call(real.get(), synth.get(), np.std, None),
-            call(real.get(), synth.get(), sp.stats.skew, None),
-            call(real.get(), synth.get(), sp.stats.kurtosis, None),
-            call(real.get(), synth.get(), categorical_distribution, None)
+            call(real.get(), synth.get(), np.mean, 'demo'),
+            call(real.get(), synth.get(), np.std, 'demo'),
+            call(real.get(), synth.get(), sp.stats.skew, 'demo'),
+            call(real.get(), synth.get(), sp.stats.kurtosis, 'demo')
         ], any_order=True)
 
     @patch('sdv.evaluation.DESCRIPTORS')
@@ -252,26 +254,27 @@ class TestGetDescriptorsTable(TestCase):
         ]
         expected_result = 'None'
 
-        concat_mock.return_value = 'concatenated descriptors'
-        get_descriptor_mock.return_value = 'descriptor values'
+        concat_mock.return_value = pd.DataFrame({'a': [0]})
+        get_descriptor_mock.return_value = pd.DataFrame({'a': [0, 1]})
         descriptor_value = MagicMock(
             __name__='descriptor',
-            return_value=('a_descriptor_function', (DTypes.INT, DTypes.FLOAT))
+            return_value=('a_descriptor_function', ('int', 'float'))
         )
         descriptors_mock.__getitem__ = descriptor_value
 
         metadata = Mock(spec=Metadata)
+        metadata.get_dtypes.return_value = {'a': 'int'}
 
         # Run
-        result = get_descriptors_table(real, synth, metadata, descriptors=descriptors)
+        result = get_descriptors_table(real, synth, metadata, 'demo', descriptors=descriptors)
 
         # Check
-        expected_result = 'concatenated descriptors'
+        expected_result = pd.DataFrame({'a': [0]})
 
-        assert result == expected_result
+        assert result.equals(expected_result)
         descriptors_mock.__getitem__.assert_called_once_with('a_descriptor_string')
         get_descriptor_mock.assert_called_once_with(
-            real.get(), synth.get(), 'a_descriptor_function', None)
+            real.get(), synth.get(), 'a_descriptor_function', 'demo')
 
 
 class TestEvaluate(TestCase):
@@ -293,7 +296,7 @@ class TestEvaluate(TestCase):
         descriptors = []
 
         with pytest.raises(ValueError):
-            evaluate(metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
+            evaluate(synth, real=real, metadata=metadata, metrics=metrics, descriptors=descriptors)
 
     @patch('sdv.evaluation.get_descriptors_table', autospec=True)
     def test_single_table(self, descriptors_mock):
@@ -324,14 +327,14 @@ class TestEvaluate(TestCase):
         descriptors = ['descriptor_1', 'descriptors_2']
 
         # Run
-        result_score, result_reald, result_synthd = evaluate(
-            metadata, synth, real=real, metrics=metrics, descriptors=descriptors)
+        result_score = evaluate(
+            synth, real=real, metadata=metadata, metrics=metrics, descriptors=descriptors)
 
         # Check
-        expected_result = pd.Series({
+        expected_result = pd.DataFrame({
             'metric_1': 0,
             'metric_2': 1
-        })
+        }, index=[np.nan])
 
         assert result_score.equals(expected_result)
         pd.testing.assert_frame_equal(descriptors_mock.call_args[0][0], real)
@@ -420,7 +423,7 @@ class TestEvaluate(TestCase):
             })
         }
 
-        result_scores, result_reald, result_synthd = evaluate(metadata, synth, real)
+        result = evaluate(synth, real=real, metadata=metadata)
 
         # Asserts
         expected_drop_ids = [
@@ -429,23 +432,18 @@ class TestEvaluate(TestCase):
             call(['b_fk_field'], axis=1, inplace=True),
             call(['b_fk_field'], axis=1, inplace=True)
         ]
+        expected_result = pd.DataFrame({
+            'mse': [1.0, 1.0, 1.0],
+            'rmse': [1.0, 1.0, 1.0],
+            'r2_score': [-float("Inf"), -float("Inf"), -float("Inf")]
+        }, index=['a', 'b', '__mean__'])
 
         assert descriptors_table_mock.call_count == 2
 
         for res, exp in zip(sorted(pandas_drop_mock.call_args_list), sorted(expected_drop_ids)):
             assert res == exp
 
-        pd.testing.assert_series_equal(result_scores, pd.Series({
-            'mse': 1.0,
-            'rmse': 1.0,
-            'r2_score': -float("Inf")
-        }))
-
-
-@pytest.mark.parametrize(
-    "input_a,input_b,expected",
-    [("float", (DTypes.INT, DTypes.FLOAT, DTypes.BOOL), True),
-     ("str", (DTypes.INT, DTypes.FLOAT, DTypes.BOOL), False)])
-def test__dtype_in_dtypes(input_a, input_b, expected):
-    result = _dtype_in_dtypes(input_a, input_b)
-    assert result == expected
+        pd.testing.assert_frame_equal(
+            result.sort_index(axis=1),
+            expected_result.sort_index(axis=1)
+        )

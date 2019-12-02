@@ -86,7 +86,7 @@ class Metadata:
         }
     }
     _DTYPES = {
-        ('categorical', None): 'str',
+        ('categorical', None): 'object',
         ('boolean', None): 'bool',
         ('numerical', None): 'float',
         ('numerical', 'float'): 'float',
@@ -404,16 +404,16 @@ class Metadata:
         transformers_dict = dict()
         for name, dtype in dtypes.items():
             dtype = np.dtype(dtype)
-            if dtype == 'int':
+            if dtype.kind == 'i':
                 transformer = transformers.NumericalTransformer(dtype=int)
-            elif dtype == 'float':
+            elif dtype.kind == 'f':
                 transformer = transformers.NumericalTransformer(dtype=float)
-            elif dtype == 'str':
+            elif dtype.kind == 'O':
                 anonymize = pii_fields.get(name)
                 transformer = transformers.CategoricalTransformer(anonymize=anonymize)
-            elif dtype == 'bool':
+            elif dtype.kind == 'b':
                 transformer = transformers.BooleanTransformer()
-            elif dtype == 'datetime64':
+            elif dtype.kind == 'M':
                 transformer = transformers.DatetimeTransformer()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))

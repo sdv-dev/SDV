@@ -318,7 +318,7 @@ class TestMetadata(TestCase):
             'item 0': 'int',
             'item 1': 'int',
             'item 2': 'float',
-            'item 3': 'str',
+            'item 3': 'object',
             'item 4': 'bool',
             'item 5': 'datetime64',
         }
@@ -348,7 +348,7 @@ class TestMetadata(TestCase):
         expected = {
             'item 1': 'int',
             'item 2': 'float',
-            'item 3': 'str',
+            'item 3': 'object',
             'item 4': 'bool',
             'item 5': 'datetime64',
         }
@@ -460,7 +460,7 @@ class TestMetadata(TestCase):
         dtypes = {
             'integer': 'int',
             'float': 'float',
-            'categorical': 'str',
+            'categorical': 'object',
             'boolean': 'bool',
             'datetime': 'datetime64'
         }
