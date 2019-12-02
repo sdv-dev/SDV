@@ -56,6 +56,8 @@ def get_descriptor_values(real, synth, descriptor, table_name=None):
             Synthesized data.
         descriptor (callable or str):
             Callable that accepts columns and returns real-values.
+        table_name (str):
+            Table name to format the described output name. Defaults to ``None``.
 
     Return:
         pandas.DataFrame:
@@ -108,8 +110,12 @@ def get_descriptors_table(real, synth, metadata, descriptors=DESCRIPTORS, table_
             Table of real data.
         synth (pandas.DataFrame):
             Table of synthesized data.
+        metadata (Metadata):
+            Metadata object to get column names from a table without ids.
         descriptors (dict[str, callable]):
             Dictionary of descriptors.
+        table_name (str):
+            Table name to format the described output name. Defaults to ``None``.
 
     Return:
         pandas.DataFrame:
@@ -146,15 +152,20 @@ def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(),
 
     Args:
         metadata (str, dict or Metadata):
-            ...
-        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
-            Map of names and tables of real data.
+            String or dictionary to instance a Metadata object or a Metadata itself.
         synth (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of synthesized data.
+        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
+            Map of names and tables of real data. Defaults to ``None``.
         descriptors (list[callable]):
             List of descriptors.
         metrics (list[callable]):
             List of metrics.
+        root_path (str):
+            Relative path to find the metadata.json file when needed. Defaults to ``None``.
+        table_name (str):
+            Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``
+            and ``real`` is ``None``. Defaults to None.
 
     Return:
         pandas.Series:
@@ -163,10 +174,16 @@ def evaluate(metadata, synth, real=None, descriptors=DESCRIPTORS.values(),
     if not isinstance(metadata, Metadata):
         metadata = Metadata(metadata, root_path)
 
-    if isinstance(real, pd.DataFrame):
+    if isinstance(synth, pd.DataFrame):
+        if real is None:
+            real = metadata.load_table(table_name)
+
         described = get_descriptors_table(real, synth, metadata, descriptors, table_name)
 
-    if isinstance(real, dict):
+    if isinstance(synth, dict):
+        if real is None:
+            real = metadata.load_tables()
+
         if not set(real.keys()) == set(synth.keys()):
             raise ValueError('real and synthetic dataset must have the same tables')
 
