@@ -151,10 +151,15 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
 
     Args:
         synth (dict or pandas.DataFrame):
+            Synthesized data.
         real (dict or pandas.DataFrame):
+            Real data.
         metadata (str, dict or Metadata):
+            Data used to build a Metadata instance or a Metadata instance itself.
         root_path (str):
+            Path to the metadata file.
         table_name (str):
+            Table name used to prepare the metadata object, real and synth dict.
 
     returns:
         tuple (dict, dict, Metadata):
