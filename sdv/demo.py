@@ -101,23 +101,23 @@ def _download(dataset_name, dataset_path):
     response = urllib.request.urlopen(url)
     bytes_io = io.BytesIO(response.read())
 
-    LOGGER.info('Extracting dataset into {}'.format(dataset_path))
+    LOGGER.info('Extracting dataset into {}'.format(data_path))
     with ZipFile(bytes_io) as zf:
-        zf.extractall(dataset_path)
+        zf.extractall(data_path)
 
 
-def _load(dataset_name, dataset_path):
+def _load(dataset_name, data_path):
     if not os.path.exists(DATA_PATH):
         os.makedirs(DATA_PATH)
 
-    dataset_path = os.path.join(dataset_path, dataset_name)
-    if not os.path.exists(dataset_path):
-        _download(dataset_name, dataset_path)
+    data_path = os.path.join(data_path, dataset_name)
+    if not os.path.exists(data_path):
+        _download(dataset_name, data_path)
 
-    return dataset_path
+    return data_path
 
 
-def load_demo(dataset_name=None, dataset_path=DATA_PATH, metadata=False):
+def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
     """Load demo data.
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
@@ -132,8 +132,8 @@ def load_demo(dataset_name=None, dataset_path=DATA_PATH, metadata=False):
             metadata and tables dict.
     """
     if dataset_name:
-        dataset_path = _load(dataset_name, dataset_path)
-        # meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
+        data_path = _load(dataset_name, data_path)
+        # meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
         # TODO: load csv and return data
         return None
 
