@@ -126,9 +126,19 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
         * sessions: sessions data with a foreign key to user.
         * transactions: transactions data with a foreign key to sessions.
 
+    Args:
+        dataset_name (str):
+            Dataset name to be downloaded, if ``None`` use default demo data. Defaults to ``None``.
+        data_path (str):
+            Data path to save the dataset files, only used if dataset_name is provided.
+            Defaults to ``DATA_PATH``.
+        metadata (bool):
+            If ``True`` return Metadata object. Defaults to ``False``.
+
     Returns:
-        tuple:
-            metadata and tables dict.
+        dict or tuple:
+            If ``metadata`` is ``False`` return a ``dict`` with the tables data.
+            If ``metadata`` is ``True`` return a ``tuple`` with Metadata and tables data.
     """
     if dataset_name:
         data_path = _load(dataset_name, data_path)
