@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 import pandas as pd
 
-from sdv.metadata import Metadata
+from sdv.metadata import Metadata, _load_csv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -91,10 +91,10 @@ DATA_PATH = os.path.join(
     os.path.dirname(__file__),
     'data'
 )
-DATA_URL = 'http://sdv-datasets.s3.amazonaws.com/{}.zip'
+DATA_URL = 'https://sdv-demos.s3.eu-west-3.amazonaws.com/{}.zip'
 
 
-def _download(dataset_name, dataset_path):
+def _download(dataset_name, data_path):
     url = DATA_URL.format(dataset_name)
 
     LOGGER.info('Downloading dataset {} from {}'.format(dataset_name, url))
@@ -110,11 +110,10 @@ def _load(dataset_name, data_path):
     if not os.path.exists(DATA_PATH):
         os.makedirs(DATA_PATH)
 
-    data_path = os.path.join(data_path, dataset_name)
-    if not os.path.exists(data_path):
+    if not os.path.exists(os.path.join(data_path, dataset_name)):
         _download(dataset_name, data_path)
 
-    return data_path
+    return os.path.join(data_path, dataset_name)
 
 
 def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
@@ -133,9 +132,16 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
     """
     if dataset_name:
         data_path = _load(dataset_name, data_path)
-        # meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
-        # TODO: load csv and return data
-        return None
+        meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
+        tables = {
+            table: _load_csv(data_path, meta.get_table_meta(table))
+            for table in meta.get_tables()
+        }
+
+        if metadata:
+            return meta, tables
+
+        return tables
 
     users = pd.DataFrame({
         'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
