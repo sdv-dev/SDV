@@ -45,6 +45,46 @@ from sdv.evaluation.descriptors import DESCRIPTORS
 from sdv.evaluation.metrics import DEFAULT_METRICS
 from sdv.metadata import Metadata
 
+DEFAULT_DTYPES = ['int', 'float', 'object', 'bool', 'datetime64']
+
+
+def get_column_descriptor_values(real_column, synth_column, descriptor, table_name, column_name):
+    """Compute the descriptor values for the given column.
+
+    Args:
+        real_column (pandas.Series):
+            Real data.
+        synth_column (pandas.Series):
+            Synthesized data.
+        descriptor (callable):
+            Callable that accepts columns and returns real-values.
+        table_name (str):
+            Table name to format the described output name.
+        column_name (str):
+            Column name to format the described output name.
+
+    Returns:
+        tuple:
+            It contains a ``(None, None)`` tuple if a ``TypeError`` is raised.
+            Otherwise, it contains the descriptors output for a given column.
+    """
+    described_real_column = pd.Series(descriptor(real_column))
+    described_synth_column = pd.Series(descriptor(synth_column))
+
+    if table_name:
+        column_name = '{}_{}'.format(table_name, column_name)
+
+    described_name = '{}_{}'.format(descriptor.__name__, column_name)
+    if len(described_real_column) > 1:
+        described_name = described_name + '_'
+        described_real_column = described_real_column.add_prefix(described_name)
+        described_synth_column = described_synth_column.add_prefix(described_name)
+    else:
+        described_real_column.index = [described_name]
+        described_synth_column.index = [described_name]
+
+    return described_real_column.T, described_synth_column.T
+
 
 def get_descriptor_values(real, synth, descriptor, table_name=None):
     """Compute the descriptor values for the given tables.
@@ -54,7 +94,7 @@ def get_descriptor_values(real, synth, descriptor, table_name=None):
             Real data.
         synth (pandas.DataFrame):
             Synthesized data.
-        descriptor (callable or str):
+        descriptor (callable):
             Callable that accepts columns and returns real-values.
         table_name (str):
             Table name to format the described output name. Defaults to ``None``.
@@ -69,23 +109,16 @@ def get_descriptor_values(real, synth, descriptor, table_name=None):
 
     for column_name in real:
         try:
-            described_real_column = pd.Series(descriptor(real[column_name]))
-            described_synth_column = pd.Series(descriptor(synth[column_name]))
+            described_real_column, described_synth_column = get_column_descriptor_values(
+                real[column_name],
+                synth[column_name],
+                descriptor,
+                table_name,
+                column_name
+            )
 
-            if table_name:
-                column_name = '{}_{}'.format(table_name, column_name)
-
-            described_name = '{}_{}'.format(descriptor.__name__, column_name)
-            if len(described_real_column) > 1:
-                described_name = described_name + '_'
-                described_real_column = described_real_column.add_prefix(described_name)
-                described_synth_column = described_synth_column.add_prefix(described_name)
-            else:
-                described_real_column.index = [described_name]
-                described_synth_column.index = [described_name]
-
-            real_values.append(described_real_column.T)
-            synth_values.append(described_synth_column.T)
+            real_values.append(described_real_column)
+            synth_values.append(described_synth_column)
         except TypeError:
             pass
 
@@ -122,7 +155,7 @@ def get_descriptors_table(real, synth, metadata, table_name, descriptors=DESCRIP
         elif isinstance(descriptor, tuple):
             descriptor, dtypes = descriptor
         else:
-            dtypes = ['int', 'float', 'object', 'bool', 'datetime64']
+            dtypes = DEFAULT_DTYPES
 
         table_dtypes = pd.Series(metadata.get_dtypes(table_name))
         cols = table_dtypes[table_dtypes.isin(dtypes)].index
@@ -194,8 +227,8 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
     return synth, real, metadata
 
 
-def evaluate(synth, real=None, metadata=None, descriptors=DESCRIPTORS.values(),
-             metrics=DEFAULT_METRICS, root_path=None, table_name=None, by_tables=True):
+def evaluate(synth, real=None, metadata=None, root_path=None, descriptors=DESCRIPTORS.values(),
+             metrics=DEFAULT_METRICS, table_name=None, by_tables=True):
     """Compute stats metric for all tables.
 
     Args:
@@ -206,12 +239,12 @@ def evaluate(synth, real=None, metadata=None, descriptors=DESCRIPTORS.values(),
         metadata (str, dict or Metadata):
             String or dictionary to instance a Metadata object or a Metadata itself.
             Defaults to ``None``.
+        root_path (str):
+            Relative path to find the metadata.json file when needed. Defaults to ``None``.
         descriptors (list[callable]):
             List of descriptors.
         metrics (list[callable]):
             List of metrics.
-        root_path (str):
-            Relative path to find the metadata.json file when needed. Defaults to ``None``.
         table_name (str):
             Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``
             and ``real`` is ``None``. Defaults to None.
@@ -251,7 +284,7 @@ def evaluate(synth, real=None, metadata=None, descriptors=DESCRIPTORS.values(),
 
     if len(scores) > 1:
         mean = scores.mean()
-        mean.name = '__mean__'
+        mean.name = 'mean'
         scores = scores.append(mean)
 
     return scores

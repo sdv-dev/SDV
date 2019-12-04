@@ -436,7 +436,7 @@ class TestEvaluate(TestCase):
             'mse': [1.0, 1.0, 1.0],
             'rmse': [1.0, 1.0, 1.0],
             'r2_score': [-float("Inf"), -float("Inf"), -float("Inf")]
-        }, index=['a', 'b', '__mean__'])
+        }, index=['a', 'b', 'mean'])
 
         assert descriptors_table_mock.call_count == 2
 
