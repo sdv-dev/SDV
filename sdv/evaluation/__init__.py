@@ -46,109 +46,98 @@ from sdv.evaluation.metrics import DEFAULT_METRICS
 from sdv.metadata import Metadata
 
 DEFAULT_DTYPES = ['int', 'float', 'object', 'bool', 'datetime64']
+DESCRIBE_COLUMNS = ['table', 'column', 'descriptor', 'value', 'statistic']
+EVALUATE_INDEX = ['table', 'column', 'descriptor', 'value']
 
 
-def get_column_descriptor_values(real_column, synth_column, descriptor, table_name, column_name):
-    """Compute the descriptor values for the given column.
+def _describe_column(column, descriptor):
+    """Compute the descriptor statistics for the given column.
 
     Args:
-        real_column (pandas.Series):
-            Real data.
-        synth_column (pandas.Series):
-            Synthesized data.
+        column (pandas.Series):
+            Data to describe.
         descriptor (callable):
-            Callable that accepts columns and returns real-values.
-        table_name (str):
-            Table name to format the described output name.
-        column_name (str):
-            Column name to format the described output name.
+            Callable that accepts a single column and returns one or more real-values.
 
     Returns:
-        tuple:
-            It contains a ``(None, None)`` tuple if a ``TypeError`` is raised.
-            Otherwise, it contains the descriptors output for a given column.
+        pandas.DataFrame:
+            Column statistics as a ``pandas.DataFrame`` with 3 columns:
+                * ``statistic``: Value of the statistic.
+                * ``value``: specific column value to which the statistic relates.
+                * ``descriptor``: Name of the descriptor used to compute the statistics.
     """
-    described_real_column = pd.Series(descriptor(real_column))
-    described_synth_column = pd.Series(descriptor(synth_column))
+    column_stats = pd.Series(descriptor(column))
+    column_stats.name = 'statistic'
+    column_stats.index.name = 'value'
+    column_stats = column_stats.reset_index()
+    column_stats['descriptor'] = descriptor.__name__
 
-    if table_name:
-        column_name = '{}_{}'.format(table_name, column_name)
-
-    described_name = '{}_{}'.format(descriptor.__name__, column_name)
-    if len(described_real_column) > 1:
-        described_name = described_name + '_'
-        described_real_column = described_real_column.add_prefix(described_name)
-        described_synth_column = described_synth_column.add_prefix(described_name)
-    else:
-        described_real_column.index = [described_name]
-        described_synth_column.index = [described_name]
-
-    return described_real_column.T, described_synth_column.T
+    return column_stats
 
 
-def get_descriptor_values(real, synth, descriptor, table_name=None):
-    """Compute the descriptor values for the given tables.
+def _describe_columns(table_data, descriptor):
+    """Compute the descriptor values for the given table.
 
     Args:
-        real (pandas.DataFrame):
-            Real data.
-        synth (pandas.DataFrame):
-            Synthesized data.
+        table_data (pandas.DataFrame):
+            Data to describe.
         descriptor (callable):
-            Callable that accepts columns and returns real-values.
-        table_name (str):
-            Table name to format the described output name. Defaults to ``None``.
+            Callable that accepts a single column and returns one or more real-values.
 
-    Return:
+    Returns:
         pandas.DataFrame:
-            It will contain the descriptor output for each column as columns.
-
+            Table statistics as a ``pandas.DataFrame`` with 4 columns:
+                * ``statistic``: Value of the statistic.
+                * ``value``: specific column value to which the statistic relates.
+                * ``descriptor``: Name of the descriptor used to compute the statistics.
+                * ``column``: Name of the column being described.
     """
-    real_values = list()
-    synth_values = list()
+    table_stats = list()
 
-    for column_name in real:
+    for column_name in table_data.columns:
         try:
-            described_real_column, described_synth_column = get_column_descriptor_values(
-                real[column_name],
-                synth[column_name],
-                descriptor,
-                table_name,
-                column_name
-            )
-
-            real_values.append(described_real_column)
-            synth_values.append(described_synth_column)
+            column_stats = _describe_column(table_data[column_name], descriptor)
+            column_stats['column'] = column_name
+            table_stats.append(column_stats)
         except TypeError:
             pass
 
-    real_values = pd.concat(real_values, axis=0, sort=False)
-    synth_values = pd.concat(synth_values, axis=0, sort=False)
-    return pd.concat([real_values, synth_values], axis=1, sort=True, ignore_index=True).T
+    return pd.concat(table_stats, ignore_index=True, sort=False)
 
 
-def get_descriptors_table(real, synth, metadata, table_name, descriptors=DESCRIPTORS):
-    """Score the synthesized data using the given metrics and descriptors.
+def _describe_table(table_data, table_dtypes, descriptors):
+    """Get stats for the given table using the descriptors.
 
     Args:
-        real (pandas.DataFrame):
-            Table of real data.
-        synth (pandas.DataFrame):
-            Table of synthesized data.
-        metadata (Metadata):
-            Metadata object to get column names from a table without ids.
-        descriptors (dict[str, callable]):
-            Dictionary of descriptors.
-        table_name (str):
-            Table name to format the described output name. Defaults to ``None``.
+        table (pandas.DataFrame):
+            Table to describe.
+        table_dtypes (list[str]):
+            List of column dtypes extracted from the table metadata.
+        descriptors (list[callabel, list]):
+           List of descriptors and supported dtypes.
 
     Return:
         pandas.DataFrame:
-            2-column DataFrame whose index the name of the descriptors applied to the tables.
-
+            Table statistics as a ``pandas.DataFrame`` with 4 columns:
+                * ``statistic``: Value of the statistic.
+                * ``value``: specific column value to which the statistic relates.
+                * ``descriptor``: Name of the descriptor used to compute the statistics.
+                * ``column``: Name of the column being described.
     """
+    table_stats = list()
+    for descriptor, dtypes in descriptors:
+        valid_columns = table_dtypes[table_dtypes.isin(dtypes)].index
+        if not valid_columns.empty:
+            table_stats.append(_describe_columns(table_data[valid_columns], descriptor))
 
-    described = list()
+    return pd.concat(table_stats, ignore_index=True, sort=False)
+
+
+def _get_descriptor_tuples(descriptors):
+    if not descriptors:
+        return list(DESCRIPTORS.values())
+
+    tuples = list()
     for descriptor in descriptors:
         if isinstance(descriptor, str):
             descriptor, dtypes = DESCRIPTORS[descriptor]
@@ -157,27 +146,46 @@ def get_descriptors_table(real, synth, metadata, table_name, descriptors=DESCRIP
         else:
             dtypes = DEFAULT_DTYPES
 
+        tuples.append(descriptor, dtypes)
+
+    return tuples
+
+
+def describe(tables, metadata, descriptors=None):
+    """Compute statistics for all tables.
+
+    Args:
+        tables (dict[str, pandas.DataFrame]):
+            Mapping of table names and the corresponding pd.DataFrames.
+        metadata (Metadata):
+            Dataset Metadata.
+        descriptors (list[callable]):
+            List of descriptors.
+
+    Return:
+        pandas.Series or pandas.DataFrame:
+            It has the metrics as index, and the scores as values.
+    """
+    stats = list()
+    descriptors = _get_descriptor_tuples(descriptors)
+    for table_name, table_data in tables.items():
         table_dtypes = pd.Series(metadata.get_dtypes(table_name))
-        cols = table_dtypes[table_dtypes.isin(dtypes)].index
+        table_stats = _describe_table(table_data, table_dtypes, descriptors)
+        table_stats['table'] = table_name
+        stats.append(table_stats)
 
-        if not cols.empty:
-            described.append(
-                get_descriptor_values(real.get(cols), synth.get(cols), descriptor, table_name)
-            )
-
-    return pd.concat(described, axis=1).fillna(0)
+    return pd.concat(stats, ignore_index=True, sort=False)[DESCRIBE_COLUMNS]
 
 
 def _validate_arguments(synth, real, metadata, root_path, table_name):
-    """Validate arguments before compute descriptors values.
+    """Validate arguments needed to compute descriptors values.
 
     If ``metadata`` is an instance of dict create the ``Metadata`` object.
-    If ``metadata`` is ``None``, validate that ``real`` has to be a ``pandas.DataFrane``.
+    If ``metadata`` is ``None``, ``real`` has to be a ``pandas.DataFrane``.
 
     If ``real`` is ``None`` load all the tables and assert that ``synth`` is a ``dict``.
     Otherwise, ``real`` and ``synth`` must be of the same type.
 
-    If ``synth`` is not a ``dict``, create a dictionary using the ``table_name``.
     If ``synth`` is not a ``dict``, create a dictionary using the ``table_name``.
 
     Assert that ``synth`` and ``real`` must have the same tables.
@@ -185,16 +193,16 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
     Args:
         synth (dict or pandas.DataFrame):
             Synthesized data.
-        real (dict or pandas.DataFrame):
+        real (dict, pandas.DataFrame or None):
             Real data.
-        metadata (str, dict or Metadata):
-            Data used to build a Metadata instance or a Metadata instance itself.
+        metadata (str, dict, Metadata or None):
+            Metadata instance or details needed to build it.
         root_path (str):
             Path to the metadata file.
         table_name (str):
             Table name used to prepare the metadata object, real and synth dict.
 
-    returns:
+    Returns:
         tuple (dict, dict, Metadata):
             Processed tables and Metadata oject.
     """
@@ -227,29 +235,28 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
     return synth, real, metadata
 
 
-def evaluate(synth, real=None, metadata=None, root_path=None, descriptors=DESCRIPTORS.values(),
-             metrics=DEFAULT_METRICS, table_name=None, by_tables=True):
+def evaluate(synth, real=None, metadata=None, root_path=None, descriptors=DESCRIPTORS.keys(),
+             metrics=DEFAULT_METRICS, table_name=None, by_tables=False):
     """Compute stats metric for all tables.
 
     Args:
         synth (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of synthesized data.
         real (dict[str, pandas.DataFrame] or pandas.DataFrame):
-            Map of names and tables of real data. Defaults to ``None``.
-        metadata (str, dict or Metadata):
-            String or dictionary to instance a Metadata object or a Metadata itself.
-            Defaults to ``None``.
+            Map of names and tables of real data.
+        metadata (str, dict, Metadata or None):
+            Metadata instance or details needed to build it.
         root_path (str):
-            Relative path to find the metadata.json file when needed. Defaults to ``None``.
+            Relative path to find the metadata.json file when needed.
         descriptors (list[callable]):
             List of descriptors.
         metrics (list[callable]):
             List of metrics.
         table_name (str):
             Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``
-            and ``real`` is ``None``. Defaults to None.
+            and ``real`` is ``None``.
         by_tables (bool):
-            Flag to return a ``pandas.DataFrame`` when ``True``, ``pandas.Series`` otherwise.
+            Whether to compute the metrics by table or over the whole dataset.
 
     Return:
         pandas.Series or pandas.DataFrame:
@@ -257,28 +264,30 @@ def evaluate(synth, real=None, metadata=None, root_path=None, descriptors=DESCRI
     """
     synth, real, metadata = _validate_arguments(synth, real, metadata, root_path, table_name)
 
-    results = dict()
-    for name, real_table in real.items():
-        synth_table = synth[name]
-        table_scores = get_descriptors_table(
-            real_table, synth_table, metadata, name, descriptors)
-        results[name] = table_scores
+    real_stats = describe(real, metadata)
+    synth_stats = describe(synth, metadata)
+
+    stats = pd.DataFrame({
+        'real': real_stats.set_index(EVALUATE_INDEX)['statistic'],
+        'synth': synth_stats.set_index(EVALUATE_INDEX)['statistic']
+    }).fillna(0).reset_index()
 
     if not by_tables:
-        results = {0: pd.concat(list(results.values()), axis=1)}
+        stats['table'] = 0
 
     if not isinstance(metrics, (list, tuple)):
         metrics = [metrics]
 
     scores = dict()
-    for name, described in results.items():
+    for table in stats['table'].unique():
         table_scores = dict()
-        real_descriptors = described.iloc[0, :]
-        synth_descriptors = described.iloc[1, :]
+        table_stats = stats[stats['table'] == table]
+        real_stats = table_stats['real']
+        synth_stats = table_stats['synth']
         for metric in metrics:
-            table_scores[metric.__name__] = metric(real_descriptors, synth_descriptors)
+            table_scores[metric.__name__] = metric(real_stats, synth_stats)
 
-        scores[name] = table_scores
+        scores[table] = table_scores
 
     scores = pd.DataFrame(scores).T
 
