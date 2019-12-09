@@ -146,7 +146,7 @@ def _get_descriptor_tuples(descriptors):
         else:
             dtypes = DEFAULT_DTYPES
 
-        tuples.append(descriptor, dtypes)
+        tuples.append((descriptor, dtypes))
 
     return tuples
 

@@ -1,5 +1,3 @@
-import pandas as pd
-
 from sdv import SDV, Metadata, load_demo
 from sdv.evaluation import evaluate
 
@@ -31,7 +29,4 @@ def test_evaluate_tables_from_demo():
         table_scores[table] = evaluate(
             sampled[table], real=tables[table], metadata=new_meta, table_name=table)
 
-    scores = evaluate(sampled, real=tables, metadata=new_meta)
-
-    for table_name, table_score in table_scores.items():
-        pd.testing.assert_series_equal(table_score.T.squeeze(), scores.loc[table_name])
+    evaluate(sampled, real=tables, metadata=new_meta)
