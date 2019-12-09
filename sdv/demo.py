@@ -92,6 +92,7 @@ DATA_PATH = os.path.join(
     'data'
 )
 DATA_URL = 'https://sdv-demos.s3.eu-west-3.amazonaws.com/{}.zip'
+DATASETS_URL = 'https://sdv-demos.s3.eu-west-3.amazonaws.com/datasets.csv'
 
 
 def _download(dataset_name, data_path):
@@ -114,6 +115,42 @@ def _load(dataset_name, data_path):
         _download(dataset_name, data_path)
 
     return os.path.join(data_path, dataset_name)
+
+
+def _load_dummy():
+    users = pd.DataFrame({
+        'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        'country': ['USA', 'UK', 'ES', 'UK', 'USA', 'DE', 'BG', 'ES', 'FR', 'UK'],
+        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F', None, 'F', None],
+        'age': [34, 23, 44, 22, 54, 57, 45, 41, 23, 30]
+    })
+    sessions = pd.DataFrame({
+        'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        'user_id': [0, 1, 1, 2, 4, 5, 6, 6, 6, 8],
+        'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
+                   'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
+        'os': ['android', 'ios', 'android', 'android', 'ios',
+               'android', 'ios', 'ios', 'ios', 'ios']
+    })
+    transactions = pd.DataFrame({
+        'transaction_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        'session_id': [0, 0, 1, 3, 5, 5, 7, 8, 9, 9],
+        'timestamp': ['2019-01-01T12:34:32', '2019-01-01T12:42:21', '2019-01-07T17:23:11',
+                      '2019-01-10T11:08:57', '2019-01-10T21:54:08', '2019-01-11T11:21:20',
+                      '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
+                      '2019-01-29T12:10:48'],
+        'amount': [100.0, 55.3, 79.5, 112.1, 110.0, 76.3, 89.5, 132.1, 68.0, 99.9],
+        'approved': [True, True, True, False, False, True, True, False, True, True],
+    })
+    transactions['timestamp'] = pd.to_datetime(transactions['timestamp'])
+
+    tables = {
+        'users': users,
+        'sessions': sessions,
+        'transactions': transactions
+    }
+
+    return tables
 
 
 def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
@@ -153,39 +190,27 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
 
         return tables
 
-    users = pd.DataFrame({
-        'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'country': ['USA', 'UK', 'ES', 'UK', 'USA', 'DE', 'BG', 'ES', 'FR', 'UK'],
-        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F', None, 'F', None],
-        'age': [34, 23, 44, 22, 54, 57, 45, 41, 23, 30]
-    })
-    sessions = pd.DataFrame({
-        'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'user_id': [0, 1, 1, 2, 4, 5, 6, 6, 6, 8],
-        'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
-                   'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
-        'os': ['android', 'ios', 'android', 'android', 'ios',
-               'android', 'ios', 'ios', 'ios', 'ios']
-    })
-    transactions = pd.DataFrame({
-        'transaction_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'session_id': [0, 0, 1, 3, 5, 5, 7, 8, 9, 9],
-        'timestamp': ['2019-01-01T12:34:32', '2019-01-01T12:42:21', '2019-01-07T17:23:11',
-                      '2019-01-10T11:08:57', '2019-01-10T21:54:08', '2019-01-11T11:21:20',
-                      '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
-                      '2019-01-29T12:10:48'],
-        'amount': [100.0, 55.3, 79.5, 112.1, 110.0, 76.3, 89.5, 132.1, 68.0, 99.9],
-        'approved': [True, True, True, False, False, True, True, False, True, True],
-    })
-    transactions['timestamp'] = pd.to_datetime(transactions['timestamp'])
-
-    tables = {
-        'users': users,
-        'sessions': sessions,
-        'transactions': transactions
-    }
-
+    tables = _load_dummy()
     if metadata:
         return Metadata(DEMO_METADATA), tables
 
     return tables
+
+
+def get_available_demos():
+    """Get available demos and information about them.
+
+    Returns:
+        pandas.DataFrame:
+            Table with the available demos.
+    """
+    data_path = os.path.join(DATA_PATH, 'datasets.csv')
+    if not os.path.exists(data_path):
+        LOGGER.info('Downloading datasets information')
+        response = urllib.request.urlopen(DATASETS_URL)
+        bytes_io = io.BytesIO(response.read())
+
+        with open(data_path, 'wb') as f:
+            f.write(bytes_io.read())
+
+    return pd.read_csv(data_path)
