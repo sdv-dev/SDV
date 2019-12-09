@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 import pandas as pd
 
-from sdv.metadata import Metadata, _load_csv
+from sdv.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,10 +87,7 @@ DEMO_METADATA = {
 }
 
 
-DATA_PATH = os.path.join(
-    os.path.dirname(__file__),
-    'data'
-)
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 DATA_URL = 'https://sdv-demos.s3.eu-west-3.amazonaws.com/{}.zip'
 DATASETS_URL = 'https://sdv-demos.s3.eu-west-3.amazonaws.com/datasets.csv'
 
@@ -150,7 +147,14 @@ def _load_dummy():
         'transactions': transactions
     }
 
-    return tables
+    return Metadata(DEMO_METADATA), tables
+
+
+def _load_demo_dataset(dataset_name, data_path):
+    data_path = _load(dataset_name, data_path)
+    meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
+    tables = meta.load_tables()
+    return meta, tables
 
 
 def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
@@ -178,21 +182,12 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
             If ``metadata`` is ``True`` return a ``tuple`` with Metadata and tables data.
     """
     if dataset_name:
-        data_path = _load(dataset_name, data_path)
-        meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
-        tables = {
-            table: _load_csv(data_path, meta.get_table_meta(table))
-            for table in meta.get_tables()
-        }
+        meta, tables = _load_demo_dataset(dataset_name, data_path)
+    else:
+        meta, tables = _load_dummy()
 
-        if metadata:
-            return meta, tables
-
-        return tables
-
-    tables = _load_dummy()
     if metadata:
-        return Metadata(DEMO_METADATA), tables
+        return meta, tables
 
     return tables
 
@@ -204,13 +199,4 @@ def get_available_demos():
         pandas.DataFrame:
             Table with the available demos.
     """
-    data_path = os.path.join(DATA_PATH, 'datasets.csv')
-    if not os.path.exists(data_path):
-        LOGGER.info('Downloading datasets information')
-        response = urllib.request.urlopen(DATASETS_URL)
-        bytes_io = io.BytesIO(response.read())
-
-        with open(data_path, 'wb') as f:
-            f.write(bytes_io.read())
-
-    return pd.read_csv(data_path)
+    return pd.read_csv(DATASETS_URL)
