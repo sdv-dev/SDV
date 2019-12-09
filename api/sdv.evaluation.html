@@ -311,77 +311,58 @@ call it with:</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.evaluate" title="sdv.evaluation.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(real, synth[, descriptors, metrics])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.describe" title="sdv.evaluation.describe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">describe</span></code></a>(tables, metadata[, descriptors])</p></td>
+<td><p>Compute statistics for all tables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.evaluation.evaluate" title="sdv.evaluation.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(synth[, real, metadata, root_path, …])</p></td>
 <td><p>Compute stats metric for all tables.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.evaluation.get_descriptor_values" title="sdv.evaluation.get_descriptor_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_descriptor_values</span></code></a>(real, synth, descriptor)</p></td>
-<td><p>Compute the descriptor values for the given tables.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.get_descriptors_table" title="sdv.evaluation.get_descriptors_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_descriptors_table</span></code></a>(real, synth[, descriptors])</p></td>
-<td><p>Score the synthesized data using the given metrics and descriptors.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="function">
-<dt id="sdv.evaluation.evaluate">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptors=dict_values([&lt;function mean&gt;</em>, <em class="sig-param">&lt;function std&gt;</em>, <em class="sig-param">&lt;function skew&gt;</em>, <em class="sig-param">&lt;function kurtosis&gt;</em>, <em class="sig-param">&lt;function categorical_distribution&gt;])</em>, <em class="sig-param">metrics=(&lt;function mse&gt;</em>, <em class="sig-param">&lt;function rmse&gt;</em>, <em class="sig-param">&lt;function r2_score&gt;)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute stats metric for all tables.</p>
+<dt id="sdv.evaluation.describe">
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param">tables</em>, <em class="sig-param">metadata</em>, <em class="sig-param">descriptors=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute statistics for all tables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>real</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data.</p></li>
-<li><p><strong>synth</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data.</p></li>
+<li><p><strong>tables</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – Mapping of table names and the corresponding pd.DataFrames.</p></li>
+<li><p><strong>metadata</strong> (<a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Dataset Metadata.</p></li>
 <li><p><strong>descriptors</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of descriptors.</p></li>
-<li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of metrics.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>It has the metrics as index, and the scores as values.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.Series</p>
+<dd class="field-odd"><p>pandas.Series or pandas.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
-<dt id="sdv.evaluation.get_descriptor_values">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">get_descriptor_values</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#get_descriptor_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.get_descriptor_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the descriptor values for the given tables.</p>
+<dt id="sdv.evaluation.evaluate">
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">synth</em>, <em class="sig-param">real=None</em>, <em class="sig-param">metadata=None</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">descriptors=dict_keys(['mean'</em>, <em class="sig-param">'std'</em>, <em class="sig-param">'skew'</em>, <em class="sig-param">'kurtosis'</em>, <em class="sig-param">'categorical_distribution'])</em>, <em class="sig-param">metrics=(&lt;function mse&gt;</em>, <em class="sig-param">&lt;function rmse&gt;</em>, <em class="sig-param">&lt;function r2_score&gt;)</em>, <em class="sig-param">table_name=None</em>, <em class="sig-param">by_tables=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute stats metric for all tables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>real</strong> (<em>pandas.DataFrame</em>) – Real data.</p></li>
-<li><p><strong>synth</strong> (<em>pandas.DataFrame</em>) – Synthesized data.</p></li>
-<li><p><strong>descriptor</strong> (<em>callable</em><em> or </em><em>str</em>) – Callable that accepts columns and returns real-values.</p></li>
+<li><p><strong>synth</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data.</p></li>
+<li><p><strong>real</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data.</p></li>
+<li><p><strong>metadata</strong> (<em>str</em><em>, </em><em>dict</em><em>, </em><a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a><em> or </em><em>None</em>) – Metadata instance or details needed to build it.</p></li>
+<li><p><strong>root_path</strong> (<em>str</em>) – Relative path to find the metadata.json file when needed.</p></li>
+<li><p><strong>descriptors</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of descriptors.</p></li>
+<li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of metrics.</p></li>
+<li><p><strong>table_name</strong> (<em>str</em>) – Table name to be evaluated, only used when <code class="docutils literal notranslate"><span class="pre">synth</span></code> is a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>
+and <code class="docutils literal notranslate"><span class="pre">real</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>by_tables</strong> (<em>bool</em>) – Whether to compute the metrics by table or over the whole dataset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>It will contain the descriptor output for each column as columns.</p>
+<dd class="field-even"><p>It has the metrics as index, and the scores as values.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.evaluation.get_descriptors_table">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">get_descriptors_table</code><span class="sig-paren">(</span><em class="sig-param">real</em>, <em class="sig-param">synth</em>, <em class="sig-param">descriptors={'categorical_distribution': &lt;function categorical_distribution&gt;</em>, <em class="sig-param">'kurtosis': &lt;function kurtosis&gt;</em>, <em class="sig-param">'mean': &lt;function mean&gt;</em>, <em class="sig-param">'skew': &lt;function skew&gt;</em>, <em class="sig-param">'std': &lt;function std&gt;}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#get_descriptors_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.get_descriptors_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Score the synthesized data using the given metrics and descriptors.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>real</strong> (<em>pandas.DataFrame</em>) – Table of real data.</p></li>
-<li><p><strong>synth</strong> (<em>pandas.DataFrame</em>) – Table of synthesized data.</p></li>
-<li><p><strong>descriptors</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>callable</em><em>]</em>) – Dictionary of descriptors.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>2-column DataFrame whose index the name of the descriptors applied to the tables.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p>pandas.Series or pandas.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>

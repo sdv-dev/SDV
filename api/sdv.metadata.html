@@ -309,43 +309,46 @@ of <code class="docutils literal notranslate"><span class="pre">metadata</span><
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_children" title="sdv.metadata.Metadata.get_children"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_children</span></code></a>(table_name)</p></td>
 <td><p>Get tables for which the given table is parent.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_fields" title="sdv.metadata.Metadata.get_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fields</span></code></a>(table_name)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_dtypes" title="sdv.metadata.Metadata.get_dtypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dtypes</span></code></a>(table_name[, ids])</p></td>
+<td><p>Get a <code class="docutils literal notranslate"><span class="pre">dict</span></code> with the <code class="docutils literal notranslate"><span class="pre">dtypes</span></code> for each field of a given table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_fields" title="sdv.metadata.Metadata.get_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fields</span></code></a>(table_name)</p></td>
 <td><p>Get table fields metadata.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_foreign_key" title="sdv.metadata.Metadata.get_foreign_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_foreign_key</span></code></a>(parent, child)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_foreign_key" title="sdv.metadata.Metadata.get_foreign_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_foreign_key</span></code></a>(parent, child)</p></td>
 <td><p>Get table foreign key field name.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_parents" title="sdv.metadata.Metadata.get_parents"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parents</span></code></a>(table_name)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_parents" title="sdv.metadata.Metadata.get_parents"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parents</span></code></a>(table_name)</p></td>
 <td><p>Get tables for with the given table is child.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_primary_key" title="sdv.metadata.Metadata.get_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_primary_key</span></code></a>(table_name)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_primary_key" title="sdv.metadata.Metadata.get_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_primary_key</span></code></a>(table_name)</p></td>
 <td><p>Get the primary key name of the indicated table.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_table_meta" title="sdv.metadata.Metadata.get_table_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_meta</span></code></a>(table_name)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_table_meta" title="sdv.metadata.Metadata.get_table_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_meta</span></code></a>(table_name)</p></td>
 <td><p>Get the metadata dict for a table.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_tables" title="sdv.metadata.Metadata.get_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tables</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.get_tables" title="sdv.metadata.Metadata.get_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tables</span></code></a>()</p></td>
 <td><p>Get the list of table names.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.load_table" title="sdv.metadata.Metadata.load_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_table</span></code></a>(table_name)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.load_table" title="sdv.metadata.Metadata.load_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_table</span></code></a>(table_name)</p></td>
 <td><p>Load table data.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.load_tables" title="sdv.metadata.Metadata.load_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_tables</span></code></a>([tables])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.load_tables" title="sdv.metadata.Metadata.load_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_tables</span></code></a>([tables])</p></td>
 <td><p>Get a dictionary with data from multiple tables.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.reverse_transform" title="sdv.metadata.Metadata.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(table_name, data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.reverse_transform" title="sdv.metadata.Metadata.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(table_name, data)</p></td>
 <td><p>Reverse the transformed data for a given table.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.set_primary_key" title="sdv.metadata.Metadata.set_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_primary_key</span></code></a>(table, field)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.set_primary_key" title="sdv.metadata.Metadata.set_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_primary_key</span></code></a>(table, field)</p></td>
 <td><p>Set the primary key field of the indicated table.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.to_dict" title="sdv.metadata.Metadata.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.to_dict" title="sdv.metadata.Metadata.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Get a dict representation of this metadata.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.to_json" title="sdv.metadata.Metadata.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>(path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.to_json" title="sdv.metadata.Metadata.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>(path)</p></td>
 <td><p>Dump this metadata into a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.transform" title="sdv.metadata.Metadata.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_name, data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Metadata.transform" title="sdv.metadata.Metadata.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_name, data)</p></td>
 <td><p>Transform data for a given table.</p></td>
 </tr>
 </tbody>
@@ -447,6 +450,30 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Metadata.get_dtypes">
+<code class="sig-name descname">get_dtypes</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">ids=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.get_dtypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Metadata.get_dtypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <code class="docutils literal notranslate"><span class="pre">dict</span></code> with the <code class="docutils literal notranslate"><span class="pre">dtypes</span></code> for each field of a given table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Table name for which to retrive the <code class="docutils literal notranslate"><span class="pre">dtypes</span></code>.</p></li>
+<li><p><strong>ids</strong> (<em>bool</em>) – Whether or not include the id fields. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary that contains the field names and data types from a table.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If a field has an invalid type or subtype or if the table does not
+    exist in this metadata.</p>
 </dd>
 </dl>
 </dd></dl>

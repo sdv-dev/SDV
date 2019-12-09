@@ -256,11 +256,11 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">rdt</span> <span class="k">import</span> <span class="n">HyperTransformer</span><span class="p">,</span> <span class="n">transformers</span>
+<span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span><span class="p">,</span> <span class="n">transformers</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -340,15 +340,15 @@
         <span class="p">}</span>
     <span class="p">}</span>
     <span class="n">_DTYPES</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">object</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">bool</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">):</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span> <span class="nb">str</span>
+        <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="s1">&#39;object&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="s1">&#39;bool&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">):</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="s1">&#39;datetime64&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">):</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span> <span class="s1">&#39;str&#39;</span>
     <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">_analyze_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -410,7 +410,7 @@
 
         <span class="k">return</span> <span class="n">new_metadata</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">root_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="k">as</span> <span class="n">metadata_file</span><span class="p">:</span>
@@ -580,7 +580,7 @@
             <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
         <span class="p">}</span></div>
 
-    <span class="k">def</span> <span class="nf">_get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
 
 <span class="sd">        Args:</span>
@@ -618,7 +618,7 @@
             <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
                 <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
 
-        <span class="k">return</span> <span class="n">dtypes</span>
+        <span class="k">return</span> <span class="n">dtypes</span></div>
 
     <span class="k">def</span> <span class="nf">_get_pii_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the ``pii_category`` for each field that contains PII.</span>
@@ -692,7 +692,7 @@
 <span class="sd">            rdt.HyperTransformer:</span>
 <span class="sd">                Instance of ``rdt.HyperTransformer`` for the given table.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="n">pii_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pii_fields</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="n">transformers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformers</span><span class="p">(</span><span class="n">dtypes</span><span class="p">,</span> <span class="n">pii_fields</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
@@ -738,7 +738,7 @@
         <span class="n">hyper_transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformers</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
         <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">reversed_data</span></div>

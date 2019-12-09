@@ -269,15 +269,15 @@
 <span class="sd">                       their value.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">column</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">column</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span></div>
 
 
 <span class="n">DESCRIPTORS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
-    <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">,</span>
-    <span class="s1">&#39;skew&#39;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">skew</span><span class="p">,</span>
-    <span class="s1">&#39;kurtosis&#39;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">,</span>
-    <span class="s1">&#39;categorical_distribution&#39;</span><span class="p">:</span> <span class="n">categorical_distribution</span>
+    <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
+    <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
+    <span class="s1">&#39;skew&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">skew</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
+    <span class="s1">&#39;kurtosis&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
+    <span class="s1">&#39;categorical_distribution&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">categorical_distribution</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">))</span>
 <span class="p">}</span>
 </pre></div>
 
