@@ -86,15 +86,15 @@ class Metadata:
         }
     }
     _DTYPES = {
-        ('categorical', None): np.object,
-        ('boolean', None): bool,
-        ('numerical', None): float,
-        ('numerical', 'float'): float,
-        ('numerical', 'integer'): int,
-        ('datetime', None): np.datetime64,
-        ('id', None): int,
-        ('id', 'integer'): int,
-        ('id', 'string'): str
+        ('categorical', None): 'object',
+        ('boolean', None): 'bool',
+        ('numerical', None): 'float',
+        ('numerical', 'float'): 'float',
+        ('numerical', 'integer'): 'int',
+        ('datetime', None): 'datetime64',
+        ('id', None): 'int',
+        ('id', 'integer'): 'int',
+        ('id', 'string'): 'str'
     }
 
     def _analyze_relationships(self):
@@ -326,7 +326,7 @@ class Metadata:
             for table_name in tables or self.get_tables()
         }
 
-    def _get_dtypes(self, table_name, ids=False):
+    def get_dtypes(self, table_name, ids=False):
         """Get a ``dict`` with the ``dtypes`` for each field of a given table.
 
         Args:
@@ -438,7 +438,7 @@ class Metadata:
             rdt.HyperTransformer:
                 Instance of ``rdt.HyperTransformer`` for the given table.
         """
-        dtypes = self._get_dtypes(table_name)
+        dtypes = self.get_dtypes(table_name)
         pii_fields = self._get_pii_fields(table_name)
         transformers_dict = self._get_transformers(dtypes, pii_fields)
         return HyperTransformer(transformers=transformers_dict)
@@ -484,7 +484,7 @@ class Metadata:
         hyper_transformer = self._hyper_transformers[table_name]
         reversed_data = hyper_transformer.reverse_transform(data)
 
-        for name, dtype in self._get_dtypes(table_name, ids=True).items():
+        for name, dtype in self.get_dtypes(table_name, ids=True).items():
             reversed_data[name] = reversed_data[name].dropna().astype(dtype)
 
         return reversed_data

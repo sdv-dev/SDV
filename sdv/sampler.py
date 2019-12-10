@@ -414,7 +414,7 @@ class Sampler:
         parents = self.metadata.get_parents(table_name)
         if parents:
             parent_name = list(parents)[0]
-            foreign_key = self.metadata.foreign_keys[(table_name, parent_name)][1]
+            foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
             parent_id = self._get_primary_keys(parent_name, 1)[1][0]
             sampled_rows[foreign_key] = parent_id
 

@@ -13,13 +13,13 @@ def categorical_distribution(column):
                        their value.
 
     """
-    return column.value_counts(normalize=True)
+    return column.value_counts(normalize=True).sort_index()
 
 
 DESCRIPTORS = {
-    'mean': np.mean,
-    'std': np.std,
-    'skew': sp.stats.skew,
-    'kurtosis': sp.stats.kurtosis,
-    'categorical_distribution': categorical_distribution
+    'mean': (np.mean, ('int', 'float', 'bool')),
+    'std': (np.std, ('int', 'float', 'bool')),
+    'skew': (sp.stats.skew, ('int', 'float', 'bool')),
+    'kurtosis': (sp.stats.kurtosis, ('int', 'float', 'bool')),
+    'categorical_distribution': (categorical_distribution, ('object', 'bool'))
 }
