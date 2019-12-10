@@ -252,9 +252,18 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.demo</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span></span><span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 
 <span class="n">DEMO_METADATA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -332,20 +341,34 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load demo data.</span>
+<span class="n">DATA_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span>
+<span class="n">DATA_URL</span> <span class="o">=</span> <span class="s1">&#39;https://sdv-datasets.s3.amazonaws.com/</span><span class="si">{}</span><span class="s1">.zip&#39;</span>
+<span class="n">DATASETS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://sdv-datasets.s3.amazonaws.com/datasets.csv&#39;</span>
 
-<span class="sd">    The demo data consists of the metadata and tables dict for a a toy dataset with</span>
-<span class="sd">    three simple tables:</span>
 
-<span class="sd">        * users: user data including country, gender and age.</span>
-<span class="sd">        * sessions: sessions data with a foreign key to user.</span>
-<span class="sd">        * transactions: transactions data with a foreign key to sessions.</span>
+<span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">DATA_URL</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        tuple:</span>
-<span class="sd">            metadata and tables dict.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Downloading dataset </span><span class="si">{}</span><span class="s1"> from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">bytes_io</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting dataset into </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_path</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">bytes_io</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+        <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_load</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_PATH</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">DATA_PATH</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)):</span>
+        <span class="n">_download</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_load_dummy</span><span class="p">():</span>
     <span class="n">users</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
         <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;USA&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">,</span> <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">,</span> <span class="s1">&#39;USA&#39;</span><span class="p">,</span> <span class="s1">&#39;DE&#39;</span><span class="p">,</span> <span class="s1">&#39;BG&#39;</span><span class="p">,</span> <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;FR&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">],</span>
@@ -378,10 +401,59 @@
         <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">transactions</span>
     <span class="p">}</span>
 
+    <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
+
+
+<span class="k">def</span> <span class="nf">_load_demo_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">_load</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">))</span>
+    <span class="n">tables</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span>
+
+
+<div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load demo data.</span>
+
+<span class="sd">    The demo data consists of the metadata and tables dict for a a toy dataset with</span>
+<span class="sd">    three simple tables:</span>
+
+<span class="sd">        * users: user data including country, gender and age.</span>
+<span class="sd">        * sessions: sessions data with a foreign key to user.</span>
+<span class="sd">        * transactions: transactions data with a foreign key to sessions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset_name (str):</span>
+<span class="sd">            Dataset name to be downloaded, if ``None`` use default demo data. Defaults to ``None``.</span>
+<span class="sd">        data_path (str):</span>
+<span class="sd">            Data path to save the dataset files, only used if dataset_name is provided.</span>
+<span class="sd">            Defaults to ``DATA_PATH``.</span>
+<span class="sd">        metadata (bool):</span>
+<span class="sd">            If ``True`` return Metadata object. Defaults to ``False``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict or tuple:</span>
+<span class="sd">            If ``metadata`` is ``False`` return a ``dict`` with the tables data.</span>
+<span class="sd">            If ``metadata`` is ``True`` return a ``tuple`` with Metadata and tables data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dataset_name</span><span class="p">:</span>
+        <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">_load_demo_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">_load_dummy</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
+        <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span>
 
     <span class="k">return</span> <span class="n">tables</span></div>
+
+
+<div class="viewcode-block" id="get_available_demos"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.get_available_demos">[docs]</a><span class="k">def</span> <span class="nf">get_available_demos</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Get available demos and information about them.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame:</span>
+<span class="sd">            Table with the available demos.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATASETS_URL</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

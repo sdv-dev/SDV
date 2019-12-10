@@ -268,14 +268,31 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.demo.load_demo" title="sdv.demo.load_demo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_demo</span></code></a>([metadata])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.demo.get_available_demos" title="sdv.demo.get_available_demos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_available_demos</span></code></a>()</p></td>
+<td><p>Get available demos and information about them.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.demo.load_demo" title="sdv.demo.load_demo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_demo</span></code></a>([dataset_name, data_path, metadata])</p></td>
 <td><p>Load demo data.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="function">
+<dt id="sdv.demo.get_available_demos">
+<code class="sig-prename descclassname">sdv.demo.</code><code class="sig-name descname">get_available_demos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/demo.html#get_available_demos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.demo.get_available_demos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get available demos and information about them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table with the available demos.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="sdv.demo.load_demo">
-<code class="sig-prename descclassname">sdv.demo.</code><code class="sig-name descname">load_demo</code><span class="sig-paren">(</span><em class="sig-param">metadata=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/demo.html#load_demo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.demo.load_demo" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sdv.demo.</code><code class="sig-name descname">load_demo</code><span class="sig-paren">(</span><em class="sig-param">dataset_name=None</em>, <em class="sig-param">data_path='/home/travis/build/HDI-Project/SDV/sdv/data'</em>, <em class="sig-param">metadata=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/demo.html#load_demo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.demo.load_demo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load demo data.</p>
 <p>The demo data consists of the metadata and tables dict for a a toy dataset with
 three simple tables:</p>
@@ -287,11 +304,20 @@ three simple tables:</p>
 </ul>
 </div></blockquote>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>metadata and tables dict.</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_name</strong> (<em>str</em>) – Dataset name to be downloaded, if <code class="docutils literal notranslate"><span class="pre">None</span></code> use default demo data. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>data_path</strong> (<em>str</em>) – Data path to save the dataset files, only used if dataset_name is provided.
+Defaults to <code class="docutils literal notranslate"><span class="pre">DATA_PATH</span></code>.</p></li>
+<li><p><strong>metadata</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> return Metadata object. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">metadata</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code> return a <code class="docutils literal notranslate"><span class="pre">dict</span></code> with the tables data.
+If <code class="docutils literal notranslate"><span class="pre">metadata</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> return a <code class="docutils literal notranslate"><span class="pre">tuple</span></code> with Metadata and tables data.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict or tuple</p>
 </dd>
 </dl>
 </dd></dl>
