@@ -88,8 +88,8 @@ DEMO_METADATA = {
 
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
-DATA_URL = 'https://sdv-datasets.s3.eu-west-3.amazonaws.com/{}.zip'
-DATASETS_URL = 'https://sdv-datasets.s3.eu-west-3.amazonaws.com/datasets.csv'
+DATA_URL = 'https://sdv-datasets.s3.amazonaws.com/{}.zip'
+DATASETS_URL = 'https://sdv-datasets.s3.amazonaws.com/datasets.csv'
 
 
 def _download(dataset_name, data_path):
