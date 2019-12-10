@@ -500,6 +500,20 @@ class TestSampler(TestCase):
         pd.testing.assert_frame_equal(result['table a'], pd.DataFrame({'foo': range(3)}))
         pd.testing.assert_frame_equal(result['table c'], pd.DataFrame({'foo': range(3)}))
 
+    def test_sample_table_with_parents(self):
+        """Test sample table with parents."""
+        sampler = Mock(spec=Sampler)
+        sampler.metadata = Mock(spec=Metadata)
+        sampler.metadata.get_parents.return_value = ['test_parent']
+        sampler.metadata.get_foreign_key.return_value = 'id'
+        sampler.models = {'test': 'some model'}
+        sampler._get_primary_keys.return_value = None, pd.Series({'id': 0})
+        sampler._sample_rows.return_value = pd.DataFrame({'id': [0, 1]})
+
+        Sampler.sample(sampler, 'test', 5)
+        sampler.metadata.get_parents.assert_called_once_with('test')
+        sampler.metadata.get_foreign_key.assert_called_once_with('test_parent', 'test')
+
     def test_sample_no_sample_children(self):
         """Test sample no sample children"""
         # Setup
@@ -509,3 +523,7 @@ class TestSampler(TestCase):
 
         # Run
         Sampler.sample(sampler, 'test', 5, sample_children=False)
+        sampler._transform_synthesized_rows.assert_called_once_with(
+            sampler._sample_rows.return_value,
+            'test'
+        )
