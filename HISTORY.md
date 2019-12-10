@@ -1,5 +1,13 @@
 # History
 
+## 0.2.2 - 2019-12-10
+
+### New Features
+
+* Adapt evaluation to the different data types - [Issue #128](https://github.com/HDI-Project/SDV/issues/128) by @csala @JDTheRipperPC
+
+* Extend `load_demo` functionality to load other datasets - [Issue #136](https://github.com/HDI-Project/SDV/issues/136) by @JDTheRipperPC
+
 ## 0.2.1 - 2019-11-25
 
 ### New Features
