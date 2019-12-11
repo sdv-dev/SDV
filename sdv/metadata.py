@@ -4,6 +4,7 @@ import logging
 import os
 from collections import defaultdict
 
+import graphviz
 import numpy as np
 import pandas as pd
 from rdt import HyperTransformer, transformers
@@ -762,6 +763,76 @@ class Metadata:
             del self._metadata['tables'][name]
             raise
 
+    def plot(self, path=None):
+        """Create a UML diagram-ish graph of the Metadata.
+
+        Args:
+            path (str):
+                Path to where the plot should be saved.
+                If ``None`` the plot will not be saved.
+                Defaults to ``None``.
+        """
+        try:
+            graphviz.Digraph().pipe()
+        except graphviz.backend.ExecutableNotFound:
+            raise RuntimeError(
+                "To plot entity sets, a graphviz backend is required.\n" +
+                "Install the backend using one of the following commands:\n" +
+                "  Mac OS: brew install graphviz\n" +
+                "  Linux (Ubuntu): sudo apt-get install graphviz\n" +
+                "  Windows: conda install python-graphviz\n" +
+                "  For more details visit:\n"+
+                "  https://docs.featuretools.com/getting_started/install.html"
+            )
+
+        if path:
+            split_path = path.split('.')
+            if len(split_path) > 2:
+                raise ValueError("Please use a file extension like '.pdf'" +
+                                 " so that the format can be inferred")
+
+            digraph_format = split_path[-1]
+            if digraph_format not in graphviz.backend.FORMATS:
+                raise ValueError("Unknown format. Make sure your format is" +
+                                 " amongst the following: %s" % graphviz.backend.FORMATS)
+
+        else:
+            digraph_format = None
+
+        graph = graphviz.Digraph('Metadata', format=digraph_format)
+
+        # Draw entities
+        for table in self.get_tables():
+            fields_string = '\l'.join([
+                '{} : {}'.format(field, value['type'])
+                for field, value in self.get_fields(table).items()
+            ])
+            label = '{%s|%s\l}' % (table, fields_string)
+            graph.node(table, label=label, **{'shape':'record', 'fontname': 'Arial'})
+
+        # Draw relationships
+        for table, parents in self._parent_map.items():
+            for parent in parents:
+                graph.edge(
+                    table, 
+                    parent, 
+                    xlabel='{}.{} -> {}.{}'.format(
+                        table,
+                        self.get_foreign_key(parent, table),
+                        parent,
+                        self.get_primary_key(parent)
+                    )
+                )
+
+        if path:
+            # Graphviz always appends the format to the file name, so we need to
+            # remove it manually to avoid file names like 'file_name.pdf.pdf'
+            offset = len(digraph_format) + 1
+            output_path = path[:-offset]
+            graph.render(output_path, cleanup=True)
+
+        return graph
+
     def to_dict(self):
         """Get a dict representation of this metadata.
 
@@ -780,3 +851,6 @@ class Metadata:
         """
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
+
+    def __str__(self):
+        pass
