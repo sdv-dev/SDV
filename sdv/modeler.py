@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 
-LOGGER = logging.getLogger(__name__)
+from sdv.models.base import SDVModel
+from sdv.models.utils import flatten_dict
 
-IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
+LOGGER = logging.getLogger(__name__)
 
 
 class Modeler:
@@ -29,68 +30,6 @@ class Modeler:
         self.metadata = metadata
         self.model = model
         self.model_kwargs = dict() if model_kwargs is None else model_kwargs
-
-    @classmethod
-    def _flatten_array(cls, nested, prefix=''):
-        """Flatten an array as a dict.
-
-        Args:
-            nested (list, numpy.array):
-                Iterable to flatten.
-            prefix (str):
-                Name to append to the array indices. Defaults to ``''``.
-
-        Returns:
-            dict:
-                Flattened array.
-        """
-        result = dict()
-        for index in range(len(nested)):
-            prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
-
-            if isinstance(nested[index], (list, np.ndarray)):
-                result.update(cls._flatten_array(nested[index], prefix=prefix_key))
-
-            else:
-                result[prefix_key] = nested[index]
-
-        return result
-
-    @classmethod
-    def _flatten_dict(cls, nested, prefix=''):
-        """Flatten a dictionary.
-
-        This method returns a flatten version of a dictionary, concatenating key names with
-        double underscores.
-
-        Args:
-            nested (dict):
-                Original dictionary to flatten.
-            prefix (str):
-                Prefix to append to key name. Defaults to ``''``.
-
-        Returns:
-            dict:
-                Flattened dictionary.
-        """
-        result = dict()
-
-        for key, value in nested.items():
-            prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
-
-            if key in IGNORED_DICT_KEYS and not isinstance(value, (dict, list)):
-                continue
-
-            elif isinstance(value, dict):
-                result.update(cls._flatten_dict(value, prefix_key))
-
-            elif isinstance(value, (np.ndarray, list)):
-                result.update(cls._flatten_array(value, prefix_key))
-
-            else:
-                result[prefix_key] = value
-
-        return result
 
     @staticmethod
     def _impute(data):
@@ -117,7 +56,12 @@ class Modeler:
                 Instance of ``self.model`` fitted with data.
         """
         data = self._impute(data)
-        model = self.model(**self.model_kwargs)
+
+        if isinstance(self.model, SDVModel):
+            model = self.model
+        else:
+            model = self.model(**self.model_kwargs)
+
         model.fit(data)
 
         return model
@@ -146,7 +90,7 @@ class Modeler:
             if distribution.std is not None:
                 distribution.std = np.log(distribution.std)
 
-        return self._flatten_dict(model.to_dict())
+        return flatten_dict(model.to_dict())
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate list of extension for child tables.

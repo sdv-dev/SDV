@@ -4,6 +4,8 @@ import exrex
 import numpy as np
 import pandas as pd
 
+from sdv.models.utils import unflatten_dict
+
 
 class Sampler:
     """Sampler class.
@@ -202,69 +204,6 @@ class Sampler:
 
         return primary_key, primary_key_values
 
-    @staticmethod
-    def _key_order(key_value):
-        parts = list()
-        for part in key_value[0].split('__'):
-            if part.isdigit():
-                part = int(part)
-
-            parts.append(part)
-
-        return parts
-
-    def _unflatten_dict(self, flat):
-        """Transform a flattened dict into its original form.
-
-        Args:
-            flat (dict):
-                Flattened dict.
-
-        Returns:
-            dict:
-                Nested dict (if corresponds)
-        """
-        unflattened = dict()
-
-        for key, value in sorted(flat.items(), key=self._key_order):
-            if '__' in key:
-                key, subkey = key.split('__', 1)
-                subkey, name = subkey.rsplit('__', 1)
-
-                if name.isdigit():
-                    column_index = int(name)
-                    row_index = int(subkey)
-
-                    array = unflattened.setdefault(key, list())
-
-                    if len(array) == row_index:
-                        row = list()
-                        array.append(row)
-                    elif len(array) == row_index + 1:
-                        row = array[row_index]
-                    else:
-                        # This should never happen
-                        raise ValueError('There was an error unflattening the extension.')
-
-                    if len(row) == column_index:
-                        row.append(value)
-                    else:
-                        # This should never happen
-                        raise ValueError('There was an error unflattening the extension.')
-
-                else:
-                    subdict = unflattened.setdefault(key, dict())
-                    if subkey.isdigit():
-                        subkey = int(subkey)
-
-                    inner = subdict.setdefault(subkey, dict())
-                    inner[name] = value
-
-            else:
-                unflattened[key] = value
-
-        return unflattened
-
     def _unflatten_gaussian_copula(self, model_parameters):
         """Prepare unflattened model params to recreate Gaussian Multivariate instance.
 
@@ -322,7 +261,7 @@ class Sampler:
         """Build a model using the extension parameters."""
         table_model_parameters = table_model.to_dict()
 
-        model_parameters = self._unflatten_dict(extension)
+        model_parameters = unflatten_dict(extension)
         model_parameters['fitted'] = True
         model_parameters['distribution'] = table_model_parameters['distribution']
 
