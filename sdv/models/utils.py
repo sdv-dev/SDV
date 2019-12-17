@@ -127,3 +127,179 @@ def unflatten_dict(flat):
             unflattened[key] = value
 
     return unflattened
+
+
+def _impute(data):
+    for column in data:
+        column_data = data[column]
+        if column_data.dtype in (np.int, np.float):
+            fill_value = column_data.mean()
+        else:
+            fill_value = column_data.mode()[0]
+
+        data[column] = data[column].fillna(fill_value)
+
+    return data
+
+
+def fit_model(data, model, **kwargs):
+    """Fit a model to the given data.
+
+    Args:
+        data (pandas.DataFrame):
+            Data to fit the model to.
+
+    Returns:
+        model:
+            Instance of ``self.model`` fitted with data.
+    """
+    data = _impute(data)
+    model = model(**kwargs)
+    model.fit(data)
+    return model
+
+
+def get_model_dict(data, model, **kwargs):
+    """Fit and serialize a model and flatten its parameters into an array.
+
+    Args:
+        data (pandas.DataFrame):
+            Data to fit the model to.
+
+    Returns:
+        dict:
+            Flattened parameters for the fitted model.
+    """
+    model = fit_model(data, model, **kwargs)
+    return model.get_parameters()
+
+
+def square_matrix(triangular_matrix):
+    """Fill with zeros a triangular matrix to reshape it to a square one.
+
+    Args:
+        triangular_matrix (list [list [float]]):
+            Array of arrays of
+
+    Returns:
+        list:
+            Square matrix.
+    """
+    length = len(triangular_matrix)
+    zero = [0.0]
+
+    for item in triangular_matrix:
+        item.extend(zero * (length - len(item)))
+
+    return triangular_matrix
+
+
+def _check_matrix_symmetric_positive_definite(matrix):
+    """Check if a matrix is symmetric positive-definite.
+
+    Args:
+        matrix (list or numpy.ndarray):
+            Matrix to evaluate.
+
+    Returns:
+        bool
+    """
+    try:
+        if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+            # Not 2-dimensional or square, so not simmetric.
+            return False
+
+        np.linalg.cholesky(matrix)
+        return True
+
+    except np.linalg.LinAlgError:
+        return False
+
+
+def _make_positive_definite(matrix):
+    """Find the nearest positive-definite matrix to input.
+
+    Args:
+        matrix (numpy.ndarray):
+            Matrix to transform
+
+    Returns:
+        numpy.ndarray:
+            Closest symetric positive-definite matrix.
+    """
+    symetric_matrix = (matrix + matrix.T) / 2
+    _, s, V = np.linalg.svd(symetric_matrix)
+    symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
+    A2 = (symetric_matrix + symmetric_polar) / 2
+    A3 = (A2 + A2.T) / 2
+
+    if _check_matrix_symmetric_positive_definite(A3):
+        return A3
+
+    spacing = np.spacing(np.linalg.norm(matrix))
+    identity = np.eye(matrix.shape[0])
+    iterations = 1
+    while not _check_matrix_symmetric_positive_definite(A3):
+        min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
+        A3 += identity * (-min_eigenvals * iterations**2 + spacing)
+        iterations += 1
+
+    return A3
+
+
+def _prepare_sampled_covariance(covariance):
+    """Prepare a covariance matrix.
+
+    Args:
+        covariance (list):
+            covariance after unflattening model parameters.
+
+    Result:
+        list[list]:
+            symmetric Positive semi-definite matrix.
+    """
+    covariance = np.array(square_matrix(covariance))
+    covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
+
+    if not _check_matrix_symmetric_positive_definite(covariance):
+        covariance = _make_positive_definite(covariance)
+
+    return covariance.tolist()
+
+
+def unflatten_gaussian_copula(model_parameters):
+    """Prepare unflattened model params to recreate Gaussian Multivariate instance.
+
+    The preparations consist basically in:
+
+        - Transform sampled negative standard deviations from distributions into positive
+          numbers
+
+        - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
+
+        - Add string parameters kept inside the class (as they can't be modelled),
+          like ``distribution_type``.
+
+    Args:
+        model_parameters (dict):
+            Sampled and reestructured model parameters.
+
+    Returns:
+        dict:
+            Model parameters ready to recreate the model.
+    """
+
+    distribution_kwargs = {
+        'fitted': True,
+        'type': model_parameters['distribution']
+    }
+
+    distribs = model_parameters['distribs']
+    for distribution in distribs.values():
+        distribution.update(distribution_kwargs)
+        distribution['std'] = np.exp(distribution['std'])
+
+    covariance = model_parameters['covariance']
+    model_parameters['covariance'] = _prepare_sampled_covariance(covariance)
+
+    return model_parameters

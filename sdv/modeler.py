@@ -5,7 +5,7 @@ import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 
 from sdv.models.base import SDVModel
-from sdv.models.utils import flatten_dict
+from sdv.models.utils import fit_model, get_model_dict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,67 +30,6 @@ class Modeler:
         self.metadata = metadata
         self.model = model
         self.model_kwargs = dict() if model_kwargs is None else model_kwargs
-
-    @staticmethod
-    def _impute(data):
-        for column in data:
-            column_data = data[column]
-            if column_data.dtype in (np.int, np.float):
-                fill_value = column_data.mean()
-            else:
-                fill_value = column_data.mode()[0]
-
-            data[column] = data[column].fillna(fill_value)
-
-        return data
-
-    def _fit_model(self, data):
-        """Fit a model to the given data.
-
-        Args:
-            data (pandas.DataFrame):
-                Data to fit the model to.
-
-        Returns:
-            model:
-                Instance of ``self.model`` fitted with data.
-        """
-        data = self._impute(data)
-
-        if isinstance(self.model, SDVModel):
-            model = self.model
-        else:
-            model = self.model(**self.model_kwargs)
-
-        model.fit(data)
-
-        return model
-
-    def _get_model_dict(self, data):
-        """Fit and serialize a model and flatten its parameters into an array.
-
-        Args:
-            data (pandas.DataFrame):
-                Data to fit the model to.
-
-        Returns:
-            dict:
-                Flattened parameters for the fitted model.
-        """
-        model = self._fit_model(data)
-
-        values = list()
-        triangle = np.tril(model.covariance)
-
-        for index, row in enumerate(triangle.tolist()):
-            values.append(row[:index + 1])
-
-        model.covariance = np.array(values)
-        for distribution in model.distribs.values():
-            if distribution.std is not None:
-                distribution.std = np.log(distribution.std)
-
-        return flatten_dict(model.to_dict())
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate list of extension for child tables.
@@ -118,7 +57,7 @@ class Modeler:
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
             num_child_rows = len(child_rows)
-            row = self._get_model_dict(child_rows)
+            row = get_model_dict(child_rows, self.model, **self.model_kwargs)
             row['child_rows'] = num_child_rows
 
             row = pd.Series(row)
@@ -126,6 +65,7 @@ class Modeler:
             extension_rows.append(row)
 
         return pd.DataFrame(extension_rows, index=foreign_key_values)
+
 
     def cpa(self, table_name, tables, foreign_key=None):
         """Run the CPA algorithm over the indicated table and its children.
@@ -163,7 +103,7 @@ class Modeler:
                                           right_index=True, left_index=True)
                 extended['__' + child_name + '__child_rows'].fillna(0, inplace=True)
 
-        self.models[table_name] = self._fit_model(extended)
+        self.models[table_name] = fit_model(extended, self.model, **self.model_kwargs)
 
         if primary_key:
             extended.reset_index(inplace=True)
