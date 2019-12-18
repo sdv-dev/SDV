@@ -5,7 +5,7 @@ import pandas as pd
 from copulas.multivariate import GaussianMultivariate
 
 from sdv.models.base import SDVModel
-from sdv.models.utils import fit_model, get_model_dict
+from sdv.models.utils import impute
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +57,11 @@ class Modeler:
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
             num_child_rows = len(child_rows)
-            row = get_model_dict(child_rows, self.model, **self.model_kwargs)
+
+            data = impute(child_rows)
+            model = self.model(**self.model_kwargs)
+            model.fit(data)
+            row = model.get_parameters()
             row['child_rows'] = num_child_rows
 
             row = pd.Series(row)
@@ -103,7 +107,10 @@ class Modeler:
                                           right_index=True, left_index=True)
                 extended['__' + child_name + '__child_rows'].fillna(0, inplace=True)
 
-        self.models[table_name] = fit_model(extended, self.model, **self.model_kwargs)
+        data = impute(extended)
+        model = self.model(**self.model_kwargs)
+        model.fit(data)
+        self.models[table_name] = model
 
         if primary_key:
             extended.reset_index(inplace=True)

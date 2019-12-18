@@ -132,30 +132,6 @@ class Sampler:
         flat_parameters = parent_row[keys]
         return flat_parameters.rename(new_keys).to_dict()
 
-    def _get_model(self, extension, table_model):
-        """Build a model using the extension parameters."""
-        model = self.model(**self.model_kwargs)
-
-        parameters = unflatten_dict(extension)
-        for param in parameters['distribs'].values():
-            if param.get('type') is None:
-                param['type'] = model.distribution
-
-            if param.get('fitted') is None:
-                param['fitted'] = True
-
-        if parameters.get('fitted') is None:
-            parameters['fitted'] = True
-
-        if parameters.get('distribution') is None:
-            parameters['distribution'] = model.distribution
-
-        model_parameters = unflatten_gaussian_copula(parameters)
-        import ipdb; ipdb.set_trace()
-        model.set_parameters(model_parameters)
-        return model
-        # return table_model.from_dict(model_parameters)
-
     def _sample_rows(self, model, num_rows, table_name):
         """Sample ``num_rows`` from ``model``.
 
@@ -188,8 +164,8 @@ class Sampler:
     def _sample_table(self, table_name, parent_name, parent_row, sampled):
         extension = self._get_extension(parent_row, table_name)
 
-        table_model = self.models[table_name]
-        model = self._get_model(extension, table_model)
+        model = self.model(**self.model_kwargs)
+        model.set_parameters(extension)
         num_rows = max(round(extension['child_rows']), 0)
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)

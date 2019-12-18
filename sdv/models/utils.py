@@ -129,7 +129,7 @@ def unflatten_dict(flat):
     return unflattened
 
 
-def _impute(data):
+def impute(data):
     for column in data:
         column_data = data[column]
         if column_data.dtype in (np.int, np.float):
@@ -140,38 +140,6 @@ def _impute(data):
         data[column] = data[column].fillna(fill_value)
 
     return data
-
-
-def fit_model(data, model, **kwargs):
-    """Fit a model to the given data.
-
-    Args:
-        data (pandas.DataFrame):
-            Data to fit the model to.
-
-    Returns:
-        model:
-            Instance of ``self.model`` fitted with data.
-    """
-    data = _impute(data)
-    model = model(**kwargs)
-    model.fit(data)
-    return model
-
-
-def get_model_dict(data, model, **kwargs):
-    """Fit and serialize a model and flatten its parameters into an array.
-
-    Args:
-        data (pandas.DataFrame):
-            Data to fit the model to.
-
-    Returns:
-        dict:
-            Flattened parameters for the fitted model.
-    """
-    model = fit_model(data, model, **kwargs)
-    return model.get_parameters()
 
 
 def square_matrix(triangular_matrix):

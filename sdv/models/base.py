@@ -27,10 +27,3 @@ class SDVModel:
 
     def set_parameters(self, parameters):
         raise NotImplementedError
-
-    def to_dict(self):
-        raise NotImplementedError
-
-    @classmethod
-    def from_dict(cls, copula_dict):
-        raise NotImplementedError
