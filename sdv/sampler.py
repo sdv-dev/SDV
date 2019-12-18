@@ -4,8 +4,6 @@ import exrex
 import numpy as np
 import pandas as pd
 
-from sdv.models.utils import square_matrix, unflatten_dict, unflatten_gaussian_copula
-
 
 class Sampler:
     """Sampler class.

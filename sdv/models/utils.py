@@ -162,7 +162,7 @@ def square_matrix(triangular_matrix):
     return triangular_matrix
 
 
-def _check_matrix_symmetric_positive_definite(matrix):
+def check_matrix_symmetric_positive_definite(matrix):
     """Check if a matrix is symmetric positive-definite.
 
     Args:
@@ -184,7 +184,7 @@ def _check_matrix_symmetric_positive_definite(matrix):
         return False
 
 
-def _make_positive_definite(matrix):
+def make_positive_definite(matrix):
     """Find the nearest positive-definite matrix to input.
 
     Args:
@@ -201,73 +201,15 @@ def _make_positive_definite(matrix):
     A2 = (symetric_matrix + symmetric_polar) / 2
     A3 = (A2 + A2.T) / 2
 
-    if _check_matrix_symmetric_positive_definite(A3):
+    if check_matrix_symmetric_positive_definite(A3):
         return A3
 
     spacing = np.spacing(np.linalg.norm(matrix))
     identity = np.eye(matrix.shape[0])
     iterations = 1
-    while not _check_matrix_symmetric_positive_definite(A3):
+    while not check_matrix_symmetric_positive_definite(A3):
         min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
         A3 += identity * (-min_eigenvals * iterations**2 + spacing)
         iterations += 1
 
     return A3
-
-
-def _prepare_sampled_covariance(covariance):
-    """Prepare a covariance matrix.
-
-    Args:
-        covariance (list):
-            covariance after unflattening model parameters.
-
-    Result:
-        list[list]:
-            symmetric Positive semi-definite matrix.
-    """
-    covariance = np.array(square_matrix(covariance))
-    covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
-
-    if not _check_matrix_symmetric_positive_definite(covariance):
-        covariance = _make_positive_definite(covariance)
-
-    return covariance.tolist()
-
-
-def unflatten_gaussian_copula(model_parameters):
-    """Prepare unflattened model params to recreate Gaussian Multivariate instance.
-
-    The preparations consist basically in:
-
-        - Transform sampled negative standard deviations from distributions into positive
-          numbers
-
-        - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
-
-        - Add string parameters kept inside the class (as they can't be modelled),
-          like ``distribution_type``.
-
-    Args:
-        model_parameters (dict):
-            Sampled and reestructured model parameters.
-
-    Returns:
-        dict:
-            Model parameters ready to recreate the model.
-    """
-
-    distribution_kwargs = {
-        'fitted': True,
-        'type': model_parameters['distribution']
-    }
-
-    distribs = model_parameters['distribs']
-    for distribution in distribs.values():
-        distribution.update(distribution_kwargs)
-        distribution['std'] = np.exp(distribution['std'])
-
-    covariance = model_parameters['covariance']
-    model_parameters['covariance'] = _prepare_sampled_covariance(covariance)
-
-    return model_parameters

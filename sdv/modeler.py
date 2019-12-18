@@ -1,11 +1,8 @@
 import logging
 
-import numpy as np
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
 
-from sdv.models.base import SDVModel
-from sdv.models.utils import impute
+from copulas.multivariate import GaussianMultivariate
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,9 +55,8 @@ class Modeler:
             child_rows = child_table.loc[[foreign_key_value]]
             num_child_rows = len(child_rows)
 
-            data = impute(child_rows)
             model = self.model(**self.model_kwargs)
-            model.fit(data)
+            model.fit(child_rows)
             row = model.get_parameters()
             row['child_rows'] = num_child_rows
 
@@ -69,7 +65,6 @@ class Modeler:
             extension_rows.append(row)
 
         return pd.DataFrame(extension_rows, index=foreign_key_values)
-
 
     def cpa(self, table_name, tables, foreign_key=None):
         """Run the CPA algorithm over the indicated table and its children.
@@ -107,9 +102,8 @@ class Modeler:
                                           right_index=True, left_index=True)
                 extended['__' + child_name + '__child_rows'].fillna(0, inplace=True)
 
-        data = impute(extended)
         model = self.model(**self.model_kwargs)
-        model.fit(data)
+        model.fit(extended)
         self.models[table_name] = model
 
         if primary_key:
