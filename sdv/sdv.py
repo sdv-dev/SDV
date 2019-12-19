@@ -5,10 +5,10 @@ import pickle
 
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
-from sdv.models.copulas import GaussianMultivariate
+from sdv.models.copulas import GaussianCopula
 from sdv.sampler import Sampler
 
-DEFAULT_MODEL = GaussianMultivariate
+DEFAULT_MODEL = GaussianCopula
 DEFAULT_MODEL_KWARGS = {
     'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
 }
@@ -26,7 +26,7 @@ class SDV:
     Args:
         model (type):
             Class of the ``copula`` to use. Defaults to
-            ``sdv.models.copulas.GaussianMultivariate``.
+            ``sdv.models.copulas.GaussianCopula``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. Defaults to ``None``.
     """

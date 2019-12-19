@@ -28,19 +28,19 @@ class SDVModel:
         raise NotImplementedError
 
     def get_parameters(self):
-        """Get copula model parameters.
+        """Get model parameters.
 
         Returns:
             dict:
-                Copula flatten parameters.
+                Flatten parameters.
         """
         raise NotImplementedError
 
     def set_parameters(self, parameters):
-        """Set copula model parameters.
+        """Set model parameters.
 
         Args:
             dict:
-                Copula flatten parameters.
+                Flatten parameters.
         """
         raise NotImplementedError

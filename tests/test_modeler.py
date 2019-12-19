@@ -6,7 +6,7 @@ import pandas as pd
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
 from sdv.models.base import SDVModel
-from sdv.models.copulas import GaussianMultivariate
+from sdv.models.copulas import GaussianCopula
 
 
 class TestModeler(TestCase):
@@ -19,7 +19,7 @@ class TestModeler(TestCase):
         # Asserts
         assert modeler.models == dict()
         assert modeler.metadata == 'test'
-        assert modeler.model == GaussianMultivariate
+        assert modeler.model == GaussianCopula
         assert modeler.model_kwargs == dict()
 
     def test___init__with_arguments(self):

@@ -3,16 +3,16 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from sdv.models.copulas import GaussianMultivariate
+from sdv.models.copulas import GaussianCopula
 
 
-class TestGaussianMultivariate(TestCase):
+class TestGaussianCopula(TestCase):
 
     def test__prepare_sampled_covariance(self):
         """Test prepare_sampler_covariante"""
         # Run
         covariance = [[0, 1], [1]]
-        result = GaussianMultivariate._prepare_sampled_covariance(Mock(), covariance)
+        result = GaussianCopula._prepare_sampled_covariance(Mock(), covariance)
 
         # Asserts
         expected = np.array([[1., 1.], [1., 1.0]])
@@ -21,7 +21,7 @@ class TestGaussianMultivariate(TestCase):
     def test__unflatten_gaussian_copula(self):
         """Test unflatte gaussian copula"""
         # Setup
-        sdvmodel = Mock(autospec=GaussianMultivariate)
+        sdvmodel = Mock(autospec=GaussianCopula)
         sdvmodel._prepare_sampled_covariance.return_value = [[0.4, 0.2], [0.2, 0.0]]
 
         # Run
@@ -32,7 +32,7 @@ class TestGaussianMultivariate(TestCase):
             'covariance': [[0.4, 0.1], [0.1]],
             'distribution': 'GaussianUnivariate'
         }
-        result = GaussianMultivariate._unflatten_gaussian_copula(sdvmodel, model_parameters)
+        result = GaussianCopula._unflatten_gaussian_copula(sdvmodel, model_parameters)
 
         # Asserts
         expected = {

@@ -1,5 +1,5 @@
 import numpy as np
-from copulas.multivariate import GaussianMultivariate as CopulasGaussianMultivariate
+from copulas import multivariate
 
 from sdv.models.base import SDVModel
 from sdv.models.utils import (
@@ -7,7 +7,7 @@ from sdv.models.utils import (
     square_matrix, unflatten_dict)
 
 
-class GaussianMultivariate(SDVModel):
+class GaussianCopula(SDVModel):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
 
     Args:
@@ -45,7 +45,7 @@ class GaussianMultivariate(SDVModel):
                 Data to be fitted.
         """
         table_data = impute(table_data)
-        self.model = CopulasGaussianMultivariate(distribution=self.distribution)
+        self.model = multivariate.GaussianMultivariate(distribution=self.distribution)
         self.model.fit(table_data)
 
     def sample(self, num_samples):
@@ -151,20 +151,12 @@ class GaussianMultivariate(SDVModel):
                 Copula flatten parameters.
         """
         parameters = unflatten_dict(parameters)
-
-        if parameters.get('fitted') is None:
-            parameters['fitted'] = True
-
-        if parameters.get('distribution') is None:
-            parameters['distribution'] = self.distribution
+        parameters.setdefault('fitted', True)
+        parameters.setdefault('distribution', self.distribution)
 
         parameters = self._unflatten_gaussian_copula(parameters)
-
         for param in parameters['distribs'].values():
-            if param.get('type') is None:
-                param['type'] = self.distribution
+            param.setdefault('type', self.distribution)
+            param.setdefault('fitted', True)
 
-            if param.get('fitted') is None:
-                param['fitted'] = True
-
-        self.model = CopulasGaussianMultivariate.from_dict(parameters)
+        self.model = multivariate.GaussianMultivariate.from_dict(parameters)
