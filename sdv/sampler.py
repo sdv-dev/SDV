@@ -13,6 +13,10 @@ class Sampler:
             Dataset Metadata.
         models (dict):
             Table models.
+        model (SDVModel):
+            Model class to sample data.
+        model_kwargs (dict):
+            Additional arguments to create the ``SDVModel``.
     """
     metadata = None
     models = None

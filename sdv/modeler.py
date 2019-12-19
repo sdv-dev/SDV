@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-from copulas.multivariate import GaussianMultivariate
+from sdv.models.copulas import GaussianMultivariate
 
 LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class Modeler:
         metadata (Metadata):
             Dataset Metadata.
         model (type):
-            Class of model to use. Defaults to ``copulas.multivariate.GaussianMultivariate``.
+            Class of model to use. Defaults to ``sdv.models.copulas.GaussianMultivariate``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. Defaults to ``None``.
     """

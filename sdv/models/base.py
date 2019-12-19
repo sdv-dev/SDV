@@ -1,4 +1,9 @@
 class SDVModel:
+    """Base class for all the models used in ``SDV``.
+
+    The ``SDVModel`` class contains the api methods that must be implemented
+    in order to create a new model.
+    """
 
     def fit(self, table_data):
         """Fit the model to the table.
@@ -23,7 +28,19 @@ class SDVModel:
         raise NotImplementedError
 
     def get_parameters(self):
+        """Get copula model parameters.
+
+        Returns:
+            dict:
+                Copula flatten parameters.
+        """
         raise NotImplementedError
 
     def set_parameters(self, parameters):
+        """Set copula model parameters.
+
+        Args:
+            dict:
+                Copula flatten parameters.
+        """
         raise NotImplementedError

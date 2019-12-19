@@ -26,7 +26,7 @@ class SDV:
     Args:
         model (type):
             Class of the ``copula`` to use. Defaults to
-            ``copulas.multivariate.GaussianMultivariate``.
+            ``sdv.models.copulas.GaussianMultivariate``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. Defaults to ``None``.
     """

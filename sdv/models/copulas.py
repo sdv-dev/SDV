@@ -1,6 +1,6 @@
 import numpy as np
-
 from copulas.multivariate import GaussianMultivariate as CopulasGaussianMultivariate
+
 from sdv.models.base import SDVModel
 from sdv.models.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, impute, make_positive_definite,
@@ -8,6 +8,26 @@ from sdv.models.utils import (
 
 
 class GaussianMultivariate(SDVModel):
+    """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
+
+    Args:
+        distribution (str):
+            Copulas univariate distribution to use.
+
+    Example:
+        The example below shows simple usage case where a ``GaussianMultivariate``
+        is being created and it's ``fit`` and ``sample`` methods are being called.
+
+        >>> model = GaussianMultivariate('copulas.univariate.gaussian.GaussianUnivariate')
+        >>> model.fit(pd.DataFrame({'a_field': list(range(10))}))
+        >>> model.sample(5)
+            a_field
+        0  4.796559
+        1  7.395329
+        2  7.400417
+        3  2.794212
+        4  1.925887
+    """
 
     distribution = None
     model = None
@@ -16,14 +36,41 @@ class GaussianMultivariate(SDVModel):
         self.distribution = distribution
 
     def fit(self, table_data):
+        """Fit the model to the table.
+
+        Impute the table data before fit the model.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Data to be fitted.
+        """
         table_data = impute(table_data)
         self.model = CopulasGaussianMultivariate(distribution=self.distribution)
         self.model.fit(table_data)
 
     def sample(self, num_samples):
+        """Sample ``num_samples`` rows from the model.
+
+        Args:
+            num_samples (int):
+                Amount of rows to sample.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data with the number of rows specified in ``num_samples``.
+        """
         return self.model.sample(num_samples)
 
     def get_parameters(self):
+        """Get copula model parameters.
+
+        Compute model ``covariance`` and ``distribution.std``
+        before it returns the flatten dict.
+
+        Returns:
+            dict:
+                Copula flatten parameters.
+        """
         values = list()
         triangle = np.tril(self.model.covariance)
 
@@ -94,6 +141,15 @@ class GaussianMultivariate(SDVModel):
         return model_parameters
 
     def set_parameters(self, parameters):
+        """Set copula model parameters.
+
+        Add additional keys after unflatte the parameters
+        in order to set expected parameters for the copula.
+
+        Args:
+            dict:
+                Copula flatten parameters.
+        """
         parameters = unflatten_dict(parameters)
 
         if parameters.get('fitted') is None:
