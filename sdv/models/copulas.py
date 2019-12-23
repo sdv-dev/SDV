@@ -29,11 +29,12 @@ class GaussianCopula(SDVModel):
         4  1.925887
     """
 
+    DISTRIBUTION = 'copulas.univariate.gaussian.GaussianUnivariate'
     distribution = None
     model = None
 
-    def __init__(self, distribution):
-        self.distribution = distribution
+    def __init__(self, distribution=None):
+        self.distribution = distribution or self.DISTRIBUTION
 
     def fit(self, table_data):
         """Fit the model to the table.
