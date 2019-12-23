@@ -16,7 +16,7 @@ class GaussianCopula(SDVModel):
 
     Example:
         The example below shows simple usage case where a ``GaussianMultivariate``
-        is being created and it's ``fit`` and ``sample`` methods are being called.
+        is being created and its ``fit`` and ``sample`` methods are being called.
 
         >>> model = GaussianMultivariate('copulas.univariate.gaussian.GaussianUnivariate')
         >>> model.fit(pd.DataFrame({'a_field': list(range(10))}))
