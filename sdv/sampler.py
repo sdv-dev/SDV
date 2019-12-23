@@ -13,107 +13,23 @@ class Sampler:
             Dataset Metadata.
         models (dict):
             Table models.
+        model (SDVModel):
+            Model class to sample data.
+        model_kwargs (dict):
+            Additional arguments to create the ``SDVModel``.
     """
     metadata = None
     models = None
     primary_key = None
     remaining_primary_key = None
 
-    def __init__(self, metadata, models):
+    def __init__(self, metadata, models, model, model_kwargs):
         self.metadata = metadata
         self.models = models
         self.primary_key = dict()
         self.remaining_primary_key = dict()
-
-    @staticmethod
-    def _square_matrix(triangular_matrix):
-        """Fill with zeros a triangular matrix to reshape it to a square one.
-
-        Args:
-            triangular_matrix (list [list [float]]):
-                Array of arrays of
-
-        Returns:
-            list:
-                Square matrix.
-        """
-        length = len(triangular_matrix)
-        zero = [0.0]
-
-        for item in triangular_matrix:
-            item.extend(zero * (length - len(item)))
-
-        return triangular_matrix
-
-    def _check_matrix_symmetric_positive_definite(self, matrix):
-        """Check if a matrix is symmetric positive-definite.
-
-        Args:
-            matrix (list or numpy.ndarray):
-                Matrix to evaluate.
-
-        Returns:
-            bool
-        """
-        try:
-            if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
-                # Not 2-dimensional or square, so not simmetric.
-                return False
-
-            np.linalg.cholesky(matrix)
-            return True
-
-        except np.linalg.LinAlgError:
-            return False
-
-    def _make_positive_definite(self, matrix):
-        """Find the nearest positive-definite matrix to input.
-
-        Args:
-            matrix (numpy.ndarray):
-                Matrix to transform
-
-        Returns:
-            numpy.ndarray:
-                Closest symetric positive-definite matrix.
-        """
-        symetric_matrix = (matrix + matrix.T) / 2
-        _, s, V = np.linalg.svd(symetric_matrix)
-        symmetric_polar = np.dot(V.T, np.dot(np.diag(s), V))
-        A2 = (symetric_matrix + symmetric_polar) / 2
-        A3 = (A2 + A2.T) / 2
-
-        if self._check_matrix_symmetric_positive_definite(A3):
-            return A3
-
-        spacing = np.spacing(np.linalg.norm(matrix))
-        identity = np.eye(matrix.shape[0])
-        iterations = 1
-        while not self._check_matrix_symmetric_positive_definite(A3):
-            min_eigenvals = np.min(np.real(np.linalg.eigvals(A3)))
-            A3 += identity * (-min_eigenvals * iterations**2 + spacing)
-            iterations += 1
-
-        return A3
-
-    def _prepare_sampled_covariance(self, covariance):
-        """Prepare a covariance matrix.
-
-        Args:
-            covariance (list):
-                covariance after unflattening model parameters.
-
-        Result:
-            list[list]:
-                symmetric Positive semi-definite matrix.
-        """
-        covariance = np.array(self._square_matrix(covariance))
-        covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
-
-        if not self._check_matrix_symmetric_positive_definite(covariance):
-            covariance = self._make_positive_definite(covariance)
-
-        return covariance.tolist()
+        self.model = model
+        self.model_kwargs = model_kwargs
 
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
@@ -202,106 +118,6 @@ class Sampler:
 
         return primary_key, primary_key_values
 
-    @staticmethod
-    def _key_order(key_value):
-        parts = list()
-        for part in key_value[0].split('__'):
-            if part.isdigit():
-                part = int(part)
-
-            parts.append(part)
-
-        return parts
-
-    def _unflatten_dict(self, flat):
-        """Transform a flattened dict into its original form.
-
-        Args:
-            flat (dict):
-                Flattened dict.
-
-        Returns:
-            dict:
-                Nested dict (if corresponds)
-        """
-        unflattened = dict()
-
-        for key, value in sorted(flat.items(), key=self._key_order):
-            if '__' in key:
-                key, subkey = key.split('__', 1)
-                subkey, name = subkey.rsplit('__', 1)
-
-                if name.isdigit():
-                    column_index = int(name)
-                    row_index = int(subkey)
-
-                    array = unflattened.setdefault(key, list())
-
-                    if len(array) == row_index:
-                        row = list()
-                        array.append(row)
-                    elif len(array) == row_index + 1:
-                        row = array[row_index]
-                    else:
-                        # This should never happen
-                        raise ValueError('There was an error unflattening the extension.')
-
-                    if len(row) == column_index:
-                        row.append(value)
-                    else:
-                        # This should never happen
-                        raise ValueError('There was an error unflattening the extension.')
-
-                else:
-                    subdict = unflattened.setdefault(key, dict())
-                    if subkey.isdigit():
-                        subkey = int(subkey)
-
-                    inner = subdict.setdefault(subkey, dict())
-                    inner[name] = value
-
-            else:
-                unflattened[key] = value
-
-        return unflattened
-
-    def _unflatten_gaussian_copula(self, model_parameters):
-        """Prepare unflattened model params to recreate Gaussian Multivariate instance.
-
-        The preparations consist basically in:
-
-            - Transform sampled negative standard deviations from distributions into positive
-              numbers
-
-            - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
-
-            - Add string parameters kept inside the class (as they can't be modelled),
-              like ``distribution_type``.
-
-        Args:
-            model_parameters (dict):
-                Sampled and reestructured model parameters.
-
-        Returns:
-            dict:
-                Model parameters ready to recreate the model.
-        """
-
-        distribution_kwargs = {
-            'fitted': True,
-            'type': model_parameters['distribution']
-        }
-
-        distribs = model_parameters['distribs']
-        for distribution in distribs.values():
-            distribution.update(distribution_kwargs)
-            distribution['std'] = np.exp(distribution['std'])
-
-        covariance = model_parameters['covariance']
-        model_parameters['covariance'] = self._prepare_sampled_covariance(covariance)
-
-        return model_parameters
-
     def _get_extension(self, parent_row, table_name):
         """Get the params from a generated parent row.
 
@@ -317,18 +133,6 @@ class Sampler:
         new_keys = {key: key.replace(prefix, '') for key in keys}
         flat_parameters = parent_row[keys]
         return flat_parameters.rename(new_keys).to_dict()
-
-    def _get_model(self, extension, table_model):
-        """Build a model using the extension parameters."""
-        table_model_parameters = table_model.to_dict()
-
-        model_parameters = self._unflatten_dict(extension)
-        model_parameters['fitted'] = True
-        model_parameters['distribution'] = table_model_parameters['distribution']
-
-        model_parameters = self._unflatten_gaussian_copula(model_parameters)
-
-        return table_model.from_dict(model_parameters)
 
     def _sample_rows(self, model, num_rows, table_name):
         """Sample ``num_rows`` from ``model``.
@@ -362,8 +166,8 @@ class Sampler:
     def _sample_table(self, table_name, parent_name, parent_row, sampled):
         extension = self._get_extension(parent_row, table_name)
 
-        table_model = self.models[table_name]
-        model = self._get_model(extension, table_model)
+        model = self.model(**self.model_kwargs)
+        model.set_parameters(extension)
         num_rows = max(round(extension['child_rows']), 0)
 
         sampled_rows = self._sample_rows(model, num_rows, table_name)

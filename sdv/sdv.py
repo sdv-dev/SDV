@@ -3,13 +3,12 @@
 """Main module."""
 import pickle
 
-from copulas.multivariate import GaussianMultivariate
-
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
+from sdv.models.copulas import GaussianCopula
 from sdv.sampler import Sampler
 
-DEFAULT_MODEL = GaussianMultivariate
+DEFAULT_MODEL = GaussianCopula
 DEFAULT_MODEL_KWARGS = {
     'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
 }
@@ -27,7 +26,7 @@ class SDV:
     Args:
         model (type):
             Class of the ``copula`` to use. Defaults to
-            ``copulas.multivariate.GaussianMultivariate``.
+            ``sdv.models.copulas.GaussianCopula``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. Defaults to ``None``.
     """
@@ -72,7 +71,7 @@ class SDV:
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
         self.modeler.model_database(tables)
-        self.sampler = Sampler(self.metadata, self.modeler.models)
+        self.sampler = Sampler(self.metadata, self.modeler.models, self.model, self.model_kwargs)
 
     def sample(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
         """Sample ``num_rows`` rows from the indicated table.
