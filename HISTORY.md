@@ -1,5 +1,11 @@
 # History
 
+## 0.3.0 - 2019-12-23
+
+### New Features
+
+* Create sdv.models subpackage - [Issue #141](https://github.com/HDI-Project/SDV/issues/141) by @JDTheRipperPC
+
 ## 0.2.2 - 2019-12-10
 
 ### New Features
