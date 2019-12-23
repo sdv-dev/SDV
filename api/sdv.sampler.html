@@ -138,6 +138,11 @@
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
@@ -272,14 +277,14 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler" title="sdv.sampler.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></a>(metadata, models)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler" title="sdv.sampler.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></a>(metadata, models, model, model_kwargs)</p></td>
 <td><p>Sampler class.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="class">
 <dt id="sdv.sampler.Sampler">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.sampler.</code><code class="sig-name descname">Sampler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">models</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.sampler.</code><code class="sig-name descname">Sampler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">models</em>, <em class="sig-param">model</em>, <em class="sig-param">model_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Sampler class.</p>
 <dl class="field-list simple">
@@ -287,6 +292,8 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>metadata</strong> (<a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Dataset Metadata.</p></li>
 <li><p><strong>models</strong> (<em>dict</em>) – Table models.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="sdv.models.base.html#sdv.models.base.SDVModel" title="sdv.models.base.SDVModel"><em>SDVModel</em></a>) – Model class to sample data.</p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Additional arguments to create the <code class="docutils literal notranslate"><span class="pre">SDVModel</span></code>.</p></li>
 </ul>
 </dd>
 </dl>

@@ -1,0 +1,7 @@
+sdv.models.copulas module
+=========================
+
+.. automodule:: sdv.models.copulas
+   :members:
+   :undoc-members:
+   :show-inheritance:

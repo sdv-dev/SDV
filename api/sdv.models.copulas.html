@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.modeler module &mdash; SDV 0.2.3.dev0 documentation</title>
+  <title>sdv.models.copulas module &mdash; SDV 0.2.3.dev0 documentation</title>
   
 
   
@@ -37,8 +37,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sdv.sampler module" href="sdv.sampler.html" />
-    <link rel="prev" title="sdv.metadata module" href="sdv.metadata.html" /> 
+    <link rel="next" title="sdv.models.utils module" href="sdv.models.utils.html" />
+    <link rel="prev" title="sdv.models.base module" href="sdv.models.base.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -132,23 +132,23 @@
 <p class="caption"><span class="caption-text">Resources</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sdv.html">sdv.sdv module</a></li>
 </ul>
@@ -247,14 +247,16 @@
         
           <li><a href="sdv.html">sdv package</a> &raquo;</li>
         
-      <li>sdv.modeler module</li>
+          <li><a href="sdv.models.html">sdv.models package</a> &raquo;</li>
+        
+      <li>sdv.models.copulas module</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
             
-              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.modeler.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.models.copulas.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -268,8 +270,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-sdv.modeler">
-<span id="sdv-modeler-module"></span><h1>sdv.modeler module<a class="headerlink" href="#module-sdv.modeler" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-sdv.models.copulas">
+<span id="sdv-models-copulas-module"></span><h1>sdv.models.copulas module<a class="headerlink" href="#module-sdv.models.copulas" title="Permalink to this headline">¶</a></h1>
 <p><strong>Classes</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -277,27 +279,33 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.modeler.Modeler" title="sdv.modeler.Modeler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Modeler</span></code></a>(metadata[, model, model_kwargs])</p></td>
-<td><p>Modeler class.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula" title="sdv.models.copulas.GaussianCopula"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GaussianCopula</span></code></a>([distribution])</p></td>
+<td><p>Model wrapping <code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code> copula.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="class">
-<dt id="sdv.modeler.Modeler">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.modeler.</code><code class="sig-name descname">Modeler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">model=&lt;class 'sdv.models.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Modeler class.</p>
-<p>The Modeler class applies the CPA algorithm recursively over all the tables
-from the dataset.</p>
+<dt id="sdv.models.copulas.GaussianCopula">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.models.copulas.</code><code class="sig-name descname">GaussianCopula</code><span class="sig-paren">(</span><em class="sig-param">distribution=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/copulas.html#GaussianCopula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.copulas.GaussianCopula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sdv.models.base.html#sdv.models.base.SDVModel" title="sdv.models.base.SDVModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">sdv.models.base.SDVModel</span></code></a></p>
+<p>Model wrapping <code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code> copula.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata</strong> (<a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Dataset Metadata.</p></li>
-<li><p><strong>model</strong> (<em>type</em>) – Class of model to use. Defaults to <code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
-<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>distribution</strong> (<em>str</em>) – Copulas univariate distribution to use.</p>
 </dd>
 </dl>
+<p><strong>Attributes</strong></p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.DISTRIBUTION" title="sdv.models.copulas.GaussianCopula.DISTRIBUTION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DISTRIBUTION</span></code></a></p></td>
+<td><p>str(object=’‘) -&gt; str</p></td>
+</tr>
+</tbody>
+</table>
 <p><strong>Methods</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -305,29 +313,87 @@ from the dataset.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.modeler.Modeler.cpa" title="sdv.modeler.Modeler.cpa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpa</span></code></a>(table_name, tables[, foreign_key])</p></td>
-<td><p>Run the CPA algorithm over the indicated table and its children.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.fit" title="sdv.models.copulas.GaussianCopula.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(table_data)</p></td>
+<td><p>Fit the model to the table.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.modeler.Modeler.model_database" title="sdv.modeler.Modeler.model_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_database</span></code></a>([tables])</p></td>
-<td><p>Run CPA algorithm on all the tables of this dataset.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.get_parameters" title="sdv.models.copulas.GaussianCopula.get_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameters</span></code></a>()</p></td>
+<td><p>Get copula model parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.sample" title="sdv.models.copulas.GaussianCopula.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(num_samples)</p></td>
+<td><p>Sample <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> rows from the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.set_parameters" title="sdv.models.copulas.GaussianCopula.set_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_parameters</span></code></a>(parameters)</p></td>
+<td><p>Set copula model parameters.</p></td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Example</p>
+<p>The example below shows simple usage case where a <code class="docutils literal notranslate"><span class="pre">GaussianMultivariate</span></code>
+is being created and its <code class="docutils literal notranslate"><span class="pre">fit</span></code> and <code class="docutils literal notranslate"><span class="pre">sample</span></code> methods are being called.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">(</span><span class="s1">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;a_field&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="go">    a_field</span>
+<span class="go">0  4.796559</span>
+<span class="go">1  7.395329</span>
+<span class="go">2  7.400417</span>
+<span class="go">3  2.794212</span>
+<span class="go">4  1.925887</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="sdv.models.copulas.GaussianCopula.DISTRIBUTION">
+<code class="sig-name descname">DISTRIBUTION</code><em class="property"> = 'copulas.univariate.gaussian.GaussianUnivariate'</em><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.DISTRIBUTION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sdv.models.copulas.GaussianCopula.distribution">
+<code class="sig-name descname">distribution</code><em class="property"> = None</em><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
-<dt id="sdv.modeler.Modeler.cpa">
-<code class="sig-name descname">cpa</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">tables</em>, <em class="sig-param">foreign_key=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler.cpa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler.cpa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the CPA algorithm over the indicated table and its children.</p>
+<dt id="sdv.models.copulas.GaussianCopula.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">table_data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/copulas.html#GaussianCopula.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the model to the table.</p>
+<p>Impute the table data before fit the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to model.</p></li>
-<li><p><strong>tables</strong> (<em>dict</em>) – Dict of tables tha have been already modeled.</p></li>
-<li><p><strong>foreign_key</strong> (<em>str</em>) – Name of the foreign key that references this table. Used only when applying
-CPA on a child table.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>table_data</strong> (<em>pandas.DataFrame</em>) – Data to be fitted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.models.copulas.GaussianCopula.get_parameters">
+<code class="sig-name descname">get_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/copulas.html#GaussianCopula.get_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.get_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get copula model parameters.</p>
+<p>Compute model <code class="docutils literal notranslate"><span class="pre">covariance</span></code> and <code class="docutils literal notranslate"><span class="pre">distribution.std</span></code>
+before it returns the flatten dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Copula flatten parameters.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sdv.models.copulas.GaussianCopula.model">
+<code class="sig-name descname">model</code><em class="property"> = None</em><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sdv.models.copulas.GaussianCopula.sample">
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/copulas.html#GaussianCopula.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> rows from the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_samples</strong> (<em>int</em>) – Amount of rows to sample.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>table data with the extensions created while modeling its children.</p>
+<dd class="field-even"><p>Sampled data with the number of rows specified in <code class="docutils literal notranslate"><span class="pre">num_samples</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
@@ -336,14 +402,14 @@ CPA on a child table.</p></li>
 </dd></dl>
 
 <dl class="method">
-<dt id="sdv.modeler.Modeler.model_database">
-<code class="sig-name descname">model_database</code><span class="sig-paren">(</span><em class="sig-param">tables=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler.model_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler.model_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run CPA algorithm on all the tables of this dataset.</p>
+<dt id="sdv.models.copulas.GaussianCopula.set_parameters">
+<code class="sig-name descname">set_parameters</code><span class="sig-paren">(</span><em class="sig-param">parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/copulas.html#GaussianCopula.set_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.set_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set copula model parameters.</p>
+<p>Add additional keys after unflatte the parameters
+in order to set expected parameters for the copula.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>tables</strong> (<em>dict</em>) – Optional. Dictinary containing the tables of this dataset.
-If not given, the tables will be loaded using the dataset
-metadata specification.</p>
+<dd class="field-odd"><p><strong>dict</strong> – Copula flatten parameters.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -360,10 +426,10 @@ metadata specification.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sdv.sampler.html" class="btn btn-neutral float-right" title="sdv.sampler module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sdv.models.utils.html" class="btn btn-neutral float-right" title="sdv.models.utils module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sdv.metadata.html" class="btn btn-neutral float-left" title="sdv.metadata module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="sdv.models.base.html" class="btn btn-neutral float-left" title="sdv.models.base module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

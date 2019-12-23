@@ -138,6 +138,11 @@
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
@@ -298,7 +303,7 @@
 
 <dl class="class">
 <dt id="sdv.sdv.SDV">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.sdv.</code><code class="sig-name descname">SDV</code><span class="sig-paren">(</span><em class="sig-param">model=&lt;class 'copulas.multivariate.gaussian.GaussianMultivariate'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.sdv.</code><code class="sig-name descname">SDV</code><span class="sig-paren">(</span><em class="sig-param">model=&lt;class 'sdv.models.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Automated generative modeling and sampling tool.</p>
 <p>Allows the users to generate synthetic data after creating generative models for their data.</p>
@@ -306,7 +311,7 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>type</em>) – Class of the <code class="docutils literal notranslate"><span class="pre">copula</span></code> to use. Defaults to
-<code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
 <li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>

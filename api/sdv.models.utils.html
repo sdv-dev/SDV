@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.modeler module &mdash; SDV 0.2.3.dev0 documentation</title>
+  <title>sdv.models.utils module &mdash; SDV 0.2.3.dev0 documentation</title>
   
 
   
@@ -37,8 +37,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sdv.sampler module" href="sdv.sampler.html" />
-    <link rel="prev" title="sdv.metadata module" href="sdv.metadata.html" /> 
+    <link rel="next" title="sdv.demo module" href="sdv.demo.html" />
+    <link rel="prev" title="sdv.models.copulas module" href="sdv.models.copulas.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -132,23 +132,23 @@
 <p class="caption"><span class="caption-text">Resources</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sdv.html">sdv.sdv module</a></li>
 </ul>
@@ -247,14 +247,16 @@
         
           <li><a href="sdv.html">sdv package</a> &raquo;</li>
         
-      <li>sdv.modeler module</li>
+          <li><a href="sdv.models.html">sdv.models package</a> &raquo;</li>
+        
+      <li>sdv.models.utils module</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
             
-              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.modeler.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/HDI-Project/SDV/blob/master/docs/api/sdv.models.utils.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -268,86 +270,148 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-sdv.modeler">
-<span id="sdv-modeler-module"></span><h1>sdv.modeler module<a class="headerlink" href="#module-sdv.modeler" title="Permalink to this headline">¶</a></h1>
-<p><strong>Classes</strong></p>
+  <div class="section" id="module-sdv.models.utils">
+<span id="sdv-models-utils-module"></span><h1>sdv.models.utils module<a class="headerlink" href="#module-sdv.models.utils" title="Permalink to this headline">¶</a></h1>
+<p><strong>Functions</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.modeler.Modeler" title="sdv.modeler.Modeler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Modeler</span></code></a>(metadata[, model, model_kwargs])</p></td>
-<td><p>Modeler class.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.check_matrix_symmetric_positive_definite" title="sdv.models.utils.check_matrix_symmetric_positive_definite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_matrix_symmetric_positive_definite</span></code></a>(matrix)</p></td>
+<td><p>Check if a matrix is symmetric positive-definite.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.flatten_array" title="sdv.models.utils.flatten_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten_array</span></code></a>(nested[, prefix])</p></td>
+<td><p>Flatten an array as a dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.flatten_dict" title="sdv.models.utils.flatten_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten_dict</span></code></a>(nested[, prefix])</p></td>
+<td><p>Flatten a dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.impute" title="sdv.models.utils.impute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">impute</span></code></a>(data)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.make_positive_definite" title="sdv.models.utils.make_positive_definite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_positive_definite</span></code></a>(matrix)</p></td>
+<td><p>Find the nearest positive-definite matrix to input.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.square_matrix" title="sdv.models.utils.square_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">square_matrix</span></code></a>(triangular_matrix)</p></td>
+<td><p>Fill with zeros a triangular matrix to reshape it to a square one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.unflatten_dict" title="sdv.models.utils.unflatten_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unflatten_dict</span></code></a>(flat)</p></td>
+<td><p>Transform a flattened dict into its original form.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="class">
-<dt id="sdv.modeler.Modeler">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.modeler.</code><code class="sig-name descname">Modeler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">model=&lt;class 'sdv.models.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Modeler class.</p>
-<p>The Modeler class applies the CPA algorithm recursively over all the tables
-from the dataset.</p>
+<dl class="function">
+<dt id="sdv.models.utils.check_matrix_symmetric_positive_definite">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">check_matrix_symmetric_positive_definite</code><span class="sig-paren">(</span><em class="sig-param">matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#check_matrix_symmetric_positive_definite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.check_matrix_symmetric_positive_definite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a matrix is symmetric positive-definite.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata</strong> (<a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Dataset Metadata.</p></li>
-<li><p><strong>model</strong> (<em>type</em>) – Class of model to use. Defaults to <code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
-<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>matrix</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – Matrix to evaluate.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
-<p><strong>Methods</strong></p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.modeler.Modeler.cpa" title="sdv.modeler.Modeler.cpa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpa</span></code></a>(table_name, tables[, foreign_key])</p></td>
-<td><p>Run the CPA algorithm over the indicated table and its children.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.modeler.Modeler.model_database" title="sdv.modeler.Modeler.model_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_database</span></code></a>([tables])</p></td>
-<td><p>Run CPA algorithm on all the tables of this dataset.</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="sdv.modeler.Modeler.cpa">
-<code class="sig-name descname">cpa</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">tables</em>, <em class="sig-param">foreign_key=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler.cpa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler.cpa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the CPA algorithm over the indicated table and its children.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdv.models.utils.flatten_array">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">flatten_array</code><span class="sig-paren">(</span><em class="sig-param">nested</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#flatten_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.flatten_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten an array as a dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to model.</p></li>
-<li><p><strong>tables</strong> (<em>dict</em>) – Dict of tables tha have been already modeled.</p></li>
-<li><p><strong>foreign_key</strong> (<em>str</em>) – Name of the foreign key that references this table. Used only when applying
-CPA on a child table.</p></li>
+<li><p><strong>nested</strong> (<em>list</em><em>, </em><em>numpy.array</em>) – Iterable to flatten.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – Name to append to the array indices. Defaults to <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>table data with the extensions created while modeling its children.</p>
+<dd class="field-even"><p>Flattened array.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="sdv.modeler.Modeler.model_database">
-<code class="sig-name descname">model_database</code><span class="sig-paren">(</span><em class="sig-param">tables=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/modeler.html#Modeler.model_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler.model_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run CPA algorithm on all the tables of this dataset.</p>
+<dl class="function">
+<dt id="sdv.models.utils.flatten_dict">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">flatten_dict</code><span class="sig-paren">(</span><em class="sig-param">nested</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#flatten_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.flatten_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten a dictionary.</p>
+<p>This method returns a flatten version of a dictionary, concatenating key names with
+double underscores.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>tables</strong> (<em>dict</em>) – Optional. Dictinary containing the tables of this dataset.
-If not given, the tables will be loaded using the dataset
-metadata specification.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nested</strong> (<em>dict</em>) – Original dictionary to flatten.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – Prefix to append to key name. Defaults to <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flattened dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="sdv.models.utils.impute">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">impute</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#impute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.impute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sdv.models.utils.make_positive_definite">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">make_positive_definite</code><span class="sig-paren">(</span><em class="sig-param">matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#make_positive_definite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.make_positive_definite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the nearest positive-definite matrix to input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>matrix</strong> (<em>numpy.ndarray</em>) – Matrix to transform</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Closest symetric positive-definite matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdv.models.utils.square_matrix">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">square_matrix</code><span class="sig-paren">(</span><em class="sig-param">triangular_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#square_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.square_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill with zeros a triangular matrix to reshape it to a square one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>triangular_matrix</strong> (<em>list</em><em> [</em><em>list</em><em> [</em><em>float</em><em>]</em><em>]</em>) – Array of arrays of</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Square matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdv.models.utils.unflatten_dict">
+<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">unflatten_dict</code><span class="sig-paren">(</span><em class="sig-param">flat</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#unflatten_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.unflatten_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a flattened dict into its original form.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>flat</strong> (<em>dict</em>) – Flattened dict.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Nested dict (if corresponds)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -360,10 +424,10 @@ metadata specification.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sdv.sampler.html" class="btn btn-neutral float-right" title="sdv.sampler module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sdv.demo.html" class="btn btn-neutral float-right" title="sdv.demo module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sdv.metadata.html" class="btn btn-neutral float-left" title="sdv.metadata module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="sdv.models.copulas.html" class="btn btn-neutral float-left" title="sdv.models.copulas module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -136,6 +136,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
@@ -261,13 +266,12 @@
 <span class="sd">&quot;&quot;&quot;Main module.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
-<span class="kn">from</span> <span class="nn">copulas.multivariate</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
-
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
 <span class="kn">from</span> <span class="nn">sdv.modeler</span> <span class="kn">import</span> <span class="n">Modeler</span>
+<span class="kn">from</span> <span class="nn">sdv.models.copulas</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 <span class="kn">from</span> <span class="nn">sdv.sampler</span> <span class="kn">import</span> <span class="n">Sampler</span>
 
-<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span>
+<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianCopula</span>
 <span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
 <span class="p">}</span>
@@ -285,7 +289,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        model (type):</span>
 <span class="sd">            Class of the ``copula`` to use. Defaults to</span>
-<span class="sd">            ``copulas.multivariate.GaussianMultivariate``.</span>
+<span class="sd">            ``sdv.models.copulas.GaussianCopula``.</span>
 <span class="sd">        model_kwargs (dict):</span>
 <span class="sd">            Keyword arguments to pass to the model. Defaults to ``None``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -330,7 +334,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span> <span class="o">=</span> <span class="n">Modeler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">model_database</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SDV.sample"><a class="viewcode-back" href="../../api/sdv.sdv.html#sdv.SDV.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample ``num_rows`` rows from the indicated table.</span>

@@ -136,6 +136,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
@@ -271,107 +276,23 @@
 <span class="sd">            Dataset Metadata.</span>
 <span class="sd">        models (dict):</span>
 <span class="sd">            Table models.</span>
+<span class="sd">        model (SDVModel):</span>
+<span class="sd">            Model class to sample data.</span>
+<span class="sd">        model_kwargs (dict):</span>
+<span class="sd">            Additional arguments to create the ``SDVModel``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">models</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">remaining_primary_key</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">models</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">remaining_primary_key</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_square_matrix</span><span class="p">(</span><span class="n">triangular_matrix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fill with zeros a triangular matrix to reshape it to a square one.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            triangular_matrix (list [list [float]]):</span>
-<span class="sd">                Array of arrays of</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            list:</span>
-<span class="sd">                Square matrix.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">triangular_matrix</span><span class="p">)</span>
-        <span class="n">zero</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
-
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">triangular_matrix</span><span class="p">:</span>
-            <span class="n">item</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">zero</span> <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)))</span>
-
-        <span class="k">return</span> <span class="n">triangular_matrix</span>
-
-    <span class="k">def</span> <span class="nf">_check_matrix_symmetric_positive_definite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Check if a matrix is symmetric positive-definite.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            matrix (list or numpy.ndarray):</span>
-<span class="sd">                Matrix to evaluate.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            bool</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="c1"># Not 2-dimensional or square, so not simmetric.</span>
-                <span class="k">return</span> <span class="kc">False</span>
-
-            <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">def</span> <span class="nf">_make_positive_definite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Find the nearest positive-definite matrix to input.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            matrix (numpy.ndarray):</span>
-<span class="sd">                Matrix to transform</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            numpy.ndarray:</span>
-<span class="sd">                Closest symetric positive-definite matrix.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">symetric_matrix</span> <span class="o">=</span> <span class="p">(</span><span class="n">matrix</span> <span class="o">+</span> <span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">symetric_matrix</span><span class="p">)</span>
-        <span class="n">symmetric_polar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">V</span><span class="p">))</span>
-        <span class="n">A2</span> <span class="o">=</span> <span class="p">(</span><span class="n">symetric_matrix</span> <span class="o">+</span> <span class="n">symmetric_polar</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">A3</span> <span class="o">=</span> <span class="p">(</span><span class="n">A2</span> <span class="o">+</span> <span class="n">A2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_matrix_symmetric_positive_definite</span><span class="p">(</span><span class="n">A3</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">A3</span>
-
-        <span class="n">spacing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">))</span>
-        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">iterations</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_matrix_symmetric_positive_definite</span><span class="p">(</span><span class="n">A3</span><span class="p">):</span>
-            <span class="n">min_eigenvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvals</span><span class="p">(</span><span class="n">A3</span><span class="p">)))</span>
-            <span class="n">A3</span> <span class="o">+=</span> <span class="n">identity</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">min_eigenvals</span> <span class="o">*</span> <span class="n">iterations</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">spacing</span><span class="p">)</span>
-            <span class="n">iterations</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="k">return</span> <span class="n">A3</span>
-
-    <span class="k">def</span> <span class="nf">_prepare_sampled_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Prepare a covariance matrix.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            covariance (list):</span>
-<span class="sd">                covariance after unflattening model parameters.</span>
-
-<span class="sd">        Result:</span>
-<span class="sd">            list[list]:</span>
-<span class="sd">                symmetric Positive semi-definite matrix.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_square_matrix</span><span class="p">(</span><span class="n">covariance</span><span class="p">))</span>
-        <span class="n">covariance</span> <span class="o">=</span> <span class="p">(</span><span class="n">covariance</span> <span class="o">+</span> <span class="n">covariance</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">covariance</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_matrix_symmetric_positive_definite</span><span class="p">(</span><span class="n">covariance</span><span class="p">):</span>
-            <span class="n">covariance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_positive_definite</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">covariance</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span>
 
     <span class="k">def</span> <span class="nf">_reset_primary_keys_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reset the primary key generators.&quot;&quot;&quot;</span>
@@ -460,106 +381,6 @@
 
         <span class="k">return</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">primary_key_values</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_key_order</span><span class="p">(</span><span class="n">key_value</span><span class="p">):</span>
-        <span class="n">parts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">key_value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                <span class="n">part</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
-
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">parts</span>
-
-    <span class="k">def</span> <span class="nf">_unflatten_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform a flattened dict into its original form.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            flat (dict):</span>
-<span class="sd">                Flattened dict.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict:</span>
-<span class="sd">                Nested dict (if corresponds)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">unflattened</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_order</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s1">&#39;__&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
-                <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="n">subkey</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">subkey</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
-                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                    <span class="n">column_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-                    <span class="n">row_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
-
-                    <span class="n">array</span> <span class="o">=</span> <span class="n">unflattened</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span>
-
-                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span><span class="p">:</span>
-                        <span class="n">row</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-                        <span class="n">array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">row_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="n">row</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">row_index</span><span class="p">]</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># This should never happen</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
-
-                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">==</span> <span class="n">column_index</span><span class="p">:</span>
-                        <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># This should never happen</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;There was an error unflattening the extension.&#39;</span><span class="p">)</span>
-
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">subdict</span> <span class="o">=</span> <span class="n">unflattened</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
-                    <span class="k">if</span> <span class="n">subkey</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                        <span class="n">subkey</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>
-
-                    <span class="n">inner</span> <span class="o">=</span> <span class="n">subdict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
-                    <span class="n">inner</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">unflattened</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-        <span class="k">return</span> <span class="n">unflattened</span>
-
-    <span class="k">def</span> <span class="nf">_unflatten_gaussian_copula</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Prepare unflattened model params to recreate Gaussian Multivariate instance.</span>
-
-<span class="sd">        The preparations consist basically in:</span>
-
-<span class="sd">            - Transform sampled negative standard deviations from distributions into positive</span>
-<span class="sd">              numbers</span>
-
-<span class="sd">            - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.</span>
-
-<span class="sd">            - Add string parameters kept inside the class (as they can&#39;t be modelled),</span>
-<span class="sd">              like ``distribution_type``.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            model_parameters (dict):</span>
-<span class="sd">                Sampled and reestructured model parameters.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict:</span>
-<span class="sd">                Model parameters ready to recreate the model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">distribution_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;fitted&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
-        <span class="p">}</span>
-
-        <span class="n">distribs</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribs&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="n">distribs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">distribution</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">distribution_kwargs</span><span class="p">)</span>
-            <span class="n">distribution</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">distribution</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">])</span>
-
-        <span class="n">covariance</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span>
-        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_sampled_covariance</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">model_parameters</span>
-
     <span class="k">def</span> <span class="nf">_get_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_row</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the params from a generated parent row.</span>
 
@@ -575,18 +396,6 @@
         <span class="n">new_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
         <span class="n">flat_parameters</span> <span class="o">=</span> <span class="n">parent_row</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">flat_parameters</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">new_keys</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">,</span> <span class="n">table_model</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Build a model using the extension parameters.&quot;&quot;&quot;</span>
-        <span class="n">table_model_parameters</span> <span class="o">=</span> <span class="n">table_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-
-        <span class="n">model_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unflatten_dict</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
-        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;fitted&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
-
-        <span class="n">model_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unflatten_gaussian_copula</span><span class="p">(</span><span class="n">model_parameters</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">table_model</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">model_parameters</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample ``num_rows`` from ``model``.</span>
@@ -620,8 +429,8 @@
     <span class="k">def</span> <span class="nf">_sample_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">,</span> <span class="n">parent_row</span><span class="p">,</span> <span class="n">sampled</span><span class="p">):</span>
         <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extension</span><span class="p">(</span><span class="n">parent_row</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
-        <span class="n">table_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">table_model</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
         <span class="n">num_rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">extension</span><span class="p">[</span><span class="s1">&#39;child_rows&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>

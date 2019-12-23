@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.evaluation.descriptors &mdash; SDV 0.2.3.dev0 documentation</title>
+  <title>sdv.models.base &mdash; SDV 0.2.3.dev0 documentation</title>
   
 
   
@@ -245,9 +245,7 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
-          <li><a href="../evaluation.html">sdv.evaluation</a> &raquo;</li>
-        
-      <li>sdv.evaluation.descriptors</li>
+      <li>sdv.models.base</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -262,32 +260,53 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for sdv.evaluation.descriptors</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">scipy</span> <span class="k">as</span> <span class="nn">sp</span>
+  <h1>Source code for sdv.models.base</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="SDVModel"><a class="viewcode-back" href="../../../api/sdv.models.base.html#sdv.models.base.SDVModel">[docs]</a><span></span><span class="k">class</span> <span class="nc">SDVModel</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all the models used in ``SDV``.</span>
 
-
-<div class="viewcode-block" id="categorical_distribution"><a class="viewcode-back" href="../../../api/sdv.evaluation.descriptors.html#sdv.evaluation.descriptors.categorical_distribution">[docs]</a><span class="k">def</span> <span class="nf">categorical_distribution</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute the empirical distribution for a categorical column.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        column(pandas.Series): Column to compute the empirical distribution.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        pandas.Series: Serie whose index are the catogories, and their relative frequency is</span>
-<span class="sd">                       their value.</span>
-
+<span class="sd">    The ``SDVModel`` class contains the api methods that must be implemented</span>
+<span class="sd">    in order to create a new model.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">column</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span></div>
 
+<div class="viewcode-block" id="SDVModel.fit"><a class="viewcode-back" href="../../../api/sdv.models.base.html#sdv.models.base.SDVModel.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
-<span class="n">DESCRIPTORS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
-    <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
-    <span class="s1">&#39;skew&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">skew</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
-    <span class="s1">&#39;kurtosis&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">)),</span>
-    <span class="s1">&#39;categorical_distribution&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">categorical_distribution</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">))</span>
-<span class="p">}</span>
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Data to be fitted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="SDVModel.sample"><a class="viewcode-back" href="../../../api/sdv.models.base.html#sdv.models.base.SDVModel.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample ``num_samples`` rows from the model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_samples (int):</span>
+<span class="sd">                Amount of rows to sample.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Sampled data with the number of rows specified in ``num_samples``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="SDVModel.get_parameters"><a class="viewcode-back" href="../../../api/sdv.models.base.html#sdv.models.base.SDVModel.get_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get model parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                Flatten parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="SDVModel.set_parameters"><a class="viewcode-back" href="../../../api/sdv.models.base.html#sdv.models.base.SDVModel.set_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set model parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                Flatten parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
 </pre></div>
 
            </div>

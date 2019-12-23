@@ -137,6 +137,11 @@
 <li class="toctree-l4"><a class="reference internal" href="api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdv.html#submodules">Submodules</a><ul>
@@ -270,6 +275,7 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
@@ -277,6 +283,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  
 </div>
 <h2 id="A">A</h2>
@@ -312,6 +319,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.check_matrix_symmetric_positive_definite">check_matrix_symmetric_positive_definite() (in module sdv.models.utils)</a>
+</li>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler.cpa">cpa() (sdv.modeler.Modeler method)</a>
 </li>
   </ul></td>
@@ -321,6 +330,12 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.evaluation.html#sdv.evaluation.describe">describe() (in module sdv.evaluation)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.DISTRIBUTION">DISTRIBUTION (sdv.models.copulas.GaussianCopula attribute)</a>
+</li>
+      <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.distribution">distribution (sdv.models.copulas.GaussianCopula attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -336,18 +351,30 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sdv.html#sdv.SDV.fit">fit() (sdv.SDV method)</a>
+      <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.fit">fit() (sdv.models.base.SDVModel method)</a>
 
       <ul>
+        <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.fit">(sdv.models.copulas.GaussianCopula method)</a>
+</li>
+        <li><a href="api/sdv.html#sdv.SDV.fit">(sdv.SDV method)</a>
+</li>
         <li><a href="api/sdv.sdv.html#sdv.sdv.SDV.fit">(sdv.sdv.SDV method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.flatten_array">flatten_array() (in module sdv.models.utils)</a>
+</li>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.flatten_dict">flatten_dict() (in module sdv.models.utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula">GaussianCopula (class in sdv.models.copulas)</a>
+</li>
       <li><a href="api/sdv.html#sdv.get_available_demos">get_available_demos() (in module sdv)</a>
 
       <ul>
@@ -380,6 +407,12 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.get_parameters">get_parameters() (sdv.models.base.SDVModel method)</a>
+
+      <ul>
+        <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.get_parameters">(sdv.models.copulas.GaussianCopula method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.html#sdv.Metadata.get_parents">get_parents() (sdv.Metadata method)</a>
 
       <ul>
@@ -404,6 +437,14 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_tables">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.impute">impute() (in module sdv.models.utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -442,6 +483,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.make_positive_definite">make_positive_definite() (in module sdv.models.utils)</a>
+</li>
       <li><a href="api/sdv.html#sdv.Metadata">Metadata (class in sdv)</a>
 
       <ul>
@@ -452,6 +495,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.model">model (sdv.models.copulas.GaussianCopula attribute)</a>
+</li>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler.model_database">model_database() (sdv.modeler.Modeler method)</a>
 </li>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler">Modeler (class in sdv.modeler)</a>
@@ -502,9 +547,13 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.sample">sample() (sdv.sampler.Sampler method)</a>
+      <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.sample">sample() (sdv.models.base.SDVModel method)</a>
 
       <ul>
+        <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.sample">(sdv.models.copulas.GaussianCopula method)</a>
+</li>
+        <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.sample">(sdv.sampler.Sampler method)</a>
+</li>
         <li><a href="api/sdv.html#sdv.SDV.sample">(sdv.SDV method)</a>
 </li>
         <li><a href="api/sdv.sdv.html#sdv.sdv.SDV.sample">(sdv.sdv.SDV method)</a>
@@ -538,12 +587,12 @@
         <li><a href="api/sdv.sdv.html#sdv.sdv.SDV">(class in sdv.sdv)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#module-sdv">sdv (module)</a>
 </li>
       <li><a href="api/sdv.demo.html#module-sdv.demo">sdv.demo (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.evaluation.html#module-sdv.evaluation">sdv.evaluation (module)</a>
 </li>
       <li><a href="api/sdv.evaluation.descriptors.html#module-sdv.evaluation.descriptors">sdv.evaluation.descriptors (module)</a>
@@ -554,16 +603,34 @@
 </li>
       <li><a href="api/sdv.modeler.html#module-sdv.modeler">sdv.modeler (module)</a>
 </li>
+      <li><a href="api/sdv.models.html#module-sdv.models">sdv.models (module)</a>
+</li>
+      <li><a href="api/sdv.models.base.html#module-sdv.models.base">sdv.models.base (module)</a>
+</li>
+      <li><a href="api/sdv.models.copulas.html#module-sdv.models.copulas">sdv.models.copulas (module)</a>
+</li>
+      <li><a href="api/sdv.models.utils.html#module-sdv.models.utils">sdv.models.utils (module)</a>
+</li>
       <li><a href="api/sdv.sampler.html#module-sdv.sampler">sdv.sampler (module)</a>
 </li>
       <li><a href="api/sdv.sdv.html#module-sdv.sdv">sdv.sdv (module)</a>
 </li>
+      <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel">SDVModel (class in sdv.models.base)</a>
+</li>
+      <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.set_parameters">set_parameters() (sdv.models.base.SDVModel method)</a>
+
+      <ul>
+        <li><a href="api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.set_parameters">(sdv.models.copulas.GaussianCopula method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.html#sdv.Metadata.set_primary_key">set_primary_key() (sdv.Metadata method)</a>
 
       <ul>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.set_primary_key">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.square_matrix">square_matrix() (in module sdv.models.utils)</a>
+</li>
       <li><a href="api/sdv.evaluation.metrics.html#sdv.evaluation.metrics.sum_square_diff">sum_square_diff() (in module sdv.evaluation.metrics)</a>
 </li>
   </ul></td>
@@ -592,6 +659,14 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.transform">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.models.utils.html#sdv.models.utils.unflatten_dict">unflatten_dict() (in module sdv.models.utils)</a>
+</li>
   </ul></td>
 </tr></table>
 

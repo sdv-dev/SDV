@@ -1,0 +1,19 @@
+sdv.models package
+==================
+
+Submodules
+----------
+
+.. toctree::
+
+   sdv.models.base
+   sdv.models.copulas
+   sdv.models.utils
+
+Module contents
+---------------
+
+.. automodule:: sdv.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
