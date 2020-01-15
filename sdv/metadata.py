@@ -116,6 +116,76 @@ class Metadata:
                         self._child_map[parent].add(table)
                         self._parent_map[table].add(parent)
 
+    def _validate_dataset_structure(self):
+        """Make sure that all the tables have at most one parent."""
+        for table in self.get_tables():
+            if len(self.get_parents(table)) > 1:
+                raise ValueError('Some tables have multiple parents, which is not supported yet.')
+
+    def _validate_table(self, table_name, table_meta, tables=None):
+        """Validate metadata table.
+
+        Args:
+            table_name (str):
+                Table name to be validated.
+            table_meta (dict):
+                Table metadata to be validated.
+            tables (dict):
+                Dictionary with the name of the table and their data.
+                If it's provided, assert metadata types are valid and
+                metadata fields exist in data columns.
+        """
+        dtypes = self.get_dtypes(table_name, ids=True)
+
+        # Primary key field exists and its type is 'id'
+        primary_key = table_meta.get('primary_key')
+        if primary_key:
+            pk_field = table_meta['fields'].get(primary_key)
+
+            if not pk_field:
+                raise MetadataError('Primary key is not an existing field.')
+
+            if pk_field['type'] != 'id':
+                raise MetadataError('Primary key is not of type `id`.')
+
+        if tables:
+            data = tables[table_name]
+
+            for column in data:
+                data[column].astype(dtypes[column])
+
+            # assert all dtypes are in data
+            for field in dtypes:
+                if field not in data.columns:
+                    raise MetadataError(
+                        '`{}`.`{}` is not in data fields.'.format(table_name, field)
+                    )
+
+    def validate(self, tables=None):
+        """Validate metadata structure.
+
+        Args:
+            tables (bool, dict):
+                When is a ``bool`` if ``True`` load the data to validate each
+                field type from the metadata. When is a ``dict`` use this data
+                to validate. Defaults to ``None``
+        """
+        tables_meta = self._metadata.get('tables')
+        if not tables_meta:
+            raise MetadataError('Metadata missing "tables".')
+
+        data = None
+        if isinstance(tables, dict):
+            data = tables
+        elif tables:
+            data = self.load_tables()
+
+        for table_name, table_meta in tables_meta.items():
+            self._validate_table(table_name, table_meta, data)
+            self._validate_circular_relationships(table_name)
+
+        self._validate_dataset_structure()
+
     @staticmethod
     def _dict_metadata(metadata):
         """Get a metadata ``dict`` with SDV format.
@@ -780,3 +850,7 @@ class Metadata:
         """
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
+
+
+class MetadataError(Exception):
+    pass
