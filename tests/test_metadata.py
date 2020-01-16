@@ -843,6 +843,41 @@ class TestMetadata(TestCase):
         metadata.set_primary_key.call_count == 0
         metadata.add_relationship.call_count == 0
 
+    @patch('sdv.metadata.pd.read_csv')
+    def test_add_table_with_data_str(self, mock_read_csv):
+        """Add table with data as str"""
+        # Setup
+        metadata = Mock(spec=Metadata)
+        metadata.get_tables.return_value = ['a_table', 'b_table']
+        metadata._metadata = {'tables': dict()}
+        mock_read_csv.return_value = pd.DataFrame({
+            'a_field': [0, 1],
+            'b_field': [True, False],
+            'c_field': ['a', 'b']
+        })
+        metadata._get_field_details.return_value = {
+            'a_field': {'type': 'numerical', 'subtype': 'integer'},
+            'b_field': {'type': 'boolean'},
+            'c_field': {'type': 'categorical'}
+        }
+
+        # Run
+        Metadata.add_table(metadata, 'x_table', data='/path/to/file.csv')
+
+        expected_table_meta = {
+            'fields': {
+                'a_field': {'type': 'numerical', 'subtype': 'integer'},
+                'b_field': {'type': 'boolean'},
+                'c_field': {'type': 'categorical'}
+            },
+            'path': '/path/to/file.csv'
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.set_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
     def test_add_relationship_table_no_exist(self):
         """Add relationship table no exist"""
         # Setup
