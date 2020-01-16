@@ -798,7 +798,7 @@ class Metadata:
 
         return None, None
 
-    def plot(self, path=None):
+    def visualize(self, path=None):
         """Plot metadata usign graphviz.
 
         Try to generate a plot using graphviz.
