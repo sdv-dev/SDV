@@ -50,6 +50,10 @@ def _load_csv(root_path, table_meta):
     return data
 
 
+class MetadataError(Exception):
+    pass
+
+
 class Metadata:
     """Dataset Metadata.
 
@@ -116,22 +120,26 @@ class Metadata:
                         self._child_map[parent].add(table)
                         self._parent_map[table].add(parent)
 
-    def _validate_dataset_structure(self):
+    def _validate_parents(self):
         """Make sure that all the tables have at most one parent."""
         for table in self.get_tables():
             if len(self.get_parents(table)) > 1:
                 raise ValueError('Some tables have multiple parents, which is not supported yet.')
 
-    def _validate_table(self, table_name, table_meta, tables=None):
+    def _validate_table(self, table_name, table_meta, table_data=None):
         """Validate metadata table.
+
+        Gets the data types for the ``table_data`` including the ids,
+        assert that the ``primary_key`` is a fields with type ``id`` and
+        for each table data column check the data types are valid and
+        all the data types are in the table columns.
 
         Args:
             table_name (str):
                 Table name to be validated.
             table_meta (dict):
                 Table metadata to be validated.
-            tables (dict):
-                Dictionary with the name of the table and their data.
+            table_data (pandas.DataFrame):
                 If it's provided, assert metadata types are valid and
                 metadata fields exist in data columns.
         """
@@ -148,43 +156,64 @@ class Metadata:
             if pk_field['type'] != 'id':
                 raise MetadataError('Primary key is not of type `id`.')
 
-        if tables:
-            data = tables[table_name]
-
-            for column in data:
-                data[column].astype(dtypes[column])
+        if table_data is not None:
+            for column in table_data:
+                try:
+                    table_data[column].astype(dtypes[column])
+                    del dtypes[column]
+                except ValueError as ve:
+                    message = 'Invalid values found in column {} of table {}: {}'.format(
+                        column, table_name, ve)
+                    raise MetadataError(message) from None
 
             # assert all dtypes are in data
-            for field in dtypes:
-                if field not in data.columns:
-                    raise MetadataError(
-                        '`{}`.`{}` is not in data fields.'.format(table_name, field)
-                    )
+            if dtypes:
+                raise MetadataError(
+                    'Missing columns on table {}: {}.'.format(table_name, list(dtypes.keys()))
+                )
 
     def validate(self, tables=None):
         """Validate metadata structure.
 
+        Validate ``tables`` entry exists in Metadata.
+        Validate tables metadata exist in ``tables`` if provided.
+        For each table validate the primary key is a field of type ``id``
+        and only one foreign key is allowed.
+        For each field validate:
+            * The type and subtype are valids.
+            * If the field is type ``id`` is primary key or has a ``ref`` entry.
+            * If it has a ``ref`` the type is ``id``.
+            * If it has foreign key, the parent table exists,
+              the parent primary key exists and the primary key
+              subtype is the same.
+
         Args:
             tables (bool, dict):
-                When is a ``bool`` if ``True`` load the data to validate each
-                field type from the metadata. When is a ``dict`` use this data
-                to validate. Defaults to ``None``
+                If a dict of table is passed, validate that the columns and
+                dtypes match the metadata. If ``True`` is passed, load the
+                tables from the Metadata instead. If ``None``, omit the data
+                validation. Defaults to ``None``.
         """
         tables_meta = self._metadata.get('tables')
         if not tables_meta:
-            raise MetadataError('Metadata missing "tables".')
+            raise MetadataError('"tables" entry not found in Metadata.')
 
-        data = None
-        if isinstance(tables, dict):
-            data = tables
-        elif tables:
-            data = self.load_tables()
+        if tables and not isinstance(tables, dict):
+            tables = self.load_tables()
 
         for table_name, table_meta in tables_meta.items():
-            self._validate_table(table_name, table_meta, data)
+            if tables:
+                table = tables.get(table_name)
+                if table is None:
+                    raise MetadataError('Table `{}` not found in tables'.format(table_name))
+
+            else:
+                table = None
+
+            self._validate_table(table_name, table_meta, table)
             self._validate_circular_relationships(table_name)
 
-        self._validate_dataset_structure()
+        self._validate_parents()
 
     @staticmethod
     def _dict_metadata(metadata):
@@ -850,7 +879,3 @@ class Metadata:
         """
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
-
-
-class MetadataError(Exception):
-    pass
