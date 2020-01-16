@@ -826,14 +826,12 @@ class Metadata:
             node_attr={"shape": "Mrecord"},
         )
 
-        # No QA W605 invalid escape sequence.
-        # '\l' is used to left align the fields inside the label
         for table in self.get_tables():
-            fields = '\l'.join([  # noqa: W605
+            fields = r'\l'.join([
                 '{} : {}'.format(name, value['type'])
                 for name, value in self.get_fields(table).items()
             ])
-            title = '{%s|%s\l}' % (table, fields)  # noqa: W605
+            title = r'{%s|%s\l}' % (table, fields)
             plot.node(table, label=title)
 
         for table in self.get_tables():
