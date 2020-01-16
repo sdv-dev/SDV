@@ -792,7 +792,7 @@ class Metadata:
                 raise ValueError('Path without graphviz extansion.')
 
             graphviz_extension = path_splitted[-1]
-            
+
             if graphviz_extension not in graphviz.backend.FORMATS:
                 raise ValueError('"{}" not a valid graphviz extension format.')
 
@@ -801,6 +801,17 @@ class Metadata:
         return None, None
 
     def plot(self, path=None):
+        """Plot metadata usign graphviz.
+
+        Try to generate a plot using graphviz.
+        If a ``path`` is provided save the output into a file.
+
+        Args:
+            path (str):
+                Output file path to save the plot, it requires a graphviz
+                supported extension. If ``None`` do not save the plot.
+                Defaults to ``None``.
+        """
         try:
             graphviz.Digraph().pipe()
         except graphviz.backend.ExecutableNotFound:
@@ -813,16 +824,18 @@ class Metadata:
         plot = graphviz.Digraph(
             'Metadata',
             format=graphviz_extension,
-            graph_attr={"rankdir":"BT"},
-            node_attr={"shape": "Mrecord", "width": "2.3"},
+            graph_attr={"rankdir": "BT"},
+            node_attr={"shape": "Mrecord"},
         )
 
+        # No QA W605 invalid escape sequence.
+        # '\l' is used to left align the fields inside the label
         for table in self.get_tables():
-            fields = '\l'.join([
+            fields = '\l'.join([  # noqa: W605
                 '{} : {}'.format(name, value['type'])
                 for name, value in self.get_fields(table).items()
             ])
-            title = '{%s|%s\l}' % (table, fields)
+            title = '{%s|%s\l}' % (table, fields)  # noqa: W605
             plot.node(table, label=title)
 
         for table in self.get_tables():
