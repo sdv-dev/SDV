@@ -17,6 +17,7 @@ install_requires = [
     'pandas>=0.23.4,<0.25',
     'copulas>=0.2.3,<0.3',
     'rdt>=0.2.0,<0.3',
+    'graphviz>=0.13.2',
     # 'docutils<0.15,>=0.10',
 ]
 
