@@ -51,30 +51,6 @@ class TestSDV(TestCase):
         assert sdv.model == 'test'
         assert sdv.model_kwargs == {'a': 2}
 
-    def test__validate_dataset_structure_no_error(self):
-        """Test that any error is raised with a supported structure"""
-        # Setup
-        sdv = Mock()
-        sdv.metadata.get_tables.return_value = ['foo', 'bar', 'tar']
-        sdv.metadata.get_parents.side_effect = [[], ['foo'], ['bar']]
-
-        # Run
-        SDV._validate_dataset_structure(sdv)
-
-        # Asserts
-        assert sdv.metadata.get_parents.call_count == 3
-
-    def test__validate_dataset_structure_raise_error(self):
-        """Test that a ValueError is raised because the bad structure"""
-        # Setup
-        sdv = Mock()
-        sdv.metadata.get_tables.return_value = ['foo', 'bar', 'tar']
-        sdv.metadata.get_parents.side_effect = [[], [], ['foo', 'bar']]
-
-        # Run
-        with pytest.raises(ValueError):
-            SDV._validate_dataset_structure(sdv)
-
     def test_sample_fitted(self):
         """Check that the sample is called."""
         # Sample
