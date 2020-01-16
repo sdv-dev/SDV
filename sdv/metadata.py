@@ -728,8 +728,10 @@ class Metadata:
         if name in self.get_tables():
             raise ValueError('Table "{}" already exists.'.format(name))
 
+        path = None
         if data is not None:
             if isinstance(data, str):
+                path = data
                 if not os.path.isabs(data):
                     data = os.path.join(self.root_path, data)
 
@@ -746,9 +748,11 @@ class Metadata:
         elif fields_metadata is None:
             fields_metadata = dict()
 
-        self._metadata['tables'][name] = {
-            'fields': fields_metadata
-        }
+        table_metadata = {'fields': fields_metadata}
+        if path:
+            table_metadata['path'] = path
+
+        self._metadata['tables'][name] = table_metadata
 
         try:
             if primary_key:
