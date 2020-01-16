@@ -11,8 +11,6 @@ from rdt import HyperTransformer, transformers
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_PLOT_EXTENSION = 'jpg'
-
 
 def _read_csv_dtypes(table_meta):
     """Get the dtypes specification that needs to be passed to read_csv."""
