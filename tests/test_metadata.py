@@ -217,7 +217,7 @@ class TestMetadata(TestCase):
         }
         assert result == expected
 
-    def test__validate_dataset_structure_no_error(self):
+    def test__validate_parents_no_error(self):
         """Test that any error is raised with a supported structure"""
         # Setup
         mock = MagicMock(spec=Metadata)
@@ -225,12 +225,12 @@ class TestMetadata(TestCase):
         mock.get_parents.side_effect = [[], ['foo'], ['bar']]
 
         # Run
-        Metadata._validate_dataset_structure(mock)
+        Metadata._validate_parents(mock)
 
         # Asserts
         assert mock.get_parents.call_count == 3
 
-    def test__validate_dataset_structure_raise_error(self):
+    def test__validate_parents_raise_error(self):
         """Test that a ValueError is raised because the bad structure"""
         # Setup
         mock = MagicMock(spec=Metadata)
@@ -239,7 +239,7 @@ class TestMetadata(TestCase):
 
         # Run
         with pytest.raises(ValueError):
-            Metadata._validate_dataset_structure(mock)
+            Metadata._validate_parents(mock)
 
     @patch('sdv.metadata.Metadata._analyze_relationships')
     @patch('sdv.metadata.Metadata._dict_metadata')

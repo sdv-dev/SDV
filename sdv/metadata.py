@@ -129,10 +129,15 @@ class Metadata:
     def _validate_table(self, table_name, table_meta, table_data=None):
         """Validate metadata table.
 
-        Gets the data types for the ``table_data`` including the ids,
-        assert that the ``primary_key`` is a fields with type ``id`` and
-        for each table data column check the data types are valid and
-        all the data types are in the table columns.
+        Validate the type and subtype combination for each field in ``table_meta``
+        and in case a field of type ``id`` exists it must be the ``primary_key`` or
+        must have a ``ref`` entry.
+
+        If ``primary_key`` entry exists, check that it's an existing field
+        and its type is ``id``.
+
+        If ``table_data`` is provided, check all the data types for the table
+        correspond to each column and all the data types exists on the table.
 
         Args:
             table_name (str):
@@ -140,8 +145,8 @@ class Metadata:
             table_meta (dict):
                 Table metadata to be validated.
             table_data (pandas.DataFrame):
-                If it's provided, assert metadata types are valid and
-                metadata fields exist in data columns.
+                If it's provided, check the metadata types are valid and the
+                metadata fields exists in data columns.
         """
         dtypes = self.get_dtypes(table_name, ids=True)
 
@@ -175,17 +180,23 @@ class Metadata:
     def validate(self, tables=None):
         """Validate metadata structure.
 
-        Validate ``tables`` entry exists in Metadata.
-        Validate tables metadata exist in ``tables`` if provided.
-        For each table validate the primary key is a field of type ``id``
-        and only one foreign key is allowed.
-        For each field validate:
-            * The type and subtype are valids.
-            * If the field is type ``id`` is primary key or has a ``ref`` entry.
-            * If it has a ``ref`` the type is ``id``.
-            * If it has foreign key, the parent table exists,
-              the parent primary key exists and the primary key
-              subtype is the same.
+        Check that ``tables`` entry exists.
+        If ``tables`` is ``True``, load the tables from the ``Metadata``.
+
+        For each table from the metadata ``tables`` entry:
+            * If ``tables`` are provided or they have been loaded, check
+              that all the metadata tables exists in the ``tables`` dictionary.
+            * Validate the type/subtype combination for each field and
+              if a field of type ``id`` exists it must be the ``primary_key``
+              or must have a ``ref`` entry.
+            * If ``primary_key`` entry exists, check that it's an existing
+              field and its type is ``id``.
+            * If ``tables`` are provided or they have been loaded, check
+              all the data types for the table correspond to each column and
+              all the data types exists on the table.
+            * Validate that there is no circular relatioship in the metadata.
+
+        Check that all the tables have at most one parent.
 
         Args:
             tables (bool, dict):
