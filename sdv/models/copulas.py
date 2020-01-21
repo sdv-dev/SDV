@@ -1,5 +1,5 @@
 import numpy as np
-from copulas import multivariate
+from copulas import multivariate, univariate
 
 from sdv.models.base import SDVModel
 from sdv.models.utils import (
@@ -29,7 +29,7 @@ class GaussianCopula(SDVModel):
         4  1.925887
     """
 
-    DISTRIBUTION = 'copulas.univariate.gaussian.GaussianUnivariate'
+    DISTRIBUTION = univariate.GaussianUnivariate
     distribution = None
     model = None
 
