@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata import Metadata, _load_csv, _parse_dtypes, _read_csv_dtypes
+from sdv.metadata import Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes
 
 
 def test__read_csv_dtypes():
@@ -221,25 +221,23 @@ class TestMetadata(TestCase):
         """Test that any error is raised with a supported structure"""
         # Setup
         mock = MagicMock(spec=Metadata)
-        mock.get_tables.return_value = ['foo', 'bar', 'tar']
-        mock.get_parents.side_effect = [[], ['foo'], ['bar']]
+        mock.get_parents.return_value = []
 
         # Run
-        Metadata._validate_parents(mock)
+        Metadata._validate_parents(mock, 'demo')
 
         # Asserts
-        assert mock.get_parents.call_count == 3
+        mock.get_parents.assert_called_once_with('demo')
 
     def test__validate_parents_raise_error(self):
         """Test that a ValueError is raised because the bad structure"""
         # Setup
         mock = MagicMock(spec=Metadata)
-        mock.get_tables.return_value = ['foo', 'bar', 'tar']
-        mock.get_parents.side_effect = [[], [], ['foo', 'bar']]
+        mock.get_parents.return_value = ['foo', 'bar']
 
         # Run
-        with pytest.raises(ValueError):
-            Metadata._validate_parents(mock)
+        with pytest.raises(MetadataError):
+            Metadata._validate_parents(mock, 'demo')
 
     @patch('sdv.metadata.Metadata._analyze_relationships')
     @patch('sdv.metadata.Metadata._dict_metadata')
@@ -391,7 +389,7 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(ValueError):
+        with pytest.raises(MetadataError):
             Metadata.get_dtypes(metadata, 'test')
 
     def test_get_dtypes_error_id(self):
@@ -407,7 +405,7 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(ValueError):
+        with pytest.raises(MetadataError):
             Metadata.get_dtypes(metadata, 'test', ids=True)
 
     def test_get_dtypes_error_subtype_numerical(self):
@@ -423,7 +421,7 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(ValueError):
+        with pytest.raises(MetadataError):
             Metadata.get_dtypes(metadata, 'test')
 
     def test_get_dtypes_error_subtype_id(self):
@@ -439,7 +437,7 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(ValueError):
+        with pytest.raises(MetadataError):
             Metadata.get_dtypes(metadata, 'test', ids=True)
 
     def test__get_pii_fields(self):
