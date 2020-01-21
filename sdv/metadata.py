@@ -120,112 +120,6 @@ class Metadata:
                         self._child_map[parent].add(table)
                         self._parent_map[table].add(parent)
 
-    def _validate_parents(self):
-        """Make sure that all the tables have at most one parent."""
-        for table in self.get_tables():
-            if len(self.get_parents(table)) > 1:
-                raise ValueError('Some tables have multiple parents, which is not supported yet.')
-
-    def _validate_table(self, table_name, table_meta, table_data=None):
-        """Validate metadata table.
-
-        Validate the type and subtype combination for each field in ``table_meta``
-        and in case a field of type ``id`` exists it must be the ``primary_key`` or
-        must have a ``ref`` entry.
-
-        If ``primary_key`` entry exists, check that it's an existing field
-        and its type is ``id``.
-
-        If ``table_data`` is provided, check all the data types for the table
-        correspond to each column and all the data types exists on the table.
-
-        Args:
-            table_name (str):
-                Table name to be validated.
-            table_meta (dict):
-                Table metadata to be validated.
-            table_data (pandas.DataFrame):
-                If it's provided, check the metadata types are valid and the
-                metadata fields exists in data columns.
-        """
-        dtypes = self.get_dtypes(table_name, ids=True)
-
-        # Primary key field exists and its type is 'id'
-        primary_key = table_meta.get('primary_key')
-        if primary_key:
-            pk_field = table_meta['fields'].get(primary_key)
-
-            if not pk_field:
-                raise MetadataError('Primary key is not an existing field.')
-
-            if pk_field['type'] != 'id':
-                raise MetadataError('Primary key is not of type `id`.')
-
-        if table_data is not None:
-            for column in table_data:
-                try:
-                    table_data[column].astype(dtypes[column])
-                    del dtypes[column]
-                except ValueError as ve:
-                    message = 'Invalid values found in column {} of table {}: {}'.format(
-                        column, table_name, ve)
-                    raise MetadataError(message) from None
-
-            # assert all dtypes are in data
-            if dtypes:
-                raise MetadataError(
-                    'Missing columns on table {}: {}.'.format(table_name, list(dtypes.keys()))
-                )
-
-    def validate(self, tables=None):
-        """Validate metadata structure.
-
-        Check that ``tables`` entry exists.
-        If ``tables`` is ``True``, load the tables from the ``Metadata``.
-
-        For each table from the metadata ``tables`` entry:
-            * If ``tables`` are provided or they have been loaded, check
-              that all the metadata tables exists in the ``tables`` dictionary.
-            * Validate the type/subtype combination for each field and
-              if a field of type ``id`` exists it must be the ``primary_key``
-              or must have a ``ref`` entry.
-            * If ``primary_key`` entry exists, check that it's an existing
-              field and its type is ``id``.
-            * If ``tables`` are provided or they have been loaded, check
-              all the data types for the table correspond to each column and
-              all the data types exists on the table.
-            * Validate that there is no circular relatioship in the metadata.
-
-        Check that all the tables have at most one parent.
-
-        Args:
-            tables (bool, dict):
-                If a dict of table is passed, validate that the columns and
-                dtypes match the metadata. If ``True`` is passed, load the
-                tables from the Metadata instead. If ``None``, omit the data
-                validation. Defaults to ``None``.
-        """
-        tables_meta = self._metadata.get('tables')
-        if not tables_meta:
-            raise MetadataError('"tables" entry not found in Metadata.')
-
-        if tables and not isinstance(tables, dict):
-            tables = self.load_tables()
-
-        for table_name, table_meta in tables_meta.items():
-            if tables:
-                table = tables.get(table_name)
-                if table is None:
-                    raise MetadataError('Table `{}` not found in tables'.format(table_name))
-
-            else:
-                table = None
-
-            self._validate_table(table_name, table_meta, table)
-            self._validate_circular_relationships(table_name)
-
-        self._validate_parents()
-
     @staticmethod
     def _dict_metadata(metadata):
         """Get a metadata ``dict`` with SDV format.
@@ -461,14 +355,14 @@ class Metadata:
             field_subtype = field.get('subtype')
             dtype = self._DTYPES.get((field_type, field_subtype))
             if not dtype:
-                raise ValueError(
+                raise MetadataError(
                     'Invalid type and subtype combination for field {}: ({}, {})'.format(
                         name, field_type, field_subtype)
                 )
 
             if ids and field_type == 'id':
                 if (name != table_meta.get('primary_key')) and not field.get('ref'):
-                    raise ValueError(
+                    raise MetadataError(
                         'id field `{}` is neither a primary or a foreign key'.format(name))
 
             if ids or (field_type != 'id'):
@@ -599,6 +493,128 @@ class Metadata:
 
         return reversed_data
 
+    # ################### #
+    # Metadata Validation #
+    # ################### #
+
+    def _validate_table(self, table_name, table_meta, table_data=None):
+        """Validate table metadata.
+
+        Validate the type and subtype combination for each field in ``table_meta``.
+        If a field has type ``id``, validate that it either is the ``primary_key`` or
+        has a ``ref`` entry.
+
+        If the table has ``primary_key``, make sure that the corresponding field exists
+        and its type is ``id``.
+
+        If ``table_data`` is provided, also check that the list of columns corresponds
+        to the ones indicated in the metadata and that all the dtypes are valid.
+
+        Args:
+            table_name (str):
+                Name of the table to validate.
+            table_meta (dict):
+                Metadata of the table to validate.
+            table_data (pandas.DataFrame):
+                If provided, make sure that the data matches the one described
+                on the metadata.
+
+        Raises:
+            MetadataError:
+                If there is any error in the metadata or the data does not
+                match the metadata description.
+        """
+        dtypes = self.get_dtypes(table_name, ids=True)
+
+        # Primary key field exists and its type is 'id'
+        primary_key = table_meta.get('primary_key')
+        if primary_key:
+            pk_field = table_meta['fields'].get(primary_key)
+
+            if not pk_field:
+                raise MetadataError('Primary key is not an existing field.')
+
+            if pk_field['type'] != 'id':
+                raise MetadataError('Primary key is not of type `id`.')
+
+        if table_data is not None:
+            for column in table_data:
+                try:
+                    table_data[column].astype(dtypes[column])
+                    del dtypes[column]
+                except ValueError as ve:
+                    message = 'Invalid values found in column {} of table {}: {}'.format(
+                        column, table_name, ve)
+                    raise MetadataError(message) from None
+
+            # assert all dtypes are in data
+            if dtypes:
+                raise MetadataError(
+                    'Missing columns on table {}: {}.'.format(table_name, list(dtypes.keys()))
+                )
+
+    def _validate_circular_relationships(self, parent, children=None):
+        """Validate that there is no circular relatioship in the metadata."""
+        if children is None:
+            children = self.get_children(parent)
+
+        if parent in children:
+            raise MetadataError('Circular relationship found for table "{}"'.format(parent))
+
+        for child in children:
+            self._validate_circular_relationships(parent, self.get_children(child))
+
+    def _validate_parents(self, table_name):
+        """Make sure that the table has only one parent."""
+        if len(self.get_parents(table_name)) > 1:
+            raise MetadataError('Table {} has more than one parent.'.format(table_name))
+
+    def validate(self, tables=None):
+        """Validate this metadata.
+
+        For each table from in metadata ``tables`` entry:
+            * Validate the table metadata is correct.
+
+        * If ``tables`` are provided or they have been loaded, check
+          that all the metadata tables exists in the ``tables`` dictionary.
+        * Validate the type/subtype combination for each field and
+          if a field of type ``id`` exists it must be the ``primary_key``
+          or must have a ``ref`` entry.
+        * If ``primary_key`` entry exists, check that it's an existing
+          field and its type is ``id``.
+        * If ``tables`` are provided or they have been loaded, check
+          all the data types for the table correspond to each column and
+          all the data types exists on the table.
+        * Validate that there is no circular relatioship in the metadata.
+        * Check that all the tables have at most one parent.
+
+        Args:
+            tables (bool, dict):
+                If a dict of table is passed, validate that the columns and
+                dtypes match the metadata. If ``True`` is passed, load the
+                tables from the Metadata instead. If ``None``, omit the data
+                validation. Defaults to ``None``.
+        """
+        tables_meta = self._metadata.get('tables')
+        if not tables_meta:
+            raise MetadataError('"tables" entry not found in Metadata.')
+
+        if tables and not isinstance(tables, dict):
+            tables = self.load_tables()
+
+        for table_name, table_meta in tables_meta.items():
+            if tables:
+                table = tables.get(table_name)
+                if table is None:
+                    raise MetadataError('Table `{}` not found in tables'.format(table_name))
+
+            else:
+                table = None
+
+            self._validate_table(table_name, table_meta, table)
+            self._validate_circular_relationships(table_name)
+            self._validate_parents(table_name)
+
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
         table_fields = self.get_fields(table)
@@ -607,6 +623,10 @@ class Metadata:
 
         if not exists and (field in table_fields):
             raise ValueError('Field "{}" already exists in table "{}"'.format(field, table))
+
+    # ################# #
+    # Metadata Creation #
+    # ################# #
 
     def add_field(self, table, field, field_type, field_subtype=None, properties=None):
         """Add a new field to the indicated table.
@@ -689,17 +709,6 @@ class Metadata:
             'subtype': field_subtype
         }
         table_meta['primary_key'] = field
-
-    def _validate_circular_relationships(self, parent, children=None):
-        """Validate that there is no circular relatioship in the metadata."""
-        if children is None:
-            children = self.get_children(parent)
-
-        if parent in children:
-            raise ValueError('Circular relationship found for table "{}"'.format(parent))
-
-        for child in children:
-            self._validate_circular_relationships(parent, self.get_children(child))
 
     def add_relationship(self, parent, child, foreign_key=None):
         """Add a new relationship between the parent and child tables.
@@ -871,6 +880,10 @@ class Metadata:
             # Cleanup
             del self._metadata['tables'][name]
             raise
+
+    # ###################### #
+    # Metadata Serialization #
+    # ###################### #
 
     def to_dict(self):
         """Get a dict representation of this metadata.
