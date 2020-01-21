@@ -8,9 +8,11 @@ from sdv.modeler import Modeler
 from sdv.models.copulas import GaussianCopula
 from sdv.sampler import Sampler
 
+from copulas.univariate import GaussianUnivariate
+
 DEFAULT_MODEL = GaussianCopula
 DEFAULT_MODEL_KWARGS = {
-    'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
+    'distribution': GaussianUnivariate
 }
 
 
