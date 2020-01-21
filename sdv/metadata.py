@@ -540,10 +540,13 @@ class Metadata:
         if table_data is not None:
             for column in table_data:
                 try:
-                    table_data[column].astype(dtypes[column])
-                    del dtypes[column]
+                    dtype = dtypes.pop(column)
+                    table_data[column].dropna().astype(dtype)
+                except KeyError:
+                    message = 'Unexpected column in table `{}`: `{}`'.format(table_name, column)
+                    raise MetadataError(message) from None
                 except ValueError as ve:
-                    message = 'Invalid values found in column {} of table {}: {}'.format(
+                    message = 'Invalid values found in column `{}` of table `{}`: `{}`'.format(
                         column, table_name, ve)
                     raise MetadataError(message) from None
 
