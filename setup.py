@@ -90,7 +90,7 @@ setup(
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
-    url='https://github.com/HDI-Project/SDV',
-    version='0.2.3.dev0',
+    url='https://github.com/sdv-dev/SDV',
+    version='0.3.1.dev0',
     zip_safe=False,
 )

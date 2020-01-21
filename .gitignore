@@ -104,3 +104,5 @@ ENV/
 
 # Vim
 .*.swp
+
+sdv/data/

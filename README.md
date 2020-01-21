@@ -1,18 +1,18 @@
 <p align="left">
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“SDV” />
+<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
 [![PyPi Shield](https://img.shields.io/pypi/v/SDV.svg)](https://pypi.python.org/pypi/SDV)
-[![Travis CI Shield](https://travis-ci.org/HDI-Project/SDV.svg?branch=master)](https://travis-ci.org/HDI-Project/SDV)
-[![Coverage Status](https://codecov.io/gh/HDI-Project/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/SDV)
+[![Travis CI Shield](https://travis-ci.org/sdv-dev/SDV.svg?branch=master)](https://travis-ci.org/sdv-dev/SDV)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
 
 # SDV - Synthetic Data Vault
 
-* License: [MIT](https://github.com/HDI-Project/SDV/blob/master/LICENSE)
-* Documentation: https://HDI-Project.github.io/SDV
-* Homepage: https://github.com/HDI-Project/SDV
+* License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
+* Documentation: https://sdv-dev.github.io/SDV
+* Homepage: https://github.com/sdv-dev/SDV
 
 ## Overview
 
@@ -45,7 +45,7 @@ pip install sdv
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 If you want to install from source or contribute to the project please read the
-[Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started).
+[Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started).
 
 
 # Quickstart
@@ -75,7 +75,7 @@ This will return two objects:
 1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
 For more details about how to build the `Metadata` for your own dataset, please refer to the
-[Metadata](https://hdi-project.github.io/SDV/metadata.html) section of the documentation.
+[Metadata](https://sdv-dev.github.io/SDV/metadata.html) section of the documentation.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
 metadata object.
@@ -176,13 +176,13 @@ the original distribution of your dataset.
 # Join out community
 
 1. If you would like to see more usage examples, please have a look at the [examples folder](
-https://github.com/HDI-Project/SDV/tree/master/examples) or the repository. Please contact us
+https://github.com/sdv-dev/SDV/tree/master/examples) or the repository. Please contact us
 if you have a usage example that you would want to share with the community.
-2. Please head to the [Contributing Guide](https://HDI-Project.github.io/SDV/contributing.html#get-started)
+2. Please head to the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
 for more details about this process.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
-https://github.com/HDI-Project/SDV/issues)
-4. Also do not forget to check the [project documentation site](https://HDI-Project.github.io/SDV/)!
+https://github.com/sdv-dev/SDV/issues)
+4. Also do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
 
 # Citation
 
