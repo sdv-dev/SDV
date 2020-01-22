@@ -470,6 +470,9 @@ of <code class="docutils literal notranslate"><span class="pre">metadata</span><
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.Metadata.validate" title="sdv.Metadata.validate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate</span></code></a>([tables])</p></td>
 <td><p>Validate this metadata.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.Metadata.visualize" title="sdv.Metadata.visualize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">visualize</span></code></a>([path])</p></td>
+<td><p>Plot metadata usign graphviz.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="method">
@@ -862,6 +865,21 @@ all the data types exists on the table.</p></li>
 dtypes match the metadata. If <code class="docutils literal notranslate"><span class="pre">True</span></code> is passed, load the
 tables from the Metadata instead. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, omit the data
 validation. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.Metadata.visualize">
+<code class="sig-name descname">visualize</code><span class="sig-paren">(</span><em class="sig-param">path=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata.html#Metadata.visualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.Metadata.visualize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot metadata usign graphviz.</p>
+<p>Try to generate a plot using graphviz.
+If a <code class="docutils literal notranslate"><span class="pre">path</span></code> is provided save the output into a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Output file path to save the plot, it requires a graphviz
+supported extension. If <code class="docutils literal notranslate"><span class="pre">None</span></code> do not save the plot.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
