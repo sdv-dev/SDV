@@ -266,7 +266,7 @@
             
   <h1>Source code for sdv.models.copulas</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">multivariate</span>
+<span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">multivariate</span><span class="p">,</span> <span class="n">univariate</span>
 
 <span class="kn">from</span> <span class="nn">sdv.models.base</span> <span class="kn">import</span> <span class="n">SDVModel</span>
 <span class="kn">from</span> <span class="nn">sdv.models.utils</span> <span class="kn">import</span> <span class="p">(</span>
@@ -278,14 +278,14 @@
     <span class="sd">&quot;&quot;&quot;Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        distribution (str):</span>
+<span class="sd">        distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        The example below shows simple usage case where a ``GaussianMultivariate``</span>
 <span class="sd">        is being created and its ``fit`` and ``sample`` methods are being called.</span>
 
-<span class="sd">        &gt;&gt;&gt; model = GaussianMultivariate(&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; model = GaussianMultivariate()</span>
 <span class="sd">        &gt;&gt;&gt; model.fit(pd.DataFrame({&#39;a_field&#39;: list(range(10))}))</span>
 <span class="sd">        &gt;&gt;&gt; model.sample(5)</span>
 <span class="sd">            a_field</span>
@@ -296,7 +296,7 @@
 <span class="sd">        4  1.925887</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="s1">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="n">univariate</span><span class="o">.</span><span class="n">GaussianUnivariate</span>
     <span class="n">distribution</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
 

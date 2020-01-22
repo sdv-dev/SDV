@@ -270,6 +270,8 @@
 <span class="sd">&quot;&quot;&quot;Main module.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
+<span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
+
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
 <span class="kn">from</span> <span class="nn">sdv.modeler</span> <span class="kn">import</span> <span class="n">Modeler</span>
 <span class="kn">from</span> <span class="nn">sdv.models.copulas</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
@@ -277,7 +279,7 @@
 
 <span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianCopula</span>
 <span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+    <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">GaussianUnivariate</span>
 <span class="p">}</span>
 
 

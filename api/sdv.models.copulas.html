@@ -295,10 +295,10 @@
 <p>Model wrapping <code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code> copula.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>distribution</strong> (<em>str</em>) – Copulas univariate distribution to use.</p>
+<dd class="field-odd"><p><strong>distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – Copulas univariate distribution to use.</p>
 </dd>
 </dl>
-<p><strong>Attributes</strong></p>
+<p><strong>Classes</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -306,7 +306,7 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.copulas.GaussianCopula.DISTRIBUTION" title="sdv.models.copulas.GaussianCopula.DISTRIBUTION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DISTRIBUTION</span></code></a></p></td>
-<td><p>str(object=’‘) -&gt; str</p></td>
+<td><p>Gaussian univariate model.</p></td>
 </tr>
 </tbody>
 </table>
@@ -334,7 +334,7 @@
 <p class="rubric">Example</p>
 <p>The example below shows simple usage case where a <code class="docutils literal notranslate"><span class="pre">GaussianMultivariate</span></code>
 is being created and its <code class="docutils literal notranslate"><span class="pre">fit</span></code> and <code class="docutils literal notranslate"><span class="pre">sample</span></code> methods are being called.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">(</span><span class="s1">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;a_field&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))}))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 <span class="go">    a_field</span>
@@ -347,8 +347,9 @@ is being created and its <code class="docutils literal notranslate"><span class=
 </div>
 <dl class="attribute">
 <dt id="sdv.models.copulas.GaussianCopula.DISTRIBUTION">
-<code class="sig-name descname">DISTRIBUTION</code><em class="property"> = 'copulas.univariate.gaussian.GaussianUnivariate'</em><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.DISTRIBUTION" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">DISTRIBUTION</code><a class="headerlink" href="#sdv.models.copulas.GaussianCopula.DISTRIBUTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">copulas.univariate.gaussian.GaussianUnivariate</span></code></p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="sdv.models.copulas.GaussianCopula.distribution">
