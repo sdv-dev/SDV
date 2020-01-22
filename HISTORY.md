@@ -1,5 +1,19 @@
 # History
 
+## 0.3.1 - 2019-01-22
+
+### New Features
+
+* Add Metadata Validation - [Issue #134](https://github.com/sdv-dev/SDV/issues/134) by @csala @JDTheRipperPC
+
+* Add Metadata Visualization - [Issue #135](https://github.com/sdv-dev/SDV/issues/135) by @JDTheRipperPC
+
+### General Improvements
+
+* Add path to metadata JSON - [Issue #143](https://github.com/sdv-dev/SDV/issues/143) by @JDTheRipperPC
+
+* Use new Copulas and RDT versions - [Issue #147](https://github.com/sdv-dev/SDV/issues/147) by @csala @JDTheRipperPC
+
 ## 0.3.0 - 2019-12-23
 
 ### New Features
