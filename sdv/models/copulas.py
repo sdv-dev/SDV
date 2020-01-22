@@ -1,5 +1,5 @@
 import numpy as np
-from copulas import multivariate
+from copulas import multivariate, univariate
 
 from sdv.models.base import SDVModel
 from sdv.models.utils import (
@@ -11,14 +11,14 @@ class GaussianCopula(SDVModel):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
 
     Args:
-        distribution (str):
+        distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use.
 
     Example:
         The example below shows simple usage case where a ``GaussianMultivariate``
         is being created and its ``fit`` and ``sample`` methods are being called.
 
-        >>> model = GaussianMultivariate('copulas.univariate.gaussian.GaussianUnivariate')
+        >>> model = GaussianMultivariate()
         >>> model.fit(pd.DataFrame({'a_field': list(range(10))}))
         >>> model.sample(5)
             a_field
@@ -29,7 +29,7 @@ class GaussianCopula(SDVModel):
         4  1.925887
     """
 
-    DISTRIBUTION = 'copulas.univariate.gaussian.GaussianUnivariate'
+    DISTRIBUTION = univariate.GaussianUnivariate
     distribution = None
     model = None
 
