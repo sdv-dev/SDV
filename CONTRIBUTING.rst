@@ -232,6 +232,6 @@ or in command line::
     pip install 'sdv>=X.Y.Z.dev'
 
 
-.. _GitHub issues page: https://github.com/HDI-Project/SDV/issues
-.. _Travis Build Status page: https://travis-ci.org/HDI-Project/SDV/pull_requests
+.. _GitHub issues page: https://github.com/sdv-dev/SDV/issues
+.. _Travis Build Status page: https://travis-ci.org/sdv-dev/SDV/pull_requests
 .. _Google docstrings style: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments

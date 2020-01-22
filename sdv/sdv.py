@@ -3,6 +3,8 @@
 """Main module."""
 import pickle
 
+from copulas.univariate import GaussianUnivariate
+
 from sdv.metadata import Metadata
 from sdv.modeler import Modeler
 from sdv.models.copulas import GaussianCopula
@@ -10,7 +12,7 @@ from sdv.sampler import Sampler
 
 DEFAULT_MODEL = GaussianCopula
 DEFAULT_MODEL_KWARGS = {
-    'distribution': 'copulas.univariate.gaussian.GaussianUnivariate'
+    'distribution': GaussianUnivariate
 }
 
 
@@ -40,12 +42,6 @@ class SDV:
         else:
             self.model_kwargs = model_kwargs
 
-    def _validate_dataset_structure(self):
-        """Make sure that all the tables have at most one parent."""
-        for table in self.metadata.get_tables():
-            if len(self.metadata.get_parents(table)) > 1:
-                raise ValueError('Some tables have multiple parents, which is not supported yet.')
-
     def fit(self, metadata, tables=None, root_path=None):
         """Fit this SDV instance to the dataset data.
 
@@ -67,7 +63,7 @@ class SDV:
         else:
             self.metadata = Metadata(metadata, root_path)
 
-        self._validate_dataset_structure()
+        self.metadata.validate(tables)
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
         self.modeler.model_database(tables)
