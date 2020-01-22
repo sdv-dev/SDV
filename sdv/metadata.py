@@ -4,6 +4,7 @@ import logging
 import os
 from collections import defaultdict
 
+import graphviz
 import numpy as np
 import pandas as pd
 from rdt import HyperTransformer, transformers
@@ -910,3 +911,94 @@ class Metadata:
         """
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
+
+    @staticmethod
+    def _get_graphviz_extension(path):
+        if path:
+            path_splitted = path.split('.')
+            if len(path_splitted) == 1:
+                raise ValueError('Path without graphviz extansion.')
+
+            graphviz_extension = path_splitted[-1]
+
+            if graphviz_extension not in graphviz.backend.FORMATS:
+                raise ValueError('"{}" not a valid graphviz extension format.')
+
+            return ''.join(path_splitted[:-1]), graphviz_extension
+
+        return None, None
+
+    def visualize(self, path=None):
+        """Plot metadata usign graphviz.
+
+        Try to generate a plot using graphviz.
+        If a ``path`` is provided save the output into a file.
+
+        Args:
+            path (str):
+                Output file path to save the plot, it requires a graphviz
+                supported extension. If ``None`` do not save the plot.
+                Defaults to ``None``.
+        """
+        try:
+            graphviz.Digraph().pipe()
+        except graphviz.backend.ExecutableNotFound:
+            raise SystemError(
+                'Missing graphviz executable. Please take a look at: '
+                'https://graphviz.gitlab.io/download/'
+            )
+
+        filename, graphviz_extension = self._get_graphviz_extension(path)
+        plot = graphviz.Digraph(
+            'Metadata',
+            format=graphviz_extension,
+            graph_attr={"rankdir": "BT"},
+            node_attr={"shape": "Mrecord"},
+        )
+
+        for table in self.get_tables():
+            fields = r'\l'.join([
+                '{} : {}'.format(name, value['type'])
+                for name, value in self.get_fields(table).items()
+            ])
+            title = r'{%s|%s\l}' % (table, fields)
+            plot.node(table, label=title)
+
+        for table in self.get_tables():
+            for parent in list(self.get_parents(table)):
+                plot.edge(
+                    table,
+                    parent,
+                    label='{}.{} -> {}.{}'.format(
+                        table, self.get_foreign_key(parent, table),
+                        parent, self.get_primary_key(parent)
+                    )
+                )
+
+        if filename:
+            plot.render(filename=filename, cleanup=True, format=graphviz_extension)
+
+        return plot
+
+    def __str__(self):
+        tables = self.get_tables()
+        relationships = [
+            '    {}.{} -> {}.{}'.format(
+                table, self.get_foreign_key(parent, table),
+                parent, self.get_primary_key(parent)
+            )
+            for table in tables
+            for parent in list(self.get_parents(table))
+        ]
+
+        return (
+            "Metadata\n"
+            "  root_path: {}\n"
+            "  tables: {}\n"
+            "  relationships:\n"
+            "{}"
+        ).format(
+            os.path.abspath(self.root_path),
+            tables,
+            '\n'.join(relationships)
+        )

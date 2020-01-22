@@ -15,8 +15,11 @@ install_requires = [
     'exrex>=0.9.4,<0.11',
     'numpy>=1.15.4,<1.17',
     'pandas>=0.23.4,<0.25',
+
     'copulas>=0.2.5,<0.3',
     'rdt>=0.2.1,<0.3',
+    'graphviz>=0.13.2',
+    # 'docutils<0.15,>=0.10',
 ]
 
 setup_requires = [
