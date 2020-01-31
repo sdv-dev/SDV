@@ -71,6 +71,13 @@ class Metadata:
             The path where the ``metadata.json`` is located. Defaults to ``None``.
     """
 
+    _child_map = None
+    _hyper_transformers = None
+    _metadata = None
+    _parent_map = None
+
+    root_path = None
+
     _FIELD_TEMPLATES = {
         'i': {
             'type': 'numerical',
@@ -922,9 +929,10 @@ class Metadata:
             graphviz_extension = path_splitted[-1]
 
             if graphviz_extension not in graphviz.backend.FORMATS:
-                raise ValueError('"{}" not a valid graphviz extension format.')
+                raise ValueError(
+                    '"{}" not a valid graphviz extension format.'.format(graphviz_extension))
 
-            return ''.join(path_splitted[:-1]), graphviz_extension
+            return '.'.join(path_splitted[:-1]), graphviz_extension
 
         return None, None
 
@@ -1005,7 +1013,7 @@ class Metadata:
         """
         try:
             graphviz.Digraph().pipe()
-        except graphviz.backend.ExecutableNotFound:
+        except RuntimeError:
             raise SystemError(
                 'Missing graphviz executable. Please take a look at: '
                 'https://graphviz.gitlab.io/download/'
@@ -1015,7 +1023,6 @@ class Metadata:
         plot = graphviz.Digraph(
             'Metadata',
             format=graphviz_extension,
-            graph_attr={},
             node_attr={
                 "shape": "Mrecord",
                 "fillcolor": "lightgoldenrod1",

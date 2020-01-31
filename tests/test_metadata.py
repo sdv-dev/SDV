@@ -1,8 +1,10 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, call, patch
 
+import graphviz
 import pandas as pd
 import pytest
+from graphviz.backend import ExecutableNotFound
 
 from sdv.metadata import Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes
 
@@ -102,7 +104,7 @@ class TestMetadata(TestCase):
     def test__analyze_relationships(self):
         """Test get relationships"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         _metadata = {
             'tables': {
                 'test': {
@@ -220,7 +222,7 @@ class TestMetadata(TestCase):
     def test__validate_parents_no_error(self):
         """Test that any error is raised with a supported structure"""
         # Setup
-        mock = MagicMock(spec=Metadata)
+        mock = MagicMock(spec_set=Metadata)
         mock.get_parents.return_value = []
 
         # Run
@@ -232,7 +234,7 @@ class TestMetadata(TestCase):
     def test__validate_parents_raise_error(self):
         """Test that a ValueError is raised because the bad structure"""
         # Setup
-        mock = MagicMock(spec=Metadata)
+        mock = MagicMock(spec_set=Metadata)
         mock.get_parents.return_value = ['foo', 'bar']
 
         # Run
@@ -255,7 +257,7 @@ class TestMetadata(TestCase):
     def test_get_children(self):
         """Test get children"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata._child_map = {
             'test': 'child_table'
         }
@@ -269,7 +271,7 @@ class TestMetadata(TestCase):
     def test_get_parents(self):
         """Test get parents"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata._parent_map = {
             'test': 'parent_table'
         }
@@ -283,7 +285,7 @@ class TestMetadata(TestCase):
     def test_get_table_meta(self):
         """Test get table meta"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata._metadata = {
             'tables': {
                 'test': {'some': 'data'}
@@ -300,7 +302,7 @@ class TestMetadata(TestCase):
     def test_load_table(self, mock_load_csv):
         """Test load table"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.root_path = 'a/path'
         metadata.get_table_meta.return_value = {'some': 'data'}
         mock_load_csv.return_value = 'data'
@@ -328,7 +330,7 @@ class TestMetadata(TestCase):
             },
             'primary_key': 'item 0'
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -359,7 +361,7 @@ class TestMetadata(TestCase):
                 'item 5': {'type': 'datetime'},
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -384,7 +386,7 @@ class TestMetadata(TestCase):
                 'item': {'type': 'unknown'}
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -400,7 +402,7 @@ class TestMetadata(TestCase):
                 'item': {'type': 'id'}
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -416,7 +418,7 @@ class TestMetadata(TestCase):
                 'item': {'type': 'numerical', 'subtype': 'boolean'}
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -432,7 +434,7 @@ class TestMetadata(TestCase):
                 'item': {'type': 'id', 'subtype': 'boolean'}
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
         metadata._DTYPES = Metadata._DTYPES
 
@@ -456,7 +458,7 @@ class TestMetadata(TestCase):
                 }
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
 
         # Run
@@ -523,7 +525,7 @@ class TestMetadata(TestCase):
     def test__load_hyper_transformer(self, mock_ht):
         """Test load HyperTransformer"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_dtypes.return_value = {'meta': 'dtypes'}
         metadata._get_pii_fields.return_value = {'meta': 'pii_fields'}
         metadata._get_transformers.return_value = {'meta': 'transformers'}
@@ -552,7 +554,7 @@ class TestMetadata(TestCase):
                 'table 3': None
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata._metadata = _metadata
 
         # Run
@@ -570,7 +572,7 @@ class TestMetadata(TestCase):
             pd.DataFrame({'bar': [3, 4]}),
             pd.DataFrame({'tar': [5, 6]})
         ]
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.side_effect = table_names
         metadata.load_table.side_effect = table_data
 
@@ -598,7 +600,7 @@ class TestMetadata(TestCase):
                 'b_field': 'other data'
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
 
         # Run
@@ -616,7 +618,7 @@ class TestMetadata(TestCase):
         table_meta = {
             'primary_key': 'a_primary_key'
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
 
         # Run
@@ -644,7 +646,7 @@ class TestMetadata(TestCase):
                 'name': 'p_field'
             }
         }
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_primary_key.return_value = primary_key
         metadata.get_fields.return_value = fields
 
@@ -667,7 +669,7 @@ class TestMetadata(TestCase):
             'item 4': pd.Series([True, False, None, False, True])
         }
 
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata._hyper_transformers = {
             'test': ht_mock
         }
@@ -692,7 +694,7 @@ class TestMetadata(TestCase):
     def test_add_table_already_exist(self):
         """Try to add a new table that already exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
 
         # Run
@@ -702,7 +704,7 @@ class TestMetadata(TestCase):
     def test_add_table_only_name(self):
         """Add table with only the name"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
 
@@ -722,7 +724,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_primary_key(self):
         """Add table with primary key"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
 
@@ -742,7 +744,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_foreign_key(self):
         """Add table with foreign key"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
 
@@ -762,7 +764,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_fields_metadata(self):
         """Add table with fields metadata"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
 
@@ -788,7 +790,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_fields_no_data(self):
         """Add table with fields and no data"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
 
@@ -807,7 +809,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_fields_data(self):
         """Add table with fields and data"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
         metadata._get_field_details.return_value = {
@@ -837,7 +839,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_no_fields_data(self):
         """Add table with data to analyze all"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
         metadata._get_field_details.return_value = {
@@ -869,7 +871,7 @@ class TestMetadata(TestCase):
     def test_add_table_with_data_str(self, mock_read_csv):
         """Add table with data as str"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata._metadata = {'tables': dict()}
         mock_read_csv.return_value = pd.DataFrame({
@@ -903,7 +905,7 @@ class TestMetadata(TestCase):
     def test_add_relationship_table_no_exist(self):
         """Add relationship table no exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = list()
 
         # Run
@@ -913,7 +915,7 @@ class TestMetadata(TestCase):
     def test_add_relationship_parent_no_exist(self):
         """Add relationship table no exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table']
 
         # Run
@@ -923,7 +925,7 @@ class TestMetadata(TestCase):
     def test_add_relationship_already_exist(self):
         """Add relationship already exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata.get_parents.return_value = set(['b_table'])
 
@@ -934,7 +936,7 @@ class TestMetadata(TestCase):
     def test_add_relationship_parent_no_primary_key(self):
         """Add relationship parent no primary key"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
         metadata.get_parents.return_value = set()
         metadata.get_children.return_value = set()
@@ -947,7 +949,7 @@ class TestMetadata(TestCase):
     def test_set_primary_key(self):
         """Set primary key table no exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = list()
         metadata.get_fields.return_value = {'a_field': {'type': 'id', 'subtype': 'integer'}}
         metadata._metadata = {
@@ -969,7 +971,7 @@ class TestMetadata(TestCase):
     def test_add_field(self):
         """Add field table no exist"""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = list()
         metadata._metadata = {
             'tables': {
@@ -991,3 +993,127 @@ class TestMetadata(TestCase):
 
         assert metadata._metadata == expected_metadata
         metadata._check_field.assert_called_once_with('a_table', 'a_field', exists=False)
+
+    def test__get_graphviz_extension_path_without_extension(self):
+        """Raises a ValueError when the path doesn't contains an extension."""
+        with pytest.raises(ValueError):
+            Metadata._get_graphviz_extension('/some/path')
+
+    def test__get_graphviz_extension_invalid_extension(self):
+        """Raises a ValueError when the path contains an invalid extension."""
+        with pytest.raises(ValueError):
+            Metadata._get_graphviz_extension('/some/path.foo')
+
+    def test__get_graphviz_extension_none(self):
+        """Get graphviz with path equals to None."""
+        # Run
+        result = Metadata._get_graphviz_extension(None)
+
+        # Asserts
+        assert result == (None, None)
+
+    def test__get_graphviz_extension_valid(self):
+        """Get a valid graphviz extension."""
+        # Run
+        result = Metadata._get_graphviz_extension('/some/path.png')
+
+        # Asserts
+        assert result == ('/some/path', 'png')
+
+    def test__visualize_add_nodes(self):
+        """Add nodes into a graphviz digraph."""
+        # Setup
+        metadata = MagicMock(spec_set=Metadata)
+        minimock = Mock()
+
+        # pass tests in python3.5
+        minimock.items.return_value = (
+            ('a_field', {'type': 'numerical', 'subtype': 'integer'}),
+            ('b_field', {'type': 'id'}),
+            ('c_field', {'type': 'id', 'ref': {'table': 'other', 'field': 'pk_field'}})
+        )
+
+        metadata.get_tables.return_value = ['demo']
+        metadata.get_fields.return_value = minimock
+
+        metadata.get_primary_key.return_value = 'b_field'
+        metadata.get_parents.return_value = set(['other'])
+        metadata.get_foreign_key.return_value = 'c_field'
+
+        metadata.get_table_meta.return_value = {'path': None}
+
+        plot = Mock()
+
+        # Run
+        Metadata._visualize_add_nodes(metadata, plot)
+
+        # Asserts
+        expected_node_label = r"{demo|a_field : numerical - integer\lb_field : id\l" \
+                              r"c_field : id\l|Primary key: b_field\l" \
+                              r"Foreign key (other): c_field\l}"
+
+        metadata.get_fields.assert_called_once_with('demo')
+        metadata.get_primary_key.assert_called_once_with('demo')
+        metadata.get_parents.assert_called_once_with('demo')
+        metadata.get_table_meta.assert_called_once_with('demo')
+        metadata.get_foreign_key.assert_called_once_with('other', 'demo')
+        metadata.get_table_meta.assert_called_once_with('demo')
+
+        plot.node.assert_called_once_with('demo', label=expected_node_label)
+
+    def test__visualize_add_edges(self):
+        """Add edges into a graphviz digraph."""
+        # Setup
+        metadata = MagicMock(spec_set=Metadata)
+
+        metadata.get_tables.return_value = ['demo', 'other']
+        metadata.get_parents.side_effect = [set(['other']), set()]
+
+        metadata.get_foreign_key.return_value = 'fk'
+        metadata.get_primary_key.return_value = 'pk'
+
+        plot = Mock()
+
+        # Run
+        Metadata._visualize_add_edges(metadata, plot)
+
+        # Asserts
+        expected_edge_label = '   {}.{} -> {}.{}'.format('demo', 'fk', 'other', 'pk')
+
+        metadata.get_tables.assert_called_once_with()
+        metadata.get_foreign_key.assert_called_once_with('other', 'demo')
+        metadata.get_primary_key.assert_called_once_with('other')
+        assert metadata.get_parents.call_args_list == [call('demo'), call('other')]
+
+        plot.edge.assert_called_once_with(
+            'other',
+            'demo',
+            label=expected_edge_label,
+            arrowhead='crow'
+        )
+
+    @patch('sdv.metadata.graphviz')
+    def test_visualize_raise_error(self, graphviz):
+        metadata = MagicMock(spec_set=Metadata)
+        graphviz.Digraph().pipe.side_effect = ExecutableNotFound('test')
+
+        with pytest.raises(SystemError):
+            Metadata.visualize(metadata)
+
+    @patch('sdv.metadata.graphviz')
+    def test_visualize(self, graphviz_mock):
+        plot = Mock(spec_set=graphviz.Digraph)
+        graphviz_mock.Digraph.return_value = plot
+
+        metadata = MagicMock(spec_set=Metadata)
+        metadata._get_graphviz_extension.return_value = ('output', 'png')
+
+        result = Metadata.visualize(metadata, path='output.png')
+
+        assert result == plot
+
+        metadata._get_graphviz_extension.assert_called_once_with('output.png')
+        metadata._visualize_add_nodes.assert_called_once_with(plot)
+        metadata._visualize_add_edges.assert_called_once_with(plot)
+
+        plot.render.assert_called_once_with(filename='output', cleanup=True, format='png')
