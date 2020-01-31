@@ -1094,22 +1094,29 @@ class TestMetadata(TestCase):
 
     @patch('sdv.metadata.graphviz')
     def test_visualize_raise_error(self, graphviz):
+        """Graphviz executable not found"""
+        # Setup
         metadata = MagicMock(spec_set=Metadata)
         graphviz.Digraph().pipe.side_effect = ExecutableNotFound('test')
 
+        # Run
         with pytest.raises(SystemError):
             Metadata.visualize(metadata)
 
     @patch('sdv.metadata.graphviz')
     def test_visualize(self, graphviz_mock):
+        """Metadata visualize digraph"""
+        # Setup
         plot = Mock(spec_set=graphviz.Digraph)
         graphviz_mock.Digraph.return_value = plot
 
         metadata = MagicMock(spec_set=Metadata)
         metadata._get_graphviz_extension.return_value = ('output', 'png')
 
+        # Run
         result = Metadata.visualize(metadata, path='output.png')
 
+        # Asserts
         assert result == plot
 
         metadata._get_graphviz_extension.assert_called_once_with('output.png')

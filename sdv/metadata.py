@@ -930,7 +930,8 @@ class Metadata:
 
             if graphviz_extension not in graphviz.backend.FORMATS:
                 raise ValueError(
-                    '"{}" not a valid graphviz extension format.'.format(graphviz_extension))
+                    '"{}" not a valid graphviz extension format.'.format(graphviz_extension)
+                )
 
             return '.'.join(path_splitted[:-1]), graphviz_extension
 
