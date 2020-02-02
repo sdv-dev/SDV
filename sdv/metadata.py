@@ -1012,8 +1012,6 @@ class Metadata:
                 supported extension. If ``None`` do not save the plot.
                 Defaults to ``None``.
         """
-        graphviz.Digraph().pipe()
-
         filename, graphviz_extension = self._get_graphviz_extension(path)
         plot = graphviz.Digraph(
             'Metadata',
@@ -1030,8 +1028,8 @@ class Metadata:
 
         if filename:
             plot.render(filename=filename, cleanup=True, format=graphviz_extension)
-
-        return plot
+        else:
+            return plot
 
     def __str__(self):
         tables = self.get_tables()
