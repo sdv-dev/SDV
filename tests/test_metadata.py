@@ -1100,7 +1100,7 @@ class TestMetadata(TestCase):
         graphviz.Digraph().pipe.side_effect = ExecutableNotFound('test')
 
         # Run
-        with pytest.raises(SystemError):
+        with pytest.raises(ExecutableNotFound):
             Metadata.visualize(metadata)
 
     @patch('sdv.metadata.graphviz')

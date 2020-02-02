@@ -1012,13 +1012,7 @@ class Metadata:
                 supported extension. If ``None`` do not save the plot.
                 Defaults to ``None``.
         """
-        try:
-            graphviz.Digraph().pipe()
-        except RuntimeError:
-            raise SystemError(
-                'Missing graphviz executable. Please take a look at: '
-                'https://graphviz.gitlab.io/download/'
-            )
+        graphviz.Digraph().pipe()
 
         filename, graphviz_extension = self._get_graphviz_extension(path)
         plot = graphviz.Digraph(
