@@ -343,6 +343,13 @@
 <span class="sd">            The path where the ``metadata.json`` is located. Defaults to ``None``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_child_map</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_hyper_transformers</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_metadata</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_parent_map</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">root_path</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="n">_FIELD_TEMPLATES</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
@@ -1194,11 +1201,76 @@
             <span class="n">graphviz_extension</span> <span class="o">=</span> <span class="n">path_splitted</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="n">graphviz_extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graphviz</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">FORMATS</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;</span><span class="si">{}</span><span class="s1">&quot; not a valid graphviz extension format.&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;&quot;</span><span class="si">{}</span><span class="s1">&quot; not a valid graphviz extension format.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">graphviz_extension</span><span class="p">)</span>
+                <span class="p">)</span>
 
-            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_splitted</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">graphviz_extension</span>
+            <span class="k">return</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_splitted</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">graphviz_extension</span>
 
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_visualize_add_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add nodes into a `graphviz.Digraph`.</span>
+
+<span class="sd">        Each node represent a metadata table.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            plot (graphviz.Digraph)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
+            <span class="c1"># Append table fields</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]))</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]))</span>
+
+            <span class="n">fields</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\l&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+
+            <span class="c1"># Append table extra information</span>
+            <span class="n">extras</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">primary_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">extras</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Primary key: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">primary_key</span><span class="p">))</span>
+
+            <span class="n">parents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+                <span class="n">foreign_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+                <span class="n">extras</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Foreign key (</span><span class="si">{}</span><span class="s1">): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">))</span>
+
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">extras</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Data path: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+            <span class="n">extras</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\l&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+
+            <span class="c1"># Add table node</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">|</span><span class="si">%s</span><span class="s1">\l|</span><span class="si">%s</span><span class="s1">\l}&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">extras</span><span class="p">)</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_visualize_add_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add edges into a `graphviz.Digraph`.</span>
+
+<span class="sd">        Each edge represents a relationship between two metadata tables.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            plot (graphviz.Digraph)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table</span><span class="p">)):</span>
+                <span class="n">plot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
+                    <span class="n">parent</span><span class="p">,</span>
+                    <span class="n">table</span><span class="p">,</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s1">&#39;   </span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1"> -&gt; </span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">table</span><span class="p">),</span>
+                        <span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="n">arrowhead</span><span class="o">=</span><span class="s1">&#39;crow&#39;</span>
+                <span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot metadata usign graphviz.</span>
@@ -1212,45 +1284,24 @@
 <span class="sd">                supported extension. If ``None`` do not save the plot.</span>
 <span class="sd">                Defaults to ``None``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">graphviz</span><span class="o">.</span><span class="n">Digraph</span><span class="p">()</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
-        <span class="k">except</span> <span class="n">graphviz</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">ExecutableNotFound</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span>
-                <span class="s1">&#39;Missing graphviz executable. Please take a look at: &#39;</span>
-                <span class="s1">&#39;https://graphviz.gitlab.io/download/&#39;</span>
-            <span class="p">)</span>
-
         <span class="n">filename</span><span class="p">,</span> <span class="n">graphviz_extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_graphviz_extension</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">plot</span> <span class="o">=</span> <span class="n">graphviz</span><span class="o">.</span><span class="n">Digraph</span><span class="p">(</span>
             <span class="s1">&#39;Metadata&#39;</span><span class="p">,</span>
             <span class="nb">format</span><span class="o">=</span><span class="n">graphviz_extension</span><span class="p">,</span>
-            <span class="n">graph_attr</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rankdir&quot;</span><span class="p">:</span> <span class="s2">&quot;BT&quot;</span><span class="p">},</span>
-            <span class="n">node_attr</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;Mrecord&quot;</span><span class="p">},</span>
+            <span class="n">node_attr</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;Mrecord&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;lightgoldenrod1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;filled&quot;</span>
+            <span class="p">},</span>
         <span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
-            <span class="n">fields</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\l&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
-                <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="p">])</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">|</span><span class="si">%s</span><span class="s1">\l}&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
-            <span class="n">plot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table</span><span class="p">)):</span>
-                <span class="n">plot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
-                    <span class="n">table</span><span class="p">,</span>
-                    <span class="n">parent</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1"> -&gt; </span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">table</span><span class="p">),</span>
-                        <span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_visualize_add_nodes</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_visualize_add_edges</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
             <span class="n">plot</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">graphviz_extension</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">plot</span></div>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot</span></div>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
