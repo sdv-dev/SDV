@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, Mock, call, patch
 import graphviz
 import pandas as pd
 import pytest
-from graphviz.backend import ExecutableNotFound
 
 from sdv.metadata import Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes
 
