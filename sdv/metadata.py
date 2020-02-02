@@ -71,6 +71,13 @@ class Metadata:
             The path where the ``metadata.json`` is located. Defaults to ``None``.
     """
 
+    _child_map = None
+    _hyper_transformers = None
+    _metadata = None
+    _parent_map = None
+
+    root_path = None
+
     _FIELD_TEMPLATES = {
         'i': {
             'type': 'numerical',
@@ -922,11 +929,76 @@ class Metadata:
             graphviz_extension = path_splitted[-1]
 
             if graphviz_extension not in graphviz.backend.FORMATS:
-                raise ValueError('"{}" not a valid graphviz extension format.')
+                raise ValueError(
+                    '"{}" not a valid graphviz extension format.'.format(graphviz_extension)
+                )
 
-            return ''.join(path_splitted[:-1]), graphviz_extension
+            return '.'.join(path_splitted[:-1]), graphviz_extension
 
         return None, None
+
+    def _visualize_add_nodes(self, plot):
+        """Add nodes into a `graphviz.Digraph`.
+
+        Each node represent a metadata table.
+
+        Args:
+            plot (graphviz.Digraph)
+        """
+        for table in self.get_tables():
+            # Append table fields
+            fields = []
+
+            for name, value in self.get_fields(table).items():
+                if value.get('subtype') is not None:
+                    fields.append('{} : {} - {}'.format(name, value['type'], value['subtype']))
+
+                else:
+                    fields.append('{} : {}'.format(name, value['type']))
+
+            fields = r'\l'.join(fields)
+
+            # Append table extra information
+            extras = []
+
+            primary_key = self.get_primary_key(table)
+            if primary_key is not None:
+                extras.append('Primary key: {}'.format(primary_key))
+
+            parents = self.get_parents(table)
+            for parent in parents:
+                foreign_key = self.get_foreign_key(parent, table)
+                extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
+
+            path = self.get_table_meta(table).get('path')
+            if path is not None:
+                extras.append('Data path: {}'.format(path))
+
+            extras = r'\l'.join(extras)
+
+            # Add table node
+            title = r'{%s|%s\l|%s\l}' % (table, fields, extras)
+            plot.node(table, label=title)
+
+    def _visualize_add_edges(self, plot):
+        """Add edges into a `graphviz.Digraph`.
+
+        Each edge represents a relationship between two metadata tables.
+
+        Args:
+            plot (graphviz.Digraph)
+        """
+        for table in self.get_tables():
+            for parent in list(self.get_parents(table)):
+                plot.edge(
+                    parent,
+                    table,
+                    label='   {}.{} -> {}.{}'.format(
+                        table, self.get_foreign_key(parent, table),
+                        parent, self.get_primary_key(parent)
+                    ),
+                    arrowhead='crow'
+                )
 
     def visualize(self, path=None):
         """Plot metadata usign graphviz.
@@ -940,45 +1012,24 @@ class Metadata:
                 supported extension. If ``None`` do not save the plot.
                 Defaults to ``None``.
         """
-        try:
-            graphviz.Digraph().pipe()
-        except graphviz.backend.ExecutableNotFound:
-            raise SystemError(
-                'Missing graphviz executable. Please take a look at: '
-                'https://graphviz.gitlab.io/download/'
-            )
-
         filename, graphviz_extension = self._get_graphviz_extension(path)
         plot = graphviz.Digraph(
             'Metadata',
             format=graphviz_extension,
-            graph_attr={"rankdir": "BT"},
-            node_attr={"shape": "Mrecord"},
+            node_attr={
+                "shape": "Mrecord",
+                "fillcolor": "lightgoldenrod1",
+                "style": "filled"
+            },
         )
 
-        for table in self.get_tables():
-            fields = r'\l'.join([
-                '{} : {}'.format(name, value['type'])
-                for name, value in self.get_fields(table).items()
-            ])
-            title = r'{%s|%s\l}' % (table, fields)
-            plot.node(table, label=title)
-
-        for table in self.get_tables():
-            for parent in list(self.get_parents(table)):
-                plot.edge(
-                    table,
-                    parent,
-                    label='{}.{} -> {}.{}'.format(
-                        table, self.get_foreign_key(parent, table),
-                        parent, self.get_primary_key(parent)
-                    )
-                )
+        self._visualize_add_nodes(plot)
+        self._visualize_add_edges(plot)
 
         if filename:
             plot.render(filename=filename, cleanup=True, format=graphviz_extension)
-
-        return plot
+        else:
+            return plot
 
     def __str__(self):
         tables = self.get_tables()
