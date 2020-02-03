@@ -6,14 +6,14 @@
                     "type": "id",
                     "subtype": "integer"
                 },
-                "country": {
+                "gender": {
                     "type": "categorical"
                 },
                 "age": {
                     "type": "numerical",
                     "subtype": "integer"
                 },
-                "gender": {
+                "country": {
                     "type": "categorical"
                 }
             },
@@ -29,15 +29,15 @@
                         "field": "user_id"
                     }
                 },
+                "os": {
+                    "type": "categorical"
+                },
                 "device": {
                     "type": "categorical"
                 },
                 "session_id": {
                     "type": "id",
                     "subtype": "integer"
-                },
-                "os": {
-                    "type": "categorical"
                 }
             },
             "primary_key": "session_id"
