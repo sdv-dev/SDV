@@ -1,6 +1,12 @@
 # History
 
-## 0.3.1 - 2019-01-22
+## 0.3.2 - 2020-02-03
+
+### General Improvements
+
+* Improve metadata visualization - [Issue #151](https://github.com/sdv-dev/SDV/issues/151) @csala @JDTheRipperPC
+
+## 0.3.1 - 2020-01-22
 
 ### New Features
 
