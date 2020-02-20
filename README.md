@@ -3,6 +3,7 @@
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
+[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/SDV.svg)](https://pypi.python.org/pypi/SDV)
 [![Travis CI Shield](https://travis-ci.org/sdv-dev/SDV.svg?branch=master)](https://travis-ci.org/sdv-dev/SDV)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
@@ -11,6 +12,7 @@
 # SDV - Synthetic Data Vault
 
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
+* Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 * Documentation: https://sdv-dev.github.io/SDV
 * Homepage: https://github.com/sdv-dev/SDV
 
