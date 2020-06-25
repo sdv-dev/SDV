@@ -6,12 +6,12 @@
                     "type": "id",
                     "subtype": "integer"
                 },
-                "gender": {
-                    "type": "categorical"
-                },
                 "age": {
                     "type": "numerical",
                     "subtype": "integer"
+                },
+                "gender": {
+                    "type": "categorical"
                 },
                 "country": {
                     "type": "categorical"
@@ -21,6 +21,13 @@
         },
         "sessions": {
             "fields": {
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "os": {
+                    "type": "categorical"
+                },
                 "user_id": {
                     "type": "id",
                     "subtype": "integer",
@@ -29,15 +36,8 @@
                         "field": "user_id"
                     }
                 },
-                "os": {
-                    "type": "categorical"
-                },
                 "device": {
                     "type": "categorical"
-                },
-                "session_id": {
-                    "type": "id",
-                    "subtype": "integer"
                 }
             },
             "primary_key": "session_id"
@@ -48,17 +48,6 @@
                     "type": "datetime",
                     "format": "%Y-%m-%d"
                 },
-                "approved": {
-                    "type": "boolean"
-                },
-                "amount": {
-                    "type": "numerical",
-                    "subtype": "float"
-                },
-                "transaction_id": {
-                    "type": "id",
-                    "subtype": "integer"
-                },
                 "session_id": {
                     "type": "id",
                     "subtype": "integer",
@@ -66,6 +55,17 @@
                         "table": "sessions",
                         "field": "session_id"
                     }
+                },
+                "approved": {
+                    "type": "boolean"
+                },
+                "transaction_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "amount": {
+                    "type": "numerical",
+                    "subtype": "float"
                 }
             },
             "primary_key": "transaction_id"

@@ -66,7 +66,7 @@ save a hierarchical model. We will cover these two steps in this section using a
 **SDV** comes with a toy dataset to play with, which can be loaded using the `sdv.load_demo`
 function:
 
-```python
+```python3
 from sdv import load_demo
 
 metadata, tables = load_demo(metadata=True)
@@ -134,7 +134,7 @@ During this process, **SDV** will traverse across all the tables in your dataset
 primary key-foreign key relationships and learn the probability distributions of the values in
 the columns.
 
-```python
+```python3
 from sdv import SDV
 
 sdv = SDV()
@@ -144,8 +144,8 @@ sdv.fit(metadata, tables)
 Once the modeling has finished, you can save your fitted `SDV` instance for later usage
 using the `save` method of your instance.
 
-```python
-sdv.save('path/to/sdv.pkl')
+```python3
+sdv.save('sdv.pkl')
 ```
 
 The generated `pkl` file will not include any of the original data in it, so it can be
@@ -157,14 +157,14 @@ In order to sample data from the fitted model, we will first need to load it fro
 `pkl` file. Note that you can skip this step if you are running all the steps sequentially
 within the same python session.
 
-```python
-sdv = SDV.load('path/to/sdv.pkl')
+```python3
+sdv = SDV.load('sdv.pkl')
 ```
 
 After loading the instance, we can sample synthetic data using its `sample_all` method,
 passing the number of rows that we want to generate.
 
-```python
+```python3
 samples = sdv.sample_all(5)
 ```
 

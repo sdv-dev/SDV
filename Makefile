@@ -29,133 +29,8 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-.PHONY: install
-install: clean-build clean-pyc ## install the package to the active Python's site-packages
-	pip install .
 
-.PHONY: install-test
-install-test: clean-build clean-pyc ## install the package and test dependencies
-	pip install .[test]
-
-.PHONY: test
-test: ## run tests quickly with the default Python
-	python -m pytest --basetemp=${ENVTMPDIR} --cov=sdv
-
-.PHONY: lint
-lint: ## check style with flake8 and isort
-	flake8 sdv tests
-	isort -c --recursive sdv tests
-
-.PHONY: install-develop
-install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
-	pip install -e .[dev]
-
-.PHONY: test-all
-test-all: ## run tests on every Python version with tox
-	tox -r
-
-.PHONY: fix-lint
-fix-lint: ## fix lint issues using autoflake, autopep8, and isort
-	find sdv -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
-	autopep8 --in-place --recursive --aggressive sdv
-	isort --apply --atomic --recursive sdv
-
-	find tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
-	autopep8 --in-place --recursive --aggressive tests
-	isort --apply --atomic --recursive tests
-
-.PHONY: coverage
-coverage: ## check code coverage quickly with the default Python
-	coverage run --source sdv -m pytest
-	coverage report -m
-	coverage html
-	$(BROWSER) htmlcov/index.html
-
-.PHONY: docs
-docs: clean-docs ## generate Sphinx HTML documentation, including API docs
-	sphinx-apidoc --separate --no-toc -o docs/api/ sdv
-	$(MAKE) -C docs html
-
-.PHONY: view-docs
-view-docs: docs ## view docs in browser
-	$(BROWSER) docs/_build/html/index.html
-
-.PHONY: serve-docs
-serve-docs: view-docs ## compile the docs watching for changes
-	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' .
-
-.PHONY: dist
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
-
-.PHONY: test-publish
-test-publish: dist ## package and upload a release on TestPyPI
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
-.PHONY: publish
-publish: dist ## package and upload a release
-	twine upload dist/*
-
-.PHONY: bumpversion-release
-bumpversion-release: ## Merge master to stable and bumpversion release
-	git checkout stable
-	git merge --no-ff master -m"make release-tag: Merge branch 'master' into stable"
-	bumpversion release
-	git push --tags origin stable
-
-.PHONY: bumpversion-patch
-bumpversion-patch: ## Merge stable to master and bumpversion patch
-	git checkout master
-	git merge stable
-	bumpversion --no-tag patch
-	git push
-
-.PHONY: bumpversion-minor
-bumpversion-minor: ## Bump the version the next minor skipping the release
-	bumpversion --no-tag minor
-
-.PHONY: bumpversion-major
-bumpversion-major: ## Bump the version the next major skipping the release
-	bumpversion --no-tag major
-
-.PHONY: bumpversion-candidate
-bumpversion-candidate: ## Bump the version to the next candidate
-	bumpversion candidate --no-tag
-
-CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-CHANGELOG_LINES := $(shell git diff HEAD..origin/stable HISTORY.md 2>&1 | wc -l)
-
-.PHONY: check-master
-check-master: ## Check if we are in master branch
-ifneq ($(CURRENT_BRANCH),master)
-	$(error Please make the release from master branch\n)
-endif
-
-.PHONY: check-history
-check-history: ## Check if HISTORY.md has been modified
-ifeq ($(CHANGELOG_LINES),0)
-	$(error Please insert the release notes in HISTORY.md before releasing)
-endif
-
-.PHONY: check-release
-check-release: check-master check-history ## Check if the release can be made
-
-.PHONY: release
-release: check-release bumpversion-release publish bumpversion-patch
-
-.PHONY: release-candidate
-release-candidate: check-master publish bumpversion-candidate
-
-.PHONY: release-minor
-release-minor: check-release bumpversion-minor release
-
-.PHONY: release-major
-release-major: check-release bumpversion-major release
-
-.PHONY: clean
-clean: clean-build clean-pyc clean-test clean-coverage clean-docs ## remove all build, test, coverage, docs and Python artifacts
+# CLEAN TARGETS
 
 .PHONY: clean-build
 clean-build: ## remove build artifacts
@@ -172,6 +47,11 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
+.PHONY: clean-docs
+clean-docs: ## remove previously built docs
+	rm -f docs/api/*.rst
+	-$(MAKE) -C docs clean 2>/dev/null  # this fails if sphinx is not yet installed
+
 .PHONY: clean-coverage
 clean-coverage: ## remove coverage artifacts
 	rm -f .coverage
@@ -183,7 +63,190 @@ clean-test: ## remove test artifacts
 	rm -fr .tox/
 	rm -fr .pytest_cache
 
-.PHONY: clean-docs
-clean-docs: ## remove previously built docs
-	rm -f docs/api/*.rst
-	-$(MAKE) -C docs clean 2>/dev/null  # this fails if sphinx is not yet installed
+.PHONY: clean
+clean: clean-build clean-pyc clean-test clean-coverage clean-docs ## remove all build, test, coverage, docs and Python artifacts
+
+
+# INSTALL TARGETS
+
+.PHONY: install
+install: clean-build clean-pyc ## install the package to the active Python's site-packages
+	pip install .
+
+.PHONY: install-test
+install-test: clean-build clean-pyc ## install the package and test dependencies
+	pip install .[test]
+
+.PHONY: install-develop
+install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
+	pip install -e .[dev]
+
+
+# LINT TARGETS
+
+.PHONY: lint
+lint: ## check style with flake8 and isort
+	flake8 sdv tests
+	isort -c --recursive sdv tests
+
+.PHONY: fix-lint
+fix-lint: ## fix lint issues using autoflake, autopep8, and isort
+	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
+	autopep8 --in-place --recursive --aggressive sdv tests
+	isort --apply --atomic --recursive sdv tests
+
+
+# TEST TARGETS
+
+.PHONY: test-unit
+test-unit: ## run tests quickly with the default Python
+	python -m pytest --cov=sdv
+
+.PHONY: test-readme
+test-readme: ## run the readme snippets
+	rm -rf tests/readme_test && mkdir tests/readme_test
+	cd tests/readme_test && rundoc run --single-session python3 -t python3 ../../README.md
+	rm -rf tests/readme_test
+
+.PHONY: test-tutorials
+test-tutorials: ## run the tutorial notebooks
+	jupyter nbconvert --execute --ExecutePreprocessor.timeout=600 examples/*.ipynb --stdout > /dev/null
+
+.PHONY: test
+test: test-unit test-readme test-tutorials ## test everything that needs test dependencies
+
+.PHONY: test-devel
+test-devel: lint docs ## test everything that needs development dependencies
+
+.PHONY: test-all
+test-all: ## run tests on every Python version with tox
+	tox -r
+
+.PHONY: coverage
+coverage: ## check code coverage quickly with the default Python
+	coverage run --source sdv -m pytest
+	coverage report -m
+	coverage html
+	$(BROWSER) htmlcov/index.html
+
+
+# DOCS TARGETS
+
+.PHONY: docs
+docs: clean-docs ## generate Sphinx HTML documentation, including API docs
+	sphinx-apidoc --separate --no-toc -o docs/api/ sdv
+	$(MAKE) -C docs html
+
+.PHONY: view-docs
+view-docs: docs ## view docs in browser
+	$(BROWSER) docs/_build/html/index.html
+
+.PHONY: serve-docs
+serve-docs: view-docs ## compile the docs watching for changes
+	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' .
+
+
+# RELEASE TARGETS
+
+.PHONY: dist
+dist: clean ## builds source and wheel package
+	python setup.py sdist
+	python setup.py bdist_wheel
+	ls -l dist
+
+.PHONY: publish-confirm
+publish-confirm:
+	@echo "WARNING: This will irreversibly upload a new version to PyPI!"
+	@echo -n "Please type 'confirm' to proceed: " \
+		&& read answer \
+		&& [ "$${answer}" = "confirm" ]
+
+.PHONY: publish-test
+publish-test: dist publish-confirm ## package and upload a release on TestPyPI
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+.PHONY: publish
+publish: dist publish-confirm ## package and upload a release
+	twine upload dist/*
+
+.PHONY: bumpversion-release
+bumpversion-release: ## Merge master to stable and bumpversion release
+	git checkout stable || git checkout -b stable
+	git merge --no-ff master -m"make release-tag: Merge branch 'master' into stable"
+	bumpversion release
+	git push --tags origin stable
+
+.PHONY: bumpversion-release-test
+bumpversion-release-test: ## Merge master to stable and bumpversion release
+	git checkout stable || git checkout -b stable
+	git merge --no-ff master -m"make release-tag: Merge branch 'master' into stable"
+	bumpversion release --no-tag
+	@echo git push --tags origin stable
+
+.PHONY: bumpversion-patch
+bumpversion-patch: ## Merge stable to master and bumpversion patch
+	git checkout master
+	git merge stable
+	bumpversion --no-tag patch
+	git push
+
+.PHONY: bumpversion-candidate
+bumpversion-candidate: ## Bump the version to the next candidate
+	bumpversion candidate --no-tag
+
+.PHONY: bumpversion-minor
+bumpversion-minor: ## Bump the version the next minor skipping the release
+	bumpversion --no-tag minor
+
+.PHONY: bumpversion-major
+bumpversion-major: ## Bump the version the next major skipping the release
+	bumpversion --no-tag major
+
+.PHONY: bumpversion-revert
+bumpversion-revert: ## Undo a previous bumpversion-release
+	git checkout master
+	git branch -D stable
+
+CLEAN_DIR := $(shell git status --short | grep -v ??)
+CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+CHANGELOG_LINES := $(shell git diff HEAD..origin/stable HISTORY.md 2>&1 | wc -l)
+
+.PHONY: check-clean
+check-clean: ## Check if the directory has uncommitted changes
+ifneq ($(CLEAN_DIR),)
+	$(error There are uncommitted changes)
+endif
+
+.PHONY: check-master
+check-master: ## Check if we are in master branch
+ifneq ($(CURRENT_BRANCH),master)
+	$(error Please make the release from master branch\n)
+endif
+
+.PHONY: check-history
+check-history: ## Check if HISTORY.md has been modified
+ifeq ($(CHANGELOG_LINES),0)
+	$(error Please insert the release notes in HISTORY.md before releasing)
+endif
+
+.PHONY: check-release
+check-release: check-clean check-master check-history ## Check if the release can be made
+	@echo "A new release can be made"
+
+.PHONY: release
+release: check-release bumpversion-release publish bumpversion-patch
+
+.PHONY: release-test
+release-test: check-release bumpversion-release-test publish-test bumpversion-revert
+
+.PHONY: release-candidate
+release-candidate: check-master publish bumpversion-candidate
+
+.PHONY: release-candidate-test
+release-candidate-test: check-clean check-master publish-test
+
+.PHONY: release-minor
+release-minor: check-release bumpversion-minor release
+
+.PHONY: release-major
+release-major: check-release bumpversion-major release
