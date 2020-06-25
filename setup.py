@@ -18,7 +18,7 @@ install_requires = [
     'copulas>=0.2.5,<0.3',
     'rdt>=0.2.1,<0.3',
     'graphviz>=0.13.2',
-    'sdmetrics>=0.0.1,<0.0.2'
+    'sdmetrics>=0.0.1.dev0,<0.0.2'
 ]
 
 setup_requires = [
