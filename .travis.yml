@@ -7,7 +7,9 @@ python:
   - 3.5
 
 # Command to install dependencies
-install: pip install -U tox-travis codecov
+install:
+  - sudo apt install graphviz
+  - pip install -U tox-travis codecov
 
 after_success: codecov
 
