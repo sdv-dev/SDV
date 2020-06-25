@@ -8,7 +8,8 @@ python:
 
 # Command to install dependencies
 install:
-  - sudo apt install graphviz
+  - sudo apt-get update
+  - sudo apt-get install graphviz
   - pip install -U tox-travis codecov
 
 after_success: codecov

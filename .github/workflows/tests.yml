@@ -24,7 +24,7 @@ jobs:
     - if: matrix.os == 'ubuntu-latest'
       name: Install graphviz - Ubuntu
       run: |
-        sudo apt install graphviz
+        sudo apt-get install graphviz
 
     - if: matrix.os == 'macos-latest'
       name: Install graphviz - MacOS
