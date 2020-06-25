@@ -21,10 +21,6 @@
         },
         "sessions": {
             "fields": {
-                "session_id": {
-                    "type": "id",
-                    "subtype": "integer"
-                },
                 "os": {
                     "type": "categorical"
                 },
@@ -38,6 +34,10 @@
                 },
                 "device": {
                     "type": "categorical"
+                },
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer"
                 }
             },
             "primary_key": "session_id"
@@ -48,6 +48,13 @@
                     "type": "datetime",
                     "format": "%Y-%m-%d"
                 },
+                "transaction_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "approved": {
+                    "type": "boolean"
+                },
                 "session_id": {
                     "type": "id",
                     "subtype": "integer",
@@ -55,13 +62,6 @@
                         "table": "sessions",
                         "field": "session_id"
                     }
-                },
-                "approved": {
-                    "type": "boolean"
-                },
-                "transaction_id": {
-                    "type": "id",
-                    "subtype": "integer"
                 },
                 "amount": {
                     "type": "numerical",
