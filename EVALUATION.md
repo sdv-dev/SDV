@@ -1,10 +1,10 @@
 # SDV Evaluation
 
 After using SDV to model your database and generate a synthetic version of it you
-might want to evaluate how similar the syntehtic data is to your real data.
+might want to evaluate how similar the synthetic data is to your real data.
 
 SDV has an evaluation module with a simple function that allows you to compare
-the syntehtic data to your real data using [SDMetrics](https://github.com/sdv-dev/SDMetrics) and
+the synthetic data to your real data using [SDMetrics](https://github.com/sdv-dev/SDMetrics) and
 generate a simple standardized score.
 
 ## Evaluating your synthetic data
