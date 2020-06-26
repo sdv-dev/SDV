@@ -175,6 +175,10 @@ but filled with synthetic data instead of the real one.
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.
 
+Finally, if you want to evaluate how similar the sampled tables are to the real data,
+please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](
+/sdv-dev/SDMetrics) library.
+
 # Join out community
 
 1. If you would like to see more usage examples, please have a look at the [examples folder](
