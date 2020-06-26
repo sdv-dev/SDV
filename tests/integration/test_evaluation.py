@@ -1,7 +1,10 @@
+import pytest
+
 from sdv import SDV, Metadata, load_demo
 from sdv.evaluation import evaluate
 
 
+@pytest.mark.xfail
 def test_evaluate_tables_from_demo():
     tables = load_demo(metadata=False)
 
