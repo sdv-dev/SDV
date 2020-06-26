@@ -132,11 +132,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.evaluation.html">sdv.evaluation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.evaluation.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#module-sdv.models">Module contents</a></li>
@@ -146,6 +141,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdv.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.sampler.html">sdv.sampler module</a></li>
@@ -338,7 +334,7 @@ save a hierarchical model. We will cover these two steps in this section using a
 <h3>Step 1: Load example data<a class="headerlink" href="#step-1-load-example-data" title="Permalink to this headline">¶</a></h3>
 <p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code>
 function:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
 
 <span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -402,7 +398,7 @@ create an instance of the <code class="docutils literal notranslate"><span class
 <p>During this process, <strong>SDV</strong> will traverse across all the tables in your dataset following the
 primary key-foreign key relationships and learn the probability distributions of the values in
 the columns.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
 
 <span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">()</span>
 <span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="p">)</span>
@@ -410,7 +406,7 @@ the columns.</p>
 </div>
 <p>Once the modeling has finished, you can save your fitted <code class="docutils literal notranslate"><span class="pre">SDV</span></code> instance for later usage
 using the <code class="docutils literal notranslate"><span class="pre">save</span></code> method of your instance.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;path/to/sdv.pkl&#39;</span><span class="p">)</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sdv.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The generated <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file will not include any of the original data in it, so it can be
@@ -422,12 +418,12 @@ safely sent to where the synthetic data will be generated without any privacy co
 <p>In order to sample data from the fitted model, we will first need to load it from its
 <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file. Note that you can skip this step if you are running all the steps sequentially
 within the same python session.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/sdv.pkl&#39;</span><span class="p">)</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;sdv.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>After loading the instance, we can sample synthetic data using its <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method,
 passing the number of rows that we want to generate.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The output will be a dictionary with the same structure as the original <code class="docutils literal notranslate"><span class="pre">tables</span></code> dict,
@@ -435,6 +431,8 @@ but filled with synthetic data instead of the real one.</p>
 <p><strong>Note</strong> that only the parent tables of your dataset will have the specified number of rows,
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.</p>
+<p>Finally, if you want to evaluate how similar the sampled tables are to the real data,
+please have a look at our <a class="reference external" href="EVALUATION.md">evaluation</a> framework or visit the <a class="reference external" href="https://github.com/sdv-dev/SDMetrics">SDMetrics</a> library.</p>
 </div>
 </div>
 <div class="section" id="join-out-community">

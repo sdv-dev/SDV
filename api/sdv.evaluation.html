@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.evaluation package &mdash; SDV 0.3.3.dev0 documentation</title>
+  <title>sdv.evaluation module &mdash; SDV 0.3.3.dev0 documentation</title>
   
 
   
@@ -37,8 +37,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sdv.evaluation.descriptors module" href="sdv.evaluation.descriptors.html" />
-    <link rel="prev" title="sdv package" href="sdv.html" /> 
+    <link rel="next" title="sdv.metadata module" href="sdv.metadata.html" />
+    <link rel="prev" title="sdv.demo module" href="sdv.demo.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -132,12 +132,7 @@
 <p class="caption"><span class="caption-text">Resources</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.evaluation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
@@ -145,8 +140,9 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
@@ -260,7 +256,7 @@
         
           <li><a href="sdv.html">sdv package</a> &raquo;</li>
         
-      <li>sdv.evaluation package</li>
+      <li>sdv.evaluation module</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -281,51 +277,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="sdv-evaluation-package">
-<h1>sdv.evaluation package<a class="headerlink" href="#sdv-evaluation-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.descriptors.html">sdv.evaluation.descriptors module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.metrics.html">sdv.evaluation.metrics module</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="module-sdv.evaluation">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sdv.evaluation" title="Permalink to this headline">¶</a></h2>
-<p>Tools for evaluate the synthesized data.</p>
-<p>The main function in this module is <cite>evaluate</cite> whose usage has been shown in the README.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluate</span></code> works by using a series of descriptors on each column for both datasets, and
-then applying metrics on the generated descriptors.</p>
-<p>A descriptor is a function <code class="docutils literal notranslate"><span class="pre">descriptor(column:</span> <span class="pre">pandas.Series)</span> <span class="pre">-&gt;</span> <span class="pre">pandas.Series</span></code> whose input and
-return value are <code class="docutils literal notranslate"><span class="pre">pandas.Series</span></code>.</p>
-<p>A metric is a function <code class="docutils literal notranslate"><span class="pre">metric(expected:</span> <span class="pre">numpy.ndarray,</span> <span class="pre">observed:</span> <span class="pre">numpy.ndarray)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code> that
-takes to numpy arrays and returns a float.</p>
-<p>So, if you want to use <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> with your custom descriptors and/or metrics, you can
-call it with:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_descriptor_function</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
-   <span class="c1"># All necessary steps here</span>
-   <span class="k">return</span> <span class="n">description</span>
-
-<span class="k">def</span> <span class="nf">my_custom_metric</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">):</span>
-   <span class="c1"># All necessary steps here</span>
-   <span class="k">return</span> <span class="n">metric</span>
-
-<span class="n">my_descriptors</span> <span class="o">=</span> <span class="p">[</span>
-   <span class="n">my_descriptor_function</span>
-<span class="p">]</span>
-
-<span class="n">my_metrics</span> <span class="o">=</span> <span class="p">[</span>
-   <span class="n">my_custom_metric</span>
-<span class="p">]</span>
-
-<span class="n">evaluate</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="n">my_descriptors</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">my_metrics</span><span class="p">)</span>
-
-    <span class="n">my_custom_metric</span>   <span class="mf">6.040444e+32</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
-</pre></div>
-</div>
+  <div class="section" id="module-sdv.evaluation">
+<span id="sdv-evaluation-module"></span><h1>sdv.evaluation module<a class="headerlink" href="#module-sdv.evaluation" title="Permalink to this headline">¶</a></h1>
+<p>Tools to evaluate the synthesized data.</p>
 <p><strong>Functions</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -333,39 +287,15 @@ call it with:</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.describe" title="sdv.evaluation.describe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">describe</span></code></a>(tables, metadata[, descriptors])</p></td>
-<td><p>Compute statistics for all tables.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.evaluation.evaluate" title="sdv.evaluation.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(synth[, real, metadata, root_path, …])</p></td>
-<td><p>Compute stats metric for all tables.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.evaluation.evaluate" title="sdv.evaluation.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>(synth[, real, metadata, root_path, …])</p></td>
+<td><p>Compute a score using SDMetrics.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="function">
-<dt id="sdv.evaluation.describe">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param">tables</em>, <em class="sig-param">metadata</em>, <em class="sig-param">descriptors=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.describe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute statistics for all tables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>tables</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – Mapping of table names and the corresponding pd.DataFrames.</p></li>
-<li><p><strong>metadata</strong> (<a class="reference internal" href="sdv.html#sdv.Metadata" title="sdv.Metadata"><em>Metadata</em></a>) – Dataset Metadata.</p></li>
-<li><p><strong>descriptors</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of descriptors.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>It has the metrics as index, and the scores as values.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.Series or pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="sdv.evaluation.evaluate">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">synth</em>, <em class="sig-param">real=None</em>, <em class="sig-param">metadata=None</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">descriptors=dict_keys(['mean'</em>, <em class="sig-param">'std'</em>, <em class="sig-param">'skew'</em>, <em class="sig-param">'kurtosis'</em>, <em class="sig-param">'categorical_distribution'])</em>, <em class="sig-param">metrics=(&lt;function mse&gt;</em>, <em class="sig-param">&lt;function rmse&gt;</em>, <em class="sig-param">&lt;function r2_score&gt;)</em>, <em class="sig-param">table_name=None</em>, <em class="sig-param">by_tables=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute stats metric for all tables.</p>
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">synth</em>, <em class="sig-param">real=None</em>, <em class="sig-param">metadata=None</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">table_name=None</em>, <em class="sig-param">get_report=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a score using SDMetrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -377,19 +307,16 @@ call it with:</p>
 <li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of metrics.</p></li>
 <li><p><strong>table_name</strong> (<em>str</em>) – Table name to be evaluated, only used when <code class="docutils literal notranslate"><span class="pre">synth</span></code> is a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>
 and <code class="docutils literal notranslate"><span class="pre">real</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>by_tables</strong> (<em>bool</em>) – Whether to compute the metrics by table or over the whole dataset.</p></li>
+<li><p><strong>get_report</strong> (<em>bool</em>) – whether to return the complete SDMetrics report. If False (default), only
+the overall score is returned.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>It has the metrics as index, and the scores as values.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.Series or pandas.DataFrame</p>
+<dd class="field-even"><p>float or sdmetrics.MetricsReport</p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
 </div>
 
 
@@ -400,10 +327,10 @@ and <code class="docutils literal notranslate"><span class="pre">real</span></co
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sdv.evaluation.descriptors.html" class="btn btn-neutral float-right" title="sdv.evaluation.descriptors module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sdv.metadata.html" class="btn btn-neutral float-right" title="sdv.metadata module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sdv.html" class="btn btn-neutral float-left" title="sdv package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="sdv.demo.html" class="btn btn-neutral float-left" title="sdv.demo module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

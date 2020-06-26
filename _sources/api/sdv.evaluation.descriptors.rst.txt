@@ -1,7 +1,0 @@
-sdv.evaluation.descriptors module
-=================================
-
-.. automodule:: sdv.evaluation.descriptors
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sdv.evaluation package" href="sdv.evaluation.html" />
+    <link rel="next" title="sdv.models package" href="sdv.models.html" />
     <link rel="prev" title="Metadata" href="../metadata.html" /> 
 </head>
 
@@ -133,11 +133,6 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
@@ -147,6 +142,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
@@ -285,15 +281,6 @@
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sdv.evaluation.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.descriptors.html">sdv.evaluation.descriptors module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.metrics.html">sdv.evaluation.metrics module</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdv.models.base.html">sdv.models.base module</a></li>
@@ -312,6 +299,7 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sdv.sampler.html">sdv.sampler module</a></li>
@@ -368,7 +356,7 @@
 
 <dl class="function">
 <dt id="sdv.load_demo">
-<code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">load_demo</code><span class="sig-paren">(</span><em class="sig-param">dataset_name=None</em>, <em class="sig-param">data_path='/home/travis/build/sdv-dev/SDV/sdv/data'</em>, <em class="sig-param">metadata=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/demo.html#load_demo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.load_demo" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sdv.</code><code class="sig-name descname">load_demo</code><span class="sig-paren">(</span><em class="sig-param">dataset_name=None</em>, <em class="sig-param">data_path='/home/runner/work/SDV/SDV/sdv/data'</em>, <em class="sig-param">metadata=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/demo.html#load_demo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.load_demo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load demo data.</p>
 <p>The demo data consists of the metadata and tables dict for a a toy dataset with
 three simple tables:</p>
@@ -1046,7 +1034,7 @@ metadata is a dict, the current working directory is used.</p></li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sdv.evaluation.html" class="btn btn-neutral float-right" title="sdv.evaluation package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sdv.models.html" class="btn btn-neutral float-right" title="sdv.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../metadata.html" class="btn btn-neutral float-left" title="Metadata" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

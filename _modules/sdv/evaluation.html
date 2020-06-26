@@ -131,11 +131,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
@@ -145,6 +140,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.sampler.html">sdv.sampler module</a></li>
@@ -274,183 +270,12 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.evaluation</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Tools for evaluate the synthesized data.</span>
-
-<span class="sd">The main function in this module is `evaluate` whose usage has been shown in the README.</span>
-
-<span class="sd">``evaluate`` works by using a series of descriptors on each column for both datasets, and</span>
-<span class="sd">then applying metrics on the generated descriptors.</span>
-
-<span class="sd">A descriptor is a function ``descriptor(column: pandas.Series) -&gt; pandas.Series`` whose input and</span>
-<span class="sd">return value are ``pandas.Series``.</span>
-
-<span class="sd">A metric is a function ``metric(expected: numpy.ndarray, observed: numpy.ndarray) -&gt; float`` that</span>
-<span class="sd">takes to numpy arrays and returns a float.</span>
-
-<span class="sd">So, if you want to use ``evaluate`` with your custom descriptors and/or metrics, you can</span>
-<span class="sd">call it with:</span>
-
-<span class="sd">.. code-block:: python</span>
-
-<span class="sd">    def my_descriptor_function(column):</span>
-<span class="sd">       # All necessary steps here</span>
-<span class="sd">       return description</span>
-
-<span class="sd">    def my_custom_metric(expected, observed):</span>
-<span class="sd">       # All necessary steps here</span>
-<span class="sd">       return metric</span>
-
-<span class="sd">    my_descriptors = [</span>
-<span class="sd">       my_descriptor_function</span>
-<span class="sd">    ]</span>
-
-<span class="sd">    my_metrics = [</span>
-<span class="sd">       my_custom_metric</span>
-<span class="sd">    ]</span>
-
-<span class="sd">    evaluate(real, samples, descriptors=my_descriptors, metrics=my_metrics)</span>
-
-<span class="sd">        my_custom_metric   6.040444e+32</span>
-<span class="sd">        dtype: float64</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Tools to evaluate the synthesized data.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">sdmetrics</span>
 
-<span class="kn">from</span> <span class="nn">sdv.evaluation.descriptors</span> <span class="kn">import</span> <span class="n">DESCRIPTORS</span>
-<span class="kn">from</span> <span class="nn">sdv.evaluation.metrics</span> <span class="kn">import</span> <span class="n">DEFAULT_METRICS</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
-
-<span class="n">DEFAULT_DTYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime64&#39;</span><span class="p">]</span>
-<span class="n">DESCRIBE_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">,</span> <span class="s1">&#39;column&#39;</span><span class="p">,</span> <span class="s1">&#39;descriptor&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;statistic&#39;</span><span class="p">]</span>
-<span class="n">EVALUATE_INDEX</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">,</span> <span class="s1">&#39;column&#39;</span><span class="p">,</span> <span class="s1">&#39;descriptor&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">]</span>
-
-
-<span class="k">def</span> <span class="nf">_describe_column</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute the descriptor statistics for the given column.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        column (pandas.Series):</span>
-<span class="sd">            Data to describe.</span>
-<span class="sd">        descriptor (callable):</span>
-<span class="sd">            Callable that accepts a single column and returns one or more real-values.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        pandas.DataFrame:</span>
-<span class="sd">            Column statistics as a ``pandas.DataFrame`` with 3 columns:</span>
-<span class="sd">                * ``statistic``: Value of the statistic.</span>
-<span class="sd">                * ``value``: specific column value to which the statistic relates.</span>
-<span class="sd">                * ``descriptor``: Name of the descriptor used to compute the statistics.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">column_stats</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">descriptor</span><span class="p">(</span><span class="n">column</span><span class="p">))</span>
-    <span class="n">column_stats</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;statistic&#39;</span>
-    <span class="n">column_stats</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;value&#39;</span>
-    <span class="n">column_stats</span> <span class="o">=</span> <span class="n">column_stats</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-    <span class="n">column_stats</span><span class="p">[</span><span class="s1">&#39;descriptor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">descriptor</span><span class="o">.</span><span class="vm">__name__</span>
-
-    <span class="k">return</span> <span class="n">column_stats</span>
-
-
-<span class="k">def</span> <span class="nf">_describe_columns</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute the descriptor values for the given table.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        table_data (pandas.DataFrame):</span>
-<span class="sd">            Data to describe.</span>
-<span class="sd">        descriptor (callable):</span>
-<span class="sd">            Callable that accepts a single column and returns one or more real-values.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        pandas.DataFrame:</span>
-<span class="sd">            Table statistics as a ``pandas.DataFrame`` with 4 columns:</span>
-<span class="sd">                * ``statistic``: Value of the statistic.</span>
-<span class="sd">                * ``value``: specific column value to which the statistic relates.</span>
-<span class="sd">                * ``descriptor``: Name of the descriptor used to compute the statistics.</span>
-<span class="sd">                * ``column``: Name of the column being described.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">table_stats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-
-    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">column_stats</span> <span class="o">=</span> <span class="n">_describe_column</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">descriptor</span><span class="p">)</span>
-            <span class="n">column_stats</span><span class="p">[</span><span class="s1">&#39;column&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">column_name</span>
-            <span class="n">table_stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column_stats</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">table_stats</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_describe_table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">table_dtypes</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get stats for the given table using the descriptors.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        table (pandas.DataFrame):</span>
-<span class="sd">            Table to describe.</span>
-<span class="sd">        table_dtypes (list[str]):</span>
-<span class="sd">            List of column dtypes extracted from the table metadata.</span>
-<span class="sd">        descriptors (list[callabel, list]):</span>
-<span class="sd">           List of descriptors and supported dtypes.</span>
-
-<span class="sd">    Return:</span>
-<span class="sd">        pandas.DataFrame:</span>
-<span class="sd">            Table statistics as a ``pandas.DataFrame`` with 4 columns:</span>
-<span class="sd">                * ``statistic``: Value of the statistic.</span>
-<span class="sd">                * ``value``: specific column value to which the statistic relates.</span>
-<span class="sd">                * ``descriptor``: Name of the descriptor used to compute the statistics.</span>
-<span class="sd">                * ``column``: Name of the column being described.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">table_stats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">descriptor</span><span class="p">,</span> <span class="n">dtypes</span> <span class="ow">in</span> <span class="n">descriptors</span><span class="p">:</span>
-        <span class="n">valid_columns</span> <span class="o">=</span> <span class="n">table_dtypes</span><span class="p">[</span><span class="n">table_dtypes</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)]</span><span class="o">.</span><span class="n">index</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_columns</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">table_stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_describe_columns</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="n">valid_columns</span><span class="p">],</span> <span class="n">descriptor</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">table_stats</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_get_descriptor_tuples</span><span class="p">(</span><span class="n">descriptors</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">descriptors</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">DESCRIPTORS</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-    <span class="n">tuples</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">descriptor</span> <span class="ow">in</span> <span class="n">descriptors</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">descriptor</span><span class="p">,</span> <span class="n">dtypes</span> <span class="o">=</span> <span class="n">DESCRIPTORS</span><span class="p">[</span><span class="n">descriptor</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="n">descriptor</span><span class="p">,</span> <span class="n">dtypes</span> <span class="o">=</span> <span class="n">descriptor</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dtypes</span> <span class="o">=</span> <span class="n">DEFAULT_DTYPES</span>
-
-        <span class="n">tuples</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">tuples</span>
-
-
-<div class="viewcode-block" id="describe"><a class="viewcode-back" href="../../api/sdv.evaluation.html#sdv.evaluation.describe">[docs]</a><span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute statistics for all tables.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        tables (dict[str, pandas.DataFrame]):</span>
-<span class="sd">            Mapping of table names and the corresponding pd.DataFrames.</span>
-<span class="sd">        metadata (Metadata):</span>
-<span class="sd">            Dataset Metadata.</span>
-<span class="sd">        descriptors (list[callable]):</span>
-<span class="sd">            List of descriptors.</span>
-
-<span class="sd">    Return:</span>
-<span class="sd">        pandas.Series or pandas.DataFrame:</span>
-<span class="sd">            It has the metrics as index, and the scores as values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">stats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="n">descriptors</span> <span class="o">=</span> <span class="n">_get_descriptor_tuples</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">table_data</span> <span class="ow">in</span> <span class="n">tables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">table_dtypes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
-        <span class="n">table_stats</span> <span class="o">=</span> <span class="n">_describe_table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">table_dtypes</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">)</span>
-        <span class="n">table_stats</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
-        <span class="n">stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">table_stats</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stats</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="n">DESCRIBE_COLUMNS</span><span class="p">]</span></div>
 
 
 <span class="k">def</span> <span class="nf">_validate_arguments</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
@@ -508,12 +333,18 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">synth</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;real and synthetic dataset must have the same tables&#39;</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()):</span>
+        <span class="n">meta_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">table</span><span class="p">:</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">({</span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="n">meta_dict</span><span class="p">})</span>
+
     <span class="k">return</span> <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span>
 
 
-<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api/sdv.evaluation.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">descriptors</span><span class="o">=</span><span class="n">DESCRIPTORS</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
-             <span class="n">metrics</span><span class="o">=</span><span class="n">DEFAULT_METRICS</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">by_tables</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute stats metric for all tables.</span>
+<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api/sdv.evaluation.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_report</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute a score using SDMetrics.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
@@ -531,48 +362,22 @@
 <span class="sd">        table_name (str):</span>
 <span class="sd">            Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``</span>
 <span class="sd">            and ``real`` is ``None``.</span>
-<span class="sd">        by_tables (bool):</span>
-<span class="sd">            Whether to compute the metrics by table or over the whole dataset.</span>
+<span class="sd">        get_report (bool):</span>
+<span class="sd">            whether to return the complete SDMetrics report. If False (default), only</span>
+<span class="sd">            the overall score is returned.</span>
 
 <span class="sd">    Return:</span>
-<span class="sd">        pandas.Series or pandas.DataFrame:</span>
-<span class="sd">            It has the metrics as index, and the scores as values.</span>
+<span class="sd">        float or sdmetrics.MetricsReport</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">_validate_arguments</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
-    <span class="n">real_stats</span> <span class="o">=</span> <span class="n">describe</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
-    <span class="n">synth_stats</span> <span class="o">=</span> <span class="n">describe</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">sdmetrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">)</span>
 
-    <span class="n">stats</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-        <span class="s1">&#39;real&#39;</span><span class="p">:</span> <span class="n">real_stats</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">EVALUATE_INDEX</span><span class="p">)[</span><span class="s1">&#39;statistic&#39;</span><span class="p">],</span>
-        <span class="s1">&#39;synth&#39;</span><span class="p">:</span> <span class="n">synth_stats</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">EVALUATE_INDEX</span><span class="p">)[</span><span class="s1">&#39;statistic&#39;</span><span class="p">]</span>
-    <span class="p">})</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">get_report</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">report</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">by_tables</span><span class="p">:</span>
-        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="n">metrics</span><span class="p">]</span>
-
-    <span class="n">scores</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
-        <span class="n">table_scores</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">table_stats</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">table</span><span class="p">]</span>
-        <span class="n">real_stats</span> <span class="o">=</span> <span class="n">table_stats</span><span class="p">[</span><span class="s1">&#39;real&#39;</span><span class="p">]</span>
-        <span class="n">synth_stats</span> <span class="o">=</span> <span class="n">table_stats</span><span class="p">[</span><span class="s1">&#39;synth&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
-            <span class="n">table_scores</span><span class="p">[</span><span class="n">metric</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">real_stats</span><span class="p">,</span> <span class="n">synth_stats</span><span class="p">)</span>
-
-        <span class="n">scores</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_scores</span>
-
-    <span class="n">scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-        <span class="n">mean</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">scores</span></div>
+    <span class="k">return</span> <span class="n">report</span><span class="o">.</span><span class="n">overall</span><span class="p">()</span></div>
 </pre></div>
 
            </div>

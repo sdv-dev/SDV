@@ -1,16 +1,5 @@
-sdv.evaluation package
-======================
-
-Submodules
-----------
-
-.. toctree::
-
-   sdv.evaluation.descriptors
-   sdv.evaluation.metrics
-
-Module contents
----------------
+sdv.evaluation module
+=====================
 
 .. automodule:: sdv.evaluation
    :members:

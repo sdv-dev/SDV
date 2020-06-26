@@ -1,7 +1,0 @@
-sdv.evaluation.metrics module
-=============================
-
-.. automodule:: sdv.evaluation.metrics
-   :members:
-   :undoc-members:
-   :show-inheritance:

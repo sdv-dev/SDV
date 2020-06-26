@@ -131,11 +131,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.evaluation.html#module-sdv.evaluation">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.models.html">sdv.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
@@ -145,6 +140,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.metadata.html">sdv.metadata module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.modeler.html">sdv.modeler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.sampler.html">sdv.sampler module</a></li>
@@ -327,8 +323,13 @@
         <span class="n">extension_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">foreign_key_values</span> <span class="o">=</span> <span class="n">child_table</span><span class="p">[</span><span class="n">foreign_key</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
         <span class="n">child_table</span> <span class="o">=</span> <span class="n">child_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">foreign_key</span><span class="p">)</span>
+        <span class="n">child_primary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">child_name</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">foreign_key_value</span> <span class="ow">in</span> <span class="n">foreign_key_values</span><span class="p">:</span>
             <span class="n">child_rows</span> <span class="o">=</span> <span class="n">child_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="n">foreign_key_value</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">child_primary</span> <span class="ow">in</span> <span class="n">child_rows</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">child_rows</span><span class="p">[</span><span class="n">child_primary</span><span class="p">]</span>
+
             <span class="n">num_child_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_rows</span><span class="p">)</span>
 
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
