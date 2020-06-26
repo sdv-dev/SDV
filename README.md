@@ -177,7 +177,7 @@ the original distribution of your dataset.
 
 Finally, if you want to evaluate how similar the sampled tables are to the real data,
 please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](
-/sdv-dev/SDMetrics) library.
+https://github.com/sdv-dev/SDMetrics) library.
 
 # Join out community
 

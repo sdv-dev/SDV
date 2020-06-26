@@ -4,7 +4,7 @@ After using SDV to model your database and generate a synthetic version of it yo
 might want to evaluate how similar the syntehtic data is to your real data.
 
 SDV has an evaluation module with a simple function that allows you to compare
-the syntehtic data to your real data using [SDMetrics](/sdv-dev/SDMetrics) and
+the syntehtic data to your real data using [SDMetrics](https://github.com/sdv-dev/SDMetrics) and
 generate a simple standardized score.
 
 ## Evaluating your synthetic data
@@ -43,4 +43,4 @@ the higher the value, the more similar the sets of table are. Notice that in mos
 the value will be negative.
 
 For further options, including visualizations and more detailed reports, please refer to
-the [SDMetrics](/sdv-dev/SDMetrics) library.
+the [SDMetrics](https://github.com/sdv-dev/SDMetrics) library.
