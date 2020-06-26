@@ -51,8 +51,13 @@ class Modeler:
         extension_rows = list()
         foreign_key_values = child_table[foreign_key].unique()
         child_table = child_table.set_index(foreign_key)
+        child_primary = self.metadata.get_primary_key(child_name)
+
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
+            if child_primary in child_rows.columns:
+                del child_rows[child_primary]
+
             num_child_rows = len(child_rows)
 
             model = self.model(**self.model_kwargs)
