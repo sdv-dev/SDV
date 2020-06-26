@@ -3,6 +3,7 @@
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
+[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/SDV.svg)](https://pypi.python.org/pypi/SDV)
 [![Travis CI Shield](https://travis-ci.org/sdv-dev/SDV.svg?branch=master)](https://travis-ci.org/sdv-dev/SDV)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
@@ -11,6 +12,7 @@
 # SDV - Synthetic Data Vault
 
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
+* Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 * Documentation: https://sdv-dev.github.io/SDV
 * Homepage: https://github.com/sdv-dev/SDV
 
@@ -64,7 +66,7 @@ save a hierarchical model. We will cover these two steps in this section using a
 **SDV** comes with a toy dataset to play with, which can be loaded using the `sdv.load_demo`
 function:
 
-```python
+```python3
 from sdv import load_demo
 
 metadata, tables = load_demo(metadata=True)
@@ -132,7 +134,7 @@ During this process, **SDV** will traverse across all the tables in your dataset
 primary key-foreign key relationships and learn the probability distributions of the values in
 the columns.
 
-```python
+```python3
 from sdv import SDV
 
 sdv = SDV()
@@ -142,8 +144,8 @@ sdv.fit(metadata, tables)
 Once the modeling has finished, you can save your fitted `SDV` instance for later usage
 using the `save` method of your instance.
 
-```python
-sdv.save('path/to/sdv.pkl')
+```python3
+sdv.save('sdv.pkl')
 ```
 
 The generated `pkl` file will not include any of the original data in it, so it can be
@@ -155,14 +157,14 @@ In order to sample data from the fitted model, we will first need to load it fro
 `pkl` file. Note that you can skip this step if you are running all the steps sequentially
 within the same python session.
 
-```python
-sdv = SDV.load('path/to/sdv.pkl')
+```python3
+sdv = SDV.load('sdv.pkl')
 ```
 
 After loading the instance, we can sample synthetic data using its `sample_all` method,
 passing the number of rows that we want to generate.
 
-```python
+```python3
 samples = sdv.sample_all(5)
 ```
 
@@ -172,6 +174,10 @@ but filled with synthetic data instead of the real one.
 **Note** that only the parent tables of your dataset will have the specified number of rows,
 as the number of child rows that each row in the parent table has is also sampled following
 the original distribution of your dataset.
+
+Finally, if you want to evaluate how similar the sampled tables are to the real data,
+please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](
+https://github.com/sdv-dev/SDMetrics) library.
 
 # Join out community
 

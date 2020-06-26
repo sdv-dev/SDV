@@ -130,7 +130,7 @@ class Sampler:
 
         prefix = '__{}__'.format(table_name)
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
-        new_keys = {key: key.replace(prefix, '') for key in keys}
+        new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys]
         return flat_parameters.rename(new_keys).to_dict()
 

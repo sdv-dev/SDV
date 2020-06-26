@@ -6,12 +6,12 @@
                     "type": "id",
                     "subtype": "integer"
                 },
-                "gender": {
-                    "type": "categorical"
-                },
                 "age": {
                     "type": "numerical",
                     "subtype": "integer"
+                },
+                "gender": {
+                    "type": "categorical"
                 },
                 "country": {
                     "type": "categorical"
@@ -21,6 +21,9 @@
         },
         "sessions": {
             "fields": {
+                "os": {
+                    "type": "categorical"
+                },
                 "user_id": {
                     "type": "id",
                     "subtype": "integer",
@@ -28,9 +31,6 @@
                         "table": "users",
                         "field": "user_id"
                     }
-                },
-                "os": {
-                    "type": "categorical"
                 },
                 "device": {
                     "type": "categorical"
@@ -48,16 +48,12 @@
                     "type": "datetime",
                     "format": "%Y-%m-%d"
                 },
-                "approved": {
-                    "type": "boolean"
-                },
-                "amount": {
-                    "type": "numerical",
-                    "subtype": "float"
-                },
                 "transaction_id": {
                     "type": "id",
                     "subtype": "integer"
+                },
+                "approved": {
+                    "type": "boolean"
                 },
                 "session_id": {
                     "type": "id",
@@ -66,6 +62,10 @@
                         "table": "sessions",
                         "field": "session_id"
                     }
+                },
+                "amount": {
+                    "type": "numerical",
+                    "subtype": "float"
                 }
             },
             "primary_key": "transaction_id"
