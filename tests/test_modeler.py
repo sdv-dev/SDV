@@ -47,6 +47,7 @@ class TestModeler(TestCase):
         modeler = Mock(spec=Modeler)
         modeler.model = model
         modeler.model_kwargs = dict()
+        modeler.metadata = Mock(spec=Metadata)
 
         # Run
         child_table = pd.DataFrame({'foo': ['aaa', 'bbb', 'ccc']})
