@@ -20,11 +20,15 @@ def flatten_array(nested, prefix=''):
     for index in range(len(nested)):
         prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
 
-        if isinstance(nested[index], (list, np.ndarray)):
-            result.update(flatten_array(nested[index], prefix=prefix_key))
+        value = nested[index]
+        if isinstance(value, (list, np.ndarray)):
+            result.update(flatten_array(value, prefix=prefix_key))
+
+        elif isinstance(value, dict):
+            result.update(flatten_dict(value, prefix=prefix_key))
 
         else:
-            result[prefix_key] = nested[index]
+            result[prefix_key] = value
 
     return result
 
