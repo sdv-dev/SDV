@@ -27,6 +27,7 @@ class Modeler:
         self.metadata = metadata
         self.model = model
         self.model_kwargs = dict() if model_kwargs is None else model_kwargs
+        self.table_sizes = dict()
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate list of extension for child tables.
@@ -78,7 +79,7 @@ class Modeler:
             table_name (str):
                 Name of the table to model.
             tables (dict):
-                Dict of tables tha have been already modeled.
+                Dict of original tables.
             foreign_key (str):
                 Name of the foreign key that references this table. Used only when applying
                 CPA on a child table.
@@ -87,12 +88,15 @@ class Modeler:
             pandas.DataFrame:
                 table data with the extensions created while modeling its children.
         """
+
         LOGGER.info('Modeling %s', table_name)
 
         if tables:
             table = tables[table_name]
         else:
             table = self.metadata.load_table(table_name)
+
+        self.table_sizes[table_name] = len(table)
 
         extended = self.metadata.transform(table_name, table)
 

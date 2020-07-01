@@ -67,16 +67,18 @@ class SDV:
 
         self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
         self.modeler.model_database(tables)
-        self.sampler = Sampler(self.metadata, self.modeler.models, self.model, self.model_kwargs)
+        self.sampler = Sampler(self.metadata, self.modeler.models, self.model,
+                               self.model_kwargs, self.modeler.table_sizes)
 
-    def sample(self, table_name, num_rows, sample_children=True, reset_primary_keys=False):
+    def sample(self, table_name, num_rows=None, sample_children=True, reset_primary_keys=False):
         """Sample ``num_rows`` rows from the indicated table.
 
         Args:
             table_name (str):
                 Name of the table to sample from.
             num_rows (int):
-                Amount of rows to sample.
+                Amount of rows to sample. If ``None``, sample the same number of rows
+                as there were in the original table.
             sample_children (bool):
                 Whether or not to sample children tables. Defaults to ``True``.
             reset_primary_keys (bool):
@@ -100,12 +102,13 @@ class SDV:
             reset_primary_keys=reset_primary_keys
         )
 
-    def sample_all(self, num_rows=5, reset_primary_keys=False):
+    def sample_all(self, num_rows=None, reset_primary_keys=False):
         """Sample the entire dataset.
 
         Args:
             num_rows (int):
-                Amount of rows to sample. Defaults to ``5``.
+                Number of rows to be sampled on the first parent tables. If ``None``,
+                sample the same number of rows as in the original tables.
             reset_primary_keys (bool):
                 Wheter or not reset the primary key generators. Defaults to ``False``.
 

@@ -624,7 +624,7 @@ class Metadata:
 
             self._validate_table(table_name, table_meta, table)
             self._validate_circular_relationships(table_name)
-            self._validate_parents(table_name)
+            # self._validate_parents(table_name)
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
