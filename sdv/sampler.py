@@ -38,7 +38,11 @@ class Sampler:
         self.remaining_primary_key = dict()
 
     def _finalize(self, sampled_data):
-        """Reverse transform synthetized data.
+        """Do the final touches to the generated data.
+
+        This method reverts the previous transformations to go back
+        to values in the original space and also adds the parent
+        keys in case foreign key relationships exist between the tables.
 
         Args:
             sampled_data (dict):
@@ -226,11 +230,7 @@ class Sampler:
             # singular matrix rows with the mean
             likelihoods = likelihoods.fillna(mean)
 
-        total = likelihoods.sum()
-        if total == 0:
-            weights = np.ones(len(likelihoods))
-        else:
-            weights = likelihoods.values / likelihoods.sum()
+        weights = likelihoods.values / likelihoods.sum()
 
         return np.random.choice(likelihoods.index, p=weights)
 
@@ -245,7 +245,8 @@ class Sampler:
             parent_rows = self._sample_rows(parent_model, num_parent_rows, parent_name)
 
         primary_key = self.metadata.get_primary_key(parent_name)
-        pdfs = self._get_pdfs(parent_rows.set_index(primary_key), table_name)
+        parent_rows = parent_rows.set_index(primary_key)
+        pdfs = self._get_pdfs(parent_rows, table_name)
         num_rows = parent_rows['__' + table_name + '__child_rows'].clip(0)
 
         parent_ids = list()

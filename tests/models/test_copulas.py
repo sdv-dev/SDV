@@ -26,8 +26,11 @@ class TestGaussianCopula(TestCase):
 
         # Run
         model_parameters = {
-            'distribs': {
-                'foo': {'std': 0.5}
+            'univariates': {
+                'foo': {
+                    'scale': 0.0,
+                    'loc': 5
+                },
             },
             'covariance': [[0.4, 0.1], [0.1]],
             'distribution': 'GaussianUnivariate'
@@ -36,13 +39,14 @@ class TestGaussianCopula(TestCase):
 
         # Asserts
         expected = {
-            'distribs': {
-                'foo': {
-                    'fitted': True,
-                    'std': 1.6487212707001282,
+            'univariates': [
+                {
+                    'scale': 1.0,
+                    'loc': 5,
                     'type': 'GaussianUnivariate'
                 }
-            },
+            ],
+            'columns': ['foo'],
             'distribution': 'GaussianUnivariate',
             'covariance': [[0.4, 0.2], [0.2, 0.0]]
         }

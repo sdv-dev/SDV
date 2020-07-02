@@ -575,11 +575,6 @@ class Metadata:
         for child in children:
             self._validate_circular_relationships(parent, self.get_children(child))
 
-    def _validate_parents(self, table_name):
-        """Make sure that the table has only one parent."""
-        if len(self.get_parents(table_name)) > 1:
-            raise MetadataError('Table {} has more than one parent.'.format(table_name))
-
     def validate(self, tables=None):
         """Validate this metadata.
 
@@ -624,7 +619,6 @@ class Metadata:
 
             self._validate_table(table_name, table_meta, table)
             self._validate_circular_relationships(table_name)
-            # self._validate_parents(table_name)
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""

@@ -218,28 +218,6 @@ class TestMetadata(TestCase):
         }
         assert result == expected
 
-    def test__validate_parents_no_error(self):
-        """Test that any error is raised with a supported structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = []
-
-        # Run
-        Metadata._validate_parents(mock, 'demo')
-
-        # Asserts
-        mock.get_parents.assert_called_once_with('demo')
-
-    def test__validate_parents_raise_error(self):
-        """Test that a ValueError is raised because the bad structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = ['foo', 'bar']
-
-        # Run
-        with pytest.raises(MetadataError):
-            Metadata._validate_parents(mock, 'demo')
-
     @patch('sdv.metadata.Metadata._analyze_relationships')
     @patch('sdv.metadata.Metadata._dict_metadata')
     def test___init__default_metadata_dict(self, mock_meta, mock_relationships):
