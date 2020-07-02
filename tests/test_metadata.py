@@ -381,6 +381,7 @@ class TestMetadata(TestCase):
         }
         metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
+        metadata.get_children.return_value = []
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
@@ -608,23 +609,16 @@ class TestMetadata(TestCase):
     def test_get_foreign_key(self):
         """Test get foreign key"""
         # Setup
-        primary_key = 'a_primary_key'
         fields = {
             'a_field': {
                 'ref': {
+                    'table': 'parent',
                     'field': 'a_primary_key'
                 },
                 'name': 'a_field'
-            },
-            'p_field': {
-                'ref': {
-                    'field': 'another_key_field'
-                },
-                'name': 'p_field'
             }
         }
         metadata = Mock(spec_set=Metadata)
-        metadata.get_primary_key.return_value = primary_key
         metadata.get_fields.return_value = fields
 
         # Run
@@ -632,7 +626,6 @@ class TestMetadata(TestCase):
 
         # Asserts
         assert result == 'a_field'
-        metadata.get_primary_key.assert_called_once_with('parent')
         metadata.get_fields.assert_called_once_with('child')
 
     def test_reverse_transform(self):

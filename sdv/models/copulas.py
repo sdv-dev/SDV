@@ -152,7 +152,7 @@ class GaussianCopula(SDVModel):
         model_parameters['univariates'] = univariates
         model_parameters['columns'] = columns
 
-        covariance = model_parameters['covariance']
+        covariance = model_parameters.get('covariance')
         model_parameters['covariance'] = self._prepare_sampled_covariance(covariance)
 
         return model_parameters
