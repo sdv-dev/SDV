@@ -88,7 +88,7 @@ class TestSampler:
             result['test'].sort_index(axis=1),
             expected.sort_index(axis=1)
         )
-        sampler._find_parent_ids.assert_called_once()
+        assert sampler._find_parent_ids.call_count == 1
 
     def test__get_primary_keys_none(self):
         """Test returns a tuple of none when a table doesn't have a primary key"""
@@ -351,7 +351,7 @@ class TestSampler:
 
         expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
 
-        choice_mock.assert_called_once()
+        assert choice_mock.call_count == 1
         assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
         np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
 
@@ -365,7 +365,7 @@ class TestSampler:
 
         expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
 
-        choice_mock.assert_called_once()
+        assert choice_mock.call_count == 1
         assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
         np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
 
@@ -379,7 +379,7 @@ class TestSampler:
 
         expected_weights = np.array([0, 2 / 6, 0, 4 / 6])
 
-        choice_mock.assert_called_once()
+        assert choice_mock.call_count == 1
         assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
         np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
 
@@ -393,7 +393,7 @@ class TestSampler:
 
         expected_weights = np.array([0.5 / 4, 1 / 4, 1.5 / 4, 1 / 4])
 
-        choice_mock.assert_called_once()
+        assert choice_mock.call_count == 1
         assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
         np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
 
@@ -407,6 +407,6 @@ class TestSampler:
 
         expected_weights = np.array([0.5 / 5, 1 / 5, 1.5 / 5, 2 / 5])
 
-        choice_mock.assert_called_once()
+        assert choice_mock.call_count == 1
         assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
         np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
