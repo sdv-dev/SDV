@@ -171,13 +171,13 @@ class Sampler:
 
         return sampled
 
-    def _sample_children(self, table_name, sampled):
-        table_rows = sampled[table_name]
+    def _sample_children(self, table_name, sampled_data):
+        table_rows = sampled_data[table_name]
         for child_name in self.metadata.get_children(table_name):
             for _, row in table_rows.iterrows():
-                self._sample_child_rows(child_name, table_name, row, sampled)
+                self._sample_child_rows(child_name, table_name, row, sampled_data)
 
-    def _sample_child_rows(self, table_name, parent_name, parent_row, sampled):
+    def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
         parameters = self._extract_parameters(parent_row, table_name)
 
         model = self.model(**self.model_kwargs)
@@ -190,37 +190,28 @@ class Sampler:
         foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
         table_rows[foreign_key] = parent_row[parent_key]
 
-        previous = sampled.get(table_name)
+        previous = sampled_data.get(table_name)
         if previous is None:
-            sampled[table_name] = table_rows
+            sampled_data[table_name] = table_rows
         else:
-            sampled[table_name] = pd.concat([previous, table_rows]).reset_index(drop=True)
+            sampled_data[table_name] = pd.concat([previous, table_rows]).reset_index(drop=True)
 
-        self._sample_children(table_name, sampled)
+        self._sample_children(table_name, sampled_data)
 
-    def _get_pdfs(self, parent_rows, child_name):
-        """Build a model for each parent row and get its pdf function."""
-        pdfs = dict()
-        for parent_id, row in parent_rows.iterrows():
-            parameters = self._extract_parameters(row, child_name)
-            model = self.model(**self.model_kwargs)
-            model.set_parameters(parameters)
-            pdfs[parent_id] = model.model.probability_density
-
-        return pdfs
-
-    def _find_parent_id(self, likelihoods, num_rows):
+    @staticmethod
+    def _find_parent_id(likelihoods, num_rows):
         mean = likelihoods.mean()
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
             likelihoods = num_rows
         elif pd.isnull(mean) or mean == 0:
-            # No row got likelihood > 0, but some got singlar matrix
-            # Fallback to num_rows on the singular matrix rows
+            # Some rows got singlar matrix error and the rest were 0
+            # Fallback to num_rows on the singular matrix rows and
+            # keep 0s on the rest.
             likelihoods = likelihoods.fillna(num_rows)
         else:
-            # at least one row got likelihood > 0, so fill the
-            # singular matrix rows with the mean
+            # at least one row got a valid likelihood, so fill the
+            # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
 
         weights = likelihoods.values / likelihoods.sum()

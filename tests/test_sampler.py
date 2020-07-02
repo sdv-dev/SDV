@@ -1,6 +1,6 @@
-from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,7 +9,7 @@ from sdv.models.base import SDVModel
 from sdv.sampler import Sampler
 
 
-class TestSampler(TestCase):
+class TestSampler:
 
     def test___init__(self):
         """Test create a default instance of Sampler class"""
@@ -61,10 +61,7 @@ class TestSampler(TestCase):
             'c': 'some data'   # fk
         }
 
-        sampler._find_parent_ids.side_effect = [
-            [2, 3],
-            [4, 5]
-        ]
+        sampler._find_parent_ids.return_value = [4, 5]
         sampler.metadata.get_foreign_key.side_effect = [
             'b',
             'c',
@@ -74,6 +71,7 @@ class TestSampler(TestCase):
         sampled_data = {
             'test': pd.DataFrame({
                 'a': [0, 1],  # actual data
+                'b': [2, 3],  # existing fk key
                 'z': [6, 7]   # not used
             })
         }
@@ -90,6 +88,7 @@ class TestSampler(TestCase):
             result['test'].sort_index(axis=1),
             expected.sort_index(axis=1)
         )
+        sampler._find_parent_ids.assert_called_once()
 
     def test__get_primary_keys_none(self):
         """Test returns a tuple of none when a table doesn't have a primary key"""
@@ -168,7 +167,7 @@ class TestSampler(TestCase):
             Sampler._get_primary_keys(sampler, 'test', 5)
 
     def test__extract_parameters(self):
-        """Test get extension"""
+        """Test extract parameters"""
         # Setup
         sampler = Mock(spec=Sampler)
 
@@ -206,24 +205,24 @@ class TestSampler(TestCase):
         sampler.metadata.get_children.return_value = ['child A', 'child B', 'child C']
 
         # Run
-        sampled = {
+        sampled_data = {
             'test': pd.DataFrame({'field': [11, 22, 33]})
         }
-        Sampler._sample_children(sampler, 'test', sampled)
+        Sampler._sample_children(sampler, 'test', sampled_data)
 
         # Asserts
         sampler.metadata.get_children.assert_called_once_with('test')
 
         expected_calls = [
-            ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled],
-            ['child B', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child B', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child B', 'test', pd.Series([33], index=['field'], name=2), sampled],
-            ['child C', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child C', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child C', 'test', pd.Series([33], index=['field'], name=2), sampled],
+            ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
+            ['child B', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child B', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child B', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
+            ['child C', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child C', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child C', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
         ]
         actual_calls = sampler._sample_child_rows.call_args_list
         for result_call, expected_call in zip(actual_calls, expected_calls):
@@ -341,3 +340,73 @@ class TestSampler(TestCase):
         assert sampler._reset_primary_keys_generators.call_count == 1
         pd.testing.assert_frame_equal(result['table a'], pd.DataFrame({'foo': range(3)}))
         pd.testing.assert_frame_equal(result['table c'], pd.DataFrame({'foo': range(3)}))
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_0(self, choice_mock):
+        """If all likelihoods are 0, use num_rows."""
+        likelihoods = pd.Series([0, 0, 0, 0])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
+
+        choice_mock.assert_called_once()
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_singlar_matrix(self, choice_mock):
+        """If all likelihoods got singular matrix, use num_rows."""
+        likelihoods = pd.Series([None, None, None, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
+
+        choice_mock.assert_called_once()
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_0_or_singlar_matrix(self, choice_mock):
+        """If likehoods are either 0 or NaN, fill the gaps with num_rows."""
+        likelihoods = pd.Series([0, None, 0, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0, 2 / 6, 0, 4 / 6])
+
+        choice_mock.assert_called_once()
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_some_good(self, choice_mock):
+        """If some likehoods are good, fill the gaps with num_rows."""
+        likelihoods = pd.Series([0.5, None, 1.5, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0.5 / 4, 1 / 4, 1.5 / 4, 1 / 4])
+
+        choice_mock.assert_called_once()
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_good(self, choice_mock):
+        """If all are good, use the likelihoods unmodified."""
+        likelihoods = pd.Series([0.5, 1, 1.5, 2])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0.5 / 5, 1 / 5, 1.5 / 5, 2 / 5])
+
+        choice_mock.assert_called_once()
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
