@@ -23,14 +23,14 @@ def test_sdv():
     users = sdv.sample('users', sample_children=False)
 
     assert users.shape == tables['users'].shape
-    assert list(users.columns) == list(tables['users'].columns)
+    assert set(users.columns) == set(tables['users'].columns)
 
     sessions = sdv.sample('sessions', sample_children=False)
 
     assert sessions.shape == tables['sessions'].shape
-    assert list(sessions.columns) == list(tables['sessions'].columns)
+    assert set(sessions.columns) == set(tables['sessions'].columns)
 
     transactions = sdv.sample('transactions', sample_children=False)
 
     assert transactions.shape == tables['transactions'].shape
-    assert list(transactions.columns) == list(tables['transactions'].columns)
+    assert set(transactions.columns) == set(tables['transactions'].columns)
