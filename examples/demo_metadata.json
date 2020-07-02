@@ -2,31 +2,31 @@
     "tables": {
         "users": {
             "fields": {
-                "age": {
-                    "type": "numerical",
-                    "subtype": "integer"
-                },
-                "gender": {
+                "country": {
                     "type": "categorical"
                 },
                 "user_id": {
                     "type": "id",
                     "subtype": "integer"
                 },
-                "country": {
+                "gender": {
                     "type": "categorical"
+                },
+                "age": {
+                    "type": "numerical",
+                    "subtype": "integer"
                 }
             },
             "primary_key": "user_id"
         },
         "sessions": {
             "fields": {
+                "device": {
+                    "type": "categorical"
+                },
                 "session_id": {
                     "type": "id",
                     "subtype": "integer"
-                },
-                "device": {
-                    "type": "categorical"
                 },
                 "user_id": {
                     "type": "id",
@@ -48,9 +48,9 @@
                     "type": "datetime",
                     "format": "%Y-%m-%d"
                 },
-                "transaction_id": {
-                    "type": "id",
-                    "subtype": "integer"
+                "amount": {
+                    "type": "numerical",
+                    "subtype": "float"
                 },
                 "session_id": {
                     "type": "id",
@@ -60,9 +60,9 @@
                         "field": "session_id"
                     }
                 },
-                "amount": {
-                    "type": "numerical",
-                    "subtype": "float"
+                "transaction_id": {
+                    "type": "id",
+                    "subtype": "integer"
                 },
                 "approved": {
                     "type": "boolean"
