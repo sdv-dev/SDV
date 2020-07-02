@@ -57,9 +57,10 @@ class Sampler:
             parents = self.metadata.get_parents(table_name)
             if parents:
                 for parent_name in parents:
-                    parent_ids = self._find_parent_ids(table_name, parent_name, sampled_data)
                     foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
-                    table_rows[foreign_key] = parent_ids
+                    if foreign_key not in table_rows:
+                        parent_ids = self._find_parent_ids(table_name, parent_name, sampled_data)
+                        table_rows[foreign_key] = parent_ids
 
             reversed_data = self.metadata.reverse_transform(table_name, table_rows)
 
@@ -198,6 +199,7 @@ class Sampler:
         self._sample_children(table_name, sampled)
 
     def _get_pdfs(self, parent_rows, child_name):
+        """Build a model for each parent row and get its pdf function."""
         pdfs = dict()
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, child_name)
@@ -207,16 +209,7 @@ class Sampler:
 
         return pdfs
 
-    def _find_parent_id(self, row, pdfs, num_rows):
-        likelihoods = dict()
-        for parent_id, pdf in pdfs.items():
-            try:
-                likelihoods[parent_id] = max(pdf(row), 0.0)
-            except np.linalg.LinAlgError:
-                # Singular matrix
-                likelihoods[parent_id] = None
-
-        likelihoods = pd.Series(likelihoods)
+    def _find_parent_id(self, likelihoods, num_rows):
         mean = likelihoods.mean()
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
@@ -234,6 +227,19 @@ class Sampler:
 
         return np.random.choice(likelihoods.index, p=weights)
 
+    def _get_likelihoods(self, table_rows, parent_rows, table_name):
+        likelihoods = dict()
+        for parent_id, row in parent_rows.iterrows():
+            parameters = self._extract_parameters(row, table_name)
+            model = self.model(**self.model_kwargs)
+            model.set_parameters(parameters)
+            try:
+                likelihoods[parent_id] = model.model.probability_density(table_rows)
+            except np.linalg.LinAlgError:
+                likelihoods[parent_id] = None
+
+        return pd.DataFrame(likelihoods, index=table_rows.index)
+
     def _find_parent_ids(self, table_name, parent_name, sampled_data):
         table_rows = sampled_data[table_name]
         if parent_name in sampled_data:
@@ -246,14 +252,10 @@ class Sampler:
 
         primary_key = self.metadata.get_primary_key(parent_name)
         parent_rows = parent_rows.set_index(primary_key)
-        pdfs = self._get_pdfs(parent_rows, table_name)
         num_rows = parent_rows['__' + table_name + '__child_rows'].clip(0)
 
-        parent_ids = list()
-        for _, row in table_rows.iterrows():
-            parent_ids.append(self._find_parent_id(row, pdfs, num_rows))
-
-        return parent_ids
+        likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name)
+        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 
     def sample(self, table_name, num_rows=None, reset_primary_keys=False,
                sample_children=True, sample_parents=True):
