@@ -1,0 +1,79 @@
+{
+    "path": "",
+    "tables": [
+        {
+            "use": true,
+            "primary_key": "character_id",
+            "fields": [
+                {
+                    "regex": "^[1-9]{1,2}$",
+                    "type": "id",
+                    "name": "character_id"
+                },
+                {
+                    "type": "categorical",
+                    "name": "name"
+                },
+                {
+                    "subtype": "integer",
+                    "type": "numerical",
+                    "name": "age"
+                }
+            ],
+            "headers": true,
+            "path": "characters.csv",
+            "name": "characters"
+        },
+        {
+            "use": true,
+            "primary_key": "family_id",
+            "fields": [
+                {
+                    "regex": "^[1-9]$",
+                    "type": "id",
+                    "name": "family_id"
+                },
+                {
+                    "type": "categorical",
+                    "name": "name"
+                }
+            ],
+            "headers": true,
+            "path": "families.csv",
+            "name": "families"
+        },
+        {
+            "headers": true,
+            "path": "character_families.csv",
+            "use": true,
+            "name": "character_families",
+            "fields": [
+                {
+                    "type": "id",
+                    "ref": {
+                        "field": "character_id",
+                        "table": "characters"
+                    },
+                    "name": "character_id"
+                },
+                {
+                    "type": "id",
+                    "ref": {
+                        "field": "family_id",
+                        "table": "families"
+                    },
+                    "name": "family_id"
+                },
+                {
+                    "type": "categorical",
+                    "name": "type"
+                },
+                {
+                    "subtype": "integer",
+                    "type": "numerical",
+                    "name": "generation"
+                }
+            ]
+        }
+    ]
+}
