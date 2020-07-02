@@ -2,16 +2,16 @@
     "tables": {
         "users": {
             "fields": {
-                "user_id": {
-                    "type": "id",
-                    "subtype": "integer"
-                },
                 "age": {
                     "type": "numerical",
                     "subtype": "integer"
                 },
                 "gender": {
                     "type": "categorical"
+                },
+                "user_id": {
+                    "type": "id",
+                    "subtype": "integer"
                 },
                 "country": {
                     "type": "categorical"
@@ -21,7 +21,11 @@
         },
         "sessions": {
             "fields": {
-                "os": {
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "device": {
                     "type": "categorical"
                 },
                 "user_id": {
@@ -32,12 +36,8 @@
                         "field": "user_id"
                     }
                 },
-                "device": {
+                "os": {
                     "type": "categorical"
-                },
-                "session_id": {
-                    "type": "id",
-                    "subtype": "integer"
                 }
             },
             "primary_key": "session_id"
@@ -52,9 +52,6 @@
                     "type": "id",
                     "subtype": "integer"
                 },
-                "approved": {
-                    "type": "boolean"
-                },
                 "session_id": {
                     "type": "id",
                     "subtype": "integer",
@@ -66,6 +63,9 @@
                 "amount": {
                     "type": "numerical",
                     "subtype": "float"
+                },
+                "approved": {
+                    "type": "boolean"
                 }
             },
             "primary_key": "transaction_id"
