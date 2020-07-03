@@ -516,6 +516,30 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
+<div class="viewcode-block" id="Metadata.get_field_meta"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_field_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_field_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_name (str):</span>
+<span class="sd">                Name of the table to which the field belongs.</span>
+<span class="sd">            field_name (str):</span>
+<span class="sd">                Name of the field to get data for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                field metadata</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If the table or the field do not exist in this metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">field_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field_meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Table &quot;</span><span class="si">{}</span><span class="s1">&quot; does not contain a field name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">field_meta</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get table fields metadata.</span>
 
@@ -567,11 +591,9 @@
 <span class="sd">            ValueError:</span>
 <span class="sd">                If the relationship does not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">primary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
-
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">ref</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">ref</span> <span class="ow">and</span> <span class="n">ref</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">primary</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ref</span> <span class="ow">and</span> <span class="n">ref</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">parent</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">name</span>
 
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not parent of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">))</span></div>
@@ -646,8 +668,13 @@
 
             <span class="k">if</span> <span class="n">ids</span> <span class="ow">and</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                        <span class="s1">&#39;id field `</span><span class="si">{}</span><span class="s1">` is neither a primary or a foreign key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">child_table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_key</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">child_table</span><span class="p">):</span>
+                            <span class="k">break</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                            <span class="s1">&#39;id field `</span><span class="si">{}</span><span class="s1">` is neither a primary or a foreign key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
                 <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
@@ -851,11 +878,6 @@
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_validate_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make sure that the table has only one parent.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Table </span><span class="si">{}</span><span class="s1"> has more than one parent.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
-
 <div class="viewcode-block" id="Metadata.validate"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate this metadata.</span>
 
@@ -899,8 +921,7 @@
                 <span class="n">table</span> <span class="o">=</span> <span class="kc">None</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_parents</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_check_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate the existance of the table and existance (or not) of field.&quot;&quot;&quot;</span>
@@ -954,14 +975,17 @@
     <span class="k">def</span> <span class="nf">_get_key_subtype</span><span class="p">(</span><span class="n">field_meta</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
             <span class="n">field_subtype</span> <span class="o">=</span> <span class="s1">&#39;string&#39;</span>
+
         <span class="k">elif</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
             <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">field_subtype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s1">&#39;Invalid field &quot;subtype&quot; for key field: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_subtype</span><span class="p">)</span>
                 <span class="p">)</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;Invalid field &quot;type&quot; for key field: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_type</span><span class="p">)</span>
@@ -1022,7 +1046,11 @@
 <span class="sd">                    * The child table already has a parent.</span>
 <span class="sd">                    * The new relationship closes a relationship circle.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Validate table and field names</span>
+        <span class="c1"># Validate tables exists</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+
+        <span class="c1"># Validate field names</span>
         <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">primary_key</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parent table &quot;</span><span class="si">{}</span><span class="s1">&quot; does not have a primary key&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
@@ -1030,32 +1058,50 @@
         <span class="k">if</span> <span class="n">foreign_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">foreign_key</span> <span class="o">=</span> <span class="n">primary_key</span>
 
+        <span class="n">parent_key_meta</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_field_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">))</span>
+        <span class="n">child_key_meta</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_field_meta</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">))</span>
+
         <span class="c1"># Validate relationships</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Table &quot;</span><span class="si">{}</span><span class="s1">&quot; already has a parent&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+        <span class="n">child_ref</span> <span class="o">=</span> <span class="n">child_key_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">child_ref</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Field &quot;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&quot; already defines a relationship&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">))</span>
 
         <span class="n">grandchildren</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">grandchildren</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">grandchildren</span><span class="p">)</span>
 
-        <span class="c1"># Copy primary key details over to the foreign key</span>
-        <span class="n">foreign_key_details</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">parent</span><span class="p">)[</span><span class="n">primary_key</span><span class="p">])</span>
-        <span class="n">foreign_key_details</span><span class="p">[</span><span class="s1">&#39;ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Make sure that the parent key is an id</span>
+        <span class="k">if</span> <span class="n">parent_key_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+            <span class="n">parent_key_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">parent_key_meta</span><span class="p">)</span>
+            <span class="n">parent_key_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;id&#39;</span>
+
+        <span class="c1"># Update the child key meta</span>
+        <span class="n">child_key_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">child_key_meta</span><span class="p">)</span>
+        <span class="n">child_key_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;id&#39;</span>
+        <span class="n">child_key_meta</span><span class="p">[</span><span class="s1">&#39;ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="n">parent</span><span class="p">,</span>
             <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="n">primary_key</span>
         <span class="p">}</span>
 
         <span class="c1"># Make sure that key subtypes are the same</span>
-        <span class="n">foreign_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">foreign_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">foreign_meta</span><span class="p">:</span>
-            <span class="n">foreign_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">foreign_meta</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">foreign_subtype</span> <span class="o">!=</span> <span class="n">foreign_key_details</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Primary and Foreign key subtypes mismatch&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">child_key_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">parent_key_meta</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parent and Child key subtypes mismatch&#39;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">child</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">foreign_key_details</span>
+        <span class="c1"># Make a backup</span>
+        <span class="n">metadata_backup</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">parent</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">primary_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_key_meta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">child</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">foreign_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_key_meta</span>
 
         <span class="c1"># Re-analyze the relationships</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">MetadataError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata_backup</span>
+            <span class="k">raise</span></div>
 
     <span class="k">def</span> <span class="nf">_get_field_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get or build all the fields metadata.</span>

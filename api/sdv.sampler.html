@@ -290,14 +290,14 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler" title="sdv.sampler.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></a>(metadata, models, model, model_kwargs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler" title="sdv.sampler.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></a>(metadata, models, model, …)</p></td>
 <td><p>Sampler class.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="class">
 <dt id="sdv.sampler.Sampler">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.sampler.</code><code class="sig-name descname">Sampler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">models</em>, <em class="sig-param">model</em>, <em class="sig-param">model_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.sampler.</code><code class="sig-name descname">Sampler</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">models</em>, <em class="sig-param">model</em>, <em class="sig-param">model_kwargs</em>, <em class="sig-param">table_sizes</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Sampler class.</p>
 <dl class="field-list simple">
@@ -317,7 +317,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler.sample" title="sdv.sampler.Sampler.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(table_name, num_rows[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sampler.Sampler.sample" title="sdv.sampler.Sampler.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(table_name[, num_rows, …])</p></td>
 <td><p>Sample one table.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.sampler.Sampler.sample_all" title="sdv.sampler.Sampler.sample_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_all</span></code></a>([num_rows, reset_primary_keys])</p></td>
@@ -347,7 +347,7 @@
 
 <dl class="method">
 <dt id="sdv.sampler.Sampler.sample">
-<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">num_rows</em>, <em class="sig-param">reset_primary_keys=False</em>, <em class="sig-param">sample_children=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">num_rows=None</em>, <em class="sig-param">reset_primary_keys=False</em>, <em class="sig-param">sample_children=True</em>, <em class="sig-param">sample_parents=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample one table.</p>
 <p>Child tables will be sampled when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.
 If <code class="docutils literal notranslate"><span class="pre">sampled_data</span></code> is provided then append the sampled child tables there, if not
@@ -356,9 +356,11 @@ create a new dict to fill.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>table_name</strong> (<em>str</em>) – Table name to sample.</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample.</p></li>
+<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, sample the same number of rows
+as there were in the original table.</p></li>
 <li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Whether or not reset the primary keys generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 <li><p><strong>sample_children</strong> (<em>bool</em>) – Whether or not sample child tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>sample_parents</strong> (<em>bool</em>) – Whether or not sample parent tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -377,7 +379,7 @@ and child tables.</p></li>
 
 <dl class="method">
 <dt id="sdv.sampler.Sampler.sample_all">
-<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=5</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples the entire dataset.</p>
 <p><code class="docutils literal notranslate"><span class="pre">sample_all</span></code> returns a dictionary with all the tables of the dataset sampled.
 The amount of rows sampled will depend from table to table, and is only guaranteed
@@ -387,8 +389,9 @@ with their parent tables, so its behavior may change from one table to another.<
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the parent tables.</p></li>
-<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators.</p></li>
+<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the first parent tables. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+sample the same number of rows as in the original tables.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Whether or not reset the primary key generators.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

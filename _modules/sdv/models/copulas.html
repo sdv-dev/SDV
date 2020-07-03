@@ -275,7 +275,9 @@
             
   <h1>Source code for sdv.models.copulas</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">multivariate</span><span class="p">,</span> <span class="n">univariate</span>
+<span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">EPSILON</span>
+<span class="kn">from</span> <span class="nn">copulas.multivariate</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
+<span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
 
 <span class="kn">from</span> <span class="nn">sdv.models.base</span> <span class="kn">import</span> <span class="n">SDVModel</span>
 <span class="kn">from</span> <span class="nn">sdv.models.utils</span> <span class="kn">import</span> <span class="p">(</span>
@@ -305,7 +307,7 @@
 <span class="sd">        4  1.925887</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="n">univariate</span><span class="o">.</span><span class="n">GaussianUnivariate</span>
+    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="n">GaussianUnivariate</span>
     <span class="n">distribution</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -322,7 +324,7 @@
 <span class="sd">                Data to be fitted.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">impute</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GaussianCopula.sample"><a class="viewcode-back" href="../../../api/sdv.models.copulas.html#sdv.models.copulas.GaussianCopula.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -355,11 +357,20 @@
             <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">distribs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">distribution</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">distribution</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">distribution</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">univariates</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">),</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]):</span>
+            <span class="n">univariates</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span>
+            <span class="k">if</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">univariate</span><span class="p">:</span>
+                <span class="n">scale</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">scale</span> <span class="o">=</span> <span class="n">EPSILON</span>
 
-        <span class="k">return</span> <span class="n">flatten_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span></div>
+                <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariates</span>
+
+        <span class="k">return</span> <span class="n">flatten_dict</span><span class="p">(</span><span class="n">params</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_prepare_sampled_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Prepare a covariance matrix.</span>
@@ -402,17 +413,22 @@
 <span class="sd">                Model parameters ready to recreate the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">distribution_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;fitted&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">univariate_kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
         <span class="p">}</span>
 
-        <span class="n">distribs</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribs&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="n">distribs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">distribution</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">distribution_kwargs</span><span class="p">)</span>
-            <span class="n">distribution</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">distribution</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">])</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">univariates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            <span class="n">univariate</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">univariate_kwargs</span><span class="p">)</span>
+            <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
+            <span class="n">univariates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">univariate</span><span class="p">)</span>
 
-        <span class="n">covariance</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span>
+        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariates</span>
+        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">columns</span>
+
+        <span class="n">covariance</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;covariance&#39;</span><span class="p">)</span>
         <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_sampled_covariance</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">model_parameters</span>
@@ -432,11 +448,8 @@
         <span class="n">parameters</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;distribution&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
 
         <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unflatten_gaussian_copula</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distribs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
-            <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;fitted&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

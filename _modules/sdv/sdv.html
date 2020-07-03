@@ -343,16 +343,18 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span> <span class="o">=</span> <span class="n">Modeler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">model_database</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">table_sizes</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample"><a class="viewcode-back" href="../../api/sdv.sdv.html#sdv.SDV.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample"><a class="viewcode-back" href="../../api/sdv.sdv.html#sdv.SDV.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample ``num_rows`` rows from the indicated table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
 <span class="sd">                Name of the table to sample from.</span>
 <span class="sd">            num_rows (int):</span>
-<span class="sd">                Amount of rows to sample.</span>
+<span class="sd">                Amount of rows to sample. If ``None``, sample the same number of rows</span>
+<span class="sd">                as there were in the original table.</span>
 <span class="sd">            sample_children (bool):</span>
 <span class="sd">                Whether or not to sample children tables. Defaults to ``True``.</span>
 <span class="sd">            reset_primary_keys (bool):</span>
@@ -376,12 +378,13 @@
             <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SDV.sample_all"><a class="viewcode-back" href="../../api/sdv.sdv.html#sdv.SDV.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="SDV.sample_all"><a class="viewcode-back" href="../../api/sdv.sdv.html#sdv.SDV.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the entire dataset.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
-<span class="sd">                Amount of rows to sample. Defaults to ``5``.</span>
+<span class="sd">                Number of rows to be sampled on the first parent tables. If ``None``,</span>
+<span class="sd">                sample the same number of rows as in the original tables.</span>
 <span class="sd">            reset_primary_keys (bool):</span>
 <span class="sd">                Wheter or not reset the primary key generators. Defaults to ``False``.</span>
 

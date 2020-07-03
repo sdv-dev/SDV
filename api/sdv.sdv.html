@@ -342,7 +342,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.sdv.SDV.load" title="sdv.sdv.SDV.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
 <td><p>Load a SDV instance from a given path.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sdv.SDV.sample" title="sdv.sdv.SDV.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(table_name, num_rows[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.sdv.SDV.sample" title="sdv.sdv.SDV.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(table_name[, num_rows, …])</p></td>
 <td><p>Sample <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> rows from the indicated table.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.sdv.SDV.sample_all" title="sdv.sdv.SDV.sample_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_all</span></code></a>([num_rows, reset_primary_keys])</p></td>
@@ -385,13 +385,14 @@ metadata is a dict, the current working directory is used.</p></li>
 
 <dl class="method">
 <dt id="sdv.sdv.SDV.sample">
-<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">num_rows</em>, <em class="sig-param">sample_children=True</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">num_rows=None</em>, <em class="sig-param">sample_children=True</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> rows from the indicated table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to sample from.</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample.</p></li>
+<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, sample the same number of rows
+as there were in the original table.</p></li>
 <li><p><strong>sample_children</strong> (<em>bool</em>) – Whether or not to sample children tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
@@ -410,12 +411,13 @@ metadata is a dict, the current working directory is used.</p></li>
 
 <dl class="method">
 <dt id="sdv.sdv.SDV.sample_all">
-<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=5</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sdv.html#SDV.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sdv.SDV.sample_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample the entire dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample. Defaults to <code class="docutils literal notranslate"><span class="pre">5</span></code>.</p></li>
+<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to be sampled on the first parent tables. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+sample the same number of rows as in the original tables.</p></li>
 <li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>

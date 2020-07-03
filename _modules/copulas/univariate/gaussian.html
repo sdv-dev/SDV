@@ -274,142 +274,34 @@
            <div itemprop="articleBody">
             
   <h1>Source code for copulas.univariate.gaussian</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
-
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
 
-<span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">check_valid_values</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">store_args</span>
-<span class="kn">from</span> <span class="nn">copulas.univariate.base</span> <span class="kn">import</span> <span class="n">Univariate</span>
-
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">copulas.univariate.base</span> <span class="kn">import</span> <span class="n">BoundedType</span><span class="p">,</span> <span class="n">ParametricType</span><span class="p">,</span> <span class="n">ScipyModel</span>
 
 
-<span class="k">class</span> <span class="nc">GaussianUnivariate</span><span class="p">(</span><span class="n">Univariate</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">GaussianUnivariate</span><span class="p">(</span><span class="n">ScipyModel</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Gaussian univariate model.&quot;&quot;&quot;</span>
 
-    <span class="n">fitted</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">PARAMETRIC</span> <span class="o">=</span> <span class="n">ParametricType</span><span class="o">.</span><span class="n">PARAMETRIC</span>
+    <span class="n">BOUNDED</span> <span class="o">=</span> <span class="n">BoundedType</span><span class="o">.</span><span class="n">UNBOUNDED</span>
 
-    <span class="nd">@store_args</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">MODEL_CLASS</span> <span class="o">=</span> <span class="n">norm</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">details</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="s1">&#39;Distribution Type: Gaussian</span><span class="se">\n</span><span class="s1">&#39;</span>
-            <span class="s1">&#39;Variable name: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
-            <span class="s1">&#39;Mean: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
-            <span class="s1">&#39;Standard deviation: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">details</span><span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="nd">@check_valid_values</span>
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model.</span>
-
-<span class="sd">        Arguments:</span>
-<span class="sd">            X: `np.ndarray` of shape (n, 1).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            None</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">name</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">constant_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_constant_value</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_replace_constant_methods</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span>
-
-    <span class="k">def</span> <span class="nf">probability_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute probability density.</span>
-
-<span class="sd">        Arguments:</span>
-<span class="sd">            X: `np.ndarray` of shape (n, 1).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            np.ndarray</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">check_fit</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">cumulative_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Cumulative distribution function for gaussian distribution.</span>
-
-<span class="sd">        Arguments:</span>
-<span class="sd">            X: `np.ndarray` of shape (n, 1).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            np.ndarray: Cumulative density for X.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">check_fit</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">percent_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Given a cumulated distribution value, returns a value in original space.</span>
-
-<span class="sd">        Arguments:</span>
-<span class="sd">            U: `np.ndarray` of shape (n, 1) and values in [0,1]</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            `np.ndarray`: Estimated values in original space.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">check_fit</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
-
-    <span class="nd">@random_state</span>
-    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns new data point based on model.</span>
-
-<span class="sd">        Arguments:</span>
-<span class="sd">            n_samples: `int`</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            np.ndarray: Generated samples</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">check_fit</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_fit_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_value</span><span class="p">,</span>
-                <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">0</span>
-            <span class="p">}</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
-            <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">_fit_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="mi">0</span>
         <span class="p">}</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">copula_dict</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set attributes with provided values.&quot;&quot;&quot;</span>
-        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="n">copula_dict</span><span class="p">[</span><span class="s1">&#39;fitted&#39;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
+            <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="p">}</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">instance</span>
-
-        <span class="n">std</span> <span class="o">=</span> <span class="n">copula_dict</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">instance</span><span class="o">.</span><span class="n">constant_value</span> <span class="o">=</span> <span class="n">copula_dict</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">instance</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">copula_dict</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span>
-            <span class="n">instance</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="n">std</span>
-
-        <span class="k">return</span> <span class="n">instance</span>
+    <span class="k">def</span> <span class="nf">_is_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
 </pre></div>
 
            </div>
