@@ -86,7 +86,7 @@ class TestSDV(TestCase):
 
         # Asserts
         assert result == 'test'
-        sdv.sampler.sample_all.assert_called_once_with(5, reset_primary_keys=False)
+        sdv.sampler.sample_all.assert_called_once_with(None, reset_primary_keys=False)
 
     def test_sample_all_not_fitted(self):
         """Check that the sample_all raise an exception when is not fitted."""

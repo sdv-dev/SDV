@@ -1,6 +1,6 @@
-from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,13 +9,19 @@ from sdv.models.base import SDVModel
 from sdv.sampler import Sampler
 
 
-class TestSampler(TestCase):
+class TestSampler:
 
     def test___init__(self):
         """Test create a default instance of Sampler class"""
         # Run
         models = {'test': Mock()}
-        sampler = Sampler('test_metadata', models, SDVModel, dict())
+        sampler = Sampler(
+            'test_metadata',
+            models,
+            SDVModel,
+            {'model': 'kwargs'},
+            {'table': 'sizes'}
+        )
 
         # Asserts
         assert sampler.metadata == 'test_metadata'
@@ -23,7 +29,8 @@ class TestSampler(TestCase):
         assert sampler.primary_key == dict()
         assert sampler.remaining_primary_key == dict()
         assert sampler.model == SDVModel
-        assert sampler.model_kwargs == dict()
+        assert sampler.model_kwargs == {'model': 'kwargs'}
+        assert sampler.table_sizes == {'table': 'sizes'}
 
     def test__reset_primary_keys_generators(self):
         """Test reset values"""
@@ -39,23 +46,49 @@ class TestSampler(TestCase):
         assert sampler.primary_key == dict()
         assert sampler.remaining_primary_key == dict()
 
-    def test__transform_synthesized_rows(self):
-        """Test transform synthesized rows"""
+    def test__finalize(self):
+        """Test finalize"""
         # Setup
-        metadata_reverse_transform = pd.DataFrame({'foo': [0, 1], 'bar': [2, 3], 'tar': [4, 5]})
-
         sampler = Mock(spec=Sampler)
         sampler.metadata = Mock(spec=Metadata)
-        sampler.metadata.reverse_transform.return_value = metadata_reverse_transform
-        sampler.metadata.get_fields.return_value = {'foo': 'some data', 'tar': 'some data'}
+        sampler.metadata.get_parents.return_value = ['b', 'c']
+
+        sampler.metadata.reverse_transform.side_effect = lambda x, y: y
+
+        sampler.metadata.get_fields.return_value = {
+            'a': 'some data',
+            'b': 'some data',  # fk
+            'c': 'some data'   # fk
+        }
+
+        sampler._find_parent_ids.return_value = [4, 5]
+        sampler.metadata.get_foreign_key.side_effect = [
+            'b',
+            'c',
+        ]
 
         # Run
-        synthesized = pd.DataFrame({'data': [1, 2, 3]})
-        result = Sampler._transform_synthesized_rows(sampler, synthesized, 'test')
+        sampled_data = {
+            'test': pd.DataFrame({
+                'a': [0, 1],  # actual data
+                'b': [2, 3],  # existing fk key
+                'z': [6, 7]   # not used
+            })
+        }
+        result = Sampler._finalize(sampler, sampled_data)
 
         # Asserts
-        expected = pd.DataFrame({'foo': [0, 1], 'tar': [4, 5]})
-        pd.testing.assert_frame_equal(result.sort_index(axis=1), expected.sort_index(axis=1))
+        assert isinstance(result, dict)
+        expected = pd.DataFrame({
+            'a': [0, 1],
+            'b': [2, 3],
+            'c': [4, 5],
+        })
+        pd.testing.assert_frame_equal(
+            result['test'].sort_index(axis=1),
+            expected.sort_index(axis=1)
+        )
+        assert sampler._find_parent_ids.call_count == 1
 
     def test__get_primary_keys_none(self):
         """Test returns a tuple of none when a table doesn't have a primary key"""
@@ -133,15 +166,15 @@ class TestSampler(TestCase):
         with pytest.raises(ValueError):
             Sampler._get_primary_keys(sampler, 'test', 5)
 
-    def test__get_extension(self):
-        """Test get extension"""
+    def test__extract_parameters(self):
+        """Test extract parameters"""
         # Setup
         sampler = Mock(spec=Sampler)
 
         # Run
         parent_row = pd.Series([[0, 1], [1, 0]], index=['__foo__field', '__foo__field2'])
         table_name = 'foo'
-        result = Sampler._get_extension(sampler, parent_row, table_name)
+        result = Sampler._extract_parameters(sampler, parent_row, table_name)
 
         # Asserts
         expected = {'field': [0, 1], 'field2': [1, 0]}
@@ -172,33 +205,33 @@ class TestSampler(TestCase):
         sampler.metadata.get_children.return_value = ['child A', 'child B', 'child C']
 
         # Run
-        sampled = {
+        sampled_data = {
             'test': pd.DataFrame({'field': [11, 22, 33]})
         }
-        Sampler._sample_children(sampler, 'test', sampled)
+        Sampler._sample_children(sampler, 'test', sampled_data)
 
         # Asserts
         sampler.metadata.get_children.assert_called_once_with('test')
 
         expected_calls = [
-            ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled],
-            ['child B', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child B', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child B', 'test', pd.Series([33], index=['field'], name=2), sampled],
-            ['child C', 'test', pd.Series([11], index=['field'], name=0), sampled],
-            ['child C', 'test', pd.Series([22], index=['field'], name=1), sampled],
-            ['child C', 'test', pd.Series([33], index=['field'], name=2), sampled],
+            ['child A', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child A', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child A', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
+            ['child B', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child B', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child B', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
+            ['child C', 'test', pd.Series([11], index=['field'], name=0), sampled_data],
+            ['child C', 'test', pd.Series([22], index=['field'], name=1), sampled_data],
+            ['child C', 'test', pd.Series([33], index=['field'], name=2), sampled_data],
         ]
-        actual_calls = sampler._sample_table.call_args_list
+        actual_calls = sampler._sample_child_rows.call_args_list
         for result_call, expected_call in zip(actual_calls, expected_calls):
             assert result_call[0][0] == expected_call[0]
             assert result_call[0][1] == expected_call[1]
             assert result_call[0][3] == expected_call[3]
             pd.testing.assert_series_equal(result_call[0][2], expected_call[2])
 
-    def test__sample_table_sampled_empty(self):
+    def test__sample_child_rows_sampled_empty(self):
         """Test sample table when sampled is still an empty dict."""
         # Setup
         model = Mock(spec=SDVModel)
@@ -208,7 +241,7 @@ class TestSampler(TestCase):
         sampler.model = model
         sampler.model_kwargs = dict()
 
-        sampler._get_extension.return_value = {'child_rows': 5}
+        sampler._extract_parameters.return_value = {'child_rows': 5}
 
         table_model_mock = Mock()
         sampler.models = {'test': table_model_mock}
@@ -222,10 +255,10 @@ class TestSampler(TestCase):
         # Run
         parent_row = pd.Series({'id': 0})
         sampled = dict()
-        Sampler._sample_table(sampler, 'test', 'parent', parent_row, sampled)
+        Sampler._sample_child_rows(sampler, 'test', 'parent', parent_row, sampled)
 
         # Asserts
-        sampler._get_extension.assert_called_once_with(parent_row, 'test')
+        sampler._extract_parameters.assert_called_once_with(parent_row, 'test')
         sampler._sample_rows.assert_called_once_with(model, 5, 'test')
 
         assert sampler._sample_children.call_count == 1
@@ -240,7 +273,7 @@ class TestSampler(TestCase):
             expected_sampled
         )
 
-    def test__sample_table_sampled_not_empty(self):
+    def test__sample_child_rows_sampled_not_empty(self):
         """Test sample table when sampled previous sampled rows exist."""
         # Setup
         model = Mock(spec=SDVModel)
@@ -249,7 +282,7 @@ class TestSampler(TestCase):
         sampler = Mock(spec=Sampler)
         sampler.model = model
         sampler.model_kwargs = dict()
-        sampler._get_extension.return_value = {'child_rows': 5}
+        sampler._extract_parameters.return_value = {'child_rows': 5}
 
         table_model_mock = Mock()
         sampler.models = {'test': table_model_mock}
@@ -270,11 +303,10 @@ class TestSampler(TestCase):
                 'parent_id': [0, 0, 0, 0, 0]
             })
         }
-        Sampler._sample_table(sampler, 'test', 'parent', parent_row, sampled)
+        Sampler._sample_child_rows(sampler, 'test', 'parent', parent_row, sampled)
 
         # Asserts
-        sampler._get_extension.assert_called_once_with(parent_row, 'test')
-        # sampler._get_model.assert_called_once_with({'child_rows': 5}, table_model_mock)
+        sampler._extract_parameters.assert_called_once_with(parent_row, 'test')
         sampler._sample_rows.assert_called_once_with(model, 5, 'test')
 
         assert sampler._sample_children.call_count == 1
@@ -309,30 +341,72 @@ class TestSampler(TestCase):
         pd.testing.assert_frame_equal(result['table a'], pd.DataFrame({'foo': range(3)}))
         pd.testing.assert_frame_equal(result['table c'], pd.DataFrame({'foo': range(3)}))
 
-    def test_sample_table_with_parents(self):
-        """Test sample table with parents."""
-        sampler = Mock(spec=Sampler)
-        sampler.metadata = Mock(spec=Metadata)
-        sampler.metadata.get_parents.return_value = ['test_parent']
-        sampler.metadata.get_foreign_key.return_value = 'id'
-        sampler.models = {'test': 'some model'}
-        sampler._get_primary_keys.return_value = None, pd.Series({'id': 0})
-        sampler._sample_rows.return_value = pd.DataFrame({'id': [0, 1]})
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_0(self, choice_mock):
+        """If all likelihoods are 0, use num_rows."""
+        likelihoods = pd.Series([0, 0, 0, 0])
+        num_rows = pd.Series([1, 2, 3, 4])
 
-        Sampler.sample(sampler, 'test', 5)
-        sampler.metadata.get_parents.assert_called_once_with('test')
-        sampler.metadata.get_foreign_key.assert_called_once_with('test_parent', 'test')
+        Sampler._find_parent_id(likelihoods, num_rows)
 
-    def test_sample_no_sample_children(self):
-        """Test sample no sample children"""
-        # Setup
-        sampler = Mock(spec=Sampler)
-        sampler.models = {'test': 'model'}
-        sampler.metadata.get_parents.return_value = None
+        expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
 
-        # Run
-        Sampler.sample(sampler, 'test', 5, sample_children=False)
-        sampler._transform_synthesized_rows.assert_called_once_with(
-            sampler._sample_rows.return_value,
-            'test'
-        )
+        assert choice_mock.call_count == 1
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_singlar_matrix(self, choice_mock):
+        """If all likelihoods got singular matrix, use num_rows."""
+        likelihoods = pd.Series([None, None, None, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([1 / 10, 2 / 10, 3 / 10, 4 / 10])
+
+        assert choice_mock.call_count == 1
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_0_or_singlar_matrix(self, choice_mock):
+        """If likehoods are either 0 or NaN, fill the gaps with num_rows."""
+        likelihoods = pd.Series([0, None, 0, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0, 2 / 6, 0, 4 / 6])
+
+        assert choice_mock.call_count == 1
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_some_good(self, choice_mock):
+        """If some likehoods are good, fill the gaps with num_rows."""
+        likelihoods = pd.Series([0.5, None, 1.5, None])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0.5 / 4, 1 / 4, 1.5 / 4, 1 / 4])
+
+        assert choice_mock.call_count == 1
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
+
+    @patch('sdv.sampler.np.random.choice')
+    def test__find_parent_id_all_good(self, choice_mock):
+        """If all are good, use the likelihoods unmodified."""
+        likelihoods = pd.Series([0.5, 1, 1.5, 2])
+        num_rows = pd.Series([1, 2, 3, 4])
+
+        Sampler._find_parent_id(likelihoods, num_rows)
+
+        expected_weights = np.array([0.5 / 5, 1 / 5, 1.5 / 5, 2 / 5])
+
+        assert choice_mock.call_count == 1
+        assert list(choice_mock.call_args[0][0]) == list(likelihoods.index)
+        np.testing.assert_array_equal(choice_mock.call_args[1]['p'], expected_weights)
