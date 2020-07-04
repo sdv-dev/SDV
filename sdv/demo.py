@@ -104,9 +104,9 @@ def _download(dataset_name, data_path):
         zf.extractall(data_path)
 
 
-def _load(dataset_name, data_path):
-    if not os.path.exists(DATA_PATH):
-        os.makedirs(DATA_PATH)
+def _get_dataset_path(dataset_name, data_path):
+    if not os.path.exists(data_path):
+        os.makedirs(data_path)
 
     if not os.path.exists(os.path.join(data_path, dataset_name)):
         _download(dataset_name, data_path)
@@ -151,8 +151,8 @@ def _load_dummy():
 
 
 def _load_demo_dataset(dataset_name, data_path):
-    data_path = _load(dataset_name, data_path)
-    meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
+    dataset_path = _get_dataset_path(dataset_name, data_path)
+    meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
     tables = meta.load_tables()
     return meta, tables
 

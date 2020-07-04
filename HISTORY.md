@@ -1,5 +1,16 @@
 # History
 
+## 0.3.4 - 2020-07-04
+
+## New Features
+
+* Support for Multiple Parents - [Issue #162](https://github.com/sdv-dev/SDV/issues/162) by @csala
+* Sample by default the same number of rows as in the original table - [Issue #163](https://github.com/sdv-dev/SDV/issues/163) by @csala
+
+### General Improvements
+
+* Add benchmark - [Issue #165](https://github.com/sdv-dev/SDV/issues/165) by @csala
+
 ## 0.3.3 - 2020-06-26
 
 ### General Improvements

@@ -69,6 +69,7 @@ class TestModeler(TestCase):
         modeler.model = Mock(spec=SDVModel)
         modeler.model_kwargs = dict()
         modeler.models = dict()
+        modeler.table_sizes = {'data': 5}
         modeler.metadata.transform.return_value = pd.DataFrame({'data': [1, 2, 3]})
         modeler.metadata.get_primary_key.return_value = None
 

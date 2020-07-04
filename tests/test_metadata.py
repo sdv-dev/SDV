@@ -218,28 +218,6 @@ class TestMetadata(TestCase):
         }
         assert result == expected
 
-    def test__validate_parents_no_error(self):
-        """Test that any error is raised with a supported structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = []
-
-        # Run
-        Metadata._validate_parents(mock, 'demo')
-
-        # Asserts
-        mock.get_parents.assert_called_once_with('demo')
-
-    def test__validate_parents_raise_error(self):
-        """Test that a ValueError is raised because the bad structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = ['foo', 'bar']
-
-        # Run
-        with pytest.raises(MetadataError):
-            Metadata._validate_parents(mock, 'demo')
-
     @patch('sdv.metadata.Metadata._analyze_relationships')
     @patch('sdv.metadata.Metadata._dict_metadata')
     def test___init__default_metadata_dict(self, mock_meta, mock_relationships):
@@ -403,6 +381,7 @@ class TestMetadata(TestCase):
         }
         metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
+        metadata.get_children.return_value = []
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
@@ -630,23 +609,16 @@ class TestMetadata(TestCase):
     def test_get_foreign_key(self):
         """Test get foreign key"""
         # Setup
-        primary_key = 'a_primary_key'
         fields = {
             'a_field': {
                 'ref': {
+                    'table': 'parent',
                     'field': 'a_primary_key'
                 },
                 'name': 'a_field'
-            },
-            'p_field': {
-                'ref': {
-                    'field': 'another_key_field'
-                },
-                'name': 'p_field'
             }
         }
         metadata = Mock(spec_set=Metadata)
-        metadata.get_primary_key.return_value = primary_key
         metadata.get_fields.return_value = fields
 
         # Run
@@ -654,7 +626,6 @@ class TestMetadata(TestCase):
 
         # Asserts
         assert result == 'a_field'
-        metadata.get_primary_key.assert_called_once_with('parent')
         metadata.get_fields.assert_called_once_with('child')
 
     def test_reverse_transform(self):
