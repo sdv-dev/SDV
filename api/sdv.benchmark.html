@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.models.utils module &mdash; SDV 0.3.4.dev0 documentation</title>
+  <title>sdv.benchmark module &mdash; SDV 0.3.4.dev0 documentation</title>
   
 
   
@@ -37,8 +37,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sdv.benchmark module" href="sdv.benchmark.html" />
-    <link rel="prev" title="sdv.models.copulas module" href="sdv.models.copulas.html" /> 
+    <link rel="next" title="sdv.demo module" href="sdv.demo.html" />
+    <link rel="prev" title="sdv.models.utils module" href="sdv.models.utils.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -132,16 +132,16 @@
 <p class="caption"><span class="caption-text">Resources</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul class="current">
-<li class="toctree-l4 current"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.models.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.models.html#module-sdv.models">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="sdv.benchmark.html">sdv.benchmark module</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdv.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.benchmark module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.demo.html">sdv.demo module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata module</a></li>
@@ -261,16 +261,14 @@
         
           <li><a href="sdv.html">sdv package</a> &raquo;</li>
         
-          <li><a href="sdv.models.html">sdv.models package</a> &raquo;</li>
-        
-      <li>sdv.models.utils module</li>
+      <li>sdv.benchmark module</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
             
-              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/api/sdv.models.utils.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/api/sdv.benchmark.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -284,8 +282,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-sdv.models.utils">
-<span id="sdv-models-utils-module"></span><h1>sdv.models.utils module<a class="headerlink" href="#module-sdv.models.utils" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-sdv.benchmark">
+<span id="sdv-benchmark-module"></span><h1>sdv.benchmark module<a class="headerlink" href="#module-sdv.benchmark" title="Permalink to this headline">¶</a></h1>
 <p><strong>Functions</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -293,140 +291,23 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.check_matrix_symmetric_positive_definite" title="sdv.models.utils.check_matrix_symmetric_positive_definite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_matrix_symmetric_positive_definite</span></code></a>(matrix)</p></td>
-<td><p>Check if a matrix is symmetric positive-definite.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.flatten_array" title="sdv.models.utils.flatten_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten_array</span></code></a>(nested[, prefix])</p></td>
-<td><p>Flatten an array as a dict.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.flatten_dict" title="sdv.models.utils.flatten_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flatten_dict</span></code></a>(nested[, prefix])</p></td>
-<td><p>Flatten a dictionary.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.impute" title="sdv.models.utils.impute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">impute</span></code></a>(data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.benchmark.benchmark" title="sdv.benchmark.benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">benchmark</span></code></a>([datasets, datasets_path, …])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.make_positive_definite" title="sdv.models.utils.make_positive_definite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_positive_definite</span></code></a>(matrix)</p></td>
-<td><p>Find the nearest positive-definite matrix to input.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.models.utils.square_matrix" title="sdv.models.utils.square_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">square_matrix</span></code></a>(triangular_matrix)</p></td>
-<td><p>Fill with zeros a triangular matrix to reshape it to a square one.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.models.utils.unflatten_dict" title="sdv.models.utils.unflatten_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unflatten_dict</span></code></a>(flat)</p></td>
-<td><p>Transform a flattened dict into its original form.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.benchmark.score_dataset" title="sdv.benchmark.score_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_dataset</span></code></a>(dataset, datasets_path[, timeout])</p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
 <dl class="function">
-<dt id="sdv.models.utils.check_matrix_symmetric_positive_definite">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">check_matrix_symmetric_positive_definite</code><span class="sig-paren">(</span><em class="sig-param">matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#check_matrix_symmetric_positive_definite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.check_matrix_symmetric_positive_definite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if a matrix is symmetric positive-definite.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>matrix</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – Matrix to evaluate.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.models.utils.flatten_array">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">flatten_array</code><span class="sig-paren">(</span><em class="sig-param">nested</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#flatten_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.flatten_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flatten an array as a dict.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nested</strong> (<em>list</em><em>, </em><em>numpy.array</em>) – Iterable to flatten.</p></li>
-<li><p><strong>prefix</strong> (<em>str</em>) – Name to append to the array indices. Defaults to <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Flattened array.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.models.utils.flatten_dict">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">flatten_dict</code><span class="sig-paren">(</span><em class="sig-param">nested</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#flatten_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.flatten_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flatten a dictionary.</p>
-<p>This method returns a flatten version of a dictionary, concatenating key names with
-double underscores.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nested</strong> (<em>dict</em>) – Original dictionary to flatten.</p></li>
-<li><p><strong>prefix</strong> (<em>str</em>) – Prefix to append to key name. Defaults to <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Flattened dictionary.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.models.utils.impute">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">impute</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#impute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.impute" title="Permalink to this definition">¶</a></dt>
+<dt id="sdv.benchmark.benchmark">
+<code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">benchmark</code><span class="sig-paren">(</span><em class="sig-param">datasets=None</em>, <em class="sig-param">datasets_path=None</em>, <em class="sig-param">distributed=True</em>, <em class="sig-param">timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/benchmark.html#benchmark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.benchmark" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="sdv.models.utils.make_positive_definite">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">make_positive_definite</code><span class="sig-paren">(</span><em class="sig-param">matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#make_positive_definite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.make_positive_definite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find the nearest positive-definite matrix to input.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>matrix</strong> (<em>numpy.ndarray</em>) – Matrix to transform</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Closest symetric positive-definite matrix.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.models.utils.square_matrix">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">square_matrix</code><span class="sig-paren">(</span><em class="sig-param">triangular_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#square_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.square_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fill with zeros a triangular matrix to reshape it to a square one.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>triangular_matrix</strong> (<em>list</em><em> [</em><em>list</em><em> [</em><em>float</em><em>]</em><em>]</em>) – Array of arrays of</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Square matrix.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="sdv.models.utils.unflatten_dict">
-<code class="sig-prename descclassname">sdv.models.utils.</code><code class="sig-name descname">unflatten_dict</code><span class="sig-paren">(</span><em class="sig-param">flat</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/models/utils.html#unflatten_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.models.utils.unflatten_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transform a flattened dict into its original form.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>flat</strong> (<em>dict</em>) – Flattened dict.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Nested dict (if corresponds)</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
+<dt id="sdv.benchmark.score_dataset">
+<code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">score_dataset</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">datasets_path</em>, <em class="sig-param">timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/benchmark.html#score_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.score_dataset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 
@@ -438,10 +319,10 @@ double underscores.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sdv.benchmark.html" class="btn btn-neutral float-right" title="sdv.benchmark module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sdv.demo.html" class="btn btn-neutral float-right" title="sdv.demo module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sdv.models.copulas.html" class="btn btn-neutral float-left" title="sdv.models.copulas module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="sdv.models.utils.html" class="btn btn-neutral float-left" title="sdv.models.utils module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -13,6 +13,7 @@ Submodules
 
 .. toctree::
 
+   sdv.benchmark
    sdv.demo
    sdv.evaluation
    sdv.metadata

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>sdv.evaluation &mdash; SDV 0.3.4.dev0 documentation</title>
+  <title>sdv.benchmark &mdash; SDV 0.3.4.dev0 documentation</title>
   
 
   
@@ -259,7 +259,7 @@
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
-      <li>sdv.evaluation</li>
+      <li>sdv.benchmark</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -274,115 +274,101 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for sdv.evaluation</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Tools to evaluate the synthesized data.&quot;&quot;&quot;</span>
+  <h1>Source code for sdv.benchmark</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">sdmetrics</span>
 
-<span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
+<span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span><span class="p">,</span> <span class="n">Metadata</span>
+<span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">get_available_demos</span><span class="p">,</span> <span class="n">load_demo</span>
+<span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
-
-<span class="k">def</span> <span class="nf">_validate_arguments</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validate arguments needed to compute descriptors values.</span>
-
-<span class="sd">    If ``metadata`` is an instance of dict create the ``Metadata`` object.</span>
-<span class="sd">    If ``metadata`` is ``None``, ``real`` has to be a ``pandas.DataFrane``.</span>
-
-<span class="sd">    If ``real`` is ``None`` load all the tables and assert that ``synth`` is a ``dict``.</span>
-<span class="sd">    Otherwise, ``real`` and ``synth`` must be of the same type.</span>
-
-<span class="sd">    If ``synth`` is not a ``dict``, create a dictionary using the ``table_name``.</span>
-
-<span class="sd">    Assert that ``synth`` and ``real`` must have the same tables.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        synth (dict or pandas.DataFrame):</span>
-<span class="sd">            Synthesized data.</span>
-<span class="sd">        real (dict, pandas.DataFrame or None):</span>
-<span class="sd">            Real data.</span>
-<span class="sd">        metadata (str, dict, Metadata or None):</span>
-<span class="sd">            Metadata instance or details needed to build it.</span>
-<span class="sd">        root_path (str):</span>
-<span class="sd">            Path to the metadata file.</span>
-<span class="sd">        table_name (str):</span>
-<span class="sd">            Table name used to prepare the metadata object, real and synth dict.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        tuple (dict, dict, Metadata):</span>
-<span class="sd">            Processed tables and Metadata oject.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;If metadata is None, `real` has to be a DataFrame&#39;</span><span class="p">)</span>
-
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">()</span>
-        <span class="n">metadata</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">real</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">real</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">real</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;If `real` is `None`, `synth` must be a dict&#39;</span><span class="p">)</span>
-
-    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">real</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;`real` and `synth` must be of the same type&#39;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">synth</span> <span class="o">=</span> <span class="p">{</span><span class="n">table_name</span><span class="p">:</span> <span class="n">synth</span><span class="p">}</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">real</span> <span class="o">=</span> <span class="p">{</span><span class="n">table_name</span><span class="p">:</span> <span class="n">real</span><span class="p">}</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">synth</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;real and synthetic dataset must have the same tables&#39;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()):</span>
-        <span class="n">meta_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">table</span><span class="p">:</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">real</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="p">}</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">({</span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="n">meta_dict</span><span class="p">})</span>
-
-    <span class="k">return</span> <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api/sdv.evaluation.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_report</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute a score using SDMetrics.</span>
+<span class="k">def</span> <span class="nf">_score_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
-<span class="sd">            Map of names and tables of synthesized data.</span>
-<span class="sd">        real (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
-<span class="sd">            Map of names and tables of real data.</span>
-<span class="sd">        metadata (str, dict, Metadata or None):</span>
-<span class="sd">            Metadata instance or details needed to build it.</span>
-<span class="sd">        root_path (str):</span>
-<span class="sd">            Relative path to find the metadata.json file when needed.</span>
-<span class="sd">        descriptors (list[callable]):</span>
-<span class="sd">            List of descriptors.</span>
-<span class="sd">        metrics (list[callable]):</span>
-<span class="sd">            List of metrics.</span>
-<span class="sd">        table_name (str):</span>
-<span class="sd">            Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``</span>
-<span class="sd">            and ``real`` is ``None``.</span>
-<span class="sd">        get_report (bool):</span>
-<span class="sd">            whether to return the complete SDMetrics report. If False (default), only</span>
-<span class="sd">            the overall score is returned.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">datasets_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">))</span>
+            <span class="n">tables</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
 
-<span class="sd">    Return:</span>
-<span class="sd">        float or sdmetrics.MetricsReport</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+        <span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">()</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Modeling dataset </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="p">)</span>
 
-    <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">_validate_arguments</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling dataset </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 
-    <span class="n">report</span> <span class="o">=</span> <span class="n">sdmetrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Evaluating dataset </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">get_report</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">report</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1"> - ELAPSED: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+            <span class="s1">&#39;score&#39;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+        <span class="p">})</span>
 
-    <span class="k">return</span> <span class="n">report</span><span class="o">.</span><span class="n">overall</span><span class="p">()</span></div>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1"> - ELAPSED: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+            <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">error</span>
+        <span class="p">})</span>
+
+
+<div class="viewcode-block" id="score_dataset"><a class="viewcode-back" href="../../api/sdv.benchmark.html#sdv.benchmark.score_dataset">[docs]</a><span class="k">def</span> <span class="nf">score_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span> <span class="k">as</span> <span class="n">manager</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">_score_dataset</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: TIMEOUT&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+                <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="s1">&#39;timeout&#39;</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="benchmark"><a class="viewcode-back" href="../../api/sdv.benchmark.html#sdv.benchmark.benchmark">[docs]</a><span class="k">def</span> <span class="nf">benchmark</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datasets_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">datasets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">datasets_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datasets</span> <span class="o">=</span> <span class="n">get_available_demos</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">datasets</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">dask</span>
+
+        <span class="k">global</span> <span class="n">score_dataset</span>
+        <span class="n">score_dataset</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">score_dataset</span><span class="p">)</span>
+
+    <span class="n">scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="o">*</span><span class="n">scores</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

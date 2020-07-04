@@ -139,6 +139,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.benchmark.html">sdv.benchmark module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.demo.html">sdv.demo module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.metadata.html">sdv.metadata module</a></li>
@@ -380,9 +381,9 @@
         <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_load</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">DATA_PATH</span><span class="p">):</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">DATA_PATH</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_get_dataset_path</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_path</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)):</span>
         <span class="n">_download</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
@@ -427,8 +428,8 @@
 
 
 <span class="k">def</span> <span class="nf">_load_demo_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
-    <span class="n">data_path</span> <span class="o">=</span> <span class="n">_load</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">))</span>
+    <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">_get_dataset_path</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">))</span>
     <span class="n">tables</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span>
 
