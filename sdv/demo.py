@@ -152,7 +152,7 @@ def _load_dummy():
 
 def _load_demo_dataset(dataset_name, data_path):
     dataset_path = _get_dataset_path(dataset_name, data_path)
-    meta = Metadata(metadata=os.path.join(data_path, 'metadata.json'))
+    meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
     tables = meta.load_tables()
     return meta, tables
 

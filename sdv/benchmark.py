@@ -3,13 +3,11 @@
 import logging
 import multiprocessing
 import os
-import signal
-import sys
 from datetime import datetime
 
 import pandas as pd
 
-from sdv import Metadata, SDV
+from sdv import SDV, Metadata
 from sdv.demo import get_available_demos, load_demo
 from sdv.evaluation import evaluate
 
