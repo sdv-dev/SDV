@@ -36,7 +36,7 @@ def test_gaussian_copula():
     assert list(sampled['user_id']) == list(range(0, len(users)))
 
     # country codes have been replaced with new ones
-    assert set(sampled.country.unique()) & set(users.country.unique()) == set()
+    assert set(sampled.country.unique()) != set(users.country.unique())
 
     assert gc.get_metadata().to_dict() == {
         'fields': {
