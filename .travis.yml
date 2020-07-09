@@ -9,7 +9,7 @@ python:
 # Command to install dependencies
 install:
   - sudo apt-get update
-  - sudo apt-get install graphviz
+  - sudo apt-get install graphviz pandoc
   - pip install -U tox-travis codecov
 
 after_success: codecov
