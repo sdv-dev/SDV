@@ -1,5 +1,34 @@
 # History
 
+## 0.3.5 - 2020-07-09
+
+This release introduces a new subpackage `sdv.tabular` with models designed specifically
+for single table modeling, while still providing all the usual conveniences from SDV, such
+as:
+
+* Seamless multi-type support
+* Missing data handling
+* PII anonymization
+
+Currently implemented models are:
+
+* GaussianCopula: Multivariate distributions modeled using copula functions. This is stronger
+  version, with more marginal distributions and options, than the one used to model multi-table
+  datasets.
+* CTGAN: GAN-based data synthesizer that can generate synthetic tabular data with high fidelity.
+
+
+## 0.3.4 - 2020-07-04
+
+## New Features
+
+* Support for Multiple Parents - [Issue #162](https://github.com/sdv-dev/SDV/issues/162) by @csala
+* Sample by default the same number of rows as in the original table - [Issue #163](https://github.com/sdv-dev/SDV/issues/163) by @csala
+
+### General Improvements
+
+* Add benchmark - [Issue #165](https://github.com/sdv-dev/SDV/issues/165) by @csala
+
 ## 0.3.3 - 2020-06-26
 
 ### General Improvements

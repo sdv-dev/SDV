@@ -23,37 +23,52 @@ class Sampler:
     primary_key = None
     remaining_primary_key = None
 
-    def __init__(self, metadata, models, model, model_kwargs):
+    def __init__(self, metadata, models, model, model_kwargs, table_sizes):
         self.metadata = metadata
         self.models = models
         self.primary_key = dict()
         self.remaining_primary_key = dict()
         self.model = model
         self.model_kwargs = model_kwargs
+        self.table_sizes = table_sizes
 
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
         self.primary_key = dict()
         self.remaining_primary_key = dict()
 
-    def _transform_synthesized_rows(self, synthesized, table_name):
-        """Reverse transform synthetized data.
+    def _finalize(self, sampled_data):
+        """Do the final touches to the generated data.
+
+        This method reverts the previous transformations to go back
+        to values in the original space and also adds the parent
+        keys in case foreign key relationships exist between the tables.
 
         Args:
-            synthesized (pandas.DataFrame):
-                Generated data from model
-            table_name (str):
-                Name of the table.
+            sampled_data (dict):
+                Generated data
 
         Return:
             pandas.DataFrame:
                 Formatted synthesized data.
         """
-        reversed_data = self.metadata.reverse_transform(table_name, synthesized)
+        final_data = dict()
+        for table_name, table_rows in sampled_data.items():
+            parents = self.metadata.get_parents(table_name)
+            if parents:
+                for parent_name in parents:
+                    foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
+                    if foreign_key not in table_rows:
+                        parent_ids = self._find_parent_ids(table_name, parent_name, sampled_data)
+                        table_rows[foreign_key] = parent_ids
 
-        fields = self.metadata.get_fields(table_name)
+            reversed_data = self.metadata.reverse_transform(table_name, table_rows)
 
-        return reversed_data[list(fields.keys())]
+            fields = self.metadata.get_fields(table_name)
+
+            final_data[table_name] = reversed_data[list(fields.keys())]
+
+        return final_data
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -118,7 +133,7 @@ class Sampler:
 
         return primary_key, primary_key_values
 
-    def _get_extension(self, parent_row, table_name):
+    def _extract_parameters(self, parent_row, table_name):
         """Get the params from a generated parent row.
 
         Args:
@@ -127,7 +142,6 @@ class Sampler:
             table_name (str):
                 Name of the table to make the model for.
         """
-
         prefix = '__{}__'.format(table_name)
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
@@ -157,34 +171,85 @@ class Sampler:
 
         return sampled
 
-    def _sample_children(self, table_name, sampled):
-        table_rows = sampled[table_name]
+    def _sample_children(self, table_name, sampled_data):
+        table_rows = sampled_data[table_name]
         for child_name in self.metadata.get_children(table_name):
             for _, row in table_rows.iterrows():
-                self._sample_table(child_name, table_name, row, sampled)
+                self._sample_child_rows(child_name, table_name, row, sampled_data)
 
-    def _sample_table(self, table_name, parent_name, parent_row, sampled):
-        extension = self._get_extension(parent_row, table_name)
+    def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
+        parameters = self._extract_parameters(parent_row, table_name)
 
         model = self.model(**self.model_kwargs)
-        model.set_parameters(extension)
-        num_rows = max(round(extension['child_rows']), 0)
+        model.set_parameters(parameters)
+        num_rows = max(round(parameters['child_rows']), 0)
 
-        sampled_rows = self._sample_rows(model, num_rows, table_name)
+        table_rows = self._sample_rows(model, num_rows, table_name)
 
         parent_key = self.metadata.get_primary_key(parent_name)
         foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
-        sampled_rows[foreign_key] = parent_row[parent_key]
+        table_rows[foreign_key] = parent_row[parent_key]
 
-        previous = sampled.get(table_name)
+        previous = sampled_data.get(table_name)
         if previous is None:
-            sampled[table_name] = sampled_rows
+            sampled_data[table_name] = table_rows
         else:
-            sampled[table_name] = pd.concat([previous, sampled_rows]).reset_index(drop=True)
+            sampled_data[table_name] = pd.concat([previous, table_rows]).reset_index(drop=True)
 
-        self._sample_children(table_name, sampled)
+        self._sample_children(table_name, sampled_data)
 
-    def sample(self, table_name, num_rows, reset_primary_keys=False, sample_children=True):
+    @staticmethod
+    def _find_parent_id(likelihoods, num_rows):
+        mean = likelihoods.mean()
+        if (likelihoods == 0).all():
+            # All rows got 0 likelihood, fallback to num_rows
+            likelihoods = num_rows
+        elif pd.isnull(mean) or mean == 0:
+            # Some rows got singlar matrix error and the rest were 0
+            # Fallback to num_rows on the singular matrix rows and
+            # keep 0s on the rest.
+            likelihoods = likelihoods.fillna(num_rows)
+        else:
+            # at least one row got a valid likelihood, so fill the
+            # rows that got a singular matrix error with the mean
+            likelihoods = likelihoods.fillna(mean)
+
+        weights = likelihoods.values / likelihoods.sum()
+
+        return np.random.choice(likelihoods.index, p=weights)
+
+    def _get_likelihoods(self, table_rows, parent_rows, table_name):
+        likelihoods = dict()
+        for parent_id, row in parent_rows.iterrows():
+            parameters = self._extract_parameters(row, table_name)
+            model = self.model(**self.model_kwargs)
+            model.set_parameters(parameters)
+            try:
+                likelihoods[parent_id] = model.model.probability_density(table_rows)
+            except np.linalg.LinAlgError:
+                likelihoods[parent_id] = None
+
+        return pd.DataFrame(likelihoods, index=table_rows.index)
+
+    def _find_parent_ids(self, table_name, parent_name, sampled_data):
+        table_rows = sampled_data[table_name]
+        if parent_name in sampled_data:
+            parent_rows = sampled_data[parent_name]
+        else:
+            ratio = self.table_sizes[parent_name] / self.table_sizes[table_name]
+            num_parent_rows = max(int(round(len(table_rows) * ratio)), 1)
+            parent_model = self.models[parent_name]
+            parent_rows = self._sample_rows(parent_model, num_parent_rows, parent_name)
+
+        primary_key = self.metadata.get_primary_key(parent_name)
+        parent_rows = parent_rows.set_index(primary_key)
+        num_rows = parent_rows['__' + table_name + '__child_rows'].clip(0)
+
+        likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name)
+        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
+
+    def sample(self, table_name, num_rows=None, reset_primary_keys=False,
+               sample_children=True, sample_parents=True):
         """Sample one table.
 
         Child tables will be sampled when ``sample_children`` is ``True``.
@@ -195,11 +260,14 @@ class Sampler:
             table_name (str):
                 Table name to sample.
             num_rows (int):
-                Amount of rows to sample.
+                Amount of rows to sample. If ``None``, sample the same number of rows
+                as there were in the original table.
             reset_primary_keys (bool):
                 Whether or not reset the primary keys generators. Defaults to ``False``.
             sample_children (bool):
                 Whether or not sample child tables. Defaults to ``True``.
+            sample_parents (bool):
+                Whether or not sample parent tables. Defaults to ``True``.
 
         Returns:
             dict or pandas.DataFrame:
@@ -207,37 +275,27 @@ class Sampler:
                   and child tables.
                 - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
         """
-
         if reset_primary_keys:
             self._reset_primary_keys_generators()
 
+        if num_rows is None:
+            num_rows = self.table_sizes[table_name]
+
         model = self.models[table_name]
-
-        sampled_rows = self._sample_rows(model, num_rows, table_name)
-
-        parents = self.metadata.get_parents(table_name)
-        if parents:
-            parent_name = list(parents)[0]
-            foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
-            parent_id = self._get_primary_keys(parent_name, 1)[1][0]
-            sampled_rows[foreign_key] = parent_id
+        table_rows = self._sample_rows(model, num_rows, table_name)
 
         if sample_children:
             sampled_data = {
-                table_name: sampled_rows
+                table_name: table_rows
             }
 
             self._sample_children(table_name, sampled_data)
-
-            for table, sampled_rows in sampled_data.items():
-                sampled_data[table] = self._transform_synthesized_rows(sampled_rows, table)
-
-            return sampled_data
+            return self._finalize(sampled_data)
 
         else:
-            return self._transform_synthesized_rows(sampled_rows, table_name)
+            return self._finalize({table_name: table_rows})[table_name]
 
-    def sample_all(self, num_rows=5, reset_primary_keys=False):
+    def sample_all(self, num_rows=None, reset_primary_keys=False):
         """Samples the entire dataset.
 
         ``sample_all`` returns a dictionary with all the tables of the dataset sampled.
@@ -249,9 +307,10 @@ class Sampler:
 
         Args:
             num_rows (int):
-                Number of rows to be sampled on the parent tables.
+                Number of rows to be sampled on the first parent tables. If ``None``,
+                sample the same number of rows as in the original tables.
             reset_primary_keys (bool):
-                Wheter or not reset the primary key generators.
+                Whether or not reset the primary key generators.
 
         Returns:
             dict:

@@ -24,12 +24,12 @@ jobs:
     - if: matrix.os == 'ubuntu-latest'
       name: Install graphviz - Ubuntu
       run: |
-        sudo apt-get install graphviz
+        sudo apt-get install graphviz pandoc
 
     - if: matrix.os == 'macos-latest'
       name: Install graphviz - MacOS
       run: |
-        brew install graphviz
+        brew install graphviz pandoc
 
     - name: Install dependencies
       run: |

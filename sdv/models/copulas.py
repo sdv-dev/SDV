@@ -1,5 +1,7 @@
 import numpy as np
-from copulas import multivariate, univariate
+from copulas import EPSILON
+from copulas.multivariate import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 
 from sdv.models.base import SDVModel
 from sdv.models.utils import (
@@ -29,7 +31,7 @@ class GaussianCopula(SDVModel):
         4  1.925887
     """
 
-    DISTRIBUTION = univariate.GaussianUnivariate
+    DISTRIBUTION = GaussianUnivariate
     distribution = None
     model = None
 
@@ -46,7 +48,7 @@ class GaussianCopula(SDVModel):
                 Data to be fitted.
         """
         table_data = impute(table_data)
-        self.model = multivariate.GaussianMultivariate(distribution=self.distribution)
+        self.model = GaussianMultivariate(distribution=self.distribution)
         self.model.fit(table_data)
 
     def sample(self, num_samples):
@@ -79,11 +81,20 @@ class GaussianCopula(SDVModel):
             values.append(row[:index + 1])
 
         self.model.covariance = np.array(values)
-        for distribution in self.model.distribs.values():
-            if distribution.std is not None:
-                distribution.std = np.log(distribution.std)
+        params = self.model.to_dict()
+        univariates = dict()
+        for name, univariate in zip(params.pop('columns'), params['univariates']):
+            univariates[name] = univariate
+            if 'scale' in univariate:
+                scale = univariate['scale']
+                if scale == 0:
+                    scale = EPSILON
 
-        return flatten_dict(self.model.to_dict())
+                univariate['scale'] = np.log(scale)
+
+        params['univariates'] = univariates
+
+        return flatten_dict(params)
 
     def _prepare_sampled_covariance(self, covariance):
         """Prepare a covariance matrix.
@@ -126,17 +137,22 @@ class GaussianCopula(SDVModel):
                 Model parameters ready to recreate the model.
         """
 
-        distribution_kwargs = {
-            'fitted': True,
+        univariate_kwargs = {
             'type': model_parameters['distribution']
         }
 
-        distribs = model_parameters['distribs']
-        for distribution in distribs.values():
-            distribution.update(distribution_kwargs)
-            distribution['std'] = np.exp(distribution['std'])
+        columns = list()
+        univariates = list()
+        for column, univariate in model_parameters['univariates'].items():
+            columns.append(column)
+            univariate.update(univariate_kwargs)
+            univariate['scale'] = np.exp(univariate['scale'])
+            univariates.append(univariate)
 
-        covariance = model_parameters['covariance']
+        model_parameters['univariates'] = univariates
+        model_parameters['columns'] = columns
+
+        covariance = model_parameters.get('covariance')
         model_parameters['covariance'] = self._prepare_sampled_covariance(covariance)
 
         return model_parameters
@@ -156,8 +172,5 @@ class GaussianCopula(SDVModel):
         parameters.setdefault('distribution', self.distribution)
 
         parameters = self._unflatten_gaussian_copula(parameters)
-        for param in parameters['distribs'].values():
-            param.setdefault('type', self.distribution)
-            param.setdefault('fitted', True)
 
-        self.model = multivariate.GaussianMultivariate.from_dict(parameters)
+        self.model = GaussianMultivariate.from_dict(parameters)

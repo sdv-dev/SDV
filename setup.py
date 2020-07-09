@@ -13,12 +13,17 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'exrex>=0.9.4,<0.11',
-    'numpy>=1.15.4,<1.17',
+    'numpy>=1.15.4,<2',
     'pandas>=0.23.4,<0.25',
-    'copulas>=0.2.5,<0.3',
-    'rdt>=0.2.1,<0.3',
+    'copulas>=0.3.1,<0.4',
+    'rdt>=0.2.3,<0.3',
     'graphviz>=0.13.2',
-    'sdmetrics>=0.0.1,<0.0.2'
+    'sdmetrics>=0.0.2.dev0,<0.0.3',
+    'scikit-learn<0.23,>=0.21',
+]
+
+ctgan_requires = [
+    'ctgan>=0.2.2.dev0,<0.3',
 ]
 
 setup_requires = [
@@ -40,6 +45,7 @@ development_requires = [
 
     # docs
     'm2r>=0.2.0,<0.3',
+    'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=1.7.1,<3',
     'sphinx_rtd_theme>=0.2.4,<0.5',
     'autodocsumm>=0.1.10',
@@ -76,8 +82,8 @@ setup(
     ],
     description='Automated Generative Modeling and Sampling',
     extras_require={
-        'test': tests_require,
-        'dev': development_requires + tests_require,
+        'test': tests_require + ctgan_requires,
+        'dev': development_requires + tests_require + ctgan_requires,
     },
     install_package_data=True,
     install_requires=install_requires,
@@ -93,6 +99,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.3.3',
+    version='0.3.5.dev0',
     zip_safe=False,
 )

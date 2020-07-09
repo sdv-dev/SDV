@@ -1,7 +1,6 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, call, patch
 
-import graphviz
 import pandas as pd
 import pytest
 
@@ -218,28 +217,6 @@ class TestMetadata(TestCase):
         }
         assert result == expected
 
-    def test__validate_parents_no_error(self):
-        """Test that any error is raised with a supported structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = []
-
-        # Run
-        Metadata._validate_parents(mock, 'demo')
-
-        # Asserts
-        mock.get_parents.assert_called_once_with('demo')
-
-    def test__validate_parents_raise_error(self):
-        """Test that a ValueError is raised because the bad structure"""
-        # Setup
-        mock = MagicMock(spec_set=Metadata)
-        mock.get_parents.return_value = ['foo', 'bar']
-
-        # Run
-        with pytest.raises(MetadataError):
-            Metadata._validate_parents(mock, 'demo')
-
     @patch('sdv.metadata.Metadata._analyze_relationships')
     @patch('sdv.metadata.Metadata._dict_metadata')
     def test___init__default_metadata_dict(self, mock_meta, mock_relationships):
@@ -403,6 +380,7 @@ class TestMetadata(TestCase):
         }
         metadata = Mock(spec_set=Metadata)
         metadata.get_table_meta.return_value = table_meta
+        metadata.get_children.return_value = []
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
@@ -630,23 +608,16 @@ class TestMetadata(TestCase):
     def test_get_foreign_key(self):
         """Test get foreign key"""
         # Setup
-        primary_key = 'a_primary_key'
         fields = {
             'a_field': {
                 'ref': {
+                    'table': 'parent',
                     'field': 'a_primary_key'
                 },
                 'name': 'a_field'
-            },
-            'p_field': {
-                'ref': {
-                    'field': 'another_key_field'
-                },
-                'name': 'p_field'
             }
         }
         metadata = Mock(spec_set=Metadata)
-        metadata.get_primary_key.return_value = primary_key
         metadata.get_fields.return_value = fields
 
         # Run
@@ -654,7 +625,6 @@ class TestMetadata(TestCase):
 
         # Asserts
         assert result == 'a_field'
-        metadata.get_primary_key.assert_called_once_with('parent')
         metadata.get_fields.assert_called_once_with('child')
 
     def test_reverse_transform(self):
@@ -992,121 +962,3 @@ class TestMetadata(TestCase):
 
         assert metadata._metadata == expected_metadata
         metadata._check_field.assert_called_once_with('a_table', 'a_field', exists=False)
-
-    def test__get_graphviz_extension_path_without_extension(self):
-        """Raises a ValueError when the path doesn't contains an extension."""
-        with pytest.raises(ValueError):
-            Metadata._get_graphviz_extension('/some/path')
-
-    def test__get_graphviz_extension_invalid_extension(self):
-        """Raises a ValueError when the path contains an invalid extension."""
-        with pytest.raises(ValueError):
-            Metadata._get_graphviz_extension('/some/path.foo')
-
-    def test__get_graphviz_extension_none(self):
-        """Get graphviz with path equals to None."""
-        # Run
-        result = Metadata._get_graphviz_extension(None)
-
-        # Asserts
-        assert result == (None, None)
-
-    def test__get_graphviz_extension_valid(self):
-        """Get a valid graphviz extension."""
-        # Run
-        result = Metadata._get_graphviz_extension('/some/path.png')
-
-        # Asserts
-        assert result == ('/some/path', 'png')
-
-    def test__visualize_add_nodes(self):
-        """Add nodes into a graphviz digraph."""
-        # Setup
-        metadata = MagicMock(spec_set=Metadata)
-        minimock = Mock()
-
-        # pass tests in python3.5
-        minimock.items.return_value = (
-            ('a_field', {'type': 'numerical', 'subtype': 'integer'}),
-            ('b_field', {'type': 'id'}),
-            ('c_field', {'type': 'id', 'ref': {'table': 'other', 'field': 'pk_field'}})
-        )
-
-        metadata.get_tables.return_value = ['demo']
-        metadata.get_fields.return_value = minimock
-
-        metadata.get_primary_key.return_value = 'b_field'
-        metadata.get_parents.return_value = set(['other'])
-        metadata.get_foreign_key.return_value = 'c_field'
-
-        metadata.get_table_meta.return_value = {'path': None}
-
-        plot = Mock()
-
-        # Run
-        Metadata._visualize_add_nodes(metadata, plot)
-
-        # Asserts
-        expected_node_label = r"{demo|a_field : numerical - integer\lb_field : id\l" \
-                              r"c_field : id\l|Primary key: b_field\l" \
-                              r"Foreign key (other): c_field\l}"
-
-        metadata.get_fields.assert_called_once_with('demo')
-        metadata.get_primary_key.assert_called_once_with('demo')
-        metadata.get_parents.assert_called_once_with('demo')
-        metadata.get_table_meta.assert_called_once_with('demo')
-        metadata.get_foreign_key.assert_called_once_with('other', 'demo')
-        metadata.get_table_meta.assert_called_once_with('demo')
-
-        plot.node.assert_called_once_with('demo', label=expected_node_label)
-
-    def test__visualize_add_edges(self):
-        """Add edges into a graphviz digraph."""
-        # Setup
-        metadata = MagicMock(spec_set=Metadata)
-
-        metadata.get_tables.return_value = ['demo', 'other']
-        metadata.get_parents.side_effect = [set(['other']), set()]
-
-        metadata.get_foreign_key.return_value = 'fk'
-        metadata.get_primary_key.return_value = 'pk'
-
-        plot = Mock()
-
-        # Run
-        Metadata._visualize_add_edges(metadata, plot)
-
-        # Asserts
-        expected_edge_label = '   {}.{} -> {}.{}'.format('demo', 'fk', 'other', 'pk')
-
-        metadata.get_tables.assert_called_once_with()
-        metadata.get_foreign_key.assert_called_once_with('other', 'demo')
-        metadata.get_primary_key.assert_called_once_with('other')
-        assert metadata.get_parents.call_args_list == [call('demo'), call('other')]
-
-        plot.edge.assert_called_once_with(
-            'other',
-            'demo',
-            label=expected_edge_label,
-            arrowhead='crow'
-        )
-
-    @patch('sdv.metadata.graphviz')
-    def test_visualize(self, graphviz_mock):
-        """Metadata visualize digraph"""
-        # Setup
-        plot = Mock(spec_set=graphviz.Digraph)
-        graphviz_mock.Digraph.return_value = plot
-
-        metadata = MagicMock(spec_set=Metadata)
-        metadata._get_graphviz_extension.return_value = ('output', 'png')
-
-        # Run
-        Metadata.visualize(metadata, path='output.png')
-
-        # Asserts
-        metadata._get_graphviz_extension.assert_called_once_with('output.png')
-        metadata._visualize_add_nodes.assert_called_once_with(plot)
-        metadata._visualize_add_edges.assert_called_once_with(plot)
-
-        plot.render.assert_called_once_with(filename='output', cleanup=True, format='png')

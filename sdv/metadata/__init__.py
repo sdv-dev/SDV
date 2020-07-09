@@ -4,10 +4,20 @@ import logging
 import os
 from collections import defaultdict
 
-import graphviz
 import numpy as np
 import pandas as pd
 from rdt import HyperTransformer, transformers
+
+from sdv.metadata import visualization
+from sdv.metadata.errors import MetadataError
+from sdv.metadata.table import Table
+
+__all__ = [
+    'Metadata',
+    'MetadataError',
+    'Table',
+    'visualization'
+]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,10 +59,6 @@ def _load_csv(root_path, table_meta):
     data = _parse_dtypes(data, table_meta)
 
     return data
-
-
-class MetadataError(Exception):
-    pass
 
 
 class Metadata:
@@ -240,6 +246,30 @@ class Metadata:
         """
         return list(self._metadata['tables'].keys())
 
+    def get_field_meta(self, table_name, field_name):
+        """Get the metadata dict for a table.
+
+        Args:
+            table_name (str):
+                Name of the table to which the field belongs.
+            field_name (str):
+                Name of the field to get data for.
+
+        Returns:
+            dict:
+                field metadata
+
+        Raises:
+            ValueError:
+                If the table or the field do not exist in this metadata.
+        """
+        field_meta = self.get_fields(table_name).get(field_name)
+        if field_meta is None:
+            raise ValueError(
+                'Table "{}" does not contain a field name "{}"'.format(table_name, field_name))
+
+        return copy.deepcopy(field_meta)
+
     def get_fields(self, table_name):
         """Get table fields metadata.
 
@@ -291,11 +321,9 @@ class Metadata:
             ValueError:
                 If the relationship does not exist.
         """
-        primary = self.get_primary_key(parent)
-
         for name, field in self.get_fields(child).items():
             ref = field.get('ref')
-            if ref and ref['field'] == primary:
+            if ref and ref['table'] == parent:
                 return name
 
         raise ValueError('{} is not parent of {}'.format(parent, child))
@@ -370,8 +398,13 @@ class Metadata:
 
             if ids and field_type == 'id':
                 if (name != table_meta.get('primary_key')) and not field.get('ref'):
-                    raise MetadataError(
-                        'id field `{}` is neither a primary or a foreign key'.format(name))
+                    for child_table in self.get_children(table_name):
+                        if name == self.get_foreign_key(table_name, child_table):
+                            break
+
+                    else:
+                        raise MetadataError(
+                            'id field `{}` is neither a primary or a foreign key'.format(name))
 
             if ids or (field_type != 'id'):
                 dtypes[name] = dtype
@@ -575,11 +608,6 @@ class Metadata:
         for child in children:
             self._validate_circular_relationships(parent, self.get_children(child))
 
-    def _validate_parents(self, table_name):
-        """Make sure that the table has only one parent."""
-        if len(self.get_parents(table_name)) > 1:
-            raise MetadataError('Table {} has more than one parent.'.format(table_name))
-
     def validate(self, tables=None):
         """Validate this metadata.
 
@@ -624,7 +652,6 @@ class Metadata:
 
             self._validate_table(table_name, table_meta, table)
             self._validate_circular_relationships(table_name)
-            self._validate_parents(table_name)
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
@@ -678,14 +705,17 @@ class Metadata:
     def _get_key_subtype(field_meta):
         """Get the appropriate key subtype."""
         field_type = field_meta['type']
+
         if field_type == 'categorical':
             field_subtype = 'string'
+
         elif field_type in ('numerical', 'id'):
             field_subtype = field_meta['subtype']
             if field_subtype not in ('integer', 'string'):
                 raise ValueError(
                     'Invalid field "subtype" for key field: "{}"'.format(field_subtype)
                 )
+
         else:
             raise ValueError(
                 'Invalid field "type" for key field: "{}"'.format(field_type)
@@ -746,7 +776,11 @@ class Metadata:
                     * The child table already has a parent.
                     * The new relationship closes a relationship circle.
         """
-        # Validate table and field names
+        # Validate tables exists
+        self.get_table_meta(parent)
+        self.get_table_meta(child)
+
+        # Validate field names
         primary_key = self.get_primary_key(parent)
         if not primary_key:
             raise ValueError('Parent table "{}" does not have a primary key'.format(parent))
@@ -754,32 +788,50 @@ class Metadata:
         if foreign_key is None:
             foreign_key = primary_key
 
+        parent_key_meta = copy.deepcopy(self.get_field_meta(parent, primary_key))
+        child_key_meta = copy.deepcopy(self.get_field_meta(child, foreign_key))
+
         # Validate relationships
-        if self.get_parents(child):
-            raise ValueError('Table "{}" already has a parent'.format(child))
+        child_ref = child_key_meta.get('ref')
+        if child_ref:
+            raise ValueError(
+                'Field "{}.{}" already defines a relationship'.format(child, foreign_key))
 
         grandchildren = self.get_children(child)
         if grandchildren:
             self._validate_circular_relationships(parent, grandchildren)
 
-        # Copy primary key details over to the foreign key
-        foreign_key_details = copy.deepcopy(self.get_fields(parent)[primary_key])
-        foreign_key_details['ref'] = {
+        # Make sure that the parent key is an id
+        if parent_key_meta['type'] != 'id':
+            parent_key_meta['subtype'] = self._get_key_subtype(parent_key_meta)
+            parent_key_meta['type'] = 'id'
+
+        # Update the child key meta
+        child_key_meta['subtype'] = self._get_key_subtype(child_key_meta)
+        child_key_meta['type'] = 'id'
+        child_key_meta['ref'] = {
             'table': parent,
             'field': primary_key
         }
 
         # Make sure that key subtypes are the same
-        foreign_meta = self.get_fields(child).get(foreign_key)
-        if foreign_meta:
-            foreign_subtype = self._get_key_subtype(foreign_meta)
-            if foreign_subtype != foreign_key_details['subtype']:
-                raise ValueError('Primary and Foreign key subtypes mismatch')
+        if child_key_meta['subtype'] != parent_key_meta['subtype']:
+            raise ValueError('Parent and Child key subtypes mismatch')
 
-        self._metadata['tables'][child]['fields'][foreign_key] = foreign_key_details
+        # Make a backup
+        metadata_backup = copy.deepcopy(self._metadata)
+
+        self._metadata['tables'][parent]['fields'][primary_key] = parent_key_meta
+        self._metadata['tables'][child]['fields'][foreign_key] = child_key_meta
 
         # Re-analyze the relationships
         self._analyze_relationships()
+
+        try:
+            self.validate()
+        except MetadataError:
+            self._metadata = metadata_backup
+            raise
 
     def _get_field_details(self, data, fields):
         """Get or build all the fields metadata.
@@ -919,119 +971,7 @@ class Metadata:
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
 
-    @staticmethod
-    def _get_graphviz_extension(path):
-        if path:
-            path_splitted = path.split('.')
-            if len(path_splitted) == 1:
-                raise ValueError('Path without graphviz extansion.')
-
-            graphviz_extension = path_splitted[-1]
-
-            if graphviz_extension not in graphviz.backend.FORMATS:
-                raise ValueError(
-                    '"{}" not a valid graphviz extension format.'.format(graphviz_extension)
-                )
-
-            return '.'.join(path_splitted[:-1]), graphviz_extension
-
-        return None, None
-
-    def _visualize_add_nodes(self, plot):
-        """Add nodes into a `graphviz.Digraph`.
-
-        Each node represent a metadata table.
-
-        Args:
-            plot (graphviz.Digraph)
-        """
-        for table in self.get_tables():
-            # Append table fields
-            fields = []
-
-            for name, value in self.get_fields(table).items():
-                if value.get('subtype') is not None:
-                    fields.append('{} : {} - {}'.format(name, value['type'], value['subtype']))
-
-                else:
-                    fields.append('{} : {}'.format(name, value['type']))
-
-            fields = r'\l'.join(fields)
-
-            # Append table extra information
-            extras = []
-
-            primary_key = self.get_primary_key(table)
-            if primary_key is not None:
-                extras.append('Primary key: {}'.format(primary_key))
-
-            parents = self.get_parents(table)
-            for parent in parents:
-                foreign_key = self.get_foreign_key(parent, table)
-                extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
-
-            path = self.get_table_meta(table).get('path')
-            if path is not None:
-                extras.append('Data path: {}'.format(path))
-
-            extras = r'\l'.join(extras)
-
-            # Add table node
-            title = r'{%s|%s\l|%s\l}' % (table, fields, extras)
-            plot.node(table, label=title)
-
-    def _visualize_add_edges(self, plot):
-        """Add edges into a `graphviz.Digraph`.
-
-        Each edge represents a relationship between two metadata tables.
-
-        Args:
-            plot (graphviz.Digraph)
-        """
-        for table in self.get_tables():
-            for parent in list(self.get_parents(table)):
-                plot.edge(
-                    parent,
-                    table,
-                    label='   {}.{} -> {}.{}'.format(
-                        table, self.get_foreign_key(parent, table),
-                        parent, self.get_primary_key(parent)
-                    ),
-                    arrowhead='crow'
-                )
-
-    def visualize(self, path=None):
-        """Plot metadata usign graphviz.
-
-        Try to generate a plot using graphviz.
-        If a ``path`` is provided save the output into a file.
-
-        Args:
-            path (str):
-                Output file path to save the plot, it requires a graphviz
-                supported extension. If ``None`` do not save the plot.
-                Defaults to ``None``.
-        """
-        filename, graphviz_extension = self._get_graphviz_extension(path)
-        plot = graphviz.Digraph(
-            'Metadata',
-            format=graphviz_extension,
-            node_attr={
-                "shape": "Mrecord",
-                "fillcolor": "lightgoldenrod1",
-                "style": "filled"
-            },
-        )
-
-        self._visualize_add_nodes(plot)
-        self._visualize_add_edges(plot)
-
-        if filename:
-            plot.render(filename=filename, cleanup=True, format=graphviz_extension)
-        else:
-            return plot
-
-    def __str__(self):
+    def __repr__(self):
         tables = self.get_tables()
         relationships = [
             '    {}.{} -> {}.{}'.format(
@@ -1053,3 +993,18 @@ class Metadata:
             tables,
             '\n'.join(relationships)
         )
+
+    def visualize(self, path=None):
+        """Plot metadata usign graphviz.
+
+        Generate a plot using graphviz.
+        If a ``path`` is provided save the output into a file.
+
+        Args:
+            path (str):
+                Output file path to save the plot. It requires a graphviz
+                supported extension. If ``None`` do not save the plot and
+                just return the ``graphviz.Digraph`` object.
+                Defaults to ``None``.
+        """
+        return visualization.visualize(self, path)
