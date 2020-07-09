@@ -1,0 +1,74 @@
+{
+    "tables": {
+        "users": {
+            "fields": {
+                "age": {
+                    "type": "numerical",
+                    "subtype": "integer"
+                },
+                "user_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "gender": {
+                    "type": "categorical"
+                },
+                "country": {
+                    "type": "categorical"
+                }
+            },
+            "primary_key": "user_id"
+        },
+        "sessions": {
+            "fields": {
+                "os": {
+                    "type": "categorical"
+                },
+                "user_id": {
+                    "type": "id",
+                    "subtype": "integer",
+                    "ref": {
+                        "table": "users",
+                        "field": "user_id"
+                    }
+                },
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "device": {
+                    "type": "categorical"
+                }
+            },
+            "primary_key": "session_id"
+        },
+        "transactions": {
+            "fields": {
+                "timestamp": {
+                    "type": "datetime",
+                    "format": "%Y-%m-%d"
+                },
+                "transaction_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer",
+                    "ref": {
+                        "table": "sessions",
+                        "field": "session_id"
+                    }
+                },
+                "approved": {
+                    "type": "boolean"
+                },
+                "amount": {
+                    "type": "numerical",
+                    "subtype": "float"
+                }
+            },
+            "primary_key": "transaction_id"
+        }
+    }
+}

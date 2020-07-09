@@ -32,6 +32,7 @@ import sdv
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'm2r',
+    'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
@@ -52,6 +53,9 @@ source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
+
+# Jupyter Notebooks
+nbsphinx_execute = 'never'
 
 # General information about the project.
 project = 'SDV'
