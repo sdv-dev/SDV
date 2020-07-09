@@ -1,3 +1,5 @@
+import pickle
+
 from sdv.metadata import Table
 
 
@@ -190,3 +192,28 @@ class BaseTabularModel():
                 using a simple dictionary.
         """
         raise NotImplementedError()
+
+    def save(self, path):
+        """Save this model instance to the given path using pickle.
+
+        Args:
+            path (str):
+                Path where the SDV instance will be serialized.
+        """
+        with open(path, 'wb') as output:
+            pickle.dump(self, output)
+
+    @classmethod
+    def load(cls, path):
+        """Load a TabularModel instance from a given path.
+
+        Args:
+            path (str):
+                Path from which to load the instance.
+
+        Returns:
+            TabularModel:
+                The loaded tabular model.
+        """
+        with open(path, 'rb') as f:
+            return pickle.load(f)
