@@ -1,5 +1,5 @@
-Metadata
-========
+Working with Metadata
+=====================
 
 In order to use **SDV** you will need a ``Metadata`` object alongside your data.
 

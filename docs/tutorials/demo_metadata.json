@@ -2,31 +2,30 @@
     "tables": {
         "users": {
             "fields": {
-                "country": {
-                    "type": "categorical"
-                },
-                "user_id": {
-                    "type": "id",
-                    "subtype": "integer"
-                },
                 "gender": {
                     "type": "categorical"
                 },
                 "age": {
                     "type": "numerical",
                     "subtype": "integer"
+                },
+                "user_id": {
+                    "type": "id",
+                    "subtype": "integer"
+                },
+                "country": {
+                    "type": "categorical"
                 }
             },
             "primary_key": "user_id"
         },
         "sessions": {
             "fields": {
-                "device": {
+                "os": {
                     "type": "categorical"
                 },
-                "session_id": {
-                    "type": "id",
-                    "subtype": "integer"
+                "device": {
+                    "type": "categorical"
                 },
                 "user_id": {
                     "type": "id",
@@ -36,8 +35,9 @@
                         "field": "user_id"
                     }
                 },
-                "os": {
-                    "type": "categorical"
+                "session_id": {
+                    "type": "id",
+                    "subtype": "integer"
                 }
             },
             "primary_key": "session_id"
@@ -60,12 +60,12 @@
                         "field": "session_id"
                     }
                 },
+                "approved": {
+                    "type": "boolean"
+                },
                 "transaction_id": {
                     "type": "id",
                     "subtype": "integer"
-                },
-                "approved": {
-                    "type": "boolean"
                 }
             },
             "primary_key": "transaction_id"
