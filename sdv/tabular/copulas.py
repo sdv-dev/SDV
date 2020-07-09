@@ -84,7 +84,6 @@ class GaussianCopula(BaseTabularModel):
             table_data (pandas.DataFrame):
                 Data to be fitted.
         """
-        params = self._metadata.get_model_params()
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
         self._model.fit(data)
 
