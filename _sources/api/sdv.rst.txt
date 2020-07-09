@@ -6,7 +6,9 @@ Subpackages
 
 .. toctree::
 
+   sdv.metadata
    sdv.models
+   sdv.tabular
 
 Submodules
 ----------
@@ -16,7 +18,6 @@ Submodules
    sdv.benchmark
    sdv.demo
    sdv.evaluation
-   sdv.metadata
    sdv.modeler
    sdv.sampler
    sdv.sdv

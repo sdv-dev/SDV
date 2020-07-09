@@ -1,0 +1,1544 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Single Table Modeling &mdash; SDV 0.3.5.dev0 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../_static/dai-logo-white.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Relational Data Modeling" href="03_Relational_Data_Modeling.html" />
+    <link rel="prev" title="SDV - Synthetic Data Vault" href="../readme.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SDV
+          
+
+          
+            
+            <img src="../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">SDV - Synthetic Data Vault</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#install">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-with-pip">Install with pip</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#join-out-community">Join out community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guides</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Single Table Modeling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#GaussianCopula">GaussianCopula</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#1.-Load-the-Data">1. Load the Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#2.-Prepare-the-model">2. Prepare the model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#3.-Sample-data-from-the-fitted-model">3. Sample data from the fitted model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#CTGAN">CTGAN</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">1. Load the Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">2. Prepare the model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">3. Sample data from the fitted model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#4.-Evaluate-how-good-the-data-is">4. Evaluate how good the data is</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="03_Relational_Data_Modeling.html#About-the-datset">About the datset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#Data-model-summary">Data model summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#1.-Load-data">1. Load data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../metadata.html">Working with Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#metadata-schema">Metadata Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#top-level">Top Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata.html#field-details">Field details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metadata.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Resources</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/sdv.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.metadata.html">sdv.metadata package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.tabular.html">sdv.tabular package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.benchmark.html">sdv.benchmark module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.evaluation.html">sdv.evaluation module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.modeler.html">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sampler.html">sdv.sampler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sdv.html">sdv.sdv module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#module-sdv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#types-of-contributions">Types of Contributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#report-bugs">Report Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#fix-bugs">Fix Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#implement-features">Implement Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#write-documentation">Write Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#submit-feedback">Submit Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#get-started">Get Started!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#release-workflow">Release Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing.html#release-candidates">Release Candidates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id1">0.3.4 - 2020-07-04</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#new-features">New Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#general-improvements">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id2">0.3.3 - 2020-06-26</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id3">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id4">0.3.2 - 2020-02-03</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id5">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id6">0.3.1 - 2020-01-22</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id7">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id8">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id9">0.3.0 - 2019-12-23</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id10">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id11">0.2.2 - 2019-12-10</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id12">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id13">0.2.1 - 2019-11-25</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id14">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id15">0.2.0 - 2019-10-11</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id16">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id17">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#bugs-fixed">Bugs Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#id18">0.1.2 - 2019-09-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id19">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id21">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../history.html#id24">Bugs fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../history.html#first-release">0.1.0 - First Release</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Single Table Modeling</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/tutorials/02_Single_Table_Modeling.ipynb" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="Single-Table-Modeling">
+<h1>Single Table Modeling<a class="headerlink" href="#Single-Table-Modeling" title="Permalink to this headline">¶</a></h1>
+<p><strong>SDV</strong> has special support for modeling single table datasets using a variety of models.</p>
+<p>Currently, SDV implements:</p>
+<ul class="simple">
+<li><p>GaussianCopula: A tool to model multivariate distributions using <a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula functions</a>. Based on our <a class="reference external" href="https://github.com/sdv-dev/Copulas">Copulas Library</a>.</p></li>
+<li><p>CTGAN: A GAN-based Deep Learning data synthesizer that can generate synthetic tabular data with high fidelity. Based on our <a class="reference external" href="https://github.com/sdv-dev/CTGAN">CTGAN Library</a>.</p></li>
+</ul>
+<div class="section" id="GaussianCopula">
+<h2>GaussianCopula<a class="headerlink" href="#GaussianCopula" title="Permalink to this headline">¶</a></h2>
+<p>In this first part of the tutorial we will be using the GaussianCopula class to model the <code class="docutils literal notranslate"><span class="pre">users</span></code> table from the toy dataset included in the <strong>SDV</strong> library.</p>
+<div class="section" id="1.-Load-the-Data">
+<h3>1. Load the Data<a class="headerlink" href="#1.-Load-the-Data" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+
+<span class="n">users</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">()[</span><span class="s1">&#39;users&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>This will return a table with 4 fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">user_id</span></code>: A unique identifier of the user.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">country</span></code>: A 2 letter code of the country of residence of the user.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gender</span></code>: A single letter code, <code class="docutils literal notranslate"><span class="pre">M</span></code> or <code class="docutils literal notranslate"><span class="pre">F</span></code>, indicating the user gender. Note that this demo simulates the case where some users did not indicate the gender, which resulted in empty data values in some rows.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">age</span></code>: The age of the user, in years.</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">users</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>country</th>
+      <th>gender</th>
+      <th>age</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>USA</td>
+      <td>M</td>
+      <td>34</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>UK</td>
+      <td>F</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2</td>
+      <td>ES</td>
+      <td>None</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3</td>
+      <td>UK</td>
+      <td>M</td>
+      <td>22</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>USA</td>
+      <td>F</td>
+      <td>54</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>5</td>
+      <td>DE</td>
+      <td>M</td>
+      <td>57</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>6</td>
+      <td>BG</td>
+      <td>F</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>7</td>
+      <td>ES</td>
+      <td>None</td>
+      <td>41</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>8</td>
+      <td>FR</td>
+      <td>F</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>9</td>
+      <td>UK</td>
+      <td>None</td>
+      <td>30</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+<div class="section" id="2.-Prepare-the-model">
+<h3>2. Prepare the model<a class="headerlink" href="#2.-Prepare-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In order to properly model our data we will need to provide some additional information to our model, so let’s prepare this information in some variables.</p>
+<p>First, let’s indicate that the <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field in our table is the primary key, so we do not want our model to attempt to learn it.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">primary_key</span> <span class="o">=</span> <span class="s1">&#39;user_id&#39;</span>
+</pre></div>
+</div>
+</div>
+<p>We will also want to anonymize the countries of residence of our users, to avoid disclosing such information. Let’s make a variable indicating that the <code class="docutils literal notranslate"><span class="pre">country</span></code> field needs to be anonymized using fake <code class="docutils literal notranslate"><span class="pre">country_codes</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">anonymize_fileds</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="s1">&#39;contry_code&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>The full list of categories supported corresponds to the <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">provider names</a></p>
+<p>Once we have prepared the arguments for our model we are ready to import it, create an instance and fit it to our data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+    <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
+    <span class="n">anonymize_fileds</span><span class="o">=</span><span class="n">anonymize_fileds</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-07-09 21:18:32,974 - INFO - table - Loading transformer CategoricalTransformer for field country
+2020-07-09 21:18:32,975 - INFO - table - Loading transformer CategoricalTransformer for field gender
+2020-07-09 21:18:32,975 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-09 21:18:32,991 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
+</pre></div></div>
+</div>
+<p><strong>Notice</strong> how the model took care of transforming the different fields using the appropriate Reversible Data Transforms to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
+</div>
+<div class="section" id="3.-Sample-data-from-the-fitted-model">
+<h3>3. Sample data from the fitted model<a class="headerlink" href="#3.-Sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h3>
+<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>This will return a table identical to the one which the model was fitted on, but filled with new data which resembles the original one.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>country</th>
+      <th>gender</th>
+      <th>age</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>USA</td>
+      <td>M</td>
+      <td>38</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>UK</td>
+      <td>NaN</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2</td>
+      <td>USA</td>
+      <td>F</td>
+      <td>34</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3</td>
+      <td>ES</td>
+      <td>NaN</td>
+      <td>47</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>ES</td>
+      <td>F</td>
+      <td>29</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>5</td>
+      <td>UK</td>
+      <td>F</td>
+      <td>39</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>6</td>
+      <td>FR</td>
+      <td>NaN</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>7</td>
+      <td>ES</td>
+      <td>M</td>
+      <td>38</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>8</td>
+      <td>ES</td>
+      <td>F</td>
+      <td>32</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>9</td>
+      <td>ES</td>
+      <td>F</td>
+      <td>36</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Notice, as well that the number of rows generated by default corresponds to the number of rows that the original table had, but that this number can be changed by simply passing it:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>country</th>
+      <th>gender</th>
+      <th>age</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>UK</td>
+      <td>F</td>
+      <td>48</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>USA</td>
+      <td>NaN</td>
+      <td>38</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2</td>
+      <td>USA</td>
+      <td>M</td>
+      <td>29</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3</td>
+      <td>BG</td>
+      <td>M</td>
+      <td>22</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>USA</td>
+      <td>M</td>
+      <td>43</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+</div>
+<div class="section" id="CTGAN">
+<h2>CTGAN<a class="headerlink" href="#CTGAN" title="Permalink to this headline">¶</a></h2>
+<p>In this second part of the tutorial we will be using the CTGAN model to learn the data from the demo dataset called <code class="docutils literal notranslate"><span class="pre">census</span></code>, which is based on the <a class="reference external" href="'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'">UCI Adult Census Dataset</a>.</p>
+<div class="section" id="id1">
+<h3>1. Load the Data<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+
+<span class="n">census</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="s1">&#39;census&#39;</span><span class="p">)[</span><span class="s1">&#39;census&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-07-09 21:18:33,085 - INFO - __init__ - Loading table census
+</pre></div></div>
+</div>
+<p>This will return a table with several rows of multiple data types:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">census</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education-num</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>native-country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>39</td>
+      <td>State-gov</td>
+      <td>77516</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>2174</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>Self-emp-not-inc</td>
+      <td>83311</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>13</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>215646</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Divorced</td>
+      <td>Handlers-cleaners</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>53</td>
+      <td>Private</td>
+      <td>234721</td>
+      <td>11th</td>
+      <td>7</td>
+      <td>Married-civ-spouse</td>
+      <td>Handlers-cleaners</td>
+      <td>Husband</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>28</td>
+      <td>Private</td>
+      <td>338409</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Wife</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>Cuba</td>
+      <td>&lt;=50K</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>2. Prepare the model<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>In this case there is no primary key to setup and we will not be anonymizing anything, so the only thing that we will pass to the CTGAN model is the number of epochs that we want it to perform when it leanrs the data, which we will keep low to make this execution quick.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">CTGAN</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">CTGAN</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/xals/.virtualenvs/SDV/lib/python3.6/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.utils.testing module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.utils. Anything that cannot be imported from sklearn.utils is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div></div>
+</div>
+<p>Once the instance is created, we can fit it to our data. Bear in mind that this process might take some time to finish, especially on non-GPU enabled systems, so in this case we will be passing only a subsample of the data to accelerate the process.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-07-09 21:18:33,488 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-09 21:18:33,489 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
+2020-07-09 21:18:33,489 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
+2020-07-09 21:18:33,490 - INFO - table - Loading transformer LabelEncodingTransformer for field education
+2020-07-09 21:18:33,490 - INFO - table - Loading transformer NumericalTransformer for field education-num
+2020-07-09 21:18:33,490 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
+2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
+2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
+2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field race
+2020-07-09 21:18:33,492 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
+2020-07-09 21:18:33,492 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
+2020-07-09 21:18:33,493 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
+2020-07-09 21:18:33,493 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
+2020-07-09 21:18:33,493 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
+2020-07-09 21:18:33,494 - INFO - table - Loading transformer LabelEncodingTransformer for field income
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Epoch 1, Loss G: 1.9512, Loss D: -0.0182
+Epoch 2, Loss G: 1.9884, Loss D: -0.0663
+Epoch 3, Loss G: 1.9710, Loss D: -0.1339
+Epoch 4, Loss G: 1.8960, Loss D: -0.2061
+Epoch 5, Loss G: 1.9155, Loss D: -0.3062
+Epoch 6, Loss G: 1.9699, Loss D: -0.3906
+Epoch 7, Loss G: 1.8614, Loss D: -0.5142
+Epoch 8, Loss G: 1.8446, Loss D: -0.6448
+Epoch 9, Loss G: 1.7619, Loss D: -0.7488
+Epoch 10, Loss G: 1.6732, Loss D: -0.7961
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>3. Sample data from the fitted model<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model just like we did with the GaussianCopula model.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>This will return a table identical to the one which the model was fitted on, but filled with new data which resembles the original one.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education-num</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>native-country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>50</td>
+      <td>Local-gov</td>
+      <td>169719</td>
+      <td>1st-4th</td>
+      <td>9</td>
+      <td>Widowed</td>
+      <td>?</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>114</td>
+      <td>8</td>
+      <td>38</td>
+      <td>Columbia</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>32</td>
+      <td>?</td>
+      <td>152479</td>
+      <td>1st-4th</td>
+      <td>9</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Wife</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>-42</td>
+      <td>20</td>
+      <td>21</td>
+      <td>Jamaica</td>
+      <td>&gt;50K</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>22</td>
+      <td>Private</td>
+      <td>69617</td>
+      <td>Bachelors</td>
+      <td>0</td>
+      <td>Separated</td>
+      <td>?</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>6</td>
+      <td>11</td>
+      <td>38</td>
+      <td>Guatemala</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>25</td>
+      <td>?</td>
+      <td>652858</td>
+      <td>10th</td>
+      <td>16</td>
+      <td>Married-civ-spouse</td>
+      <td>Handlers-cleaners</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>152</td>
+      <td>-27</td>
+      <td>39</td>
+      <td>Cuba</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>43</td>
+      <td>Private</td>
+      <td>301956</td>
+      <td>Some-college</td>
+      <td>8</td>
+      <td>Married-civ-spouse</td>
+      <td>?</td>
+      <td>Wife</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>-133</td>
+      <td>-12</td>
+      <td>39</td>
+      <td>India</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>66</td>
+      <td>Private</td>
+      <td>401171</td>
+      <td>Prof-school</td>
+      <td>13</td>
+      <td>Separated</td>
+      <td>Protective-serv</td>
+      <td>Unmarried</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>-124</td>
+      <td>-1</td>
+      <td>40</td>
+      <td>Cuba</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>52</td>
+      <td>Private</td>
+      <td>278399</td>
+      <td>Bachelors</td>
+      <td>12</td>
+      <td>Never-married</td>
+      <td>Prof-specialty</td>
+      <td>Unmarried</td>
+      <td>Other</td>
+      <td>Male</td>
+      <td>122567</td>
+      <td>-6</td>
+      <td>47</td>
+      <td>Columbia</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>36</td>
+      <td>Federal-gov</td>
+      <td>229817</td>
+      <td>HS-grad</td>
+      <td>8</td>
+      <td>Married-AF-spouse</td>
+      <td>Farming-fishing</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>8</td>
+      <td>19</td>
+      <td>38</td>
+      <td>Portugal</td>
+      <td>&gt;50K</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>27</td>
+      <td>Federal-gov</td>
+      <td>306972</td>
+      <td>Some-college</td>
+      <td>8</td>
+      <td>Never-married</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>Asian-Pac-Islander</td>
+      <td>Female</td>
+      <td>42144</td>
+      <td>3</td>
+      <td>39</td>
+      <td>Japan</td>
+      <td>&gt;50K</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>28</td>
+      <td>Local-gov</td>
+      <td>416161</td>
+      <td>1st-4th</td>
+      <td>8</td>
+      <td>Divorced</td>
+      <td>Adm-clerical</td>
+      <td>Unmarried</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>-349</td>
+      <td>1090</td>
+      <td>61</td>
+      <td>Guatemala</td>
+      <td>&gt;50K</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+<div class="section" id="4.-Evaluate-how-good-the-data-is">
+<h3>4. Evaluate how good the data is<a class="headerlink" href="#4.-Evaluate-how-good-the-data-is" title="Permalink to this headline">¶</a></h3>
+<p>Finally, we will use the evaluation framework included in SDV to obtain a metric of how similar the sampled data is to the original one.</p>
+<p>For this, we will simply import the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and pass both the synthetic and the real data to it.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">census</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+-144.971907591418
+</pre></div></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="03_Relational_Data_Modeling.html" class="btn btn-neutral float-right" title="Relational Data Modeling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../readme.html" class="btn btn-neutral float-left" title="SDV - Synthetic Data Vault" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

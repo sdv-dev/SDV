@@ -1,0 +1,7 @@
+sdv.metadata.errors module
+==========================
+
+.. automodule:: sdv.metadata.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

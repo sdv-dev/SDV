@@ -1,0 +1,20 @@
+sdv.tabular package
+===================
+
+Submodules
+----------
+
+.. toctree::
+
+   sdv.tabular.base
+   sdv.tabular.copulas
+   sdv.tabular.ctgan
+   sdv.tabular.utils
+
+Module contents
+---------------
+
+.. automodule:: sdv.tabular
+   :members:
+   :undoc-members:
+   :show-inheritance:
