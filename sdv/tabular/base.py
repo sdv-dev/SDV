@@ -15,8 +15,7 @@ class BaseTabularModel():
     _metadata = None
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
-                 anonymize_fields=None, constraints=None, table_metadata=None,
-                 *args, **kwargs):
+                 anonymize_fields=None, table_metadata=None, *args, **kwargs):
         """Initialize a Tabular Model.
 
         Args:
@@ -38,9 +37,6 @@ class BaseTabularModel():
             anonymize_fields (dict[str, str]):
                 Dict specifying which fields to anonymize and what faker
                 category they belong to.
-            constraints (list[dict]):
-                List of dicts specifying field and inter-field constraints.
-                TODO: Format TBD
             table_metadata (dict or metadata.Table):
                 Table metadata instance or dict representation.
                 If given alongside any other metadata-related arguments, an
@@ -54,7 +50,7 @@ class BaseTabularModel():
             if isinstance(table_metadata, dict):
                 table_metadata = Table(table_metadata,)
 
-            for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
+            for arg in (field_names, primary_key, field_types, anonymize_fields):
                 if arg:
                     raise ValueError(
                         'If table_metadata is given {} must be None'.format(arg.__name__))
@@ -66,7 +62,6 @@ class BaseTabularModel():
             self._primary_key = primary_key
             self._field_types = field_types
             self._anonymize_fields = anonymize_fields
-            self._constraints = constraints
 
     def _fit_metadata(self, data):
         """Generate a new Table metadata and fit it to the data.
@@ -84,7 +79,6 @@ class BaseTabularModel():
             primary_key=self._primary_key,
             field_types=self._field_types,
             anonymize_fields=self._anonymize_fields,
-            constraints=self._constraints,
             transformer_templates=self.TRANSFORMER_TEMPLATES,
         )
         metadata.fit(data)
