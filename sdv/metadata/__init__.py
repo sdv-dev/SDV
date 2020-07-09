@@ -4,7 +4,6 @@ import logging
 import os
 from collections import defaultdict
 
-import graphviz
 import numpy as np
 import pandas as pd
 from rdt import HyperTransformer, transformers
@@ -60,10 +59,6 @@ def _load_csv(root_path, table_meta):
     data = _parse_dtypes(data, table_meta)
 
     return data
-
-
-class MetadataError(Exception):
-    pass
 
 
 class Metadata:
@@ -1013,4 +1008,3 @@ class Metadata:
                 Defaults to ``None``.
         """
         return visualization.visualize(self, path)
-

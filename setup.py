@@ -13,12 +13,17 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'exrex>=0.9.4,<0.11',
-    'numpy>=1.15.4,<1.17',
+    'numpy>=1.15.4,<2',
     'pandas>=0.23.4,<0.25',
-    'copulas>=0.3,<0.4',
-    'rdt>=0.2.1,<0.3',
+    'copulas>=0.3.1.dev0,<0.4',
+    'rdt>=0.2.3.dev0,<0.3',
     'graphviz>=0.13.2',
-    'sdmetrics>=0.0.1,<0.0.2'
+    'sdmetrics>=0.0.2.dev0,<0.0.3',
+    'scikit-learn<0.23,>=0.21',
+]
+
+ctgan_requires = [
+    'ctgan>=0.2.2.dev0,<0.3',
 ]
 
 setup_requires = [
@@ -76,8 +81,8 @@ setup(
     ],
     description='Automated Generative Modeling and Sampling',
     extras_require={
-        'test': tests_require,
-        'dev': development_requires + tests_require,
+        'test': tests_require + ctgan_requires,
+        'dev': development_requires + tests_require + ctgan_requires,
     },
     install_package_data=True,
     install_requires=install_requires,

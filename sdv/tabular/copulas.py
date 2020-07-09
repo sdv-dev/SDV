@@ -1,10 +1,11 @@
-import numpy as np
 import copulas
+import numpy as np
+import rdt
 
 from sdv.tabular.base import BaseTabularModel
 from sdv.tabular.utils import (
-    check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite,
-    square_matrix, unflatten_dict)
+    check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
+    unflatten_dict)
 
 
 class GaussianCopula(BaseTabularModel):
@@ -13,6 +14,10 @@ class GaussianCopula(BaseTabularModel):
     Args:
         distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use.
+        categorical_transformer (str):
+            Type of transformer to use for the categorical variables, to choose
+            from ``one_hot_encoding``, ``label_encoding``, ``categorical`` and
+            ``categorical_fuzzy``.
     """
 
     DISTRIBUTION = copulas.univariate.GaussianUnivariate
@@ -23,6 +28,7 @@ class GaussianCopula(BaseTabularModel):
         'distribution': {
             'type': 'str or copulas.univariate.Univariate',
             'default': 'copulas.univariate.Univariate',
+            'description': 'Univariate distribution to use to model each column',
             'choices': [
                 'copulas.univariate.Univariate',
                 'copulas.univariate.GaussianUnivariate',
@@ -32,12 +38,34 @@ class GaussianCopula(BaseTabularModel):
                 'copulas.univariate.GaussianKDE',
                 'copulas.univariate.TruncatedGaussian',
             ]
+        },
+        'categorical_transformer': {
+            'type': 'str',
+            'default': 'categoircal_fuzzy',
+            'description': 'Type of transformer to use for the categorical variables',
+            'choices': [
+                'categorical',
+                'categorical_fuzzy',
+                'one_hot_encoding',
+                'label_encoding'
+            ]
         }
     }
+    CATEGORICAL_TRANSFORMERS = {
+        'categorical': rdt.transformers.CategoricalTransformer(fuzzy=False),
+        'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
+        'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
+        'label_encoding': rdt.transformers.LabelEncodingTransformer,
+    }
+    TRANSFORMER_TEMPLATES = {
+        'O': rdt.transformers.OneHotEncodingTransformer
+    }
 
-    def __init__(self, distribution=None, *args, **kwargs):
+    def __init__(self, distribution=None, categorical_transformer='categorical',
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._distribution = distribution or self.DISTRIBUTION
+        self.TRANSFORMER_TEMPLATES['O'] = self.CATEGORICAL_TRANSFORMERS[categorical_transformer]
 
     def _update_metadata(self):
         parameters = self._model.to_dict()
@@ -56,9 +84,9 @@ class GaussianCopula(BaseTabularModel):
             table_data (pandas.DataFrame):
                 Data to be fitted.
         """
+        params = self._metadata.get_model_params()
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
         self._model.fit(data)
-        # self._update_metadata()
 
     def _sample(self, size):
         """Sample ``size`` rows from the model.

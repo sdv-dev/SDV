@@ -1,9 +1,6 @@
 from sdv.metadata import Table
 
 
-ANONYMIZATION_MAPS = {}
-
-
 class BaseTabularModel():
     """Base class for all the tabular models.
 
@@ -11,11 +8,13 @@ class BaseTabularModel():
     TabularModels need to implement, as well as common functionality.
     """
 
+    TRANSFORMER_TEMPLATES = None
+
     _metadata = None
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
                  anonymize_fields=None, constraints=None, table_metadata=None,
-                 model_kwargs=None, *args, **kwargs):
+                 *args, **kwargs):
         """Initialize a Tabular Model.
 
         Args:
@@ -32,7 +31,8 @@ class BaseTabularModel():
                 to generate them.
             field_types (dict[str, dict]):
                 Dictinary specifying the data types and subtypes
-                of the fields that will be modeled.
+                of the fields that will be modeled. Field types and subtypes
+                combinations must be compatible with the SDV Metadata Schema.
             anonymize_fields (dict[str, str]):
                 Dict specifying which fields to anonymize and what faker
                 category they belong to.
@@ -50,9 +50,9 @@ class BaseTabularModel():
         """
         if table_metadata is not None:
             if isinstance(table_metadata, dict):
-                table_metadata = Table(table_metadata)
+                table_metadata = Table(table_metadata,)
 
-            for arg in (field_names, primary_key, field_types, anonymize, constraints):
+            for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
                     raise ValueError(
                         'If table_metadata is given {} must be None'.format(arg.__name__))
@@ -66,15 +66,24 @@ class BaseTabularModel():
             self._anonymize_fields = anonymize_fields
             self._constraints = constraints
 
-        self._model_kwargs = model_kwargs
-
     def _fit_metadata(self, data):
+        """Generate a new Table metadata and fit it to the data.
+
+        The information provided will be used to create the Table instance
+        and then the rest of information will be learned from the given
+        data.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to learn from.
+        """
         metadata = Table(
             field_names=self._field_names,
             primary_key=self._primary_key,
             field_types=self._field_types,
             anonymize_fields=self._anonymize_fields,
             constraints=self._constraints,
+            transformer_templates=self.TRANSFORMER_TEMPLATES,
         )
         metadata.fit(data)
 
@@ -83,7 +92,7 @@ class BaseTabularModel():
     def fit(self, data):
         """Fit this model to the data.
 
-        If table metadata has not been given, learn it from the data.
+        If the table metadata has not been given, learn it from the data.
 
         Args:
             data (pandas.DataFrame or str):
@@ -95,6 +104,8 @@ class BaseTabularModel():
         """
         if self._metadata is None:
             self._fit_metadata(data)
+
+        self._size = len(data)
 
         transformed = self._metadata.transform(data)
         self._fit(transformed)
@@ -133,6 +144,7 @@ class BaseTabularModel():
             pandas.DataFrame:
                 Sampled data.
         """
+        size = size or self._size
         sampled = self._sample(size)
         return self._metadata.reverse_transform(sampled)
 

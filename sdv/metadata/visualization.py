@@ -18,6 +18,7 @@ def _get_graphviz_extension(path):
 
     return None, None
 
+
 def _add_nodes(metadata, digraph):
     """Add nodes into a `graphviz.Digraph`.
 
