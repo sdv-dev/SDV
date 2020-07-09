@@ -27,7 +27,14 @@ def test_gaussian_copula():
     )
     gc.fit(users)
 
-    sampled = gc.sample()
+    parameters = gc.get_parameters()
+    new_gc = GaussianCopula(
+        table_metadata=gc.get_metadata(),
+        categorical_transformer='one_hot_encoding',
+    )
+    new_gc.set_parameters(parameters)
+
+    sampled = new_gc.sample()
 
     # test shape is right
     assert sampled.shape == users.shape
@@ -38,11 +45,12 @@ def test_gaussian_copula():
     # country codes have been replaced with new ones
     assert set(sampled.country.unique()) != set(users.country.unique())
 
-    assert gc.get_metadata().to_dict() == {
-        'fields': {
-            'user_id': {'type': 'id', 'subtype': 'integer'},
-            'country': {'type': 'categorical'},
-            'gender': {'type': 'categorical'},
-            'age': {'type': 'numerical', 'subtype': 'integer'}
-        }
+    metadata = gc.get_metadata().to_dict()
+    assert metadata['fields'] == {
+        'user_id': {'type': 'id', 'subtype': 'integer'},
+        'country': {'type': 'categorical'},
+        'gender': {'type': 'categorical'},
+        'age': {'type': 'numerical', 'subtype': 'integer'}
     }
+
+    assert 'model_kwargs' in metadata

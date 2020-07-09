@@ -386,3 +386,14 @@ class Table:
         """
         with open(path, 'w') as out_file:
             json.dump(self._metadata, out_file, indent=4)
+
+    @classmethod
+    def from_json(cls, path):
+        """Load a Table from a JSON
+
+        Args:
+            path (str):
+                Path of the JSON file to load
+        """
+        with open(path, 'r') as in_file:
+            return cls(json.load(in_file))

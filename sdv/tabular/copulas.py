@@ -20,8 +20,9 @@ class GaussianCopula(BaseTabularModel):
             ``categorical_fuzzy``.
     """
 
-    DISTRIBUTION = copulas.univariate.GaussianUnivariate
+    DEFAULT_DISTRIBUTION = copulas.univariate.Univariate
     _distribution = None
+    _categorical_transformer = None
     _model = None
 
     HYPERPARAMETERS = {
@@ -51,6 +52,7 @@ class GaussianCopula(BaseTabularModel):
             ]
         }
     }
+    DEFAULT_TRANSFORMER = 'one_hot_encoding'
     CATEGORICAL_TRANSFORMERS = {
         'categorical': rdt.transformers.CategoricalTransformer(fuzzy=False),
         'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
@@ -61,10 +63,24 @@ class GaussianCopula(BaseTabularModel):
         'O': rdt.transformers.OneHotEncodingTransformer
     }
 
-    def __init__(self, distribution=None, categorical_transformer='categorical',
-                 *args, **kwargs):
+    def __init__(self, distribution=None, categorical_transformer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._distribution = distribution or self.DISTRIBUTION
+
+        if self._metadata is not None and 'model_kwargs' in self._metadata._metadata:
+            model_kwargs = self._metadata._metadata['model_kwargs']
+            if distribution is None:
+                distribution = model_kwargs['distribution']
+
+            if categorical_transformer is None:
+                categorical_transformer = model_kwargs['categorical_transformer']
+
+            self._size = model_kwargs['_size']
+
+        self._distribution = distribution or self.DEFAULT_DISTRIBUTION
+
+        categorical_transformer = categorical_transformer or self.DEFAULT_TRANSFORMER
+        self._categorical_transformer = categorical_transformer
+
         self.TRANSFORMER_TEMPLATES['O'] = self.CATEGORICAL_TRANSFORMERS[categorical_transformer]
 
     def _update_metadata(self):
@@ -72,10 +88,15 @@ class GaussianCopula(BaseTabularModel):
         univariates = parameters['univariates']
         columns = parameters['columns']
 
-        fields = self._metadata.get_fields()
-        for field_name, univariate in zip(columns, univariates):
-            field_meta = fields[field_name]
-            field_meta['distribution'] = univariate['type']
+        distributions = {}
+        for column, univariate in zip(columns, univariates):
+            distributions[column] = univariate['type']
+
+        self._metadata._metadata['model_kwargs'] = {
+            'distribution': distributions,
+            'categorical_transformer': self._categorical_transformer,
+            '_size': self._size
+        }
 
     def _fit(self, data):
         """Fit the model to the table.
@@ -86,6 +107,7 @@ class GaussianCopula(BaseTabularModel):
         """
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
         self._model.fit(data)
+        self._update_metadata()
 
     def _sample(self, size):
         """Sample ``size`` rows from the model.
@@ -100,16 +122,24 @@ class GaussianCopula(BaseTabularModel):
         """
         return self._model.sample(size)
 
-    def get_parameters(self):
+    def get_parameters(self, flatten=False):
         """Get copula model parameters.
 
         Compute model ``covariance`` and ``distribution.std``
         before it returns the flatten dict.
 
+        Args:
+            flatten (bool):
+                Whether to flatten the parameters or not before
+                returning them.
+
         Returns:
             dict:
-                Copula flatten parameters.
+                Copula parameters.
         """
+        if not flatten:
+            return self._model.to_dict()
+
         values = list()
         triangle = np.tril(self._model.covariance)
 
@@ -195,7 +225,7 @@ class GaussianCopula(BaseTabularModel):
 
         return model_parameters
 
-    def set_parameters(self, parameters):
+    def set_parameters(self, parameters, unflatten=False):
         """Set copula model parameters.
 
         Add additional keys after unflatte the parameters
@@ -204,10 +234,13 @@ class GaussianCopula(BaseTabularModel):
         Args:
             dict:
                 Copula flatten parameters.
+            unflatten (bool):
+                Whether the parameters need to be unflattened or not.
         """
-        parameters = unflatten_dict(parameters)
-        parameters.setdefault('distribution', self.distribution)
+        if unflatten:
+            parameters = unflatten_dict(parameters)
+            parameters.setdefault('distribution', self._distribution)
 
-        parameters = self._unflatten_gaussian_copula(parameters)
+            parameters = self._unflatten_gaussian_copula(parameters)
 
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
