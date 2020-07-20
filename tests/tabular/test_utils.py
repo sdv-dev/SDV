@@ -1,16 +1,17 @@
+"""Tests for the sdv.models.utils module."""
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.models.utils import (
+from sdv.tabular.utils import (
     _key_order, check_matrix_symmetric_positive_definite, flatten_array, flatten_dict, impute,
     make_positive_definite, square_matrix, unflatten_dict)
 
 
 def test_flatten_array_default():
-    """Test get flatten array"""
+    """Test get flatten array."""
     # Run
     result = flatten_array([['foo', 'bar'], 'tar'])
 
@@ -24,7 +25,7 @@ def test_flatten_array_default():
 
 
 def test_flatten_array_with_prefix():
-    """Test get flatten array"""
+    """Test get flatten array."""
     # Run
     result = flatten_array([['foo', 'bar'], 'tar'], prefix='test')
 
@@ -38,7 +39,7 @@ def test_flatten_array_with_prefix():
 
 
 def test_flatten_dict_default():
-    """Test get flatten dict with some result"""
+    """Test get flatten dict with some result."""
     # Run
     nested = {
         'foo': 'value',
@@ -61,7 +62,7 @@ def test_flatten_dict_default():
 
 
 def test_flatten_dict_with_prefix():
-    """Test get flatten dict with some result"""
+    """Test get flatten dict with some result."""
     # Run
     nested = {
         'foo': 'value',
@@ -84,7 +85,7 @@ def test_flatten_dict_with_prefix():
 
 
 def test_impute():
-    """Test _impute data"""
+    """Test _impute data."""
     # Run
     data = pd.DataFrame({'foo': [0, None, 1], 'bar': ['a', None, 'b']})
     result = impute(data)
@@ -95,7 +96,7 @@ def test_impute():
 
 
 def test_square_matrix():
-    """Test fill zeros a triangular matrix"""
+    """Test fill zeros a triangular matrix."""
     # Run
     matrix = [[0.1, 0.5], [0.3]]
     result = square_matrix(matrix)
@@ -105,9 +106,9 @@ def test_square_matrix():
     assert result == expected
 
 
-@patch('sdv.models.utils.check_matrix_symmetric_positive_definite')
+@patch('sdv.tabular.utils.check_matrix_symmetric_positive_definite')
 def test_make_positive_definite(mock_check):
-    """Test find the nearest positive-definite matrix"""
+    """Test find the nearest positive-definite matrix."""
     # Setup
     mock_check.return_value = True
 
@@ -122,9 +123,9 @@ def test_make_positive_definite(mock_check):
     assert mock_check.call_count == 1
 
 
-@patch('sdv.models.utils.check_matrix_symmetric_positive_definite')
+@patch('sdv.tabular.utils.check_matrix_symmetric_positive_definite')
 def test_make_positive_definite_iterate(mock_check):
-    """Test find the nearest positive-definite matrix iterating"""
+    """Test find the nearest positive-definite matrix iterating."""
     # Setup
     mock_check.side_effect = [False, False, True]
 
@@ -140,7 +141,7 @@ def test_make_positive_definite_iterate(mock_check):
 
 
 def test_check_matrix_symmetric_positive_definite_shape_error():
-    """Test check matrix shape error"""
+    """Test check matrix shape error."""
     # Run
     matrix = np.array([])
     result = check_matrix_symmetric_positive_definite(matrix)
@@ -150,7 +151,7 @@ def test_check_matrix_symmetric_positive_definite_shape_error():
 
 
 def test_check_matrix_symmetric_positive_definite_np_error():
-    """Test check matrix numpy raise error"""
+    """Test check matrix numpy raise error."""
     # Run
     matrix = np.array([[-1, 0], [0, 0]])
     result = check_matrix_symmetric_positive_definite(matrix)
@@ -160,7 +161,7 @@ def test_check_matrix_symmetric_positive_definite_np_error():
 
 
 def test_check_matrix_symmetric_positive_definite():
-    """Test check matrix numpy"""
+    """Test check matrix numpy."""
     # Run
     matrix = np.array([[0.5, 0.5], [0.5, 0.5]])
     result = check_matrix_symmetric_positive_definite(matrix)
@@ -170,7 +171,7 @@ def test_check_matrix_symmetric_positive_definite():
 
 
 def test__key_order():
-    """Test key order"""
+    """Test key order."""
     # Run
     key_value = ['foo__0__1']
     result = _key_order(key_value)
@@ -180,7 +181,7 @@ def test__key_order():
 
 
 def test_unflatten_dict_raises_error_row_index():
-    """Test unflatten dict raises error row_index"""
+    """Test unflatten dict raises error row_index."""
     # Run
     flat = {
         'foo__0__1': 'some value'
@@ -191,7 +192,7 @@ def test_unflatten_dict_raises_error_row_index():
 
 
 def test_unflatten_dict_raises_error_column_index():
-    """Test unflatten dict raises error column_index"""
+    """Test unflatten dict raises error column_index."""
     # Run
     flat = {
         'foo__1__0': 'some value'
@@ -202,7 +203,7 @@ def test_unflatten_dict_raises_error_column_index():
 
 
 def test_unflatten_dict():
-    """Test unflatten_dict"""
+    """Test unflatten_dict."""
     # Run
     flat = {
         'foo__0__foo': 'foo value',

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Main module."""
+"""Main SDV module."""
+
 import pickle
 
 from copulas.univariate import GaussianUnivariate
@@ -16,7 +17,7 @@ DEFAULT_MODEL_KWARGS = {
 }
 
 
-class NotFittedError(Exception):
+class NotFittedError(Exception):  # noqa:D101
     pass
 
 
@@ -57,7 +58,6 @@ class SDV:
                 a path, the metadata location is used. If ``None`` and
                 metadata is a dict, the current working directory is used.
         """
-
         if isinstance(metadata, Metadata):
             self.metadata = metadata
         else:

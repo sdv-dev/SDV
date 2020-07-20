@@ -1,3 +1,5 @@
+"""SDV Sampler."""
+
 import itertools
 
 import exrex
@@ -18,6 +20,7 @@ class Sampler:
         model_kwargs (dict):
             Additional arguments to create the ``SDVModel``.
     """
+
     metadata = None
     models = None
     primary_key = None
@@ -296,7 +299,7 @@ class Sampler:
             return self._finalize({table_name: table_rows})[table_name]
 
     def sample_all(self, num_rows=None, reset_primary_keys=False):
-        """Samples the entire dataset.
+        """Sample the entire dataset.
 
         ``sample_all`` returns a dictionary with all the tables of the dataset sampled.
         The amount of rows sampled will depend from table to table, and is only guaranteed

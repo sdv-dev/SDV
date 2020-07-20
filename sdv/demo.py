@@ -1,3 +1,5 @@
+"""Functions to load demo datasets."""
+
 import io
 import logging
 import os

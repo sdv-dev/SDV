@@ -1,3 +1,5 @@
+"""SDV Modeler."""
+
 import logging
 
 import pandas as pd
@@ -46,6 +48,7 @@ class Modeler:
                 Names of the children.
             tables (dict):
                 Previously processed tables.
+
         Returns:
             pandas.DataFrame
         """
@@ -88,7 +91,6 @@ class Modeler:
             pandas.DataFrame:
                 table data with the extensions created while modeling its children.
         """
-
         LOGGER.info('Modeling %s', table_name)
 
         if tables:

@@ -1,10 +1,12 @@
+"""Wrappers around copulas models."""
+
 import numpy as np
 from copulas import EPSILON
 from copulas.multivariate import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 
 from sdv.models.base import SDVModel
-from sdv.models.utils import (
+from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, impute, make_positive_definite,
     square_matrix, unflatten_dict)
 
@@ -136,7 +138,6 @@ class GaussianCopula(SDVModel):
             dict:
                 Model parameters ready to recreate the model.
         """
-
         univariate_kwargs = {
             'type': model_parameters['distribution']
         }
