@@ -1,3 +1,5 @@
+"""Base Class for tabular models."""
+
 import pickle
 
 from sdv.metadata import Table

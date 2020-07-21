@@ -108,3 +108,4 @@ ENV/
 sdv/data/
 tutorials/sdv.pkl
 tutorials/demo_metadata.json
+notebooks

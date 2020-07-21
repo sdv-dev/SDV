@@ -1,3 +1,5 @@
+"""Wrappers around copulas models."""
+
 import copulas
 import numpy as np
 import rdt
@@ -202,7 +204,6 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Model parameters ready to recreate the model.
         """
-
         univariate_kwargs = {
             'type': model_parameters['distribution']
         }

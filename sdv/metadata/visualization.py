@@ -1,3 +1,5 @@
+"""Functions for Metadata visualization."""
+
 import graphviz
 
 
@@ -62,7 +64,7 @@ def _add_nodes(metadata, digraph):
         extras = r'\l'.join(extras)
 
         # Add table node
-        title = r'{%s|%s\l|%s\l}' % (table, fields, extras)
+        title = r'{{{}|{}\l|{}\l}}'.format(table, fields, extras)
         digraph.node(table, label=title)
 
 

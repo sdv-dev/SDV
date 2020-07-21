@@ -1,3 +1,5 @@
+"""Metadata class."""
+
 import copy
 import json
 import logging

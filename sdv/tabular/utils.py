@@ -1,3 +1,5 @@
+"""Utility functions for tabular models."""
+
 import numpy as np
 
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
@@ -48,7 +50,7 @@ def flatten_dict(nested, prefix=''):
     Returns:
         dict:
             Flattened dictionary.
-        """
+    """
     result = dict()
 
     for key, value in nested.items():
@@ -134,6 +136,7 @@ def unflatten_dict(flat):
 
 
 def impute(data):
+    """Fill null values with the mean (numerical) or the mode (categorical)."""
     for column in data:
         column_data = data[column]
         if column_data.dtype in (np.int, np.float):

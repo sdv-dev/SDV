@@ -1,3 +1,5 @@
+"""Wrapper around CTGAN model."""
+
 import rdt
 
 from sdv.tabular.base import BaseTabularModel

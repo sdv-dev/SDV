@@ -1,3 +1,5 @@
+"""Metadata for a single table."""
+
 import copy
 import json
 import logging
@@ -389,7 +391,7 @@ class Table:
 
     @classmethod
     def from_json(cls, path):
-        """Load a Table from a JSON
+        """Load a Table from a JSON.
 
         Args:
             path (str):

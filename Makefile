@@ -85,10 +85,20 @@ install-develop: clean-build clean-pyc ## install the package in editable mode a
 
 # LINT TARGETS
 
+.PHONY: lint-sdv
+lint-sdv: ## check style with flake8 and isort
+	flake8 sdv
+	isort -c --recursive sdv
+	pydocstyle sdv
+	# pylint sdv --rcfile=setup.cfg
+
+.PHONY: lint-tests
+lint-tests: ## check style with flake8 and isort
+	flake8 --ignore=D,SFS2 tests
+	isort -c --recursive tests
+
 .PHONY: lint
-lint: ## check style with flake8 and isort
-	flake8 sdv tests
-	isort -c --recursive sdv tests
+lint: lint-sdv lint-tests  ## Run all code style checks
 
 .PHONY: fix-lint
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
@@ -116,12 +126,16 @@ test-tutorials: ## run the tutorial notebooks
 .PHONY: test
 test: test-unit test-readme test-tutorials ## test everything that needs test dependencies
 
+.PHONY: check-dependencies
+check-dependencies: ## test if there are any broken dependencies
+	pip check
+
 .PHONY: test-devel
-test-devel: lint docs ## test everything that needs development dependencies
+test-devel: check-dependencies lint docs ## test everything that needs development dependencies
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
-	tox -r
+	tox -r -p auto
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python

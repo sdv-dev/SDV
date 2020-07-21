@@ -52,7 +52,11 @@ development_requires = [
 
     # style check
     'flake8>=3.7.7,<4',
+    'flake8-absolute-import>=1.0,<2',
+    'flake8-docstrings>=1.5.0,<2',
+    'flake8-sfs>=0.0.3,<0.1',
     'isort>=4.3.4,<5',
+    'pylint>=2.5.3,<3',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -85,13 +89,12 @@ setup(
         'test': tests_require + ctgan_requires,
         'dev': development_requires + tests_require + ctgan_requires,
     },
-    install_package_data=True,
+    include_package_data=True,
     install_requires=install_requires,
+    keywords='sdv sdv SDV',
     license='MIT license',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
-    include_package_data=True,
-    keywords='sdv sdv SDV',
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
     python_requires='>=3.5,<3.8',
