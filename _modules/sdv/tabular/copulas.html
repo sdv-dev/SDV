@@ -317,7 +317,9 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.tabular.copulas</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">copulas</span>
+<span></span><span class="sd">&quot;&quot;&quot;Wrappers around copulas models.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">copulas</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">rdt</span>
 
@@ -521,7 +523,6 @@
 <span class="sd">            dict:</span>
 <span class="sd">                Model parameters ready to recreate the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">univariate_kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
         <span class="p">}</span>

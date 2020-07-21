@@ -350,6 +350,7 @@
 </style>
 <div class="section" id="module-sdv.sampler">
 <span id="sdv-sampler-module"></span><h1>sdv.sampler module<a class="headerlink" href="#module-sdv.sampler" title="Permalink to this headline">¶</a></h1>
+<p>SDV Sampler.</p>
 <p><strong>Classes</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -388,7 +389,7 @@
 <td><p>Sample one table.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.sampler.Sampler.sample_all" title="sdv.sampler.Sampler.sample_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_all</span></code></a>([num_rows, reset_primary_keys])</p></td>
-<td><p>Samples the entire dataset.</p></td>
+<td><p>Sample the entire dataset.</p></td>
 </tr>
 </tbody>
 </table>
@@ -447,7 +448,7 @@ and child tables.</p></li>
 <dl class="method">
 <dt id="sdv.sampler.Sampler.sample_all">
 <code class="sig-name descname">sample_all</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">reset_primary_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/sampler.html#Sampler.sample_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample_all" title="Permalink to this definition">¶</a></dt>
-<dd><p>Samples the entire dataset.</p>
+<dd><p>Sample the entire dataset.</p>
 <p><code class="docutils literal notranslate"><span class="pre">sample_all</span></code> returns a dictionary with all the tables of the dataset sampled.
 The amount of rows sampled will depend from table to table, and is only guaranteed
 to match <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> on tables without parents.</p>

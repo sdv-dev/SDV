@@ -8,7 +8,6 @@ Submodules
 
    sdv.models.base
    sdv.models.copulas
-   sdv.models.utils
 
 Module contents
 ---------------

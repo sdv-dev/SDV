@@ -317,13 +317,15 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.models.copulas</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;Wrappers around copulas models.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">copulas</span> <span class="kn">import</span> <span class="n">EPSILON</span>
 <span class="kn">from</span> <span class="nn">copulas.multivariate</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
 <span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
 
 <span class="kn">from</span> <span class="nn">sdv.models.base</span> <span class="kn">import</span> <span class="n">SDVModel</span>
-<span class="kn">from</span> <span class="nn">sdv.models.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">sdv.tabular.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">check_matrix_symmetric_positive_definite</span><span class="p">,</span> <span class="n">flatten_dict</span><span class="p">,</span> <span class="n">impute</span><span class="p">,</span> <span class="n">make_positive_definite</span><span class="p">,</span>
     <span class="n">square_matrix</span><span class="p">,</span> <span class="n">unflatten_dict</span><span class="p">)</span>
 
@@ -455,7 +457,6 @@
 <span class="sd">            dict:</span>
 <span class="sd">                Model parameters ready to recreate the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">univariate_kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
         <span class="p">}</span>

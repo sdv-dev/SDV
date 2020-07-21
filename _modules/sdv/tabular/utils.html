@@ -317,7 +317,9 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.tabular.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;Utility functions for tabular models.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">IGNORED_DICT_KEYS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;fitted&#39;</span><span class="p">,</span> <span class="s1">&#39;distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
@@ -367,7 +369,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        dict:</span>
 <span class="sd">            Flattened dictionary.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">nested</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -453,6 +455,7 @@
 
 
 <div class="viewcode-block" id="impute"><a class="viewcode-back" href="../../../api/sdv.tabular.utils.html#sdv.tabular.utils.impute">[docs]</a><span class="k">def</span> <span class="nf">impute</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fill null values with the mean (numerical) or the mode (categorical).&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">column_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">column_data</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>

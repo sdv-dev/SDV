@@ -350,6 +350,7 @@
 </style>
 <div class="section" id="module-sdv.benchmark">
 <span id="sdv-benchmark-module"></span><h1>sdv.benchmark module<a class="headerlink" href="#module-sdv.benchmark" title="Permalink to this headline">¶</a></h1>
+<p>SDV Benchmarking.</p>
 <p><strong>Functions</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -358,22 +359,59 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.benchmark.benchmark" title="sdv.benchmark.benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">benchmark</span></code></a>([datasets, datasets_path, …])</p></td>
-<td><p></p></td>
+<td><p>Evaluate the performance of SDV over a collection of datasets.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.benchmark.score_dataset" title="sdv.benchmark.score_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_dataset</span></code></a>(dataset, datasets_path[, timeout])</p></td>
-<td><p></p></td>
+<td><p>Evaluate the performance of SDV on a dataset.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="function">
 <dt id="sdv.benchmark.benchmark">
 <code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">benchmark</code><span class="sig-paren">(</span><em class="sig-param">datasets=None</em>, <em class="sig-param">datasets_path=None</em>, <em class="sig-param">distributed=True</em>, <em class="sig-param">timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/benchmark.html#benchmark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.benchmark" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Evaluate the performance of SDV over a collection of datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of names of datasets to run on.</p></li>
+<li><p><strong>datasets_path</strong> (<em>str</em>) – Path where the datasets can be found. If not passed,
+the demo datasets are used.</p></li>
+<li><p><strong>distributed</strong> (<em>bool</em>) – Whether to use dask for distributed processing.</p></li>
+<li><p><strong>timeout</strong> (<em>int</em>) – Maximum number of seconds to wait. If not passed,
+wait until done.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Obtained scores or error.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="sdv.benchmark.score_dataset">
 <code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">score_dataset</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">datasets_path</em>, <em class="sig-param">timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/benchmark.html#score_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.score_dataset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Evaluate the performance of SDV on a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>) – Name of the dataset to evaluate.</p></li>
+<li><p><strong>datasets_path</strong> (<em>str</em>) – Path where the datasets can be found. If not passed,
+the demo datasets are used.</p></li>
+<li><p><strong>timeout</strong> (<em>int</em>) – Maximum number of seconds to wait. If not passed,
+wait until done.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Obtained scores or error.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 

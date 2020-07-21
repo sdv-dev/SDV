@@ -319,6 +319,8 @@
   <h1>Source code for sdv.benchmark</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
+<span class="sd">&quot;&quot;&quot;SDV Benchmarking.&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -369,6 +371,22 @@
 
 
 <div class="viewcode-block" id="score_dataset"><a class="viewcode-back" href="../../api/sdv.benchmark.html#sdv.benchmark.score_dataset">[docs]</a><span class="k">def</span> <span class="nf">score_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Evaluate the performance of SDV on a dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (str):</span>
+<span class="sd">            Name of the dataset to evaluate.</span>
+<span class="sd">        datasets_path (str):</span>
+<span class="sd">            Path where the datasets can be found. If not passed,</span>
+<span class="sd">            the demo datasets are used.</span>
+<span class="sd">        timeout (int):</span>
+<span class="sd">            Maximum number of seconds to wait. If not passed,</span>
+<span class="sd">            wait until done.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict:</span>
+<span class="sd">            Obtained scores or error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span> <span class="k">as</span> <span class="n">manager</span><span class="p">:</span>
         <span class="n">output</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span>
@@ -391,6 +409,24 @@
 
 
 <div class="viewcode-block" id="benchmark"><a class="viewcode-back" href="../../api/sdv.benchmark.html#sdv.benchmark.benchmark">[docs]</a><span class="k">def</span> <span class="nf">benchmark</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datasets_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Evaluate the performance of SDV over a collection of datasets.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        datasets (list[str]):</span>
+<span class="sd">            List of names of datasets to run on.</span>
+<span class="sd">        datasets_path (str):</span>
+<span class="sd">            Path where the datasets can be found. If not passed,</span>
+<span class="sd">            the demo datasets are used.</span>
+<span class="sd">        distributed (bool):</span>
+<span class="sd">            Whether to use dask for distributed processing.</span>
+<span class="sd">        timeout (int):</span>
+<span class="sd">            Maximum number of seconds to wait. If not passed,</span>
+<span class="sd">            wait until done.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame:</span>
+<span class="sd">            Obtained scores or error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">datasets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">datasets_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">datasets</span> <span class="o">=</span> <span class="n">get_available_demos</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>

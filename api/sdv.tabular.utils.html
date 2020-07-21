@@ -352,6 +352,7 @@
 </style>
 <div class="section" id="module-sdv.tabular.utils">
 <span id="sdv-tabular-utils-module"></span><h1>sdv.tabular.utils module<a class="headerlink" href="#module-sdv.tabular.utils" title="Permalink to this headline">¶</a></h1>
+<p>Utility functions for tabular models.</p>
 <p><strong>Functions</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -369,7 +370,7 @@
 <td><p>Flatten a dictionary.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.tabular.utils.impute" title="sdv.tabular.utils.impute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">impute</span></code></a>(data)</p></td>
-<td><p></p></td>
+<td><p>Fill null values with the mean (numerical) or the mode (categorical).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.utils.make_positive_definite" title="sdv.tabular.utils.make_positive_definite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_positive_definite</span></code></a>(matrix)</p></td>
 <td><p>Find the nearest positive-definite matrix to input.</p></td>
@@ -441,7 +442,8 @@ double underscores.</p>
 <dl class="function">
 <dt id="sdv.tabular.utils.impute">
 <code class="sig-prename descclassname">sdv.tabular.utils.</code><code class="sig-name descname">impute</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/utils.html#impute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.utils.impute" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Fill null values with the mean (numerical) or the mode (categorical).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="sdv.tabular.utils.make_positive_definite">

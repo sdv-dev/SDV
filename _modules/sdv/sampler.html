@@ -317,7 +317,9 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.sampler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span></span><span class="sd">&quot;&quot;&quot;SDV Sampler.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
 
 <span class="kn">import</span> <span class="nn">exrex</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -337,6 +339,7 @@
 <span class="sd">        model_kwargs (dict):</span>
 <span class="sd">            Additional arguments to create the ``SDVModel``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">models</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">None</span>
@@ -615,7 +618,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize</span><span class="p">({</span><span class="n">table_name</span><span class="p">:</span> <span class="n">table_rows</span><span class="p">})[</span><span class="n">table_name</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Sampler.sample_all"><a class="viewcode-back" href="../../api/sdv.sampler.html#sdv.sampler.Sampler.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Samples the entire dataset.</span>
+        <span class="sd">&quot;&quot;&quot;Sample the entire dataset.</span>
 
 <span class="sd">        ``sample_all`` returns a dictionary with all the tables of the dataset sampled.</span>
 <span class="sd">        The amount of rows sampled will depend from table to table, and is only guaranteed</span>

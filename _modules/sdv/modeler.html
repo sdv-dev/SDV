@@ -317,7 +317,9 @@
            <div itemprop="articleBody">
             
   <h1>Source code for sdv.modeler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="sd">&quot;&quot;&quot;SDV Modeler.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
@@ -365,6 +367,7 @@
 <span class="sd">                Names of the children.</span>
 <span class="sd">            tables (dict):</span>
 <span class="sd">                Previously processed tables.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -407,7 +410,6 @@
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                table data with the extensions created while modeling its children.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Modeling </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">tables</span><span class="p">:</span>
