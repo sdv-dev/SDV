@@ -76,8 +76,6 @@ class GaussianCopula(BaseTabularModel):
             if categorical_transformer is None:
                 categorical_transformer = model_kwargs['categorical_transformer']
 
-            self._size = model_kwargs['_size']
-
         self._distribution = distribution or self.DEFAULT_DISTRIBUTION
 
         categorical_transformer = categorical_transformer or self.DEFAULT_TRANSFORMER
@@ -86,19 +84,25 @@ class GaussianCopula(BaseTabularModel):
         self.TRANSFORMER_TEMPLATES['O'] = self.CATEGORICAL_TRANSFORMERS[categorical_transformer]
 
     def _update_metadata(self):
-        parameters = self._model.to_dict()
-        univariates = parameters['univariates']
-        columns = parameters['columns']
+        """Add arguments needed to reproduce this model to the Metadata.
 
-        distributions = {}
-        for column, univariate in zip(columns, univariates):
-            distributions[column] = univariate['type']
+        Additional arguments include:
+            - Distribution found for each column
+            - categorical_transformer
+        """
+        if not self._metadata._metadata.get('model_kwargs'):
+            parameters = self._model.to_dict()
+            univariates = parameters['univariates']
+            columns = parameters['columns']
 
-        self._metadata._metadata['model_kwargs'] = {
-            'distribution': distributions,
-            'categorical_transformer': self._categorical_transformer,
-            '_size': self._size
-        }
+            distributions = {}
+            for column, univariate in zip(columns, univariates):
+                distributions[column] = univariate['type']
+
+            self._metadata._metadata['model_kwargs'] = {
+                'distribution': distributions,
+                'categorical_transformer': self._categorical_transformer,
+            }
 
     def _fit(self, data):
         """Fit the model to the table.
@@ -111,18 +115,18 @@ class GaussianCopula(BaseTabularModel):
         self._model.fit(data)
         self._update_metadata()
 
-    def _sample(self, size):
-        """Sample ``size`` rows from the model.
+    def _sample(self, num_rows):
+        """Sample the indicated number of rows from the model.
 
         Args:
-            size (int):
+            num_rows (int):
                 Amount of rows to sample.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        return self._model.sample(size)
+        return self._model.sample(num_rows)
 
     def get_parameters(self, flatten=False):
         """Get copula model parameters.
@@ -139,8 +143,11 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Copula parameters.
         """
+        parameters = self._model.to_dict()
+        parameters['num_rows'] = self._num_rows
+
         if not flatten:
-            return self._model.to_dict()
+            return parameters
 
         values = list()
         triangle = np.tril(self._model.covariance)
@@ -244,4 +251,5 @@ class GaussianCopula(BaseTabularModel):
 
             parameters = self._unflatten_gaussian_copula(parameters)
 
+        self._num_rows = max(0, int(round(parameters.pop('num_rows'))))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)

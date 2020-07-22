@@ -103,7 +103,7 @@ class BaseTabularModel():
         if self._metadata is None:
             self._fit_metadata(data)
 
-        self._size = len(data)
+        self._num_rows = len(data)
 
         transformed = self._metadata.transform(data)
         self._fit(transformed)
@@ -125,11 +125,11 @@ class BaseTabularModel():
         """
         return self._metadata
 
-    def sample(self, size=None, values=None):
+    def sample(self, num_rows=None, values=None):
         """Sample rows from this table.
 
         Args:
-            size (int):
+            num_rows (int):
                 Number of rows to sample. If not given the model
                 will generate as many rows as there were in the
                 data passed to the ``fit`` method.
@@ -142,8 +142,8 @@ class BaseTabularModel():
             pandas.DataFrame:
                 Sampled data.
         """
-        size = size or self._size
-        sampled = self._sample(size)
+        num_rows = num_rows or self._num_rows
+        sampled = self._sample(num_rows)
         return self._metadata.reverse_transform(sampled)
 
     def get_parameters(self):
