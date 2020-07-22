@@ -106,17 +106,14 @@
 <p class="caption"><span class="caption-text">User Guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#GaussianCopula">GaussianCopula</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#1.-Load-the-Data">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#2.-Prepare-the-model">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#3.-Sample-data-from-the-fitted-model">3. Sample data from the fitted model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#CTGAN">CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#id1">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#id2">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#id3">3. Sample data from the fitted model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#4.-Evaluate-how-good-the-data-is">4. Evaluate how good the data is</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
 </ul>
 </li>
 </ul>
@@ -395,8 +392,6 @@
             <span class="k">if</span> <span class="n">categorical_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;categorical_transformer&#39;</span><span class="p">]</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;_size&#39;</span><span class="p">]</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="o">=</span> <span class="n">distribution</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_DISTRIBUTION</span>
 
         <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">categorical_transformer</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_TRANSFORMER</span>
@@ -405,19 +400,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">TRANSFORMER_TEMPLATES</span><span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CATEGORICAL_TRANSFORMERS</span><span class="p">[</span><span class="n">categorical_transformer</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="n">univariates</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span>
+        <span class="sd">&quot;&quot;&quot;Add arguments needed to reproduce this model to the Metadata.</span>
 
-        <span class="n">distributions</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">univariates</span><span class="p">):</span>
-            <span class="n">distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+<span class="sd">        Additional arguments include:</span>
+<span class="sd">            - Distribution found for each column</span>
+<span class="sd">            - categorical_transformer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">):</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">univariates</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distributions</span><span class="p">,</span>
-            <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">,</span>
-            <span class="s1">&#39;_size&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
-        <span class="p">}</span>
+            <span class="n">distributions</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">univariates</span><span class="p">):</span>
+                <span class="n">distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distributions</span><span class="p">,</span>
+                <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">,</span>
+            <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
@@ -430,18 +431,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample ``size`` rows from the model.</span>
+    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            size (int):</span>
+<span class="sd">            num_rows (int):</span>
 <span class="sd">                Amount of rows to sample.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GaussianCopula.get_parameters"><a class="viewcode-back" href="../../../api/sdv.tabular.copulas.html#sdv.tabular.GaussianCopula.get_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get copula model parameters.</span>
@@ -458,8 +459,11 @@
 <span class="sd">            dict:</span>
 <span class="sd">                Copula parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;num_rows&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">flatten</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">parameters</span>
 
         <span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">triangle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tril</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">covariance</span><span class="p">)</span>
@@ -563,6 +567,7 @@
 
             <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unflatten_gaussian_copula</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;num_rows&#39;</span><span class="p">))))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div></div>
 </pre></div>
 

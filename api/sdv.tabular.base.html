@@ -108,17 +108,14 @@
 <p class="caption"><span class="caption-text">User Guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#GaussianCopula">GaussianCopula</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#1.-Load-the-Data">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#2.-Prepare-the-model">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#3.-Sample-data-from-the-fitted-model">3. Sample data from the fitted model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#CTGAN">CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#id1">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#id2">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#id3">3. Sample data from the fitted model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#4.-Evaluate-how-good-the-data-is">4. Evaluate how good the data is</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
 </ul>
 </li>
 </ul>
@@ -394,7 +391,7 @@ TabularModels need to implement, as well as common functionality.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.load" title="sdv.tabular.base.BaseTabularModel.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
 <td><p>Load a TabularModel instance from a given path.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.sample" title="sdv.tabular.base.BaseTabularModel.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([size, values])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.sample" title="sdv.tabular.base.BaseTabularModel.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([num_rows, values])</p></td>
 <td><p>Sample rows from this table.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.save" title="sdv.tabular.base.BaseTabularModel.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
@@ -509,12 +506,12 @@ this model.</p>
 
 <dl class="method">
 <dt id="sdv.tabular.base.BaseTabularModel.sample">
-<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">size=None</em>, <em class="sig-param">values=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">values=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample rows from this table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>size</strong> (<em>int</em>) – Number of rows to sample. If not given the model
+<li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to sample. If not given the model
 will generate as many rows as there were in the
 data passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p></li>
 <li><p><strong>values</strong> (<em>dict</em>) – &lt;- FUTURE

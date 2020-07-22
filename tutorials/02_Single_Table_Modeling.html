@@ -108,17 +108,14 @@
 <p class="caption"><span class="caption-text">User Guides</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#GaussianCopula">GaussianCopula</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#1.-Load-the-Data">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#2.-Prepare-the-model">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#3.-Sample-data-from-the-fitted-model">3. Sample data from the fitted model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Quick-usage">Quick usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Generate synthetic data from the model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#CTGAN">CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">1. Load the Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">2. Prepare the model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">3. Sample data from the fitted model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#4.-Evaluate-how-good-the-data-is">4. Evaluate how good the data is</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Frequently-encountered-needs">Frequently encountered needs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
 </ul>
 </li>
 </ul>
@@ -566,23 +563,32 @@ div.rendered_html tbody tr:hover {
 </style>
 <div class="section" id="Single-Table-Modeling">
 <h1>Single Table Modeling<a class="headerlink" href="#Single-Table-Modeling" title="Permalink to this headline">¶</a></h1>
-<p><strong>SDV</strong> has special support for modeling single table datasets using a variety of models.</p>
-<p>Currently, SDV implements:</p>
+<p><strong>SDV</strong> supports modeling single table datasets. It provides unique features for making it easy for the user to learn models and synthesize datasets. Some important features of sdv.tables include:</p>
 <ul class="simple">
+<li><p>Support for tables with primarykey</p></li>
+<li><p>Support to anonymize certain fields like addresses, emails, phone numbers, names and other PII information. We use faker library for this. The full list of categories supported corresponds to the <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">provider names</a>.</p></li>
+<li><p>Support for a number of different data types - categorical, numerical, discrete-ordinal and datetimes.</p></li>
+<li><p>Support multiple types of statistical and deep learning models:</p></li>
 <li><p>GaussianCopula: A tool to model multivariate distributions using <a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula functions</a>. Based on our <a class="reference external" href="https://github.com/sdv-dev/Copulas">Copulas Library</a>.</p></li>
 <li><p>CTGAN: A GAN-based Deep Learning data synthesizer that can generate synthetic tabular data with high fidelity. Based on our <a class="reference external" href="https://github.com/sdv-dev/CTGAN">CTGAN Library</a>.</p></li>
 </ul>
-<div class="section" id="GaussianCopula">
-<h2>GaussianCopula<a class="headerlink" href="#GaussianCopula" title="Permalink to this headline">¶</a></h2>
-<p>In this first part of the tutorial we will be using the GaussianCopula class to model the <code class="docutils literal notranslate"><span class="pre">users</span></code> table from the toy dataset included in the <strong>SDV</strong> library.</p>
-<div class="section" id="1.-Load-the-Data">
-<h3>1. Load the Data<a class="headerlink" href="#1.-Load-the-Data" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">Note</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;</span> <span class="n">We</span> <span class="n">are</span> <span class="n">adding</span> <span class="n">a</span> <span class="n">number</span> <span class="n">of</span> <span class="n">additional</span> <span class="n">features</span> <span class="ow">and</span> <span class="n">functionality</span> <span class="n">to</span> <span class="n">make</span> <span class="n">it</span> <span class="n">easy</span> <span class="n">to</span> <span class="n">model</span> <span class="n">single</span> <span class="n">table</span> <span class="n">datasets</span><span class="o">.</span> <span class="n">For</span> <span class="n">example</span><span class="p">,</span> <span class="n">we</span> <span class="n">are</span> <span class="n">adding</span> <span class="n">ways</span> <span class="k">for</span> <span class="n">users</span> <span class="n">to</span> <span class="n">add</span> <span class="n">inter</span><span class="o">-</span><span class="n">column</span> <span class="n">constraints</span> <span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">find</span> <span class="n">a</span> <span class="n">unique</span> <span class="n">use</span> <span class="n">case</span> <span class="n">that</span> <span class="n">we</span> <span class="n">do</span> <span class="ow">not</span> <span class="n">support</span> <span class="n">consider</span> <span class="n">suggesting</span> <span class="ow">and</span> <span class="n">adding</span> <span class="n">examples</span> <span class="n">here</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Quick-usage">
+<h2>Quick usage<a class="headerlink" href="#Quick-usage" title="Permalink to this headline">¶</a></h2>
+<p>Let’s consider a dataset from our demo datasets.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
 
 <span class="n">users</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">()[</span><span class="s1">&#39;users&#39;</span><span class="p">]</span>
 </pre></div>
@@ -637,7 +643,7 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>USA</td>
+      <td>US</td>
       <td>M</td>
       <td>34</td>
     </tr>
@@ -665,7 +671,7 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>USA</td>
+      <td>US</td>
       <td>F</td>
       <td>54</td>
     </tr>
@@ -708,44 +714,23 @@ div.rendered_html tbody tr:hover {
 </table>
 </div></div>
 </div>
-</div>
-<div class="section" id="2.-Prepare-the-model">
-<h3>2. Prepare the model<a class="headerlink" href="#2.-Prepare-the-model" title="Permalink to this headline">¶</a></h3>
-<p>In order to properly model our data we will need to provide some additional information to our model, so let’s prepare this information in some variables.</p>
-<p>First, let’s indicate that the <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field in our table is the primary key, so we do not want our model to attempt to learn it.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">primary_key</span> <span class="o">=</span> <span class="s1">&#39;user_id&#39;</span>
-</pre></div>
-</div>
-</div>
-<p>We will also want to anonymize the countries of residence of our users, to avoid disclosing such information. Let’s make a variable indicating that the <code class="docutils literal notranslate"><span class="pre">country</span></code> field needs to be anonymized using fake <code class="docutils literal notranslate"><span class="pre">country_codes</span></code>.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">anonymize_fileds</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="s1">&#39;contry_code&#39;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</div>
-<p>The full list of categories supported corresponds to the <code class="docutils literal notranslate"><span class="pre">Faker</span></code> library <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">provider names</a></p>
-<p>Once we have prepared the arguments for our model we are ready to import it, create an instance and fit it to our data.</p>
+<p>We notice that there are some additional properties in this dataset:</p>
+<ul class="simple">
+<li><p>First, <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field in our table is the <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> and each row has a <code class="docutils literal notranslate"><span class="pre">unique</span></code> value, so we do not want our model to attempt to learn it.</p></li>
+<li><p>Second, let’s say we want to <code class="docutils literal notranslate"><span class="pre">anonymize</span></code> the countries of residence of our <code class="docutils literal notranslate"><span class="pre">users</span></code>, to avoid disclosing such information.</p></li>
+<li><p>Third, we notice that there is missing data for the <code class="docutils literal notranslate"><span class="pre">gender</span></code> column.</p></li>
+</ul>
+<p>Let us use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to model this data and then sample synthetic data from the model. In order to properly model our data we will need to provide some additional information to our model. Once we have prepared the arguments for our model we are ready to import it, create an instance and fit it to our data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
-    <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
-    <span class="n">anonymize_fileds</span><span class="o">=</span><span class="n">anonymize_fileds</span>
+    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
+    <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;country&#39;</span><span class="p">:</span><span class="s1">&#39;country_code&#39;</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
 </pre></div>
@@ -756,29 +741,29 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-09 21:18:32,974 - INFO - table - Loading transformer CategoricalTransformer for field country
-2020-07-09 21:18:32,975 - INFO - table - Loading transformer CategoricalTransformer for field gender
-2020-07-09 21:18:32,975 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-09 21:18:32,991 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
+2020-07-21 17:38:16,265 - INFO - table - Loading transformer OneHotEncodingTransformer for field country
+2020-07-21 17:38:16,266 - INFO - table - Loading transformer OneHotEncodingTransformer for field gender
+2020-07-21 17:38:16,266 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-21 17:38:16,279 - INFO - gaussian - Fitting GaussianMultivariate()
 </pre></div></div>
 </div>
-<p><strong>Notice</strong> how the model took care of transforming the different fields using the appropriate Reversible Data Transforms to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
+<p><strong>Notice</strong> that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data Transforms</a> to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
 </div>
-<div class="section" id="3.-Sample-data-from-the-fitted-model">
-<h3>3. Sample data from the fitted model<a class="headerlink" href="#3.-Sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h3>
-<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model.</p>
+<div class="section" id="Generate-synthetic-data-from-the-model">
+<h2>Generate synthetic data from the model<a class="headerlink" href="#Generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h2>
+<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>This will return a table identical to the one which the model was fitted on, but filled with new data which resembles the original one.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -787,7 +772,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -819,165 +804,55 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>USA</td>
+      <td>BF</td>
       <td>M</td>
-      <td>38</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>1</td>
-      <td>UK</td>
-      <td>NaN</td>
-      <td>23</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2</td>
-      <td>USA</td>
-      <td>F</td>
-      <td>34</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>3</td>
-      <td>ES</td>
-      <td>NaN</td>
-      <td>47</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>4</td>
-      <td>ES</td>
-      <td>F</td>
-      <td>29</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>5</td>
-      <td>UK</td>
-      <td>F</td>
-      <td>39</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>6</td>
-      <td>FR</td>
-      <td>NaN</td>
-      <td>40</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>7</td>
-      <td>ES</td>
-      <td>M</td>
-      <td>38</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>8</td>
-      <td>ES</td>
-      <td>F</td>
-      <td>32</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>9</td>
-      <td>ES</td>
-      <td>F</td>
-      <td>36</td>
-    </tr>
-  </tbody>
-</table>
-</div></div>
-</div>
-<p>Notice, as well that the number of rows generated by default corresponds to the number of rows that the original table had, but that this number can be changed by simply passing it:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="output_area rendered_html docutils container">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>user_id</th>
-      <th>country</th>
-      <th>gender</th>
-      <th>age</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>UK</td>
-      <td>F</td>
       <td>48</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>USA</td>
-      <td>NaN</td>
-      <td>38</td>
+      <td>BF</td>
+      <td>F</td>
+      <td>31</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>USA</td>
-      <td>M</td>
-      <td>29</td>
+      <td>ES</td>
+      <td>F</td>
+      <td>37</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>BG</td>
+      <td>SI</td>
       <td>M</td>
-      <td>22</td>
+      <td>54</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>USA</td>
+      <td>PT</td>
       <td>M</td>
-      <td>43</td>
+      <td>23</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
+<div class="admonition note">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">Note</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;</span><span class="n">You</span> <span class="n">can</span> <span class="n">control</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">rows</span> <span class="n">by</span> <span class="n">specifying</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">samples</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="n">the</span>
+<span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="o">&lt;</span><span class="n">n_samples</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;.</span> <span class="n">To</span> <span class="n">test</span><span class="p">,</span> <span class="k">try</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;.</span> <span class="n">Note</span> <span class="n">that</span> <span class="n">the</span> <span class="n">original</span>
+    <span class="n">table</span> <span class="n">only</span> <span class="n">had</span> <span class="mi">10</span> <span class="n">rows</span><span class="o">.</span>
+</pre></div>
 </div>
 </div>
-<div class="section" id="CTGAN">
-<h2>CTGAN<a class="headerlink" href="#CTGAN" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="Let's-consider-using-CTGAN">
+<h2>Let’s consider using CTGAN<a class="headerlink" href="#Let's-consider-using-CTGAN" title="Permalink to this headline">¶</a></h2>
 <p>In this second part of the tutorial we will be using the CTGAN model to learn the data from the demo dataset called <code class="docutils literal notranslate"><span class="pre">census</span></code>, which is based on the <a class="reference external" href="'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'">UCI Adult Census Dataset</a>.</p>
-<div class="section" id="id1">
-<h3>1. Load the Data<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -992,12 +867,12 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-09 21:18:33,085 - INFO - __init__ - Loading table census
+2020-07-21 17:38:17,934 - INFO - __init__ - Loading table census
 </pre></div></div>
 </div>
 <p>This will return a table with several rows of multiple data types:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1006,7 +881,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1140,12 +1015,9 @@ div.rendered_html tbody tr:hover {
 </table>
 </div></div>
 </div>
-</div>
-<div class="section" id="id2">
-<h3>2. Prepare the model<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p>In this case there is no primary key to setup and we will not be anonymizing anything, so the only thing that we will pass to the CTGAN model is the number of epochs that we want it to perform when it leanrs the data, which we will keep low to make this execution quick.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<p>In this case there is no <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to setup and we will not be <code class="docutils literal notranslate"><span class="pre">anonymizing</span></code> anything, so the only thing that we will pass to the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> model is the <code class="docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">epochs</span></code> that we want it to perform when it learns the data, which we will keep low to make this execution quick.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1155,18 +1027,15 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<p>Once the instance is created, we can fit it to our data.</p>
+<div class="admonition note">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Note</span> <span class="n">that</span> <span class="n">this</span> <span class="n">process</span> <span class="n">might</span> <span class="n">take</span> <span class="n">some</span> <span class="n">time</span> <span class="n">to</span> <span class="n">finish</span><span class="p">,</span> <span class="n">especially</span> <span class="n">on</span> <span class="n">non</span><span class="o">-</span><span class="n">GPU</span> <span class="n">enabled</span> <span class="n">systems</span><span class="p">,</span>
+<span class="n">so</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">case</span> <span class="n">we</span> <span class="n">will</span> <span class="n">be</span> <span class="n">passing</span> <span class="n">only</span> <span class="n">a</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">subsample</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;</span> <span class="n">of</span> <span class="n">the</span> <span class="n">data</span> <span class="n">to</span> <span class="n">accelerate</span> <span class="n">the</span> <span class="n">process</span><span class="o">.</span>
+</pre></div>
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/home/xals/.virtualenvs/SDV/lib/python3.6/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.utils.testing module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.utils. Anything that cannot be imported from sklearn.utils is now part of the private API.
-  warnings.warn(message, FutureWarning)
-</pre></div></div>
 </div>
-<p>Once the instance is created, we can fit it to our data. Bear in mind that this process might take some time to finish, especially on non-GPU enabled systems, so in this case we will be passing only a subsample of the data to accelerate the process.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1179,21 +1048,21 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-09 21:18:33,488 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-09 21:18:33,489 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
-2020-07-09 21:18:33,489 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
-2020-07-09 21:18:33,490 - INFO - table - Loading transformer LabelEncodingTransformer for field education
-2020-07-09 21:18:33,490 - INFO - table - Loading transformer NumericalTransformer for field education-num
-2020-07-09 21:18:33,490 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
-2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
-2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
-2020-07-09 21:18:33,491 - INFO - table - Loading transformer LabelEncodingTransformer for field race
-2020-07-09 21:18:33,492 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
-2020-07-09 21:18:33,492 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
-2020-07-09 21:18:33,493 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
-2020-07-09 21:18:33,493 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
-2020-07-09 21:18:33,493 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
-2020-07-09 21:18:33,494 - INFO - table - Loading transformer LabelEncodingTransformer for field income
+2020-07-21 17:38:18,308 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-21 17:38:18,308 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
+2020-07-21 17:38:18,309 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
+2020-07-21 17:38:18,309 - INFO - table - Loading transformer LabelEncodingTransformer for field education
+2020-07-21 17:38:18,310 - INFO - table - Loading transformer NumericalTransformer for field education-num
+2020-07-21 17:38:18,310 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
+2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
+2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
+2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field race
+2020-07-21 17:38:18,312 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
+2020-07-21 17:38:18,312 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
+2020-07-21 17:38:18,312 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
+2020-07-21 17:38:18,313 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
+2020-07-21 17:38:18,313 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
+2020-07-21 17:38:18,313 - INFO - table - Loading transformer LabelEncodingTransformer for field income
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1201,34 +1070,33 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Epoch 1, Loss G: 1.9512, Loss D: -0.0182
-Epoch 2, Loss G: 1.9884, Loss D: -0.0663
-Epoch 3, Loss G: 1.9710, Loss D: -0.1339
-Epoch 4, Loss G: 1.8960, Loss D: -0.2061
-Epoch 5, Loss G: 1.9155, Loss D: -0.3062
-Epoch 6, Loss G: 1.9699, Loss D: -0.3906
-Epoch 7, Loss G: 1.8614, Loss D: -0.5142
-Epoch 8, Loss G: 1.8446, Loss D: -0.6448
-Epoch 9, Loss G: 1.7619, Loss D: -0.7488
-Epoch 10, Loss G: 1.6732, Loss D: -0.7961
+Epoch 1, Loss G: 2.0458, Loss D: -0.0274
+Epoch 2, Loss G: 1.9645, Loss D: -0.0890
+Epoch 3, Loss G: 1.9711, Loss D: -0.1531
+Epoch 4, Loss G: 1.9269, Loss D: -0.2453
+Epoch 5, Loss G: 1.8742, Loss D: -0.2927
+Epoch 6, Loss G: 1.8715, Loss D: -0.3950
+Epoch 7, Loss G: 1.8721, Loss D: -0.5831
+Epoch 8, Loss G: 1.8332, Loss D: -0.7313
+Epoch 9, Loss G: 1.7187, Loss D: -0.9058
+Epoch 10, Loss G: 1.6420, Loss D: -0.8540
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="id3">
-<h3>3. Sample data from the fitted model<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
-<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model just like we did with the GaussianCopula model.</p>
+<div class="section" id="id1">
+<h3>Generate synthetic data from the model<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model just like we did with the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>This will return a table identical to the one which the model was fitted on, but filled with new data which resembles the original one.</p>
+<p>This will return a table identical to the one which the model was fitted on, but filled with <code class="docutils literal notranslate"><span class="pre">synthetic</span></code> data which resembles the original one.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1237,7 +1105,7 @@ Epoch 10, Loss G: 1.6732, Loss D: -0.7961
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1279,214 +1147,214 @@ Epoch 10, Loss G: 1.6732, Loss D: -0.7961
   <tbody>
     <tr>
       <th>0</th>
-      <td>50</td>
-      <td>Local-gov</td>
-      <td>169719</td>
-      <td>1st-4th</td>
-      <td>9</td>
-      <td>Widowed</td>
+      <td>28</td>
       <td>?</td>
-      <td>Husband</td>
-      <td>White</td>
-      <td>Male</td>
-      <td>114</td>
+      <td>132148</td>
+      <td>HS-grad</td>
       <td>8</td>
-      <td>38</td>
-      <td>Columbia</td>
+      <td>Divorced</td>
+      <td>Prof-specialty</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>12633</td>
+      <td>-22</td>
+      <td>36</td>
+      <td>Italy</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>32</td>
-      <td>?</td>
-      <td>152479</td>
-      <td>1st-4th</td>
-      <td>9</td>
-      <td>Never-married</td>
-      <td>Adm-clerical</td>
-      <td>Wife</td>
-      <td>Black</td>
-      <td>Male</td>
-      <td>-42</td>
-      <td>20</td>
-      <td>21</td>
-      <td>Jamaica</td>
-      <td>&gt;50K</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>22</td>
+      <td>15</td>
       <td>Private</td>
-      <td>69617</td>
-      <td>Bachelors</td>
-      <td>0</td>
-      <td>Separated</td>
+      <td>108655</td>
+      <td>Some-college</td>
+      <td>12</td>
+      <td>Never-married</td>
       <td>?</td>
-      <td>Husband</td>
+      <td>Not-in-family</td>
       <td>White</td>
       <td>Male</td>
-      <td>6</td>
-      <td>11</td>
-      <td>38</td>
-      <td>Guatemala</td>
+      <td>-134</td>
+      <td>-14</td>
+      <td>56</td>
+      <td>Nicaragua</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>25</td>
-      <td>?</td>
-      <td>652858</td>
-      <td>10th</td>
-      <td>16</td>
+      <th>2</th>
+      <td>21</td>
+      <td>Private</td>
+      <td>177471</td>
+      <td>HS-grad</td>
+      <td>11</td>
       <td>Married-civ-spouse</td>
-      <td>Handlers-cleaners</td>
-      <td>Not-in-family</td>
+      <td>Transport-moving</td>
+      <td>Unmarried</td>
       <td>White</td>
-      <td>Female</td>
-      <td>152</td>
-      <td>-27</td>
+      <td>Male</td>
+      <td>8657</td>
+      <td>6</td>
       <td>39</td>
-      <td>Cuba</td>
+      <td>United-States</td>
+      <td>&gt;50K</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>53</td>
+      <td>Private</td>
+      <td>58238</td>
+      <td>9th</td>
+      <td>11</td>
+      <td>Widowed</td>
+      <td>Craft-repair</td>
+      <td>Unmarried</td>
+      <td>Other</td>
+      <td>Male</td>
+      <td>357</td>
+      <td>0</td>
+      <td>33</td>
+      <td>Puerto-Rico</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>43</td>
-      <td>Private</td>
-      <td>301956</td>
-      <td>Some-college</td>
-      <td>8</td>
-      <td>Married-civ-spouse</td>
+      <td>20</td>
+      <td>Local-gov</td>
+      <td>199353</td>
+      <td>10th</td>
+      <td>3</td>
+      <td>Separated</td>
       <td>?</td>
-      <td>Wife</td>
-      <td>White</td>
-      <td>Male</td>
-      <td>-133</td>
-      <td>-12</td>
-      <td>39</td>
-      <td>India</td>
+      <td>Own-child</td>
+      <td>Other</td>
+      <td>Female</td>
+      <td>373</td>
+      <td>11</td>
+      <td>56</td>
+      <td>Trinadad&amp;Tobago</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>66</td>
-      <td>Private</td>
-      <td>401171</td>
-      <td>Prof-school</td>
-      <td>13</td>
-      <td>Separated</td>
-      <td>Protective-serv</td>
-      <td>Unmarried</td>
+      <td>33</td>
+      <td>Federal-gov</td>
+      <td>61574</td>
+      <td>5th-6th</td>
+      <td>9</td>
+      <td>Divorced</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
       <td>Black</td>
-      <td>Female</td>
-      <td>-124</td>
-      <td>-1</td>
-      <td>40</td>
-      <td>Cuba</td>
+      <td>Male</td>
+      <td>-103</td>
+      <td>21</td>
+      <td>42</td>
+      <td>Dominican-Republic</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>6</th>
-      <td>52</td>
+      <td>22</td>
       <td>Private</td>
-      <td>278399</td>
-      <td>Bachelors</td>
-      <td>12</td>
-      <td>Never-married</td>
-      <td>Prof-specialty</td>
-      <td>Unmarried</td>
-      <td>Other</td>
-      <td>Male</td>
-      <td>122567</td>
-      <td>-6</td>
-      <td>47</td>
-      <td>Columbia</td>
+      <td>256859</td>
+      <td>5th-6th</td>
+      <td>4</td>
+      <td>Married-civ-spouse</td>
+      <td>Sales</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>387</td>
+      <td>-8</td>
+      <td>21</td>
+      <td>India</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>7</th>
-      <td>36</td>
-      <td>Federal-gov</td>
-      <td>229817</td>
-      <td>HS-grad</td>
-      <td>8</td>
-      <td>Married-AF-spouse</td>
-      <td>Farming-fishing</td>
-      <td>Not-in-family</td>
+      <td>57</td>
+      <td>?</td>
+      <td>-1058</td>
+      <td>7th-8th</td>
+      <td>3</td>
+      <td>Married-civ-spouse</td>
+      <td>Other-service</td>
+      <td>Own-child</td>
       <td>White</td>
       <td>Male</td>
-      <td>8</td>
-      <td>19</td>
-      <td>38</td>
+      <td>883</td>
+      <td>26</td>
+      <td>29</td>
       <td>Portugal</td>
-      <td>&gt;50K</td>
+      <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>8</th>
-      <td>27</td>
-      <td>Federal-gov</td>
-      <td>306972</td>
+      <td>19</td>
+      <td>Local-gov</td>
+      <td>99863</td>
       <td>Some-college</td>
-      <td>8</td>
-      <td>Never-married</td>
+      <td>3</td>
+      <td>Widowed</td>
       <td>Exec-managerial</td>
       <td>Husband</td>
       <td>Asian-Pac-Islander</td>
-      <td>Female</td>
-      <td>42144</td>
-      <td>3</td>
-      <td>39</td>
-      <td>Japan</td>
-      <td>&gt;50K</td>
+      <td>Male</td>
+      <td>-189</td>
+      <td>-7</td>
+      <td>40</td>
+      <td>Portugal</td>
+      <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>9</th>
-      <td>28</td>
-      <td>Local-gov</td>
-      <td>416161</td>
-      <td>1st-4th</td>
-      <td>8</td>
-      <td>Divorced</td>
+      <td>15</td>
+      <td>Private</td>
+      <td>95500</td>
+      <td>11th</td>
+      <td>1</td>
+      <td>Never-married</td>
       <td>Adm-clerical</td>
-      <td>Unmarried</td>
-      <td>White</td>
+      <td>Not-in-family</td>
+      <td>Amer-Indian-Eskimo</td>
       <td>Female</td>
-      <td>-349</td>
-      <td>1090</td>
-      <td>61</td>
-      <td>Guatemala</td>
-      <td>&gt;50K</td>
+      <td>292</td>
+      <td>2055</td>
+      <td>50</td>
+      <td>Philippines</td>
+      <td>&lt;=50K</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
 </div>
-<div class="section" id="4.-Evaluate-how-good-the-data-is">
-<h3>4. Evaluate how good the data is<a class="headerlink" href="#4.-Evaluate-how-good-the-data-is" title="Permalink to this headline">¶</a></h3>
-<p>Finally, we will use the evaluation framework included in SDV to obtain a metric of how similar the sampled data is to the original one.</p>
-<p>For this, we will simply import the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and pass both the synthetic and the real data to it.</p>
+</div>
+<div class="section" id="Frequently-encountered-needs">
+<h2>Frequently encountered needs<a class="headerlink" href="#Frequently-encountered-needs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="How-can-I-evaluate-the-quality-of-my-synthetic-data?">
+<h3>How can I evaluate the quality of my synthetic data?<a class="headerlink" href="#How-can-I-evaluate-the-quality-of-my-synthetic-data?" title="Permalink to this headline">¶</a></h3>
+<p>In some cases, you will want to know how similar the generated is to the original one.</p>
+<p>For this you can use the <code class="docutils literal notranslate"><span class="pre">evaluation</span></code> framework included in SDV by simply importing the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and calling it passing it both the synthetic and the real data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+<span></span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="n">evaluate</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">census</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
--144.971907591418
+-133.19682079258746
 </pre></div></div>
 </div>
 </div>
