@@ -65,8 +65,17 @@ class GaussianCopula(BaseTabularModel):
         'O': rdt.transformers.OneHotEncodingTransformer
     }
 
-    def __init__(self, distribution=None, categorical_transformer=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, field_names=None, primary_key=None, field_types=None, anonymize_fields=None,
+                 constraints=None, table_metadata=None, distribution=None,
+                 categorical_transformer=None):
+        super().__init__(
+            field_names=field_names,
+            primary_key=primary_key,
+            field_types=field_types,
+            anonymize_fields=anonymize_fields,
+            constraints=constraints,
+            table_metadata=table_metadata
+        )
 
         if self._metadata is not None and 'model_kwargs' in self._metadata._metadata:
             model_kwargs = self._metadata._metadata['model_kwargs']

@@ -103,7 +103,7 @@ class Table:
         self._primary_key = primary_key
         self._field_types = field_types or {}
         self._anonymize_fields = anonymize_fields
-        self._constraints = constraints
+        self._constraints = constraints or []
 
         self._transformer_templates = transformer_templates or {}
 
@@ -143,10 +143,6 @@ class Table:
         Returns:
             dict:
                 Dictionary that contains the field names and data types.
-
-        Raises:
-            ValueError:
-                If a field has an invalid type or subtype.
         """
         dtypes = dict()
         for name, field_meta in self._metadata['fields'].items():
@@ -229,6 +225,12 @@ class Table:
 
         return transformers
 
+    def _fit_constraints(self, data):
+        for constraint in self._constraints:
+            data = constraint.fit_transform(data)
+
+        return data
+
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
@@ -238,7 +240,13 @@ class Table:
         Returns:
             rdt.HyperTransformer
         """
-        dtypes = self.get_dtypes(ids=False)
+        # dtypes = self.get_dtypes(ids=False)
+        dtypes = {}
+        fields = self._metadata['fields']
+        for column in data.columns:
+            if column not in fields or fields[column]['type'] != 'id':
+                dtypes[column] = data[column].dtype.kind
+
         transformers_dict = self._get_transformers(dtypes)
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
         self._hyper_transformer.fit(data[list(dtypes.keys())])
@@ -325,7 +333,7 @@ class Table:
             self._make_anonymization_mappings(data)
             data = self._anonymize(data)
 
-        # TODO: Treat/Learn constraints
+        data = self._fit_constraints(data)
         self._fit_hyper_transformer(data)
 
     def transform(self, data):
@@ -340,6 +348,10 @@ class Table:
                 Transformed data.
         """
         data = self._anonymize(data[self._field_names])
+
+        for constraint in self._constraints:
+            data = constraint.transform(data)
+
         return self._hyper_transformer.transform(data)
 
     def reverse_transform(self, data):
@@ -354,6 +366,9 @@ class Table:
         """
         reversed_data = self._hyper_transformer.reverse_transform(data)
 
+        for constraint in self._constraints:
+            reversed_data = constraint.reverse_transform(reversed_data)
+
         fields = self._metadata['fields']
         for name, dtype in self.get_dtypes(ids=True).items():
             field_type = fields[name]['type']
@@ -365,6 +380,12 @@ class Table:
             reversed_data[name] = field_data.dropna().astype(dtype)
 
         return reversed_data[self._field_names]
+
+    def filter_valid(self, data):
+        for constraint in self._constraints:
+            data = constraint.filter_valid(data)
+
+        return data
 
     # ###################### #
     # Metadata Serialization #

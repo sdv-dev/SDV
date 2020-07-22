@@ -1,8 +1,11 @@
 """Base Class for tabular models."""
 
+import logging
 import pickle
 
 from sdv.metadata import Table
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BaseTabularModel():
@@ -15,9 +18,14 @@ class BaseTabularModel():
     TRANSFORMER_TEMPLATES = None
 
     _metadata = None
+    _field_names = None
+    _primary_key = None
+    _field_types = None
+    _anonymize_fields = None
+    _constraints = None
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
-                 anonymize_fields=None, table_metadata=None, *args, **kwargs):
+                 anonymize_fields=None, table_metadata=None, constraints=None):
         """Initialize a Tabular Model.
 
         Args:
@@ -45,14 +53,12 @@ class BaseTabularModel():
                 exception will be raised.
                 If not given at all, it will be built using the other
                 arguments or learned from the data.
-            *args, **kwargs:
-                Subclasses will add any arguments or keyword arguments needed.
         """
         if table_metadata is not None:
             if isinstance(table_metadata, dict):
-                table_metadata = Table(table_metadata,)
+                table_metadata = Table(table_metadata)
 
-            for arg in (field_names, primary_key, field_types, anonymize_fields):
+            for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
                     raise ValueError(
                         'If table_metadata is given {} must be None'.format(arg.__name__))
@@ -64,6 +70,7 @@ class BaseTabularModel():
             self._primary_key = primary_key
             self._field_types = field_types
             self._anonymize_fields = anonymize_fields
+            self._constraints = constraints
 
     def _fit_metadata(self, data):
         """Generate a new Table metadata and fit it to the data.
@@ -81,6 +88,7 @@ class BaseTabularModel():
             primary_key=self._primary_key,
             field_types=self._field_types,
             anonymize_fields=self._anonymize_fields,
+            constraints=self._constraints,
             transformer_templates=self.TRANSFORMER_TEMPLATES,
         )
         metadata.fit(data)
@@ -125,7 +133,7 @@ class BaseTabularModel():
         """
         return self._metadata
 
-    def sample(self, num_rows=None, values=None):
+    def sample(self, num_rows=None, values=None, max_retries=100):
         """Sample rows from this table.
 
         Args:
@@ -137,14 +145,41 @@ class BaseTabularModel():
                 Fixed values to use for knowledge-based sampling.
                 In case the model does not support knowledge-based
                 sampling, a discard+resample strategy will be used.
+            max_retries (int):
+                Number of times to retry sampling discarded rows.
+                Defaults to 100.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
         num_rows = num_rows or self._num_rows
-        sampled = self._sample(num_rows)
-        return self._metadata.reverse_transform(sampled)
+        num_to_sample = num_rows
+        sampled = self._sample(num_to_sample)
+        sampled = self._metadata.reverse_transform(sampled)
+        sampled = self._metadata.filter_valid(sampled)
+        num_valid = len(sampled)
+
+        counter = 0
+        while num_valid < num_rows:
+            counter += 1
+            if counter >= max_retries:
+                raise ValueError('Could not get enough valid rows within %s trials', max_retries)
+
+            invalid = num_rows - num_valid
+            remaining = num_rows - num_valid
+            proportion = counter * num_rows / num_valid
+            num_to_sample = int(remaining * proportion)
+
+            LOGGER.info('%s invalid rows found. Resampling %s rows', invalid, num_to_sample)
+            resampled = self._sample(num_to_sample)
+            resampled = self._metadata.reverse_transform(resampled)
+
+            sampled = sampled.append(resampled)
+            sampled = self._metadata.filter_valid(sampled)
+            num_valid = len(sampled)
+
+        return sampled
 
     def get_parameters(self):
         """Get the parameters learned from the data.
