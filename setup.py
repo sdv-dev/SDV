@@ -20,6 +20,7 @@ install_requires = [
     'graphviz>=0.13.2',
     'sdmetrics>=0.0.2.dev0,<0.0.3',
     'scikit-learn<0.23,>=0.21',
+    'scipy<1.3,>=1.2',
 ]
 
 ctgan_requires = [
