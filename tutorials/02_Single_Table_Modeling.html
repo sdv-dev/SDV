@@ -157,6 +157,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -572,11 +577,7 @@ div.rendered_html tbody tr:hover {
 <li><p>GaussianCopula: A tool to model multivariate distributions using <a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula functions</a>. Based on our <a class="reference external" href="https://github.com/sdv-dev/Copulas">Copulas Library</a>.</p></li>
 <li><p>CTGAN: A GAN-based Deep Learning data synthesizer that can generate synthetic tabular data with high fidelity. Based on our <a class="reference external" href="https://github.com/sdv-dev/CTGAN">CTGAN Library</a>.</p></li>
 </ul>
-<div class="admonition note">
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">Note</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;</span> <span class="n">We</span> <span class="n">are</span> <span class="n">adding</span> <span class="n">a</span> <span class="n">number</span> <span class="n">of</span> <span class="n">additional</span> <span class="n">features</span> <span class="ow">and</span> <span class="n">functionality</span> <span class="n">to</span> <span class="n">make</span> <span class="n">it</span> <span class="n">easy</span> <span class="n">to</span> <span class="n">model</span> <span class="n">single</span> <span class="n">table</span> <span class="n">datasets</span><span class="o">.</span> <span class="n">For</span> <span class="n">example</span><span class="p">,</span> <span class="n">we</span> <span class="n">are</span> <span class="n">adding</span> <span class="n">ways</span> <span class="k">for</span> <span class="n">users</span> <span class="n">to</span> <span class="n">add</span> <span class="n">inter</span><span class="o">-</span><span class="n">column</span> <span class="n">constraints</span> <span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">find</span> <span class="n">a</span> <span class="n">unique</span> <span class="n">use</span> <span class="n">case</span> <span class="n">that</span> <span class="n">we</span> <span class="n">do</span> <span class="ow">not</span> <span class="n">support</span> <span class="n">consider</span> <span class="n">suggesting</span> <span class="ow">and</span> <span class="n">adding</span> <span class="n">examples</span> <span class="n">here</span><span class="o">.</span>
-</pre></div>
-</div>
-</div>
+<p><strong>Note:</strong> We are adding a number of additional features and functionality to make it easy to model single table datasets. For example, we are adding ways for users to add inter-column constraints . If you find a unique use case that we do not support consider suggesting and adding examples here.</p>
 <div class="section" id="Quick-usage">
 <h2>Quick usage<a class="headerlink" href="#Quick-usage" title="Permalink to this headline">¶</a></h2>
 <p>Let’s consider a dataset from our demo datasets.</p>
@@ -741,10 +742,10 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-21 17:38:16,265 - INFO - table - Loading transformer OneHotEncodingTransformer for field country
-2020-07-21 17:38:16,266 - INFO - table - Loading transformer OneHotEncodingTransformer for field gender
-2020-07-21 17:38:16,266 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-21 17:38:16,279 - INFO - gaussian - Fitting GaussianMultivariate()
+2020-07-23 22:15:16,942 - INFO - table - Loading transformer OneHotEncodingTransformer for field country
+2020-07-23 22:15:16,942 - INFO - table - Loading transformer OneHotEncodingTransformer for field gender
+2020-07-23 22:15:16,943 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-23 22:15:16,979 - INFO - gaussian - Fitting GaussianMultivariate()
 </pre></div></div>
 </div>
 <p><strong>Notice</strong> that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data Transforms</a> to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
@@ -804,49 +805,43 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>BF</td>
+      <td>GQ</td>
       <td>M</td>
-      <td>48</td>
+      <td>25</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>BF</td>
-      <td>F</td>
-      <td>31</td>
+      <td>BE</td>
+      <td>M</td>
+      <td>57</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>ES</td>
+      <td>BE</td>
       <td>F</td>
-      <td>37</td>
+      <td>33</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>SI</td>
-      <td>M</td>
-      <td>54</td>
+      <td>SN</td>
+      <td>F</td>
+      <td>37</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>PT</td>
+      <td>GQ</td>
       <td>M</td>
-      <td>23</td>
+      <td>37</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
-<div class="admonition note">
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">Note</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;</span><span class="n">You</span> <span class="n">can</span> <span class="n">control</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">rows</span> <span class="n">by</span> <span class="n">specifying</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">samples</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="n">the</span>
-<span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="o">&lt;</span><span class="n">n_samples</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;.</span> <span class="n">To</span> <span class="n">test</span><span class="p">,</span> <span class="k">try</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;.</span> <span class="n">Note</span> <span class="n">that</span> <span class="n">the</span> <span class="n">original</span>
-    <span class="n">table</span> <span class="n">only</span> <span class="n">had</span> <span class="mi">10</span> <span class="n">rows</span><span class="o">.</span>
-</pre></div>
-</div>
-</div>
+<p><strong>Note:</strong> You can control the number of rows by specifying the number of <code class="docutils literal notranslate"><span class="pre">samples</span></code> in the <code class="docutils literal notranslate"><span class="pre">model.sample(&lt;num_rows&gt;)</span></code>. To test, try <code class="docutils literal notranslate"><span class="pre">model.sample(10000)</span></code>. Note that the original table only had 10 rows.</p>
 </div>
 <div class="section" id="Let's-consider-using-CTGAN">
 <h2>Let’s consider using CTGAN<a class="headerlink" href="#Let's-consider-using-CTGAN" title="Permalink to this headline">¶</a></h2>
@@ -867,7 +862,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-21 17:38:17,934 - INFO - __init__ - Loading table census
+2020-07-23 22:15:18,538 - INFO - __init__ - Loading table census
 </pre></div></div>
 </div>
 <p>This will return a table with several rows of multiple data types:</p>
@@ -1028,12 +1023,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>Once the instance is created, we can fit it to our data.</p>
-<div class="admonition note">
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Note</span> <span class="n">that</span> <span class="n">this</span> <span class="n">process</span> <span class="n">might</span> <span class="n">take</span> <span class="n">some</span> <span class="n">time</span> <span class="n">to</span> <span class="n">finish</span><span class="p">,</span> <span class="n">especially</span> <span class="n">on</span> <span class="n">non</span><span class="o">-</span><span class="n">GPU</span> <span class="n">enabled</span> <span class="n">systems</span><span class="p">,</span>
-<span class="n">so</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">case</span> <span class="n">we</span> <span class="n">will</span> <span class="n">be</span> <span class="n">passing</span> <span class="n">only</span> <span class="n">a</span> <span class="o">&lt;</span><span class="n">tt</span><span class="o">&gt;</span><span class="n">subsample</span><span class="o">&lt;/</span><span class="n">tt</span><span class="o">&gt;</span> <span class="n">of</span> <span class="n">the</span> <span class="n">data</span> <span class="n">to</span> <span class="n">accelerate</span> <span class="n">the</span> <span class="n">process</span><span class="o">.</span>
-</pre></div>
-</div>
-</div>
+<p><strong>Note</strong> that this process might take some time to finish, especially on non-GPU enabled systems, so in this case we will be passing only a <code class="docutils literal notranslate"><span class="pre">subsample</span></code> of the data to accelerate the process.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
@@ -1048,21 +1038,21 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-21 17:38:18,308 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-21 17:38:18,308 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
-2020-07-21 17:38:18,309 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
-2020-07-21 17:38:18,309 - INFO - table - Loading transformer LabelEncodingTransformer for field education
-2020-07-21 17:38:18,310 - INFO - table - Loading transformer NumericalTransformer for field education-num
-2020-07-21 17:38:18,310 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
-2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
-2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
-2020-07-21 17:38:18,311 - INFO - table - Loading transformer LabelEncodingTransformer for field race
-2020-07-21 17:38:18,312 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
-2020-07-21 17:38:18,312 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
-2020-07-21 17:38:18,312 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
-2020-07-21 17:38:18,313 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
-2020-07-21 17:38:18,313 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
-2020-07-21 17:38:18,313 - INFO - table - Loading transformer LabelEncodingTransformer for field income
+2020-07-23 22:15:18,944 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-23 22:15:18,945 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
+2020-07-23 22:15:18,945 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
+2020-07-23 22:15:18,946 - INFO - table - Loading transformer LabelEncodingTransformer for field education
+2020-07-23 22:15:18,946 - INFO - table - Loading transformer NumericalTransformer for field education-num
+2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
+2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
+2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
+2020-07-23 22:15:18,948 - INFO - table - Loading transformer LabelEncodingTransformer for field race
+2020-07-23 22:15:18,948 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
+2020-07-23 22:15:18,948 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
+2020-07-23 22:15:18,949 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
+2020-07-23 22:15:18,949 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
+2020-07-23 22:15:18,949 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
+2020-07-23 22:15:18,950 - INFO - table - Loading transformer LabelEncodingTransformer for field income
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1070,16 +1060,16 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Epoch 1, Loss G: 2.0458, Loss D: -0.0274
-Epoch 2, Loss G: 1.9645, Loss D: -0.0890
-Epoch 3, Loss G: 1.9711, Loss D: -0.1531
-Epoch 4, Loss G: 1.9269, Loss D: -0.2453
-Epoch 5, Loss G: 1.8742, Loss D: -0.2927
-Epoch 6, Loss G: 1.8715, Loss D: -0.3950
-Epoch 7, Loss G: 1.8721, Loss D: -0.5831
-Epoch 8, Loss G: 1.8332, Loss D: -0.7313
-Epoch 9, Loss G: 1.7187, Loss D: -0.9058
-Epoch 10, Loss G: 1.6420, Loss D: -0.8540
+Epoch 1, Loss G: 1.9722, Loss D: 0.0039
+Epoch 2, Loss G: 2.0078, Loss D: -0.0528
+Epoch 3, Loss G: 1.9806, Loss D: -0.1373
+Epoch 4, Loss G: 1.9688, Loss D: -0.1716
+Epoch 5, Loss G: 1.8883, Loss D: -0.3181
+Epoch 6, Loss G: 1.8073, Loss D: -0.4152
+Epoch 7, Loss G: 1.8015, Loss D: -0.5423
+Epoch 8, Loss G: 1.6593, Loss D: -0.6838
+Epoch 9, Loss G: 1.6784, Loss D: -0.7575
+Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 </pre></div></div>
 </div>
 <div class="section" id="id1">
@@ -1147,183 +1137,183 @@ Epoch 10, Loss G: 1.6420, Loss D: -0.8540
   <tbody>
     <tr>
       <th>0</th>
-      <td>28</td>
+      <td>55</td>
       <td>?</td>
-      <td>132148</td>
+      <td>54620</td>
       <td>HS-grad</td>
-      <td>8</td>
-      <td>Divorced</td>
+      <td>9</td>
+      <td>Never-married</td>
       <td>Prof-specialty</td>
-      <td>Not-in-family</td>
-      <td>White</td>
-      <td>Female</td>
-      <td>12633</td>
-      <td>-22</td>
-      <td>36</td>
-      <td>Italy</td>
+      <td>Unmarried</td>
+      <td>Amer-Indian-Eskimo</td>
+      <td>Male</td>
+      <td>809</td>
+      <td>-4</td>
+      <td>-4</td>
+      <td>United-States</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>15</td>
-      <td>Private</td>
-      <td>108655</td>
-      <td>Some-college</td>
-      <td>12</td>
-      <td>Never-married</td>
-      <td>?</td>
-      <td>Not-in-family</td>
-      <td>White</td>
+      <td>65</td>
+      <td>Federal-gov</td>
+      <td>238</td>
+      <td>Bachelors</td>
+      <td>9</td>
+      <td>Married-spouse-absent</td>
+      <td>Exec-managerial</td>
+      <td>Own-child</td>
+      <td>Black</td>
       <td>Male</td>
-      <td>-134</td>
-      <td>-14</td>
-      <td>56</td>
-      <td>Nicaragua</td>
+      <td>816</td>
+      <td>-37</td>
+      <td>45</td>
+      <td>Vietnam</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>21</td>
-      <td>Private</td>
-      <td>177471</td>
-      <td>HS-grad</td>
-      <td>11</td>
-      <td>Married-civ-spouse</td>
-      <td>Transport-moving</td>
+      <td>63</td>
+      <td>?</td>
+      <td>-11877</td>
+      <td>Prof-school</td>
+      <td>9</td>
+      <td>Never-married</td>
+      <td>Prof-specialty</td>
       <td>Unmarried</td>
       <td>White</td>
-      <td>Male</td>
-      <td>8657</td>
-      <td>6</td>
-      <td>39</td>
-      <td>United-States</td>
-      <td>&gt;50K</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>53</td>
-      <td>Private</td>
-      <td>58238</td>
-      <td>9th</td>
-      <td>11</td>
-      <td>Widowed</td>
-      <td>Craft-repair</td>
-      <td>Unmarried</td>
-      <td>Other</td>
-      <td>Male</td>
-      <td>357</td>
-      <td>0</td>
+      <td>Female</td>
+      <td>166785</td>
+      <td>1684</td>
       <td>33</td>
-      <td>Puerto-Rico</td>
+      <td>Poland</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>20</td>
+      <th>3</th>
+      <td>21</td>
       <td>Local-gov</td>
-      <td>199353</td>
-      <td>10th</td>
-      <td>3</td>
-      <td>Separated</td>
+      <td>-53388</td>
+      <td>Preschool</td>
+      <td>1</td>
+      <td>Married-civ-spouse</td>
       <td>?</td>
       <td>Own-child</td>
       <td>Other</td>
+      <td>Male</td>
+      <td>554</td>
+      <td>4</td>
+      <td>51</td>
+      <td>Italy</td>
+      <td>&gt;50K</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>41</td>
+      <td>Private</td>
+      <td>117452</td>
+      <td>7th-8th</td>
+      <td>4</td>
+      <td>Widowed</td>
+      <td>Farming-fishing</td>
+      <td>Other-relative</td>
+      <td>White</td>
       <td>Female</td>
-      <td>373</td>
-      <td>11</td>
-      <td>56</td>
-      <td>Trinadad&amp;Tobago</td>
+      <td>6270</td>
+      <td>12</td>
+      <td>38</td>
+      <td>Scotland</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>33</td>
-      <td>Federal-gov</td>
-      <td>61574</td>
-      <td>5th-6th</td>
-      <td>9</td>
-      <td>Divorced</td>
-      <td>Prof-specialty</td>
-      <td>Husband</td>
-      <td>Black</td>
-      <td>Male</td>
-      <td>-103</td>
-      <td>21</td>
-      <td>42</td>
-      <td>Dominican-Republic</td>
+      <td>59</td>
+      <td>Private</td>
+      <td>109067</td>
+      <td>11th</td>
+      <td>8</td>
+      <td>Married-civ-spouse</td>
+      <td>Tech-support</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>-296</td>
+      <td>-7</td>
+      <td>39</td>
+      <td>Hungary</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>6</th>
-      <td>22</td>
-      <td>Private</td>
-      <td>256859</td>
-      <td>5th-6th</td>
-      <td>4</td>
-      <td>Married-civ-spouse</td>
-      <td>Sales</td>
-      <td>Not-in-family</td>
+      <td>55</td>
+      <td>Local-gov</td>
+      <td>133741</td>
+      <td>Some-college</td>
+      <td>9</td>
+      <td>Widowed</td>
+      <td>Adm-clerical</td>
+      <td>Own-child</td>
       <td>White</td>
-      <td>Female</td>
-      <td>387</td>
-      <td>-8</td>
-      <td>21</td>
-      <td>India</td>
+      <td>Male</td>
+      <td>27743</td>
+      <td>8</td>
+      <td>40</td>
+      <td>France</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>7</th>
-      <td>57</td>
-      <td>?</td>
-      <td>-1058</td>
+      <td>52</td>
+      <td>Federal-gov</td>
+      <td>48567</td>
       <td>7th-8th</td>
-      <td>3</td>
-      <td>Married-civ-spouse</td>
-      <td>Other-service</td>
-      <td>Own-child</td>
-      <td>White</td>
+      <td>8</td>
+      <td>Divorced</td>
+      <td>Sales</td>
+      <td>Other-relative</td>
+      <td>Black</td>
       <td>Male</td>
-      <td>883</td>
-      <td>26</td>
-      <td>29</td>
-      <td>Portugal</td>
+      <td>196</td>
+      <td>19</td>
+      <td>46</td>
+      <td>Hong</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>8</th>
-      <td>19</td>
-      <td>Local-gov</td>
-      <td>99863</td>
-      <td>Some-college</td>
-      <td>3</td>
-      <td>Widowed</td>
-      <td>Exec-managerial</td>
-      <td>Husband</td>
-      <td>Asian-Pac-Islander</td>
+      <td>24</td>
+      <td>Federal-gov</td>
+      <td>135607</td>
+      <td>9th</td>
+      <td>-1</td>
+      <td>Married-civ-spouse</td>
+      <td>Sales</td>
+      <td>Not-in-family</td>
+      <td>White</td>
       <td>Male</td>
-      <td>-189</td>
-      <td>-7</td>
-      <td>40</td>
-      <td>Portugal</td>
-      <td>&lt;=50K</td>
+      <td>465</td>
+      <td>-26</td>
+      <td>38</td>
+      <td>Vietnam</td>
+      <td>&gt;50K</td>
     </tr>
     <tr>
       <th>9</th>
-      <td>15</td>
-      <td>Private</td>
-      <td>95500</td>
-      <td>11th</td>
-      <td>1</td>
-      <td>Never-married</td>
+      <td>46</td>
+      <td>Self-emp-not-inc</td>
+      <td>-57277</td>
+      <td>12th</td>
+      <td>12</td>
+      <td>Separated</td>
       <td>Adm-clerical</td>
-      <td>Not-in-family</td>
+      <td>Own-child</td>
       <td>Amer-Indian-Eskimo</td>
-      <td>Female</td>
-      <td>292</td>
-      <td>2055</td>
-      <td>50</td>
-      <td>Philippines</td>
-      <td>&lt;=50K</td>
+      <td>Male</td>
+      <td>576</td>
+      <td>0</td>
+      <td>3</td>
+      <td>Puerto-Rico</td>
+      <td>&gt;50K</td>
     </tr>
   </tbody>
 </table>
@@ -1354,7 +1344,7 @@ Epoch 10, Loss G: 1.6420, Loss D: -0.8540
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
--133.19682079258746
+-144.80667199073469
 </pre></div></div>
 </div>
 </div>

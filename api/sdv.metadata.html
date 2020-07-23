@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="sdv.metadata.errors module" href="sdv.metadata.errors.html" />
-    <link rel="prev" title="sdv package" href="sdv.html" /> 
+    <link rel="prev" title="sdv.constraints.tabular module" href="sdv.constraints.tabular.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -157,6 +157,11 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-sdv.metadata">Module contents</a></li>
@@ -370,7 +375,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Metadata" title="sdv.metadata.Metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Metadata</span></code></a>([metadata, root_path])</p></td>
 <td><p>Dataset Metadata.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table" title="sdv.metadata.Table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Table</span></code></a>([metadata, field_names, primary_key, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table" title="sdv.metadata.Table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Table</span></code></a>([field_names, field_types, …])</p></td>
 <td><p>Table Metadata.</p></td>
 </tr>
 </tbody>
@@ -924,7 +929,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 
 <dl class="class">
 <dt id="sdv.metadata.Table">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.metadata.</code><code class="sig-name descname">Table</code><span class="sig-paren">(</span><em class="sig-param">metadata=None</em>, <em class="sig-param">field_names=None</em>, <em class="sig-param">primary_key=None</em>, <em class="sig-param">field_types=None</em>, <em class="sig-param">anonymize_fields=None</em>, <em class="sig-param">constraints=None</em>, <em class="sig-param">transformer_templates=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.metadata.</code><code class="sig-name descname">Table</code><span class="sig-paren">(</span><em class="sig-param">field_names=None</em>, <em class="sig-param">field_types=None</em>, <em class="sig-param">anonymize_fields=None</em>, <em class="sig-param">primary_key=None</em>, <em class="sig-param">constraints=None</em>, <em class="sig-param">transformer_templates=None</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Table Metadata.</p>
 <p>The Metadata class provides a unified layer of abstraction over the metadata
@@ -937,8 +942,14 @@ from the filesystem and to know how to parse and transform it to numerical data.
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.fit" title="sdv.metadata.Table.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.filter_valid" title="sdv.metadata.Table.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(data)</p></td>
+<td><p>Filter the data using the constraints and return only the valid rows.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table.fit" title="sdv.metadata.Table.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(data)</p></td>
 <td><p>Fit this metadata to the given data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.from_dict" title="sdv.metadata.Table.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code></a>(metadata_dict)</p></td>
+<td><p>Load a Table from a metadata dict.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table.from_json" title="sdv.metadata.Table.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(path)</p></td>
 <td><p>Load a Table from a JSON.</p></td>
@@ -949,8 +960,14 @@ from the filesystem and to know how to parse and transform it to numerical data.
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table.get_fields" title="sdv.metadata.Table.get_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fields</span></code></a>()</p></td>
 <td><p>Get fields metadata.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.reverse_transform" title="sdv.metadata.Table.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.get_model_kwargs" title="sdv.metadata.Table.get_model_kwargs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_kwargs</span></code></a>(model_name)</p></td>
+<td><p>Return the required model kwargs for the indicated model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table.reverse_transform" title="sdv.metadata.Table.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(data)</p></td>
 <td><p>Reverse the transformed data to the original format.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.set_model_kwargs" title="sdv.metadata.Table.set_model_kwargs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_model_kwargs</span></code></a>(model_name, model_kwargs)</p></td>
+<td><p>Set the model kwargs used for the indicated model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.metadata.Table.set_primary_key" title="sdv.metadata.Table.set_primary_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_primary_key</span></code></a>(field_name)</p></td>
 <td><p>Set the primary key of this table.</p></td>
@@ -967,12 +984,40 @@ from the filesystem and to know how to parse and transform it to numerical data.
 </tbody>
 </table>
 <dl class="method">
+<dt id="sdv.metadata.Table.filter_valid">
+<code class="sig-name descname">filter_valid</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.filter_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.filter_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter the data using the constraints and return only the valid rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Table containing only the valid rows.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="sdv.metadata.Table.fit">
 <code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit this metadata to the given data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Table to be analyzed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Table.from_dict">
+<em class="property">classmethod </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param">metadata_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a Table from a metadata dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>metadata_dict</strong> (<em>dict</em>) – Dict metadata to load.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1002,9 +1047,6 @@ from the filesystem and to know how to parse and transform it to numerical data.
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If a field has an invalid type or subtype.</p>
-</dd>
 </dl>
 </dd></dl>
 
@@ -1023,6 +1065,12 @@ from the filesystem and to know how to parse and transform it to numerical data.
 </dd></dl>
 
 <dl class="method">
+<dt id="sdv.metadata.Table.get_model_kwargs">
+<code class="sig-name descname">get_model_kwargs</code><span class="sig-paren">(</span><em class="sig-param">model_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.get_model_kwargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.get_model_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the required model kwargs for the indicated model.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="sdv.metadata.Table.reverse_transform">
 <code class="sig-name descname">reverse_transform</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.reverse_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.reverse_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reverse the transformed data to the original format.</p>
@@ -1034,6 +1082,12 @@ from the filesystem and to know how to parse and transform it to numerical data.
 <dd class="field-even"><p>pandas.DataFrame</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sdv.metadata.Table.set_model_kwargs">
+<code class="sig-name descname">set_model_kwargs</code><span class="sig-paren">(</span><em class="sig-param">model_name</em>, <em class="sig-param">model_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/metadata/table.html#Table.set_model_kwargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.set_model_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the model kwargs used for the indicated model.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1110,7 +1164,7 @@ from the filesystem and to know how to parse and transform it to numerical data.
         <a href="sdv.metadata.errors.html" class="btn btn-neutral float-right" title="sdv.metadata.errors module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sdv.html" class="btn btn-neutral float-left" title="sdv package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="sdv.constraints.tabular.html" class="btn btn-neutral float-left" title="sdv.constraints.tabular module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

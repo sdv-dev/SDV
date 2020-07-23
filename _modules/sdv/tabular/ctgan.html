@@ -155,6 +155,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -322,10 +327,56 @@
 
 
 <div class="viewcode-block" id="CTGAN"><a class="viewcode-back" href="../../../api/sdv.tabular.ctgan.html#sdv.tabular.CTGAN">[docs]</a><span class="k">class</span> <span class="nc">CTGAN</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Model wrapping ``CTGANSynthesizer`` copula.</span>
+    <span class="sd">&quot;&quot;&quot;Model wrapping ``CTGANSynthesizer`` model.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        TBD</span>
+<span class="sd">        field_names (list[str]):</span>
+<span class="sd">            List of names of the fields that need to be modeled</span>
+<span class="sd">            and included in the generated output data. Any additional</span>
+<span class="sd">            fields found in the data will be ignored and will not be</span>
+<span class="sd">            included in the generated output, except if they have</span>
+<span class="sd">            been added as primary keys or fields to anonymize.</span>
+<span class="sd">            If ``None``, all the fields found in the data are used.</span>
+<span class="sd">        primary_key (str, list[str] or dict[str, dict]):</span>
+<span class="sd">            Specification about which field or fields are the</span>
+<span class="sd">            primary key of the table and information about how</span>
+<span class="sd">            to generate them.</span>
+<span class="sd">        field_types (dict[str, dict]):</span>
+<span class="sd">            Dictinary specifying the data types and subtypes</span>
+<span class="sd">            of the fields that will be modeled. Field types and subtypes</span>
+<span class="sd">            combinations must be compatible with the SDV Metadata Schema.</span>
+<span class="sd">        anonymize_fields (dict[str, str or tuple]):</span>
+<span class="sd">            Dict specifying which fields to anonymize and what faker</span>
+<span class="sd">            category they belong to. If arguments for the faker need to be</span>
+<span class="sd">            passed to fine tune the value generation a tuple can be passed,</span>
+<span class="sd">            where the first element is the category and the rest are additional</span>
+<span class="sd">            positional arguments for the Faker.</span>
+<span class="sd">        constraints (list[dict]):</span>
+<span class="sd">            List of dicts specifying field and inter-field constraints.</span>
+<span class="sd">            TODO: Format TBD</span>
+<span class="sd">        table_metadata (dict or metadata.Table):</span>
+<span class="sd">            Table metadata instance or dict representation.</span>
+<span class="sd">            If given alongside any other metadata-related arguments, an</span>
+<span class="sd">            exception will be raised.</span>
+<span class="sd">            If not given at all, it will be built using the other</span>
+<span class="sd">            arguments or learned from the data.</span>
+<span class="sd">        epochs (int):</span>
+<span class="sd">            Number of training epochs. Defaults to 300.</span>
+<span class="sd">        log_frequency (boolean):</span>
+<span class="sd">            Whether to use log frequency of categorical levels in conditional</span>
+<span class="sd">            sampling. Defaults to ``True``.</span>
+<span class="sd">        embedding_dim (int):</span>
+<span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
+<span class="sd">        gen_dim (tuple or list of ints):</span>
+<span class="sd">            Size of the output samples for each one of the Residuals. A Resiudal Layer</span>
+<span class="sd">            will be created for each one of the values provided. Defaults to (256, 256).</span>
+<span class="sd">        dis_dim (tuple or list of ints):</span>
+<span class="sd">            Size of the output samples for each one of the Discriminator Layers. A Linear</span>
+<span class="sd">            Layer will be created for each one of the values provided. Defaults to (256, 256).</span>
+<span class="sd">        l2scale (float):</span>
+<span class="sd">            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</span>
+<span class="sd">        batch_size (int):</span>
+<span class="sd">            Number of data samples to process in each step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_CTGAN_CLASS</span> <span class="o">=</span> <span class="kc">None</span>
@@ -342,57 +393,6 @@
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
                  <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Initialize this CTGAN model.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            field_names (list[str]):</span>
-<span class="sd">                List of names of the fields that need to be modeled</span>
-<span class="sd">                and included in the generated output data. Any additional</span>
-<span class="sd">                fields found in the data will be ignored and will not be</span>
-<span class="sd">                included in the generated output, except if they have</span>
-<span class="sd">                been added as primary keys or fields to anonymize.</span>
-<span class="sd">                If ``None``, all the fields found in the data are used.</span>
-<span class="sd">            primary_key (str, list[str] or dict[str, dict]):</span>
-<span class="sd">                Specification about which field or fields are the</span>
-<span class="sd">                primary key of the table and information about how</span>
-<span class="sd">                to generate them.</span>
-<span class="sd">            field_types (dict[str, dict]):</span>
-<span class="sd">                Dictinary specifying the data types and subtypes</span>
-<span class="sd">                of the fields that will be modeled. Field types and subtypes</span>
-<span class="sd">                combinations must be compatible with the SDV Metadata Schema.</span>
-<span class="sd">            anonymize_fields (dict[str, str or tuple]):</span>
-<span class="sd">                Dict specifying which fields to anonymize and what faker</span>
-<span class="sd">                category they belong to. If arguments for the faker need to be</span>
-<span class="sd">                passed to fine tune the value generation a tuple can be passed,</span>
-<span class="sd">                where the first element is the category and the rest are additional</span>
-<span class="sd">                positional arguments for the Faker.</span>
-<span class="sd">            constraints (list[dict]):</span>
-<span class="sd">                List of dicts specifying field and inter-field constraints.</span>
-<span class="sd">                TODO: Format TBD</span>
-<span class="sd">            table_metadata (dict or metadata.Table):</span>
-<span class="sd">                Table metadata instance or dict representation.</span>
-<span class="sd">                If given alongside any other metadata-related arguments, an</span>
-<span class="sd">                exception will be raised.</span>
-<span class="sd">                If not given at all, it will be built using the other</span>
-<span class="sd">                arguments or learned from the data.</span>
-<span class="sd">            epochs (int):</span>
-<span class="sd">                Number of training epochs. Defaults to 300.</span>
-<span class="sd">            log_frequency (boolean):</span>
-<span class="sd">                Whether to use log frequency of categorical levels in conditional</span>
-<span class="sd">                sampling. Defaults to ``True``.</span>
-<span class="sd">            embedding_dim (int):</span>
-<span class="sd">                Size of the random sample passed to the Generator. Defaults to 128.</span>
-<span class="sd">            gen_dim (tuple or list of ints):</span>
-<span class="sd">                Size of the output samples for each one of the Residuals. A Resiudal Layer</span>
-<span class="sd">                will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">            dis_dim (tuple or list of ints):</span>
-<span class="sd">                Size of the output samples for each one of the Discriminator Layers. A Linear</span>
-<span class="sd">                Layer will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">            l2scale (float):</span>
-<span class="sd">                Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</span>
-<span class="sd">            batch_size (int):</span>
-<span class="sd">                Number of data samples to process in each step.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>

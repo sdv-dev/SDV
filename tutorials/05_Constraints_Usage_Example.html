@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Working with Metadata &mdash; SDV 0.3.6.dev0 documentation</title>
+  <title>&lt;no title&gt; &mdash; SDV 0.3.6.dev0 documentation</title>
   
 
   
@@ -301,14 +301,14 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Working with Metadata</li>
+      <li>&lt;no title&gt;</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
             
-              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/tutorials/04_Working_with_Metadata.ipynb" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/tutorials/05_Constraints_Usage_Example.ipynb" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -564,56 +564,33 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<div class="section" id="Working-with-Metadata">
-<h1>Working with Metadata<a class="headerlink" href="#Working-with-Metadata" title="Permalink to this headline">¶</a></h1>
-<p>In order to work with complex dataset structures you will need to pass additional information about you data to SDV.</p>
-<p>This is done by using a Metadata.</p>
-<p>Let’s have a quick look at how to do it.</p>
-<div class="section" id="Load-demo-data">
-<h2>Load demo data<a class="headerlink" href="#Load-demo-data" title="Permalink to this headline">¶</a></h2>
-<p>We will load the demo dataset included in SDV for the rest of the session.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
 
-<span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">employees</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
-<p>A part from the tables dict, this is returning a Metadata object that contains all the information about our dataset.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">metadata</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Metadata
-  root_path: /home/xals/Projects/MIT/SDV/tutorials
-  tables: [&#39;users&#39;, &#39;sessions&#39;, &#39;transactions&#39;]
-  relationships:
-    sessions.user_id -&gt; users.user_id
-    transactions.session_id -&gt; sessions.session_id
-</pre></div></div>
-</div>
-<p>This Metadata can also be represented by using a dict object:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span></span><span class="n">employees</span>
 </pre></div>
 </div>
 </div>
@@ -621,106 +598,237 @@ Metadata
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-{&#39;tables&#39;: {&#39;users&#39;: {&#39;primary_key&#39;: &#39;user_id&#39;,
-   &#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;}}},
-  &#39;sessions&#39;: {&#39;primary_key&#39;: &#39;session_id&#39;,
-   &#39;fields&#39;: {&#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;user_id&#39;: {&#39;ref&#39;: {&#39;field&#39;: &#39;user_id&#39;, &#39;table&#39;: &#39;users&#39;},
-     &#39;type&#39;: &#39;id&#39;,
-     &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;device&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;}}},
-  &#39;transactions&#39;: {&#39;primary_key&#39;: &#39;transaction_id&#39;,
-   &#39;fields&#39;: {&#39;transaction_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;session_id&#39;: {&#39;ref&#39;: {&#39;field&#39;: &#39;session_id&#39;, &#39;table&#39;: &#39;sessions&#39;},
-     &#39;type&#39;: &#39;id&#39;,
-     &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;timestamp&#39;: {&#39;type&#39;: &#39;datetime&#39;, &#39;format&#39;: &#39;%Y-%m-%d&#39;},
-    &#39;amount&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},
-    &#39;approved&#39;: {&#39;type&#39;: &#39;boolean&#39;}}}}}
-</pre></div></div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>company</th>
+      <th>department</th>
+      <th>name</th>
+      <th>address</th>
+      <th>age</th>
+      <th>age_when_joined</th>
+      <th>years_in_the_company</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Pear</td>
+      <td>Sales</td>
+      <td>Andrew Gonzalez</td>
+      <td>Unit 6052 Box 2838\nDPO AA 79358</td>
+      <td>48</td>
+      <td>47</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>David Riley DDS</td>
+      <td>039 Bender Fall\nNorth Stacytown, IN 71970</td>
+      <td>35</td>
+      <td>33</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Christina Holmes</td>
+      <td>PSC 4263, Box 8772\nAPO AE 06596</td>
+      <td>31</td>
+      <td>23</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Glasses</td>
+      <td>Search Engine</td>
+      <td>Jeffrey Ferrell MD</td>
+      <td>3294 Barbara Corner\nChambersside, FL 89465</td>
+      <td>47</td>
+      <td>43</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>James Jones</td>
+      <td>PSC 4326, Box 9319\nAPO AE 53951</td>
+      <td>30</td>
+      <td>22</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Brian Lee</td>
+      <td>671 David Wells Suite 988\nPort Eugene, NV 62074</td>
+      <td>40</td>
+      <td>38</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Pear</td>
+      <td>Sales</td>
+      <td>Vernon Hall</td>
+      <td>90057 Miller Ferry Suite 697\nWest Shelly, NC ...</td>
+      <td>44</td>
+      <td>37</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>Dr. Victoria Martinez</td>
+      <td>333 Jimenez Port\nSouth Matthew, AK 87359</td>
+      <td>36</td>
+      <td>28</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Sarah Wright</td>
+      <td>71684 Travis Glens Apt. 342\nBryantchester, SC...</td>
+      <td>45</td>
+      <td>39</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Glasses</td>
+      <td>Search Engine</td>
+      <td>Sandra Henry</td>
+      <td>103 Mcbride Crescent Suite 753\nPort Brianna, ...</td>
+      <td>45</td>
+      <td>39</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Dustin Price</td>
+      <td>7171 Charles View Apt. 400\nMelvinchester, ID ...</td>
+      <td>42</td>
+      <td>42</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Erin Foster</td>
+      <td>0486 Roy Islands Suite 043\nNew Melissa, SC 00913</td>
+      <td>30</td>
+      <td>26</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
 </div>
-</div>
-<div class="section" id="Creating-a-Metadata-object-from-scratch">
-<h2>Creating a Metadata object from scratch<a class="headerlink" href="#Creating-a-Metadata-object-from-scratch" title="Permalink to this headline">¶</a></h2>
-<p>In this section we will have a look at how to create a Metadata object from scratch.</p>
-<p>The simplest way to do it is by populating it passing the tables of your dataset together with some additional information.</p>
-<p>Let’s start by creating an empty metadata object.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">Metadata</span>
-
-<span class="n">new_meta</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">()</span>
+<span></span><span class="k">def</span> <span class="nf">years_in_the_company</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
-<p>Now we can start by adding the parent table from our dataset, <code class="docutils literal notranslate"><span class="pre">users</span></code>, indicating that the primary key is the field called <code class="docutils literal notranslate"><span class="pre">user_id</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">users_data</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="s1">&#39;users&#39;</span><span class="p">]</span>
-<span class="n">new_meta</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">users_data</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;user_id&#39;</span><span class="p">)</span>
+<span></span><span class="k">def</span> <span class="nf">age_above_30</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">30</span>
 </pre></div>
 </div>
 </div>
-<p>Next, let’s add the sessions table, indicating that: - The primary key is the field <code class="docutils literal notranslate"><span class="pre">session_id</span></code> - The <code class="docutils literal notranslate"><span class="pre">users</span></code> table is parent to this table - The relationship between the <code class="docutils literal notranslate"><span class="pre">users</span></code> and <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table is created by the field called <code class="docutils literal notranslate"><span class="pre">user_id</span></code>.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sessions_data</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="s1">&#39;sessions&#39;</span><span class="p">]</span>
-<span class="n">new_meta</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
-    <span class="s1">&#39;sessions&#39;</span><span class="p">,</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">sessions_data</span><span class="p">,</span>
-    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
-    <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;users&#39;</span><span class="p">,</span>
-    <span class="n">foreign_key</span><span class="o">=</span><span class="s1">&#39;user_id&#39;</span>
-<span class="p">)</span>
+<span></span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">tabular</span>
+<span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">tabular</span><span class="o">.</span><span class="n">UniqueCombinations</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;company&#39;</span><span class="p">,</span> <span class="s1">&#39;department&#39;</span><span class="p">],</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span><span class="p">),</span>
+    <span class="n">tabular</span><span class="o">.</span><span class="n">GreaterThan</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">),</span>
+    <span class="n">tabular</span><span class="o">.</span><span class="n">ColumnFormula</span><span class="p">(</span><span class="s1">&#39;years_in_the_company&#39;</span><span class="p">,</span> <span class="n">years_in_the_company</span><span class="p">),</span>
+    <span class="n">tabular</span><span class="o">.</span><span class="n">CustomConstraint</span><span class="p">(</span><span class="n">is_valid</span><span class="o">=</span><span class="n">age_above_30</span><span class="p">)</span>
+<span class="p">]</span>
+
+<span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span><span class="p">})</span>
+<span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>Finally, let’s add the transactions table.</p>
-<p>In this case, we will pass some additional information to indicate that the <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> field should be actually parsed and interpreted as a datetime field.</p>
-<div class="nbinput nblast docutils container">
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-07-23 22:12:06,019 - INFO - table - Loading transformer OneHotEncodingTransformer for field company
+2020-07-23 22:12:06,020 - INFO - table - Loading transformer OneHotEncodingTransformer for field department
+2020-07-23 22:12:06,020 - INFO - table - Loading transformer OneHotEncodingTransformer for field name
+2020-07-23 22:12:06,021 - INFO - table - Loading transformer OneHotEncodingTransformer for field address
+2020-07-23 22:12:06,021 - INFO - table - Loading transformer NumericalTransformer for field age_when_joined
+2020-07-23 22:12:06,022 - INFO - table - Loading transformer NumericalTransformer for field age
+2020-07-23 22:12:06,074 - INFO - gaussian - Fitting GaussianMultivariate()
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">transactions_fields</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;datetime&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="n">transactions_data</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="s1">&#39;transactions&#39;</span><span class="p">]</span>
-<span class="n">new_meta</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
-    <span class="s1">&#39;transactions&#39;</span><span class="p">,</span>
-    <span class="n">transactions_data</span><span class="p">,</span>
-    <span class="n">fields_metadata</span><span class="o">=</span><span class="n">transactions_fields</span><span class="p">,</span>
-    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;transaction_id&#39;</span><span class="p">,</span>
-    <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;sessions&#39;</span>
-<span class="p">)</span>
+<span></span><span class="n">constrained</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>Let’s see what our Metadata looks like right now:</p>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-07-23 22:12:16,043 - INFO - base - 29 invalid rows found. Resampling 40 rows
+2020-07-23 22:12:17,933 - INFO - base - 3 invalid rows found. Resampling 6 rows
+</pre></div></div>
+</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_meta</span><span class="o">.</span><span class="n">visualize</span><span class="p">()</span>
+<span></span><span class="n">constrained</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -728,107 +836,213 @@ Metadata
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="output_area docutils container">
-<img alt="../_images/tutorials_04_Working_with_Metadata_15_0.svg" src="../_images/tutorials_04_Working_with_Metadata_15_0.svg" /></div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>company</th>
+      <th>department</th>
+      <th>name</th>
+      <th>address</th>
+      <th>age</th>
+      <th>age_when_joined</th>
+      <th>years_in_the_company</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Crystal Thompson</td>
+      <td>570 Jacob Cliff Apt. 634\nRomeroborough, NC 48783</td>
+      <td>37</td>
+      <td>33</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Jennifer Garcia</td>
+      <td>9334 Erin Stravenue\nThomasville, TX 78772</td>
+      <td>46</td>
+      <td>41</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>Lori Henry</td>
+      <td>468 Darren Extension\nMeganmouth, DC 47073</td>
+      <td>34</td>
+      <td>31</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Pear</td>
+      <td>Sales</td>
+      <td>David Sawyer</td>
+      <td>12538 Becker Plaza Apt. 842\nGatesborough, NE ...</td>
+      <td>47</td>
+      <td>46</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Lori Henry</td>
+      <td>468 Darren Extension\nMeganmouth, DC 47073</td>
+      <td>35</td>
+      <td>27</td>
+      <td>8</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
 </div>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_meta</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span></span><span class="n">metadata</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-{&#39;tables&#39;: {&#39;users&#39;: {&#39;fields&#39;: {&#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},
-    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;}},
-   &#39;primary_key&#39;: &#39;user_id&#39;},
-  &#39;sessions&#39;: {&#39;fields&#39;: {&#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;device&#39;: {&#39;type&#39;: &#39;categorical&#39;},
-    &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,
-     &#39;subtype&#39;: &#39;integer&#39;,
-     &#39;ref&#39;: {&#39;table&#39;: &#39;users&#39;, &#39;field&#39;: &#39;user_id&#39;}},
-    &#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;}},
-   &#39;primary_key&#39;: &#39;session_id&#39;},
-  &#39;transactions&#39;: {&#39;fields&#39;: {&#39;timestamp&#39;: {&#39;type&#39;: &#39;datetime&#39;,
-     &#39;format&#39;: &#39;%Y-%m-%d&#39;},
-    &#39;amount&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},
-    &#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;,
-     &#39;subtype&#39;: &#39;integer&#39;,
-     &#39;ref&#39;: {&#39;table&#39;: &#39;sessions&#39;, &#39;field&#39;: &#39;session_id&#39;}},
-    &#39;approved&#39;: {&#39;type&#39;: &#39;boolean&#39;},
-    &#39;transaction_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;}},
-   &#39;primary_key&#39;: &#39;transaction_id&#39;}}}
-</pre></div></div>
-</div>
-<p>Pretty similar to the original metadata, right?</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_meta</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="o">==</span> <span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
+<div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-True
+{
+    &#34;fields&#34;: {
+        &#34;company&#34;: {
+            &#34;type&#34;: &#34;categorical&#34;
+        },
+        &#34;department&#34;: {
+            &#34;type&#34;: &#34;categorical&#34;
+        },
+        &#34;name&#34;: {
+            &#34;type&#34;: &#34;categorical&#34;,
+            &#34;pii&#34;: true,
+            &#34;pii_category&#34;: &#34;name&#34;
+        },
+        &#34;address&#34;: {
+            &#34;type&#34;: &#34;categorical&#34;,
+            &#34;pii&#34;: true,
+            &#34;pii_category&#34;: &#34;address&#34;
+        },
+        &#34;age&#34;: {
+            &#34;type&#34;: &#34;numerical&#34;,
+            &#34;subtype&#34;: &#34;integer&#34;
+        },
+        &#34;age_when_joined&#34;: {
+            &#34;type&#34;: &#34;numerical&#34;,
+            &#34;subtype&#34;: &#34;integer&#34;
+        },
+        &#34;years_in_the_company&#34;: {
+            &#34;type&#34;: &#34;numerical&#34;,
+            &#34;subtype&#34;: &#34;integer&#34;
+        }
+    },
+    &#34;constraints&#34;: [
+        {
+            &#34;constraint&#34;: &#34;sdv.constraints.tabular.UniqueCombinations&#34;,
+            &#34;columns&#34;: [
+                &#34;company&#34;,
+                &#34;department&#34;
+            ],
+            &#34;handling_strategy&#34;: &#34;reject_sampling&#34;
+        },
+        {
+            &#34;constraint&#34;: &#34;sdv.constraints.tabular.GreaterThan&#34;,
+            &#34;low&#34;: &#34;age_when_joined&#34;,
+            &#34;high&#34;: &#34;age&#34;
+        },
+        {
+            &#34;constraint&#34;: &#34;sdv.constraints.tabular.ColumnFormula&#34;,
+            &#34;column&#34;: &#34;years_in_the_company&#34;,
+            &#34;formula&#34;: &#34;__main__.years_in_the_company&#34;
+        },
+        {
+            &#34;constraint&#34;: &#34;sdv.constraints.tabular.CustomConstraint&#34;,
+            &#34;is_valid&#34;: &#34;__main__.age_above_30&#34;
+        }
+    ],
+    &#34;model_kwargs&#34;: {
+        &#34;GaussianCopula&#34;: {
+            &#34;distribution&#34;: {
+                &#34;company#0&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;company#1&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;company#2&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#0&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#1&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#2&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#3&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#4&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;department#5&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#0&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#1&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#2&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#3&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#4&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#5&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#6&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#7&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#8&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#9&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#10&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;name#11&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#0&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#1&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#2&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#3&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#4&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#5&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#6&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#7&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#8&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#9&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#10&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;address#11&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;age_when_joined&#34;: &#34;copulas.univariate.gaussian_kde.GaussianKDE&#34;,
+                &#34;age&#34;: &#34;copulas.univariate.gamma.GammaUnivariate&#34;
+            },
+            &#34;categorical_transformer&#34;: &#34;one_hot_encoding&#34;
+        }
+    }
+}
 </pre></div></div>
-</div>
-</div>
-<div class="section" id="Saving-the-Metadata-as-a-JSON-file">
-<h2>Saving the Metadata as a JSON file<a class="headerlink" href="#Saving-the-Metadata-as-a-JSON-file" title="Permalink to this headline">¶</a></h2>
-<p>The Metadata object can also be saved as a JSON file, which later on we can load:</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_meta</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="s1">&#39;demo_metadata.json&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">loaded</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="s1">&#39;demo_metadata.json&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">loaded</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="o">==</span> <span class="n">new_meta</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-True
-</pre></div></div>
-</div>
-</div>
 </div>
 
 

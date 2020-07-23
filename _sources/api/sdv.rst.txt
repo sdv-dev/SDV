@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+   sdv.constraints
    sdv.metadata
    sdv.models
    sdv.tabular

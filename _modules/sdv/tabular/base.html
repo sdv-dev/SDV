@@ -155,6 +155,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -316,9 +321,12 @@
   <h1>Source code for sdv.tabular.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base Class for tabular models.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="BaseTabularModel"><a class="viewcode-back" href="../../../api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel">[docs]</a><span class="k">class</span> <span class="nc">BaseTabularModel</span><span class="p">():</span>
@@ -326,49 +334,50 @@
 
 <span class="sd">    The ``BaseTabularModel`` class defines the common API that all the</span>
 <span class="sd">    TabularModels need to implement, as well as common functionality.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        field_names (list[str]):</span>
+<span class="sd">            List of names of the fields that need to be modeled</span>
+<span class="sd">            and included in the generated output data. Any additional</span>
+<span class="sd">            fields found in the data will be ignored and will not be</span>
+<span class="sd">            included in the generated output, except if they have</span>
+<span class="sd">            been added as primary keys or fields to anonymize.</span>
+<span class="sd">            If ``None``, all the fields found in the data are used.</span>
+<span class="sd">        primary_key (str, list[str] or dict[str, dict]):</span>
+<span class="sd">            Specification about which field or fields are the</span>
+<span class="sd">            primary key of the table and information about how</span>
+<span class="sd">            to generate them.</span>
+<span class="sd">        field_types (dict[str, dict]):</span>
+<span class="sd">            Dictinary specifying the data types and subtypes</span>
+<span class="sd">            of the fields that will be modeled. Field types and subtypes</span>
+<span class="sd">            combinations must be compatible with the SDV Metadata Schema.</span>
+<span class="sd">        anonymize_fields (dict[str, str]):</span>
+<span class="sd">            Dict specifying which fields to anonymize and what faker</span>
+<span class="sd">            category they belong to.</span>
+<span class="sd">        table_metadata (dict or metadata.Table):</span>
+<span class="sd">            Table metadata instance or dict representation.</span>
+<span class="sd">            If given alongside any other metadata-related arguments, an</span>
+<span class="sd">            exception will be raised.</span>
+<span class="sd">            If not given at all, it will be built using the other</span>
+<span class="sd">            arguments or learned from the data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">TRANSFORMER_TEMPLATES</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">_metadata</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_field_names</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_primary_key</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_field_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_anonymize_fields</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_constraints</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Initialize a Tabular Model.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            field_names (list[str]):</span>
-<span class="sd">                List of names of the fields that need to be modeled</span>
-<span class="sd">                and included in the generated output data. Any additional</span>
-<span class="sd">                fields found in the data will be ignored and will not be</span>
-<span class="sd">                included in the generated output, except if they have</span>
-<span class="sd">                been added as primary keys or fields to anonymize.</span>
-<span class="sd">                If ``None``, all the fields found in the data are used.</span>
-<span class="sd">            primary_key (str, list[str] or dict[str, dict]):</span>
-<span class="sd">                Specification about which field or fields are the</span>
-<span class="sd">                primary key of the table and information about how</span>
-<span class="sd">                to generate them.</span>
-<span class="sd">            field_types (dict[str, dict]):</span>
-<span class="sd">                Dictinary specifying the data types and subtypes</span>
-<span class="sd">                of the fields that will be modeled. Field types and subtypes</span>
-<span class="sd">                combinations must be compatible with the SDV Metadata Schema.</span>
-<span class="sd">            anonymize_fields (dict[str, str]):</span>
-<span class="sd">                Dict specifying which fields to anonymize and what faker</span>
-<span class="sd">                category they belong to.</span>
-<span class="sd">            table_metadata (dict or metadata.Table):</span>
-<span class="sd">                Table metadata instance or dict representation.</span>
-<span class="sd">                If given alongside any other metadata-related arguments, an</span>
-<span class="sd">                exception will be raised.</span>
-<span class="sd">                If not given at all, it will be built using the other</span>
-<span class="sd">                arguments or learned from the data.</span>
-<span class="sd">            *args, **kwargs:</span>
-<span class="sd">                Subclasses will add any arguments or keyword arguments needed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+                 <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">table_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">table_metadata</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,)</span>
+                <span class="n">table_metadata</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">field_names</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">field_types</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">field_names</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">field_types</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="p">,</span> <span class="n">constraints</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">arg</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="s1">&#39;If table_metadata is given </span><span class="si">{}</span><span class="s1"> must be None&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
@@ -380,6 +389,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span> <span class="o">=</span> <span class="n">primary_key</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_field_types</span> <span class="o">=</span> <span class="n">field_types</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize_fields</span> <span class="o">=</span> <span class="n">anonymize_fields</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">constraints</span>
 
     <span class="k">def</span> <span class="nf">_fit_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Generate a new Table metadata and fit it to the data.</span>
@@ -397,6 +407,7 @@
             <span class="n">primary_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">,</span>
             <span class="n">field_types</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_types</span><span class="p">,</span>
             <span class="n">anonymize_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_anonymize_fields</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span>
             <span class="n">transformer_templates</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TRANSFORMER_TEMPLATES</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -441,7 +452,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span></div>
 
-<div class="viewcode-block" id="BaseTabularModel.sample"><a class="viewcode-back" href="../../../api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseTabularModel.sample"><a class="viewcode-back" href="../../../api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
@@ -453,14 +464,41 @@
 <span class="sd">                Fixed values to use for knowledge-based sampling.</span>
 <span class="sd">                In case the model does not support knowledge-based</span>
 <span class="sd">                sampling, a discard+resample strategy will be used.</span>
+<span class="sd">            max_retries (int):</span>
+<span class="sd">                Number of times to retry sampling discarded rows.</span>
+<span class="sd">                Defaults to 100.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">num_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span>
-        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span></div>
+        <span class="n">num_to_sample</span> <span class="o">=</span> <span class="n">num_rows</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+        <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">num_valid</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">%s</span><span class="s1"> trials&#39;</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">)</span>
+
+            <span class="n">invalid</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
+            <span class="n">proportion</span> <span class="o">=</span> <span class="n">counter</span> <span class="o">*</span> <span class="n">num_rows</span> <span class="o">/</span> <span class="n">num_valid</span>
+            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">remaining</span> <span class="o">*</span> <span class="n">proportion</span><span class="p">)</span>
+
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> invalid rows found. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">invalid</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
+            <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
+            <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
+
+            <span class="n">sampled</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
+            <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+            <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BaseTabularModel.get_parameters"><a class="viewcode-back" href="../../../api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel.get_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the parameters learned from the data.</span>

@@ -157,6 +157,11 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -358,7 +363,7 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.ctgan.CTGAN" title="sdv.tabular.ctgan.CTGAN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN</span></code></a>([field_names, primary_key, …])</p></td>
-<td><p>Model wrapping <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code> copula.</p></td>
+<td><p>Model wrapping <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code> model.</p></td>
 </tr>
 </tbody>
 </table>
@@ -366,10 +371,45 @@
 <dt id="sdv.tabular.ctgan.CTGAN">
 <em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.ctgan.</code><code class="sig-name descname">CTGAN</code><span class="sig-paren">(</span><em class="sig-param">field_names=None</em>, <em class="sig-param">primary_key=None</em>, <em class="sig-param">field_types=None</em>, <em class="sig-param">anonymize_fields=None</em>, <em class="sig-param">constraints=None</em>, <em class="sig-param">table_metadata=None</em>, <em class="sig-param">epochs=300</em>, <em class="sig-param">log_frequency=True</em>, <em class="sig-param">embedding_dim=128</em>, <em class="sig-param">gen_dim=(256</em>, <em class="sig-param">256)</em>, <em class="sig-param">dis_dim=(256</em>, <em class="sig-param">256)</em>, <em class="sig-param">l2scale=1e-06</em>, <em class="sig-param">batch_size=500</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/ctgan.html#CTGAN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.ctgan.CTGAN" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel" title="sdv.tabular.base.BaseTabularModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">sdv.tabular.base.BaseTabularModel</span></code></a></p>
-<p>Model wrapping <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code> copula.</p>
+<p>Model wrapping <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code> model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TBD</strong> – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of names of the fields that need to be modeled
+and included in the generated output data. Any additional
+fields found in the data will be ignored and will not be
+included in the generated output, except if they have
+been added as primary keys or fields to anonymize.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, all the fields found in the data are used.</p></li>
+<li><p><strong>primary_key</strong> (<em>str</em><em>, </em><em>list</em><em>[</em><em>str</em><em>] or </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>]</em>) – Specification about which field or fields are the
+primary key of the table and information about how
+to generate them.</p></li>
+<li><p><strong>field_types</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>]</em>) – Dictinary specifying the data types and subtypes
+of the fields that will be modeled. Field types and subtypes
+combinations must be compatible with the SDV Metadata Schema.</p></li>
+<li><p><strong>anonymize_fields</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em> or </em><em>tuple</em><em>]</em>) – Dict specifying which fields to anonymize and what faker
+category they belong to. If arguments for the faker need to be
+passed to fine tune the value generation a tuple can be passed,
+where the first element is the category and the rest are additional
+positional arguments for the Faker.</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – List of dicts specifying field and inter-field constraints.
+TODO: Format TBD</p></li>
+<li><p><strong>table_metadata</strong> (<em>dict</em><em> or </em><a class="reference internal" href="sdv.metadata.html#sdv.metadata.Table" title="sdv.metadata.Table"><em>metadata.Table</em></a>) – Table metadata instance or dict representation.
+If given alongside any other metadata-related arguments, an
+exception will be raised.
+If not given at all, it will be built using the other
+arguments or learned from the data.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em>) – Number of training epochs. Defaults to 300.</p></li>
+<li><p><strong>log_frequency</strong> (<em>boolean</em>) – Whether to use log frequency of categorical levels in conditional
+sampling. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>embedding_dim</strong> (<em>int</em>) – Size of the random sample passed to the Generator. Defaults to 128.</p></li>
+<li><p><strong>gen_dim</strong> (<em>tuple</em><em> or </em><em>list of ints</em>) – Size of the output samples for each one of the Residuals. A Resiudal Layer
+will be created for each one of the values provided. Defaults to (256, 256).</p></li>
+<li><p><strong>dis_dim</strong> (<em>tuple</em><em> or </em><em>list of ints</em>) – Size of the output samples for each one of the Discriminator Layers. A Linear
+Layer will be created for each one of the values provided. Defaults to (256, 256).</p></li>
+<li><p><strong>l2scale</strong> (<em>float</em>) – Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Number of data samples to process in each step.</p></li>
+</ul>
 </dd>
 </dl>
 <p><strong>Attributes</strong></p>

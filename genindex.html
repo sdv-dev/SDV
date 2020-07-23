@@ -156,6 +156,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -391,8 +396,18 @@
       </ul></li>
       <li><a href="api/sdv.tabular.utils.html#sdv.tabular.utils.check_matrix_symmetric_positive_definite">check_matrix_symmetric_positive_definite() (in module sdv.tabular.utils)</a>
 </li>
+      <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula">ColumnFormula (class in sdv.constraints.tabular)</a>
+</li>
+      <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint">Constraint (class in sdv.constraints)</a>
+
+      <ul>
+        <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint">(class in sdv.constraints.base)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.ConstraintMeta">ConstraintMeta (class in sdv.constraints.base)</a>
+</li>
       <li><a href="api/sdv.modeler.html#sdv.modeler.Modeler.cpa">cpa() (sdv.modeler.Modeler method)</a>
 </li>
       <li><a href="api/sdv.tabular.html#sdv.tabular.CTGAN">CTGAN (class in sdv.tabular)</a>
@@ -401,6 +416,8 @@
         <li><a href="api/sdv.tabular.ctgan.html#sdv.tabular.ctgan.CTGAN">(class in sdv.tabular.ctgan)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.CustomConstraint">CustomConstraint (class in sdv.constraints.tabular)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -439,9 +456,27 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sdv.metadata.html#sdv.metadata.Table.fit">fit() (sdv.metadata.Table method)</a>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.filter_valid">filter_valid() (sdv.constraints.base.Constraint method)</a>
 
       <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.filter_valid">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Table.filter_valid">(sdv.metadata.Table method)</a>
+</li>
+        <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.filter_valid">(sdv.metadata.table.Table method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.fit">fit() (sdv.constraints.base.Constraint method)</a>
+
+      <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.fit">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.fit">(sdv.constraints.tabular.GreaterThan method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.fit">(sdv.constraints.tabular.UniqueCombinations method)</a>
+</li>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Table.fit">(sdv.metadata.Table method)</a>
+</li>
         <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.fit">(sdv.metadata.table.Table method)</a>
 </li>
         <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.fit">(sdv.models.base.SDVModel method)</a>
@@ -457,10 +492,26 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.fit_transform">fit_transform() (sdv.constraints.base.Constraint method)</a>
+
+      <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.fit_transform">(sdv.constraints.Constraint method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.tabular.utils.html#sdv.tabular.utils.flatten_array">flatten_array() (in module sdv.tabular.utils)</a>
 </li>
       <li><a href="api/sdv.tabular.utils.html#sdv.tabular.utils.flatten_dict">flatten_dict() (in module sdv.tabular.utils)</a>
 </li>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.from_dict">from_dict() (sdv.constraints.base.Constraint class method)</a>
+
+      <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.from_dict">(sdv.constraints.Constraint class method)</a>
+</li>
+        <li><a href="api/sdv.metadata.html#sdv.metadata.Table.from_dict">(sdv.metadata.Table class method)</a>
+</li>
+        <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.from_dict">(sdv.metadata.table.Table class method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.metadata.html#sdv.metadata.Table.from_json">from_json() (sdv.metadata.Table class method)</a>
 
       <ul>
@@ -521,16 +572,22 @@
         <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.get_fields">(sdv.metadata.table.Table method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.html#sdv.Metadata.get_foreign_key">get_foreign_key() (sdv.Metadata method)</a>
 
       <ul>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_foreign_key">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel.get_metadata">get_metadata() (sdv.tabular.base.BaseTabularModel method)</a>
 </li>
+      <li><a href="api/sdv.metadata.html#sdv.metadata.Table.get_model_kwargs">get_model_kwargs() (sdv.metadata.Table method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.get_model_kwargs">(sdv.metadata.table.Table method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.get_parameters">get_parameters() (sdv.models.base.SDVModel method)</a>
 
       <ul>
@@ -555,6 +612,8 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_primary_key">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.get_qualified_name">get_qualified_name() (in module sdv.constraints.base)</a>
+</li>
       <li><a href="api/sdv.html#sdv.Metadata.get_table_meta">get_table_meta() (sdv.Metadata method)</a>
 
       <ul>
@@ -567,6 +626,8 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.get_tables">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan">GreaterThan (class in sdv.constraints.tabular)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -589,8 +650,22 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.import_object">import_object() (in module sdv.constraints.base)</a>
+</li>
       <li><a href="api/sdv.tabular.utils.html#sdv.tabular.utils.impute">impute() (in module sdv.tabular.utils)</a>
 </li>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.is_valid">is_valid() (sdv.constraints.base.Constraint method)</a>
+
+      <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.is_valid">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.is_valid">(sdv.constraints.tabular.ColumnFormula method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.is_valid">(sdv.constraints.tabular.GreaterThan method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.is_valid">(sdv.constraints.tabular.UniqueCombinations method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -625,6 +700,8 @@
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.load_tables">(sdv.metadata.Metadata method)</a>
 </li>
       </ul></li>
+      <li><a href="api/sdv.demo.html#sdv.demo.load_tabular_demo">load_tabular_demo() (in module sdv.demo)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -677,9 +754,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.sampler.html#sdv.sampler.Sampler.remaining_primary_key">remaining_primary_key (sdv.sampler.Sampler attribute)</a>
 </li>
-      <li><a href="api/sdv.html#sdv.Metadata.reverse_transform">reverse_transform() (sdv.Metadata method)</a>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.reverse_transform">reverse_transform() (sdv.constraints.base.Constraint method)</a>
 
       <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.reverse_transform">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.reverse_transform">(sdv.constraints.tabular.ColumnFormula method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.reverse_transform">(sdv.constraints.tabular.GreaterThan method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.reverse_transform">(sdv.constraints.tabular.UniqueCombinations method)</a>
+</li>
+        <li><a href="api/sdv.html#sdv.Metadata.reverse_transform">(sdv.Metadata method)</a>
+</li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.reverse_transform">(sdv.metadata.Metadata method)</a>
 </li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Table.reverse_transform">(sdv.metadata.Table method)</a>
@@ -751,6 +838,12 @@
 </li>
       <li><a href="api/sdv.benchmark.html#module-sdv.benchmark">sdv.benchmark (module)</a>
 </li>
+      <li><a href="api/sdv.constraints.html#module-sdv.constraints">sdv.constraints (module)</a>
+</li>
+      <li><a href="api/sdv.constraints.base.html#module-sdv.constraints.base">sdv.constraints.base (module)</a>
+</li>
+      <li><a href="api/sdv.constraints.tabular.html#module-sdv.constraints.tabular">sdv.constraints.tabular (module)</a>
+</li>
       <li><a href="api/sdv.demo.html#module-sdv.demo">sdv.demo (module)</a>
 </li>
       <li><a href="api/sdv.evaluation.html#module-sdv.evaluation">sdv.evaluation (module)</a>
@@ -789,6 +882,12 @@
 </li>
       <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel">SDVModel (class in sdv.models.base)</a>
 </li>
+      <li><a href="api/sdv.metadata.html#sdv.metadata.Table.set_model_kwargs">set_model_kwargs() (sdv.metadata.Table method)</a>
+
+      <ul>
+        <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.set_model_kwargs">(sdv.metadata.table.Table method)</a>
+</li>
+      </ul></li>
       <li><a href="api/sdv.models.base.html#sdv.models.base.SDVModel.set_parameters">set_parameters() (sdv.models.base.SDVModel method)</a>
 
       <ul>
@@ -823,9 +922,13 @@
         <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table">(class in sdv.metadata.table)</a>
 </li>
       </ul></li>
-      <li><a href="api/sdv.html#sdv.Metadata.to_dict">to_dict() (sdv.Metadata method)</a>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.to_dict">to_dict() (sdv.constraints.base.Constraint method)</a>
 
       <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.to_dict">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.html#sdv.Metadata.to_dict">(sdv.Metadata method)</a>
+</li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.to_dict">(sdv.metadata.Metadata method)</a>
 </li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Table.to_dict">(sdv.metadata.Table method)</a>
@@ -843,11 +946,19 @@
         <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.to_json">(sdv.metadata.table.Table method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sdv.html#sdv.Metadata.transform">transform() (sdv.Metadata method)</a>
+      <li><a href="api/sdv.constraints.base.html#sdv.constraints.base.Constraint.transform">transform() (sdv.constraints.base.Constraint method)</a>
 
       <ul>
+        <li><a href="api/sdv.constraints.html#sdv.constraints.Constraint.transform">(sdv.constraints.Constraint method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.transform">(sdv.constraints.tabular.ColumnFormula method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.transform">(sdv.constraints.tabular.GreaterThan method)</a>
+</li>
+        <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.transform">(sdv.constraints.tabular.UniqueCombinations method)</a>
+</li>
+        <li><a href="api/sdv.html#sdv.Metadata.transform">(sdv.Metadata method)</a>
+</li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Metadata.transform">(sdv.metadata.Metadata method)</a>
 </li>
         <li><a href="api/sdv.metadata.html#sdv.metadata.Table.transform">(sdv.metadata.Table method)</a>
@@ -855,6 +966,8 @@
         <li><a href="api/sdv.metadata.table.html#sdv.metadata.table.Table.transform">(sdv.metadata.table.Table method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.tabular.base.html#sdv.tabular.base.BaseTabularModel.TRANSFORMER_TEMPLATES">TRANSFORMER_TEMPLATES (sdv.tabular.base.BaseTabularModel attribute)</a>
 
       <ul>
@@ -874,6 +987,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sdv.tabular.utils.html#sdv.tabular.utils.unflatten_dict">unflatten_dict() (in module sdv.tabular.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations">UniqueCombinations (class in sdv.constraints.tabular)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -157,6 +157,11 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sdv.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sdv.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -364,11 +369,36 @@
 </table>
 <dl class="class">
 <dt id="sdv.tabular.base.BaseTabularModel">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.base.</code><code class="sig-name descname">BaseTabularModel</code><span class="sig-paren">(</span><em class="sig-param">field_names=None</em>, <em class="sig-param">primary_key=None</em>, <em class="sig-param">field_types=None</em>, <em class="sig-param">anonymize_fields=None</em>, <em class="sig-param">table_metadata=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.base.</code><code class="sig-name descname">BaseTabularModel</code><span class="sig-paren">(</span><em class="sig-param">field_names=None</em>, <em class="sig-param">primary_key=None</em>, <em class="sig-param">field_types=None</em>, <em class="sig-param">anonymize_fields=None</em>, <em class="sig-param">table_metadata=None</em>, <em class="sig-param">constraints=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for all the tabular models.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">BaseTabularModel</span></code> class defines the common API that all the
 TabularModels need to implement, as well as common functionality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of names of the fields that need to be modeled
+and included in the generated output data. Any additional
+fields found in the data will be ignored and will not be
+included in the generated output, except if they have
+been added as primary keys or fields to anonymize.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, all the fields found in the data are used.</p></li>
+<li><p><strong>primary_key</strong> (<em>str</em><em>, </em><em>list</em><em>[</em><em>str</em><em>] or </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>]</em>) – Specification about which field or fields are the
+primary key of the table and information about how
+to generate them.</p></li>
+<li><p><strong>field_types</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>]</em>) – Dictinary specifying the data types and subtypes
+of the fields that will be modeled. Field types and subtypes
+combinations must be compatible with the SDV Metadata Schema.</p></li>
+<li><p><strong>anonymize_fields</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Dict specifying which fields to anonymize and what faker
+category they belong to.</p></li>
+<li><p><strong>table_metadata</strong> (<em>dict</em><em> or </em><a class="reference internal" href="sdv.metadata.html#sdv.metadata.Table" title="sdv.metadata.Table"><em>metadata.Table</em></a>) – Table metadata instance or dict representation.
+If given alongside any other metadata-related arguments, an
+exception will be raised.
+If not given at all, it will be built using the other
+arguments or learned from the data.</p></li>
+</ul>
+</dd>
+</dl>
 <p><strong>Methods</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -391,7 +421,7 @@ TabularModels need to implement, as well as common functionality.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.load" title="sdv.tabular.base.BaseTabularModel.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
 <td><p>Load a TabularModel instance from a given path.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.sample" title="sdv.tabular.base.BaseTabularModel.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([num_rows, values])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.sample" title="sdv.tabular.base.BaseTabularModel.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([num_rows, values, max_retries])</p></td>
 <td><p>Sample rows from this table.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#sdv.tabular.base.BaseTabularModel.save" title="sdv.tabular.base.BaseTabularModel.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
@@ -506,7 +536,7 @@ this model.</p>
 
 <dl class="method">
 <dt id="sdv.tabular.base.BaseTabularModel.sample">
-<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">values=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param">num_rows=None</em>, <em class="sig-param">values=None</em>, <em class="sig-param">max_retries=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdv/tabular/base.html#BaseTabularModel.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.base.BaseTabularModel.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample rows from this table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -518,6 +548,8 @@ data passed to the <code class="docutils literal notranslate"><span class="pre">
 Fixed values to use for knowledge-based sampling.
 In case the model does not support knowledge-based
 sampling, a discard+resample strategy will be used.</p></li>
+<li><p><strong>max_retries</strong> (<em>int</em>) – Number of times to retry sampling discarded rows.
+Defaults to 100.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

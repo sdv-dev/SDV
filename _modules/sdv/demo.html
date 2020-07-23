@@ -155,6 +155,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -322,7 +327,9 @@
 <span class="kn">import</span> <span class="nn">urllib</span>
 <span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
 
@@ -432,7 +439,7 @@
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_load_dummy</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">_load_relational_dummy</span><span class="p">():</span>
     <span class="n">users</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
         <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;US&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">,</span> <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">,</span> <span class="s1">&#39;DE&#39;</span><span class="p">,</span> <span class="s1">&#39;BG&#39;</span><span class="p">,</span> <span class="s1">&#39;ES&#39;</span><span class="p">,</span> <span class="s1">&#39;FR&#39;</span><span class="p">,</span> <span class="s1">&#39;UK&#39;</span><span class="p">],</span>
@@ -476,7 +483,7 @@
 
 
 <div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load demo data.</span>
+    <span class="sd">&quot;&quot;&quot;Load relational demo data.</span>
 
 <span class="sd">    The demo data consists of the metadata and tables dict for a a toy dataset with</span>
 <span class="sd">    three simple tables:</span>
@@ -502,12 +509,31 @@
     <span class="k">if</span> <span class="n">dataset_name</span><span class="p">:</span>
         <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">_load_demo_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">_load_dummy</span><span class="p">()</span>
+        <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">_load_relational_dummy</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span>
 
     <span class="k">return</span> <span class="n">tables</span></div>
+
+
+<div class="viewcode-block" id="load_tabular_demo"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.load_tabular_demo">[docs]</a><span class="k">def</span> <span class="nf">load_tabular_demo</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Load a dummy tabular demo dataframe.&quot;&quot;&quot;</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+    <span class="n">age_when_joined</span> <span class="o">=</span> <span class="n">age</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+    <span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span>
+    <span class="n">adresses</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">address</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;company&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Pear&#39;</span><span class="p">,</span> <span class="s1">&#39;Pear&#39;</span><span class="p">,</span> <span class="s1">&#39;Glasses&#39;</span><span class="p">,</span> <span class="s1">&#39;Glasses&#39;</span><span class="p">,</span> <span class="s1">&#39;Cheerper&#39;</span><span class="p">,</span> <span class="s1">&#39;Cheerper&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;department&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Sales&#39;</span><span class="p">,</span> <span class="s1">&#39;Design&#39;</span><span class="p">,</span> <span class="s1">&#39;AI&#39;</span><span class="p">,</span> <span class="s1">&#39;Search Engine&#39;</span><span class="p">,</span> <span class="s1">&#39;BigData&#39;</span><span class="p">,</span> <span class="s1">&#39;Support&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">names</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="n">adresses</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="n">age</span><span class="p">,</span>
+        <span class="s1">&#39;age_when_joined&#39;</span><span class="p">:</span> <span class="n">age_when_joined</span><span class="p">,</span>
+        <span class="s1">&#39;years_in_the_company&#39;</span><span class="p">:</span> <span class="n">age</span> <span class="o">-</span> <span class="n">age_when_joined</span>
+    <span class="p">})</span></div>
 
 
 <div class="viewcode-block" id="get_available_demos"><a class="viewcode-back" href="../../api/sdv.demo.html#sdv.get_available_demos">[docs]</a><span class="k">def</span> <span class="nf">get_available_demos</span><span class="p">():</span>

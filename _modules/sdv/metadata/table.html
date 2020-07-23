@@ -155,6 +155,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -327,6 +332,7 @@
 <span class="kn">import</span> <span class="nn">rdt</span>
 <span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
 
+<span class="kn">from</span> <span class="nn">sdv.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.errors</span> <span class="kn">import</span> <span class="n">MetadataError</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -340,9 +346,10 @@
 <span class="sd">    from the filesystem and to know how to parse and transform it to numerical data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_anonymization_mappings</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_fakers</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_constraint_instances</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">_FIELD_TEMPLATES</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -410,25 +417,25 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Category &quot;</span><span class="si">{}</span><span class="s1">&quot; couldn</span><span class="se">\&#39;</span><span class="s1">t be found on faker&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">transformer_templates</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="c1"># TODO: Validate that the given metadata is a valid dict</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="kc">None</span>
-
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformer_templates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="n">field_names</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span> <span class="o">=</span> <span class="n">primary_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_types</span> <span class="o">=</span> <span class="n">field_types</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize_fields</span> <span class="o">=</span> <span class="n">anonymize_fields</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize_fields</span> <span class="o">=</span> <span class="n">anonymize_fields</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span> <span class="o">=</span> <span class="n">primary_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">constraints</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transformer_templates</span> <span class="o">=</span> <span class="n">transformer_templates</span> <span class="ow">or</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fakers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_faker</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="p">(</span><span class="n">anonymize_fields</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+<div class="viewcode-block" id="Table.get_model_kwargs"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.get_model_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the required model kwargs for the indicated model.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">model_name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Table.set_model_kwargs"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.set_model_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">set_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the model kwargs used for the indicated model.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_kwargs</span></div>
 
     <span class="k">def</span> <span class="nf">_get_field_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_metadata</span><span class="p">):</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
@@ -449,7 +456,7 @@
 <span class="sd">            dict:</span>
 <span class="sd">                Dictionary of fields metadata for this table.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span></div>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.get_dtypes"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of the table.</span>
@@ -461,13 +468,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
 <span class="sd">                Dictionary that contains the field names and data types.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError:</span>
-<span class="sd">                If a field has an invalid type or subtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
@@ -490,10 +493,8 @@
 <span class="sd">            ValueError:</span>
 <span class="sd">                If a column from the data analyzed is an unsupported data type</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
-
         <span class="n">fields_metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Field </span><span class="si">{}</span><span class="s1"> not found in given data&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_name</span><span class="p">))</span>
 
@@ -508,6 +509,11 @@
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported dtype </span><span class="si">{}</span><span class="s1"> in column </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span>
 
                 <span class="n">field_meta</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">field_template</span><span class="p">)</span>
+
+            <span class="n">anonymize_category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">anonymize_category</span><span class="p">:</span>
+                <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;pii&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;pii_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">anonymize_category</span>
 
             <span class="n">fields_metadata</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_meta</span>
 
@@ -547,6 +553,21 @@
 
         <span class="k">return</span> <span class="n">transformers</span>
 
+    <span class="k">def</span> <span class="nf">_fit_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+                <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+                <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+            <span class="n">constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">constraint</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
     <span class="k">def</span> <span class="nf">_fit_hyper_transformer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create and return a new ``rdt.HyperTransformer`` instance.</span>
 
@@ -556,7 +577,13 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            rdt.HyperTransformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># dtypes = self.get_dtypes(ids=False)</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">or</span> <span class="n">fields</span><span class="p">[</span><span class="n">column</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+                <span class="n">dtypes</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span>
+
         <span class="n">transformers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformers</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">dtypes</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span>
@@ -598,10 +625,10 @@
 <span class="sd">                invalid type or subtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">field_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Field &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist in this table&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_name</span><span class="p">))</span>
 
-            <span class="n">field_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">field_name</span><span class="p">]</span>
+            <span class="n">field_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
             <span class="n">field_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_key_subtype</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">)</span>
 
             <span class="n">field_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
@@ -613,10 +640,13 @@
 
     <span class="k">def</span> <span class="nf">_make_anonymization_mappings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">mappings</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">faker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fakers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">uniques</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
-            <span class="n">fake_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">))]</span>
-            <span class="n">mappings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">uniques</span><span class="p">,</span> <span class="n">fake_values</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">field_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pii&#39;</span><span class="p">):</span>
+                <span class="n">faker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;pii_category&#39;</span><span class="p">])</span>
+
+                <span class="n">uniques</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+                <span class="n">fake_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">))]</span>
+                <span class="n">mappings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">uniques</span><span class="p">,</span> <span class="n">fake_values</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_anonymization_mappings</span> <span class="o">=</span> <span class="n">mappings</span>
 
@@ -636,14 +666,15 @@
 <span class="sd">                Table to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fields_metadata</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fields_metadata</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Re-set the primary key to validate its name and type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fakers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_make_anonymization_mappings</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_make_anonymization_mappings</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="c1"># TODO: Treat/Learn constraints</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit_hyper_transformer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -658,6 +689,10 @@
 <span class="sd">                Transformed data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.reverse_transform"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -672,7 +707,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">reversed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
+            <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)</span>
+
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">field_type</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
@@ -683,6 +721,22 @@
             <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_data</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">reversed_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Table.filter_valid"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.filter_valid">[docs]</a>    <span class="k">def</span> <span class="nf">filter_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Filter the data using the constraints and return only the valid rows.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Table containing only the valid rows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span></div>
 
     <span class="c1"># ###################### #</span>
     <span class="c1"># Metadata Serialization #</span>
@@ -695,7 +749,11 @@
 <span class="sd">            dict:</span>
 <span class="sd">                dict representation of this metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">),</span>
+            <span class="s1">&#39;constraints&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">],</span>
+            <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">),</span>
+        <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Table.to_json"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
@@ -705,7 +763,21 @@
 <span class="sd">                Path of the JSON file where this metadata will be stored.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.from_dict"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load a Table from a metadata dict.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metadata_dict (dict):</span>
+<span class="sd">                Dict metadata to load.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;constraints&#39;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
 
 <div class="viewcode-block" id="Table.from_json"><a class="viewcode-back" href="../../../api/sdv.metadata.table.html#sdv.metadata.Table.from_json">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
@@ -716,7 +788,7 @@
 <span class="sd">                Path of the JSON file to load</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">in_file</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">))</span></div></div>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">))</span></div></div>
 </pre></div>
 
            </div>

@@ -155,6 +155,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sdv.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.metadata.html">sdv.metadata package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
@@ -330,6 +335,30 @@
     <span class="sd">&quot;&quot;&quot;Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        field_names (list[str]):</span>
+<span class="sd">            List of names of the fields that need to be modeled</span>
+<span class="sd">            and included in the generated output data. Any additional</span>
+<span class="sd">            fields found in the data will be ignored and will not be</span>
+<span class="sd">            included in the generated output, except if they have</span>
+<span class="sd">            been added as primary keys or fields to anonymize.</span>
+<span class="sd">            If ``None``, all the fields found in the data are used.</span>
+<span class="sd">        primary_key (str, list[str] or dict[str, dict]):</span>
+<span class="sd">            Specification about which field or fields are the</span>
+<span class="sd">            primary key of the table and information about how</span>
+<span class="sd">            to generate them.</span>
+<span class="sd">        field_types (dict[str, dict]):</span>
+<span class="sd">            Dictinary specifying the data types and subtypes</span>
+<span class="sd">            of the fields that will be modeled. Field types and subtypes</span>
+<span class="sd">            combinations must be compatible with the SDV Metadata Schema.</span>
+<span class="sd">        anonymize_fields (dict[str, str]):</span>
+<span class="sd">            Dict specifying which fields to anonymize and what faker</span>
+<span class="sd">            category they belong to.</span>
+<span class="sd">        table_metadata (dict or metadata.Table):</span>
+<span class="sd">            Table metadata instance or dict representation.</span>
+<span class="sd">            If given alongside any other metadata-related arguments, an</span>
+<span class="sd">            exception will be raised.</span>
+<span class="sd">            If not given at all, it will be built using the other</span>
+<span class="sd">            arguments or learned from the data.</span>
 <span class="sd">        distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use.</span>
 <span class="sd">        categorical_transformer (str):</span>
@@ -381,16 +410,26 @@
         <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">OneHotEncodingTransformer</span>
     <span class="p">}</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">categorical_transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">categorical_transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
+            <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
+            <span class="n">field_types</span><span class="o">=</span><span class="n">field_types</span><span class="p">,</span>
+            <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;model_kwargs&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="p">:</span>
-            <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">distribution</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">model_kwargs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">distribution</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
 
-            <span class="k">if</span> <span class="n">categorical_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;categorical_transformer&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">categorical_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;categorical_transformer&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="o">=</span> <span class="n">distribution</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_DISTRIBUTION</span>
 
@@ -406,7 +445,9 @@
 <span class="sd">            - Distribution found for each column</span>
 <span class="sd">            - categorical_transformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">):</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_model_kwargs</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_kwargs</span><span class="p">:</span>
             <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
             <span class="n">univariates</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span>
             <span class="n">columns</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span>
@@ -415,10 +456,10 @@
             <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">univariates</span><span class="p">):</span>
                 <span class="n">distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">set_model_kwargs</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="p">{</span>
                 <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distributions</span><span class="p">,</span>
                 <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">,</span>
-            <span class="p">}</span>
+            <span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>

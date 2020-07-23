@@ -1,0 +1,705 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sdv.constraints.tabular &mdash; SDV 0.3.6.dev0 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/dai-logo-white.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SDV
+          
+
+          
+            
+            <img src="../../../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">SDV - Synthetic Data Vault</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../readme.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html#install">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../readme.html#install-with-pip">Install with pip</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html#quickstart">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html#join-out-community">Join out community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html#About-the-datset">About the datset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html#Data-model-summary">Data model summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html#1.-Load-data">1. Load data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../tutorials/03_Relational_Data_Modeling.html#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../metadata.html">Working with Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#load-your-data">Load your data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#add-the-first-table">Add the first table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../metadata.html#metadata-schema">Metadata Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../metadata.html#top-level">Top Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../metadata.html#table">Table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../metadata.html#field-details">Field details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#datetime-fields">Datetime fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#primary-key-fields">Primary key fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../metadata.html#foreign-key-fields">Foreign key fields</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Resources</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sdv.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.constraints.html">sdv.constraints package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.metadata.html">sdv.metadata package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.models.html">sdv.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.tabular.html">sdv.tabular package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.tabular.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.benchmark.html">sdv.benchmark module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.demo.html">sdv.demo module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.evaluation.html">sdv.evaluation module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.modeler.html">sdv.modeler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.sampler.html">sdv.sampler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdv.sdv.html">sdv.sdv module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdv.html#module-sdv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#types-of-contributions">Types of Contributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#report-bugs">Report Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#fix-bugs">Fix Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#implement-features">Implement Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#write-documentation">Write Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#submit-feedback">Submit Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#get-started">Get Started!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../contributing.html#release-workflow">Release Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../contributing.html#release-candidates">Release Candidates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../history.html">History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id1">0.3.5 - 2020-07-09</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id2">0.3.4 - 2020-07-04</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#new-features">New Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#general-improvements">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id3">0.3.3 - 2020-06-26</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id4">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id5">0.3.2 - 2020-02-03</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id6">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id7">0.3.1 - 2020-01-22</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id8">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id9">General Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id10">0.3.0 - 2019-12-23</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id11">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id12">0.2.2 - 2019-12-10</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id13">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id14">0.2.1 - 2019-11-25</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id15">New Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id16">0.2.0 - 2019-10-11</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id17">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id18">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#bugs-fixed">Bugs Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#id19">0.1.2 - 2019-09-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id20">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id22">General Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../history.html#id25">Bugs fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../history.html#first-release">0.1.0 - First Release</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SDV</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sdv.constraints.tabular</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sdv.constraints.tabular</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Table constraints.</span>
+
+<span class="sd">This module contains constraints that are evaluated within a single table,</span>
+<span class="sd">and which can affect one or more columns at a time, as well as one or more</span>
+<span class="sd">rows.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">sdv.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">import_object</span>
+
+
+<div class="viewcode-block" id="CustomConstraint"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.CustomConstraint">[docs]</a><span class="k">class</span> <span class="nc">CustomConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Custom Constraint Class.</span>
+
+<span class="sd">    This class simply takes the ``transform``, ``reverse_transform``</span>
+<span class="sd">    and ``is_valid`` methods as optional arguments, so users can</span>
+<span class="sd">    pass custom functions for each one of them.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tranform (callable):</span>
+<span class="sd">            Function to replace the ``tranform`` method.</span>
+<span class="sd">        reverse_tranform (callable):</span>
+<span class="sd">            Function to replace the ``reverse_tranform`` method.</span>
+<span class="sd">        is_valid (callable):</span>
+<span class="sd">            Function to replace the ``is_valid`` method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reverse_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reverse_transform</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">reverse_transform</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_valid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">is_valid</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UniqueCombinations"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations">[docs]</a><span class="k">class</span> <span class="nc">UniqueCombinations</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the combinations across multiple colums stay unique.</span>
+
+<span class="sd">    One simple example of this constraint can be found in a table that</span>
+<span class="sd">    contains the columns `country` and `city`, where each country can</span>
+<span class="sd">    have multiple cities and the same city name can even be found in</span>
+<span class="sd">    multiple countries, but some combinations of country/city would</span>
+<span class="sd">    produce invalid results.</span>
+
+<span class="sd">    This constraint would ensure that the combinations of country/city</span>
+<span class="sd">    found in the sampled data always stay within the combinations previously</span>
+<span class="sd">    seen during training.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        columns (list[str]):</span>
+<span class="sd">            Names of the columns that need to produce unique combinations.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_separator</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_joint_column</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handling_strategy</span> <span class="o">=</span> <span class="n">handling_strategy</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_valid_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if separator is valid for this data.</span>
+
+<span class="sd">        If the separator is contained within any of the columns</span>
+<span class="sd">        or the column name obtained after joining the column</span>
+<span class="sd">        names using the separator already exists, the separator</span>
+<span class="sd">        is not valid.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool:</span>
+<span class="sd">                Whether the separator is valid for this data or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="UniqueCombinations.fit"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit this Constraint to the data.</span>
+
+<span class="sd">        The fit process consists on:</span>
+<span class="sd">            - finding a separtor that works for the</span>
+<span class="sd">              current data by iteratively adding `#` to it.</span>
+<span class="sd">            - Generating the joint column name by concatenating</span>
+<span class="sd">              the names of ``self._columns`` with the separator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">=</span> <span class="s1">&#39;#&#39;</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_valid_separator</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="UniqueCombinations.is_valid"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tuples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">table_data</span><span class="o">.</span><span class="n">index</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">tuples</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UniqueCombinations.transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+
+<span class="sd">        The transformation consist on removing all the ``self._columns`` from</span>
+<span class="sd">        the dataframe, concatenating them using the found separator, and</span>
+<span class="sd">        setting them back to the data as a single name with the previously</span>
+<span class="sd">        computed name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lists_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">lists_series</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div>
+
+<div class="viewcode-block" id="UniqueCombinations.reverse_transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.UniqueCombinations.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        The transformation is reversed by popping the joint column from</span>
+<span class="sd">        the table, splitting it by the previously found separator and</span>
+<span class="sd">        them setting all the columns back to the table with the original</span>
+<span class="sd">        names.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">):</span>
+            <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div></div>
+
+
+<div class="viewcode-block" id="GreaterThan"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan">[docs]</a><span class="k">class</span> <span class="nc">GreaterThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the ``high`` column is always greater than the ``low`` one.</span>
+
+<span class="sd">    The transformation strategy works by replacing the ``high`` value with the</span>
+<span class="sd">    difference between it and the ``low`` value and then computing back the ``high``</span>
+<span class="sd">    value by adding it the ``low`` value when reversing the transformation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        low (str):</span>
+<span class="sd">            Name of the column that contains the low value.</span>
+<span class="sd">        high (str):</span>
+<span class="sd">            Name of the column that contains the high value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span> <span class="o">=</span> <span class="n">strict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handling_strategy</span> <span class="o">=</span> <span class="n">handling_strategy</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GreaterThan.fit"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Learn the dtype of the high column.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                The Table data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span></div>
+
+<div class="viewcode-block" id="GreaterThan.is_valid"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Say whether ``high`` is greater than ``low`` in each row.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="GreaterThan.transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+
+<span class="sd">        The transformation consist on replacing the ``high`` value with difference</span>
+<span class="sd">        between it and the ``low`` value.</span>
+
+<span class="sd">        Afterwards, a logarithm is applied to the difference + 1 to be able to ensure</span>
+<span class="sd">        that the value stays positive when reverted afterwards using an exponential.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">table_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">)</span> <span class="o">-</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div>
+
+<div class="viewcode-block" id="GreaterThan.reverse_transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.GreaterThan.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        The transformation is reversed by computing an exponential of the given</span>
+<span class="sd">        value, converting it to the original dtype, subtracting 1 and finally</span>
+<span class="sd">        clipping the value to 0 on the low end to ensure the value is positive.</span>
+
+<span class="sd">        Finally, the obtained value is added to the ``low`` column to get the final</span>
+<span class="sd">        ``high`` value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span> <span class="o">+</span> <span class="n">diff</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div></div>
+
+
+<div class="viewcode-block" id="ColumnFormula"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula">[docs]</a><span class="k">class</span> <span class="nc">ColumnFormula</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute a column based on applying a formula on the others.</span>
+
+<span class="sd">    This contraint accepts as input a simple function and a column name.</span>
+<span class="sd">    During the transformation phase the column is simply dropped.</span>
+<span class="sd">    During the reverse transformation, the column is re-generated by</span>
+<span class="sd">    applying the whole table to the given function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        column (str):</span>
+<span class="sd">            Name of the column to compute applying the formula.</span>
+<span class="sd">        formula (callable):</span>
+<span class="sd">            Function to use for the computation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_column</span> <span class="o">=</span> <span class="n">column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handling_strategy</span> <span class="o">=</span> <span class="n">handling_strategy</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ColumnFormula.is_valid"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Say whether the data fulfills the formula.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">computed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column</span><span class="p">]</span> <span class="o">==</span> <span class="n">computed</span></div>
+
+<div class="viewcode-block" id="ColumnFormula.transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+
+<span class="sd">        The transformation consist on simply dropping the indicated column from the</span>
+<span class="sd">        table to prevent it from being modeled.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div>
+
+<div class="viewcode-block" id="ColumnFormula.reverse_transform"><a class="viewcode-back" href="../../../api/sdv.constraints.tabular.html#sdv.constraints.tabular.ColumnFormula.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        The transformation is reversed by applying the given formula function</span>
+<span class="sd">        to the complete table and storing the result in the indicated column.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIT Data To AI Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
