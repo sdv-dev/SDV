@@ -1,5 +1,19 @@
 # History
 
+## 0.3.6 - 2020-07-23
+
+This release introduces a new concept of `Constraints`, which allow the user to define
+special relationships between columns that will not be handled via modeling.
+
+This is done via a new `sdv.constraints` subpackage which defines some well-known pre-defined
+constraints, as well as a generic framework that allows the user to customize the constraints
+to their needs as much as necessary.
+
+### New Features
+
+* Support for Constraints - [Issue #169](https://github.com/sdv-dev/SDV/issues/169) by @csala
+
+
 ## 0.3.5 - 2020-07-09
 
 This release introduces a new subpackage `sdv.tabular` with models designed specifically
@@ -20,7 +34,7 @@ Currently implemented models are:
 
 ## 0.3.4 - 2020-07-04
 
-## New Features
+### New Features
 
 * Support for Multiple Parents - [Issue #162](https://github.com/sdv-dev/SDV/issues/162) by @csala
 * Sample by default the same number of rows as in the original table - [Issue #163](https://github.com/sdv-dev/SDV/issues/163) by @csala

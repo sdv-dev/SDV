@@ -8,6 +8,7 @@
 [![Travis CI Shield](https://travis-ci.org/sdv-dev/SDV.svg?branch=master)](https://travis-ci.org/sdv-dev/SDV)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 
 # SDV - Synthetic Data Vault
 
@@ -18,13 +19,32 @@
 
 ## Overview
 
-The Synthetic Data Vault (SDV) is a tool that allows users to statistically model an entire
-multi-table, relational dataset. Users can then use the statistical model to generate a
-synthetic dataset. Synthetic data can be used to supplement, augment and in some cases replace
-real data when training machine learning models. Additionally, it enables the testing of machine
-learning or other data dependent software systems without the risk of exposure that comes with
-data disclosure. Underneath the hood it uses a unique hierarchical generative modeling and
-recursive sampling techniques.
+The Synthetic Data Vault (SDV) is a tool that allows users to statistically model tabular
+as well as entire multi-table, relational datasets. Users can then use the statistical
+model to generate a synthetic dataset. Synthetic data can be used to supplement, augment and
+in some cases replace real data when training machine learning models. Additionally, it
+enables the testing of machine learning or other data dependent software systems without the
+risk of exposure that comes with data disclosure. Underneath the hood it uses a unique
+hierarchical generative modeling and recursive sampling techniques.
+
+### Features:
+
+* Modeling of single tables using Copulas and Deep Learning based models.
+* Modeling of complex multi-table relational datasets using Copulas and unique recursive
+  modeling techniques.
+* Handling of multiple data types and missing data with minimum user input.
+* Support for pre-defined and custom constraints and data validation.
+* Definition of entire datasets with a custom and flexible Metadata JSON schema.
+
+### Coming soon:
+
+* Time Series modeling with Autoregressive and Deep Learning models.
+
+## Try it out now!
+
+If you want to quickly discover **SDV**, simply click the button below and follow the tutorials!
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 
 # Install
 
