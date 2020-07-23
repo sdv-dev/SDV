@@ -13,6 +13,32 @@ class BaseTabularModel():
 
     The ``BaseTabularModel`` class defines the common API that all the
     TabularModels need to implement, as well as common functionality.
+
+    Args:
+        field_names (list[str]):
+            List of names of the fields that need to be modeled
+            and included in the generated output data. Any additional
+            fields found in the data will be ignored and will not be
+            included in the generated output, except if they have
+            been added as primary keys or fields to anonymize.
+            If ``None``, all the fields found in the data are used.
+        primary_key (str, list[str] or dict[str, dict]):
+            Specification about which field or fields are the
+            primary key of the table and information about how
+            to generate them.
+        field_types (dict[str, dict]):
+            Dictinary specifying the data types and subtypes
+            of the fields that will be modeled. Field types and subtypes
+            combinations must be compatible with the SDV Metadata Schema.
+        anonymize_fields (dict[str, str]):
+            Dict specifying which fields to anonymize and what faker
+            category they belong to.
+        table_metadata (dict or metadata.Table):
+            Table metadata instance or dict representation.
+            If given alongside any other metadata-related arguments, an
+            exception will be raised.
+            If not given at all, it will be built using the other
+            arguments or learned from the data.
     """
 
     TRANSFORMER_TEMPLATES = None
@@ -26,34 +52,6 @@ class BaseTabularModel():
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
                  anonymize_fields=None, table_metadata=None, constraints=None):
-        """Initialize a Tabular Model.
-
-        Args:
-            field_names (list[str]):
-                List of names of the fields that need to be modeled
-                and included in the generated output data. Any additional
-                fields found in the data will be ignored and will not be
-                included in the generated output, except if they have
-                been added as primary keys or fields to anonymize.
-                If ``None``, all the fields found in the data are used.
-            primary_key (str, list[str] or dict[str, dict]):
-                Specification about which field or fields are the
-                primary key of the table and information about how
-                to generate them.
-            field_types (dict[str, dict]):
-                Dictinary specifying the data types and subtypes
-                of the fields that will be modeled. Field types and subtypes
-                combinations must be compatible with the SDV Metadata Schema.
-            anonymize_fields (dict[str, str]):
-                Dict specifying which fields to anonymize and what faker
-                category they belong to.
-            table_metadata (dict or metadata.Table):
-                Table metadata instance or dict representation.
-                If given alongside any other metadata-related arguments, an
-                exception will be raised.
-                If not given at all, it will be built using the other
-                arguments or learned from the data.
-        """
         if table_metadata is not None:
             if isinstance(table_metadata, dict):
                 table_metadata = Table(table_metadata)
@@ -179,7 +177,7 @@ class BaseTabularModel():
             sampled = self._metadata.filter_valid(sampled)
             num_valid = len(sampled)
 
-        return sampled
+        return sampled.head(num_rows)
 
     def get_parameters(self):
         """Get the parameters learned from the data.
