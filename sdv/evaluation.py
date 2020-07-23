@@ -97,7 +97,6 @@ def evaluate(synth, real=None, metadata=None, root_path=None, table_name=None, g
     Return:
         float or sdmetrics.MetricsReport
     """
-
     synth, real, metadata = _validate_arguments(synth, real, metadata, root_path, table_name)
 
     report = sdmetrics.evaluate(metadata, real, synth)

@@ -1,3 +1,5 @@
+"""Wrappers around copulas models."""
+
 import copulas
 import numpy as np
 import rdt
@@ -12,6 +14,30 @@ class GaussianCopula(BaseTabularModel):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
 
     Args:
+        field_names (list[str]):
+            List of names of the fields that need to be modeled
+            and included in the generated output data. Any additional
+            fields found in the data will be ignored and will not be
+            included in the generated output, except if they have
+            been added as primary keys or fields to anonymize.
+            If ``None``, all the fields found in the data are used.
+        primary_key (str, list[str] or dict[str, dict]):
+            Specification about which field or fields are the
+            primary key of the table and information about how
+            to generate them.
+        field_types (dict[str, dict]):
+            Dictinary specifying the data types and subtypes
+            of the fields that will be modeled. Field types and subtypes
+            combinations must be compatible with the SDV Metadata Schema.
+        anonymize_fields (dict[str, str]):
+            Dict specifying which fields to anonymize and what faker
+            category they belong to.
+        table_metadata (dict or metadata.Table):
+            Table metadata instance or dict representation.
+            If given alongside any other metadata-related arguments, an
+            exception will be raised.
+            If not given at all, it will be built using the other
+            arguments or learned from the data.
         distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use.
         categorical_transformer (str):
@@ -63,18 +89,26 @@ class GaussianCopula(BaseTabularModel):
         'O': rdt.transformers.OneHotEncodingTransformer
     }
 
-    def __init__(self, distribution=None, categorical_transformer=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, field_names=None, primary_key=None, field_types=None, anonymize_fields=None,
+                 constraints=None, table_metadata=None, distribution=None,
+                 categorical_transformer=None):
+        super().__init__(
+            field_names=field_names,
+            primary_key=primary_key,
+            field_types=field_types,
+            anonymize_fields=anonymize_fields,
+            constraints=constraints,
+            table_metadata=table_metadata
+        )
 
-        if self._metadata is not None and 'model_kwargs' in self._metadata._metadata:
-            model_kwargs = self._metadata._metadata['model_kwargs']
-            if distribution is None:
-                distribution = model_kwargs['distribution']
+        if self._metadata is not None:
+            model_kwargs = self._metadata.get_model_kwargs(self.__class__.__name__)
+            if model_kwargs:
+                if distribution is None:
+                    distribution = model_kwargs['distribution']
 
-            if categorical_transformer is None:
-                categorical_transformer = model_kwargs['categorical_transformer']
-
-            self._size = model_kwargs['_size']
+                if categorical_transformer is None:
+                    categorical_transformer = model_kwargs['categorical_transformer']
 
         self._distribution = distribution or self.DEFAULT_DISTRIBUTION
 
@@ -84,19 +118,27 @@ class GaussianCopula(BaseTabularModel):
         self.TRANSFORMER_TEMPLATES['O'] = self.CATEGORICAL_TRANSFORMERS[categorical_transformer]
 
     def _update_metadata(self):
-        parameters = self._model.to_dict()
-        univariates = parameters['univariates']
-        columns = parameters['columns']
+        """Add arguments needed to reproduce this model to the Metadata.
 
-        distributions = {}
-        for column, univariate in zip(columns, univariates):
-            distributions[column] = univariate['type']
+        Additional arguments include:
+            - Distribution found for each column
+            - categorical_transformer
+        """
+        class_name = self.__class__.__name__
+        model_kwargs = self._metadata.get_model_kwargs(class_name)
+        if not model_kwargs:
+            parameters = self._model.to_dict()
+            univariates = parameters['univariates']
+            columns = parameters['columns']
 
-        self._metadata._metadata['model_kwargs'] = {
-            'distribution': distributions,
-            'categorical_transformer': self._categorical_transformer,
-            '_size': self._size
-        }
+            distributions = {}
+            for column, univariate in zip(columns, univariates):
+                distributions[column] = univariate['type']
+
+            self._metadata.set_model_kwargs(class_name, {
+                'distribution': distributions,
+                'categorical_transformer': self._categorical_transformer,
+            })
 
     def _fit(self, data):
         """Fit the model to the table.
@@ -109,18 +151,18 @@ class GaussianCopula(BaseTabularModel):
         self._model.fit(data)
         self._update_metadata()
 
-    def _sample(self, size):
-        """Sample ``size`` rows from the model.
+    def _sample(self, num_rows):
+        """Sample the indicated number of rows from the model.
 
         Args:
-            size (int):
+            num_rows (int):
                 Amount of rows to sample.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        return self._model.sample(size)
+        return self._model.sample(num_rows)
 
     def get_parameters(self, flatten=False):
         """Get copula model parameters.
@@ -137,8 +179,11 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Copula parameters.
         """
+        parameters = self._model.to_dict()
+        parameters['num_rows'] = self._num_rows
+
         if not flatten:
-            return self._model.to_dict()
+            return parameters
 
         values = list()
         triangle = np.tril(self._model.covariance)
@@ -202,7 +247,6 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Model parameters ready to recreate the model.
         """
-
         univariate_kwargs = {
             'type': model_parameters['distribution']
         }
@@ -243,4 +287,5 @@ class GaussianCopula(BaseTabularModel):
 
             parameters = self._unflatten_gaussian_copula(parameters)
 
+        self._num_rows = max(0, int(round(parameters.pop('num_rows'))))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)

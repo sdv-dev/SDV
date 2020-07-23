@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""SDV Benchmarking."""
+
 import logging
 import multiprocessing
 import os
@@ -50,6 +52,22 @@ def _score_dataset(dataset, datasets_path, output):
 
 
 def score_dataset(dataset, datasets_path, timeout=None):
+    """Evaluate the performance of SDV on a dataset.
+
+    Args:
+        dataset (str):
+            Name of the dataset to evaluate.
+        datasets_path (str):
+            Path where the datasets can be found. If not passed,
+            the demo datasets are used.
+        timeout (int):
+            Maximum number of seconds to wait. If not passed,
+            wait until done.
+
+    Returns:
+        dict:
+            Obtained scores or error.
+    """
     with multiprocessing.Manager() as manager:
         output = manager.dict()
         process = multiprocessing.Process(
@@ -72,6 +90,24 @@ def score_dataset(dataset, datasets_path, timeout=None):
 
 
 def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None):
+    """Evaluate the performance of SDV over a collection of datasets.
+
+    Args:
+        datasets (list[str]):
+            List of names of datasets to run on.
+        datasets_path (str):
+            Path where the datasets can be found. If not passed,
+            the demo datasets are used.
+        distributed (bool):
+            Whether to use dask for distributed processing.
+        timeout (int):
+            Maximum number of seconds to wait. If not passed,
+            wait until done.
+
+    Returns:
+        pandas.DataFrame:
+            Obtained scores or error.
+    """
     if datasets is None:
         if datasets_path is None:
             datasets = get_available_demos().name

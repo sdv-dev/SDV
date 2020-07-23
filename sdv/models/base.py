@@ -1,3 +1,6 @@
+"""SDVModel base class."""
+
+
 class SDVModel:
     """Base class for all the models used in ``SDV``.
 

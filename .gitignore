@@ -65,6 +65,7 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/api/
+docs/tutorials/
 
 # PyBuilder
 target/
@@ -108,3 +109,4 @@ ENV/
 sdv/data/
 tutorials/sdv.pkl
 tutorials/demo_metadata.json
+notebooks

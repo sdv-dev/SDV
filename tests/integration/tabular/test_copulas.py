@@ -48,9 +48,10 @@ def test_gaussian_copula():
     metadata = gc.get_metadata().to_dict()
     assert metadata['fields'] == {
         'user_id': {'type': 'id', 'subtype': 'integer'},
-        'country': {'type': 'categorical'},
+        'country': {'type': 'categorical', 'pii': True, 'pii_category': 'country_code'},
         'gender': {'type': 'categorical'},
         'age': {'type': 'numerical', 'subtype': 'integer'}
     }
 
     assert 'model_kwargs' in metadata
+    assert 'GaussianCopula' in metadata['model_kwargs']

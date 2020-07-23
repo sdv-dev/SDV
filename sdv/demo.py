@@ -1,10 +1,14 @@
+"""Functions to load demo datasets."""
+
 import io
 import logging
 import os
 import urllib
 from zipfile import ZipFile
 
+import numpy as np
 import pandas as pd
+from faker import Faker
 
 from sdv.metadata import Metadata
 
@@ -114,10 +118,10 @@ def _get_dataset_path(dataset_name, data_path):
     return os.path.join(data_path, dataset_name)
 
 
-def _load_dummy():
+def _load_relational_dummy():
     users = pd.DataFrame({
         'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'country': ['USA', 'UK', 'ES', 'UK', 'USA', 'DE', 'BG', 'ES', 'FR', 'UK'],
+        'country': ['US', 'UK', 'ES', 'UK', 'US', 'DE', 'BG', 'ES', 'FR', 'UK'],
         'gender': ['M', 'F', None, 'M', 'F', 'M', 'F', None, 'F', None],
         'age': [34, 23, 44, 22, 54, 57, 45, 41, 23, 30]
     })
@@ -158,7 +162,7 @@ def _load_demo_dataset(dataset_name, data_path):
 
 
 def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
-    """Load demo data.
+    """Load relational demo data.
 
     The demo data consists of the metadata and tables dict for a a toy dataset with
     three simple tables:
@@ -184,12 +188,31 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
     if dataset_name:
         meta, tables = _load_demo_dataset(dataset_name, data_path)
     else:
-        meta, tables = _load_dummy()
+        meta, tables = _load_relational_dummy()
 
     if metadata:
         return meta, tables
 
     return tables
+
+
+def load_tabular_demo():
+    """Load a dummy tabular demo dataframe."""
+    age = np.random.randint(30, 50, 12)
+    age_when_joined = age - np.random.randint(0, 10, 12)
+    faker = Faker()
+    names = [faker.name() for _ in range(12)]
+    adresses = [faker.address() for _ in range(12)]
+
+    return pd.DataFrame({
+        'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
+        'department': ['Sales', 'Design', 'AI', 'Search Engine', 'BigData', 'Support'] * 2,
+        'name': names,
+        'address': adresses,
+        'age': age,
+        'age_when_joined': age_when_joined,
+        'years_in_the_company': age - age_when_joined
+    })
 
 
 def get_available_demos():
