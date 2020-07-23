@@ -9,6 +9,7 @@ import pandas as pd
 import rdt
 from faker import Faker
 
+from sdv.constraints.base import Constraint
 from sdv.metadata.errors import MetadataError
 
 LOGGER = logging.getLogger(__name__)
@@ -22,9 +23,10 @@ class Table:
     from the filesystem and to know how to parse and transform it to numerical data.
     """
 
-    _metadata = None
     _hyper_transformer = None
     _anonymization_mappings = None
+    _fakers = None
+    _constraint_instances = None
 
     _FIELD_TEMPLATES = {
         'i': {
@@ -92,25 +94,25 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def __init__(self, metadata=None, field_names=None, primary_key=None,
-                 field_types=None, anonymize_fields=None, constraints=None,
-                 transformer_templates=None):
-        # TODO: Validate that the given metadata is a valid dict
-        self._metadata = metadata or dict()
-        self._hyper_transformer = None
-
+    def __init__(self, field_names=None, field_types=None, anonymize_fields=None,
+                 primary_key=None, constraints=None, transformer_templates=None,
+                 model_kwargs=None):
         self._field_names = field_names
-        self._primary_key = primary_key
         self._field_types = field_types or {}
-        self._anonymize_fields = anonymize_fields
-        self._constraints = constraints
+        self._anonymize_fields = anonymize_fields or {}
+        self._model_kwargs = model_kwargs or {}
 
+        self._primary_key = primary_key
+        self._constraints = constraints or []
         self._transformer_templates = transformer_templates or {}
 
-        self._fakers = {
-            name: self._get_faker(category)
-            for name, category in (anonymize_fields or {}).items()
-        }
+    def get_model_kwargs(self, model_name):
+        """Return the required model kwargs for the indicated model."""
+        return copy.deepcopy(self._model_kwargs.get(model_name))
+
+    def set_model_kwargs(self, model_name, model_kwargs):
+        """Set the model kwargs used for the indicated model."""
+        self._model_kwargs[model_name] = model_kwargs
 
     def _get_field_dtype(self, field_name, field_metadata):
         field_type = field_metadata['type']
@@ -131,7 +133,7 @@ class Table:
             dict:
                 Dictionary of fields metadata for this table.
         """
-        return copy.deepcopy(self._metadata['fields'])
+        return copy.deepcopy(self._fields_metadata)
 
     def get_dtypes(self, ids=False):
         """Get a ``dict`` with the ``dtypes`` for each field of the table.
@@ -143,13 +145,9 @@ class Table:
         Returns:
             dict:
                 Dictionary that contains the field names and data types.
-
-        Raises:
-            ValueError:
-                If a field has an invalid type or subtype.
         """
         dtypes = dict()
-        for name, field_meta in self._metadata['fields'].items():
+        for name, field_meta in self._fields_metadata.items():
             field_type = field_meta['type']
 
             if ids or (field_type != 'id'):
@@ -172,10 +170,8 @@ class Table:
             ValueError:
                 If a column from the data analyzed is an unsupported data type
         """
-        field_names = self._field_names or data.columns
-
         fields_metadata = dict()
-        for field_name in field_names:
+        for field_name in self._field_names:
             if field_name not in data:
                 raise ValueError('Field {} not found in given data'.format(field_name))
 
@@ -190,6 +186,11 @@ class Table:
                     raise ValueError('Unsupported dtype {} in column {}'.format(dtype, field_name))
 
                 field_meta = copy.deepcopy(field_template)
+
+            anonymize_category = self._anonymize_fields.get(field_name)
+            if anonymize_category:
+                field_meta['pii'] = True
+                field_meta['pii_category'] = anonymize_category
 
             fields_metadata[field_name] = field_meta
 
@@ -229,6 +230,21 @@ class Table:
 
         return transformers
 
+    def _fit_transform_constraints(self, data):
+        for idx, constraint in enumerate(self._constraints):
+            if isinstance(constraint, type):
+                constraint = constraint().to_dict()
+
+            if isinstance(constraint, Constraint):
+                constraint = constraint.to_dict()
+
+            constraint = Constraint.from_dict(constraint)
+            self._constraints[idx] = constraint
+
+            data = constraint.fit_transform(data)
+
+        return data
+
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
@@ -238,7 +254,13 @@ class Table:
         Returns:
             rdt.HyperTransformer
         """
-        dtypes = self.get_dtypes(ids=False)
+        # dtypes = self.get_dtypes(ids=False)
+        dtypes = {}
+        fields = self._fields_metadata
+        for column in data.columns:
+            if column not in fields or fields[column]['type'] != 'id':
+                dtypes[column] = data[column].dtype.kind
+
         transformers_dict = self._get_transformers(dtypes)
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
         self._hyper_transformer.fit(data[list(dtypes.keys())])
@@ -280,10 +302,10 @@ class Table:
                 invalid type or subtype.
         """
         if field_name is not None:
-            if field_name not in self._metadata['fields']:
+            if field_name not in self._fields_metadata:
                 raise ValueError('Field "{}" does not exist in this table'.format(field_name))
 
-            field_metadata = self._metadata['fields'][field_name]
+            field_metadata = self._fields_metadata[field_name]
             field_subtype = self._get_key_subtype(field_metadata)
 
             field_metadata.update({
@@ -295,10 +317,13 @@ class Table:
 
     def _make_anonymization_mappings(self, data):
         mappings = {}
-        for name, faker in self._fakers.items():
-            uniques = data[name].unique()
-            fake_values = [faker() for x in range(len(uniques))]
-            mappings[name] = dict(zip(uniques, fake_values))
+        for name, field_metadata in self._fields_metadata.items():
+            if field_metadata.get('pii'):
+                faker = self._get_faker(field_metadata['pii_category'])
+
+                uniques = data[name].unique()
+                fake_values = [faker() for _ in range(len(uniques))]
+                mappings[name] = dict(zip(uniques, fake_values))
 
         self._anonymization_mappings = mappings
 
@@ -318,14 +343,15 @@ class Table:
                 Table to be analyzed.
         """
         self._field_names = self._field_names or list(data.columns)
-        self._metadata['fields'] = self._build_fields_metadata(data)
+        self._fields_metadata = self._build_fields_metadata(data)
+
+        # Re-set the primary key to validate its name and type
         self.set_primary_key(self._primary_key)
 
-        if self._fakers:
-            self._make_anonymization_mappings(data)
-            data = self._anonymize(data)
+        self._make_anonymization_mappings(data)
+        data = self._anonymize(data)
 
-        # TODO: Treat/Learn constraints
+        data = self._fit_transform_constraints(data)
         self._fit_hyper_transformer(data)
 
     def transform(self, data):
@@ -340,6 +366,10 @@ class Table:
                 Transformed data.
         """
         data = self._anonymize(data[self._field_names])
+
+        for constraint in self._constraints:
+            data = constraint.transform(data)
+
         return self._hyper_transformer.transform(data)
 
     def reverse_transform(self, data):
@@ -354,7 +384,10 @@ class Table:
         """
         reversed_data = self._hyper_transformer.reverse_transform(data)
 
-        fields = self._metadata['fields']
+        for constraint in self._constraints:
+            reversed_data = constraint.reverse_transform(reversed_data)
+
+        fields = self._fields_metadata
         for name, dtype in self.get_dtypes(ids=True).items():
             field_type = fields[name]['type']
             if field_type == 'id':
@@ -365,6 +398,22 @@ class Table:
             reversed_data[name] = field_data.dropna().astype(dtype)
 
         return reversed_data[self._field_names]
+
+    def filter_valid(self, data):
+        """Filter the data using the constraints and return only the valid rows.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Table containing only the valid rows.
+        """
+        for constraint in self._constraints:
+            data = constraint.filter_valid(data)
+
+        return data
 
     # ###################### #
     # Metadata Serialization #
@@ -377,7 +426,11 @@ class Table:
             dict:
                 dict representation of this metadata.
         """
-        return copy.deepcopy(self._metadata)
+        return {
+            'fields': copy.deepcopy(self._fields_metadata),
+            'constraints': [constraint.to_dict() for constraint in self._constraints],
+            'model_kwargs': copy.deepcopy(self._model_kwargs),
+        }
 
     def to_json(self, path):
         """Dump this metadata into a JSON file.
@@ -387,7 +440,21 @@ class Table:
                 Path of the JSON file where this metadata will be stored.
         """
         with open(path, 'w') as out_file:
-            json.dump(self._metadata, out_file, indent=4)
+            json.dump(self.to_dict(), out_file, indent=4)
+
+    @classmethod
+    def from_dict(cls, metadata_dict):
+        """Load a Table from a metadata dict.
+
+        Args:
+            metadata_dict (dict):
+                Dict metadata to load.
+        """
+        instance = cls()
+        instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
+        instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
+        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs'))
+        return instance
 
     @classmethod
     def from_json(cls, path):
@@ -398,4 +465,4 @@ class Table:
                 Path of the JSON file to load
         """
         with open(path, 'r') as in_file:
-            return cls(json.load(in_file))
+            return cls.from_dict(json.load(in_file))
