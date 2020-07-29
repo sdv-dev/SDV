@@ -1,0 +1,6 @@
+sdv.constraints.tabular.GreaterThan.is\_valid
+=============================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: GreaterThan.is_valid

@@ -1,0 +1,6 @@
+sdv.demo.load\_tabular\_demo
+============================
+
+.. currentmodule:: sdv.demo
+
+.. autofunction:: load_tabular_demo

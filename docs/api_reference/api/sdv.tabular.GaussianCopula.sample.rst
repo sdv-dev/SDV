@@ -1,0 +1,6 @@
+sdv.tabular.GaussianCopula.sample
+=================================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: GaussianCopula.sample

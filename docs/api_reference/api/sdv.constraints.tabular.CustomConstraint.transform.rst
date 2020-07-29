@@ -1,0 +1,6 @@
+sdv.constraints.tabular.CustomConstraint.transform
+==================================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: CustomConstraint.transform

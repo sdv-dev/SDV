@@ -1,0 +1,6 @@
+sdv.constraints.tabular.GreaterThan.transform
+=============================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: GreaterThan.transform

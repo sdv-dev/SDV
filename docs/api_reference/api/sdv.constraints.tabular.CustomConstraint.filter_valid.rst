@@ -1,0 +1,6 @@
+sdv.constraints.tabular.CustomConstraint.filter\_valid
+======================================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: CustomConstraint.filter_valid

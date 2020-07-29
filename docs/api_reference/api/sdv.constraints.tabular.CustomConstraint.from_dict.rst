@@ -1,0 +1,6 @@
+sdv.constraints.tabular.CustomConstraint.from\_dict
+===================================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: CustomConstraint.from_dict

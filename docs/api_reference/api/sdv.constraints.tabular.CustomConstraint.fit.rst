@@ -1,0 +1,6 @@
+sdv.constraints.tabular.CustomConstraint.fit
+============================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: CustomConstraint.fit

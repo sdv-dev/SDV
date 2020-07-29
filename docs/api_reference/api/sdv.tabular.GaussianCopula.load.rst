@@ -1,0 +1,6 @@
+sdv.tabular.GaussianCopula.load
+===============================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: GaussianCopula.load

@@ -1,0 +1,6 @@
+sdv.constraints.tabular.CustomConstraint.reverse\_transform
+===========================================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: CustomConstraint.reverse_transform

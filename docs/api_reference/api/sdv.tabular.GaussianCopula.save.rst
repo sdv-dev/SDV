@@ -1,0 +1,6 @@
+sdv.tabular.GaussianCopula.save
+===============================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: GaussianCopula.save

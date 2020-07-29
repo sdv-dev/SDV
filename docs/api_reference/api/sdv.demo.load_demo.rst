@@ -1,0 +1,6 @@
+sdv.demo.load\_demo
+===================
+
+.. currentmodule:: sdv.demo
+
+.. autofunction:: load_demo

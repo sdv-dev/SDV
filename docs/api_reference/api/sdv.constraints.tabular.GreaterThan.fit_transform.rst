@@ -1,0 +1,6 @@
+sdv.constraints.tabular.GreaterThan.fit\_transform
+==================================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: GreaterThan.fit_transform

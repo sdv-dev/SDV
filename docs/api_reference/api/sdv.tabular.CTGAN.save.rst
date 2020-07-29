@@ -1,0 +1,6 @@
+sdv.tabular.CTGAN.save
+======================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CTGAN.save
