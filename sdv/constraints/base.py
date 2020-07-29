@@ -10,7 +10,7 @@ import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 
-def get_qualified_name(_object):
+def _get_qualified_name(_object):
     """Return the Fully Qualified Name from an instance or class."""
     module = _object.__module__
     if hasattr(_object, '__name__'):
@@ -62,7 +62,16 @@ class ConstraintMeta(type):
 
 
 class Constraint(metaclass=ConstraintMeta):
-    """Constraint base class."""
+    """Constraint base class.
+
+    This class is not intended to be used directly and should rather be
+    subclassed to create different types of constraints.
+
+    If the attribute ``_handling_strategy`` of a subclass is set to ``transform``
+    or ``reject_sampling``, the ``filter_valid`` or ``transform`` and
+    ``reverse_transform`` methods will be replaces respectively by a simple
+    identity function.
+    """
 
     _handling_strategy = 'all'
 
@@ -77,8 +86,13 @@ class Constraint(metaclass=ConstraintMeta):
             self.reverse_transform = self._identity
 
     def fit(self, table_data):
-        """No-op method."""
-        pass
+        """No-op method written for completion. To be optionally overwritten by subclasses.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        del table_data
 
     def transform(self, table_data):
         """Identity method for completion. To be optionally overwritten by subclasses.
@@ -123,6 +137,11 @@ class Constraint(metaclass=ConstraintMeta):
     def is_valid(self, table_data):
         """Say whether the given table rows are valid.
 
+        This is a dummy version of the method that returns a series of ``True``
+        values to avoid dropping any rows. This should be overwritten by all
+        the subclasses that have a way to decide which rows are valid and which
+        are not.
+
         Args:
             table_data (pandas.DataFrame):
                 Table data.
@@ -135,6 +154,9 @@ class Constraint(metaclass=ConstraintMeta):
 
     def filter_valid(self, table_data):
         """Get only the rows that are valid.
+
+        The filtering is done by calling the method ``is_valid``, which should
+        be overwritten by subclasses, while this method should stay untouched.
 
         Args:
             table_data (pandas.DataFrame):
@@ -187,15 +209,24 @@ class Constraint(metaclass=ConstraintMeta):
         return constraint_class(**constraint_dict)
 
     def to_dict(self):
-        """Return a dict representation of this Constraint."""
+        """Return a dict representation of this Constraint.
+
+        The dictionary will contain the Qualified Name of the constraint
+        class in the key ``constriant``, as well as any other arguments
+        that were passed to the constructor when the instance was created.
+
+        Returns:
+            dict:
+                Dict representation of this Constraint.
+        """
         constraint_dict = {
-            'constraint': get_qualified_name(self.__class__),
+            'constraint': _get_qualified_name(self.__class__),
         }
 
         for key, obj in copy.deepcopy(self.__kwargs__).items():
             if not callable(obj):
                 constraint_dict[key] = obj
             else:
-                constraint_dict[key] = get_qualified_name(obj)
+                constraint_dict[key] = _get_qualified_name(obj)
 
         return constraint_dict

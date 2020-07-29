@@ -14,11 +14,13 @@ class Sampler:
         metadata (Metadata):
             Dataset Metadata.
         models (dict):
-            Table models.
+            Fitted table models.
         model (SDVModel):
-            Model class to sample data.
+            Model class to use to sample data.
         model_kwargs (dict):
             Additional arguments to create the ``SDVModel``.
+        table_sizes (dict):
+            Dict indicating the sizes of the tables in the orignal dataset.
     """
 
     metadata = None

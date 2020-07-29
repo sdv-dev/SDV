@@ -74,9 +74,10 @@ class Metadata:
         metadata (str or dict):
             Path to a ``json`` file that contains the metadata or a ``dict`` representation
             of ``metadata`` following the same structure.
-
         root_path (str):
-            The path where the ``metadata.json`` is located. Defaults to ``None``.
+            The path to which the paths found inside the metadata are relative.
+            If not given, it defaults to the folder where the metadata is located, or
+            to None, if no metadata is given.
     """
 
     _child_map = None
@@ -240,7 +241,7 @@ class Metadata:
         return copy.deepcopy(table)
 
     def get_tables(self):
-        """Get the list of table names.
+        """Get the list with the tables found in this metadata.
 
         Returns:
             list:
@@ -273,7 +274,7 @@ class Metadata:
         return copy.deepcopy(field_meta)
 
     def get_fields(self, table_name):
-        """Get table fields metadata.
+        """Get the metadata of the fields of the indicated table.
 
         Args:
             table_name (str):
@@ -290,7 +291,7 @@ class Metadata:
         return self.get_table_meta(table_name)['fields']
 
     def get_primary_key(self, table_name):
-        """Get the primary key name of the indicated table.
+        """Get the name of the primary key of the indicated table, if it has one.
 
         Args:
             table_name (str):
@@ -307,7 +308,9 @@ class Metadata:
         return self.get_table_meta(table_name).get('primary_key')
 
     def get_foreign_key(self, parent, child):
-        """Get table foreign key field name.
+        """Get the name of the field in the child that is a foreign key to parent.
+
+        If there is no relationship between the two tables, a ``ValueError`` is raised.
 
         Args:
             parent (str):
@@ -331,7 +334,7 @@ class Metadata:
         raise ValueError('{} is not parent of {}'.format(parent, child))
 
     def load_table(self, table_name):
-        """Load table data.
+        """Load the data of the indicated table as a DataFrame.
 
         Args:
             table_name (str):
@@ -414,7 +417,7 @@ class Metadata:
         return dtypes
 
     def _get_pii_fields(self, table_name):
-        """Get the ``pii_category`` for each field that contains PII.
+        """Get the ``pii_category`` for each field of the table that contains PII.
 
         Args:
             table_name (str):
@@ -613,21 +616,20 @@ class Metadata:
     def validate(self, tables=None):
         """Validate this metadata.
 
-        For each table from in metadata ``tables`` entry:
-            * Validate the table metadata is correct.
+        Validate the metadata of each table:
 
-        * If ``tables`` are provided or they have been loaded, check
-          that all the metadata tables exists in the ``tables`` dictionary.
-        * Validate the type/subtype combination for each field and
-          if a field of type ``id`` exists it must be the ``primary_key``
-          or must have a ``ref`` entry.
-        * If ``primary_key`` entry exists, check that it's an existing
-          field and its type is ``id``.
-        * If ``tables`` are provided or they have been loaded, check
-          all the data types for the table correspond to each column and
-          all the data types exists on the table.
-        * Validate that there is no circular relatioship in the metadata.
-        * Check that all the tables have at most one parent.
+            * If ``tables`` are provided or they have been loaded, check
+              that all the metadata tables exists in the ``tables`` dictionary.
+            * Validate the type/subtype combination for each field and
+              if a field of type ``id`` exists it must be the ``primary_key``
+              or must have a ``ref`` entry.
+            * If ``primary_key`` entry exists, check that it's an existing
+              field and its type is ``id``.
+            * If ``tables`` are provided or they have been loaded, check
+              all the data types for the table correspond to each column and
+              all the data types exists on the table.
+            * Validate that there is no circular relatioship in the metadata.
+            * Check that all the tables have at most one parent.
 
         Args:
             tables (bool, dict):
@@ -734,7 +736,7 @@ class Metadata:
             table (str):
                 Name of the table where the primary key will be set.
             field (str):
-                Field to be used as the new primary key.
+                Name of the field to be used as the new primary key.
 
         Raises:
             ValueError:
