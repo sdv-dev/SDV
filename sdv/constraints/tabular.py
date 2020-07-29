@@ -9,7 +9,7 @@ Currently implemented constraints are:
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
       and validation.
-    * UniqueCombinationsConstraint: Ensure that the combinations of values
+    * UniqueCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
