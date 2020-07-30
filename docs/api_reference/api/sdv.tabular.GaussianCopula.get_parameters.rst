@@ -1,6 +1,0 @@
-sdv.tabular.GaussianCopula.get\_parameters
-==========================================
-
-.. currentmodule:: sdv.tabular
-
-.. automethod:: GaussianCopula.get_parameters

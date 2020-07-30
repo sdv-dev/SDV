@@ -75,18 +75,18 @@ GreaterThan
    GreaterThan.from_dict
    GreaterThan.to_dict
 
-CustomFormula
+ColumnFormula
 ~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   CustomFormula
-   CustomFormula.fit
-   CustomFormula.transform
-   CustomFormula.fit_transform
-   CustomFormula.reverse_transform
-   CustomFormula.is_valid
-   CustomFormula.filter_valid
-   CustomFormula.from_dict
-   CustomFormula.to_dict
+   ColumnFormula
+   ColumnFormula.fit
+   ColumnFormula.transform
+   ColumnFormula.fit_transform
+   ColumnFormula.reverse_transform
+   ColumnFormula.is_valid
+   ColumnFormula.filter_valid
+   ColumnFormula.from_dict
+   ColumnFormula.to_dict

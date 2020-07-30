@@ -1,6 +1,0 @@
-sdv.constraints.tabular.GreaterThan.reverse\_transform
-======================================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: GreaterThan.reverse_transform

@@ -1,6 +1,0 @@
-sdv.tabular.GaussianCopula.get\_metadata
-========================================
-
-.. currentmodule:: sdv.tabular
-
-.. automethod:: GaussianCopula.get_metadata

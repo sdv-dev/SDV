@@ -1,6 +1,0 @@
-sdv.constraints.tabular.UniqueCombinations.filter\_valid
-========================================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: UniqueCombinations.filter_valid

@@ -1,6 +1,0 @@
-sdv.tabular.GaussianCopula.fit
-==============================
-
-.. currentmodule:: sdv.tabular
-
-.. automethod:: GaussianCopula.fit

@@ -1,6 +1,0 @@
-sdv.constraints.tabular.UniqueCombinations.fit
-==============================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: UniqueCombinations.fit
