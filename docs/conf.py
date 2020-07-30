@@ -31,7 +31,7 @@ import sdv
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'm2r',
+    'm2r2',
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
