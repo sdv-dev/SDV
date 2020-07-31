@@ -1,3 +1,6 @@
+
+.. _api:
+
 API Reference
 =============
 

@@ -6,7 +6,7 @@ related libraries, while also providing clear instructions about how to extend i
 to better adapt it to your needs to contribute to the development of the libraries.
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   architecture
-   contributing
+    overview
+    contributing

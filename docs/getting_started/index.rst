@@ -1,9 +1,10 @@
+.. _getting_started:
+
 Getting Started
 ===============
 
 .. toctree::
-   :caption: Getting Started
-   :maxdepth: 2
+    :maxdepth: 2
 
-   install
-   ../tutorials/01_Quickstart
+    install
+    ../tutorials/01_Quickstart

@@ -11,7 +11,7 @@
 SDV - The Synthetic Data Vault
 ==============================
 
---------------
+**Date**: |today| **Version**: |version|
 
 -  License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
 -  Development Status:
@@ -58,6 +58,15 @@ and follow the tutorials!
 
 |Binder|
 
+Explore SDV
+-----------
+
+* `Getting Started <getting_started/index.html>`_
+* `User Guides <user_guides/index.html>`_
+* `API Reference <api_reference/index.html>`_
+* `Developer Guides <developer_guides/index.html>`_
+* `Release Notes <history.html>`_
+
 --------------
 
 .. |Development Status| image:: https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow
@@ -75,26 +84,12 @@ and follow the tutorials!
 
 
 .. toctree::
-   :hidden:
+    :maxdepth: 3
+    :hidden:
+    :titlesonly:
 
-   getting_started/index
-
-.. toctree::
-   :hidden:
-
-   user_guides/index
-
-.. toctree::
-   :hidden:
-
-   api_reference/index
-
-.. toctree::
-   :hidden:
-
-   developer_guides/index
-
-.. toctree::
-   :hidden:
-
-   Changelogs <history>
+    getting_started/index
+    user_guides/index
+    api_reference/index
+    developer_guides/index
+    Release Notes <history>

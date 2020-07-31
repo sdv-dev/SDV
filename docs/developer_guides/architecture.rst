@@ -1,2 +1,0 @@
-SDV Architecture
-================

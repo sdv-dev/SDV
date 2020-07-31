@@ -1,4 +1,4 @@
-# History
+# Release Notes
 
 ## 0.3.6 - 2020-07-23
 
