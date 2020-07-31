@@ -1,5 +1,7 @@
-Constraints
-===========
+.. _sdv.constraints:
+
+sdv.constraints
+===============
 
 .. currentmodule:: sdv.constraints
 

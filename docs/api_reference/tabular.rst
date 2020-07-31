@@ -1,6 +1,7 @@
-==============
-Tabular Models
-==============
+.. _sdv.tabular:
+
+sdv.tabular
+===========
 
 .. currentmodule:: sdv.tabular
 

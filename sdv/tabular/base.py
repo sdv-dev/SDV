@@ -105,7 +105,7 @@ class BaseTabularModel():
         """
         return self._metadata
 
-    def sample(self, num_rows=None, values=None, max_retries=100):
+    def sample(self, num_rows=None, max_retries=100):
         """Sample rows from this table.
 
         Args:
@@ -113,10 +113,6 @@ class BaseTabularModel():
                 Number of rows to sample. If not given the model
                 will generate as many rows as there were in the
                 data passed to the ``fit`` method.
-            values (dict):    <- FUTURE
-                Fixed values to use for knowledge-based sampling.
-                In case the model does not support knowledge-based
-                sampling, a reject+resample strategy will be used.
             max_retries (int):
                 Number of times to retry sampling discarded rows.
                 Defaults to 100.

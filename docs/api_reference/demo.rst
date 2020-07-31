@@ -1,5 +1,7 @@
-Demos
-=====
+.. _sdv.demo:
+
+sdv.demo
+========
 
 .. currentmodule:: sdv.demo
 

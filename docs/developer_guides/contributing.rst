@@ -1,3 +1,5 @@
+.. _contributing:
+
 Contributing to SDV
 ===================
 
@@ -23,7 +25,7 @@ Reporting Issues
 ~~~~~~~~~~~~~~~~
 
 If there is something that you would like to see changed in the project, or that you just want
-to ask, please create an issue at the `_GitHub issues page`.
+to ask, please create an issue at the `GitHub issues page`_.
 
 If you do so, please:
 

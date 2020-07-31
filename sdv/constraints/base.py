@@ -67,23 +67,28 @@ class Constraint(metaclass=ConstraintMeta):
     This class is not intended to be used directly and should rather be
     subclassed to create different types of constraints.
 
-    If the attribute ``_handling_strategy`` of a subclass is set to ``transform``
+    If ``handling_strategy`` is passed with the value ``transform``
     or ``reject_sampling``, the ``filter_valid`` or ``transform`` and
-    ``reverse_transform`` methods will be replaces respectively by a simple
+    ``reverse_transform`` methods will be replaced respectively by a simple
     identity function.
-    """
 
-    _handling_strategy = 'all'
+    Args:
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``,
+            ``reject_sampling`` or ``all``. Defaults to ``transform``.
+    """
 
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self):
-        if self._handling_strategy == 'transform':
+    def __init__(self, handling_strategy):
+        if handling_strategy == 'transform':
             self.filter_valid = self._identity
-        elif self._handling_strategy == 'reject_sampling':
+        elif handling_strategy == 'reject_sampling':
             self.transform = self._identity
             self.reverse_transform = self._identity
+        elif handling_strategy != 'all':
+            raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
 
     def fit(self, table_data):
         """No-op method written for completion. To be optionally overwritten by subclasses.

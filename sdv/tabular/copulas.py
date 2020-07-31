@@ -89,9 +89,9 @@ class GaussianCopula(BaseTabularModel):
         'O': rdt.transformers.OneHotEncodingTransformer
     }
 
-    def __init__(self, field_names=None, primary_key=None, field_types=None, anonymize_fields=None,
-                 constraints=None, table_metadata=None, distribution=None,
-                 categorical_transformer=None):
+    def __init__(self, field_names=None, primary_key=None, field_types=None,
+                 anonymize_fields=None, constraints=None, table_metadata=None,
+                 distribution=None, categorical_transformer=None):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -140,7 +140,7 @@ class GaussianCopula(BaseTabularModel):
                 'categorical_transformer': self._categorical_transformer,
             })
 
-    def _fit(self, data):
+    def _fit(self, table_data):
         """Fit the model to the table.
 
         Args:

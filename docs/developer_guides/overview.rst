@@ -63,7 +63,7 @@ familiar API with 4 methods:
 .. _SDV: sdv/index.html
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :hidden:
 
     sdv/index

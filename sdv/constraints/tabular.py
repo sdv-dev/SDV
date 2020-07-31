@@ -76,8 +76,7 @@ class UniqueCombinations(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def _valid_separator(self, table_data):
         """Return True if separator is valid for this data.
@@ -213,8 +212,7 @@ class GreaterThan(Constraint):
         self._low = low
         self._high = high
         self._strict = strict
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def fit(self, table_data):
         """Learn the dtype of the high column.
@@ -309,8 +307,7 @@ class ColumnFormula(Constraint):
     def __init__(self, column, formula, handling_strategy='transform'):
         self._column = column
         self._formula = import_object(formula)
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def is_valid(self, table_data):
         """Say whether the data fulfills the formula.

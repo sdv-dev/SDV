@@ -7,9 +7,7 @@ different functionalirities of The Synthetic Data Vault Project.
 SDV is organized around the following concepts:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
     tabular
-    relational
-    metadata
     constraints
