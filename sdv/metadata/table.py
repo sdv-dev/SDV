@@ -298,7 +298,6 @@ class Table:
         Returns:
             rdt.HyperTransformer
         """
-        # dtypes = self.get_dtypes(ids=False)
         dtypes = {}
         fields = self._fields_metadata
         for column in data.columns:
@@ -473,7 +472,10 @@ class Table:
         """
         return {
             'fields': copy.deepcopy(self._fields_metadata),
-            'constraints': [constraint.to_dict() for constraint in self._constraints],
+            'constraints': [
+                constraint if isinstance(constraint, dict) else constraint.to_dict()
+                for constraint in self._constraints
+            ],
             'model_kwargs': copy.deepcopy(self._model_kwargs),
         }
 

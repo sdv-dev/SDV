@@ -24,29 +24,33 @@ subclasses has the following steps:
    metadata object.
 2. The ``BaseTabularModel.fit`` method is called with raw data from the table.
    During this step, the ``BaseTabularModel`` will:
-    a. Fit the Table metadata object, unless it has already been fitted before.
-    b. Store the number of rows that exist in the given data.
-    c. Use the Table metadata to transform the data into numerical data, ready for the model.
-       If the Table had any constraints defined using the ``transform`` strategy, this will also
-       apply transformations to the data.
-    d. Call the ``self._fit`` method, which has been implemented in the subclass, passing the
-       numerical data.
+
+   a. Fit the Table metadata object, unless it has already been fitted before.
+   b. Store the number of rows that exist in the given data.
+   c. Use the Table metadata to transform the data into numerical data, ready for the model.
+      If the Table had any constraints defined using the ``transform`` strategy, this will also
+      apply transformations to the data.
+   d. Call the ``self._fit`` method, which has been implemented in the subclass, passing the
+      numerical data.
+
 3. The subclass ``_fit`` method will then fit an instance of the underlying model class. For
    example, an instance of a ``copulas.multivariate.GaussianCopula`` will be created and fitted
    to the numerical data.
+
 4. In a later step, the ``BaseTabularModel.sample`` method will be called, optionally with an
    indication of the number of rows to sample.
    During this step, the ``BaseTabularModel`` will:
-    a. Decide a number of rows to sample, which will either be the number of rows provided
-       or the number of rows that the original table had.
-    b. Call the ``self._sample`` method implemented by the subclass, which will use the
-       underlying model to generate the indicated number of rows.
-    c. Use the Table metadata to transform the sampled data back to the original format by passing
-       the data to its ``revert_transform`` method. This will also revert any transformations
-       performed by the Constraints that use the ``transform`` strategy.
-    d. If there is any Constraint that is useing the ``reject_sampling`` strategy, use the
-       Table metadata to drop the invalid rows and repeat steps ``b`` and ``c`` until enough
-       valid rows have been generated.
+
+   a. Decide a number of rows to sample, which will either be the number of rows provided
+      or the number of rows that the original table had.
+   b. Call the ``self._sample`` method implemented by the subclass, which will use the
+      underlying model to generate the indicated number of rows.
+   c. Use the Table metadata to transform the sampled data back to the original format by passing
+      the data to its ``revert_transform`` method. This will also revert any transformations
+      performed by the Constraints that use the ``transform`` strategy.
+   d. If there is any Constraint that is useing the ``reject_sampling`` strategy, use the
+      Table metadata to drop the invalid rows and repeat steps ``b`` and ``c`` until enough
+      valid rows have been generated.
 
 A part from the previous steps, the ``BaseTabularModel`` also offers a couple of minor
 functionalities:

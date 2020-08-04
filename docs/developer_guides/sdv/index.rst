@@ -11,3 +11,4 @@ SDV is organized around the following concepts:
 
     tabular
     constraints
+    metadata

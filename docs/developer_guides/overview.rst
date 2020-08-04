@@ -82,5 +82,10 @@ CTGAN is a GAN-based data synthesizer that can generate synthetic tabular data w
 
 It was presented in NeurIPS 2020 in the paper `Modeling Tabular data using Conditional GAN`_.
 
+.. toctree::
+    :hidden:
+
+    sdv/index
+
 
 .. _Modeling Tabular data using Conditional GAN: https://arxiv.org/abs/1907.00503
