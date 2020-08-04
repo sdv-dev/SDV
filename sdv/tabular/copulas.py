@@ -148,7 +148,7 @@ class GaussianCopula(BaseTabularModel):
                 Data to be fitted.
         """
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
-        self._model.fit(data)
+        self._model.fit(table_data)
         self._update_metadata()
 
     def _sample(self, num_rows):
