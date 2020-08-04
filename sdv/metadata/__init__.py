@@ -993,7 +993,7 @@ class Metadata:
             "  relationships:\n"
             "{}"
         ).format(
-            os.path.abspath(self.root_path),
+            self.root_path,
             tables,
             '\n'.join(relationships)
         )

@@ -50,6 +50,8 @@ development_requires = [
     'Sphinx>=3,<4',
     'pydata-sphinx-theme',
     'autodocsumm>=0.1.10',
+    'PyYaml>=5.3.1,<6',
+    'argh>=0.26.2,<1',
 
     # style check
     'flake8>=3.7.7,<4',
