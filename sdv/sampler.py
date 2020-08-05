@@ -176,8 +176,10 @@ class Sampler:
 
         return sampled
 
-    def _sample_children(self, table_name, sampled_data):
-        table_rows = sampled_data[table_name]
+    def _sample_children(self, table_name, sampled_data, table_rows=None):
+        if table_rows is None:
+            table_rows = sampled_data[table_name]
+
         for child_name in self.metadata.get_children(table_name):
             for _, row in table_rows.iterrows():
                 self._sample_child_rows(child_name, table_name, row, sampled_data)
@@ -201,7 +203,7 @@ class Sampler:
         else:
             sampled_data[table_name] = pd.concat([previous, table_rows]).reset_index(drop=True)
 
-        self._sample_children(table_name, sampled_data)
+        self._sample_children(table_name, sampled_data, table_rows)
 
     @staticmethod
     def _find_parent_id(likelihoods, num_rows):
