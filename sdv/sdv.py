@@ -17,7 +17,9 @@ DEFAULT_MODEL_KWARGS = {
 }
 
 
-class NotFittedError(Exception):  # noqa:D101
+class NotFittedError(Exception):
+    """Error to raise when sample is called and SDV is not fitted."""
+
     pass
 
 

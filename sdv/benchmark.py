@@ -56,7 +56,7 @@ def score_dataset(dataset, datasets_path, timeout=None):
 
     Args:
         dataset (str):
-            Name of the dataset to evaluate.
+            Name of the dataset on which to evaluate SDV.
         datasets_path (str):
             Path where the datasets can be found. If not passed,
             the demo datasets are used.
@@ -92,6 +92,12 @@ def score_dataset(dataset, datasets_path, timeout=None):
 def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None):
     """Evaluate the performance of SDV over a collection of datasets.
 
+    If ``distributed`` is ``True``, ``dask`` must be installed in order to
+    distribute the load across multiple processors or workers.
+
+    If a ``timeout`` is given, any dataset that takes longer than the indicated
+    number of seconds to evaluate will be skipped and its score will be null.
+
     Args:
         datasets (list[str]):
             List of names of datasets to run on.
@@ -99,14 +105,21 @@ def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None)
             Path where the datasets can be found. If not passed,
             the demo datasets are used.
         distributed (bool):
-            Whether to use dask for distributed processing.
+            Whether to use ``dask`` for to distribute the load.
+            If ``True``, ``dask`` and ``distributed`` must also
+            be installed.
         timeout (int):
-            Maximum number of seconds to wait. If not passed,
-            wait until done.
+            Maximum number of seconds to wait for each dataset to
+            finish the evaluation process. If not passed, wait until
+            all the datasets are done.
 
     Returns:
         pandas.DataFrame:
             Obtained scores or error.
+
+    Raises:
+        ImportError:
+            If ``distributed`` is ``True`` and ``dask`` is not installed.
     """
     if datasets is None:
         if datasets_path is None:
@@ -115,7 +128,15 @@ def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None)
             datasets = os.listdir(datasets_path)
 
     if distributed:
-        import dask
+        try:
+            import dask
+        except ImportError as ie:
+            ie.msg += (
+                '\n\nIt seems like `dask` is not installed.\n'
+                'Please install dask and distributed using:\n'
+                '\n    pip install dask distributed'
+            )
+            raise
 
         global score_dataset
         score_dataset = dask.delayed(score_dataset)

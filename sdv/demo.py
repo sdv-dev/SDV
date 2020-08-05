@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from faker import Faker
 
-from sdv.metadata import Metadata
+from sdv.metadata import Metadata, Table
 
 LOGGER = logging.getLogger(__name__)
 
@@ -164,12 +164,17 @@ def _load_demo_dataset(dataset_name, data_path):
 def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
     """Load relational demo data.
 
-    The demo data consists of the metadata and tables dict for a a toy dataset with
-    three simple tables:
+    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.
+    Otherwise, a toy dataset with three simple tables is loaded:
 
         * users: user data including country, gender and age.
         * sessions: sessions data with a foreign key to user.
         * transactions: transactions data with a foreign key to sessions.
+
+    If ``metadata`` is ``True``, the output will be a tuple with a ``Metadata``
+    instance for the dataset and a ``tables`` dict that contains the tables loaded
+    as ``pandas.DataFrames``.
+    If ``metadata`` is ``False``, only the ``tables`` are returned.
 
     Args:
         dataset_name (str):
@@ -196,7 +201,7 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
     return tables
 
 
-def load_tabular_demo():
+def _load_tabular_dummy():
     """Load a dummy tabular demo dataframe."""
     age = np.random.randint(30, 50, 12)
     age_when_joined = age - np.random.randint(0, 10, 12)
@@ -213,6 +218,77 @@ def load_tabular_demo():
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined
     })
+
+
+def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, metadata=False):
+    """Load a tabular demo.
+
+    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.
+    Otherwise, a toy dataset with a single table that contains data from a short fake
+    collection of employees.
+
+    If ``metadata`` is ``True``, the output will be a tuple with a ``Metadata``
+    instance for the dataset and a ``pandas.DataFrame`` with the data from the table.
+    If ``metadata`` is ``False``, only the ``pandas.DataFrame`` is returned.
+
+    Args:
+        dataset_name (str):
+            Dataset name to be downloaded, if ``None`` use default demo data. Defaults to ``None``.
+        table_name (str):
+            If a table name is given, return this table from the indicated dataset.
+            Otherwise, return the first one.
+        data_path (str):
+            Data path to save the dataset files, only used if dataset_name is provided.
+            Defaults to ``DATA_PATH``.
+        metadata (bool):
+            If ``True`` also return a Table object. Defaults to ``False``.
+
+    Returns:
+        pandas.DataFrame or tuple:
+            If ``metadata`` is ``False`` return a ``pandas.DataFrame`` with the tables data.
+            If ``metadata`` is ``True`` return a ``tuple`` with a Table and the data.
+    """
+    if dataset_name:
+        meta, tables = _load_demo_dataset(dataset_name, data_path)
+
+        if table_name is None:
+            table_name = meta.get_tables()[0]
+
+        table = tables[table_name]
+
+        if metadata:
+            return Table.from_dict(meta.get_table_meta(table_name)), table
+
+        return table
+
+    table = _load_tabular_dummy()
+    if metadata:
+        table_meta = Table.from_dict({
+            'fields': {
+                'company': {'type': 'categorical'},
+                'department': {'type': 'categorical'},
+                'name': {'type': 'categorical'},
+                'address': {'type': 'categorical'},
+                'age': {'type': 'numerical', 'subtype': 'integer'},
+                'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
+                'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'}
+            },
+            'constraints': [
+                {
+                    'constraint': 'UniqueCombinations',
+                    'columns': ['company', 'department'],
+                },
+                {
+                    'constraint': 'GreaterThan',
+                    'low': 'age_when_joined',
+                    'high': 'age'
+                }
+            ],
+            'model_kwargs': {}
+        })
+        return table_meta, table
+
+    return table
 
 
 def get_available_demos():

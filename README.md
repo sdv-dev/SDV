@@ -201,8 +201,8 @@ https://github.com/sdv-dev/SDMetrics) library.
 
 # Join out community
 
-1. If you would like to see more usage examples, please have a look at the [examples folder](
-https://github.com/sdv-dev/SDV/tree/master/examples) or the repository. Please contact us
+1. If you would like to see more usage examples, please have a look at the [tutorials folder](
+https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
 if you have a usage example that you would want to share with the community.
 2. Please head to the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
 for more details about this process.

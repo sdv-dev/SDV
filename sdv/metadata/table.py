@@ -19,14 +19,49 @@ class Table:
     """Table Metadata.
 
     The Metadata class provides a unified layer of abstraction over the metadata
-    of a single Table, which includes both the necessary details to load the data
-    from the filesystem and to know how to parse and transform it to numerical data.
+    of a single Table, which includes all the necessary details to handle the
+    table of this data, including the data types, the fields with pii information
+    and the constraints that affect this data.
+
+    Args:
+        field_names (list[str]):
+            List of names of the fields that need to be modeled
+            and included in the generated output data. Any additional
+            fields found in the data will be ignored and will not be
+            included in the generated output.
+            If ``None``, all the fields found in the data are used.
+        field_types (dict[str, dict]):
+            Dictinary specifying the data types and subtypes
+            of the fields that will be modeled. Field types and subtypes
+            combinations must be compatible with the SDV Metadata Schema.
+        anonymize_fields (dict[str, str]):
+            Dict specifying which fields to anonymize and what faker
+            category they belong to.
+        primary_key (str):
+            Name of the field which is the primary key of the table.
+        constraints (list[Constraint, dict]):
+            List of Constraint objects or dicts.
+        transformer_templates (dict):
+            Dictionary of transformer templates to be used for the
+            different data types. The keys must be any of the `dtype.kind`
+            values, `i`, `f`, `O`, `b` or `M`, and the values must be
+            either RDT Transformer classes or RDT Transformer instances.
+        model_kwargs (dict):
+            Dictionary specifiying the kwargs that need to be used in
+            each tabular model when working on this table. This dictionary
+            contains as keys the name of the TabularModel class and as
+            values a dictionary containing the keyword arguments to use.
+            This argument exists mostly to ensure that the models are
+            fitted using the same arguments when the same Table is used
+            to fit different model instances on different slices of the
+            same table.
     """
 
     _hyper_transformer = None
     _anonymization_mappings = None
     _fakers = None
     _constraint_instances = None
+    fitted = False
 
     _FIELD_TEMPLATES = {
         'i': {
@@ -107,7 +142,17 @@ class Table:
         self._transformer_templates = transformer_templates or {}
 
     def get_model_kwargs(self, model_name):
-        """Return the required model kwargs for the indicated model."""
+        """Return the required model kwargs for the indicated model.
+
+        Args:
+            model_name (str):
+                Qualified Name of the model for which model kwargs
+                are needed.
+
+        Returns:
+            dict:
+                Keyword arguments to use on the indicated model.
+        """
         return copy.deepcopy(self._model_kwargs.get(model_name))
 
     def set_model_kwargs(self, model_name, model_kwargs):
@@ -234,8 +279,7 @@ class Table:
         for idx, constraint in enumerate(self._constraints):
             if isinstance(constraint, type):
                 constraint = constraint().to_dict()
-
-            if isinstance(constraint, Constraint):
+            elif isinstance(constraint, Constraint):
                 constraint = constraint.to_dict()
 
             constraint = Constraint.from_dict(constraint)
@@ -254,7 +298,6 @@ class Table:
         Returns:
             rdt.HyperTransformer
         """
-        # dtypes = self.get_dtypes(ids=False)
         dtypes = {}
         fields = self._fields_metadata
         for column in data.columns:
@@ -353,6 +396,7 @@ class Table:
 
         data = self._fit_transform_constraints(data)
         self._fit_hyper_transformer(data)
+        self.fitted = True
 
     def transform(self, data):
         """Transform the given data.
@@ -428,7 +472,10 @@ class Table:
         """
         return {
             'fields': copy.deepcopy(self._fields_metadata),
-            'constraints': [constraint.to_dict() for constraint in self._constraints],
+            'constraints': [
+                constraint if isinstance(constraint, dict) else constraint.to_dict()
+                for constraint in self._constraints
+            ],
             'model_kwargs': copy.deepcopy(self._model_kwargs),
         }
 

@@ -87,7 +87,7 @@ class CTGAN(BaseTabularModel):
         except ImportError as ie:
             ie.msg += (
                 '\n\nIt seems like `ctgan` is not installed.\n'
-                'Please install it using:\n\n    pip install ctgan'
+                'Please install it using:\n\n    pip install sdv[ctgan]'
             )
             raise
 
@@ -99,11 +99,11 @@ class CTGAN(BaseTabularModel):
         self._epochs = epochs
         self._log_frequency = log_frequency
 
-    def _fit(self, data):
+    def _fit(self, table_data):
         """Fit the model to the table.
 
         Args:
-            data (pandas.DataFrame):
+            table_data (pandas.DataFrame):
                 Data to be learned.
         """
         self._model = self._CTGAN_CLASS(
@@ -119,21 +119,21 @@ class CTGAN(BaseTabularModel):
             if meta['type'] == 'categorical'
         ]
         self._model.fit(
-            data,
+            table_data,
             epochs=self._epochs,
             discrete_columns=categoricals,
             log_frequency=self._log_frequency,
         )
 
-    def _sample(self, size):
-        """Sample ``size`` rows from the model.
+    def _sample(self, num_rows):
+        """Sample the indicated number of rows from the model.
 
         Args:
-            size (int):
+            num_rows (int):
                 Amount of rows to sample.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        return self._model.sample(size)
+        return self._model.sample(num_rows)

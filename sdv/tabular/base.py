@@ -19,8 +19,7 @@ class BaseTabularModel():
             List of names of the fields that need to be modeled
             and included in the generated output data. Any additional
             fields found in the data will be ignored and will not be
-            included in the generated output, except if they have
-            been added as primary keys or fields to anonymize.
+            included in the generated output.
             If ``None``, all the fields found in the data are used.
         primary_key (str, list[str] or dict[str, dict]):
             Specification about which field or fields are the
@@ -44,54 +43,29 @@ class BaseTabularModel():
     TRANSFORMER_TEMPLATES = None
 
     _metadata = None
-    _field_names = None
-    _primary_key = None
-    _field_types = None
-    _anonymize_fields = None
-    _constraints = None
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
                  anonymize_fields=None, table_metadata=None, constraints=None):
-        if table_metadata is not None:
+        if table_metadata is None:
+            self._metadata = Table(
+                field_names=field_names,
+                primary_key=primary_key,
+                field_types=field_types,
+                anonymize_fields=anonymize_fields,
+                constraints=constraints,
+                transformer_templates=self.TRANSFORMER_TEMPLATES,
+            )
+        else:
             if isinstance(table_metadata, dict):
-                table_metadata = Table(table_metadata)
+                self._metadata = Table(table_metadata)
 
-            for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
-                if arg:
-                    raise ValueError(
-                        'If table_metadata is given {} must be None'.format(arg.__name__))
+            if table_metadata is not None:
+                for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
+                    if arg:
+                        raise ValueError(
+                            'If table_metadata is given {} must be None'.format(arg.__name__))
 
             self._metadata = table_metadata
-
-        else:
-            self._field_names = field_names
-            self._primary_key = primary_key
-            self._field_types = field_types
-            self._anonymize_fields = anonymize_fields
-            self._constraints = constraints
-
-    def _fit_metadata(self, data):
-        """Generate a new Table metadata and fit it to the data.
-
-        The information provided will be used to create the Table instance
-        and then the rest of information will be learned from the given
-        data.
-
-        Args:
-            data (pandas.DataFrame):
-                Data to learn from.
-        """
-        metadata = Table(
-            field_names=self._field_names,
-            primary_key=self._primary_key,
-            field_types=self._field_types,
-            anonymize_fields=self._anonymize_fields,
-            constraints=self._constraints,
-            transformer_templates=self.TRANSFORMER_TEMPLATES,
-        )
-        metadata.fit(data)
-
-        self._metadata = metadata
 
     def fit(self, data):
         """Fit this model to the data.
@@ -106,8 +80,8 @@ class BaseTabularModel():
                 the path to a CSV file which can be loaded using
                 ``pandas.read_csv``.
         """
-        if self._metadata is None:
-            self._fit_metadata(data)
+        if not self._metadata.fitted:
+            self._metadata.fit(data)
 
         self._num_rows = len(data)
 
@@ -131,7 +105,7 @@ class BaseTabularModel():
         """
         return self._metadata
 
-    def sample(self, num_rows=None, values=None, max_retries=100):
+    def sample(self, num_rows=None, max_retries=100):
         """Sample rows from this table.
 
         Args:
@@ -139,10 +113,6 @@ class BaseTabularModel():
                 Number of rows to sample. If not given the model
                 will generate as many rows as there were in the
                 data passed to the ``fit`` method.
-            values (dict):    <- FUTURE
-                Fixed values to use for knowledge-based sampling.
-                In case the model does not support knowledge-based
-                sampling, a discard+resample strategy will be used.
             max_retries (int):
                 Number of times to retry sampling discarded rows.
                 Defaults to 100.
