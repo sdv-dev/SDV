@@ -11,26 +11,32 @@ class CTGAN(BaseTabularModel):
             List of names of the fields that need to be modeled
             and included in the generated output data. Any additional
             fields found in the data will be ignored and will not be
-            included in the generated output, except if they have
-            been added as primary keys or fields to anonymize.
+            included in the generated output.
             If ``None``, all the fields found in the data are used.
-        primary_key (str, list[str] or dict[str, dict]):
-            Specification about which field or fields are the
-            primary key of the table and information about how
-            to generate them.
         field_types (dict[str, dict]):
             Dictinary specifying the data types and subtypes
             of the fields that will be modeled. Field types and subtypes
             combinations must be compatible with the SDV Metadata Schema.
-        anonymize_fields (dict[str, str or tuple]):
+        field_transformers (dict[str, str]):
+            Dictinary specifying which transformers to use for each field.
+            Available transformers are:
+
+                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
+                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
+                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
+                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
+                * ``boolean``: Uses a ``BooleanTransformer``.
+                * ``datetime``: Uses a ``DatetimeTransformer``.
+
+        anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
-            category they belong to. If arguments for the faker need to be
-            passed to fine tune the value generation a tuple can be passed,
-            where the first element is the category and the rest are additional
-            positional arguments for the Faker.
-        constraints (list[dict]):
-            List of dicts specifying field and inter-field constraints.
-            TODO: Format TBD
+            category they belong to.
+        primary_key (str):
+            Name of the field which is the primary key of the table.
+        constraints (list[Constraint, dict]):
+            List of Constraint objects or dicts.
         table_metadata (dict or metadata.Table):
             Table metadata instance or dict representation.
             If given alongside any other metadata-related arguments, an
@@ -63,8 +69,8 @@ class CTGAN(BaseTabularModel):
         'O': 'label_encoding'
     }
 
-    def __init__(self, field_names=None, primary_key=None, field_types=None,
-                 anonymize_fields=None, constraints=None, table_metadata=None,
+    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
                  dis_dim=(256, 256), l2scale=1e-6, batch_size=500):
         super().__init__(

@@ -23,14 +23,12 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
-        categorical_transformer='one_hot_encoding',
     )
     gc.fit(users)
 
     parameters = gc.get_parameters()
     new_gc = GaussianCopula(
         table_metadata=gc.get_metadata(),
-        categorical_transformer='one_hot_encoding',
     )
     new_gc.set_parameters(parameters)
 

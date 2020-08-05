@@ -34,6 +34,19 @@ class Table:
             Dictinary specifying the data types and subtypes
             of the fields that will be modeled. Field types and subtypes
             combinations must be compatible with the SDV Metadata Schema.
+        field_transformers (dict[str, str]):
+            Dictinary specifying which transformers to use for each field.
+            Available transformers are:
+
+                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
+                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
+                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
+                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
+                * ``boolean``: Uses a ``BooleanTransformer``.
+                * ``datetime``: Uses a ``DatetimeTransformer``.
+
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
             category they belong to.
@@ -70,6 +83,7 @@ class Table:
         'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
         'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
         'label_encoding': rdt.transformers.LabelEncodingTransformer,
+        'boolean': rdt.transformers.BooleanTransformer,
         'datetime': rdt.transformers.DatetimeTransformer,
     }
     _DTYPE_TRANSFORMERS = {

@@ -3,6 +3,7 @@
 import copulas
 import numpy as np
 
+from sdv.metadata import Table
 from sdv.tabular.base import BaseTabularModel
 from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
@@ -17,20 +18,32 @@ class GaussianCopula(BaseTabularModel):
             List of names of the fields that need to be modeled
             and included in the generated output data. Any additional
             fields found in the data will be ignored and will not be
-            included in the generated output, except if they have
-            been added as primary keys or fields to anonymize.
+            included in the generated output.
             If ``None``, all the fields found in the data are used.
-        primary_key (str, list[str] or dict[str, dict]):
-            Specification about which field or fields are the
-            primary key of the table and information about how
-            to generate them.
         field_types (dict[str, dict]):
             Dictinary specifying the data types and subtypes
             of the fields that will be modeled. Field types and subtypes
             combinations must be compatible with the SDV Metadata Schema.
+        field_transformers (dict[str, str]):
+            Dictinary specifying which transformers to use for each field.
+            Available transformers are:
+
+                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
+                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
+                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
+                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
+                * ``boolean``: Uses a ``BooleanTransformer``.
+                * ``datetime``: Uses a ``DatetimeTransformer``.
+
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
             category they belong to.
+        primary_key (str):
+            Name of the field which is the primary key of the table.
+        constraints (list[Constraint, dict]):
+            List of Constraint objects or dicts.
         table_metadata (dict or metadata.Table):
             Table metadata instance or dict representation.
             If given alongside any other metadata-related arguments, an
@@ -38,10 +51,36 @@ class GaussianCopula(BaseTabularModel):
             If not given at all, it will be built using the other
             arguments or learned from the data.
         distribution (copulas.univariate.Univariate or str):
-            Copulas univariate distribution to use.
+            Copulas univariate distribution to use. To choose from:
+
+                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
+                  This may result in non-parametric models being used.
+                * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
+                  but restrict the selection to parametric distributions only.
+                * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
+                  but restrict the selection to bounded distributions only.
+                  This may result in non-parametric models being used.
+                * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
+                  but restrict the selection to semi-bounded distributions only.
+                  This may result in non-parametric models being used.
+                * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
+                  distribution, but restrict the selection to parametric and bounded distributions
+                  only.
+                * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
+                  distribution, but restrict the selection to parametric and semi-bounded
+                  distributions only.
+                * ``gaussian``: Use a Gaussian distribution.
+                * ``gamma``: Use a Gamma distribution.
+                * ``beta``: Use a Beta distribution.
+                * ``student_t``: Use a Student T distribution.
+                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+                  so using this will make ``get_parameters`` unusable.
+                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, to choose
             from:
+
                 * ``one_hot_encoding``: Apply a OneHotEncodingTransformer to the
                   categorical column, which replaces the  column with one boolean
                   column for each possible category, indicating whether each row
@@ -61,15 +100,28 @@ class GaussianCopula(BaseTabularModel):
     _categorical_transformer = None
     _model = None
 
-    _DEFAULT_DISTRIBUTION = copulas.univariate.Univariate
     _DISTRIBUTIONS = {
-        'Univariate': copulas.univariate.Univariate,
-        'Gaussian': copulas.univariate.GaussianUnivariate,
-        'Gamma': copulas.univariate.GammaUnivariate,
-        'Beta': copulas.univariate.BetaUnivariate,
-        'StudentT': copulas.univariate.StudentTUnivariate,
-        'GaussianKDE': copulas.univariate.GaussianKDE,
-        'TruncatedGaussian': copulas.univariate.TruncatedGaussian,
+        'univariate': copulas.univariate.Univariate,
+        'parametric': copulas.univariate.Univariate(
+            parametric=copulas.univariate.ParametricType.PARAMETRIC),
+        'bounded': copulas.univariate.Univariate(
+            bounded=copulas.univariate.BoundedType.BOUNDED),
+        'semi_bounded': copulas.univariate.Univariate(
+            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED),
+        'parametric_bounded': copulas.univariate.Univariate(
+            parametric=copulas.univariate.ParametricType.PARAMETRIC,
+            bounded=copulas.univariate.BoundedType.BOUNDED,
+        ),
+        'parametric_semi_bounded': copulas.univariate.Univariate(
+            parametric=copulas.univariate.ParametricType.PARAMETRIC,
+            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED,
+        ),
+        'gaussian': copulas.univariate.GaussianUnivariate,
+        'gamma': copulas.univariate.GammaUnivariate,
+        'beta': copulas.univariate.BetaUnivariate,
+        'student_t': copulas.univariate.StudentTUnivariate,
+        'gaussian_kde': copulas.univariate.GaussianKDE,
+        'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
 
     _HYPERPARAMETERS = {
@@ -104,7 +156,7 @@ class GaussianCopula(BaseTabularModel):
     @classmethod
     def _get_distribution(cls, distribution):
         if not distribution:
-            return cls._DEFAULT_DISTRIBUTION
+            return cls._DISTRIBUTIONS['parametric']
 
         if isinstance(distribution, str):
             return cls._DISTRIBUTIONS.get(distribution, distribution)
@@ -117,12 +169,15 @@ class GaussianCopula(BaseTabularModel):
 
         return distribution
 
-    def __init__(self, field_names=None, primary_key=None, field_types=None,
-                 anonymize_fields=None, constraints=None, table_metadata=None,
-                 distribution=None, categorical_transformer=None):
+    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+                 anonymize_fields=None, primary_key=None, constraints=None,
+                 table_metadata=None, distribution=None, categorical_transformer=None):
 
-        if self._metadata is not None:
-            model_kwargs = self._metadata.get_model_kwargs(self.__class__.__name__)
+        if isinstance(table_metadata, dict):
+            table_metadata = Table.from_dict(table_metadata)
+
+        if table_metadata:
+            model_kwargs = table_metadata.get_model_kwargs(self.__class__.__name__)
             if model_kwargs:
                 if distribution is None:
                     distribution = model_kwargs['distribution']
@@ -192,35 +247,28 @@ class GaussianCopula(BaseTabularModel):
         """
         return self._model.sample(num_rows)
 
-    def get_parameters(self, flatten=False):
+    def get_parameters(self):
         """Get copula model parameters.
 
         Compute model ``covariance`` and ``distribution.std``
         before it returns the flatten dict.
 
-        Args:
-            flatten (bool):
-                Whether to flatten the parameters or not before
-                returning them.
-
         Returns:
             dict:
                 Copula parameters.
+
+        Raises:
+            NonParametricError:
+                If a non-parametric distribution has been used.
         """
-        parameters = self._model.to_dict()
-        parameters['num_rows'] = self._num_rows
-
-        if not flatten:
-            return parameters
-
-        values = list()
-        triangle = np.tril(self._model.covariance)
-
-        for index, row in enumerate(triangle.tolist()):
-            values.append(row[:index + 1])
-
-        self._model.covariance = np.array(values)
         params = self._model.to_dict()
+
+        covariance = list()
+        for index, row in enumerate(params['covariance']):
+            covariance.append(row[:index + 1])
+
+        # self._model.covariance = np.array(values)
+        # params = self._model.to_dict()
         univariates = dict()
         for name, univariate in zip(params.pop('columns'), params['univariates']):
             univariates[name] = univariate
@@ -232,19 +280,27 @@ class GaussianCopula(BaseTabularModel):
                 univariate['scale'] = np.log(scale)
 
         params['univariates'] = univariates
+        params['num_rows'] = self._num_rows
 
         return flatten_dict(params)
 
-    def _prepare_sampled_covariance(self, covariance):
-        """Prepare a covariance matrix.
+    def _rebuild_covariance_matrix(self, covariance):
+        """Rebuild the covariance matrix from its parameter values.
+
+        This method follows the steps:
+
+            * Rebuild a square matrix out of a triangular one.
+            * Add the missing half of the matrix by adding its transposed and
+              then removing the duplicated diagonal values.
+            * ensure the matrix is positive definite
 
         Args:
             covariance (list):
-                covariance after unflattening model parameters.
+                covariance values after unflattening model parameters.
 
         Result:
-            list[list]:
-                symmetric Positive semi-definite matrix.
+            list[list[float]]:
+                Symmetric positive semi-definite matrix.
         """
         covariance = np.array(square_matrix(covariance))
         covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
@@ -254,18 +310,8 @@ class GaussianCopula(BaseTabularModel):
 
         return covariance.tolist()
 
-    def _unflatten_gaussian_copula(self, model_parameters):
-        """Prepare unflattened model params to recreate Gaussian Multivariate instance.
-
-        The preparations consist basically in:
-
-            - Transform sampled negative standard deviations from distributions into positive
-              numbers
-
-            - Ensure the covariance matrix is a valid symmetric positive-semidefinite matrix.
-
-            - Add string parameters kept inside the class (as they can't be modelled),
-              like ``distribution_type``.
+    def _rebuild_gaussian_copula(self, model_parameters):
+        """Rebuild the model params to recreate a Gaussian Multivariate instance.
 
         Args:
             model_parameters (dict):
@@ -275,15 +321,11 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Model parameters ready to recreate the model.
         """
-        univariate_kwargs = {
-            'type': model_parameters['distribution']
-        }
-
         columns = list()
         univariates = list()
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
-            univariate.update(univariate_kwargs)
+            univariate['type'] = self._distribution[column]
             if 'scale' in univariate:
                 univariate['scale'] = np.exp(univariate['scale'])
 
@@ -293,27 +335,19 @@ class GaussianCopula(BaseTabularModel):
         model_parameters['columns'] = columns
 
         covariance = model_parameters.get('covariance')
-        model_parameters['covariance'] = self._prepare_sampled_covariance(covariance)
+        model_parameters['covariance'] = self._rebuild_covariance_matrix(covariance)
 
         return model_parameters
 
-    def set_parameters(self, parameters, unflatten=False):
+    def set_parameters(self, parameters):
         """Set copula model parameters.
-
-        Add additional keys after unflatte the parameters
-        in order to set expected parameters for the copula.
 
         Args:
             dict:
                 Copula flatten parameters.
-            unflatten (bool):
-                Whether the parameters need to be unflattened or not.
         """
-        if unflatten:
-            parameters = unflatten_dict(parameters)
-            parameters.setdefault('distribution', self._distribution)
-
-            parameters = self._unflatten_gaussian_copula(parameters)
+        parameters = unflatten_dict(parameters)
+        parameters = self._rebuild_gaussian_copula(parameters)
 
         self._num_rows = max(0, int(round(parameters.pop('num_rows'))))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
