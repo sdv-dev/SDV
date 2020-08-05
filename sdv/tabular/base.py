@@ -40,7 +40,7 @@ class BaseTabularModel():
             arguments or learned from the data.
     """
 
-    TRANSFORMER_TEMPLATES = None
+    _DTYPE_TRANSFORMERS = None
 
     _metadata = None
 
@@ -53,7 +53,7 @@ class BaseTabularModel():
                 field_types=field_types,
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
-                transformer_templates=self.TRANSFORMER_TEMPLATES,
+                dtype_transformers=self._DTYPE_TRANSFORMERS,
             )
         else:
             if isinstance(table_metadata, dict):

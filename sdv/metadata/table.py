@@ -41,7 +41,7 @@ class Table:
             Name of the field which is the primary key of the table.
         constraints (list[Constraint, dict]):
             List of Constraint objects or dicts.
-        transformer_templates (dict):
+        dtype_transformers (dict):
             Dictionary of transformer templates to be used for the
             different data types. The keys must be any of the `dtype.kind`
             values, `i`, `f`, `O`, `b` or `M`, and the values must be
@@ -63,7 +63,23 @@ class Table:
     _constraint_instances = None
     fitted = False
 
-    _FIELD_TEMPLATES = {
+    _TRANSFORMER_TEMPLATES = {
+        'integer': rdt.transformers.NumericalTransformer(dtype=int),
+        'float': rdt.transformers.NumericalTransformer(dtype=float),
+        'categorical': rdt.transformers.CategoricalTransformer,
+        'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
+        'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
+        'label_encoding': rdt.transformers.LabelEncodingTransformer,
+        'datetime': rdt.transformers.DatetimeTransformer,
+    }
+    _DTYPE_TRANSFORMERS = {
+        'i': 'integer',
+        'f': 'float',
+        'O': 'one_hot_encoding',
+        'b': 'boolean',
+        'M': 'datetime',
+    }
+    _DTYPES_TO_TYPES = {
         'i': {
             'type': 'numerical',
             'subtype': 'integer',
@@ -82,7 +98,7 @@ class Table:
             'type': 'datetime',
         }
     }
-    _DTYPES = {
+    _TYPES_TO_DTYPES = {
         ('categorical', None): 'object',
         ('boolean', None): 'bool',
         ('numerical', None): 'float',
@@ -129,17 +145,20 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def __init__(self, field_names=None, field_types=None, anonymize_fields=None,
-                 primary_key=None, constraints=None, transformer_templates=None,
-                 model_kwargs=None):
+    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+                 anonymize_fields=None, primary_key=None, constraints=None,
+                 dtype_transformers=None, model_kwargs=None):
         self._field_names = field_names
         self._field_types = field_types or {}
+        self._field_transformers = field_transformers or {}
         self._anonymize_fields = anonymize_fields or {}
         self._model_kwargs = model_kwargs or {}
 
         self._primary_key = primary_key
         self._constraints = constraints or []
-        self._transformer_templates = transformer_templates or {}
+        self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
+        if dtype_transformers:
+            self._dtype_transformers.update(dtype_transformers)
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -162,7 +181,7 @@ class Table:
     def _get_field_dtype(self, field_name, field_metadata):
         field_type = field_metadata['type']
         field_subtype = field_metadata.get('subtype')
-        dtype = self._DTYPES.get((field_type, field_subtype))
+        dtype = self._TYPES_TO_DTYPES.get((field_type, field_subtype))
         if not dtype:
             raise MetadataError(
                 'Invalid type and subtype combination for field {}: ({}, {})'.format(
@@ -222,15 +241,21 @@ class Table:
 
             field_meta = self._field_types.get(field_name)
             if field_meta:
-                # Validate the given meta
-                self._get_field_dtype(field_name, field_meta)
+                dtype = self._get_field_dtype(field_name, field_meta)
             else:
                 dtype = data[field_name].dtype
-                field_template = self._FIELD_TEMPLATES.get(dtype.kind)
+                field_template = self._DTYPES_TO_TYPES.get(dtype.kind)
                 if field_template is None:
-                    raise ValueError('Unsupported dtype {} in column {}'.format(dtype, field_name))
+                    msg = 'Unsupported dtype {} in column {}'.format(dtype, field_name)
+                    raise ValueError(msg)
 
                 field_meta = copy.deepcopy(field_template)
+
+            field_transformer = self._field_transformers.get(field_name)
+            if field_transformer:
+                field_meta['transformer'] = field_transformer
+            else:
+                field_meta['transformer'] = self._dtype_transformers.get(np.dtype(dtype).kind)
 
             anonymize_category = self._anonymize_fields.get(field_name)
             if anonymize_category:
@@ -252,18 +277,17 @@ class Table:
             dict:
                 mapping of field names and transformer instances.
         """
-        transformer_templates = {
-            'i': rdt.transformers.NumericalTransformer(dtype=int),
-            'f': rdt.transformers.NumericalTransformer(dtype=float),
-            'O': rdt.transformers.CategoricalTransformer,
-            'b': rdt.transformers.BooleanTransformer,
-            'M': rdt.transformers.DatetimeTransformer,
-        }
-        transformer_templates.update(self._transformer_templates)
-
         transformers = dict()
         for name, dtype in dtypes.items():
-            transformer_template = transformer_templates[np.dtype(dtype).kind]
+            field_metadata = self._fields_metadata.get(name, {})
+            transformer_template = field_metadata.get('transformer')
+            if transformer_template is None:
+                transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
+                field_metadata['transformer'] = transformer_template
+
+            if isinstance(transformer_template, str):
+                transformer_template = self._TRANSFORMER_TEMPLATES[transformer_template]
+
             if isinstance(transformer_template, type):
                 transformer = transformer_template()
             else:
@@ -294,6 +318,10 @@ class Table:
 
         First get the ``dtypes`` and then use them to build a transformer dictionary
         to be used by the ``HyperTransformer``.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             rdt.HyperTransformer

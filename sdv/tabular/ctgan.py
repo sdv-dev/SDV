@@ -1,7 +1,5 @@
 """Wrapper around CTGAN model."""
 
-import rdt
-
 from sdv.tabular.base import BaseTabularModel
 
 
@@ -61,11 +59,8 @@ class CTGAN(BaseTabularModel):
     _CTGAN_CLASS = None
     _model = None
 
-    HYPERPARAMETERS = {
-        'TBD'
-    }
-    TRANSFORMER_TEMPLATES = {
-        'O': rdt.transformers.LabelEncodingTransformer
+    _DTYPE_TRANSFORMERS = {
+        'O': 'label_encoding'
     }
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,

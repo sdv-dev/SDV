@@ -2,7 +2,6 @@
 
 import copulas
 import numpy as np
-import rdt
 
 from sdv.tabular.base import BaseTabularModel
 from sdv.tabular.utils import (
@@ -42,33 +41,55 @@ class GaussianCopula(BaseTabularModel):
             Copulas univariate distribution to use.
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, to choose
-            from ``one_hot_encoding``, ``label_encoding``, ``categorical`` and
-            ``categorical_fuzzy``.
+            from:
+                * ``one_hot_encoding``: Apply a OneHotEncodingTransformer to the
+                  categorical column, which replaces the  column with one boolean
+                  column for each possible category, indicating whether each row
+                  had that value or not.
+                * ``label_encoding``: Apply a LabelEncodingTransformer, which
+                  replaces the value of each category with an integer value that
+                  acts as its *label*.
+                * ``categorical``: Apply CategoricalTransformer, which replaces
+                  each categorical value with a float number in the `[0, 1]` range
+                  which is inversely proportional to the frequency of that category.
+                * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
+                  ``fuzzy`` argument set to ``True``, which makes it add gaussian
+                  noise around each value.
     """
 
-    DEFAULT_DISTRIBUTION = copulas.univariate.Univariate
     _distribution = None
     _categorical_transformer = None
     _model = None
 
-    HYPERPARAMETERS = {
+    _DEFAULT_DISTRIBUTION = copulas.univariate.Univariate
+    _DISTRIBUTIONS = {
+        'Univariate': copulas.univariate.Univariate,
+        'Gaussian': copulas.univariate.GaussianUnivariate,
+        'Gamma': copulas.univariate.GammaUnivariate,
+        'Beta': copulas.univariate.BetaUnivariate,
+        'StudentT': copulas.univariate.StudentTUnivariate,
+        'GaussianKDE': copulas.univariate.GaussianKDE,
+        'TruncatedGaussian': copulas.univariate.TruncatedGaussian,
+    }
+
+    _HYPERPARAMETERS = {
         'distribution': {
             'type': 'str or copulas.univariate.Univariate',
-            'default': 'copulas.univariate.Univariate',
+            'default': 'Univariate',
             'description': 'Univariate distribution to use to model each column',
             'choices': [
-                'copulas.univariate.Univariate',
-                'copulas.univariate.GaussianUnivariate',
-                'copulas.univariate.GammaUnivariate',
-                'copulas.univariate.BetaUnivariate',
-                'copulas.univariate.StudentTUnivariate',
-                'copulas.univariate.GaussianKDE',
-                'copulas.univariate.TruncatedGaussian',
+                'Univariate',
+                'Gaussian',
+                'Gamma',
+                'Beta',
+                'StudentT',
+                'GaussianKDE',
+                'TruncatedGaussian',
             ]
         },
         'categorical_transformer': {
             'type': 'str',
-            'default': 'categoircal_fuzzy',
+            'default': 'one_hot_encoding',
             'description': 'Type of transformer to use for the categorical variables',
             'choices': [
                 'categorical',
@@ -78,28 +99,27 @@ class GaussianCopula(BaseTabularModel):
             ]
         }
     }
-    DEFAULT_TRANSFORMER = 'one_hot_encoding'
-    CATEGORICAL_TRANSFORMERS = {
-        'categorical': rdt.transformers.CategoricalTransformer(fuzzy=False),
-        'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
-        'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
-        'label_encoding': rdt.transformers.LabelEncodingTransformer,
-    }
-    TRANSFORMER_TEMPLATES = {
-        'O': rdt.transformers.OneHotEncodingTransformer
-    }
+    _DEFAULT_TRANSFORMER = 'one_hot_encoding'
+
+    @classmethod
+    def _get_distribution(cls, distribution):
+        if not distribution:
+            return cls._DEFAULT_DISTRIBUTION
+
+        if isinstance(distribution, str):
+            return cls._DISTRIBUTIONS.get(distribution, distribution)
+
+        if isinstance(distribution, dict):
+            return {
+                name: cls._get_distribution(distribution)
+                for name, distribution in distribution.items()
+            }
+
+        return distribution
 
     def __init__(self, field_names=None, primary_key=None, field_types=None,
                  anonymize_fields=None, constraints=None, table_metadata=None,
                  distribution=None, categorical_transformer=None):
-        super().__init__(
-            field_names=field_names,
-            primary_key=primary_key,
-            field_types=field_types,
-            anonymize_fields=anonymize_fields,
-            constraints=constraints,
-            table_metadata=table_metadata
-        )
 
         if self._metadata is not None:
             model_kwargs = self._metadata.get_model_kwargs(self.__class__.__name__)
@@ -110,12 +130,20 @@ class GaussianCopula(BaseTabularModel):
                 if categorical_transformer is None:
                     categorical_transformer = model_kwargs['categorical_transformer']
 
-        self._distribution = distribution or self.DEFAULT_DISTRIBUTION
+        self._distribution = self._get_distribution(distribution)
 
-        categorical_transformer = categorical_transformer or self.DEFAULT_TRANSFORMER
+        categorical_transformer = categorical_transformer or self._DEFAULT_TRANSFORMER
         self._categorical_transformer = categorical_transformer
+        self._DTYPE_TRANSFORMERS = {'O': categorical_transformer}
 
-        self.TRANSFORMER_TEMPLATES['O'] = self.CATEGORICAL_TRANSFORMERS[categorical_transformer]
+        super().__init__(
+            field_names=field_names,
+            primary_key=primary_key,
+            field_types=field_types,
+            anonymize_fields=anonymize_fields,
+            constraints=constraints,
+            table_metadata=table_metadata
+        )
 
     def _update_metadata(self):
         """Add arguments needed to reproduce this model to the Metadata.
