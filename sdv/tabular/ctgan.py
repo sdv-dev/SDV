@@ -87,7 +87,7 @@ class CTGAN(BaseTabularModel):
         except ImportError as ie:
             ie.msg += (
                 '\n\nIt seems like `ctgan` is not installed.\n'
-                'Please install it using:\n\n    pip install ctgan'
+                'Please install it using:\n\n    pip install sdv[ctgan]'
             )
             raise
 

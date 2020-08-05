@@ -89,6 +89,7 @@ setup(
     ],
     description='Automated Generative Modeling and Sampling',
     extras_require={
+        'ctgan': ctgan_requires,
         'test': tests_require + ctgan_requires,
         'dev': development_requires + tests_require + ctgan_requires,
     },
