@@ -24,7 +24,7 @@ def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S'):
                 table[column] = column_data.dt.strftime(datetime_fmt)
 
         names.append('<td><b>{}</b></td>'.format(name))
-        data.append('<td>{}</td>'.format(table.head(max_rows)._repr_html_()))
+        data.append('<td>{}</td>'.format(table.head(max_rows).to_html(index=False)))
 
     return HTML('<table><tr>{}</tr><tr>{}</tr></table>'.format(
         ''.join(names),

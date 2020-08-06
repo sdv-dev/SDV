@@ -21,10 +21,24 @@ def test_ctgan():
 
     assert ctgan.get_metadata().to_dict() == {
         'fields': {
-            'user_id': {'type': 'id', 'subtype': 'integer'},
-            'country': {'type': 'categorical'},
-            'gender': {'type': 'categorical'},
-            'age': {'type': 'numerical', 'subtype': 'integer'}
+            'user_id': {
+                'type': 'id',
+                'subtype': 'integer',
+                'transformer': 'integer',
+            },
+            'country': {
+                'type': 'categorical',
+                'transformer': 'label_encoding',
+            },
+            'gender': {
+                'type': 'categorical',
+                'transformer': 'label_encoding',
+            },
+            'age': {
+                'type': 'numerical',
+                'subtype': 'integer',
+                'transformer': 'integer',
+            }
         },
         'constraints': [],
         'model_kwargs': {}
