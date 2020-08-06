@@ -4,7 +4,7 @@ import copulas
 import numpy as np
 
 from sdv.metadata import Table
-from sdv.tabular.base import BaseTabularModel
+from sdv.tabular.base import BaseTabularModel, NonParametricError
 from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
     unflatten_dict)
@@ -261,14 +261,19 @@ class GaussianCopula(BaseTabularModel):
             NonParametricError:
                 If a non-parametric distribution has been used.
         """
+        for univariate in self._model.univariates:
+            if type(univariate) is copulas.univariate.Univariate:
+                univariate = univariate._instance
+
+            if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:
+                raise NonParametricError("This GaussianCopula uses non parametric distributions")
+
         params = self._model.to_dict()
 
         covariance = list()
         for index, row in enumerate(params['covariance']):
             covariance.append(row[:index + 1])
 
-        # self._model.covariance = np.array(values)
-        # params = self._model.to_dict()
         univariates = dict()
         for name, univariate in zip(params.pop('columns'), params['univariates']):
             univariates[name] = univariate
