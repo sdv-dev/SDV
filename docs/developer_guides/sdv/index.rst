@@ -2,7 +2,7 @@ SDV
 ===
 
 SDV is the library which provides a user friendly interface to access all the
-different functionalirities of The Synthetic Data Vault Project.
+different functionalities of The Synthetic Data Vault Project.
 
 SDV is organized around the following concepts:
 
