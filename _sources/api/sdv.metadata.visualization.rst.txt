@@ -1,7 +1,0 @@
-sdv.metadata.visualization module
-=================================
-
-.. automodule:: sdv.metadata.visualization
-   :members:
-   :undoc-members:
-   :show-inheritance:

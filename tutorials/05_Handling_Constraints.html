@@ -1,0 +1,968 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Handling Constraints &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api_reference/index.html" />
+    <link rel="prev" title="Working with Metadata" href="04_Working_with_Metadata.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="02_Single_Table_Modeling.html">Single Table Modeling</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="03_Relational_Data_Modeling.html">Relational Data Modeling</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="04_Working_with_Metadata.html">Working with Metadata</a>
+              </li>
+          
+        
+          
+              <li class="active">
+                  <a href="">Handling Constraints</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Load-a-Tabular-Demo" class="nav-link">Load a Tabular Demo</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#How-does-SDV-Handle-Constraints?" class="nav-link">How does SDV Handle Constraints?</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#Transform-Strategy" class="nav-link">Transform Strategy</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#Reject-Sampling-Strategy" class="nav-link">Reject Sampling Strategy</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Defining-Constraints" class="nav-link">Defining Constraints</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#UniqueCombinations-Constraint" class="nav-link">UniqueCombinations Constraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#GreaterThan-Constraint" class="nav-link">GreaterThan Constraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#CustomFormula-Constraint" class="nav-link">CustomFormula Constraint</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Using-the-Constraints" class="nav-link">Using the Constraints</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5.5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<div class="section" id="Handling-Constraints">
+<h1>Handling Constraints<a class="headerlink" href="#Handling-Constraints" title="Permalink to this headline">¶</a></h1>
+<p>A very common scenario that we face when working with tabular data is finding columns that have very particular relationships between them which are very hard to model and easily confuse the Tabular Models.</p>
+<p>Some simple examples of these scenarios include:</p>
+<ul class="simple">
+<li><p>A table that has the columns <code class="docutils literal notranslate"><span class="pre">country</span></code> and <code class="docutils literal notranslate"><span class="pre">city</span></code>: In such scenario, it might be very hard to learn which country each city belongs to, and when sampling probabilistically, the model is likely to end up generating invalid country/city combinations.</p></li>
+<li><p>A table that contains both the <code class="docutils literal notranslate"><span class="pre">age</span></code> and the <code class="docutils literal notranslate"><span class="pre">date</span> <span class="pre">of</span> <span class="pre">birth</span></code> of a user. The model will learn the age and date of birth distributions and mostly generate valid combinations, but in some cases it might end up giving back ages that do not correspond to the given date of birth.</p></li>
+</ul>
+<p>These kind of special relationships between columns are called <code class="docutils literal notranslate"><span class="pre">Constraints</span></code>, and <strong>SDV</strong> provides a very powerful and flexible mechanism to take them into account and guarantee that the sampled data always respects them.</p>
+<p>Let us explore a few <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> examples and learn how to handle them:</p>
+<div class="section" id="Load-a-Tabular-Demo">
+<h2>Load a Tabular Demo<a class="headerlink" href="#Load-a-Tabular-Demo" title="Permalink to this headline">¶</a></h2>
+<p>We will start by loading a small table that contains data with some constraints:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
+
+<span class="n">employees</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">()</span>
+<span class="n">employees</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>company</th>
+      <th>department</th>
+      <th>name</th>
+      <th>address</th>
+      <th>age</th>
+      <th>age_when_joined</th>
+      <th>years_in_the_company</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Pear</td>
+      <td>Sales</td>
+      <td>Bryan Salazar</td>
+      <td>99477 Woods Land\nLake Michelleborough, ID 13732</td>
+      <td>30</td>
+      <td>25</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>Sandra Bryant</td>
+      <td>Unit 7174 Box 4866\nDPO AA 53089</td>
+      <td>49</td>
+      <td>42</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Meagan Snyder</td>
+      <td>0135 Christina Lakes\nSalazarport, KS 20085</td>
+      <td>30</td>
+      <td>26</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Glasses</td>
+      <td>Search Engine</td>
+      <td>Christine Mckinney</td>
+      <td>4355 Mckenzie Run\nEast Robinville, HI 51618</td>
+      <td>44</td>
+      <td>40</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Michelle Hall</td>
+      <td>0859 Ralph Lodge Apt. 713\nDanielland, VT 90799</td>
+      <td>39</td>
+      <td>31</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Toni Williams</td>
+      <td>672 Wilson Glens\nAmandaside, NY 36687</td>
+      <td>32</td>
+      <td>26</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Pear</td>
+      <td>Sales</td>
+      <td>Jaime Collins</td>
+      <td>71111 Margaret Mills\nKennedyfort, KS 40149</td>
+      <td>46</td>
+      <td>43</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>Sarah Perez</td>
+      <td>524 Joseph Oval\nScottchester, MD 92525</td>
+      <td>49</td>
+      <td>42</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Colleen Buchanan</td>
+      <td>83684 Betty Pine Apt. 866\nErneststad, NC 40785</td>
+      <td>37</td>
+      <td>32</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Glasses</td>
+      <td>Search Engine</td>
+      <td>Claire Clarke</td>
+      <td>2959 Lisa River\nWest Brandi, KS 80870</td>
+      <td>30</td>
+      <td>29</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Felicia Green</td>
+      <td>536 Rodriguez Bypass\nEast Aaronburgh, MI 13357</td>
+      <td>37</td>
+      <td>28</td>
+      <td>9</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Rebecca Lewis</td>
+      <td>0595 Kenneth Mount\nVanessamouth, DC 60910</td>
+      <td>42</td>
+      <td>36</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>This step loaded a simple table that gives us some basic details about simulated employees from several companies.</p>
+<p>If we observe the data closely we will find a few <strong>constraints</strong>:</p>
+<ol class="arabic simple">
+<li><p>Each <code class="docutils literal notranslate"><span class="pre">company</span></code> has employees from two or more <code class="docutils literal notranslate"><span class="pre">departments</span></code>, but <code class="docutils literal notranslate"><span class="pre">department</span></code> names are different across <code class="docutils literal notranslate"><span class="pre">companies</span></code>. This implies that a <code class="docutils literal notranslate"><span class="pre">company</span></code> should only be paired with its own <code class="docutils literal notranslate"><span class="pre">departments</span></code> and never with the <code class="docutils literal notranslate"><span class="pre">departments</span></code> of other <code class="docutils literal notranslate"><span class="pre">companies</span></code>.</p></li>
+<li><p>We have an <code class="docutils literal notranslate"><span class="pre">age</span></code> column that represents the age of the employee at the date when the data was created and an <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> that represents the age of the employee when they joined the <code class="docutils literal notranslate"><span class="pre">company</span></code>. Since all of them joined the <code class="docutils literal notranslate"><span class="pre">company</span></code> before the data was created, the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> will always be equal or lower than the <code class="docutils literal notranslate"><span class="pre">age</span></code> column.</p></li>
+<li><p>We have a <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> column that indicates how many years passed since they joined the company, which means that the <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> will always be equal to the <code class="docutils literal notranslate"><span class="pre">age</span></code> minus the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code>.</p></li>
+</ol>
+</div>
+<div class="section" id="How-does-SDV-Handle-Constraints?">
+<h2>How does SDV Handle Constraints?<a class="headerlink" href="#How-does-SDV-Handle-Constraints?" title="Permalink to this headline">¶</a></h2>
+<p><strong>SDV</strong> handles constraints using two different strategies:</p>
+<div class="section" id="Transform-Strategy">
+<h3>Transform Strategy<a class="headerlink" href="#Transform-Strategy" title="Permalink to this headline">¶</a></h3>
+<p>When using this strategy, <strong>SDV</strong> applies a transformation to the data before learning it in a way that allows the model to better capture the data properties.</p>
+<p>For example, if we have one column that needs to be always greater than the other one, SDV can do the following:</p>
+<ol class="arabic simple">
+<li><p>Replace the higher column with the difference between the two columns, which will always be positive.</p></li>
+<li><p>Model the transformed data and sample new values.</p></li>
+<li><p>Recompute the value of the high column by adding the values of the lower column to it.</p></li>
+</ol>
+<p>The <strong>Transform</strong> strategy is very efficient and does not affect the speed of the modeling and sampling process, but in some cases might affect the quality of the learning process or simply not be possible.</p>
+</div>
+<div class="section" id="Reject-Sampling-Strategy">
+<h3>Reject Sampling Strategy<a class="headerlink" href="#Reject-Sampling-Strategy" title="Permalink to this headline">¶</a></h3>
+<p>In the cases where applying a <strong>Transform</strong> strategy is not possible or may affect the quality of the learning process, <strong>SDV</strong> can apply a <strong>Reject Sampling</strong> strategy.</p>
+<p>When using this strategy, <strong>SDV</strong> validates the sampled rows, discards the ones that do not adjust to the constraint, and resamples them. This process is repeated until enough rows have been sampled.</p>
+</div>
+</div>
+<div class="section" id="Defining-Constraints">
+<h2>Defining Constraints<a class="headerlink" href="#Defining-Constraints" title="Permalink to this headline">¶</a></h2>
+<p>Let us go back to the demo data that we loaded before and define <strong>Constraints</strong> that indicate <strong>SDV</strong> how to work with this data.</p>
+<div class="section" id="UniqueCombinations-Constraint">
+<h3>UniqueCombinations Constraint<a class="headerlink" href="#UniqueCombinations-Constraint" title="Permalink to this headline">¶</a></h3>
+<p>The first constraint that we will explore is the <code class="docutils literal notranslate"><span class="pre">UniqueCombinations</span></code> constraint.</p>
+<p>This Constraint class can handle the situation number 1 indicated above, in which the values of a set of columns can only be combined exactly as seen in the original data, and new combinations are not accepted.</p>
+<p>In order to use this constraint we will need to import it from the <code class="docutils literal notranslate"><span class="pre">sdv.constraints</span></code> module and create an instance of it indicating:</p>
+<ul class="simple">
+<li><p>the names of the affected columns</p></li>
+<li><p>which strategy we want to use: <code class="docutils literal notranslate"><span class="pre">transform</span></code> or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code></p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">UniqueCombinations</span>
+
+<span class="n">unique_company_department_constraint</span> <span class="o">=</span> <span class="n">UniqueCombinations</span><span class="p">(</span>
+    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;company&#39;</span><span class="p">,</span> <span class="s1">&#39;department&#39;</span><span class="p">],</span>
+    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="GreaterThan-Constraint">
+<h3>GreaterThan Constraint<a class="headerlink" href="#GreaterThan-Constraint" title="Permalink to this headline">¶</a></h3>
+<p>The second constraint that we need for our data is the <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code> constraint.</p>
+<p>This constraint guarantees that one column is always greater than the other one.</p>
+<p>In order to use it, we need to create an instance passing:</p>
+<ul class="simple">
+<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column</p></li>
+<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column</p></li>
+<li><p>the handling strategy that we want to use</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+
+<span class="n">age_gt_age_when_joined_constraint</span> <span class="o">=</span> <span class="n">GreaterThan</span><span class="p">(</span>
+    <span class="n">low</span><span class="o">=</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">,</span>
+    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">,</span>
+    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="CustomFormula-Constraint">
+<h3>CustomFormula Constraint<a class="headerlink" href="#CustomFormula-Constraint" title="Permalink to this headline">¶</a></h3>
+<p>In some cases, one column will need to be computed based on the other columns using a custom formula.</p>
+<p>This is, for example, what happens with the <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> column in our demo data, which will always need to be computed based on the <code class="docutils literal notranslate"><span class="pre">age</span></code> and <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> columns by subtracting them.</p>
+<p>In these cases, we need to define a custom function that defines how to compute the value of the column:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">def</span> <span class="nf">years_in_the_company</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Once we have defined this function, we can use the <code class="docutils literal notranslate"><span class="pre">ColumnFormula</span></code> constraint by passing it:</p>
+<ul class="simple">
+<li><p>the name of the column that we want to generate</p></li>
+<li><p>the function that generates the column values</p></li>
+<li><p>the handling strategy that we want to use</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">ColumnFormula</span>
+
+<span class="n">years_in_the_company_constraint</span> <span class="o">=</span> <span class="n">ColumnFormula</span><span class="p">(</span>
+    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;years_in_the_company&#39;</span><span class="p">,</span>
+    <span class="n">formula</span><span class="o">=</span><span class="n">years_in_the_company</span><span class="p">,</span>
+    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Using-the-Constraints">
+<h2>Using the Constraints<a class="headerlink" href="#Using-the-Constraints" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have defined the constraints needed to properly describe our dataset, we can pass them to the Tabular Model of our choice.</p>
+<p>For example, let us create a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model passing it the constraints that we just defined as a <code class="docutils literal notranslate"><span class="pre">list</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">unique_company_department_constraint</span><span class="p">,</span>
+    <span class="n">age_gt_age_when_joined_constraint</span><span class="p">,</span>
+    <span class="n">years_in_the_company_constraint</span>
+<span class="p">]</span>
+
+<span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>After creating the model, we can just fit and sample as usual:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-08-05 20:22:26,151 - INFO - sdv.metadata.table - Loading transformer OneHotEncodingTransformer for field name
+2020-08-05 20:22:26,151 - INFO - sdv.metadata.table - Loading transformer OneHotEncodingTransformer for field address
+2020-08-05 20:22:26,152 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field age
+2020-08-05 20:22:26,152 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field age_when_joined
+2020-08-05 20:22:26,153 - INFO - sdv.metadata.table - Loading transformer OneHotEncodingTransformer for field company#department
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2020-08-05 20:22:32,163 - INFO - sdv.tabular.base - 3 invalid rows found. Resampling 4 rows
+</pre></div></div>
+</div>
+<p>And observe that the sampled rows really adjust to the constraints that we defined:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sampled</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>company</th>
+      <th>department</th>
+      <th>name</th>
+      <th>address</th>
+      <th>age</th>
+      <th>age_when_joined</th>
+      <th>years_in_the_company</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Michelle Hall</td>
+      <td>0859 Ralph Lodge Apt. 713\nDanielland, VT 90799</td>
+      <td>29</td>
+      <td>27</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Rebecca Lewis</td>
+      <td>0595 Kenneth Mount\nVanessamouth, DC 60910</td>
+      <td>46</td>
+      <td>43</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Michelle Hall</td>
+      <td>0859 Ralph Lodge Apt. 713\nDanielland, VT 90799</td>
+      <td>46</td>
+      <td>40</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Cheerper</td>
+      <td>BigData</td>
+      <td>Meagan Snyder</td>
+      <td>0135 Christina Lakes\nSalazarport, KS 20085</td>
+      <td>33</td>
+      <td>25</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Glasses</td>
+      <td>Search Engine</td>
+      <td>Christine Mckinney</td>
+      <td>4355 Mckenzie Run\nEast Robinville, HI 51618</td>
+      <td>42</td>
+      <td>25</td>
+      <td>17</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Colleen Buchanan</td>
+      <td>83684 Betty Pine Apt. 866\nErneststad, NC 40785</td>
+      <td>36</td>
+      <td>25</td>
+      <td>11</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Cheerper</td>
+      <td>Support</td>
+      <td>Felicia Green</td>
+      <td>536 Rodriguez Bypass\nEast Aaronburgh, MI 13357</td>
+      <td>42</td>
+      <td>42</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Pear</td>
+      <td>Design</td>
+      <td>Sarah Perez</td>
+      <td>524 Joseph Oval\nScottchester, MD 92525</td>
+      <td>54</td>
+      <td>43</td>
+      <td>11</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Colleen Buchanan</td>
+      <td>83684 Betty Pine Apt. 866\nErneststad, NC 40785</td>
+      <td>35</td>
+      <td>25</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Glasses</td>
+      <td>AI</td>
+      <td>Toni Williams</td>
+      <td>672 Wilson Glens\nAmandaside, NY 36687</td>
+      <td>28</td>
+      <td>25</td>
+      <td>3</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="04_Working_with_Metadata.html" title="previous page">Working with Metadata</a>
+    <a class='right-next' id="next-link" href="../api_reference/index.html" title="next page">API Reference</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

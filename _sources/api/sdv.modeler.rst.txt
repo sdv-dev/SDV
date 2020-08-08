@@ -1,7 +1,0 @@
-sdv.modeler module
-==================
-
-.. automodule:: sdv.modeler
-   :members:
-   :undoc-members:
-   :show-inheritance:

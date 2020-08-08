@@ -1,7 +1,0 @@
-sdv.tabular.copulas module
-==========================
-
-.. automodule:: sdv.tabular.copulas
-   :members:
-   :undoc-members:
-   :show-inheritance:

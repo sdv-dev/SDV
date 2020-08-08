@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sdv.constraints.tabular.GreaterThan &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="sdv.constraints.tabular.GreaterThan.fit" href="sdv.constraints.tabular.GreaterThan.fit.html" />
+    <link rel="prev" title="sdv.constraints.tabular.UniqueCombinations.to_dict" href="sdv.constraints.tabular.UniqueCombinations.to_dict.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="../tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../metadata.html">sdv.metadata</a>
+              </li>
+          
+        
+          
+
+              <li class="active">
+                  <a href="../constraints.html">sdv.constraints</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.html">sdv.constraints.Constraint</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.fit.html">sdv.constraints.Constraint.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.transform.html">sdv.constraints.Constraint.transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.fit_transform.html">sdv.constraints.Constraint.fit_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.reverse_transform.html">sdv.constraints.Constraint.reverse_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.is_valid.html">sdv.constraints.Constraint.is_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.filter_valid.html">sdv.constraints.Constraint.filter_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.from_dict.html">sdv.constraints.Constraint.from_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.Constraint.to_dict.html">sdv.constraints.Constraint.to_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.html">sdv.constraints.tabular.CustomConstraint</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.fit.html">sdv.constraints.tabular.CustomConstraint.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.transform.html">sdv.constraints.tabular.CustomConstraint.transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.fit_transform.html">sdv.constraints.tabular.CustomConstraint.fit_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.reverse_transform.html">sdv.constraints.tabular.CustomConstraint.reverse_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.is_valid.html">sdv.constraints.tabular.CustomConstraint.is_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.filter_valid.html">sdv.constraints.tabular.CustomConstraint.filter_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.from_dict.html">sdv.constraints.tabular.CustomConstraint.from_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.CustomConstraint.to_dict.html">sdv.constraints.tabular.CustomConstraint.to_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.html">sdv.constraints.tabular.UniqueCombinations</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.fit.html">sdv.constraints.tabular.UniqueCombinations.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.transform.html">sdv.constraints.tabular.UniqueCombinations.transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.fit_transform.html">sdv.constraints.tabular.UniqueCombinations.fit_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.reverse_transform.html">sdv.constraints.tabular.UniqueCombinations.reverse_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.is_valid.html">sdv.constraints.tabular.UniqueCombinations.is_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.filter_valid.html">sdv.constraints.tabular.UniqueCombinations.filter_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.from_dict.html">sdv.constraints.tabular.UniqueCombinations.from_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.UniqueCombinations.to_dict.html">sdv.constraints.tabular.UniqueCombinations.to_dict</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="">sdv.constraints.tabular.GreaterThan</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.fit.html">sdv.constraints.tabular.GreaterThan.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.transform.html">sdv.constraints.tabular.GreaterThan.transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.fit_transform.html">sdv.constraints.tabular.GreaterThan.fit_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.reverse_transform.html">sdv.constraints.tabular.GreaterThan.reverse_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.is_valid.html">sdv.constraints.tabular.GreaterThan.is_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.filter_valid.html">sdv.constraints.tabular.GreaterThan.filter_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.from_dict.html">sdv.constraints.tabular.GreaterThan.from_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.GreaterThan.to_dict.html">sdv.constraints.tabular.GreaterThan.to_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.html">sdv.constraints.tabular.ColumnFormula</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.fit.html">sdv.constraints.tabular.ColumnFormula.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.transform.html">sdv.constraints.tabular.ColumnFormula.transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.fit_transform.html">sdv.constraints.tabular.ColumnFormula.fit_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.reverse_transform.html">sdv.constraints.tabular.ColumnFormula.reverse_transform</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.is_valid.html">sdv.constraints.tabular.ColumnFormula.is_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.filter_valid.html">sdv.constraints.tabular.ColumnFormula.filter_valid</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.from_dict.html">sdv.constraints.tabular.ColumnFormula.from_dict</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.constraints.tabular.ColumnFormula.to_dict.html">sdv.constraints.tabular.ColumnFormula.to_dict</a>
+                      </li>
+                  
+                  </ul>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../demo.html">sdv.demo</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="sdv-constraints-tabular-greaterthan">
+<h1>sdv.constraints.tabular.GreaterThan<a class="headerlink" href="#sdv-constraints-tabular-greaterthan" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="sdv.constraints.tabular.GreaterThan">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.tabular.</code><code class="sig-name descname">GreaterThan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/constraints/tabular.html#GreaterThan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.tabular.GreaterThan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">high</span></code> column is always greater than the <code class="docutils literal notranslate"><span class="pre">low</span></code> one.</p>
+<p>The transformation strategy works by replacing the <code class="docutils literal notranslate"><span class="pre">high</span></code> value with the
+difference between it and the <code class="docutils literal notranslate"><span class="pre">low</span></code> value and then computing back the <code class="docutils literal notranslate"><span class="pre">high</span></code>
+value by adding it the <code class="docutils literal notranslate"><span class="pre">low</span></code> value when reversing the transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>low</strong> (<em>str</em>) – Name of the column that contains the low value.</p></li>
+<li><p><strong>high</strong> (<em>str</em>) – Name of the column that contains the high value.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – Whether the comparison of the values should be strict <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> or
+not <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> when comparing them. Currently, this is only respected
+if <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> or <code class="docutils literal notranslate"><span class="pre">all</span></code> handling strategies are used.</p></li>
+<li><p><strong>handling_strategy</strong> (<em>str</em>) – How this Constraint should be handled, which can be <code class="docutils literal notranslate"><span class="pre">transform</span></code>
+or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="sdv.constraints.tabular.GreaterThan.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.tabular.GreaterThan.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable table">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.tabular.GreaterThan.__init__" title="sdv.constraints.tabular.GreaterThan.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(low, high[, strict, handling_strategy])</p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.filter_valid.html#sdv.constraints.tabular.GreaterThan.filter_valid" title="sdv.constraints.tabular.GreaterThan.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(table_data)</p></td>
+<td><p>Get only the rows that are valid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.fit.html#sdv.constraints.tabular.GreaterThan.fit" title="sdv.constraints.tabular.GreaterThan.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(table_data)</p></td>
+<td><p>Learn the dtype of the high column.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.fit_transform.html#sdv.constraints.tabular.GreaterThan.fit_transform" title="sdv.constraints.tabular.GreaterThan.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_transform</span></code></a>(table_data)</p></td>
+<td><p>Fit this Constraint to the data and then transform it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.from_dict.html#sdv.constraints.tabular.GreaterThan.from_dict" title="sdv.constraints.tabular.GreaterThan.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code></a>(constraint_dict)</p></td>
+<td><p>Build a Constraint object from a dict.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.is_valid.html#sdv.constraints.tabular.GreaterThan.is_valid" title="sdv.constraints.tabular.GreaterThan.is_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid</span></code></a>(table_data)</p></td>
+<td><p>Say whether <code class="docutils literal notranslate"><span class="pre">high</span></code> is greater than <code class="docutils literal notranslate"><span class="pre">low</span></code> in each row.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.reverse_transform.html#sdv.constraints.tabular.GreaterThan.reverse_transform" title="sdv.constraints.tabular.GreaterThan.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_transform</span></code></a>(table_data)</p></td>
+<td><p>Reverse transform the table data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.to_dict.html#sdv.constraints.tabular.GreaterThan.to_dict" title="sdv.constraints.tabular.GreaterThan.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<td><p>Return a dict representation of this Constraint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.tabular.GreaterThan.transform.html#sdv.constraints.tabular.GreaterThan.transform" title="sdv.constraints.tabular.GreaterThan.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_data)</p></td>
+<td><p>Transform the table data.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="sdv.constraints.tabular.UniqueCombinations.to_dict.html" title="previous page">sdv.constraints.tabular.UniqueCombinations.to_dict</a>
+    <a class='right-next' id="next-link" href="sdv.constraints.tabular.GreaterThan.fit.html" title="next page">sdv.constraints.tabular.GreaterThan.fit</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

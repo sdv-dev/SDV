@@ -1,0 +1,6 @@
+﻿sdv.metadata.Metadata.get\_children
+===================================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Metadata.get_children

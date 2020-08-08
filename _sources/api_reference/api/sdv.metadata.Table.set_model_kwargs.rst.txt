@@ -1,0 +1,6 @@
+﻿sdv.metadata.Table.set\_model\_kwargs
+=====================================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Table.set_model_kwargs

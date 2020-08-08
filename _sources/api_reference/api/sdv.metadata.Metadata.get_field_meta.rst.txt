@@ -1,0 +1,6 @@
+﻿sdv.metadata.Metadata.get\_field\_meta
+======================================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Metadata.get_field_meta

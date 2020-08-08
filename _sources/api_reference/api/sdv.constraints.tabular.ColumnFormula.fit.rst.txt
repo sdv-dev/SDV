@@ -1,0 +1,6 @@
+﻿sdv.constraints.tabular.ColumnFormula.fit
+=========================================
+
+.. currentmodule:: sdv.constraints.tabular
+
+.. automethod:: ColumnFormula.fit

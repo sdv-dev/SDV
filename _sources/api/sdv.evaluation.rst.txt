@@ -1,7 +1,0 @@
-sdv.evaluation module
-=====================
-
-.. automodule:: sdv.evaluation
-   :members:
-   :undoc-members:
-   :show-inheritance:

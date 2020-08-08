@@ -1,338 +1,200 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Single Table Modeling &mdash; SDV 0.3.7.dev0 documentation</title>
-  
 
-  
-  
-    <link rel="shortcut icon" href="../_static/dai-logo-white.ico"/>
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single Table Modeling &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Relational Data Modeling" href="03_Relational_Data_Modeling.html" />
-    <link rel="prev" title="SDV - Synthetic Data Vault" href="../readme.html" /> 
-</head>
-
-<body class="wy-body-for-nav">
-
-   
-  <div class="wy-grid-for-nav">
+    <link rel="prev" title="User Guides" href="../user_guides/index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
 
-          
-            <a href="../index.html" class="icon icon-home"> SDV
-          
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-          
-            
-            <img src="../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
-          
-          </a>
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
 
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">SDV - Synthetic Data Vault</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#overview">Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#features">Features:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#coming-soon">Coming soon:</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#try-it-out-now">Try it out now!</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#install">Install</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-with-pip">Install with pip</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#join-out-community">Join out community</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#citation">Citation</a></li>
-</ul>
-<p class="caption"><span class="caption-text">User Guides</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#Quick-usage">Quick usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">Generate synthetic data from the model</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#Frequently-encountered-needs">Frequently encountered needs</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="03_Relational_Data_Modeling.html#About-the-datset">About the datset</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#Data-model-summary">Data model summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#1.-Load-data">1. Load data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="03_Relational_Data_Modeling.html#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../metadata.html">Working with Metadata</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#load-your-data">Load your data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-the-first-table">Add the first table</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#metadata-schema">Metadata Schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#top-level">Top Level</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#table">Table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#field-details">Field details</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#primary-key-fields">Primary key fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#foreign-key-fields">Foreign key fields</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Resources</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/sdv.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.constraints.html">sdv.constraints package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.metadata.html">sdv.metadata package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#module-sdv.models">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.tabular.html">sdv.tabular package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.benchmark.html">sdv.benchmark module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.demo.html">sdv.demo module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.evaluation.html">sdv.evaluation module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.modeler.html">sdv.modeler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sampler.html">sdv.sampler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sdv.html">sdv.sdv module</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#module-sdv">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#types-of-contributions">Types of Contributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#report-bugs">Report Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#fix-bugs">Fix Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#implement-features">Implement Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#write-documentation">Write Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#submit-feedback">Submit Feedback</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#get-started">Get Started!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#tips">Tips</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#release-workflow">Release Workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#release-candidates">Release Candidates</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id1">0.3.6 - 2020-07-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#new-features">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id2">0.3.5 - 2020-07-09</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id3">0.3.4 - 2020-07-04</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id4">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#general-improvements">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id5">0.3.3 - 2020-06-26</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id6">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id7">0.3.2 - 2020-02-03</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id8">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id9">0.3.1 - 2020-01-22</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id10">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id11">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id12">0.3.0 - 2019-12-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id13">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id14">0.2.2 - 2019-12-10</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id15">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id16">0.2.1 - 2019-11-25</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id17">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id18">0.2.0 - 2019-10-11</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id19">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id20">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#bugs-fixed">Bugs Fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id21">0.1.2 - 2019-09-18</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id22">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id24">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id27">Bugs fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#first-release">0.1.0 - First Release</a></li>
-</ul>
-</li>
-</ul>
-
-            
-          
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+
+      <ul class="navbar-nav">
         
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">SDV</a>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
         
-      </nav>
-
-
-      <div class="wy-nav-content">
         
-        <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-      <li>Single Table Modeling</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            
-              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/tutorials/02_Single_Table_Modeling.ipynb" class="fa fa-github"> Edit on GitHub</a>
-            
-          
-        
-      </li>
-    
-  </ul>
-
-  
-  <hr/>
+      </ul>
+    </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="active">
+                  <a href="">Single Table Modeling</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="03_Relational_Data_Modeling.html">Relational Data Modeling</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="04_Working_with_Metadata.html">Working with Metadata</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="05_Handling_Constraints.html">Handling Constraints</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Quick-usage" class="nav-link">Quick usage</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Generate-synthetic-data-from-the-model" class="nav-link">Generate synthetic data from the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Let's-consider-using-CTGAN" class="nav-link">Let’s consider using CTGAN</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#id1" class="nav-link">Generate synthetic data from the model</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Frequently-encountered-needs" class="nav-link">Frequently encountered needs</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#How-can-I-evaluate-the-quality-of-my-synthetic-data?" class="nav-link">How can I evaluate the quality of my synthetic data?</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
   
 <style>
 /* CSS for nbsphinx extension */
@@ -399,7 +261,7 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
+    min-width: 5.5ex;
     padding-top: 0.3rem;
     padding-right: 0.3rem;
     text-align: right;
@@ -552,28 +414,6 @@ div.rendered_html tbody tr:nth-child(odd) {
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
-
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="section" id="Single-Table-Modeling">
 <h1>Single Table Modeling<a class="headerlink" href="#Single-Table-Modeling" title="Permalink to this headline">¶</a></h1>
@@ -591,14 +431,11 @@ div.rendered_html tbody tr:hover {
 <h2>Quick usage<a class="headerlink" href="#Quick-usage" title="Permalink to this headline">¶</a></h2>
 <p>Let’s consider a dataset from our demo datasets.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+<span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
 
 <span class="n">users</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">()[</span><span class="s1">&#39;users&#39;</span><span class="p">]</span>
 </pre></div>
@@ -612,7 +449,7 @@ div.rendered_html tbody tr:hover {
 <li><p><code class="docutils literal notranslate"><span class="pre">age</span></code>: The age of the user, in years.</p></li>
 </ul>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -621,7 +458,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -732,7 +569,7 @@ div.rendered_html tbody tr:hover {
 </ul>
 <p>Let us use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to model this data and then sample synthetic data from the model. In order to properly model our data we will need to provide some additional information to our model. Once we have prepared the arguments for our model we are ready to import it, create an instance and fit it to our data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -751,10 +588,9 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-23 22:15:16,942 - INFO - table - Loading transformer OneHotEncodingTransformer for field country
-2020-07-23 22:15:16,942 - INFO - table - Loading transformer OneHotEncodingTransformer for field gender
-2020-07-23 22:15:16,943 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-23 22:15:16,979 - INFO - gaussian - Fitting GaussianMultivariate()
+2020-08-05 20:21:32,681 - INFO - sdv.metadata.table - Loading transformer OneHotEncodingTransformer for field country
+2020-08-05 20:21:32,682 - INFO - sdv.metadata.table - Loading transformer OneHotEncodingTransformer for field gender
+2020-08-05 20:21:32,682 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field age
 </pre></div></div>
 </div>
 <p><strong>Notice</strong> that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data Transforms</a> to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
@@ -763,7 +599,7 @@ div.rendered_html tbody tr:hover {
 <h2>Generate synthetic data from the model<a class="headerlink" href="#Generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h2>
 <p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -773,7 +609,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>This will return a table identical to the one which the model was fitted on, but filled with new data which resembles the original one.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -782,7 +618,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -814,37 +650,37 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>GQ</td>
-      <td>M</td>
-      <td>25</td>
+      <td>GM</td>
+      <td>F</td>
+      <td>42</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>BE</td>
-      <td>M</td>
-      <td>57</td>
+      <td>RU</td>
+      <td>F</td>
+      <td>47</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>BE</td>
+      <td>IR</td>
       <td>F</td>
-      <td>33</td>
+      <td>22</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>SN</td>
+      <td>AU</td>
       <td>F</td>
-      <td>37</td>
+      <td>34</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>GQ</td>
-      <td>M</td>
-      <td>37</td>
+      <td>GM</td>
+      <td>F</td>
+      <td>35</td>
     </tr>
   </tbody>
 </table>
@@ -856,7 +692,7 @@ div.rendered_html tbody tr:hover {
 <h2>Let’s consider using CTGAN<a class="headerlink" href="#Let's-consider-using-CTGAN" title="Permalink to this headline">¶</a></h2>
 <p>In this second part of the tutorial we will be using the CTGAN model to learn the data from the demo dataset called <code class="docutils literal notranslate"><span class="pre">census</span></code>, which is based on the <a class="reference external" href="'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'">UCI Adult Census Dataset</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -871,12 +707,12 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-23 22:15:18,538 - INFO - __init__ - Loading table census
+2020-08-05 20:21:34,399 - INFO - sdv.metadata - Loading table census
 </pre></div></div>
 </div>
 <p>This will return a table with several rows of multiple data types:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -885,7 +721,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1021,7 +857,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>In this case there is no <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to setup and we will not be <code class="docutils literal notranslate"><span class="pre">anonymizing</span></code> anything, so the only thing that we will pass to the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> model is the <code class="docutils literal notranslate"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">epochs</span></code> that we want it to perform when it learns the data, which we will keep low to make this execution quick.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1034,7 +870,7 @@ div.rendered_html tbody tr:hover {
 <p>Once the instance is created, we can fit it to our data.</p>
 <p><strong>Note</strong> that this process might take some time to finish, especially on non-GPU enabled systems, so in this case we will be passing only a <code class="docutils literal notranslate"><span class="pre">subsample</span></code> of the data to accelerate the process.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1047,21 +883,21 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-23 22:15:18,944 - INFO - table - Loading transformer NumericalTransformer for field age
-2020-07-23 22:15:18,945 - INFO - table - Loading transformer LabelEncodingTransformer for field workclass
-2020-07-23 22:15:18,945 - INFO - table - Loading transformer NumericalTransformer for field fnlwgt
-2020-07-23 22:15:18,946 - INFO - table - Loading transformer LabelEncodingTransformer for field education
-2020-07-23 22:15:18,946 - INFO - table - Loading transformer NumericalTransformer for field education-num
-2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field marital-status
-2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field occupation
-2020-07-23 22:15:18,947 - INFO - table - Loading transformer LabelEncodingTransformer for field relationship
-2020-07-23 22:15:18,948 - INFO - table - Loading transformer LabelEncodingTransformer for field race
-2020-07-23 22:15:18,948 - INFO - table - Loading transformer LabelEncodingTransformer for field sex
-2020-07-23 22:15:18,948 - INFO - table - Loading transformer NumericalTransformer for field capital-gain
-2020-07-23 22:15:18,949 - INFO - table - Loading transformer NumericalTransformer for field capital-loss
-2020-07-23 22:15:18,949 - INFO - table - Loading transformer NumericalTransformer for field hours-per-week
-2020-07-23 22:15:18,949 - INFO - table - Loading transformer LabelEncodingTransformer for field native-country
-2020-07-23 22:15:18,950 - INFO - table - Loading transformer LabelEncodingTransformer for field income
+2020-08-05 20:21:34,783 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field age
+2020-08-05 20:21:34,784 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field workclass
+2020-08-05 20:21:34,784 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field fnlwgt
+2020-08-05 20:21:34,785 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field education
+2020-08-05 20:21:34,785 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field education-num
+2020-08-05 20:21:34,786 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field marital-status
+2020-08-05 20:21:34,786 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field occupation
+2020-08-05 20:21:34,787 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field relationship
+2020-08-05 20:21:34,787 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field race
+2020-08-05 20:21:34,787 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field sex
+2020-08-05 20:21:34,788 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field capital-gain
+2020-08-05 20:21:34,788 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field capital-loss
+2020-08-05 20:21:34,789 - INFO - sdv.metadata.table - Loading transformer NumericalTransformer for field hours-per-week
+2020-08-05 20:21:34,789 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field native-country
+2020-08-05 20:21:34,790 - INFO - sdv.metadata.table - Loading transformer LabelEncodingTransformer for field income
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1069,23 +905,23 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Epoch 1, Loss G: 1.9722, Loss D: 0.0039
-Epoch 2, Loss G: 2.0078, Loss D: -0.0528
-Epoch 3, Loss G: 1.9806, Loss D: -0.1373
-Epoch 4, Loss G: 1.9688, Loss D: -0.1716
-Epoch 5, Loss G: 1.8883, Loss D: -0.3181
-Epoch 6, Loss G: 1.8073, Loss D: -0.4152
-Epoch 7, Loss G: 1.8015, Loss D: -0.5423
-Epoch 8, Loss G: 1.6593, Loss D: -0.6838
-Epoch 9, Loss G: 1.6784, Loss D: -0.7575
-Epoch 10, Loss G: 1.6479, Loss D: -0.8074
+Epoch 1, Loss G: 2.0244, Loss D: -0.0316
+Epoch 2, Loss G: 2.0228, Loss D: -0.0727
+Epoch 3, Loss G: 2.0088, Loss D: -0.1097
+Epoch 4, Loss G: 2.0309, Loss D: -0.2022
+Epoch 5, Loss G: 1.9653, Loss D: -0.2710
+Epoch 6, Loss G: 1.9995, Loss D: -0.3193
+Epoch 7, Loss G: 2.0068, Loss D: -0.4362
+Epoch 8, Loss G: 1.9332, Loss D: -0.5809
+Epoch 9, Loss G: 1.8916, Loss D: -0.7454
+Epoch 10, Loss G: 1.8754, Loss D: -0.8146
 </pre></div></div>
 </div>
 <div class="section" id="id1">
 <h3>Generate synthetic data from the model<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from our model just like we did with the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1095,7 +931,7 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 </div>
 <p>This will return a table identical to the one which the model was fitted on, but filled with <code class="docutils literal notranslate"><span class="pre">synthetic</span></code> data which resembles the original one.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1104,7 +940,7 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1146,183 +982,183 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
   <tbody>
     <tr>
       <th>0</th>
-      <td>55</td>
-      <td>?</td>
-      <td>54620</td>
-      <td>HS-grad</td>
+      <td>14</td>
+      <td>Local-gov</td>
+      <td>80297</td>
+      <td>11th</td>
       <td>9</td>
-      <td>Never-married</td>
-      <td>Prof-specialty</td>
-      <td>Unmarried</td>
-      <td>Amer-Indian-Eskimo</td>
+      <td>Divorced</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
       <td>Male</td>
-      <td>809</td>
-      <td>-4</td>
-      <td>-4</td>
-      <td>United-States</td>
+      <td>-298</td>
+      <td>-6</td>
+      <td>38</td>
+      <td>Puerto-Rico</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>65</td>
-      <td>Federal-gov</td>
-      <td>238</td>
-      <td>Bachelors</td>
+      <td>41</td>
+      <td>?</td>
+      <td>310388</td>
+      <td>Prof-school</td>
       <td>9</td>
-      <td>Married-spouse-absent</td>
-      <td>Exec-managerial</td>
-      <td>Own-child</td>
-      <td>Black</td>
+      <td>Widowed</td>
+      <td>Transport-moving</td>
+      <td>Husband</td>
+      <td>White</td>
       <td>Male</td>
-      <td>816</td>
-      <td>-37</td>
-      <td>45</td>
-      <td>Vietnam</td>
+      <td>8185</td>
+      <td>8</td>
+      <td>13</td>
+      <td>?</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>63</td>
-      <td>?</td>
-      <td>-11877</td>
-      <td>Prof-school</td>
+      <td>36</td>
+      <td>Self-emp-inc</td>
+      <td>151728</td>
+      <td>Assoc-voc</td>
       <td>9</td>
       <td>Never-married</td>
-      <td>Prof-specialty</td>
+      <td>Farming-fishing</td>
       <td>Unmarried</td>
-      <td>White</td>
+      <td>Amer-Indian-Eskimo</td>
       <td>Female</td>
-      <td>166785</td>
-      <td>1684</td>
-      <td>33</td>
-      <td>Poland</td>
+      <td>13230</td>
+      <td>-7</td>
+      <td>41</td>
+      <td>Trinadad&amp;Tobago</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>21</td>
+      <td>16</td>
       <td>Local-gov</td>
-      <td>-53388</td>
-      <td>Preschool</td>
-      <td>1</td>
-      <td>Married-civ-spouse</td>
-      <td>?</td>
-      <td>Own-child</td>
-      <td>Other</td>
+      <td>469476</td>
+      <td>Some-college</td>
+      <td>14</td>
+      <td>Never-married</td>
+      <td>Sales</td>
+      <td>Not-in-family</td>
+      <td>Black</td>
       <td>Male</td>
-      <td>554</td>
-      <td>4</td>
-      <td>51</td>
-      <td>Italy</td>
+      <td>10160</td>
+      <td>8</td>
+      <td>25</td>
+      <td>?</td>
       <td>&gt;50K</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>41</td>
+      <td>28</td>
       <td>Private</td>
-      <td>117452</td>
-      <td>7th-8th</td>
-      <td>4</td>
-      <td>Widowed</td>
-      <td>Farming-fishing</td>
-      <td>Other-relative</td>
+      <td>94019</td>
+      <td>Prof-school</td>
+      <td>8</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Own-child</td>
       <td>White</td>
-      <td>Female</td>
-      <td>6270</td>
-      <td>12</td>
-      <td>38</td>
-      <td>Scotland</td>
-      <td>&lt;=50K</td>
+      <td>Male</td>
+      <td>-26</td>
+      <td>1987</td>
+      <td>25</td>
+      <td>Guatemala</td>
+      <td>&gt;50K</td>
     </tr>
     <tr>
       <th>5</th>
       <td>59</td>
-      <td>Private</td>
-      <td>109067</td>
-      <td>11th</td>
-      <td>8</td>
-      <td>Married-civ-spouse</td>
-      <td>Tech-support</td>
-      <td>Not-in-family</td>
-      <td>White</td>
+      <td>?</td>
+      <td>179268</td>
+      <td>Prof-school</td>
+      <td>10</td>
+      <td>Never-married</td>
+      <td>Exec-managerial</td>
+      <td>Other-relative</td>
+      <td>Amer-Indian-Eskimo</td>
       <td>Female</td>
-      <td>-296</td>
-      <td>-7</td>
-      <td>39</td>
-      <td>Hungary</td>
+      <td>104</td>
+      <td>-11</td>
+      <td>28</td>
+      <td>Cuba</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>6</th>
-      <td>55</td>
-      <td>Local-gov</td>
-      <td>133741</td>
-      <td>Some-college</td>
-      <td>9</td>
-      <td>Widowed</td>
-      <td>Adm-clerical</td>
-      <td>Own-child</td>
-      <td>White</td>
-      <td>Male</td>
-      <td>27743</td>
-      <td>8</td>
-      <td>40</td>
-      <td>France</td>
+      <td>25</td>
+      <td>Private</td>
+      <td>418696</td>
+      <td>HS-grad</td>
+      <td>13</td>
+      <td>Separated</td>
+      <td>Farming-fishing</td>
+      <td>Unmarried</td>
+      <td>Other</td>
+      <td>Female</td>
+      <td>17109</td>
+      <td>-14</td>
+      <td>38</td>
+      <td>South</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>7</th>
-      <td>52</td>
-      <td>Federal-gov</td>
-      <td>48567</td>
-      <td>7th-8th</td>
-      <td>8</td>
-      <td>Divorced</td>
-      <td>Sales</td>
-      <td>Other-relative</td>
-      <td>Black</td>
-      <td>Male</td>
-      <td>196</td>
-      <td>19</td>
-      <td>46</td>
-      <td>Hong</td>
+      <td>14</td>
+      <td>Self-emp-not-inc</td>
+      <td>186409</td>
+      <td>9th</td>
+      <td>10</td>
+      <td>Widowed</td>
+      <td>Priv-house-serv</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>-24</td>
+      <td>15</td>
+      <td>62</td>
+      <td>Portugal</td>
       <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>8</th>
-      <td>24</td>
-      <td>Federal-gov</td>
-      <td>135607</td>
-      <td>9th</td>
-      <td>-1</td>
-      <td>Married-civ-spouse</td>
-      <td>Sales</td>
-      <td>Not-in-family</td>
+      <td>64</td>
+      <td>Local-gov</td>
+      <td>198041</td>
+      <td>Some-college</td>
+      <td>12</td>
+      <td>Separated</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
       <td>White</td>
-      <td>Male</td>
-      <td>465</td>
-      <td>-26</td>
-      <td>38</td>
-      <td>Vietnam</td>
-      <td>&gt;50K</td>
+      <td>Female</td>
+      <td>-242</td>
+      <td>8</td>
+      <td>39</td>
+      <td>Mexico</td>
+      <td>&lt;=50K</td>
     </tr>
     <tr>
       <th>9</th>
-      <td>46</td>
-      <td>Self-emp-not-inc</td>
-      <td>-57277</td>
+      <td>21</td>
+      <td>Private</td>
+      <td>314514</td>
       <td>12th</td>
       <td>12</td>
       <td>Separated</td>
-      <td>Adm-clerical</td>
+      <td>Prof-specialty</td>
       <td>Own-child</td>
-      <td>Amer-Indian-Eskimo</td>
+      <td>White</td>
       <td>Male</td>
-      <td>576</td>
-      <td>0</td>
-      <td>3</td>
-      <td>Puerto-Rico</td>
-      <td>&gt;50K</td>
+      <td>-217</td>
+      <td>-21</td>
+      <td>38</td>
+      <td>Cambodia</td>
+      <td>&lt;=50K</td>
     </tr>
   </tbody>
 </table>
@@ -1337,7 +1173,7 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 <p>In some cases, you will want to know how similar the generated is to the original one.</p>
 <p>For this you can use the <code class="docutils literal notranslate"><span class="pre">evaluation</span></code> framework included in SDV by simply importing the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and calling it passing it both the synthetic and the real data.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1348,12 +1184,12 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
--144.80667199073469
+-158.827930355211
 </pre></div></div>
 </div>
 </div>
@@ -1361,52 +1197,30 @@ Epoch 10, Loss G: 1.6479, Loss D: -0.8074
 </div>
 
 
-           </div>
-           
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="03_Relational_Data_Modeling.html" class="btn btn-neutral float-right" title="Relational Data Modeling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../readme.html" class="btn btn-neutral float-left" title="SDV - Synthetic Data Vault" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="../user_guides/index.html" title="previous page">User Guides</a>
+    <a class='right-next' id="next-link" href="03_Relational_Data_Modeling.html" title="next page">Relational Data Modeling</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
     </div>
-  
 
-  <hr/>
-
-  <div role="contentinfo">
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab
-
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
 </footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-  
-  
-    
-   
-
-</body>
+  </body>
 </html>

@@ -1,396 +1,209 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>SDV - Synthetic Data Vault &mdash; SDV 0.3.7.dev0 documentation</title>
-  
 
-  
-  
-    <link rel="shortcut icon" href="_static/dai-logo-white.ico"/>
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SDV - Synthetic Data Vault" href="readme.html" /> 
-</head>
-
-<body class="wy-body-for-nav">
-
-   
-  <div class="wy-grid-for-nav">
+    <link rel="next" title="Getting Started" href="getting_started/index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
 
-          
-            <a href="#" class="icon icon-home"> SDV
-          
+    
+    <a class="navbar-brand" href="#">
+      <img src="_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-          
-            
-            <img src="_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
-          
-          </a>
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
 
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">SDV - Synthetic Data Vault</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#overview">Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="readme.html#features">Features:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="readme.html#coming-soon">Coming soon:</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#try-it-out-now">Try it out now!</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html#install">Install</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#install-with-pip">Install with pip</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html#join-out-community">Join out community</a></li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
-</ul>
-<p class="caption"><span class="caption-text">User Guides</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#About-the-datset">About the datset</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#Data-model-summary">Data model summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#1.-Load-data">1. Load data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="metadata.html">Working with Metadata</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#load-your-data">Load your data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-the-first-table">Add the first table</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-schema">Metadata Schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#top-level">Top Level</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#table">Table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#field-details">Field details</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#primary-key-fields">Primary key fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="metadata.html#foreign-key-fields">Foreign key fields</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Resources</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/sdv.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.constraints.html">sdv.constraints package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.constraints.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.metadata.html">sdv.metadata package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.metadata.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.models.html#module-sdv.models">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.tabular.html">sdv.tabular package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.tabular.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.benchmark.html">sdv.benchmark module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.demo.html">sdv.demo module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.evaluation.html">sdv.evaluation module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.modeler.html">sdv.modeler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.sampler.html">sdv.sampler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sdv.sdv.html">sdv.sdv module</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api/sdv.html#module-sdv">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#types-of-contributions">Types of Contributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#report-bugs">Report Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#fix-bugs">Fix Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#implement-features">Implement Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#write-documentation">Write Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#submit-feedback">Submit Feedback</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#get-started">Get Started!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#tips">Tips</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#release-workflow">Release Workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="contributing.html#release-candidates">Release Candidates</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="history.html">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id1">0.3.6 - 2020-07-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#new-features">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id2">0.3.5 - 2020-07-09</a></li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id3">0.3.4 - 2020-07-04</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id4">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#general-improvements">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id5">0.3.3 - 2020-06-26</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id6">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id7">0.3.2 - 2020-02-03</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id8">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id9">0.3.1 - 2020-01-22</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id10">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id11">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id12">0.3.0 - 2019-12-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id13">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id14">0.2.2 - 2019-12-10</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id15">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id16">0.2.1 - 2019-11-25</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id17">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id18">0.2.0 - 2019-10-11</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id19">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id20">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#bugs-fixed">Bugs Fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#id21">0.1.2 - 2019-09-18</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id22">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id24">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="history.html#id27">Bugs fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="history.html#first-release">0.1.0 - First Release</a></li>
-</ul>
-</li>
-</ul>
-
-            
-          
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+
+      <ul class="navbar-nav">
         
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">SDV</a>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
         
-      </nav>
-
-
-      <div class="wy-nav-content">
         
-        <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="#">Docs</a> &raquo;</li>
-        
-      <li>SDV - Synthetic Data Vault</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            
-              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
-            
-          
-        
-      </li>
-    
-  </ul>
-
-  
-  <hr/>
+      </ul>
+    </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
   
-<style>
-/* CSS overrides for sphinx_rtd_theme */
 
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
 
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
+</nav>
+          </div>
+          
 
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
 
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<p align="left">
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#overview" class="nav-link">Overview</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#features" class="nav-link">Features:</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#coming-soon" class="nav-link">Coming soon:</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#try-it-out-now" class="nav-link">Try it out now!</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#join-our-slack-workspace" class="nav-link">Join our Slack Workspace</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#explore-sdv" class="nav-link">Explore SDV</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <p align="left">
 <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
 <i>An open source project from Data to AI Lab at MIT.</i>
-</p><a class="reference external image-reference" href="https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha"><img alt="Development Status" src="https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow" /></a>
-<a class="reference external image-reference" href="https://pypi.python.org/pypi/SDV"><img alt="PyPi Shield" src="https://img.shields.io/pypi/v/SDV.svg" /></a>
-<a class="reference external image-reference" href="https://travis-ci.org/sdv-dev/SDV"><img alt="Travis CI Shield" src="https://travis-ci.org/sdv-dev/SDV.svg?branch=master" /></a>
-<a class="reference external image-reference" href="https://codecov.io/gh/sdv-dev/SDV"><img alt="Coverage Status" src="https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg" /></a>
-<a class="reference external image-reference" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a>
-<a class="reference external image-reference" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a>
-<div class="section" id="sdv-synthetic-data-vault">
-<h1>SDV - Synthetic Data Vault<a class="headerlink" href="#sdv-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
+</p><p><a class="reference external" href="https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha"><img alt="Development Status" src="https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow" /></a> <a class="reference external" href="https://pypi.python.org/pypi/SDV"><img alt="PyPi Shield" src="https://img.shields.io/pypi/v/SDV.svg" /></a> <a class="reference external" href="https://travis-ci.org/sdv-dev/SDV"><img alt="Travis CI Shield" src="https://travis-ci.org/sdv-dev/SDV.svg?branch=master" /></a> <a class="reference external" href="https://codecov.io/gh/sdv-dev/SDV"><img alt="Coverage Status" src="https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg" /></a>
+<a class="reference external" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a> <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
+<div class="section" id="sdv-the-synthetic-data-vault">
+<h1>SDV - The Synthetic Data Vault<a class="headerlink" href="#sdv-the-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
+<p><strong>Date</strong>: Aug 08, 2020 <strong>Version</strong>: 0.4.0</p>
 <ul class="simple">
 <li><p>License: <a class="reference external" href="https://github.com/sdv-dev/SDV/blob/master/LICENSE">MIT</a></p></li>
-<li><p>Development Status: <a class="reference external" href="https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha">Pre-Alpha</a></p></li>
+<li><p>Development Status:
+<a class="reference external" href="https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha">Pre-Alpha</a></p></li>
 <li><p>Documentation: <a class="reference external" href="https://sdv-dev.github.io/SDV">https://sdv-dev.github.io/SDV</a></p></li>
 <li><p>Homepage: <a class="reference external" href="https://github.com/sdv-dev/SDV">https://github.com/sdv-dev/SDV</a></p></li>
 </ul>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>The Synthetic Data Vault (SDV) is a tool that allows users to statistically model tabular
-as well as entire multi-table, relational datasets. Users can then use the statistical
-model to generate a synthetic dataset. Synthetic data can be used to supplement, augment and
-in some cases replace real data when training machine learning models. Additionally, it
-enables the testing of machine learning or other data dependent software systems without the
-risk of exposure that comes with data disclosure. Underneath the hood it uses a unique
-hierarchical generative modeling and recursive sampling techniques.</p>
+<p>The Synthetic Data Vault (SDV) is a tool that allows users to
+statistically model tabular as well as entire multi-table, relational
+datasets. Users can then use the statistical model to generate a
+synthetic dataset. Synthetic data can be used to supplement, augment and
+in some cases replace real data when training machine learning models.
+Additionally, it enables the testing of machine learning or other data
+dependent software systems without the risk of exposure that comes with
+data disclosure. Underneath the hood it uses a unique hierarchical
+generative modeling and recursive sampling techniques.</p>
 <div class="section" id="features">
 <h3>Features:<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Modeling of single tables using Copulas and Deep Learning based models.</p></li>
-<li><p>Modeling of complex multi-table relational datasets using Copulas and unique recursive
-modeling techniques.</p></li>
-<li><p>Handling of multiple data types and missing data with minimum user input.</p></li>
+<li><p>Modeling of single tables using Copulas and Deep Learning based
+models.</p></li>
+<li><p>Modeling of complex multi-table relational datasets using Copulas and
+unique recursive modeling techniques.</p></li>
+<li><p>Handling of multiple data types and missing data with minimum user
+input.</p></li>
 <li><p>Support for pre-defined and custom constraints and data validation.</p></li>
-<li><p>Definition of entire datasets with a custom and flexible Metadata JSON schema.</p></li>
+<li><p>Definition of entire datasets with a custom and flexible Metadata
+JSON schema.</p></li>
 </ul>
 </div>
 <div class="section" id="coming-soon">
@@ -402,258 +215,56 @@ modeling techniques.</p></li>
 </div>
 <div class="section" id="try-it-out-now">
 <h2>Try it out now!<a class="headerlink" href="#try-it-out-now" title="Permalink to this headline">¶</a></h2>
-<p>If you want to quickly discover <strong>SDV</strong>, simply click the button below and follow the tutorials!</p>
-<a class="reference external image-reference" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a>
+<p>If you want to quickly discover <strong>SDV</strong>, simply click the button below
+and follow the tutorials!</p>
+<p><a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
 </div>
+<div class="section" id="join-our-slack-workspace">
+<h2>Join our Slack Workspace<a class="headerlink" href="#join-our-slack-workspace" title="Permalink to this headline">¶</a></h2>
+<p>If you want to be part of the SDV community to receive announcements of the latest releases,
+ask questions, suggest new features or participate in the development meetings, please join
+our Slack Workspace!</p>
+<p><a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
 </div>
-<div class="section" id="install">
-<h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<p><strong>SDV</strong> has been developed and tested on <a class="reference external" href="https://www.python.org/downloads">Python 3.5, 3.6 and 3.7</a></p>
-<p>Also, although it is not strictly required, the usage of a
-<a class="reference external" href="https://virtualenv.pypa.io/en/latest/">virtualenv</a> is highly recommended in order to avoid
-interfering with other software installed in the system where <strong>SDV</strong> is run.</p>
-</div>
-<div class="section" id="install-with-pip">
-<h2>Install with pip<a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
-<p>The easiest and recommended way to install <strong>SDV</strong> is using <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sdv
-</pre></div>
-</div>
-<p>This will pull and install the latest stable release from <a class="reference external" href="https://pypi.org/">PyPi</a>.</p>
-<p>If you want to install from source or contribute to the project please read the
-<a class="reference external" href="https://sdv-dev.github.io/SDV/contributing.html#get-started">Contributing Guide</a>.</p>
-</div>
-</div>
-<div class="section" id="quickstart">
-<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
-<p>In this short tutorial we will guide you through a series of steps that will help you
-getting started using <strong>SDV</strong>.</p>
-<div class="section" id="model-the-dataset-using-sdv">
-<h2>1. Model the dataset using SDV<a class="headerlink" href="#model-the-dataset-using-sdv" title="Permalink to this headline">¶</a></h2>
-<p>To model a multi table, relational dataset, we follow two steps. In the first step, we will load
-the data and configures the meta data. In the second step, we will use the sdv API to fit and
-save a hierarchical model. We will cover these two steps in this section using an example dataset.</p>
-<div class="section" id="step-1-load-example-data">
-<h3>Step 1: Load example data<a class="headerlink" href="#step-1-load-example-data" title="Permalink to this headline">¶</a></h3>
-<p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code>
-function:</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
-
-<span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>This will return two objects:</p>
-<ol class="arabic simple">
-<li><p>A <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object with all the information that <strong>SDV</strong> needs to know about the dataset.</p></li>
-</ol>
-<p>For more details about how to build the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> for your own dataset, please refer to the
-<a class="reference external" href="https://sdv-dev.github.io/SDV/metadata.html">Metadata</a> section of the documentation.</p>
-<ol class="arabic simple">
-<li><p>A dictionary containing three <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code> with the tables described in the
-metadata object.</p></li>
-</ol>
-<p>The returned objects contain the following information:</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>{
-    &#39;users&#39;:
-            user_id country gender  age
-          0        0     USA      M   34
-          1        1      UK      F   23
-          2        2      ES   None   44
-          3        3      UK      M   22
-          4        4     USA      F   54
-          5        5      DE      M   57
-          6        6      BG      F   45
-          7        7      ES   None   41
-          8        8      FR      F   23
-          9        9      UK   None   30,
-  &#39;sessions&#39;:
-          session_id  user_id  device       os
-          0           0        0  mobile  android
-          1           1        1  tablet      ios
-          2           2        1  tablet  android
-          3           3        2  mobile  android
-          4           4        4  mobile      ios
-          5           5        5  mobile  android
-          6           6        6  mobile      ios
-          7           7        6  tablet      ios
-          8           8        6  mobile      ios
-          9           9        8  tablet      ios,
-  &#39;transactions&#39;:
-          transaction_id  session_id           timestamp  amount  approved
-          0               0           0 2019-01-01 12:34:32   100.0      True
-          1               1           0 2019-01-01 12:42:21    55.3      True
-          2               2           1 2019-01-07 17:23:11    79.5      True
-          3               3           3 2019-01-10 11:08:57   112.1     False
-          4               4           5 2019-01-10 21:54:08   110.0     False
-          5               5           5 2019-01-11 11:21:20    76.3      True
-          6               6           7 2019-01-22 14:44:10    89.5      True
-          7               7           8 2019-01-23 10:14:09   132.1     False
-          8               8           9 2019-01-27 16:09:17    68.0      True
-          9               9           9 2019-01-29 12:10:48    99.9      True
-}
-</pre></div>
-</div>
-</div>
-<div class="section" id="fit-a-model-using-the-sdv-api">
-<h3>2. Fit a model using the SDV API.<a class="headerlink" href="#fit-a-model-using-the-sdv-api" title="Permalink to this headline">¶</a></h3>
-<p>First, we build a hierarchical statistical model of the data using <strong>SDV</strong>. For this we will
-create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class and use its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
-<p>During this process, <strong>SDV</strong> will traverse across all the tables in your dataset following the
-primary key-foreign key relationships and learn the probability distributions of the values in
-the columns.</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
-
-<span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">()</span>
-<span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Once the modeling has finished, you can save your fitted <code class="docutils literal notranslate"><span class="pre">SDV</span></code> instance for later usage
-using the <code class="docutils literal notranslate"><span class="pre">save</span></code> method of your instance.</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sdv.pkl&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The generated <code class="docutils literal notranslate"><span class="pre">pkl</span></code> file will not include any of the original data in it, so it can be
-safely sent to where the synthetic data will be generated without any privacy concerns.</p>
-</div>
-</div>
-<div class="section" id="sample-data-from-the-fitted-model">
-<h2>2. Sample data from the fitted model<a class="headerlink" href="#sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h2>
-<p>In order to sample data from the fitted model, we will first need to load it from its
-<code class="docutils literal notranslate"><span class="pre">pkl</span></code> file. Note that you can skip this step if you are running all the steps sequentially
-within the same python session.</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;sdv.pkl&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>After loading the instance, we can sample synthetic data using its <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method,
-passing the number of rows that we want to generate.</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The output will be a dictionary with the same structure as the original <code class="docutils literal notranslate"><span class="pre">tables</span></code> dict,
-but filled with synthetic data instead of the real one.</p>
-<p><strong>Note</strong> that only the parent tables of your dataset will have the specified number of rows,
-as the number of child rows that each row in the parent table has is also sampled following
-the original distribution of your dataset.</p>
-<p>Finally, if you want to evaluate how similar the sampled tables are to the real data,
-please have a look at our <a class="reference external" href="EVALUATION.md">evaluation</a> framework or visit the <a class="reference external" href="https://github.com/sdv-dev/SDMetrics">SDMetrics</a> library.</p>
-</div>
-</div>
-<div class="section" id="join-out-community">
-<h1>Join out community<a class="headerlink" href="#join-out-community" title="Permalink to this headline">¶</a></h1>
-<ol class="arabic simple">
-<li><p>If you would like to see more usage examples, please have a look at the <a class="reference external" href="https://github.com/sdv-dev/SDV/tree/master/examples">examples folder</a> or the repository. Please contact us
-if you have a usage example that you would want to share with the community.</p></li>
-<li><p>Please head to the <a class="reference external" href="https://sdv-dev.github.io/SDV/contributing.html#get-started">Contributing Guide</a>
-for more details about this process.</p></li>
-<li><p>If you have any doubts, feature requests or detect an error, please <a class="reference external" href="https://github.com/sdv-dev/SDV/issues">open an issue on github</a></p></li>
-<li><p>Also do not forget to check the <a class="reference external" href="https://sdv-dev.github.io/SDV/">project documentation site</a>!</p></li>
-</ol>
-</div>
-<div class="section" id="citation">
-<h1>Citation<a class="headerlink" href="#citation" title="Permalink to this headline">¶</a></h1>
-<p>If you use <strong>SDV</strong> for your research, please consider citing the following paper:</p>
-<p>Neha Patki, Roy Wedge, Kalyan Veeramachaneni. <a class="reference external" href="https://dai.lids.mit.edu/wp-content/uploads/2018/03/SDV.pdf">The Synthetic Data Vault</a>. <a class="reference external" href="https://ieeexplore.ieee.org/document/7796926">IEEE DSAA 2016</a>.</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>@inproceedings{
-    7796926,
-    author={N. {Patki} and R. {Wedge} and K. {Veeramachaneni}},
-    booktitle={2016 IEEE International Conference on Data Science and Advanced Analytics (DSAA)},
-    title={The Synthetic Data Vault},
-    year={2016},
-    volume={},
-    number={},
-    pages={399-410},
-    keywords={data analysis;relational databases;synthetic data vault;SDV;generative model;relational database;multivariate modelling;predictive model;data analysis;data science;Data models;Databases;Computational modeling;Predictive models;Hidden Markov models;Numerical models;Synthetic data generation;crowd sourcing;data science;predictive modeling},
-    doi={10.1109/DSAA.2016.49},
-    ISSN={},
-    month={Oct}
-}
-</pre></div>
-</div>
-<div class="toctree-wrapper compound">
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">User Guides</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/03_Relational_Data_Modeling.html#About-the-datset">About the datset</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="metadata.html">Working with Metadata</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-schema">Metadata Schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#top-level">Top Level</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#table">Table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="metadata.html#field-details">Field details</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="explore-sdv">
+<h2>Explore SDV<a class="headerlink" href="#explore-sdv" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+<li><p><a class="reference external" href="getting_started/index.html">Getting Started</a></p></li>
+<li><p><a class="reference external" href="user_guides/index.html">User Guides</a></p></li>
+<li><p><a class="reference external" href="api_reference/index.html">API Reference</a></p></li>
+<li><p><a class="reference external" href="developer_guides/index.html">Developer Guides</a></p></li>
+<li><p><a class="reference external" href="history.html">Release Notes</a></p></li>
 </ul>
+<hr class="docutils" />
+<div class="toctree-wrapper compound">
+</div>
+</div>
 </div>
 
 
-           </div>
-           
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="readme.html" class="btn btn-neutral float-right" title="SDV - Synthetic Data Vault" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='right-next' id="next-link" href="getting_started/index.html" title="next page">Getting Started</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
     </div>
-  
 
-  <hr/>
-
-  <div role="contentinfo">
+    <script src="_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab
-
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
 </footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-  
-  
-    
-   
-
-</body>
+  </body>
 </html>

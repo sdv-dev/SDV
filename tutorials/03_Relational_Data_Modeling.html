@@ -1,338 +1,194 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Relational Data Modeling &mdash; SDV 0.3.7.dev0 documentation</title>
-  
 
-  
-  
-    <link rel="shortcut icon" href="../_static/dai-logo-white.ico"/>
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Relational Data Modeling &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Working with Metadata" href="../metadata.html" />
-    <link rel="prev" title="Single Table Modeling" href="02_Single_Table_Modeling.html" /> 
-</head>
-
-<body class="wy-body-for-nav">
-
-   
-  <div class="wy-grid-for-nav">
+    <link rel="next" title="Working with Metadata" href="04_Working_with_Metadata.html" />
+    <link rel="prev" title="Single Table Modeling" href="02_Single_Table_Modeling.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
 
-          
-            <a href="../index.html" class="icon icon-home"> SDV
-          
+    
+    <a class="navbar-brand" href="../index.html">
+      <img src="../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-          
-            
-            <img src="../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
-          
-          </a>
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
 
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">SDV - Synthetic Data Vault</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#overview">Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#features">Features:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#coming-soon">Coming soon:</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#try-it-out-now">Try it out now!</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#install">Install</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-with-pip">Install with pip</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#join-out-community">Join out community</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html#citation">Citation</a></li>
-</ul>
-<p class="caption"><span class="caption-text">User Guides</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Relational Data Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#About-the-datset">About the datset</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#Data-model-summary">Data model summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#1.-Load-data">1. Load data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../metadata.html">Working with Metadata</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#load-your-data">Load your data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-the-first-table">Add the first table</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#metadata-schema">Metadata Schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#top-level">Top Level</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#table">Table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../metadata.html#field-details">Field details</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#primary-key-fields">Primary key fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../metadata.html#foreign-key-fields">Foreign key fields</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Resources</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/sdv.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.constraints.html">sdv.constraints package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.metadata.html">sdv.metadata package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.models.html#module-sdv.models">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.tabular.html">sdv.tabular package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.benchmark.html">sdv.benchmark module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.demo.html">sdv.demo module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.evaluation.html">sdv.evaluation module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.modeler.html">sdv.modeler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sampler.html">sdv.sampler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/sdv.sdv.html">sdv.sdv module</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/sdv.html#module-sdv">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#types-of-contributions">Types of Contributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#report-bugs">Report Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#fix-bugs">Fix Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#implement-features">Implement Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#write-documentation">Write Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#submit-feedback">Submit Feedback</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#get-started">Get Started!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#tips">Tips</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../contributing.html#release-workflow">Release Workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../contributing.html#release-candidates">Release Candidates</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id1">0.3.6 - 2020-07-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#new-features">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id2">0.3.5 - 2020-07-09</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id3">0.3.4 - 2020-07-04</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id4">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#general-improvements">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id5">0.3.3 - 2020-06-26</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id6">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id7">0.3.2 - 2020-02-03</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id8">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id9">0.3.1 - 2020-01-22</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id10">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id11">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id12">0.3.0 - 2019-12-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id13">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id14">0.2.2 - 2019-12-10</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id15">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id16">0.2.1 - 2019-11-25</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id17">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id18">0.2.0 - 2019-10-11</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id19">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id20">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#bugs-fixed">Bugs Fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#id21">0.1.2 - 2019-09-18</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id22">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id24">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../history.html#id27">Bugs fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../history.html#first-release">0.1.0 - First Release</a></li>
-</ul>
-</li>
-</ul>
-
-            
-          
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+
+      <ul class="navbar-nav">
         
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">SDV</a>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
         
-      </nav>
-
-
-      <div class="wy-nav-content">
         
-        <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-      <li>Relational Data Modeling</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            
-              <a href="https://github.com/sdv-dev/SDV/blob/master/docs/tutorials/03_Relational_Data_Modeling.ipynb" class="fa fa-github"> Edit on GitHub</a>
-            
-          
-        
-      </li>
-    
-  </ul>
-
-  
-  <hr/>
+      </ul>
+    </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="02_Single_Table_Modeling.html">Single Table Modeling</a>
+              </li>
+          
+        
+          
+              <li class="active">
+                  <a href="">Relational Data Modeling</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="04_Working_with_Metadata.html">Working with Metadata</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="05_Handling_Constraints.html">Handling Constraints</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#About-the-datset" class="nav-link">About the datset</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#Data-model-summary" class="nav-link">Data model summary</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Load-relational-data" class="nav-link">Load relational data</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Model-the-data-with-SDV" class="nav-link">Model the data with SDV</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#Generate-synthetic-data" class="nav-link">Generate synthetic data</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
   
 <style>
 /* CSS for nbsphinx extension */
@@ -399,7 +255,7 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
+    min-width: 5.5ex;
     padding-top: 0.3rem;
     padding-right: 0.3rem;
     text-align: right;
@@ -552,28 +408,6 @@ div.rendered_html tbody tr:nth-child(odd) {
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
-
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="section" id="Relational-Data-Modeling">
 <h1>Relational Data Modeling<a class="headerlink" href="#Relational-Data-Modeling" title="Permalink to this headline">¶</a></h1>
@@ -587,7 +421,7 @@ div.rendered_html tbody tr:hover {
 <div class="section" id="Data-model-summary">
 <h3>Data model summary<a class="headerlink" href="#Data-model-summary" title="Permalink to this headline">¶</a></h3>
 <p style="text-align: center"><p>stores</p>
-<p><table class="docutils align-default">
+<p><table class="table">
 <colgroup>
 <col style="width: 15%" />
 <col style="width: 25%" />
@@ -621,7 +455,7 @@ div.rendered_html tbody tr:hover {
 </table>
 <p>Contains information about the 45 stores, indicating the type and size of store.</p>
 <p style="text-align: center"><p>features</p>
-<p><table class="docutils align-default">
+<p><table class="table">
 <colgroup>
 <col style="width: 23%" />
 <col style="width: 19%" />
@@ -700,7 +534,7 @@ div.rendered_html tbody tr:hover {
 </table>
 <p>Contains historical training data, which covers to 2010-02-05 to 2012-11-01.</p>
 <p style="text-align: center"><p>depts</p>
-<p><table class="docutils align-default">
+<p><table class="table">
 <colgroup>
 <col style="width: 24%" />
 <col style="width: 18%" />
@@ -744,8 +578,9 @@ div.rendered_html tbody tr:hover {
 </table>
 <p>Contains additional data related to the store, department, and regional activity for the given dates.</p>
 </div>
-<div class="section" id="1.-Load-data">
-<h3>1. Load data<a class="headerlink" href="#1.-Load-data" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="Load-relational-data">
+<h2>Load relational data<a class="headerlink" href="#Load-relational-data" title="Permalink to this headline">¶</a></h2>
 <p>Let’s start downloading the data set. In this case, we will download the data set <em>walmart</em>. We will use the SDV function <code class="docutils literal notranslate"><span class="pre">load_demo</span></code>, we can specify the name of the dataset we want to use and if we want its Metadata object or not. To know more about the demo data <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.demo.html">see the documentation</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -763,9 +598,9 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-09 21:00:17,378 - INFO - __init__ - Loading table stores
-2020-07-09 21:00:17,384 - INFO - __init__ - Loading table features
-2020-07-09 21:00:17,402 - INFO - __init__ - Loading table depts
+2020-08-05 20:21:53,505 - INFO - sdv.metadata - Loading table stores
+2020-08-05 20:21:53,513 - INFO - sdv.metadata - Loading table features
+2020-08-05 20:21:53,526 - INFO - sdv.metadata - Loading table depts
 </pre></div></div>
 </div>
 <p>Our dataset is downloaded from an <a class="reference external" href="http://sdv-datasets.s3.amazonaws.com/index.html">Amazon S3 bucket</a> that contains all available data sets of the <code class="docutils literal notranslate"><span class="pre">load_demo</span></code> method.</p>
@@ -784,7 +619,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_03_Relational_Data_Modeling_9_0.svg" src="../_images/tutorials_03_Relational_Data_Modeling_9_0.svg" /></div>
+<img alt="../_images/tutorials_03_Relational_Data_Modeling_10_0.svg" src="../_images/tutorials_03_Relational_Data_Modeling_10_0.svg" /></div>
 </div>
 <p>And also validate that the metadata is correctly defined for our data</p>
 <div class="nbinput nblast docutils container">
@@ -796,12 +631,331 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="2.-Create-an-instance-of-SDV-and-train-the-instance">
-<h3>2. Create an instance of SDV and train the instance<a class="headerlink" href="#2.-Create-an-instance-of-SDV-and-train-the-instance" title="Permalink to this headline">¶</a></h3>
-<p>Once we download it, we have to create an SDV instance. With that instance, we have to analyze the loaded tables to generate a statistical model from the data. In this case, the process of adjusting the model is quickly because the dataset is small. However, with larger datasets it can be a slow process.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.utils</span> <span class="kn">import</span> <span class="n">display_tables</span>
+
+<span class="n">display_tables</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table><tr><td><b>stores</b></td><td><b>features</b></td><td><b>depts</b></td></tr><tr><td><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Store</th>
+      <th>Type</th>
+      <th>Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>A</td>
+      <td>151315</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>A</td>
+      <td>202307</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>B</td>
+      <td>37392</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>A</td>
+      <td>205863</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>B</td>
+      <td>34875</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>A</td>
+      <td>202505</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>B</td>
+      <td>70713</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>A</td>
+      <td>155078</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>B</td>
+      <td>125833</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>B</td>
+      <td>126512</td>
+    </tr>
+  </tbody>
+</table></td><td><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Store</th>
+      <th>Date</th>
+      <th>Temperature</th>
+      <th>Fuel_Price</th>
+      <th>MarkDown1</th>
+      <th>MarkDown2</th>
+      <th>MarkDown3</th>
+      <th>MarkDown4</th>
+      <th>MarkDown5</th>
+      <th>CPI</th>
+      <th>Unemployment</th>
+      <th>IsHoliday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2010-02-05 00:00:00</td>
+      <td>42.31</td>
+      <td>2.572</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.096358</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-02-12 00:00:00</td>
+      <td>38.51</td>
+      <td>2.548</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.242170</td>
+      <td>8.106</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-02-19 00:00:00</td>
+      <td>39.93</td>
+      <td>2.514</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.289143</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-02-26 00:00:00</td>
+      <td>46.63</td>
+      <td>2.561</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.319643</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-03-05 00:00:00</td>
+      <td>46.50</td>
+      <td>2.625</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.350143</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-03-12 00:00:00</td>
+      <td>57.79</td>
+      <td>2.667</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.380643</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-03-19 00:00:00</td>
+      <td>54.58</td>
+      <td>2.720</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.215635</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-03-26 00:00:00</td>
+      <td>51.45</td>
+      <td>2.732</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>211.018042</td>
+      <td>8.106</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-04-02 00:00:00</td>
+      <td>62.27</td>
+      <td>2.719</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>210.820450</td>
+      <td>7.808</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>2010-04-09 00:00:00</td>
+      <td>65.86</td>
+      <td>2.770</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>210.622857</td>
+      <td>7.808</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table></td><td><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Store</th>
+      <th>Dept</th>
+      <th>Date</th>
+      <th>Weekly_Sales</th>
+      <th>IsHoliday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-02-05 00:00:00</td>
+      <td>24924.50</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-02-12 00:00:00</td>
+      <td>46039.49</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-02-19 00:00:00</td>
+      <td>41595.55</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-02-26 00:00:00</td>
+      <td>19403.54</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-03-05 00:00:00</td>
+      <td>21827.90</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-03-12 00:00:00</td>
+      <td>21043.39</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-03-19 00:00:00</td>
+      <td>22136.64</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-03-26 00:00:00</td>
+      <td>26229.21</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-04-02 00:00:00</td>
+      <td>57258.43</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>2010-04-09 00:00:00</td>
+      <td>42960.91</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table></td></tr></table></div>
+</div>
+</div>
+<div class="section" id="Model-the-data-with-SDV">
+<h2>Model the data with SDV<a class="headerlink" href="#Model-the-data-with-SDV" title="Permalink to this headline">¶</a></h2>
+<p>Once we download it, we have to create an SDV instance. With that instance, we have to analyze the loaded tables to generate a statistical model from the data. In this case, the process of adjusting the model is quickly because the dataset is small. However, with larger datasets it can be a slow process.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -817,134 +971,37 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2020-07-09 21:00:31,480 - INFO - modeler - Modeling stores
-2020-07-09 21:00:31,481 - INFO - __init__ - Loading transformer CategoricalTransformer for field Type
-2020-07-09 21:00:31,481 - INFO - __init__ - Loading transformer NumericalTransformer for field Size
-2020-07-09 21:00:31,491 - INFO - modeler - Modeling features
-2020-07-09 21:00:31,492 - INFO - __init__ - Loading transformer DatetimeTransformer for field Date
-2020-07-09 21:00:31,493 - INFO - __init__ - Loading transformer NumericalTransformer for field MarkDown1
-2020-07-09 21:00:31,493 - INFO - __init__ - Loading transformer BooleanTransformer for field IsHoliday
-2020-07-09 21:00:31,493 - INFO - __init__ - Loading transformer NumericalTransformer for field MarkDown4
-2020-07-09 21:00:31,494 - INFO - __init__ - Loading transformer NumericalTransformer for field MarkDown3
-2020-07-09 21:00:31,494 - INFO - __init__ - Loading transformer NumericalTransformer for field Fuel_Price
-2020-07-09 21:00:31,494 - INFO - __init__ - Loading transformer NumericalTransformer for field Unemployment
-2020-07-09 21:00:31,495 - INFO - __init__ - Loading transformer NumericalTransformer for field Temperature
-2020-07-09 21:00:31,495 - INFO - __init__ - Loading transformer NumericalTransformer for field MarkDown5
-2020-07-09 21:00:31,495 - INFO - __init__ - Loading transformer NumericalTransformer for field MarkDown2
-2020-07-09 21:00:31,495 - INFO - __init__ - Loading transformer NumericalTransformer for field CPI
-2020-07-09 21:00:31,544 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,595 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-/home/xals/Projects/MIT/SDV/sdv/models/copulas.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify &#39;dtype=object&#39; when creating the ndarray
-  self.model.covariance = np.array(values)
-2020-07-09 21:00:31,651 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,679 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,707 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,734 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,762 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,790 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,816 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,845 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,872 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,901 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,931 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,959 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:31,986 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,014 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,040 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,070 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,096 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,123 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,152 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,181 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,209 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,235 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,264 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,293 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,322 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,349 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,376 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,405 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,433 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,463 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,492 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,521 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,552 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,583 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,612 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,644 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,674 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,704 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,732 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,762 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,791 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,821 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,852 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,882 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:32,917 - INFO - modeler - Modeling depts
-2020-07-09 21:00:32,918 - INFO - __init__ - Loading transformer DatetimeTransformer for field Date
-2020-07-09 21:00:32,918 - INFO - __init__ - Loading transformer NumericalTransformer for field Weekly_Sales
-2020-07-09 21:00:32,919 - INFO - __init__ - Loading transformer NumericalTransformer for field Dept
-2020-07-09 21:00:32,919 - INFO - __init__ - Loading transformer BooleanTransformer for field IsHoliday
-2020-07-09 21:00:33,016 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,318 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,334 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,350 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,364 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,381 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,396 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,412 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,428 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,447 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,464 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,479 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,495 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,511 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,526 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,541 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,554 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,567 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,582 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,596 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,609 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,624 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,639 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,652 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,667 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,682 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,696 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,709 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,724 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,740 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,753 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,766 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,779 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,792 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,803 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,818 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,831 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,842 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,856 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,870 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,885 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,898 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,912 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,926 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,937 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:33,949 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-2020-07-09 21:00:34,047 - INFO - gaussian - Fitting GaussianMultivariate(distribution=&#34;GaussianUnivariate&#34;)
-/home/xals/.virtualenvs/SDV/lib/python3.6/site-packages/numpy/core/fromnumeric.py:58: FutureWarning: Series.nonzero() is deprecated and will be removed in a future version.Use Series.to_numpy().nonzero() instead
-  return bound(*args, **kwds)
-2020-07-09 21:00:34,259 - INFO - modeler - Modeling Complete
+2020-08-05 20:21:55,259 - INFO - sdv.modeler - Modeling stores
+2020-08-05 20:21:55,260 - INFO - sdv.metadata - Loading transformer CategoricalTransformer for field Type
+2020-08-05 20:21:55,260 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Size
+2020-08-05 20:21:55,269 - INFO - sdv.modeler - Modeling depts
+2020-08-05 20:21:55,269 - INFO - sdv.metadata - Loading transformer DatetimeTransformer for field Date
+2020-08-05 20:21:55,270 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Weekly_Sales
+2020-08-05 20:21:55,270 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Dept
+2020-08-05 20:21:55,270 - INFO - sdv.metadata - Loading transformer BooleanTransformer for field IsHoliday
+2020-08-05 20:21:56,148 - INFO - sdv.modeler - Modeling features
+2020-08-05 20:21:56,149 - INFO - sdv.metadata - Loading transformer DatetimeTransformer for field Date
+2020-08-05 20:21:56,149 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field MarkDown1
+2020-08-05 20:21:56,149 - INFO - sdv.metadata - Loading transformer BooleanTransformer for field IsHoliday
+2020-08-05 20:21:56,149 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field MarkDown4
+2020-08-05 20:21:56,150 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field MarkDown3
+2020-08-05 20:21:56,150 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Fuel_Price
+2020-08-05 20:21:56,151 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Unemployment
+2020-08-05 20:21:56,151 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field Temperature
+2020-08-05 20:21:56,152 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field MarkDown5
+2020-08-05 20:21:56,152 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field MarkDown2
+2020-08-05 20:21:56,152 - INFO - sdv.metadata - Loading transformer NumericalTransformer for field CPI
+2020-08-05 20:21:57,675 - INFO - sdv.modeler - Modeling Complete
 </pre></div></div>
 </div>
 <p>Note: We may not want to train the model every time we want to generate new synthetic data. We can <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sdv.html#sdv.sdv.SDV.save">save</a> the SDV instance to <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sdv.html#sdv.sdv.SDV.save">load</a> it later.</p>
 </div>
-<div class="section" id="3.-Generate-synthetic-data">
-<h3>3. Generate synthetic data<a class="headerlink" href="#3.-Generate-synthetic-data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="Generate-synthetic-data">
+<h2>Generate synthetic data<a class="headerlink" href="#Generate-synthetic-data" title="Permalink to this headline">¶</a></h2>
 <p>Once the instance is trained, we are ready to generate the synthetic data.</p>
 <p>The easiest way to generate synthetic data for the entire dataset is to call the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method. By default, this method generates only 5 rows, but we can specify the row number that will be generated with the <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument. To learn more about the available arguments, see <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sampler.html#sdv.sampler.Sampler.sample_all">sample_all</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -953,16 +1010,16 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;stores&#39;: 45, &#39;features&#39;: 8190, &#39;depts&#39;: 421570}
+{&#39;stores&#39;: 45, &#39;depts&#39;: 421570, &#39;features&#39;: 8190}
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -970,39 +1027,42 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<p>This returns a dictionary with a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> for each table.</p>
+<p>This returns a dictionary with the same format as the input <code class="docutils literal notranslate"><span class="pre">tables</span></code>, with a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> for each table.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;stores&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span></span><span class="n">samples</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;stores&#39;, &#39;depts&#39;, &#39;features&#39;])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">display_tables</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
+<table><tr><td><b>stores</b></td><td><b>depts</b></td><td><b>features</b></td></tr><tr><td><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
-      <th></th>
       <th>Type</th>
       <th>Size</th>
       <th>Store</th>
@@ -1010,50 +1070,312 @@ div.rendered_html tbody tr:hover {
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>B</td>
-      <td>106106</td>
+      <td>A</td>
+      <td>238835</td>
       <td>0</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>B</td>
-      <td>68071</td>
+      <td>C</td>
+      <td>207057</td>
       <td>1</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>C</td>
-      <td>253603</td>
+      <td>A</td>
+      <td>185450</td>
       <td>2</td>
     </tr>
     <tr>
-      <th>3</th>
       <td>A</td>
-      <td>223268</td>
+      <td>121853</td>
       <td>3</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>B</td>
-      <td>166848</td>
+      <td>A</td>
+      <td>232242</td>
       <td>4</td>
     </tr>
+    <tr>
+      <td>A</td>
+      <td>77979</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>A</td>
+      <td>176550</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>97136</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>B</td>
+      <td>76354</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <td>A</td>
+      <td>204217</td>
+      <td>9</td>
+    </tr>
   </tbody>
-</table>
-</div></div>
+</table></td><td><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Date</th>
+      <th>Weekly_Sales</th>
+      <th>Store</th>
+      <th>Dept</th>
+      <th>IsHoliday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2009-11-29 17:36:28</td>
+      <td>20821.607058</td>
+      <td>0</td>
+      <td>16</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2012-01-08 06:40:44</td>
+      <td>41236.940636</td>
+      <td>0</td>
+      <td>33</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2012-04-09 00:20:25</td>
+      <td>12542.904701</td>
+      <td>0</td>
+      <td>53</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2011-05-03 22:21:09</td>
+      <td>1502.801881</td>
+      <td>0</td>
+      <td>67</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2010-02-05 10:27:53</td>
+      <td>33705.556525</td>
+      <td>0</td>
+      <td>79</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2010-08-13 08:12:53</td>
+      <td>33603.447512</td>
+      <td>0</td>
+      <td>65</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2011-03-09 17:48:50</td>
+      <td>36437.864869</td>
+      <td>0</td>
+      <td>56</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2011-11-15 03:15:11</td>
+      <td>84252.321067</td>
+      <td>0</td>
+      <td>15</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2010-11-17 10:08:48</td>
+      <td>20147.631086</td>
+      <td>0</td>
+      <td>97</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2011-10-26 21:14:32</td>
+      <td>50308.108110</td>
+      <td>0</td>
+      <td>115</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table></td><td><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Date</th>
+      <th>MarkDown1</th>
+      <th>Store</th>
+      <th>IsHoliday</th>
+      <th>MarkDown4</th>
+      <th>MarkDown3</th>
+      <th>Fuel_Price</th>
+      <th>Unemployment</th>
+      <th>Temperature</th>
+      <th>MarkDown5</th>
+      <th>MarkDown2</th>
+      <th>CPI</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2010-09-13 22:20:50</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>-15565.212056</td>
+      <td>3.540375</td>
+      <td>9.319047</td>
+      <td>36.148818</td>
+      <td>-690.156093</td>
+      <td>NaN</td>
+      <td>138.733632</td>
+    </tr>
+    <tr>
+      <td>2011-06-13 06:54:03</td>
+      <td>1924.356731</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>5474.001735</td>
+      <td>3.120499</td>
+      <td>6.785801</td>
+      <td>51.859132</td>
+      <td>3074.428335</td>
+      <td>NaN</td>
+      <td>122.895407</td>
+    </tr>
+    <tr>
+      <td>2011-10-15 03:18:09</td>
+      <td>4111.565396</td>
+      <td>0</td>
+      <td>False</td>
+      <td>1477.643644</td>
+      <td>NaN</td>
+      <td>3.846399</td>
+      <td>7.856785</td>
+      <td>58.607029</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>125.178160</td>
+    </tr>
+    <tr>
+      <td>2013-12-23 23:26:02</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>13489.924205</td>
+      <td>3.248204</td>
+      <td>5.358036</td>
+      <td>91.976147</td>
+      <td>17789.068373</td>
+      <td>25676.848016</td>
+      <td>100.048910</td>
+    </tr>
+    <tr>
+      <td>2012-02-23 20:57:58</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>-6247.838632</td>
+      <td>4.138286</td>
+      <td>7.393956</td>
+      <td>62.759731</td>
+      <td>NaN</td>
+      <td>7194.555130</td>
+      <td>116.153442</td>
+    </tr>
+    <tr>
+      <td>2013-03-24 04:50:22</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>8662.584306</td>
+      <td>3.982871</td>
+      <td>8.083396</td>
+      <td>69.228531</td>
+      <td>13357.949277</td>
+      <td>19403.532155</td>
+      <td>105.543737</td>
+    </tr>
+    <tr>
+      <td>2013-05-04 17:05:43</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>-1429.550481</td>
+      <td>3.629152</td>
+      <td>5.191689</td>
+      <td>71.796423</td>
+      <td>12860.156795</td>
+      <td>19045.767252</td>
+      <td>100.699692</td>
+    </tr>
+    <tr>
+      <td>2012-10-23 22:36:22</td>
+      <td>15636.762678</td>
+      <td>0</td>
+      <td>False</td>
+      <td>6722.626391</td>
+      <td>NaN</td>
+      <td>3.340829</td>
+      <td>8.824630</td>
+      <td>63.285988</td>
+      <td>10342.385739</td>
+      <td>12450.531560</td>
+      <td>110.677276</td>
+    </tr>
+    <tr>
+      <td>2012-12-17 18:14:18</td>
+      <td>13275.305424</td>
+      <td>0</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.560748</td>
+      <td>9.287100</td>
+      <td>72.715464</td>
+      <td>NaN</td>
+      <td>10486.712336</td>
+      <td>107.115148</td>
+    </tr>
+    <tr>
+      <td>2012-04-10 15:34:39</td>
+      <td>12320.412661</td>
+      <td>0</td>
+      <td>False</td>
+      <td>7639.578818</td>
+      <td>NaN</td>
+      <td>4.092588</td>
+      <td>10.443083</td>
+      <td>74.016148</td>
+      <td>8631.244171</td>
+      <td>NaN</td>
+      <td>132.264987</td>
+    </tr>
+  </tbody>
+</table></td></tr></table></div>
 </div>
+<p>We may not want to generate data for all tables in the dataset, rather for just one table. This is possible with SDV using the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method. To use it we only need to specify the name of the table we want to synthesize and the row numbers to generate. In this case, the “walmart” data set has 3 tables: stores, features and depts.</p>
+<p>In the following example, we will generate 1000 rows of the “features” table.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span></span><span class="n">sdv</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -1092,428 +1414,953 @@ div.rendered_html tbody tr:hover {
   <tbody>
     <tr>
       <th>0</th>
-      <td>2009-12-13 04:59:49.832576000</td>
-      <td>222.268822</td>
-      <td>0</td>
-      <td>False</td>
-      <td>758.900545</td>
-      <td>-1080.569435</td>
-      <td>4.574966</td>
-      <td>6.052795</td>
-      <td>51.354606</td>
-      <td>-4016.012141</td>
+      <td>2011-05-16 22:12:16.719949312</td>
       <td>NaN</td>
-      <td>224.973722</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>-3522.610360</td>
+      <td>3.557379</td>
+      <td>10.119276</td>
+      <td>84.948873</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>130.097566</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2011-07-20 14:40:40.400244736</td>
-      <td>6857.712028</td>
-      <td>0</td>
+      <td>2012-05-07 18:21:57.668985856</td>
+      <td>13882.743393</td>
+      <td>49</td>
       <td>False</td>
-      <td>NaN</td>
-      <td>-551.045257</td>
-      <td>3.018296</td>
-      <td>6.720669</td>
-      <td>80.723862</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>204.595072</td>
+      <td>10409.402379</td>
+      <td>392.508334</td>
+      <td>3.696959</td>
+      <td>7.697493</td>
+      <td>49.363466</td>
+      <td>4296.996403</td>
+      <td>-432.020252</td>
+      <td>122.412264</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2011-10-12 08:23:54.987658240</td>
-      <td>5530.929425</td>
-      <td>0</td>
+      <td>2010-09-09 01:38:54.464363264</td>
+      <td>NaN</td>
+      <td>46</td>
       <td>False</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>3.466358</td>
-      <td>7.256570</td>
-      <td>73.954938</td>
+      <td>2.981501</td>
+      <td>8.281216</td>
+      <td>99.879443</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>202.591941</td>
+      <td>134.195498</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2012-11-26 09:22:59.377291776</td>
+      <td>2012-01-25 14:53:44.246531840</td>
+      <td>9927.716783</td>
+      <td>48</td>
+      <td>True</td>
+      <td>5438.785435</td>
       <td>NaN</td>
-      <td>0</td>
-      <td>False</td>
+      <td>3.467548</td>
+      <td>9.272527</td>
+      <td>69.947886</td>
       <td>NaN</td>
-      <td>3703.137191</td>
-      <td>3.623725</td>
-      <td>6.598615</td>
-      <td>72.041454</td>
-      <td>NaN</td>
-      <td>3925.456611</td>
-      <td>169.457078</td>
+      <td>3538.205782</td>
+      <td>121.043138</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>2013-05-13 15:22:12.213717760</td>
-      <td>NaN</td>
-      <td>0</td>
+      <td>2011-07-03 02:42:31.676273408</td>
+      <td>14814.954099</td>
+      <td>49</td>
       <td>False</td>
-      <td>3773.942572</td>
+      <td>8365.552143</td>
+      <td>6867.661993</td>
+      <td>2.741602</td>
+      <td>7.094083</td>
+      <td>87.784597</td>
+      <td>8220.514161</td>
+      <td>425.358506</td>
+      <td>236.021879</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2012-02-27 06:10:45.754697472</td>
+      <td>8816.901591</td>
+      <td>45</td>
+      <td>False</td>
       <td>NaN</td>
-      <td>3.381795</td>
-      <td>5.115002</td>
-      <td>83.058322</td>
-      <td>15018.944605</td>
+      <td>2263.174004</td>
+      <td>3.989228</td>
+      <td>8.134336</td>
+      <td>82.983094</td>
+      <td>4682.423318</td>
       <td>NaN</td>
-      <td>182.801974</td>
+      <td>177.070555</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>2009-06-25 00:57:40.227447552</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.406865</td>
+      <td>8.877070</td>
+      <td>35.395686</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>191.663563</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2012-11-08 12:02:01.170885888</td>
+      <td>3067.194088</td>
+      <td>46</td>
+      <td>False</td>
+      <td>2143.278025</td>
+      <td>761.688935</td>
+      <td>3.686846</td>
+      <td>6.783572</td>
+      <td>27.675874</td>
+      <td>1340.924945</td>
+      <td>3653.037306</td>
+      <td>128.662878</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>2011-08-01 05:01:06.322296576</td>
+      <td>9369.668949</td>
+      <td>45</td>
+      <td>False</td>
+      <td>4459.373644</td>
+      <td>6272.463483</td>
+      <td>3.273961</td>
+      <td>10.398373</td>
+      <td>48.396609</td>
+      <td>8529.139835</td>
+      <td>10030.259069</td>
+      <td>157.443283</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>2010-12-21 01:50:51.813451264</td>
+      <td>NaN</td>
+      <td>47</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.983382</td>
+      <td>9.394405</td>
+      <td>59.193581</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>160.979347</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>2012-04-02 15:27:30.499279360</td>
+      <td>4258.384061</td>
+      <td>47</td>
+      <td>False</td>
+      <td>2298.419586</td>
+      <td>1327.806172</td>
+      <td>3.128438</td>
+      <td>8.547957</td>
+      <td>62.364361</td>
+      <td>8850.782860</td>
+      <td>420.405375</td>
+      <td>236.681153</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>2011-09-16 22:09:49.708962816</td>
+      <td>4061.369413</td>
+      <td>46</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>6105.997291</td>
+      <td>2.790730</td>
+      <td>6.763811</td>
+      <td>45.134604</td>
+      <td>-611.144232</td>
+      <td>NaN</td>
+      <td>199.679280</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>2012-11-06 02:21:27.492714752</td>
+      <td>8777.125206</td>
+      <td>46</td>
+      <td>False</td>
+      <td>5530.708751</td>
+      <td>-799.221806</td>
+      <td>3.558818</td>
+      <td>7.233418</td>
+      <td>71.933357</td>
+      <td>825.428658</td>
+      <td>3706.480639</td>
+      <td>125.742918</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>2012-11-01 15:37:07.648778240</td>
+      <td>13695.370418</td>
+      <td>46</td>
+      <td>True</td>
+      <td>3844.820453</td>
+      <td>7782.224536</td>
+      <td>3.561333</td>
+      <td>8.081871</td>
+      <td>63.080199</td>
+      <td>2811.250458</td>
+      <td>5016.360863</td>
+      <td>183.209492</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>2010-04-24 10:27:35.922357504</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.489370</td>
+      <td>6.215088</td>
+      <td>60.624319</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>240.002902</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>2013-02-02 23:13:11.213843712</td>
+      <td>5039.654238</td>
+      <td>47</td>
+      <td>False</td>
+      <td>2074.175181</td>
+      <td>5216.051007</td>
+      <td>4.058931</td>
+      <td>6.185562</td>
+      <td>69.767338</td>
+      <td>3106.710909</td>
+      <td>3049.266396</td>
+      <td>210.162782</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>2013-07-06 22:45:58.830334464</td>
+      <td>11937.666237</td>
+      <td>48</td>
+      <td>False</td>
+      <td>2519.893655</td>
+      <td>986.608180</td>
+      <td>4.228705</td>
+      <td>9.111046</td>
+      <td>52.940173</td>
+      <td>5418.801564</td>
+      <td>6520.694132</td>
+      <td>116.337056</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>2012-11-28 11:25:10.521213952</td>
+      <td>21897.961729</td>
+      <td>48</td>
+      <td>False</td>
+      <td>13413.349614</td>
+      <td>2209.977156</td>
+      <td>3.646627</td>
+      <td>9.421001</td>
+      <td>61.592049</td>
+      <td>5265.465441</td>
+      <td>7182.194803</td>
+      <td>138.127029</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>2011-01-26 22:11:03.367919104</td>
+      <td>NaN</td>
+      <td>46</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.949940</td>
+      <td>9.532300</td>
+      <td>97.857372</td>
+      <td>NaN</td>
+      <td>-2743.072869</td>
+      <td>114.672211</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>2011-08-19 07:24:03.778560000</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.125037</td>
+      <td>7.922240</td>
+      <td>56.105412</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>158.700466</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>2012-02-21 20:31:45.161696512</td>
+      <td>6954.924023</td>
+      <td>45</td>
+      <td>False</td>
+      <td>4816.896477</td>
+      <td>6247.874377</td>
+      <td>2.874874</td>
+      <td>6.238975</td>
+      <td>76.837824</td>
+      <td>7723.001352</td>
+      <td>NaN</td>
+      <td>213.769268</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>2013-02-22 12:51:42.753999104</td>
+      <td>3002.459708</td>
+      <td>47</td>
+      <td>False</td>
+      <td>2922.336087</td>
+      <td>-1020.507649</td>
+      <td>3.893631</td>
+      <td>5.961414</td>
+      <td>63.775849</td>
+      <td>2135.992202</td>
+      <td>930.417913</td>
+      <td>203.352174</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>2010-08-24 00:01:30.848025600</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.169432</td>
+      <td>7.836160</td>
+      <td>80.852115</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>125.225771</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>2010-03-27 02:14:20.085373184</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.628957</td>
+      <td>5.710371</td>
+      <td>65.652859</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>181.425093</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>2012-03-16 06:09:05.035138816</td>
+      <td>-2643.345105</td>
+      <td>45</td>
+      <td>False</td>
+      <td>-2702.178818</td>
+      <td>-1238.030435</td>
+      <td>3.172917</td>
+      <td>6.977321</td>
+      <td>52.259834</td>
+      <td>8616.868748</td>
+      <td>NaN</td>
+      <td>145.373576</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>2011-06-02 11:41:53.499891200</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.630476</td>
+      <td>8.724658</td>
+      <td>51.608481</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>234.722885</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>2010-08-09 14:05:53.611908352</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.889739</td>
+      <td>7.889335</td>
+      <td>53.526645</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>192.191322</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>2011-01-27 15:31:38.092682240</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.859846</td>
+      <td>9.761703</td>
+      <td>63.676337</td>
+      <td>NaN</td>
+      <td>1464.144620</td>
+      <td>168.253128</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>2014-07-22 16:45:13.151007232</td>
+      <td>11203.026007</td>
+      <td>49</td>
+      <td>False</td>
+      <td>4950.165996</td>
+      <td>648.404705</td>
+      <td>3.986740</td>
+      <td>6.172010</td>
+      <td>82.977615</td>
+      <td>-1883.126604</td>
+      <td>3952.304622</td>
+      <td>199.752206</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>2010-03-09 11:38:45.433661952</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.445006</td>
+      <td>8.125775</td>
+      <td>34.736076</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>204.123654</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>970</th>
+      <td>2012-02-10 06:22:25.778329344</td>
+      <td>10910.510616</td>
+      <td>49</td>
+      <td>False</td>
+      <td>5676.148272</td>
+      <td>NaN</td>
+      <td>3.399604</td>
+      <td>6.840746</td>
+      <td>74.305554</td>
+      <td>10399.878100</td>
+      <td>NaN</td>
+      <td>217.932325</td>
+    </tr>
+    <tr>
+      <th>971</th>
+      <td>2010-09-22 00:35:35.110930944</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.926635</td>
+      <td>9.633406</td>
+      <td>67.659559</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>181.112873</td>
+    </tr>
+    <tr>
+      <th>972</th>
+      <td>2012-03-26 13:12:39.923467008</td>
+      <td>13848.137176</td>
+      <td>46</td>
+      <td>False</td>
+      <td>4408.683357</td>
+      <td>3396.258993</td>
+      <td>3.802886</td>
+      <td>7.743784</td>
+      <td>23.716938</td>
+      <td>6069.842645</td>
+      <td>4231.388132</td>
+      <td>150.394740</td>
+    </tr>
+    <tr>
+      <th>973</th>
+      <td>2012-06-17 23:18:04.111680000</td>
+      <td>16384.811603</td>
+      <td>48</td>
+      <td>False</td>
+      <td>7503.905048</td>
+      <td>2463.226845</td>
+      <td>3.998348</td>
+      <td>7.068228</td>
+      <td>63.060224</td>
+      <td>-813.221231</td>
+      <td>6531.710844</td>
+      <td>204.646832</td>
+    </tr>
+    <tr>
+      <th>974</th>
+      <td>2012-12-07 06:00:01.461283072</td>
+      <td>13415.762030</td>
+      <td>49</td>
+      <td>False</td>
+      <td>4483.786527</td>
+      <td>-3437.499171</td>
+      <td>3.600467</td>
+      <td>7.618567</td>
+      <td>38.692164</td>
+      <td>3368.498977</td>
+      <td>773.996001</td>
+      <td>201.941713</td>
+    </tr>
+    <tr>
+      <th>975</th>
+      <td>2011-08-03 07:33:02.839435776</td>
+      <td>NaN</td>
+      <td>47</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.767102</td>
+      <td>6.550577</td>
+      <td>78.754125</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>215.906279</td>
+    </tr>
+    <tr>
+      <th>976</th>
+      <td>2011-06-01 15:48:14.452527104</td>
+      <td>NaN</td>
+      <td>46</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.671096</td>
+      <td>10.960368</td>
+      <td>58.719499</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>101.798360</td>
+    </tr>
+    <tr>
+      <th>977</th>
+      <td>2011-07-18 13:46:07.451840000</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.246079</td>
+      <td>9.977418</td>
+      <td>56.902135</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>187.444668</td>
+    </tr>
+    <tr>
+      <th>978</th>
+      <td>2011-03-01 03:55:56.868541696</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.814714</td>
+      <td>8.493884</td>
+      <td>61.988793</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>196.494150</td>
+    </tr>
+    <tr>
+      <th>979</th>
+      <td>2010-10-22 20:24:17.398207488</td>
+      <td>NaN</td>
+      <td>47</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.914678</td>
+      <td>6.380173</td>
+      <td>88.106303</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>162.631404</td>
+    </tr>
+    <tr>
+      <th>980</th>
+      <td>2011-12-29 19:47:18.864218624</td>
+      <td>3265.808771</td>
+      <td>47</td>
+      <td>False</td>
+      <td>-1199.539894</td>
+      <td>NaN</td>
+      <td>2.351292</td>
+      <td>NaN</td>
+      <td>24.080899</td>
+      <td>3253.373587</td>
+      <td>5397.662703</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>981</th>
+      <td>2012-10-27 17:44:01.544715520</td>
+      <td>3836.793728</td>
+      <td>48</td>
+      <td>False</td>
+      <td>2723.035308</td>
+      <td>-2846.358659</td>
+      <td>3.574000</td>
+      <td>10.483418</td>
+      <td>63.860599</td>
+      <td>3887.188911</td>
+      <td>5239.436741</td>
+      <td>175.327534</td>
+    </tr>
+    <tr>
+      <th>982</th>
+      <td>2010-11-11 08:41:45.401498880</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.397327</td>
+      <td>9.024581</td>
+      <td>65.181815</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>133.838040</td>
+    </tr>
+    <tr>
+      <th>983</th>
+      <td>2011-06-11 14:35:02.727222784</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.926216</td>
+      <td>9.930411</td>
+      <td>57.195777</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>197.707462</td>
+    </tr>
+    <tr>
+      <th>984</th>
+      <td>2011-02-19 04:01:32.238805248</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.992983</td>
+      <td>6.273455</td>
+      <td>94.580623</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>217.975098</td>
+    </tr>
+    <tr>
+      <th>985</th>
+      <td>2011-07-10 04:32:49.469103360</td>
+      <td>NaN</td>
+      <td>47</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.878385</td>
+      <td>9.473094</td>
+      <td>62.706788</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>209.991699</td>
+    </tr>
+    <tr>
+      <th>986</th>
+      <td>2010-08-31 22:36:46.645955072</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.013323</td>
+      <td>7.791802</td>
+      <td>43.754108</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>212.972585</td>
+    </tr>
+    <tr>
+      <th>987</th>
+      <td>2010-12-03 18:06:07.042392576</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.257432</td>
+      <td>7.699337</td>
+      <td>76.275396</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>226.856944</td>
+    </tr>
+    <tr>
+      <th>988</th>
+      <td>2013-11-10 17:06:53.568315392</td>
+      <td>15455.601861</td>
+      <td>45</td>
+      <td>False</td>
+      <td>8761.934061</td>
+      <td>8113.118038</td>
+      <td>3.974762</td>
+      <td>10.145966</td>
+      <td>69.774517</td>
+      <td>10368.083822</td>
+      <td>-1179.231505</td>
+      <td>236.037290</td>
+    </tr>
+    <tr>
+      <th>989</th>
+      <td>2013-04-18 17:28:59.214258432</td>
+      <td>4671.643893</td>
+      <td>45</td>
+      <td>False</td>
+      <td>3684.809978</td>
+      <td>118.750436</td>
+      <td>3.383109</td>
+      <td>7.715390</td>
+      <td>68.296920</td>
+      <td>1872.949970</td>
+      <td>10135.097570</td>
+      <td>171.015002</td>
+    </tr>
+    <tr>
+      <th>990</th>
+      <td>2011-10-21 00:01:25.161750784</td>
+      <td>10474.503569</td>
+      <td>47</td>
+      <td>False</td>
+      <td>4153.891418</td>
+      <td>-3407.832503</td>
+      <td>2.938356</td>
+      <td>4.727209</td>
+      <td>42.250078</td>
+      <td>3850.718837</td>
+      <td>NaN</td>
+      <td>167.552282</td>
+    </tr>
+    <tr>
+      <th>991</th>
+      <td>2010-10-05 23:16:37.648663040</td>
+      <td>NaN</td>
+      <td>49</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.756815</td>
+      <td>7.480490</td>
+      <td>92.256178</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>145.564639</td>
+    </tr>
+    <tr>
+      <th>992</th>
+      <td>2010-12-22 11:17:15.068431872</td>
+      <td>NaN</td>
+      <td>47</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>-1997.454287</td>
+      <td>3.087294</td>
+      <td>8.188031</td>
+      <td>86.205066</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>159.685843</td>
+    </tr>
+    <tr>
+      <th>993</th>
+      <td>2011-12-28 23:25:41.801294336</td>
+      <td>16350.305150</td>
+      <td>49</td>
+      <td>False</td>
+      <td>3406.974997</td>
+      <td>-5435.686985</td>
+      <td>3.471616</td>
+      <td>9.531845</td>
+      <td>79.482367</td>
+      <td>11821.291964</td>
+      <td>4206.835269</td>
+      <td>156.621456</td>
+    </tr>
+    <tr>
+      <th>994</th>
+      <td>2011-05-10 22:14:29.908780544</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>3180.839028</td>
+      <td>2592.008194</td>
+      <td>2.482860</td>
+      <td>8.996028</td>
+      <td>28.607111</td>
+      <td>NaN</td>
+      <td>8289.490120</td>
+      <td>166.280079</td>
+    </tr>
+    <tr>
+      <th>995</th>
+      <td>2012-09-13 17:18:31.073678592</td>
+      <td>5768.475257</td>
+      <td>46</td>
+      <td>False</td>
+      <td>-117.426788</td>
+      <td>2882.135096</td>
+      <td>3.472646</td>
+      <td>9.250116</td>
+      <td>41.815140</td>
+      <td>3555.326207</td>
+      <td>5190.237248</td>
+      <td>253.283869</td>
+    </tr>
+    <tr>
+      <th>996</th>
+      <td>2012-05-04 05:35:44.629785600</td>
+      <td>1049.718825</td>
+      <td>49</td>
+      <td>False</td>
+      <td>-2197.174624</td>
+      <td>NaN</td>
+      <td>3.679516</td>
+      <td>10.652481</td>
+      <td>75.748123</td>
+      <td>1987.708208</td>
+      <td>NaN</td>
+      <td>157.348891</td>
+    </tr>
+    <tr>
+      <th>997</th>
+      <td>2011-01-22 04:43:37.968207104</td>
+      <td>NaN</td>
+      <td>45</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.801804</td>
+      <td>6.335627</td>
+      <td>52.573134</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>98.119109</td>
+    </tr>
+    <tr>
+      <th>998</th>
+      <td>2010-07-16 04:47:56.644150528</td>
+      <td>NaN</td>
+      <td>48</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.818916</td>
+      <td>7.680164</td>
+      <td>62.518471</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>247.350604</td>
+    </tr>
+    <tr>
+      <th>999</th>
+      <td>2012-01-25 09:03:21.837204480</td>
+      <td>2805.993932</td>
+      <td>49</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>8908.682318</td>
+      <td>3.089580</td>
+      <td>6.513568</td>
+      <td>42.013851</td>
+      <td>5055.234941</td>
+      <td>NaN</td>
+      <td>202.510363</td>
     </tr>
   </tbody>
 </table>
+<p>1000 rows × 12 columns</p>
 </div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;depts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="output_area rendered_html docutils container">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Date</th>
-      <th>Weekly_Sales</th>
-      <th>Store</th>
-      <th>Dept</th>
-      <th>IsHoliday</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>2012-04-19 04:40:04.370382848</td>
-      <td>7523.202470</td>
-      <td>0</td>
-      <td>36</td>
-      <td>False</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>2012-10-24 12:49:45.630176512</td>
-      <td>13675.425498</td>
-      <td>0</td>
-      <td>17</td>
-      <td>False</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2012-06-05 05:02:35.551761408</td>
-      <td>2402.017324</td>
-      <td>0</td>
-      <td>31</td>
-      <td>False</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>2012-05-31 22:15:14.903856896</td>
-      <td>-12761.073176</td>
-      <td>0</td>
-      <td>81</td>
-      <td>False</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>2011-09-07 15:34:43.239835648</td>
-      <td>3642.817612</td>
-      <td>0</td>
-      <td>58</td>
-      <td>False</td>
-    </tr>
-  </tbody>
-</table>
-</div></div>
-</div>
-<p>We may not want to generate data for all tables in the dataset, rather for just one table. This is possible with SDV using the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method. To use it we only need to specify the name of the table we want to synthesize and the row numbers to generate. In this case, the “walmart” data set has 3 tables: stores, features and depts.</p>
-<p>In the following example, we will generate 1000 rows of the “features” table.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sdv</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-{&#39;features&#39;:                              Date     MarkDown1  Store  IsHoliday  \
- 0   2010-07-07 18:33:30.490365440           NaN     46       True
- 1   2010-05-31 05:12:43.555245568           NaN     49      False
- 2   2009-11-13 00:11:26.645775872           NaN     46      False
- 3   2011-06-26 13:37:23.832223232   8480.251096     48      False
- 4   2013-09-30 06:14:18.804104192   4586.374804     48      False
- 5   2011-03-18 21:50:55.521650432           NaN     45      False
- 6   2012-03-22 14:59:09.189622016   9747.212668     46      False
- 7   2011-04-05 16:45:11.282816000           NaN     48      False
- 8   2013-05-05 14:23:57.431958784   5430.557501     46      False
- 9   2011-04-07 02:38:10.873993984   6735.454863     49      False
- 10  2012-07-09 15:59:11.863023616  11818.737600     48      False
- 11  2012-03-10 03:57:22.968428544   4603.635257     48      False
- 12  2011-10-01 03:51:05.280273920  14596.976258     49      False
- 13  2012-06-24 23:45:06.501742080   5816.163902     49      False
- 14  2011-08-06 14:43:48.366935040           NaN     47      False
- 15  2012-06-14 01:06:45.771771648           NaN     45      False
- 16  2011-11-22 08:57:27.766619392           NaN     45      False
- 17  2012-10-06 19:10:00.039407360   5887.384577     48      False
- 18  2013-06-08 07:46:59.612567808  -5770.051172     48      False
- 19  2012-05-27 11:08:47.184699648   6908.122060     46      False
- 20  2010-10-19 21:42:09.919441408           NaN     46      False
- 21  2013-01-01 17:57:15.273558784   6221.151492     48      False
- 22  2012-07-13 14:40:51.181466112   1378.006687     47      False
- 23  2012-02-13 18:37:30.161656320           NaN     48      False
- 24  2010-11-27 09:56:34.540603392           NaN     46      False
- 25  2011-05-21 03:49:37.053693440           NaN     49      False
- 26  2010-06-12 20:31:32.339124224           NaN     49       True
- 27  2011-08-12 21:10:37.406385152           NaN     47      False
- 28  2012-02-07 03:31:37.558127360           NaN     47      False
- 29  2011-05-28 22:39:00.441712128           NaN     48      False
- ..                            ...           ...    ...        ...
- 970 2012-10-01 09:27:33.224137984   7367.091411     49      False
- 971 2011-08-05 19:20:26.151251200           NaN     49      False
- 972 2010-05-02 10:25:48.294526720           NaN     49      False
- 973 2014-07-30 06:33:25.027884800   2869.286369     46      False
- 974 2012-06-10 23:50:28.918937344           NaN     45      False
- 975 2011-11-20 17:24:25.076207104           NaN     48      False
- 976 2011-07-16 19:31:09.475053312   8465.620591     48      False
- 977 2010-12-17 11:17:29.377529600           NaN     45      False
- 978 2011-05-01 22:00:24.413698816           NaN     48       True
- 979 2009-01-04 14:06:28.700405504           NaN     48      False
- 980 2013-01-26 23:44:47.124111360   7711.715123     47      False
- 981 2012-02-05 15:58:21.306519040   4771.829938     49      False
- 982 2012-12-25 20:25:33.794860544   9052.115357     45      False
- 983 2011-03-11 05:15:33.422215424           NaN     48      False
- 984 2012-04-10 15:14:42.299491072  11469.698722     49      False
- 985 2012-09-04 11:56:04.719035648  11985.730540     47      False
- 986 2010-08-12 06:13:43.472920320           NaN     47      False
- 987 2011-11-28 00:46:09.219015936           NaN     47      False
- 988 2010-11-01 19:46:13.442969344           NaN     47      False
- 989 2012-09-03 02:46:56.811711232  13448.706455     46      False
- 990 2012-06-21 20:15:00.600609536   8515.644049     45      False
- 991 2009-11-09 11:32:20.317559808           NaN     47      False
- 992 2012-12-24 16:57:40.573141760   8785.735128     48      False
- 993 2010-10-26 22:04:15.916646656           NaN     45      False
- 994 2013-07-27 21:48:37.233461248   2218.444188     46      False
- 995 2012-11-22 15:48:58.070053120           NaN     47      False
- 996 2012-11-19 17:12:55.679613440  11318.264204     45      False
- 997 2013-10-11 21:09:49.021492480    478.609430     47      False
- 998 2013-01-23 23:17:20.493887232  14227.944357     49      False
- 999 2012-06-23 00:01:59.594749696   9121.193148     46      False
-
-        MarkDown4     MarkDown3  Fuel_Price  Unemployment  Temperature  \
- 0            NaN           NaN    3.246268      6.712596    72.778272
- 1            NaN           NaN    2.961909      8.775273    31.911285
- 2            NaN           NaN    2.474694      8.693548    36.996590
- 3    2990.430314    450.886030    3.180972      7.482533    82.689207
- 4    1300.901307   1038.142954    3.979948      3.842990    61.626723
- 5            NaN           NaN    3.190374      9.185961    43.775213
- 6    5068.165070   4033.503158    3.436991     10.002234    44.980268
- 7    2639.207053           NaN    3.126477      8.921070    60.901225
- 8   -1515.448599   1859.931318    4.101750     10.478649    81.003354
- 9            NaN  -4013.843645    3.200662      8.549170    46.332113
- 10   6983.561124   9246.461293    3.637923      6.940256    66.208533
- 11           NaN   1872.845519    3.535785      5.360209    76.842613
- 12   5967.615987  -2084.078449    3.314418           NaN    73.216988
- 13   4181.309429  -7382.929438    3.170917      7.209879    27.887139
- 14           NaN           NaN    4.084598     10.976241    75.512964
- 15   6522.458652  -2969.500556    3.592465      6.778646    45.304799
- 16           NaN           NaN    3.691225      9.169614    61.590909
- 17   2195.064778  10031.652043    3.790657      5.655427    38.507717
- 18  -2522.448316   4530.988378    3.349566      4.743290    36.629555
- 19           NaN   3416.997827    3.641454      8.177166    89.916452
- 20           NaN           NaN    3.075063      5.229354    61.706563
- 21   4647.376520   3247.164388    4.162684      5.033966    37.962542
- 22           NaN           NaN    3.384827      4.921576    54.039707
- 23           NaN   7039.242263    3.187745      9.768689    74.453345
- 24           NaN           NaN    3.045024      6.954771    63.069450
- 25           NaN           NaN    4.164028      8.876290    71.070532
- 26           NaN           NaN    2.719009      7.230035    57.364249
- 27           NaN           NaN    3.257133      9.345917    68.652152
- 28           NaN  -4190.690106    3.548902      9.494165    89.145578
- 29           NaN           NaN    3.316924      6.697705    77.375684
- ..           ...           ...         ...           ...          ...
- 970  2712.006496    -14.780688    3.618468      8.148930    30.483065
- 971          NaN           NaN    3.012630      6.326113    47.975596
- 972          NaN           NaN    2.841184     10.269877    81.946843
- 973  1937.104665  -1511.898278    4.759412      7.778287    30.662510
- 974  5253.689129    329.011494    3.343722      7.398721    21.129117
- 975          NaN   4930.780630    3.506178      9.701808   110.523151
- 976  5293.404197  -3121.976568    2.800094      5.843644    32.442600
- 977  9805.271519           NaN    3.136993      7.623560    72.572211
- 978          NaN           NaN    2.714601      7.234621    52.291714
- 979          NaN           NaN    2.043747      8.744450    46.628272
- 980  5415.328424  -4809.140910    3.287617      8.354515    61.384200
- 981          NaN           NaN    3.337297      6.142083    36.829644
- 982   837.730915   4072.518501    3.894026     12.494251    94.673851
- 983          NaN           NaN    3.420209      7.090230    47.694700
- 984  5134.594286    357.279124    3.325391      4.539604    37.460031
- 985          NaN   4056.157461    3.685698      7.230368    43.096815
- 986  3953.583585    805.676045    3.044291      7.884751    34.438372
- 987  4511.412982           NaN    3.394697      6.834802    36.636557
- 988          NaN           NaN    3.154329      8.363893    49.751330
- 989          NaN   2084.191209    3.615679      9.596049    75.533229
- 990  4457.772828    218.985398    3.440906      8.526339    61.864859
- 991          NaN           NaN    3.247303      7.423321    59.019784
- 992          NaN           NaN    3.458168      6.459322    48.584436
- 993          NaN           NaN    2.608670     10.259658    82.758016
- 994   719.333117   6631.998410    4.368128      7.588005    54.580465
- 995  3003.501922           NaN    3.800082           NaN   100.143258
- 996          NaN   -681.708699    4.140327     10.717719    46.213930
- 997   735.529994   3856.959812    3.921162      7.439993    59.473702
- 998  2557.407176   2865.135441    3.971143      9.540309    67.952407
- 999   671.086509   2328.798014    3.487042      5.988222    63.846379
-
-         MarkDown5     MarkDown2         CPI
- 0             NaN           NaN  172.666543
- 1             NaN           NaN  119.214662
- 2             NaN           NaN  143.990866
- 3     4354.651570   5019.468642  180.631779
- 4    -4772.570563   2947.674138  173.813790
- 5             NaN           NaN  177.052581
- 6     7083.723804   3513.601560  185.921725
- 7             NaN   -180.888893  153.966086
- 8     6265.833733   2401.076738  170.559516
- 9     3759.801559   4729.764492  200.039874
- 10    6567.512481  -1022.527044  150.002644
- 11    7765.142655           NaN  221.169299
- 12            NaN   3308.681495         NaN
- 13    2826.442468   8385.400703  150.777231
- 14            NaN           NaN  211.070762
- 15    6642.564583           NaN  154.828636
- 16            NaN           NaN  138.236111
- 17    4118.446321           NaN  138.853628
- 18    1115.215425  -1526.587205  219.621502
- 19    4994.790024           NaN  197.086249
- 20            NaN           NaN  143.384357
- 21    9934.092076   6538.282816  208.758478
- 22     396.251330   1170.864752  217.807128
- 23    1492.226506           NaN  144.261943
- 24            NaN           NaN  198.046465
- 25            NaN           NaN  152.795139
- 26            NaN           NaN  192.354502
- 27    1804.646340           NaN  213.883682
- 28            NaN           NaN  237.955017
- 29            NaN           NaN  140.091500
- ..            ...           ...         ...
- 970   -208.184350   4224.751927  149.278618
- 971           NaN   3814.404768  167.707496
- 972           NaN           NaN  115.688179
- 973   1199.031857   3033.592607  120.703360
- 974           NaN   -351.113110  106.143265
- 975           NaN           NaN  211.109816
- 976   3975.213749           NaN  152.402312
- 977           NaN           NaN  121.333484
- 978           NaN   3607.788296  176.680147
- 979           NaN           NaN  164.924902
- 980   5431.606087   7005.735955  208.516910
- 981   -285.659902           NaN  146.865904
- 982   5584.625275   2016.204322  165.913603
- 983           NaN           NaN  136.591286
- 984   2929.718397  11730.460834  153.875137
- 985   4618.823214   1218.336997  191.245195
- 986           NaN    128.922827  209.229013
- 987   7757.467609           NaN  201.908861
- 988           NaN           NaN  210.724201
- 989   5115.758017   1620.240724  149.542233
- 990   1789.565202   1350.171000  193.810848
- 991           NaN           NaN  147.307937
- 992   -105.978005           NaN  229.688010
- 993           NaN           NaN  217.839779
- 994   -907.055933   3253.948843  128.459172
- 995           NaN           NaN         NaN
- 996   3043.948542           NaN  114.508859
- 997   1459.810600  -4003.468566  193.149902
- 998  12151.265277  -3099.180177  150.590590
- 999   2792.671569           NaN  201.355736
-
- [1000 rows x 12 columns]}
-</pre></div></div>
 </div>
 <p>SDV has tools to evaluate the synthetic data generated and compare them with the original data. To see more about the evaluation tools, <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.evaluation.html#sdv.evaluation.evaluate">see the documentation</a>.</p>
 </div>
 </div>
-</div>
 
 
-           </div>
-           
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../metadata.html" class="btn btn-neutral float-right" title="Working with Metadata" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="02_Single_Table_Modeling.html" class="btn btn-neutral float-left" title="Single Table Modeling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="02_Single_Table_Modeling.html" title="previous page">Single Table Modeling</a>
+    <a class='right-next' id="next-link" href="04_Working_with_Metadata.html" title="next page">Working with Metadata</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
     </div>
-  
 
-  <hr/>
-
-  <div role="contentinfo">
+    <script src="../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab
-
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
 </footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-  
-  
-    
-   
-
-</body>
+  </body>
 </html>

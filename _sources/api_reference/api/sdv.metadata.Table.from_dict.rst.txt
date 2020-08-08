@@ -1,0 +1,6 @@
+﻿sdv.metadata.Table.from\_dict
+=============================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Table.from_dict

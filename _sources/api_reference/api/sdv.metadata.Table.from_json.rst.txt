@@ -1,0 +1,6 @@
+﻿sdv.metadata.Table.from\_json
+=============================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Table.from_json

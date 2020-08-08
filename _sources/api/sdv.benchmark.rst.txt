@@ -1,7 +1,0 @@
-sdv.benchmark module
-====================
-
-.. automodule:: sdv.benchmark
-   :members:
-   :undoc-members:
-   :show-inheritance:

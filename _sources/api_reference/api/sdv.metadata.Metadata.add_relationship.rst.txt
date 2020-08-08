@@ -1,0 +1,6 @@
+﻿sdv.metadata.Metadata.add\_relationship
+=======================================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Metadata.add_relationship

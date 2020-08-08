@@ -1,7 +1,0 @@
-sdv.tabular.ctgan module
-========================
-
-.. automodule:: sdv.tabular.ctgan
-   :members:
-   :undoc-members:
-   :show-inheritance:

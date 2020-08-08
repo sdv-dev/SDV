@@ -1,7 +1,0 @@
-sdv.constraints.tabular module
-==============================
-
-.. automodule:: sdv.constraints.tabular
-   :members:
-   :undoc-members:
-   :show-inheritance:

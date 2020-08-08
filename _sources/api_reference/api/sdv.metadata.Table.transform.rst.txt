@@ -1,0 +1,6 @@
+﻿sdv.metadata.Table.transform
+============================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Table.transform

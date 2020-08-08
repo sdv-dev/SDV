@@ -1,0 +1,6 @@
+﻿sdv.metadata.Metadata.get\_foreign\_key
+=======================================
+
+.. currentmodule:: sdv.metadata
+
+.. automethod:: Metadata.get_foreign_key

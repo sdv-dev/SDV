@@ -1,332 +1,141 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>sdv.metadata &mdash; SDV 0.3.7.dev0 documentation</title>
-  
 
-  
-  
-    <link rel="shortcut icon" href="../../_static/dai-logo-white.ico"/>
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sdv.metadata &#8212; SDV 0.4.0 documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
+    <link href="../../_static/css/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
-</head>
-
-<body class="wy-body-for-nav">
-
-   
-  <div class="wy-grid-for-nav">
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="docsearch:language" content="en">
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
 
-          
-            <a href="../../index.html" class="icon icon-home"> SDV
-          
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-          
-            
-            <img src="../../_static/dai-logo-white-200.png" class="logo" alt="Logo"/>
-          
-          </a>
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../user_guides/index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
 
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html">SDV - Synthetic Data Vault</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#overview">Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../readme.html#features">Features:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../readme.html#coming-soon">Coming soon:</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#try-it-out-now">Try it out now!</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html#install">Install</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#install-with-pip">Install with pip</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html#quickstart">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#model-the-dataset-using-sdv">1. Model the dataset using SDV</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../readme.html#step-1-load-example-data">Step 1: Load example data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../readme.html#fit-a-model-using-the-sdv-api">2. Fit a model using the SDV API.</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../readme.html#sample-data-from-the-fitted-model">2. Sample data from the fitted model</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html#join-out-community">Join out community</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html#citation">Citation</a></li>
-</ul>
-<p class="caption"><span class="caption-text">User Guides</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html">Single Table Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#Quick-usage">Quick usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#Generate-synthetic-data-from-the-model">Generate synthetic data from the model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#Let's-consider-using-CTGAN">Let’s consider using CTGAN</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#id1">Generate synthetic data from the model</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#Frequently-encountered-needs">Frequently encountered needs</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/02_Single_Table_Modeling.html#How-can-I-evaluate-the-quality-of-my-synthetic-data?">How can I evaluate the quality of my synthetic data?</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html">Relational Data Modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html#About-the-datset">About the datset</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html#Data-model-summary">Data model summary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html#1.-Load-data">1. Load data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html#2.-Create-an-instance-of-SDV-and-train-the-instance">2. Create an instance of SDV and train the instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../tutorials/03_Relational_Data_Modeling.html#3.-Generate-synthetic-data">3. Generate synthetic data</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../metadata.html">Working with Metadata</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#generate-metadata-from-your-data">Generate Metadata from your data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#load-your-data">Load your data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#create-a-metadata-instance">Create a Metadata instance</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-the-first-table">Add the first table</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-its-parent">Add a table specifying its parent</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#add-a-table-specifying-field-properties">Add a table specifying field properties</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#store-your-metadata-in-a-json-file">Store your Metadata in a JSON file</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#metadata-schema">Metadata Schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#top-level">Top Level</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#table">Table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../metadata.html#field-details">Field details</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#datetime-fields">Datetime fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#categorical-fields-data-anonymization">Categorical fields (Data anonymization)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#primary-key-fields">Primary key fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../metadata.html#foreign-key-fields">Foreign key fields</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Resources</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/sdv.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.constraints.html">sdv.constraints package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.constraints.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.constraints.html#module-sdv.constraints">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.metadata.html">sdv.metadata package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.metadata.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.metadata.html#module-sdv.metadata">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.models.html">sdv.models package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.models.html#module-sdv.models">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.tabular.html">sdv.tabular package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.tabular.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sdv.tabular.html#module-sdv.tabular">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.benchmark.html">sdv.benchmark module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.demo.html">sdv.demo module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.evaluation.html">sdv.evaluation module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.modeler.html">sdv.modeler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.sampler.html">sdv.sampler module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdv.sdv.html">sdv.sdv module</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/sdv.html#module-sdv">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#types-of-contributions">Types of Contributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#report-bugs">Report Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#fix-bugs">Fix Bugs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#implement-features">Implement Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#write-documentation">Write Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#submit-feedback">Submit Feedback</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#get-started">Get Started!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#pull-request-guidelines">Pull Request Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#unit-testing-guidelines">Unit Testing Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#tips">Tips</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../contributing.html#release-workflow">Release Workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../contributing.html#release-candidates">Release Candidates</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../history.html">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id1">0.3.6 - 2020-07-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#new-features">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id2">0.3.5 - 2020-07-09</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id3">0.3.4 - 2020-07-04</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id4">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#general-improvements">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id5">0.3.3 - 2020-06-26</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id6">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id7">0.3.2 - 2020-02-03</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id8">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id9">0.3.1 - 2020-01-22</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id10">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id11">General Improvements</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id12">0.3.0 - 2019-12-23</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id13">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id14">0.2.2 - 2019-12-10</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id15">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id16">0.2.1 - 2019-11-25</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id17">New Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id18">0.2.0 - 2019-10-11</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id19">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id20">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#bugs-fixed">Bugs Fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#id21">0.1.2 - 2019-09-18</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id22">New Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id24">General Improvements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../history.html#id27">Bugs fixed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#anonymization-of-data">0.1.1 - Anonymization of data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../history.html#first-release">0.1.0 - First Release</a></li>
-</ul>
-</li>
-</ul>
-
-            
-          
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+
+      <ul class="navbar-nav">
         
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">SDV</a>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
         
-      </nav>
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
 
 
-      <div class="wy-nav-content">
-        
-        <div class="rst-content">
-        
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
           
 
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-        
-      <li>sdv.metadata</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-      </li>
-    
-  </ul>
+    </ul>
+</nav>
 
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
   <h1>Source code for sdv.metadata</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Metadata class.&quot;&quot;&quot;</span>
 
@@ -393,7 +202,7 @@
     <span class="k">return</span> <span class="n">data</span>
 
 
-<div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">:</span>
+<div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.html#sdv.metadata.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Dataset Metadata.</span>
 
 <span class="sd">    The Metadata class provides a unified layer of abstraction over the dataset</span>
@@ -404,9 +213,10 @@
 <span class="sd">        metadata (str or dict):</span>
 <span class="sd">            Path to a ``json`` file that contains the metadata or a ``dict`` representation</span>
 <span class="sd">            of ``metadata`` following the same structure.</span>
-
 <span class="sd">        root_path (str):</span>
-<span class="sd">            The path where the ``metadata.json`` is located. Defaults to ``None``.</span>
+<span class="sd">            The path to which the paths found inside the metadata are relative.</span>
+<span class="sd">            If not given, it defaults to the folder where the metadata is located, or</span>
+<span class="sd">            to None, if no metadata is given.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_child_map</span> <span class="o">=</span> <span class="kc">None</span>
@@ -506,7 +316,7 @@
 
         <span class="k">return</span> <span class="n">new_metadata</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.__init__"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.html#sdv.metadata.Metadata.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">root_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="k">as</span> <span class="n">metadata_file</span><span class="p">:</span>
@@ -520,9 +330,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="p">{}}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Metadata.get_children"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_children"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_children.html#sdv.metadata.Metadata.get_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get tables for which the given table is parent.</span>
 
 <span class="sd">        Args:</span>
@@ -535,7 +345,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Metadata.get_parents"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_parents"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_parents.html#sdv.metadata.Metadata.get_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get tables for with the given table is child.</span>
 
 <span class="sd">        Args:</span>
@@ -548,7 +358,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Metadata.get_table_meta"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_table_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_table_meta"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_table_meta.html#sdv.metadata.Metadata.get_table_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
 
 <span class="sd">        Args:</span>
@@ -569,8 +379,8 @@
 
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Metadata.get_tables"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the list of table names.</span>
+<div class="viewcode-block" id="Metadata.get_tables"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_tables.html#sdv.metadata.Metadata.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the list with the tables found in this metadata.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list:</span>
@@ -578,7 +388,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="Metadata.get_field_meta"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_field_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_field_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_field_meta"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_field_meta.html#sdv.metadata.Metadata.get_field_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_field_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
 
 <span class="sd">        Args:</span>
@@ -602,8 +412,8 @@
 
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">field_meta</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table fields metadata.</span>
+<div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_fields.html#sdv.metadata.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the metadata of the fields of the indicated table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -619,8 +429,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Metadata.get_primary_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the primary key name of the indicated table.</span>
+<div class="viewcode-block" id="Metadata.get_primary_key"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_primary_key.html#sdv.metadata.Metadata.get_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the name of the primary key of the indicated table, if it has one.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -636,8 +446,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Metadata.get_foreign_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_foreign_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get table foreign key field name.</span>
+<div class="viewcode-block" id="Metadata.get_foreign_key"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_foreign_key.html#sdv.metadata.Metadata.get_foreign_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the name of the field in the child that is a foreign key to parent.</span>
+
+<span class="sd">        If there is no relationship between the two tables, a ``ValueError`` is raised.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parent (str):</span>
@@ -660,8 +472,8 @@
 
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not parent of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Metadata.load_table"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.load_table">[docs]</a>    <span class="k">def</span> <span class="nf">load_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load table data.</span>
+<div class="viewcode-block" id="Metadata.load_table"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.load_table.html#sdv.metadata.Metadata.load_table">[docs]</a>    <span class="k">def</span> <span class="nf">load_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load the data of the indicated table as a DataFrame.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -679,7 +491,7 @@
         <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_load_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Metadata.load_tables"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.load_tables">[docs]</a>    <span class="k">def</span> <span class="nf">load_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.load_tables"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.load_tables.html#sdv.metadata.Metadata.load_tables">[docs]</a>    <span class="k">def</span> <span class="nf">load_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a dictionary with data from multiple tables.</span>
 
 <span class="sd">        If a ``tables`` list is given, only load the indicated tables.</span>
@@ -698,7 +510,7 @@
             <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.get_dtypes.html#sdv.metadata.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
 
 <span class="sd">        Args:</span>
@@ -744,7 +556,7 @@
         <span class="k">return</span> <span class="n">dtypes</span></div>
 
     <span class="k">def</span> <span class="nf">_get_pii_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the ``pii_category`` for each field that contains PII.</span>
+        <span class="sd">&quot;&quot;&quot;Get the ``pii_category`` for each field of the table that contains PII.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -820,7 +632,7 @@
         <span class="n">transformers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformers</span><span class="p">(</span><span class="n">dtypes</span><span class="p">,</span> <span class="n">pii_fields</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Metadata.transform"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.transform"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.transform.html#sdv.metadata.Metadata.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform data for a given table.</span>
 
 <span class="sd">        If the ``HyperTransformer`` for a table is ``None`` it is created.</span>
@@ -846,7 +658,7 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hyper_transformer</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Metadata.reverse_transform"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.reverse_transform"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.reverse_transform.html#sdv.metadata.Metadata.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reverse the transformed data for a given table.</span>
 
 <span class="sd">        Args:</span>
@@ -940,24 +752,23 @@
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
 
-<div class="viewcode-block" id="Metadata.validate"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.validate"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.validate.html#sdv.metadata.Metadata.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate this metadata.</span>
 
-<span class="sd">        For each table from in metadata ``tables`` entry:</span>
-<span class="sd">            * Validate the table metadata is correct.</span>
+<span class="sd">        Validate the metadata of each table:</span>
 
-<span class="sd">        * If ``tables`` are provided or they have been loaded, check</span>
-<span class="sd">          that all the metadata tables exists in the ``tables`` dictionary.</span>
-<span class="sd">        * Validate the type/subtype combination for each field and</span>
-<span class="sd">          if a field of type ``id`` exists it must be the ``primary_key``</span>
-<span class="sd">          or must have a ``ref`` entry.</span>
-<span class="sd">        * If ``primary_key`` entry exists, check that it&#39;s an existing</span>
-<span class="sd">          field and its type is ``id``.</span>
-<span class="sd">        * If ``tables`` are provided or they have been loaded, check</span>
-<span class="sd">          all the data types for the table correspond to each column and</span>
-<span class="sd">          all the data types exists on the table.</span>
-<span class="sd">        * Validate that there is no circular relatioship in the metadata.</span>
-<span class="sd">        * Check that all the tables have at most one parent.</span>
+<span class="sd">            * If ``tables`` are provided or they have been loaded, check</span>
+<span class="sd">              that all the metadata tables exists in the ``tables`` dictionary.</span>
+<span class="sd">            * Validate the type/subtype combination for each field and</span>
+<span class="sd">              if a field of type ``id`` exists it must be the ``primary_key``</span>
+<span class="sd">              or must have a ``ref`` entry.</span>
+<span class="sd">            * If ``primary_key`` entry exists, check that it&#39;s an existing</span>
+<span class="sd">              field and its type is ``id``.</span>
+<span class="sd">            * If ``tables`` are provided or they have been loaded, check</span>
+<span class="sd">              all the data types for the table correspond to each column and</span>
+<span class="sd">              all the data types exists on the table.</span>
+<span class="sd">            * Validate that there is no circular relatioship in the metadata.</span>
+<span class="sd">            * Check that all the tables have at most one parent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            tables (bool, dict):</span>
@@ -998,7 +809,7 @@
     <span class="c1"># Metadata Creation #</span>
     <span class="c1"># ################# #</span>
 
-<div class="viewcode-block" id="Metadata.add_field"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_field">[docs]</a>    <span class="k">def</span> <span class="nf">add_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.add_field"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.add_field.html#sdv.metadata.Metadata.add_field">[docs]</a>    <span class="k">def</span> <span class="nf">add_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a new field to the indicated table.</span>
 
 <span class="sd">        Args:</span>
@@ -1055,7 +866,7 @@
 
         <span class="k">return</span> <span class="n">field_subtype</span>
 
-<div class="viewcode-block" id="Metadata.set_primary_key"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.set_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.set_primary_key"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.set_primary_key.html#sdv.metadata.Metadata.set_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set the primary key field of the indicated table.</span>
 
 <span class="sd">        The field must exist and either be an integer or categorical field.</span>
@@ -1064,7 +875,7 @@
 <span class="sd">            table (str):</span>
 <span class="sd">                Name of the table where the primary key will be set.</span>
 <span class="sd">            field (str):</span>
-<span class="sd">                Field to be used as the new primary key.</span>
+<span class="sd">                Name of the field to be used as the new primary key.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError:</span>
@@ -1083,7 +894,7 @@
         <span class="p">}</span>
         <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;primary_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span></div>
 
-<div class="viewcode-block" id="Metadata.add_relationship"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.add_relationship"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.add_relationship.html#sdv.metadata.Metadata.add_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a new relationship between the parent and child tables.</span>
 
 <span class="sd">        The relationship is created by adding a reference (``ref``) on the ``foreign_key``</span>
@@ -1200,7 +1011,7 @@
 
         <span class="k">return</span> <span class="n">fields_metadata</span>
 
-<div class="viewcode-block" id="Metadata.add_table"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.add_table">[docs]</a>    <span class="k">def</span> <span class="nf">add_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<div class="viewcode-block" id="Metadata.add_table"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.add_table.html#sdv.metadata.Metadata.add_table">[docs]</a>    <span class="k">def</span> <span class="nf">add_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                   <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a new table to this metadata.</span>
 
@@ -1284,7 +1095,7 @@
     <span class="c1"># Metadata Serialization #</span>
     <span class="c1"># ###################### #</span>
 
-<div class="viewcode-block" id="Metadata.to_dict"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.to_dict"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.to_dict.html#sdv.metadata.Metadata.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
 
 <span class="sd">        Returns:</span>
@@ -1293,7 +1104,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Metadata.to_json"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.to_json"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.to_json.html#sdv.metadata.Metadata.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
 
 <span class="sd">        Args:</span>
@@ -1321,12 +1132,12 @@
             <span class="s2">&quot;  relationships:</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span>
         <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span>
             <span class="n">tables</span><span class="p">,</span>
             <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../api/sdv.metadata.html#sdv.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../api_reference/api/sdv.metadata.Metadata.visualize.html#sdv.metadata.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot metadata usign graphviz.</span>
 
 <span class="sd">        Generate a plot using graphviz.</span>
@@ -1342,43 +1153,28 @@
         <span class="k">return</span> <span class="n">visualization</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div></div>
 </pre></div>
 
-           </div>
-           
-          </div>
-          <footer>
-  
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
 
-  <hr/>
+              </div>
+              
+          </main>
+          
 
-  <div role="contentinfo">
+      </div>
+    </div>
+
+    <script src="../../_static/js/index.js"></script>
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
     <p>
-        &copy; Copyright 2018, MIT Data To AI Lab
-
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
 </footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-  
-  
-    
-   
-
-</body>
+  </body>
 </html>
