@@ -124,7 +124,7 @@ html_context = {
 # }
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
-    "twitter_url": "https://twitter.com/sdv_dev",
+    # "twitter_url": "https://twitter.com/sdv_dev",
     "show_prev_next": True,
 }
 
@@ -136,12 +136,12 @@ html_theme_options = {
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'images/SDV-logo-b.ico'
+html_favicon = 'images/SDV-Logo-Black.ico'
 
 # If given, this must be the name of an image file (path relative to the
 # configuration directory) that is the logo of the docs. It is placed at
 # the top of the sidebar; its width should therefore not exceed 200 pixels.
-html_logo = 'images/SDV-logo.png'
+html_logo = 'images/SDV-Logo-Color.png'
 
 # -- Options for HTMLHelp output ---------------------------------------
 
