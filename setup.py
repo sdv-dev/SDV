@@ -16,9 +16,9 @@ install_requires = [
     'numpy>=1.15.4,<2',
     'pandas>=0.23.4,<2',
     'graphviz>=0.13.2,<1',
-    'copulas>=0.3.2.dev1,<0.4',
-    'rdt>=0.2.4.dev1,<0.3',
-    'sdmetrics>=0.0.2.dev1,<0.0.3',
+    'copulas>=0.3.2,<0.4',
+    'rdt>=0.2.4,<0.3',
+    'sdmetrics>=0.0.2,<0.0.3',
 ]
 
 ctgan_requires = [
