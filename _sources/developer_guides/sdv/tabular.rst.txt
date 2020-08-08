@@ -48,7 +48,7 @@ subclasses has the following steps:
    c. Use the Table metadata to transform the sampled data back to the original format by passing
       the data to its ``revert_transform`` method. This will also revert any transformations
       performed by the Constraints that use the ``transform`` strategy.
-   d. If there is any Constraint that is useing the ``reject_sampling`` strategy, use the
+   d. If there is any Constraint that is using the ``reject_sampling`` strategy, use the
       Table metadata to drop the invalid rows and repeat steps ``b`` and ``c`` until enough
       valid rows have been generated.
 
@@ -83,17 +83,30 @@ arguments:
   fields found in the data will be ignored and will not be
   included in the generated output.
   If ``None``, all the fields found in the data are used.
-* ``primary_key``:
-  Specification about which field or fields are the
-  primary key of the table and information about how
-  to generate them.
 * ``field_types``:
-  Dictinary specifying the data types and subtypes
+  Dictionary specifying the data types and subtypes
   of the fields that will be modeled. Field types and subtypes
   combinations must be compatible with the SDV Metadata Schema.
+* ``field_transformers``:
+  Dictionary specifying which transformers to use for each field.
+  Available transformers are:
+
+    * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
+    * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
+    * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
+    * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
+    * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
+    * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
+    * ``boolean``: Uses a ``BooleanTransformer``.
+    * ``datetime``: Uses a ``DatetimeTransformer``.
+
 * ``anonymize_fields``:
   Dict specifying which fields to anonymize and what faker
   category they belong to.
+* ``primary_key``:
+  Name of the field which is the primary key of the table.
+* ``constraints``:
+  List of Constraint objects or dicts.
 * ``table_metadata``:
   Table metadata instance or dict representation.
   If given alongside any other metadata-related arguments, an
@@ -111,8 +124,8 @@ which adds a few arguments to the class but still captures all the other argumen
 
 .. code-block:: Python
 
-    def __init__(self, field_names=None, primary_key=None, field_types=None,
-                 anonymize_fields=None, constraints=None, table_metadata=None,
+    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
                  dis_dim=(256, 256), l2scale=1e-6, batch_size=500):
         super().__init__(

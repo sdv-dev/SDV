@@ -230,7 +230,7 @@ underlying model to generate the indicated number of rows.</p></li>
 <li><p>Use the Table metadata to transform the sampled data back to the original format by passing
 the data to its <code class="docutils literal notranslate"><span class="pre">revert_transform</span></code> method. This will also revert any transformations
 performed by the Constraints that use the <code class="docutils literal notranslate"><span class="pre">transform</span></code> strategy.</p></li>
-<li><p>If there is any Constraint that is useing the <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> strategy, use the
+<li><p>If there is any Constraint that is using the <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> strategy, use the
 Table metadata to drop the invalid rows and repeat steps <code class="docutils literal notranslate"><span class="pre">b</span></code> and <code class="docutils literal notranslate"><span class="pre">c</span></code> until enough
 valid rows have been generated.</p></li>
 </ol>
@@ -258,24 +258,40 @@ functionalities:</p>
 method.</p>
 <p>The base <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method implemented in the <code class="docutils literal notranslate"><span class="pre">BaseTabularModel</span></code> expects the following
 arguments:</p>
-<ul class="simple">
+<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">field_names</span></code>:
 List of names of the fields that need to be modeled
 and included in the generated output data. Any additional
 fields found in the data will be ignored and will not be
 included in the generated output.
 If <code class="docutils literal notranslate"><span class="pre">None</span></code>, all the fields found in the data are used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">primary_key</span></code>:
-Specification about which field or fields are the
-primary key of the table and information about how
-to generate them.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">field_types</span></code>:
-Dictinary specifying the data types and subtypes
+Dictionary specifying the data types and subtypes
 of the fields that will be modeled. Field types and subtypes
 combinations must be compatible with the SDV Metadata Schema.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">field_transformers</span></code>:
+Dictionary specifying which transformers to use for each field.
+Available transformers are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">integer</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">float</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">float</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> without gaussian noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> adding gaussian noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">one_hot_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">OneHotEncodingTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">LabelEncodingTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">boolean</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">BooleanTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">datetime</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">DatetimeTransformer</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">anonymize_fields</span></code>:
 Dict specifying which fields to anonymize and what faker
 category they belong to.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">primary_key</span></code>:
+Name of the field which is the primary key of the table.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">constraints</span></code>:
+List of Constraint objects or dicts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">table_metadata</span></code>:
 Table metadata instance or dict representation.
 If given alongside any other metadata-related arguments, an
@@ -289,8 +305,8 @@ arguments or learned from the data.</p></li>
 <p>We can see such implementation in the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method of the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.ctgan.CTGAN</span></code> model,
 which adds a few arguments to the class but still captures all the other arguments and calls the
 <code class="docutils literal notranslate"><span class="pre">super().__init__</span></code> method with them:</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-             <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
              <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>

@@ -193,7 +193,7 @@ API which is compatible with the rest of the project.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">transform</span></code>: Identity method.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">fit_transform</span></code>: Call <code class="docutils literal notranslate"><span class="pre">self.fit</span></code> and then call <code class="docutils literal notranslate"><span class="pre">self.transform</span></code> and return its outputs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code>: Identity method.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code>: Return a <code class="docutils literal notranslate"><span class="pre">pandas.Series</span></code> full or <code class="docutils literal notranslate"><span class="pre">True</span></code> values with the same lenth as the
+<li><p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code>: Return a <code class="docutils literal notranslate"><span class="pre">pandas.Series</span></code> full or <code class="docutils literal notranslate"><span class="pre">True</span></code> values with the same length as the
 given data.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">filter_valid</span></code>: Return only the rows for which <code class="docutils literal notranslate"><span class="pre">self.is_valid</span></code> returns <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">from_dict</span></code>: Build a <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> from its dict representation.</p></li>
@@ -261,7 +261,7 @@ so we know which column we need to validate.</p>
 <p>With the current implementation modeling would happen as usual. However, during sampling,
 all the rows would be validated using the <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> method that we implemented, and invalid
 rows would be rejected and resampled until the number of desired rows has been generated.</p>
-<p>In this case this might be acceptable becahse each row only has a 50% chance of being invalid,
+<p>In this case this might be acceptable because each row only has a 50% chance of being invalid,
 which means that, on average, we would need the model to sample only 2 times the number of rows
 that we need in order to get enough valid rows. However, in some other cases this can take a long
 time, especially if the condition imposed has a very low chance of being true. In such cases, we
