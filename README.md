@@ -50,7 +50,7 @@ If you want to quickly discover **SDV**, simply click the button below and follo
 
 ## Requirements
 
-**SDV** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
+**SDV** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads)
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
