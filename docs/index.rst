@@ -6,7 +6,7 @@
    </p>
 
 |Development Status| |PyPi Shield| |Travis CI Shield| |Coverage Status|
-|Downloads| |Binder|
+|Downloads| |Binder| |Slack|
 
 SDV - The Synthetic Data Vault
 ==============================
@@ -58,6 +58,15 @@ and follow the tutorials!
 
 |Binder|
 
+Join our Slack Workspace
+------------------------
+
+If you want to be part of the SDV community to receive announcements of the latest releases,
+ask questions, suggest new features or participate in the development meetings, please join
+our Slack Workspace!
+
+|Slack|
+
 Explore SDV
 -----------
 
@@ -81,6 +90,8 @@ Explore SDV
    :target: https://pepy.tech/project/sdv
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
+.. |Slack| image:: https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack
+   :target: https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw
 
 
 .. toctree::
