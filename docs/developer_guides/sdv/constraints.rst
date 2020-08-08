@@ -19,7 +19,7 @@ The following public methods are implemented in this class:
 * ``transform``: Identity method.
 * ``fit_transform``: Call ``self.fit`` and then call ``self.transform`` and return its outputs.
 * ``reverse_transform``: Identity method.
-* ``is_valid``: Return a ``pandas.Series`` full or ``True`` values with the same lenth as the
+* ``is_valid``: Return a ``pandas.Series`` full or ``True`` values with the same length as the
   given data.
 * ``filter_valid``: Return only the rows for which ``self.is_valid`` returns ``True``.
 * ``from_dict``: Build a ``Constraint`` from its dict representation.
@@ -92,7 +92,7 @@ With the current implementation modeling would happen as usual. However, during 
 all the rows would be validated using the ``is_valid`` method that we implemented, and invalid
 rows would be rejected and resampled until the number of desired rows has been generated.
 
-In this case this might be acceptable becahse each row only has a 50% chance of being invalid,
+In this case this might be acceptable because each row only has a 50% chance of being invalid,
 which means that, on average, we would need the model to sample only 2 times the number of rows
 that we need in order to get enough valid rows. However, in some other cases this can take a long
 time, especially if the condition imposed has a very low chance of being true. In such cases, we
