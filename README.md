@@ -11,7 +11,9 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 [![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
 
-# SDV - Synthetic Data Vault
+<p>
+  <img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
+</p>
 
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)

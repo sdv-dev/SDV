@@ -1,5 +1,20 @@
 # Release Notes
 
+## 0.4.0 - 2020-08-08
+
+In this release SDV gets new documentation, new tutorials, improvements to the Tabular API
+and broader python and dependency support.
+
+Complete list of changes:
+
+* New Documentation site based on the `pydata-sphinx-theme`.
+* New User Guides and Notebook tutorials.
+* New Developer Guides section within the docs with details about the SDV architecture,
+  the ecosystem libraries and how to extend and contribute to the project.
+* Improved API for the Tabular models with focus on ease of use.
+* Support for Python 3.8 and the newest versions of pandas, scipy and scikit-learn.
+* New Slack Workspace for development discussions and community support.
+
 ## 0.3.6 - 2020-07-23
 
 This release introduces a new concept of `Constraints`, which allow the user to define
