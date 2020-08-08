@@ -3,6 +3,18 @@
 This module contains constraints that are evaluated within a single table,
 and which can affect one or more columns at a time, as well as one or more
 rows.
+
+Currently implemented constraints are:
+
+    * CustomConstraint: Simple constraint to be set up by passing the python
+      functions that will be used for transformation, reverse transformation
+      and validation.
+    * UniqueCombinations: Ensure that the combinations of values
+      across several columns are the same after sampling.
+    * GreaterThan: Ensure that the value in one column is always greater than
+      the value in another column.
+    * ColumnFormula: Compute the value of a column based on applying a formula
+      on the other columns of the table.
 """
 
 import numpy as np
@@ -55,8 +67,8 @@ class UniqueCombinations(Constraint):
         columns (list[str]):
             Names of the columns that need to produce unique combinations.
         handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``
-            or ``reject_sampling``.
+            How this Constraint should be handled, which can be ``transform``,
+            ``reject_sampling`` or ``all``. Defaults to ``transform``.
     """
 
     _separator = None
@@ -64,8 +76,7 @@ class UniqueCombinations(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def _valid_separator(self, table_data):
         """Return True if separator is valid for this data.
@@ -96,6 +107,7 @@ class UniqueCombinations(Constraint):
         """Fit this Constraint to the data.
 
         The fit process consists on:
+
             - finding a separtor that works for the
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
@@ -156,7 +168,7 @@ class UniqueCombinations(Constraint):
 
         The transformation is reversed by popping the joint column from
         the table, splitting it by the previously found separator and
-        them setting all the columns back to the table with the original
+        then setting all the columns back to the table with the original
         names.
 
         Args:
@@ -187,14 +199,20 @@ class GreaterThan(Constraint):
             Name of the column that contains the low value.
         high (str):
             Name of the column that contains the high value.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
     """
 
     def __init__(self, low, high, strict=False, handling_strategy='transform'):
         self._low = low
         self._high = high
         self._strict = strict
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def fit(self, table_data):
         """Learn the dtype of the high column.
@@ -281,13 +299,15 @@ class ColumnFormula(Constraint):
             Name of the column to compute applying the formula.
         formula (callable):
             Function to use for the computation.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
     """
 
     def __init__(self, column, formula, handling_strategy='transform'):
         self._column = column
         self._formula = import_object(formula)
-        self._handling_strategy = handling_strategy
-        super().__init__()
+        super().__init__(handling_strategy)
 
     def is_valid(self, table_data):
         """Say whether the data fulfills the formula.

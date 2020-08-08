@@ -14,17 +14,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'exrex>=0.9.4,<0.11',
     'numpy>=1.15.4,<2',
-    'pandas>=0.23.4,<0.25',
-    'copulas>=0.3.1,<0.4',
-    'rdt>=0.2.3,<0.3',
-    'graphviz>=0.13.2',
-    'sdmetrics>=0.0.2.dev0,<0.0.3',
-    'scikit-learn<0.23,>=0.21',
-    'scipy<1.3,>=1.2',
+    'pandas>=0.23.4,<2',
+    'graphviz>=0.13.2,<1',
+    'copulas>=0.3.2,<0.4',
+    'rdt>=0.2.4,<0.3',
+    'sdmetrics>=0.0.2,<0.0.3',
 ]
 
 ctgan_requires = [
-    'ctgan>=0.2.2.dev0,<0.3',
+    'ctgan>=0.2.2.dev1,<0.3',
 ]
 
 setup_requires = [
@@ -45,11 +43,13 @@ development_requires = [
     'watchdog>=0.8.3,<0.11',
 
     # docs
-    'm2r>=0.2.0,<0.3',
+    'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
-    'Sphinx>=1.7.1,<3',
-    'sphinx_rtd_theme>=0.2.4,<0.5',
+    'Sphinx>=3,<4',
+    'pydata-sphinx-theme',
     'autodocsumm>=0.1.10',
+    'PyYaml>=5.3.1,<6',
+    'argh>=0.26.2,<1',
 
     # style check
     'flake8>=3.7.7,<4',
@@ -84,9 +84,11 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     description='Automated Generative Modeling and Sampling',
     extras_require={
+        'ctgan': ctgan_requires,
         'test': tests_require + ctgan_requires,
         'dev': development_requires + tests_require + ctgan_requires,
     },
@@ -98,11 +100,11 @@ setup(
     long_description_content_type='text/markdown',
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
-    python_requires='>=3.5,<3.8',
+    python_requires='>=3.5,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.3.6',
+    version='0.4.0.dev1',
     zip_safe=False,
 )

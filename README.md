@@ -9,8 +9,11 @@
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
 
-# SDV - Synthetic Data Vault
+<p>
+  <img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
+</p>
 
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
@@ -46,11 +49,19 @@ If you want to quickly discover **SDV**, simply click the button below and follo
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 
+## Join our Slack Workspace
+
+If you want to be part of the SDV community to receive announcements of the latest releases,
+ask questions, suggest new features or participate in the development meetings, please join
+our Slack Workspace!
+
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
+
 # Install
 
 ## Requirements
 
-**SDV** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
+**SDV** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads)
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
@@ -199,16 +210,17 @@ Finally, if you want to evaluate how similar the sampled tables are to the real 
 please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](
 https://github.com/sdv-dev/SDMetrics) library.
 
-# Join out community
+# Join our community
 
-1. If you would like to see more usage examples, please have a look at the [examples folder](
-https://github.com/sdv-dev/SDV/tree/master/examples) or the repository. Please contact us
-if you have a usage example that you would want to share with the community.
-2. Please head to the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
-for more details about this process.
+1. If you would like to see more usage examples, please have a look at the [tutorials folder](
+   https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
+   if you have a usage example that you would want to share with the community.
+2. Please have a look at the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
+   to see how you can contribute to the project.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
-https://github.com/sdv-dev/SDV/issues)
-4. Also do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
+   https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
+   https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
+4. Also, do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
 
 # Citation
 

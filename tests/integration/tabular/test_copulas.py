@@ -23,14 +23,12 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
-        categorical_transformer='one_hot_encoding',
     )
     gc.fit(users)
 
     parameters = gc.get_parameters()
     new_gc = GaussianCopula(
         table_metadata=gc.get_metadata(),
-        categorical_transformer='one_hot_encoding',
     )
     new_gc.set_parameters(parameters)
 
@@ -47,10 +45,26 @@ def test_gaussian_copula():
 
     metadata = gc.get_metadata().to_dict()
     assert metadata['fields'] == {
-        'user_id': {'type': 'id', 'subtype': 'integer'},
-        'country': {'type': 'categorical', 'pii': True, 'pii_category': 'country_code'},
-        'gender': {'type': 'categorical'},
-        'age': {'type': 'numerical', 'subtype': 'integer'}
+        'user_id': {
+            'type': 'id',
+            'subtype': 'integer',
+            'transformer': 'integer',
+        },
+        'country': {
+            'type': 'categorical',
+            'pii': True,
+            'pii_category': 'country_code',
+            'transformer': 'one_hot_encoding',
+        },
+        'gender': {
+            'type': 'categorical',
+            'transformer': 'one_hot_encoding',
+        },
+        'age': {
+            'type': 'numerical',
+            'subtype': 'integer',
+            'transformer': 'integer',
+        }
     }
 
     assert 'model_kwargs' in metadata
