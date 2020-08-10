@@ -581,7 +581,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="section" id="Load-relational-data">
 <h2>Load relational data<a class="headerlink" href="#Load-relational-data" title="Permalink to this headline">¶</a></h2>
-<p>Let’s start downloading the data set. In this case, we will download the data set <em>walmart</em>. We will use the SDV function <code class="docutils literal notranslate"><span class="pre">load_demo</span></code>, we can specify the name of the dataset we want to use and if we want its Metadata object or not. To know more about the demo data <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.demo.html">see the documentation</a>.</p>
+<p>Let’s start downloading the data set. In this case, we will download the data set <em>walmart</em>. We will use the SDV function <code class="docutils literal notranslate"><span class="pre">load_demo</span></code>, we can specify the name of the dataset we want to use and if we want its Metadata object or not. To know more about the <code class="docutils literal notranslate"><span class="pre">load_demo</span></code> function <a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.demo.load_demo.html">see its documentation</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -999,7 +999,7 @@ div.rendered_html tbody tr:hover {
 <div class="section" id="Generate-synthetic-data">
 <h2>Generate synthetic data<a class="headerlink" href="#Generate-synthetic-data" title="Permalink to this headline">¶</a></h2>
 <p>Once the instance is trained, we are ready to generate the synthetic data.</p>
-<p>The easiest way to generate synthetic data for the entire dataset is to call the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method. By default, this method generates only 5 rows, but we can specify the row number that will be generated with the <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument. To learn more about the available arguments, see <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sampler.html#sdv.sampler.Sampler.sample_all">sample_all</a>.</p>
+<p>The easiest way to generate synthetic data for the entire dataset is to call the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method. By default, this method generates only 5 rows, but we can specify the row number that will be generated with the <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -2332,7 +2332,6 @@ dict_keys([&#39;stores&#39;, &#39;depts&#39;, &#39;features&#39;])
 <p>1000 rows × 12 columns</p>
 </div></div>
 </div>
-<p>SDV has tools to evaluate the synthetic data generated and compare them with the original data. To see more about the evaluation tools, <a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.evaluation.html#sdv.evaluation.evaluate">see the documentation</a>.</p>
 </div>
 </div>
 

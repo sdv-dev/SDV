@@ -90,7 +90,7 @@
    "source": [
     "## Load relational data\n",
     "\n",
-    "Let's start downloading the data set. In this case, we will download the data set *walmart*. We will use the SDV function `load_demo`, we can specify the name of the dataset we want to use and if we want its Metadata object or not. To know more about the demo data [see the documentation](https://sdv-dev.github.io/SDV/api/sdv.demo.html)."
+    "Let's start downloading the data set. In this case, we will download the data set *walmart*. We will use the SDV function `load_demo`, we can specify the name of the dataset we want to use and if we want its Metadata object or not. To know more about the `load_demo` function [see its documentation](https://sdv-dev.github.io/SDV/api_reference/api/sdv.demo.load_demo.html)."
    ]
   },
   {
@@ -655,7 +655,7 @@
     "\n",
     "Once the instance is trained, we are ready to generate the synthetic data.\n",
     "\n",
-    "The easiest way to generate synthetic data for the entire dataset is to call the `sample_all` method. By default, this method generates only 5 rows, but we can specify the row number that will be generated with the `num_rows` argument. To learn more about the available arguments, see [sample_all](https://sdv-dev.github.io/SDV/api/sdv.sampler.html#sdv.sampler.Sampler.sample_all)."
+    "The easiest way to generate synthetic data for the entire dataset is to call the `sample_all` method. By default, this method generates only 5 rows, but we can specify the row number that will be generated with the `num_rows` argument."
    ]
   },
   {
@@ -2215,13 +2215,6 @@
    ],
    "source": [
     "sdv.sample('features', 1000, sample_children=False)"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "SDV has tools to evaluate the synthetic data generated and compare them with the original data. To see more about the evaluation tools, [see the documentation](https://sdv-dev.github.io/SDV/api/sdv.evaluation.html#sdv.evaluation.evaluate)."
    ]
   }
  ],
