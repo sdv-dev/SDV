@@ -87,7 +87,7 @@ pip install sdv
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 If you want to install from source or contribute to the project please read the
-[Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started).
+[Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html).
 
 
 # Quickstart
@@ -117,7 +117,8 @@ This will return two objects:
 1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
 For more details about how to build the `Metadata` for your own dataset, please refer to the
-[Metadata](https://sdv-dev.github.io/SDV/metadata.html) section of the documentation.
+[Working with Metadata](https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html)
+tutorial.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
 metadata object.
@@ -224,7 +225,7 @@ https://github.com/sdv-dev/SDMetrics) library.
 1. If you would like to see more usage examples, please have a look at the [tutorials folder](
    https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
    if you have a usage example that you would want to share with the community.
-2. Please have a look at the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
+2. Please have a look at the [Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html)
    to see how you can contribute to the project.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
    https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
