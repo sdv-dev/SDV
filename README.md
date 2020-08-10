@@ -18,6 +18,8 @@
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 * Documentation: https://sdv-dev.github.io/SDV
+    * [User Guides](https://sdv-dev.github.io/SDV/user_guides/index.html)
+    * [Developer Guides](https://sdv-dev.github.io/SDV/developer_guides/index.html)
 * Homepage: https://github.com/sdv-dev/SDV
 
 ## Overview
@@ -27,21 +29,28 @@ as well as entire multi-table, relational datasets. Users can then use the stati
 model to generate a synthetic dataset. Synthetic data can be used to supplement, augment and
 in some cases replace real data when training machine learning models. Additionally, it
 enables the testing of machine learning or other data dependent software systems without the
-risk of exposure that comes with data disclosure. Underneath the hood it uses a unique
-hierarchical generative modeling and recursive sampling techniques.
+risk of exposure that comes with data disclosure. Underneath the hood it uses several
+probabilistic graphical modeling and deep learning based techniques. To enable a variety
+of data storage structures, we employ unique hierarchical generative modeling and recursive
+sampling techniques.
 
-### Features:
+### Current functionality and features:
 
-* Modeling of single tables using Copulas and Deep Learning based models.
-* Modeling of complex multi-table relational datasets using Copulas and unique recursive
-  modeling techniques.
-* Handling of multiple data types and missing data with minimum user input.
-* Support for pre-defined and custom constraints and data validation.
-* Definition of entire datasets with a custom and flexible Metadata JSON schema.
+* Synthetic data generators for **single tables** with the following features:
+    * Using Copulas and Deep Learning based models.
+    * Handling of multiple data types and missing data with minimum user input.
+    * Support for pre-defined and custom constraints and data validation.
+* Synthetic data generators for complex **multi-table, relational** datasets with the
+  following features:
+    * Definition of entire **multi-table** datasets with a custom and flexible metadata
+      JSON schema.
+    * Using Copulas and recursive modeling techniques.
 
 ### Coming soon:
 
-* Time Series modeling with Autoregressive and Deep Learning models.
+* Synthetic data generators for **timeseries** with the following features
+    * Using statistical, Autoregressive and Deep Learning models.
+    * Handling context.
 
 ## Try it out now!
 
