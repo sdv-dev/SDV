@@ -12,7 +12,7 @@ SDV
 * `Source Code <https://github.com/sdv-dev/SDV>`_
 
 SDV is the main library, which provides a user friendly interface to access all the
-different functionalirities of the project.
+different functionalities of the project.
 
 The SDV library allows you to:
 

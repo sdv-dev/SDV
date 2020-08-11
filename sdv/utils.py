@@ -1,7 +1,5 @@
 """Miscellaneous utility functions."""
 
-from IPython.core.display import HTML
-
 
 def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S'):
     """Display mutiple tables side by side on a Jupyter Notebook.
@@ -14,6 +12,9 @@ def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S'):
         datetime_fmt (str):
             Format with which to display datetime columns.
     """
+    # Import here to avoid making IPython a hard dependency
+    from IPython.core.display import HTML
+
     names = []
     data = []
     for name, table in tables.items():

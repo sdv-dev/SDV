@@ -7,7 +7,7 @@ The Synthetic Data Vault project is a collection of several open source librarie
 that range from simple reversible transformations to the most complex state-of-the-art Generative
 Deep Learning models.
 
-Building and maintining all these libraries is a community driven effort which relies on the work
+Building and maintaining all these libraries is a community driven effort which relies on the work
 of developers from all around the world that contribute their knowledge, code and feedback to make
 the project grow and improve over time.
 

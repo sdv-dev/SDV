@@ -136,7 +136,7 @@ test-devel: check-dependencies lint docs ## test everything that needs developme
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
-	tox -r -p auto
+	tox -r
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python

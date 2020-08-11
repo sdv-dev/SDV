@@ -31,10 +31,10 @@ class CustomConstraint(Constraint):
     pass custom functions for each one of them.
 
     Args:
-        tranform (callable):
-            Function to replace the ``tranform`` method.
-        reverse_tranform (callable):
-            Function to replace the ``reverse_tranform`` method.
+        transform (callable):
+            Function to replace the ``transform`` method.
+        reverse_transform (callable):
+            Function to replace the ``reverse_transform`` method.
         is_valid (callable):
             Function to replace the ``is_valid`` method.
     """

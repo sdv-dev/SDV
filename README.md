@@ -9,12 +9,17 @@
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
 
-# SDV - Synthetic Data Vault
+<p>
+  <img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
+</p>
 
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 * Documentation: https://sdv-dev.github.io/SDV
+    * [User Guides](https://sdv-dev.github.io/SDV/user_guides/index.html)
+    * [Developer Guides](https://sdv-dev.github.io/SDV/developer_guides/index.html)
 * Homepage: https://github.com/sdv-dev/SDV
 
 ## Overview
@@ -24,21 +29,28 @@ as well as entire multi-table, relational datasets. Users can then use the stati
 model to generate a synthetic dataset. Synthetic data can be used to supplement, augment and
 in some cases replace real data when training machine learning models. Additionally, it
 enables the testing of machine learning or other data dependent software systems without the
-risk of exposure that comes with data disclosure. Underneath the hood it uses a unique
-hierarchical generative modeling and recursive sampling techniques.
+risk of exposure that comes with data disclosure. Underneath the hood it uses several
+probabilistic graphical modeling and deep learning based techniques. To enable a variety
+of data storage structures, we employ unique hierarchical generative modeling and recursive
+sampling techniques.
 
-### Features:
+### Current functionality and features:
 
-* Modeling of single tables using Copulas and Deep Learning based models.
-* Modeling of complex multi-table relational datasets using Copulas and unique recursive
-  modeling techniques.
-* Handling of multiple data types and missing data with minimum user input.
-* Support for pre-defined and custom constraints and data validation.
-* Definition of entire datasets with a custom and flexible Metadata JSON schema.
+* Synthetic data generators for **single tables** with the following features:
+    * Using Copulas and Deep Learning based models.
+    * Handling of multiple data types and missing data with minimum user input.
+    * Support for pre-defined and custom constraints and data validation.
+* Synthetic data generators for complex **multi-table, relational** datasets with the
+  following features:
+    * Definition of entire **multi-table** datasets with a custom and flexible metadata
+      JSON schema.
+    * Using Copulas and recursive modeling techniques.
 
 ### Coming soon:
 
-* Time Series modeling with Autoregressive and Deep Learning models.
+* Synthetic data generators for **timeseries** with the following features
+    * Using statistical, Autoregressive and Deep Learning models.
+    * Handling context.
 
 ## Try it out now!
 
@@ -46,11 +58,19 @@ If you want to quickly discover **SDV**, simply click the button below and follo
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 
+## Join our Slack Workspace
+
+If you want to be part of the SDV community to receive announcements of the latest releases,
+ask questions, suggest new features or participate in the development meetings, please join
+our Slack Workspace!
+
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
+
 # Install
 
 ## Requirements
 
-**SDV** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
+**SDV** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads)
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
@@ -67,7 +87,7 @@ pip install sdv
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 If you want to install from source or contribute to the project please read the
-[Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started).
+[Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html).
 
 
 # Quickstart
@@ -97,7 +117,8 @@ This will return two objects:
 1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
 For more details about how to build the `Metadata` for your own dataset, please refer to the
-[Metadata](https://sdv-dev.github.io/SDV/metadata.html) section of the documentation.
+[Working with Metadata](https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html)
+tutorial.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
 metadata object.
@@ -199,16 +220,17 @@ Finally, if you want to evaluate how similar the sampled tables are to the real 
 please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](
 https://github.com/sdv-dev/SDMetrics) library.
 
-# Join out community
+# Join our community
 
 1. If you would like to see more usage examples, please have a look at the [tutorials folder](
-https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
-if you have a usage example that you would want to share with the community.
-2. Please head to the [Contributing Guide](https://sdv-dev.github.io/SDV/contributing.html#get-started)
-for more details about this process.
+   https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
+   if you have a usage example that you would want to share with the community.
+2. Please have a look at the [Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html)
+   to see how you can contribute to the project.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
-https://github.com/sdv-dev/SDV/issues)
-4. Also do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
+   https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
+   https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
+4. Also, do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
 
 # Citation
 
