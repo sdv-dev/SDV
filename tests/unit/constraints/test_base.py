@@ -3,43 +3,66 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from sdv.constraints.base import Constraint
+import sdv
+from sdv.constraints.base import Constraint, _get_qualified_name, import_object
 
 
 def test__get_qualified_name_class():
-    """Checks if the returned Fully Qualified Name is the expected,
-    if object has the given named attribute."""
+    """Checks the returned Fully Qualified Name, if object is a class."""
+    # Run
+    FullyQualifiedName = _get_qualified_name(Constraint)
+
+    # Assert
+    expectedName = 'sdv.constraints.base.Constraint'
+    assert FullyQualifiedName == expectedName
 
 
-def test__get_qualified_name_no_function():
-    """Checks if the returned Fully Qualified Name is the expected,
-    if object has not the given named attribute."""
+def test__get_qualified_name_function():
+    """Checks the returned Fully Qualified Name, if object is a function."""
+    # Run
+    fully_qualified_name = _get_qualified_name(Constraint.reverse_transform)
+
+    # Assert
+    expected_name = 'sdv.constraints.base.reverse_transform'
+    assert fully_qualified_name == expected_name
 
 
 def test_import_object():
-    """Checks if the object imported from its qualified name is the expected."""
+    """Checks the object imported from its qualified name."""
+    # Run
+    object = import_object('sdv.constraints.base.Constraint')
+
+    # Assert
+    assert object is Constraint
 
 
 class TestConstraint():
 
-    @pytest.mark.xfail
     def test__init___transform(self):
         """Create default instance."""
+        # Run
         instance = Constraint(handling_strategy='transform')
-        assert (instance.transform is instance._identity)
 
-    @pytest.mark.xfail
+        # Assert
+        assert instance.filter_valid == instance._identity
+
     def test__init___reject_sampling(self):
         """Create default instance."""
+        # Run
         instance = Constraint(handling_strategy='reject_sampling')
-        assert (instance.transform is instance._identity)
+
+        # Asserts
+        assert instance.transform == instance._identity
+        assert instance.reverse_transform == instance._identity
 
     def test__init___not_kown(self):
         """Create default instance."""
+        # Run
+        with pytest.raises(ValueError):
+            Constraint(handling_strategy='not_known')
 
     def test_fit(self):
-        """It checks if method `fit` is correctly called."""
-
+        """Checks if method `fit` is correctly called."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -50,9 +73,7 @@ class TestConstraint():
         instance.fit(table_data)
 
     def test_transform(self):
-        """It calls `transform` and checks if the return is identycal
-        to the table_data passed."""
-
+        """Checks if method `transform` performs correctly."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -66,9 +87,7 @@ class TestConstraint():
         assert (table_data == new_table).all
 
     def test_fit_transform(self):
-        """With Mock, it makes sure methods `fit` and `transform`
-        are correctly called."""
-
+        """Checks if methods `fit` and `transform` are correctly called."""
         # Setup
         constraint_mock = Mock()
         constraint_mock.transform.return_value = 'the_transformed_data'
@@ -84,9 +103,7 @@ class TestConstraint():
         constraint_mock.transform.assert_called_once_with('my_data')
 
     def test_reverse_transform(self):
-        """It calls `reverse_transform` and checks if the return is identycal
-        to the table_data passed."""
-
+        """Checks if method `transform` performs correctly."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -100,9 +117,7 @@ class TestConstraint():
         assert (table_data == new_table).all
 
     def test_is_valid(self):
-        """Given a table data, it checks if the resulting series of
-        "True" values is corect."""
-
+        """Checks if the resulting series of "True" values is corect."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -117,10 +132,8 @@ class TestConstraint():
         assert (result == expected).all
 
     def test_filter_valid(self):
-        """Given a table data, it checks if the resulting
-        valid rows are corect. Mith Mock, it makes sure method `is valid` is
-        called correctly."""
-
+        """Checks if the resulting valid rows are correct.
+        It also checks if method `is_valid` is correctly called."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -136,13 +149,12 @@ class TestConstraint():
         expected = pd.DataFrame({
             'a': [1, 2]
         })
+
         assert (result == expected).all
 
     def test_filter_valid_zero_rows(self):
-        """Given a table data and a constraint, it checks if the resulting
-        valid rows are corect if no column satisfy the constraint.
-        Mith Mock, it makes sure method `is valid` is called correctly."""
-
+        """Checks if the resulting valid rows are correct if no column satisfy the constraint.
+        It also checks if method `is valid` is correctly called."""
         # Setup
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
@@ -161,11 +173,45 @@ class TestConstraint():
 
         assert (result == expected).all
 
-    def test_to_dict(self):
-        """Checks if the returning dict is correct."""
+    def test__get_subclasses(self):
+        """Checks the resulting dict with the subclasses for the current class object."""
+        # Run
+        subclasses = Constraint._get_subclasses()
+
+        # Assert
+        expected_subclasses = {
+            'CustomConstraint': sdv.constraints.tabular.CustomConstraint,
+            'UniqueCombinations': sdv.constraints.tabular.UniqueCombinations,
+            'GreaterThan': sdv.constraints.tabular.GreaterThan,
+            'ColumnFormula': sdv.constraints.tabular.ColumnFormula
+        }
+
+        assert subclasses == expected_subclasses
 
     def test_from_dict(self):
-        """ """
+        """Checks the Constraint object built from a dict."""
+        # Setup
+        constraint_dict = {
+            'constraint': 'sdv.constraints.base.Constraint',
+            'handling_strategy': 'transform'
+        }
 
-    def test__get_subclasses(self):
-        """ """
+        # Run
+        instance_from_dict = Constraint.from_dict(constraint_dict)
+
+        # Assert
+        assert instance_from_dict.filter_valid == instance_from_dict._identity
+
+    def test_to_dict(self):
+        """Checks the returning dict representation of the Constraint."""
+        # Run
+        instance = Constraint(handling_strategy='transform')
+        dict = instance.to_dict()
+
+        # Assert
+        expected_dict = {
+            'constraint': 'sdv.constraints.base.Constraint',
+            'handling_strategy': 'transform'
+        }
+
+        assert dict == expected_dict
