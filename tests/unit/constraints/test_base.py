@@ -192,7 +192,7 @@ class TestConstraint():
         the method to certify that the interface is right.
 
         Input:
-        - table_data (pandas.DataFrame)
+        - Table data (pandas.DataFrame)
         """
         # Setup
         table_data = pd.DataFrame({
@@ -210,7 +210,7 @@ class TestConstraint():
         - Return the input data unmodified.
 
         Input:
-        - table_data (pandas.DataFrame)
+        - Table data (pandas.DataFrame)
         Output:
         - Input dataframe, unmodified
         """
@@ -256,7 +256,7 @@ class TestConstraint():
         - Return the input data unmodified.
 
         Input:
-        - table_data (pandas.DataFrame)
+        - Table data (pandas.DataFrame)
         Output:
         - Input dataframe, unmodified
         """
@@ -281,7 +281,7 @@ class TestConstraint():
         - Say whether the given table rows are valid.
 
         Input:
-        - table_data (pandas.DataFrame)
+        - Table data (pandas.DataFrame)
         Output:
         - Series of ``True`` values (pandas.Series)
         """
@@ -306,9 +306,9 @@ class TestConstraint():
         - Return only the rows that are valid.
 
         Input:
-        - table_data (pandas.DataFrame)
+        - Table data (pandas.DataFrame)
         Output:
-        - table_data (pandas.DataFrame) with only the valid rows.
+        - Table data, with only the valid rows (pandas.DataFrame)
         """
         # Setup
         table_data = pd.DataFrame({

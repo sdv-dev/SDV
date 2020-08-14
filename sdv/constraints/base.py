@@ -85,7 +85,7 @@ class Constraint(metaclass=ConstraintMeta):
     Args:
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``. Defaults to ``transform``.
+            ``reject_sampling`` or ``all``.
     """
 
     def _identity(self, table_data):
