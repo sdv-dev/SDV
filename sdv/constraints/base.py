@@ -22,6 +22,16 @@ def _get_qualified_name(_object):
     return module + '.' + _class
 
 
+def get_subclasses(cls):
+    """Recursively find subclasses for the current class object."""
+    subclasses = dict()
+    for subclass in cls.__subclasses__():
+        subclasses[subclass.__name__] = subclass
+        subclasses.update(get_subclasses(subclass))
+
+    return subclasses
+
+
 def import_object(obj):
     """Import an object from its qualified name."""
     if isinstance(obj, str):
@@ -180,16 +190,6 @@ class Constraint(metaclass=ConstraintMeta):
         return table_data[valid]
 
     @classmethod
-    def _get_subclasses(cls):
-        """Recursively find subclasses for the current class object."""
-        subclasses = dict()
-        for subclass in cls.__subclasses__():
-            subclasses[subclass.__name__] = subclass
-            subclasses.update(subclass._get_subclasses())
-
-        return subclasses
-
-    @classmethod
     def from_dict(cls, constraint_dict):
         """Build a Constraint object from a dict.
 
@@ -204,7 +204,7 @@ class Constraint(metaclass=ConstraintMeta):
         """
         constraint_dict = constraint_dict.copy()
         constraint_class = constraint_dict.pop('constraint')
-        subclasses = cls._get_subclasses()
+        subclasses = get_subclasses(cls)
         if isinstance(constraint_class, str):
             if '.' in constraint_class:
                 constraint_class = import_object(constraint_class)
