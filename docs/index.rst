@@ -22,33 +22,61 @@ SDV - The Synthetic Data Vault
 Overview
 --------
 
-The Synthetic Data Vault (SDV) is a tool that allows users to
-statistically model tabular as well as entire multi-table, relational
-datasets. Users can then use the statistical model to generate a
-synthetic dataset. Synthetic data can be used to supplement, augment and
-in some cases replace real data when training machine learning models.
-Additionally, it enables the testing of machine learning or other data
-dependent software systems without the risk of exposure that comes with
-data disclosure. Underneath the hood it uses a unique hierarchical
-generative modeling and recursive sampling techniques.
+The **Synthetic Data Vault (SDV)** is a **Synthetic Data Generation**
+ecosystem of libraries that allows users to easily learn
+`single-table <https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html>`__,
+`multi-table <https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html>`__
+and `timeseries <https://github.com/sdv-dev/DeepEcho>`__ datasets to
+later on generate new **Synthetic Data** that has the **same format and
+statistical properties** as the original dataset.
 
-Features:
-~~~~~~~~~
+Synthetic data can then be used to supplement, augment and in some cases
+replace real data when training Machine Learning models. Additionally,
+it enables the testing of Machine Learning or other data dependent
+software systems without the risk of exposure that comes with data
+disclosure.
 
--  Modeling of single tables using Copulas and Deep Learning based
-   models.
--  Modeling of complex multi-table relational datasets using Copulas and
-   unique recursive modeling techniques.
--  Handling of multiple data types and missing data with minimum user
-   input.
--  Support for pre-defined and custom constraints and data validation.
--  Definition of entire datasets with a custom and flexible Metadata
-   JSON schema.
+Underneath the hood it uses several probabilistic graphical modeling and
+deep learning based techniques. To enable a variety of data storage
+structures, we employ unique hierarchical generative modeling and
+recursive sampling techniques.
+
+Current functionality and features:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Synthetic data generators for `single
+   tables <https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html>`__
+   with the following features:
+
+   -  Using
+      `Copulas <https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula>`__
+      and `Deep
+      Learning <https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html>`__
+      based models.
+   -  Handling of multiple data types and missing data with minimum user
+      input.
+   -  Support for `pre-defined and custom
+      constraints <https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html>`__
+      and data validation.
+
+-  Synthetic data generators for `complex multi-table, relational
+   datasets <https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html>`__
+   with the following features:
+
+   -  Definition of entire `multi-table datasets
+      metadata <https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html>`__
+      with a custom and flexible `JSON
+      schema <https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html>`__.
+   -  Using Copulas and recursive modeling techniques.
 
 Coming soon:
 ~~~~~~~~~~~~
 
--  Time Series modeling with Autoregressive and Deep Learning models.
+-  Synthetic data generators for **timeseries** with the following
+   features:
+
+   -  Using statistical, Autoregressive and Deep Learning models.
+   -  Handling context.
 
 Try it out now!
 ---------------

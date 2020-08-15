@@ -9,6 +9,7 @@ and classes in SDV.
 .. toctree::
    :maxdepth: 2
 
+   sdv
    tabular
    metadata
    constraints
