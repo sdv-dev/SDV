@@ -2,7 +2,8 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-from copulas.multivariate.gaussian import GaussianMultivariate
+import copulas
+from copulas.multivariate.gaussian import GaussianMultivariate, Univariate
 
 from sdv.tabular.copulas import GaussianCopula
 
@@ -25,8 +26,11 @@ class TestGaussianCopula:
         """
         # Run
         out = GaussianCopula._get_distribution(None)
+
         # Asserts
         assert out is GaussianCopula._DISTRIBUTIONS['parametric']
+        assert out.PARAMETRIC is GaussianCopula._DISTRIBUTIONS['parametric'].PARAMETRIC
+        assert out.BOUNDED is GaussianCopula._DISTRIBUTIONS['parametric'].BOUNDED
 
     def test__get_distribution_str(self):
         """Test the ``_get_distribution method passing a known str.
@@ -42,9 +46,10 @@ class TestGaussianCopula:
           ``copulas.univariate.gamma.GammaUnivariate``)
          """
         # Run
-        out = GaussianCopula._get_distribution('bounded')
+        out = GaussianCopula._get_distribution('gamma')
+
         # Assert
-        assert out is GaussianCopula._DISTRIBUTIONS['bounded']
+        assert out is GaussianCopula._DISTRIBUTIONS['gamma']
 
     def test__get_distribution_unknown(self):
         """Test the ``_get_distribution`` passing an unknown str.
@@ -59,6 +64,7 @@ class TestGaussianCopula:
         """
         # Run
         Result = GaussianCopula._get_distribution('unknown')
+
         # Asserts
         assert Result == 'unknown'
 
@@ -79,16 +85,18 @@ class TestGaussianCopula:
         - dict containing the corresponding instances.
         """
         # Run
-        dictionary = {1: 'bounded', 2: None}
+        dictionary = {1: None, 2: 'gamma', 3: 'unknown'}
         out = GaussianCopula._get_distribution(dictionary)
 
         # Assert
-        expected = {1: GaussianCopula._DISTRIBUTIONS['bounded'],
-                    2: GaussianCopula._DISTRIBUTIONS['parametric']
+        expected = {1: GaussianCopula._DISTRIBUTIONS['parametric'],
+                    2: GaussianCopula._DISTRIBUTIONS['gamma'],
+                    3: 'unknown'
                     }
-        assert out == expected
+        for key in out.keys():
+            assert out[key] is expected[key]
 
-    def _update_metadata_existing_model_kargs(self):
+    def test__update_metadata_existing_model_kargs(self):
         """Test ``_update_metadata`` if metadata already has model_kwargs.
 
         If ``self._metadata`` already has ``model_kwargs`` in it, this
@@ -103,8 +111,19 @@ class TestGaussianCopula:
         Side Effects
         - ``self._metadata.set_model_kwargs`` is not called.
         """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
 
-    def _update_metadata_no_model_kwargs(self):
+        # Run
+        out = GaussianCopula._update_metadata(gaussian_copula)
+
+        # Asserts
+        assert out is None
+        assert not gaussian_copula._metadata.set_model_kwargs.called
+
+    @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+           spec_set=GaussianMultivariate)
+    def test__update_metadata_no_model_kwargs(self, gm_mock):
         """Test ``_update_metadata`` if metadata has no model_kwargs.
 
         If ``self._metadata`` has no ``model_kwargs`` in it, this
@@ -120,7 +139,7 @@ class TestGaussianCopula:
         Side Effects
         - ``self._metadata.set_model_kwargs`` is called with the
           expected dict.
-        """
+          """
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)
@@ -144,7 +163,6 @@ class TestGaussianCopula:
         - ``self._model.fit`` is called with the input dataframe
         - ``self._update_metadata`` is called without arguments
         """
-
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
         gaussian_copula._distribution = 'a_distribution'
@@ -183,6 +201,15 @@ class TestGaussianCopula:
         Side Effects:
         - ``self._model.sample`` is called with the given integer as input
         """
+        # Setup
+        n_rows = 2
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+
+        # Run
+        GaussianCopula._sample(gaussian_copula, n_rows)
+
+        # Asserts
+        gaussian_copula._model.sample.assert_called_once_with(n_rows)
 
     def test_get_parameters(self):
         """Test the ``get_parameters`` method when model is parametric.
@@ -198,7 +225,7 @@ class TestGaussianCopula:
               - GaussianUnivariate
               - Univariate(parametric=PARAMETRIC)
           - Is fitted with a two column dataframe where the column
-            of the ``GaussianUnivariate`` is constant (to force
+            of the ``GaussianMultivariate`` is constant (to force
             ``scale==0``) and the other one is not constant (to
             force ``scale!=0``). The dataframe can contain only
             three rows:
@@ -219,6 +246,23 @@ class TestGaussianCopula:
               univariate that had ``scale==0``.
             - ``np.log`` applied to the other ``scale`` parameter.
         """
+        # Setup
+        gm = GaussianCopula(distribution={
+            # 'a': GaussianMultivariate(),
+            'b': Univariate(parametric=copulas.univariate.ParametricType.PARAMETRIC)
+        })
+        data = pd.DataFrame({
+            # 'a': [1, 1, 1],
+            'b': [1, 2, 3],
+        })
+        gm.fit(data)
+
+        # Run
+        out = gm.get_parameters()
+
+        # Asserts
+        assert np.isclose(out['covariance__0__0'], 1.5)
+        assert np.isclose(out['univariates__b__scale'], -0.2, atol=0.003)
 
     def test_get_parameters_non_parametric(self):
         """Test the ``get_parameters`` method when model is parametric.
@@ -234,6 +278,56 @@ class TestGaussianCopula:
         - A NonParametricError is raised.
         """
 
+    def test__rebuild_covariance_matrix_positive_definite(self):
+        """Test the ``_rebuild_covariance_matrix``
+        method for a positive definide covariance matrix.
+
+        The _rebuild_covariance_matrix method is expected to:
+        - Rebuild a square covariance matrix out of a triangular one.
+        - Call ``make_positive_definite`` if input matrix is not positive definite,
+
+        Input
+        - numpy array, Symmetric positive definite matrix triangular format
+
+        output
+        - numpy array, Square matrix positive definite
+
+        Side Effects:
+        - ``make_positive_definite`` is not called.
+        """
+        # Run
+        covariance = [[1], [0, 1]]
+        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
+
+        # Asserts
+        expected = np.array([[1., 0.], [0., 1.0]])
+        np.testing.assert_almost_equal(result, expected)
+
+    def test__rebuild_covariance_matrix_not_positive_definite(self):
+        """Test the ``_rebuild_covariance_matrix``
+        method for a not positive definide covariance matrix.
+
+        The _rebuild_covariance_matrix method is expected to:
+        - Rebuild a square covariance matrix out of a triangular one.
+        - Call ``make_positive_definite`` if input matrix is not positive definite,
+
+        Input
+        - numpy array, Symmetric no positive definite matrix triangular format
+
+        output
+        - numpy array, Square matrix positive definite
+
+        Side Effects:
+        - ``make_positive_definite`` is called.
+        """
+        # Run
+        covariance = [[1], [-1, 1]]
+        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
+
+        # Asserts
+        expected = np.array([[1, -1.0], [-1.0, 1.0]])
+        np.testing.assert_almost_equal(result, expected)
+
     def test__rebuild_gaussian_copula(self):
         """Test the ``GaussianCopula._rebuild_gaussian_copula`` method.
 
@@ -241,10 +335,10 @@ class TestGaussianCopula:
         - Rebuild a square covariance matrix out of a triangular one.
 
         Input:
-        - Triangular covariance matrix
+        - numpy array, Triangular covariance matrix
 
         Expected Output:
-        - Square covariance matrix
+        - numpy array, Square covariance matrix
         """
         # Setup
         sdvmodel = Mock(autospec=GaussianCopula)
@@ -278,61 +372,6 @@ class TestGaussianCopula:
             'covariance': [[0.4, 0.17], [0.17, 0.07]]
         }
         assert result == expected
-
-    def test__rebuild_covariance_matrix_positive_definite(self):
-        """Test the  GaussianCopula._rebuild_covariance_matrix
-        method for a covariance matrix in triangular format.
-        This method return Square matrix positive definide.
-
-        The _rebuild_covariance_matrix method is expected to:
-        - Rebuild a square covariance matrix out of a triangular one.
-        - Evaluate if the covariance matrix is positive definide by the
-          method check_matrix_symmetric_positive_definite
-        - If matrix is not positive definide, apply the method make_positive_definite.
-
-        Input
-        - Symmetric positive definite matrix triangular format
-
-        output
-        - Square matrix positive definite
-
-        Side Effects:
-        - make_positive_definite is not called.
-        """
-        # Run
-        covariance = [[1], [0, 1]]
-        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
-
-        # Asserts
-        expected = np.array([[1., 0.], [0., 1.0]])
-        np.testing.assert_almost_equal(result, expected)
-
-    def test__rebuild_covariance_matrix_not_positive_definite(self):
-        """Test the GaussianCopula._rebuild_covariance_matrix method for a covariance matrix in
-           triangular format. This method return Square matrix positive definite.
-
-        The _rebuild_covariance_matrix method is expected to:
-        - Rebuild a square covariance matrix out of a triangular one.
-        - Evaluate if the covariance matrix is positive definide by the
-          method check_matrix_symmetric_positive_definite
-        - If matrix is not positive definide, apply the method make_positive_definite.
-
-        Input
-        - No Symmetric positive definite matrix triangular format
-
-        Output
-        - Square matrix positive definite
-
-        Side Effects:
-        - Make_positive_definite is called.
-        """
-        # Run
-        covariance = [[-1], [0, 1]]
-        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
-
-        # Asserts
-        expected = np.array([[0., 0.], [0., 1.0]])
-        np.testing.assert_almost_equal(result, expected)
 
     def set_parameters(self):
         """Test the ``set_parameters`` method with positive num_rows.

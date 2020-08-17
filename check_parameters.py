@@ -1,10 +1,14 @@
 from sdv import load_demo
 from sdv.tabular import GaussianCopula
+from sdv import Metadata
+
+users = load_demo()['users']
 model = GaussianCopula(
     primary_key='user_id',
     anonymize_fields={'country':'country_code'}
 )
-users = load_demo()['users']
+#model._metadata._model_kwargs.keys()
+model.fit(users)
+model._sample(2)
 
-#test__get_distribution_none
-cosa = model._get_distribution(True)
+pass

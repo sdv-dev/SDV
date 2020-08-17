@@ -73,7 +73,7 @@ class GaussianCopula(BaseTabularModel):
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
                 * ``student_t``: Use a Student T distribution.
-                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+                * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
