@@ -34,7 +34,7 @@ def test__get_qualified_name_function():
     Input:
     - A function.
     Output:
-    - Qualifed name of the function.
+    - The function qualified name.
     """
     # Run
     fully_qualified_name = _get_qualified_name(get_subclasses)
@@ -49,6 +49,11 @@ def test_import_object_class():
 
     The ``import_object`` function is expected to:
     - Import a class from its qualifed name.
+
+    Input:
+    - Qualified name of the class.
+    Output:
+    - The imported class.
     """
     # Run
     obj = import_object('sdv.constraints.base.Constraint')
@@ -62,6 +67,11 @@ def test_import_object_function():
 
     The ``import_object`` function is expected to:
     - Import a function from its qualifed name.
+
+    Input:
+    - Qualified name of the function.
+    Output:
+    - The imported function.
     """
     # Run
     obj = import_object('sdv.constraints.base.get_subclasses')
@@ -74,12 +84,16 @@ def test_get_subclasses():
     """Test the ``get_subclasses`` function.
 
     The ``get_subclasses`` function is expected to:
-    - Find subclasses for the class object passed.
+    - Recursively find subclasses for the class object passed.
+
+    Setup:
+    - Create three classes, Parent, Child and GrandChild,
+      which inherit of each other hierarchically.
 
     Input:
-    - A class.
+    - The Parent class.
     Output:
-    - Dict of the subclasses of the class.
+    - Dict of the subclasses of the class: ``Child`` and ``GrandChild`` classes.
     """
     # Setup
     class Parent:
@@ -108,10 +122,8 @@ class TestConstraint():
     def test___init___transform(self):
         """Test ```Constraint.__init__`` method when 'transform' is passed.
 
-        If 'transform' is given, the __init__ method should
-        replace the ``is_valid`` method with an identity
-        and leave ``transform`` and ``reverse_transform``
-        untouched.
+        If 'transform' is given, the ``__init__`` method should replace the ``is_valid`` method
+        with an identity and leave ``transform`` and ``reverse_transform`` untouched.
 
         Input:
             - transform
@@ -123,7 +135,7 @@ class TestConstraint():
         # Run
         instance = Constraint(handling_strategy='transform')
 
-        # Assert
+        # Asserts
         assert instance.filter_valid == instance._identity
         assert instance.transform != instance._identity
         assert instance.reverse_transform != instance._identity
@@ -131,9 +143,8 @@ class TestConstraint():
     def test___init___reject_sampling(self):
         """Test ``Constraint.__init__`` method when 'reject_sampling' is passed.
 
-        If 'reject_sampling' is given, the ``__init__`` method should
-        replace the ``transform`` and ``reverse_transform`` methods with an identity
-        and leave ``is_valid`` untouched.
+        If 'reject_sampling' is given, the ``__init__`` method should replace the ``transform``
+        and ``reverse_transform`` methods with an identity and leave ``is_valid`` untouched.
 
         Input:
             - reject_sampling
@@ -204,7 +215,8 @@ class TestConstraint():
         instance.fit(table_data)
 
     def test_transform(self):
-        """Test the ``Constraint.transform`` method.
+        """Test the ``Constraint.transform`` method. It is an identity method for completion,
+        to be optionally overwritten by subclasses.
 
         The ``Constraint.transform`` method is expected to:
         - Return the input data unmodified.
@@ -219,13 +231,12 @@ class TestConstraint():
             'a': [1, 2, 3]
         })
 
-        expected_out = table_data
-
         # Run
         instance = Constraint(handling_strategy='transform')
         out = instance.transform(table_data)
 
         # Assert
+        expected_out = table_data
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_fit_transform(self):
@@ -234,6 +245,12 @@ class TestConstraint():
         The ``Constraint.fit_transform`` method is expected to:
         - Call the ``fit`` method.
         - Call the ``transform`` method.
+        - Return the input data unmodified.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Input dataframe, unmodified
         """
         # Setup
         constraint_mock = Mock()
@@ -250,7 +267,8 @@ class TestConstraint():
         constraint_mock.transform.assert_called_once_with('my_data')
 
     def test_reverse_transform(self):
-        """Test the ``Constraint.reverse_transform`` method.
+        """Test the ``Constraint.reverse_transform`` method. It is an identity method
+        for completion, to be optionally overwritten by subclasses.
 
         The ``Constraint.reverse_transform`` method is expected to:
         - Return the input data unmodified.
@@ -265,17 +283,17 @@ class TestConstraint():
             'a': [1, 2, 3]
         })
 
-        expected_out = table_data
-
         # Run
         instance = Constraint(handling_strategy='transform')
         out = instance.reverse_transform(table_data)
 
         # Assert
+        expected_out = table_data
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_is_valid(self):
-        """Test the ``Constraint.is_valid` method.
+        """Test the ``Constraint.is_valid` method. This should be overwritten by all the
+        subclasses that have a way to decide which rows are valid and which are not.
 
         The ``Constraint.is_valid`` method is expected to:
         - Say whether the given table rows are valid.
@@ -302,8 +320,7 @@ class TestConstraint():
         """Test the ``Constraint.filter_valid`` method.
 
         The ``Constraint.filter_valid`` method is expected to:
-        - Call the ``is_valid`` method.
-        - Return only the rows that are valid.
+        - Filter the input data by calling the method ``is_valid``.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -331,7 +348,8 @@ class TestConstraint():
         """Test the ``Constraint.from_dict`` method.
 
         The ``Constraint.from_dict`` method is expected to:
-        - Build a Constraint object from a dict.
+        - Build a Constraint object, given a dict containing the keyword ``constraint`` alongside
+        any additional arguments needed to create the instance.
 
         Input:
         - Dict representation of this Constraint.
@@ -354,7 +372,9 @@ class TestConstraint():
         """Test the ``Constraint.to_dict`` method.
 
         The ``Constraint.to_dict`` method is expected to:
-        - Return a dict representation of this Constraint.
+        - Return a dict representation of this Constraint. The dictionary will contain
+        the Qualified Name of the constraint class in the key ``constriant``, as well as
+        any other arguments that were passed to the constructor when the instance was created.
 
         Output:
         - Dict with the right values.
