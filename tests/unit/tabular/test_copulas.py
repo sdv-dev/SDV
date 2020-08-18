@@ -1,16 +1,14 @@
 from unittest.mock import Mock, patch
 
+import copulas
 import numpy as np
 import pandas as pd
 import pytest
-
 from copulas.multivariate.gaussian import GaussianMultivariate, Univariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
-
-import copulas
 
 
 class TestGaussianCopula:
