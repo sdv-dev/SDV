@@ -1,3 +1,4 @@
+"""Tests for the sdv.constraints.base module."""
 from unittest.mock import Mock
 
 import pandas as pd
