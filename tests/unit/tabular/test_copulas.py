@@ -1,11 +1,10 @@
 from unittest.mock import Mock, patch
 
-import copulas
 import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate, Univariate
-from copulas.univariate import GaussianKDE, GaussianUnivariate
+from copulas.univariate import BoundedType, GammaUnivariate, GaussianKDE, ParametricType
 
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
@@ -31,9 +30,9 @@ class TestGaussianCopula:
         out = GaussianCopula._get_distribution(None)
 
         # Asserts
-        assert out is GaussianCopula._DISTRIBUTIONS['parametric']
-        assert out.PARAMETRIC is GaussianCopula._DISTRIBUTIONS['parametric'].PARAMETRIC
-        assert out.BOUNDED is GaussianCopula._DISTRIBUTIONS['parametric'].BOUNDED
+        assert isinstance(out, Univariate)
+        assert out.PARAMETRIC is ParametricType.NON_PARAMETRIC
+        assert out.BOUNDED is BoundedType.UNBOUNDED
 
     def test__get_distribution_str(self):
         """Test the ``_get_distribution method passing a known str.
@@ -52,7 +51,7 @@ class TestGaussianCopula:
         out = GaussianCopula._get_distribution('gamma')
 
         # Assert
-        assert out is GaussianCopula._DISTRIBUTIONS['gamma']
+        assert isinstance(out(), GammaUnivariate)
 
     def test__get_distribution_unknown(self):
         """Test the ``_get_distribution`` passing an unknown str.
@@ -92,12 +91,9 @@ class TestGaussianCopula:
         out = GaussianCopula._get_distribution(dictionary)
 
         # Assert
-        expected = {1: GaussianCopula._DISTRIBUTIONS['parametric'],
-                    2: GaussianCopula._DISTRIBUTIONS['gamma'],
-                    3: 'unknown'
-                    }
-        for key in out.keys():
-            assert out[key] is expected[key]
+        assert isinstance(out[1], Univariate)
+        assert isinstance(out[2](), GammaUnivariate)
+        assert out[3] == 'unknown'
 
     def test___init__(self):
         """Test ``__init__`` with empty input values.
@@ -174,9 +170,9 @@ class TestGaussianCopula:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._metadata.get_model_kwargs.return_value = False
-        distribution = Mock()
-        gaussian_copula._categorical_transformer = distribution
+        gaussian_copula._metadata.get_model_kwargs.return_value = dict()
+        gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
+
         model_parameters = {
             'univariates': [{
                 'scale': 1.0,
@@ -194,13 +190,13 @@ class TestGaussianCopula:
         out = GaussianCopula._update_metadata(gaussian_copula)
 
         # Asserts
-        # call = {
-        #    'distribution': {'foo': 'GaussianUnivariate'},
-        #    'categorical_transformer': distribution,
-        # }
         assert out is None
-        # assert gaussian_copula._metadata.\
-        #    set_model_kwargs.assert_called_once_with('GaussianCopula', call)
+        expected_kwargs = {
+            'distribution': {'foo': 'GaussianUnivariate'},
+            'categorical_transformer': 'a_categorical_transformer_value',
+        }
+        gaussian_copula._metadata.set_model_kwargs.assert_called_once_with(
+            'GaussianCopula', expected_kwargs)
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)
@@ -265,12 +261,14 @@ class TestGaussianCopula:
         # Setup
         n_rows = 2
         gaussian_copula = Mock(spec_set=GaussianCopula)
-
+        expected = pd.DataFrame([1, 2, 3])
+        gaussian_copula._model.sample.return_value = expected
         # Run
-        GaussianCopula._sample(gaussian_copula, n_rows)
+        out = GaussianCopula._sample(gaussian_copula, n_rows)
 
         # Asserts
         gaussian_copula._model.sample.assert_called_once_with(n_rows)
+        assert expected.equals(out)
 
     def test_get_parameters(self):
         """Test the ``get_parameters`` method when model is parametric.
@@ -307,23 +305,6 @@ class TestGaussianCopula:
               univariate that had ``scale==0``.
             - ``np.log`` applied to the other ``scale`` parameter.
         """
-        # Setup
-        gm = GaussianCopula(distribution={
-            'a': GaussianUnivariate(),
-            'b': Univariate(parametric=copulas.univariate.ParametricType.PARAMETRIC)
-        })
-        data = pd.DataFrame({
-            'a': [1, 1, 1],
-            'b': [1, 2, 3],
-        })
-        gm.fit(data)
-
-        # Run
-        # out = gm.get_parameters()
-
-        # Asserts
-        # assert np.isclose(out['covariance__0__0'],1.5)
-        # assert np.isclose(out['univariates__b__scale'],-0.2, atol = 0.003)
 
     def test_get_parameters_non_parametric(self):
         """Test the ``get_parameters`` method when model is parametric.
@@ -339,12 +320,15 @@ class TestGaussianCopula:
         - A NonParametricError is raised.
         """
         # Setup
-        gm = GaussianCopula(distribution=GaussianKDE())
+        gm = GaussianMultivariate(distribution=GaussianKDE())
         data = pd.DataFrame([1, 1, 1])
         gm.fit(data)
+        gc = Mock()
+        gc._model = gm
+
         # Run, Assert
         with pytest.raises(NonParametricError):
-            gm.get_parameters()  # Out[9]: copulas.multivariate.gaussian.GaussianMultivariate
+            GaussianCopula.get_parameters(gc)
 
     def test__rebuild_covariance_matrix_positive_definite(self):
         """Test the ``_rebuild_covariance_matrix``
@@ -465,6 +449,47 @@ class TestGaussianCopula:
         - ``GaussianMultivariate`` is called
         - ``GaussianMultivariate`` return value is stored as `self._model`
         """
+        # Setup
+        gaussian_copula = Mock(autospec=GaussianCopula)
+        returned = {
+            'univariates': [
+                {
+                    'scale': 1.0,
+                    'loc': 5,
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate'
+                }
+            ],
+            'columns': ['foo'],
+            'num_rows': 3,
+            'covariance': [[0.4, 0.17], [0.17, 0.07]]
+        }
+        gaussian_copula._rebuild_gaussian_copula.return_value = returned
+
+        # Run
+        flatten_parameters = {
+            'univariates__foo__scale': 0.0,
+            'univariates__foo__loc': 5,
+            'covariance__0__0': 0.1,
+            'covariance__1__0': 0.4,
+            'covariance__1__1': 0.1,
+            'num_rows': 3
+        }
+        GaussianCopula.set_parameters(gaussian_copula, flatten_parameters)
+
+        # Asserts
+        expected = {
+            'covariance': [[0.1], [0.4, 0.1]],
+            'num_rows': 3,
+            'univariates': {
+                'foo': {
+                    'loc': 5,
+                    'scale': 0.0
+                }
+            }
+        }
+        gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
+        assert gaussian_copula._num_rows == 3
+        assert isinstance(gaussian_copula._model, GaussianMultivariate)
 
     def test_set_parameters_negative_max_rows(self):
         """Test the ``set_parameters`` method with negative num_rows.
@@ -493,3 +518,44 @@ class TestGaussianCopula:
         - ``GaussianMultivariate`` is called
         - ``GaussianMultivariate`` return value is stored as `self._model`
         """
+        # Setup
+        gaussian_copula = Mock(autospec=GaussianCopula)
+        returned = {
+            'univariates': [
+                {
+                    'scale': 1.0,
+                    'loc': 5,
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate'
+                }
+            ],
+            'columns': ['foo'],
+            'num_rows': -3,
+            'covariance': [[0.4, 0.17], [0.17, 0.07]]
+        }
+        gaussian_copula._rebuild_gaussian_copula.return_value = returned
+
+        # Run
+        flatten_parameters = {
+            'univariates__foo__scale': 0.0,
+            'univariates__foo__loc': 5,
+            'covariance__0__0': 0.1,
+            'covariance__1__0': 0.4,
+            'covariance__1__1': 0.1,
+            'num_rows': -3
+        }
+        GaussianCopula.set_parameters(gaussian_copula, flatten_parameters)
+
+        # Asserts
+        expected = {
+            'covariance': [[0.1], [0.4, 0.1]],
+            'num_rows': -3,
+            'univariates': {
+                'foo': {
+                    'loc': 5,
+                    'scale': 0.0
+                }
+            }
+        }
+        gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
+        assert gaussian_copula._num_rows == 0
+        assert isinstance(gaussian_copula._model, GaussianMultivariate)
