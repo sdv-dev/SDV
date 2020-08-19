@@ -1,3 +1,4 @@
+"""Tests for the sdv.constraints.tabular module."""
 import pandas as pd
 
 from sdv.constraints.base import import_object
@@ -221,7 +222,7 @@ class TestUniqueCombinations():
         - Call ``UniqueCombinations._valid_separator``.
         - Find a separtor that works for the current data by iteratively
         adding `#` to it.
-        - Generating the joint column name by concatenating
+        - Generate the joint column name by concatenating
          the names of ``self._columns`` with the separator.
 
         Input:
@@ -241,14 +242,10 @@ class TestUniqueCombinations():
         instance.fit(table_data)
 
         # Asserts
+        expected_combinations = set(table_data[columns].itertuples(index=False))
         assert instance._separator == '#'
         assert instance._joint_column == 'b#c'
-        """
-        expected_combinations = {
-
-        }
         assert instance._combinations == expected_combinations
-        """
 
     def test_is_valid_true(self):
         """Test the ``UniqueCombinations.is_valid`` method.
@@ -428,8 +425,8 @@ class TestGreaterThan():
 
         The ``GreaterThan.__init__`` method is expected to:
         - Receive ``low`` and ``high``, names of the columns that containt the
-        low and high value. It also receives ``strict``, a bool that says whether
-        the comparison of the values should be strict or not.
+        low and high value. It also receives ``strict``, a bool that says that
+        the comparison of the values should be strict.
         - Create a Constraint instance.
 
         Input:
@@ -475,8 +472,9 @@ class TestGreaterThan():
         expected = table_data['b'].dtype
         assert instance._dtype == expected
 
-    def test_is_valid_true(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are valid.
+    def test_is_valid_true_strict(self):
+        """Test the ``GreaterThan.is_valid`` method when the column values are valid
+        and the comparison is strict.
 
         The ``GreaterThan.is_valid`` method is expected to:
         - Say whether ``high`` is greater than ``low`` in each row.
@@ -501,8 +499,9 @@ class TestGreaterThan():
         expected_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_is_valid_false(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are not valid.
+    def test_is_valid_false_strict(self):
+        """Test the ``GreaterThan.is_valid`` method when the column values are not valid
+        and the comparison is strict.
 
         The ``GreaterThan.is_valid`` method is expected to:
         - Say whether ``high`` is greater than ``low`` in each row.
@@ -521,6 +520,60 @@ class TestGreaterThan():
 
         # Run
         instance = GreaterThan(low='a', high='b', strict=True)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_true_not_strict(self):
+        """Test the ``GreaterThan.is_valid`` method when the column values are valid
+        and the comparison is not strict.
+
+        The ``GreaterThan.is_valid`` method is expected to:
+        - Say whether ``high`` is equal or greater than ``low`` in each row.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 2, 3],
+            'c': [7, 8, 9]
+        })
+
+        # Run
+        instance = GreaterThan(low='a', high='b')
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_false_not_strict(self):
+        """Test the ``GreaterThan.is_valid`` method when the column values are valid
+        and the comparison is not strict.
+
+        The ``GreaterThan.is_valid`` method is expected to:
+        - Say whether ``high`` is equal or greater than ``low`` in each row.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [0, 1, 2],
+            'c': [7, 8, 9]
+        })
+
+        # Run
+        instance = GreaterThan(low='a', high='b')
         out = instance.is_valid(table_data)
 
         # Assert
@@ -558,6 +611,7 @@ class TestGreaterThan():
             'c': [7, 8, 9],
             'b': [1.386294, 1.386294, 1.386294]
         })
+
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test_reverse_transform(self):
