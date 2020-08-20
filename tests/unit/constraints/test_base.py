@@ -343,6 +343,7 @@ class TestConstraint():
         expected_out = pd.DataFrame({
             'a': [1, 2]
         })
+
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_from_dict(self):
@@ -354,7 +355,7 @@ class TestConstraint():
 
         Input:
         - Dict representation of this Constraint.
-        Side effects:
+        Output:
         - New Constraint instance.
         """
         # Setup
