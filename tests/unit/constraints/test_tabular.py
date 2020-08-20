@@ -181,12 +181,12 @@ class TestUniqueCombinations():
 
         # Run
         instance = UniqueCombinations(columns=columns)
-        instance._separator = 'd'
+        instance._separator = 'e'
 
         # Assert
         assert instance._valid_separator(table_data) is False
 
-    def test__valid_separator_false_joined(self):
+    def test__valid_separator_false_name_joined_exists(self):
         """Test the ``UniqueCombinations._valid_separator`` method for a non-valid separator.
         The column name obtained after joining the column names using the separator
         already exists.
@@ -201,7 +201,7 @@ class TestUniqueCombinations():
         """
         # Setup
         table_data = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
+            'bec': ['a', 'b', 'c'],
             'b': ['d', 'ed', 'f'],
             'c': ['g', 'h', 'i']
         })
@@ -353,6 +353,7 @@ class TestUniqueCombinations():
             'a': ['a', 'b', 'c'],
             'b#c': ['d#g', 'e#h', 'f#i']
         })
+
         pd.testing.assert_frame_equal(expected_out, out)
 
     def reverse_transform(self):
@@ -383,7 +384,7 @@ class TestUniqueCombinations():
         # Run
         instance = UniqueCombinations(columns=columns)
         instance.fit(transformed_data)
-        out = instance.transform(transformed_data)
+        out = instance.reverse_transform(transformed_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -391,6 +392,7 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
+
         pd.testing.assert_frame_equal(expected_out, out)
 
 
@@ -609,10 +611,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [1.3862944, 1.3862944, 1.3862944]
         })
-        """
-        out = pd.DataFrame(out).to_numpy()
-        expected_out = pd.DataFrame(expected_out).to_numpy()
-        """
+
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test_reverse_transform(self):
@@ -630,8 +629,8 @@ class TestGreaterThan():
         - Table data transformed (pandas.DataFrame)
         - Table data (pandas.DataFrame)
         Side effects:
-        - Since ``reverse_transform`` uses the class variable ``_dtype``, so the ``fit`` method
-        must be called.
+        - Since ``reverse_transform`` uses the class variable ``_dtype``, the ``fit`` method
+        must be called as well.
         """
         # Setup
         table_data = pd.DataFrame({
@@ -691,6 +690,9 @@ class TestColumnFormula():
         The ``ColumnFormula.is_valid`` method is expected to:
         - Say whether each row fulfills the formula.
 
+        Setup:
+        - Create a simple function to use for the computation.
+
         Input:
         - Table data (pandas.DataFrame)
         Output:
@@ -721,6 +723,9 @@ class TestColumnFormula():
 
         The ``ColumnFormula.is_valid`` method is expected to:
         - Say whether each row fulfills the formula.
+
+        Setup:
+        - Create a simple function to use for the computation.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -753,6 +758,9 @@ class TestColumnFormula():
         The ``ColumnFormula.transform`` method is expected to:
         - Drop the indicated column from the table.
 
+        Setup:
+        - Create a simple function to use for the computation.
+
         Input:
         - Table data (pandas.DataFrame)
         Output:
@@ -779,6 +787,7 @@ class TestColumnFormula():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
         })
+
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform(self):
@@ -786,6 +795,9 @@ class TestColumnFormula():
 
         The ``ColumnFormula.reverse_transform`` method is expected to:
         - Compute the indicated column by applying the given formula.
+
+        Setup:
+        - Create a simple function to use for the computation.
 
         Input:
         - Table data without the column with the correct values (pandas.DataFrame)
@@ -814,4 +826,5 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
+
         pd.testing.assert_frame_equal(expected_out, out)
