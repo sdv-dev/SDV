@@ -598,7 +598,6 @@ class TestGreaterThan():
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
-            'c': [7, 8, 9]
         })
 
         # Run
@@ -608,10 +607,12 @@ class TestGreaterThan():
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'c': [7, 8, 9],
-            'b': [1.386294, 1.386294, 1.386294]
+            'b': [1.3862944, 1.3862944, 1.3862944]
         })
-
+        """
+        out = pd.DataFrame(out).to_numpy()
+        expected_out = pd.DataFrame(expected_out).to_numpy()
+        """
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test_reverse_transform(self):
