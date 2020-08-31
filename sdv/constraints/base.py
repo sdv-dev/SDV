@@ -10,16 +10,15 @@ import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 
-def _get_qualified_name(_object):
+def _get_qualified_name(obj):
     """Return the Fully Qualified Name from an instance or class."""
-    module = _object.__module__
-    if hasattr(_object, '__name__'):
-        _class = _object.__name__
-
+    module = obj.__module__
+    if hasattr(obj, '__name__'):
+        obj_name = obj.__name__
     else:
-        _class = _object.__class__.__name__
+        obj_name = obj.__class__.__name__
 
-    return module + '.' + _class
+    return module + '.' + obj_name
 
 
 def get_subclasses(cls):
@@ -217,7 +216,7 @@ class Constraint(metaclass=ConstraintMeta):
         """Return a dict representation of this Constraint.
 
         The dictionary will contain the Qualified Name of the constraint
-        class in the key ``constriant``, as well as any other arguments
+        class in the key ``constraint``, as well as any other arguments
         that were passed to the constructor when the instance was created.
 
         Returns:

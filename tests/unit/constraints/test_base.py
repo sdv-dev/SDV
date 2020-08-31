@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
+from sdv.constraints.tabular import UniqueCombinations
 
 
 def test__get_qualified_name_class():
@@ -38,47 +39,11 @@ def test__get_qualified_name_function():
     - The function qualified name.
     """
     # Run
-    fully_qualified_name = _get_qualified_name(get_subclasses)
+    fully_qualified_name = _get_qualified_name(_get_qualified_name)
 
     # Assert
-    expected_name = 'sdv.constraints.base.get_subclasses'
+    expected_name = 'sdv.constraints.base._get_qualified_name'
     assert fully_qualified_name == expected_name
-
-
-def test_import_object_class():
-    """Test the ``import_object`` function, when importing a class.
-
-    The ``import_object`` function is expected to:
-    - Import a class from its qualifed name.
-
-    Input:
-    - Qualified name of the class.
-    Output:
-    - The imported class.
-    """
-    # Run
-    obj = import_object('sdv.constraints.base.Constraint')
-
-    # Assert
-    assert obj is Constraint
-
-
-def test_import_object_function():
-    """Test the ``import_object`` function, when importing a function.
-
-    The ``import_object`` function is expected to:
-    - Import a function from its qualifed name.
-
-    Input:
-    - Qualified name of the function.
-    Output:
-    - The imported function.
-    """
-    # Run
-    obj = import_object('sdv.constraints.base.get_subclasses')
-
-    # Assert
-    assert obj is get_subclasses
 
 
 def test_get_subclasses():
@@ -118,7 +83,60 @@ def test_get_subclasses():
     assert subclasses == expected_subclasses
 
 
+def test_import_object_class():
+    """Test the ``import_object`` function, when importing a class.
+
+    The ``import_object`` function is expected to:
+    - Import a class from its qualifed name.
+
+    Input:
+    - Qualified name of the class.
+    Output:
+    - The imported class.
+    """
+    # Run
+    obj = import_object('sdv.constraints.base.Constraint')
+
+    # Assert
+    assert obj is Constraint
+
+
+def test_import_object_function():
+    """Test the ``import_object`` function, when importing a function.
+
+    The ``import_object`` function is expected to:
+    - Import a function from its qualifed name.
+
+    Input:
+    - Qualified name of the function.
+    Output:
+    - The imported function.
+    """
+    # Run
+    imported = import_object('sdv.constraints.base.import_object')
+
+    # Assert
+    assert imported is import_object
+
+
 class TestConstraint():
+
+    def test__identity(self):
+        """Test ```Constraint._identity`` method.
+
+        ``_identity`` method should return whatever it is passed.
+
+        Input:
+            - anything
+        Output:
+            - Input
+        """
+        # Run
+        instance = Constraint('all')
+        output = instance._identity('input')
+
+        # Asserts
+        assert output == 'input'
 
     def test___init___transform(self):
         """Test ```Constraint.__init__`` method when 'transform' is passed.
@@ -223,22 +241,16 @@ class TestConstraint():
         - Return the input data unmodified.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Anything
         Output:
-        - Input dataframe, unmodified
+        - Input
         """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
-
         # Run
         instance = Constraint(handling_strategy='transform')
-        out = instance.transform(table_data)
+        output = instance.transform('input')
 
         # Assert
-        expected_out = table_data
-        pd.testing.assert_frame_equal(expected_out, out)
+        assert output == 'input'
 
     def test_fit_transform(self):
         """Test the ``Constraint.fit_transform`` method.
@@ -249,9 +261,12 @@ class TestConstraint():
         - Return the input data unmodified.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Anything
         Output:
-        - Input dataframe, unmodified
+        - self.transform output
+        Side Effects:
+        - self.fit is called with input
+        - self.transform is called with input
         """
         # Setup
         constraint_mock = Mock()
@@ -275,22 +290,16 @@ class TestConstraint():
         - Return the input data unmodified.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Anything
         Output:
-        - Input dataframe, unmodified
+        - Input
         """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
-
         # Run
         instance = Constraint(handling_strategy='transform')
-        out = instance.reverse_transform(table_data)
+        output = instance.reverse_transform('input')
 
         # Assert
-        expected_out = table_data
-        pd.testing.assert_frame_equal(expected_out, out)
+        assert output == 'input'
 
     def test_is_valid(self):
         """Test the ``Constraint.is_valid` method. This should be overwritten by all the
@@ -343,52 +352,74 @@ class TestConstraint():
         expected_out = pd.DataFrame({
             'a': [1, 2]
         })
-
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_from_dict(self):
-        """Test the ``Constraint.from_dict`` method.
+    def test_from_dict_fqn(self):
+        """Test the ``Constraint.from_dict`` method passing a FQN.
 
-        The ``Constraint.from_dict`` method is expected to:
-        - Build a Constraint object, given a dict containing the keyword ``constraint`` alongside
-        any additional arguments needed to create the instance.
+        If the ``constraint`` string is a FQN, import the class
+        before creating an instance of it.
 
         Input:
-        - Dict representation of this Constraint.
+        - constraint dict with a FQN and args
         Output:
-        - New Constraint instance.
+        - Instance of the subclass with the right args.
         """
         # Setup
         constraint_dict = {
-            'constraint': 'sdv.constraints.base.Constraint',
-            'handling_strategy': 'transform'
+            'constraint': 'sdv.constraints.tabular.UniqueCombinations',
+            'columns': ['a', 'b'],
         }
 
         # Run
-        instance_from_dict = Constraint.from_dict(constraint_dict)
+        instance = Constraint.from_dict(constraint_dict)
 
         # Assert
-        assert instance_from_dict.filter_valid == instance_from_dict._identity
+        assert isinstance(instance, UniqueCombinations)
+        assert instance._columns == ['a', 'b']
+
+    def test_from_dict_subclass(self):
+        """Test the ``Constraint.from_dict`` method passing a subclass name.
+
+        If the ``constraint`` string is a subclass name, take it from the
+        Subclasses dict.
+
+        Input:
+        - constraint dict with a subclass name and args
+        Output:
+        - Instance of the subclass with the right args.
+        """
+        # Setup
+        constraint_dict = {
+            'constraint': 'UniqueCombinations',
+            'columns': ['a', 'b'],
+        }
+
+        # Run
+        instance = Constraint.from_dict(constraint_dict)
+
+        # Assert
+        assert isinstance(instance, UniqueCombinations)
+        assert instance._columns == ['a', 'b']
 
     def test_to_dict(self):
         """Test the ``Constraint.to_dict`` method.
 
-        The ``Constraint.to_dict`` method is expected to:
-        - Return a dict representation of this Constraint. The dictionary will contain
-        the Qualified Name of the constraint class in the key ``constriant``, as well as
-        any other arguments that were passed to the constructor when the instance was created.
+        The ``Constraint.to_dict`` method is expected to return a dict
+        containting the FQN of the constraint instance and all the
+        required arguments re rebuild it.
 
         Output:
         - Dict with the right values.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
-        dict = instance.to_dict()
+        instance = UniqueCombinations(columns=['a', 'b'], handling_strategy='transform')
+        constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
-            'constraint': 'sdv.constraints.base.Constraint',
-            'handling_strategy': 'transform'
+            'constraint': 'sdv.constraints.tabular.UniqueCombinations',
+            'handling_strategy': 'transform',
+            'columns': ['a', 'b'],
         }
-
-        assert dict == expected_dict
+        assert constraint_dict == expected_dict

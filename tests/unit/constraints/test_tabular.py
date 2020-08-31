@@ -1,113 +1,51 @@
 """Tests for the sdv.constraints.tabular module."""
 import pandas as pd
 
-from sdv.constraints.base import import_object
 from sdv.constraints.tabular import (
     ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations)
 
 
+def dummy_transform():
+    pass
+
+
+def dummy_reverse_transform():
+    pass
+
+
+def dummy_is_valid():
+    pass
+
+
 class TestCustomConstraint():
 
-    def test___init___transform(self):
-        """Test the ``CustomConstraint.__init__`` method if a function to replace
-        ``transform`` method is passed.
+    def test___init__(self):
+        """Test the ``CustomConstraint.__init__`` method.
 
-        The ``CustomConstraint.__init__`` method is expected to:
-        - Import a function to replace ``transform`` method.
-        - Create a Constraint instance.
+        The ``transform``, ``reverse_transform`` and ``is_valid`` methods
+        should be replaced by the given ones, importing them if necessary.
 
         Setup:
-        - Create a new function ``replace_transform`` to replace ``transform`` method.
+        - Create dummy functions (created above this class).
 
         Input:
-        - replace_transform.
+        - dummy transform and revert_transform + is_valid FQN
+        Output:
+        - Instance with all the methods replaced by the dummy versions.
         """
-        # Setup
-        def replace_transform(table_data):
-            pass
+        is_valid_fqn = __name__ + '.dummy_is_valid'
 
         # Run
-        instance = CustomConstraint(transform=replace_transform)
+        instance = CustomConstraint(
+            transform=dummy_transform,
+            reverse_transform=dummy_reverse_transform,
+            is_valid=is_valid_fqn
+        )
 
         # Assert
-        assert instance.transform == import_object(replace_transform)
-        assert instance.reverse_transform != import_object(replace_transform)
-        assert instance.is_valid != import_object(replace_transform)
-
-    def test___init___reverse_transform(self):
-        """Test the ``CustomConstraint.__init__`` if a function to replace
-        ``reverse_transform`` method is passed.
-
-        The ``CustomConstraint.__init__`` method is expected to:
-        - Import a function to replace ``reverse_transform`` method.
-        - Create a Constraint instance.
-
-
-        Setup:
-        - Create a new function ``replace_reverse_transform`` to replace
-        ``reverse_transform`` method.
-
-        Input:
-        - replace_reverse_transform.
-        """
-        # Setup
-        def replace_reverse_transform(table_data):
-            pass
-
-        # Run
-        instance = CustomConstraint(reverse_transform=replace_reverse_transform)
-
-        # Assert
-        assert instance.transform != import_object(replace_reverse_transform)
-        assert instance.reverse_transform == import_object(replace_reverse_transform)
-        assert instance.is_valid != import_object(replace_reverse_transform)
-
-    def test___init___is_valid(self):
-        """Test the ``CustomConstraint.__init__`` if a function to replace
-        ``is_valid`` method is passed.
-
-        The ``CustomConstraint.__init__`` method is expected to:
-        - Import a function to replace ``is_valid`` method.
-        - Create a Constraint instance.
-
-        Setup:
-        - Create a new function ``replace_is_valid`` to replace ``is_valid`` method.
-
-        Input:
-        - replace_is_valid.
-        """
-        # Setup
-        def replace_is_valid(table_data):
-            pass
-
-        # Run
-        instance = CustomConstraint(is_valid=replace_is_valid)
-
-        # Assert
-        assert instance.transform != import_object(replace_is_valid)
-        assert instance.reverse_transform != import_object(replace_is_valid)
-        assert instance.is_valid == import_object(replace_is_valid)
-
-    def test___init___no_function(self):
-        """Test the ``CustomConstraint.__init__`` if no function is passed.
-
-        The ``CustomConstraint.__init__`` method is expected to:
-        - Create a Constraint instance.
-
-        Setup:
-        - Create a new function ``do_nothing`` in order to run the asserts.
-        """
-        # Setup
-        def do_nothing():
-            pass
-
-        # Run
-        instance = CustomConstraint()
-
-        # Assert
-        assert instance.transform != import_object(do_nothing)
-        assert instance.reverse_transform != import_object(do_nothing)
-        assert instance.is_valid != import_object(do_nothing)
+        assert instance.transform == dummy_transform
+        assert instance.reverse_transform == dummy_reverse_transform
+        assert instance.is_valid == dummy_is_valid
 
 
 class TestUniqueCombinations():
