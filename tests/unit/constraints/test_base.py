@@ -407,7 +407,7 @@ class TestConstraint():
 
         The ``Constraint.to_dict`` method is expected to return a dict
         containting the FQN of the constraint instance and all the
-        required arguments re rebuild it.
+        required arguments rebuild it.
 
         Output:
         - Dict with the right values.

@@ -73,7 +73,7 @@ class TestUniqueCombinations():
         """Test the ``UniqueCombinations._valid_separator`` method for a valid separator.
 
         The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``True`` if the separator is valid for the data.
+        - Return ``True`` since, the separator is valid for the data.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -101,7 +101,7 @@ class TestUniqueCombinations():
         The separator is contained within any of the columns.
 
         The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``False`` if the separator is non-valid for the data.
+        - Return ``False``, since the separator is non-valid for the data.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -130,7 +130,7 @@ class TestUniqueCombinations():
         already exists.
 
         The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``False`` if the separator is non-valid for the data.
+        - Return ``False``, since the separator is non-valid for the data.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -158,10 +158,7 @@ class TestUniqueCombinations():
 
         The ``UniqueCombinations.fit`` method is expected to:
         - Call ``UniqueCombinations._valid_separator``.
-        - Find a separtor that works for the current data by iteratively
-        adding `#` to it.
-        - Generate the joint column name by concatenating
-         the names of ``self._columns`` with the separator.
+        - Find a valid separator for the data and generate de joint column name.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -259,10 +256,7 @@ class TestUniqueCombinations():
         """Test the ``UniqueCombinations.transform`` method.
 
         The ``UniqueCombinations.transform`` method is expected to:
-        - Transform the data by removing all the ``self._columns`` from
-        the dataframe, concatenating them using the found separator, and
-        setting them back to the data as a single name with the previously
-        computed name.
+        - Return a Table data with the columns concatenated by the separator.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -298,10 +292,7 @@ class TestUniqueCombinations():
         """Test the ``UniqueCombinations.reverse_transform`` method.
 
         The ``UniqueCombinations.reverse_transform`` method is expected to:
-        - Return the original data by popping the joint column from
-        the table, splitting it by the previously found separator and
-        then setting all the columns back to the table with the original
-        names.
+        - Return the original data separating the concatenated columns.
 
         Input:
         - Table data transformed (pandas.DataFrame)
@@ -524,10 +515,7 @@ class TestGreaterThan():
         """Test the ``GreaterThan.transform`` method.
 
         The ``GreaterThan.transform`` method is expected to:
-        - Transform the input data replacing the ``high`` value with difference
-        between it and the ``low`` value. Then, a logarithm is applied to the difference + 1
-        to be able to ensure that the value stays positive when reverted afterwards
-        using an exponential.
+        - Transform the original table data.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -556,15 +544,11 @@ class TestGreaterThan():
         """Test the ``GreaterThan.reverse_transform`` method.
 
         The ``GreaterThan.reverse_transform`` method is expected to:
-        - Transform the input data replacing the ``high`` value with the original one.
-        The transformation is reversed by computing an exponential of the given
-        value, converting it to the original dtype, subtracting 1 and finally
-        clipping the value to 0 on the low end to ensure the value is positive.
-        Finally, the obtained value is added to the ``low`` column to get the final
-        ``high`` value.
+        - Return the original table data.
 
         Input:
         - Table data transformed (pandas.DataFrame)
+        Output:
         - Table data (pandas.DataFrame)
         Side effects:
         - Since ``reverse_transform`` uses the class variable ``_dtype``, the ``fit`` method
@@ -591,19 +575,18 @@ class TestGreaterThan():
         pd.testing.assert_frame_equal(out, expected_out)
 
 
+def new_column(data):
+    return data['a'] + data['b']
+
+
 class TestColumnFormula():
 
     def test___init__(self):
         """Test the ``ColumnFormula.__init__`` method.
 
         The ``ColumnFormula.__init__`` method is expected to:
-        - Receive the name of the column to compute applying the formula,
-        the function to use for the computation and the ``handling_strategy``.
-        - Import a function to use for the computation.
+        - Import the formula to use for the computation.
         - Create a Constraint instance.
-
-        Setup:
-        - Create a simple function to use for the computation.
 
         Input:
         - column = 'c'
@@ -611,9 +594,6 @@ class TestColumnFormula():
         """
         # Setup
         column = 'c'
-
-        def new_column(data):
-            return data['a'] + data['b']
 
         # Run
         instance = ColumnFormula(column=column, formula=new_column)
@@ -627,9 +607,6 @@ class TestColumnFormula():
 
         The ``ColumnFormula.is_valid`` method is expected to:
         - Say whether each row fulfills the formula.
-
-        Setup:
-        - Create a simple function to use for the computation.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -645,9 +622,6 @@ class TestColumnFormula():
 
         column = 'c'
 
-        def new_column(data):
-            return data['a'] + data['b']
-
         # Run
         instance = ColumnFormula(column=column, formula=new_column)
         out = instance.is_valid(table_data)
@@ -661,9 +635,6 @@ class TestColumnFormula():
 
         The ``ColumnFormula.is_valid`` method is expected to:
         - Say whether each row fulfills the formula.
-
-        Setup:
-        - Create a simple function to use for the computation.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -695,9 +666,6 @@ class TestColumnFormula():
 
         The ``ColumnFormula.transform`` method is expected to:
         - Drop the indicated column from the table.
-
-        Setup:
-        - Create a simple function to use for the computation.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -733,9 +701,6 @@ class TestColumnFormula():
 
         The ``ColumnFormula.reverse_transform`` method is expected to:
         - Compute the indicated column by applying the given formula.
-
-        Setup:
-        - Create a simple function to use for the computation.
 
         Input:
         - Table data without the column with the correct values (pandas.DataFrame)
