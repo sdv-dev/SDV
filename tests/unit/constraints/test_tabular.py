@@ -53,9 +53,8 @@ class TestUniqueCombinations():
     def test___init__(self):
         """Test the ``UniqueCombinations.__init__`` method.
 
-        The ``UniqueCombinations.__init__`` method is expected to:
-        - Receive the names of the columns that need to produce unique combinations.
-        - Create a Constraint instance.
+        It is expected to create a new Constraint instance and receiving the names of
+        the columns that need to produce unique combinations.
 
         Side effects:
         - instance._colums == columns
@@ -69,11 +68,10 @@ class TestUniqueCombinations():
         # Assert
         assert instance._columns == columns
 
-    def test__valid_separator_true(self):
-        """Test the ``UniqueCombinations._valid_separator`` method for a valid separator.
+    def test__valid_separator_valid(self):
+        """Test ``_valid_separator`` for a valid separator.
 
-        The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``True`` since, the separator is valid for the data.
+        If the separator and data are valid, result is ``True``.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -81,99 +79,96 @@ class TestUniqueCombinations():
         - True (bool).
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
-            'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
-        })
-
         columns = ['b', 'c']
-
-        # Run
         instance = UniqueCombinations(columns=columns)
         instance._separator = '#'
 
-        # Assert
-        assert instance._valid_separator(table_data) is True
-
-    def test__valid_separator_false_separator_contained(self):
-        """Test the ``UniqueCombinations._valid_separator`` method for a non-valid separator.
-        The separator is contained within any of the columns.
-
-        The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``False``, since the separator is non-valid for the data.
-
-        Input:
-        - Table data (pandas.DataFrame)
-        Output:
-        - False (bool).
-        """
-        # Setup
+        # Run
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-
-        columns = ['b', 'c']
-
-        # Run
-        instance = UniqueCombinations(columns=columns)
-        instance._separator = 'e'
+        is_valid = instance._valid_separator(table_data)
 
         # Assert
-        assert instance._valid_separator(table_data) is False
+        assert is_valid
 
-    def test__valid_separator_false_name_joined_exists(self):
-        """Test the ``UniqueCombinations._valid_separator`` method for a non-valid separator.
-        The column name obtained after joining the column names using the separator
-        already exists.
+    def test__valid_separator_non_valid_separator_contained(self):
+        """Test ``_valid_separator`` passing a column that contains the separator.
 
-        The ``UniqueCombinations._valid_separator`` method is expected to:
-        - Return ``False``, since the separator is non-valid for the data.
+        If any of the columns contains the separator string, result is ``False``.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data (pandas.DataFrame) with a column that contains the separator string ('#')
         Output:
         - False (bool).
         """
         # Setup
-        table_data = pd.DataFrame({
-            'bec': ['a', 'b', 'c'],
-            'b': ['d', 'ed', 'f'],
-            'c': ['g', 'h', 'i']
-        })
-
         columns = ['b', 'c']
+        instance = UniqueCombinations(columns=columns)
+        instance._separator = '#'
 
         # Run
-        instance = UniqueCombinations(columns=columns)
-        instance._separator = 'e'
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': ['d', '#', 'f'],
+            'c': ['g', 'h', 'i']
+        })
+        is_valid = instance._valid_separator(table_data)
 
         # Assert
-        assert instance._valid_separator(table_data) is False
+        assert not is_valid
+
+    def test__valid_separator_non_valid_name_joined_exists(self):
+        """Test ``_valid_separator`` passing a column whose name is obtained after joining
+        the column names using the separator.
+
+        If the column name obtained after joining the column names using the separator
+        already exists, result is ``False``.
+
+        Input:
+        - Table data (pandas.DataFrame) with a column name that will be obtained by joining
+        the column names and the separator.
+        Output:
+        - False (bool).
+        """
+        # Setup
+        columns = ['b', 'c']
+        instance = UniqueCombinations(columns=columns)
+        instance._separator = '#'
+
+        # Run
+        table_data = pd.DataFrame({
+            'b#c': ['a', 'b', 'c'],
+            'b': ['d', 'e', 'f'],
+            'c': ['g', 'h', 'i']
+        })
+        is_valid = instance._valid_separator(table_data)
+
+        # Assert
+        assert not is_valid
 
     def test_fit(self):
         """Test the ``UniqueCombinations.fit`` method.
 
         The ``UniqueCombinations.fit`` method is expected to:
         - Call ``UniqueCombinations._valid_separator``.
-        - Find a valid separator for the data and generate de joint column name.
+        - Find a valid separator for the data and generate the joint column name.
 
         Input:
         - Table data (pandas.DataFrame)
         """
         # Setup
+        columns = ['b', 'c']
+        instance = UniqueCombinations(columns=columns)
+
+        # Run
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-
-        columns = ['b', 'c']
-
-        # Run
-        instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
 
         # Asserts
@@ -185,11 +180,10 @@ class TestUniqueCombinations():
     def test_is_valid_true(self):
         """Test the ``UniqueCombinations.is_valid`` method.
 
-        The ``UniqueCombinations.is_valid`` method is expected to:
-        - Return a pandas.Series, to say whether each row is valid.
+        If the input data satisfies the constraint, result is a series of ``True`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data (pandas.DataFrame), satisfying the constraint.
         Output:
         - Series of ``True`` values (pandas.Series)
         Side effects:
@@ -202,12 +196,11 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-
         columns = ['b', 'c']
-
-        # Run
         instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
@@ -217,11 +210,10 @@ class TestUniqueCombinations():
     def test_is_valid_false(self):
         """Test the ``UniqueCombinations.is_valid`` method.
 
-        The ``UniqueCombinations.is_valid`` method is expected to:
-        - Return a pandas.Series, to say whether each row is valid.
+        If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data (pandas.DataFrame), which does not satisfy the constraint.
         Output:
         - Series of ``False`` values (pandas.Series)
         Side effects:
@@ -234,18 +226,16 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
+        columns = ['b', 'c']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
 
+        # Run
         incorrect_table = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['D', 'E', 'F'],
             'c': ['g', 'h', 'i']
         })
-
-        columns = ['b', 'c']
-
-        # Run
-        instance = UniqueCombinations(columns=columns)
-        instance.fit(table_data)
         out = instance.is_valid(incorrect_table)
 
         # Assert
@@ -255,13 +245,12 @@ class TestUniqueCombinations():
     def test_transform(self):
         """Test the ``UniqueCombinations.transform`` method.
 
-        The ``UniqueCombinations.transform`` method is expected to:
-        - Return a Table data with the columns concatenated by the separator.
+        It is expected to return a Table data with the columns concatenated by the separator.
 
         Input:
         - Table data (pandas.DataFrame)
         Output:
-        - Table data transformed (pandas.DataFrame)
+        - Table data transformed, with the columns concatenated (pandas.DataFrame)
         Side effects:
         - Since the ``transform`` method needs ``self._joint_column``, method ``fit``
         must be called as well.
@@ -272,12 +261,11 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-
         columns = ['b', 'c']
-
-        # Run
         instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
+
+        # Run
         out = instance.transform(table_data)
 
         # Assert
@@ -285,19 +273,17 @@ class TestUniqueCombinations():
             'a': ['a', 'b', 'c'],
             'b#c': ['d#g', 'e#h', 'f#i']
         })
-
         pd.testing.assert_frame_equal(expected_out, out)
 
     def reverse_transform(self):
         """Test the ``UniqueCombinations.reverse_transform`` method.
 
-        The ``UniqueCombinations.reverse_transform`` method is expected to:
-        - Return the original data separating the concatenated columns.
+        It is expected to return the original data separating the concatenated columns.
 
         Input:
         - Table data transformed (pandas.DataFrame)
         Output:
-        - Table data (pandas.DataFrame)
+        - Original table data, with the concatenated columns separated (pandas.DataFrame)
         Side effects:
         - Since the ``transform`` method needs ``self._joint_column``, method ``fit``
         must be called as well.
@@ -307,12 +293,11 @@ class TestUniqueCombinations():
             'a': ['a', 'b', 'c'],
             'b#c': ['d#g', 'e#h', 'f#i']
         })
-
         columns = ['b', 'c']
-
-        # Run
         instance = UniqueCombinations(columns=columns)
         instance.fit(transformed_data)
+
+        # Run
         out = instance.reverse_transform(transformed_data)
 
         # Assert
@@ -321,7 +306,6 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-
         pd.testing.assert_frame_equal(expected_out, out)
 
 
@@ -330,10 +314,8 @@ class TestGreaterThan():
     def test___init___strict_false(self):
         """Test the ``GreaterThan.__init__`` method.
 
-        The ``GreaterThan.__init__`` method is expected to:
-        - Receive ``low`` and ``high``, names of the columns that containt the
-        low and high value.
-        - Create a Constraint instance.
+        It is expected to create a new Constraint instance and receiving ``low`` and ``high``,
+        names of the columns that contain the low and high value.
 
         Input:
         - low = 'a'
@@ -354,11 +336,9 @@ class TestGreaterThan():
     def test___init___strict_true(self):
         """Test the ``GreaterThan.__init__`` method.
 
-        The ``GreaterThan.__init__`` method is expected to:
-        - Receive ``low`` and ``high``, names of the columns that containt the
-        low and high value. It also receives ``strict``, a bool that says that
-        the comparison of the values should be strict.
-        - Create a Constraint instance.
+        It is expected to create a new Constraint instance and receiving ``low`` and ``high``,
+        names of the columns that contain the low and high value. It also receives ``strict``,
+        a bool that indicates the comparison of the values should be strict.
 
         Input:
         - low = 'a'
@@ -380,8 +360,7 @@ class TestGreaterThan():
     def test_fit(self):
         """Test the ``GreaterThan.fit`` method.
 
-        The ``GreaterThan.fit`` method is expected to:
-        - Learn the dtype of the ``high`` column.
+        It is expected to return the dtype of the ``high`` column.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -389,14 +368,14 @@ class TestGreaterThan():
         - dtype of the ``high`` column.
         """
         # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b')
         instance.fit(table_data)
 
         # Asserts
@@ -407,23 +386,23 @@ class TestGreaterThan():
         """Test the ``GreaterThan.is_valid`` method when the column values are valid
         and the comparison is strict.
 
-        The ``GreaterThan.is_valid`` method is expected to:
-        - Say whether ``high`` is greater than ``low`` in each row.
+        If the columns satisfy the constraint, result is a series of ``True`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data, where the values of the ``low`` column are lower
+        than the values of the ``high`` column (pandas.DataFrame)
         Output:
         - Series of ``True`` values (pandas.Series)
         """
         # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b', strict=True)
         out = instance.is_valid(table_data)
 
         # Assert
@@ -434,23 +413,23 @@ class TestGreaterThan():
         """Test the ``GreaterThan.is_valid`` method when the column values are not valid
         and the comparison is strict.
 
-        The ``GreaterThan.is_valid`` method is expected to:
-        - Say whether ``high`` is greater than ``low`` in each row.
+        If the columns do not satisfy the costraint, result is a series of ``False`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data, where the values of the ``low`` column are higher or equal
+        than the values of the ``high`` column (pandas.DataFrame)
         Output:
         - Series of ``False`` values (pandas.Series)
         """
         # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [1, 1, 1],
             'c': [7, 8, 9]
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b', strict=True)
         out = instance.is_valid(table_data)
 
         # Assert
@@ -461,23 +440,23 @@ class TestGreaterThan():
         """Test the ``GreaterThan.is_valid`` method when the column values are valid
         and the comparison is not strict.
 
-        The ``GreaterThan.is_valid`` method is expected to:
-        - Say whether ``high`` is equal or greater than ``low`` in each row.
+        If the columns satisfy the constraint, result is a series of ``True`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data, where the values of the ``low`` column are lower or equal
+        than the values of the ``high`` column (pandas.DataFrame)
         Output:
         - Series of ``True`` values (pandas.Series)
         """
         # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 2, 3],
             'c': [7, 8, 9]
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b')
         out = instance.is_valid(table_data)
 
         # Assert
@@ -485,26 +464,26 @@ class TestGreaterThan():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_false_not_strict(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are valid
+        """Test the ``GreaterThan.is_valid`` method when the column values are not valid
         and the comparison is not strict.
 
-        The ``GreaterThan.is_valid`` method is expected to:
-        - Say whether ``high`` is equal or greater than ``low`` in each row.
+        If the columns do not satisfy the costraint, result is a series of ``False`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data, where the values of the ``low`` column are higher
+        than the values of the ``high`` column (pandas.DataFrame)
         Output:
         - Series of ``True`` values (pandas.Series)
         """
         # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [0, 1, 2],
             'c': [7, 8, 9]
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b')
         out = instance.is_valid(table_data)
 
         # Assert
@@ -523,13 +502,13 @@ class TestGreaterThan():
         - Table data transformed (pandas.DataFrame)
         """
         # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
         })
-
-        # Run
-        instance = GreaterThan(low='a', high='b', strict=True)
         out = instance.transform(table_data)
 
         # Assert
@@ -537,7 +516,6 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [1.3862944, 1.3862944, 1.3862944]
         })
-
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test_reverse_transform(self):
@@ -560,10 +538,10 @@ class TestGreaterThan():
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-
-        # Run
         instance = GreaterThan(low='a', high='b', strict=True)
         instance.fit(table_data)
+
+        # Run
         out = instance.reverse_transform(table_data)
 
         # Assert
@@ -576,6 +554,7 @@ class TestGreaterThan():
 
 
 def new_column(data):
+    """Formula to be used for the ``TestColumnFormula`` class."""
     return data['a'] + data['b']
 
 
@@ -584,9 +563,8 @@ class TestColumnFormula():
     def test___init__(self):
         """Test the ``ColumnFormula.__init__`` method.
 
-        The ``ColumnFormula.__init__`` method is expected to:
-        - Import the formula to use for the computation.
-        - Create a Constraint instance.
+        It is expected to create a new Constraint instance
+        and import the formula to use for the computation.
 
         Input:
         - column = 'c'
@@ -602,58 +580,52 @@ class TestColumnFormula():
         assert instance._column == column
         assert instance._formula == new_column
 
-    def test_is_valid_true(self):
-        """Test the ``ColumnFormula.is_valid`` method.
+    def test_is_valid_valid(self):
+        """Test the ``ColumnFormula.is_valid`` method for a valid data.
 
-        The ``ColumnFormula.is_valid`` method is expected to:
-        - Say whether each row fulfills the formula.
+        If the data fulfills the formula, result is a series of ``True`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data fulfilling the formula (pandas.DataFrame)
         Output:
         - Series of ``True`` values (pandas.Series)
         """
         # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-
-        column = 'c'
-
-        # Run
-        instance = ColumnFormula(column=column, formula=new_column)
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_is_valid_false(self):
-        """Test the ``ColumnFormula.is_valid`` method.
+    def test_is_valid_non_valid(self):
+        """Test the ``ColumnFormula.is_valid`` method for a non-valid data.
 
-        The ``ColumnFormula.is_valid`` method is expected to:
-        - Say whether each row fulfills the formula.
+        If the data does not fulfill the formula, result is a series of ``False`` values.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data not fulfilling the formula (pandas.DataFrame)
         Output:
         - Series of ``False`` values (pandas.Series)
         """
         # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [1, 2, 3]
         })
-
-        column = 'c'
-
-        def new_column(data):
-            return data['a'] + data['b']
-
-        # Run
         instance = ColumnFormula(column=column, formula=new_column)
         out = instance.is_valid(table_data)
 
@@ -664,8 +636,7 @@ class TestColumnFormula():
     def test_transform(self):
         """Test the ``ColumnFormula.transform`` method.
 
-        The ``ColumnFormula.transform`` method is expected to:
-        - Drop the indicated column from the table.
+        It is expected to drop the indicated column from the table.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -673,19 +644,15 @@ class TestColumnFormula():
         - Table data without the indicated column (pandas.DataFrame)
         """
         # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-
-        column = 'c'
-
-        def new_column(data):
-            return data['a'] + data['b']
-
-        # Run
-        instance = ColumnFormula(column=column, formula=new_column)
         out = instance.transform(table_data)
 
         # Assert
@@ -693,34 +660,28 @@ class TestColumnFormula():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
         })
-
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform(self):
         """Test the ``ColumnFormula.reverse_transform`` method.
 
-        The ``ColumnFormula.reverse_transform`` method is expected to:
-        - Compute the indicated column by applying the given formula.
+        It is expected to compute the indicated column by applying the given formula.
 
         Input:
-        - Table data without the column with the correct values (pandas.DataFrame)
+        - Table data with the column with incorrect values (pandas.DataFrame)
         Output:
         - Table data with the computed column (pandas.DataFrame)
         """
         # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [1, 1, 1]
         })
-
-        column = 'c'
-
-        def new_column(data):
-            return data['a'] + data['b']
-
-        # Run
-        instance = ColumnFormula(column=column, formula=new_column)
         out = instance.reverse_transform(table_data)
 
         # Assert
@@ -729,5 +690,4 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-
         pd.testing.assert_frame_equal(expected_out, out)
