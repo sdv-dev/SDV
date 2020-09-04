@@ -14,11 +14,6 @@ from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 
 LOGGER = logging.getLogger(__name__)
 
-# Keep anonymization mappings outside from the Table class
-# to avoid keeping track of them if the model is serialized
-# using pickle.
-_ANONYMIZATION_MAPPINGS = dict()
-
 
 class Table:
     """Table Metadata.
@@ -82,6 +77,7 @@ class Table:
     _constraint_instances = None
     fitted = False
 
+    _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
         'integer': rdt.transformers.NumericalTransformer(dtype=int),
         'float': rdt.transformers.NumericalTransformer(dtype=float),
@@ -420,12 +416,12 @@ class Table:
                 fake_values = [faker() for _ in range(len(uniques))]
                 mappings[name] = dict(zip(uniques, fake_values))
 
-        _ANONYMIZATION_MAPPINGS[id(self)] = mappings
+        self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
 
         return mappings
 
     def _anonymize(self, data):
-        anonymization_mappings = _ANONYMIZATION_MAPPINGS.get(id(self))
+        anonymization_mappings = self._ANONYMIZATION_MAPPINGS.get(id(self))
         if anonymization_mappings:
             data = data.copy()
             for name, mapping in anonymization_mappings.items():
