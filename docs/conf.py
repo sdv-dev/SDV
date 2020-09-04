@@ -38,7 +38,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    # 'autodocsumm',
 ]
 
 
@@ -61,6 +60,16 @@ master_doc = 'index'
 
 # Jupyter Notebooks
 nbsphinx_execute = 'never'
+nbsphinx_prolog = """
+.. raw:: html
+
+    <style>
+        .nbinput .prompt,
+        .nboutput .prompt {
+            display: none;
+        }
+    </style>
+"""
 
 # General information about the project.
 project = 'SDV'
