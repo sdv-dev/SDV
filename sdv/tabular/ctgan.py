@@ -1,5 +1,8 @@
 """Wrapper around CTGAN model."""
 
+import contextlib
+import io
+
 from sdv.tabular.base import BaseTabularModel
 
 
@@ -60,6 +63,8 @@ class CTGAN(BaseTabularModel):
             Wheight Decay for the Adam Optimizer. Defaults to 1e-6.
         batch_size (int):
             Number of data samples to process in each step.
+        verbose (bool):
+            Whether to print fit progress on stdout. Defaults to ``False``.
     """
 
     _CTGAN_CLASS = None
@@ -72,7 +77,7 @@ class CTGAN(BaseTabularModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500):
+                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -99,6 +104,7 @@ class CTGAN(BaseTabularModel):
         self._batch_size = batch_size
         self._epochs = epochs
         self._log_frequency = log_frequency
+        self._verbose = verbose
 
     def _fit(self, table_data):
         """Fit the model to the table.
@@ -119,12 +125,22 @@ class CTGAN(BaseTabularModel):
             for field, meta in self._metadata.get_fields().items()
             if meta['type'] == 'categorical'
         ]
-        self._model.fit(
-            table_data,
-            epochs=self._epochs,
-            discrete_columns=categoricals,
-            log_frequency=self._log_frequency,
-        )
+
+        if self._verbose:
+            self._model.fit(
+                table_data,
+                epochs=self._epochs,
+                discrete_columns=categoricals,
+                log_frequency=self._log_frequency,
+            )
+        else:
+            with contextlib.redirect_stdout(io.StringIO()):
+                self._model.fit(
+                    table_data,
+                    epochs=self._epochs,
+                    discrete_columns=categoricals,
+                    log_frequency=self._log_frequency,
+                )
 
     def _sample(self, num_rows):
         """Sample the indicated number of rows from the model.
