@@ -1,28 +1,49 @@
 
-
 <!DOCTYPE html>
 
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.0 documentation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
-    <link href="_static/css/index.css" rel="stylesheet">
+    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.1 documentation</title>
+    
+  <link rel="stylesheet" href="_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.30270b6e4c972e43c488.js">
+
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/language_data.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     <link rel="shortcut icon" href="_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Getting Started" href="getting_started/index.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="docsearch:language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
@@ -131,7 +152,7 @@
             <a href="#overview" class="nav-link">Overview</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#features" class="nav-link">Features:</a>
+            <a href="#current-functionality-and-features" class="nav-link">Current functionality and features:</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
@@ -173,7 +194,7 @@
 <a class="reference external" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a> <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
 <div class="section" id="sdv-the-synthetic-data-vault">
 <h1>SDV - The Synthetic Data Vault<a class="headerlink" href="#sdv-the-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
-<p><strong>Date</strong>: Aug 10, 2020 <strong>Version</strong>: 0.4.0</p>
+<p><strong>Date</strong>: Sep 07, 2020 <strong>Version</strong>: 0.4.1</p>
 <ul class="simple">
 <li><p>License: <a class="reference external" href="https://github.com/sdv-dev/SDV/blob/master/LICENSE">MIT</a></p></li>
 <li><p>Development Status:
@@ -183,33 +204,64 @@
 </ul>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>The Synthetic Data Vault (SDV) is a tool that allows users to
-statistically model tabular as well as entire multi-table, relational
-datasets. Users can then use the statistical model to generate a
-synthetic dataset. Synthetic data can be used to supplement, augment and
-in some cases replace real data when training machine learning models.
-Additionally, it enables the testing of machine learning or other data
-dependent software systems without the risk of exposure that comes with
-data disclosure. Underneath the hood it uses a unique hierarchical
-generative modeling and recursive sampling techniques.</p>
-<div class="section" id="features">
-<h3>Features:<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>Synthetic Data Vault (SDV)</strong> is a <strong>Synthetic Data Generation</strong>
+ecosystem of libraries that allows users to easily learn
+<a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html">single-table</a>,
+<a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html">multi-table</a>
+and <a class="reference external" href="https://github.com/sdv-dev/DeepEcho">timeseries</a> datasets to
+later on generate new <strong>Synthetic Data</strong> that has the <strong>same format and
+statistical properties</strong> as the original dataset.</p>
+<p>Synthetic data can then be used to supplement, augment and in some cases
+replace real data when training Machine Learning models. Additionally,
+it enables the testing of Machine Learning or other data dependent
+software systems without the risk of exposure that comes with data
+disclosure.</p>
+<p>Underneath the hood it uses several probabilistic graphical modeling and
+deep learning based techniques. To enable a variety of data storage
+structures, we employ unique hierarchical generative modeling and
+recursive sampling techniques.</p>
+<div class="section" id="current-functionality-and-features">
+<h3>Current functionality and features:<a class="headerlink" href="#current-functionality-and-features" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Modeling of single tables using Copulas and Deep Learning based
-models.</p></li>
-<li><p>Modeling of complex multi-table relational datasets using Copulas and
-unique recursive modeling techniques.</p></li>
+<li><p>Synthetic data generators for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html">single
+tables</a>
+with the following features:</p>
+<ul>
+<li><p>Using
+<a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula">Copulas</a>
+and <a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html">Deep
+Learning</a>
+based models.</p></li>
 <li><p>Handling of multiple data types and missing data with minimum user
 input.</p></li>
-<li><p>Support for pre-defined and custom constraints and data validation.</p></li>
-<li><p>Definition of entire datasets with a custom and flexible Metadata
-JSON schema.</p></li>
+<li><p>Support for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html">pre-defined and custom
+constraints</a>
+and data validation.</p></li>
+</ul>
+</li>
+<li><p>Synthetic data generators for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html">complex multi-table, relational
+datasets</a>
+with the following features:</p>
+<ul>
+<li><p>Definition of entire <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html">multi-table datasets
+metadata</a>
+with a custom and flexible <a class="reference external" href="https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html">JSON
+schema</a>.</p></li>
+<li><p>Using Copulas and recursive modeling techniques.</p></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="coming-soon">
 <h3>Coming soon:<a class="headerlink" href="#coming-soon" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Time Series modeling with Autoregressive and Deep Learning models.</p></li>
+<li><p>Synthetic data generators for <strong>timeseries</strong> with the following
+features:</p>
+<ul>
+<li><p>Using statistical, Autoregressive and Deep Learning models.</p></li>
+<li><p>Handling context.</p></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -257,12 +309,15 @@ our Slack Workspace!</p>
       </div>
     </div>
 
-    <script src="_static/js/index.js"></script>
+    
+  <script src="_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
           &copy; Copyright 2018, MIT Data To AI Lab.<br/>
-        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>
 </footer>

@@ -1,0 +1,6 @@
+﻿sdv.SDV.fit
+===========
+
+.. currentmodule:: sdv
+
+.. automethod:: SDV.fit

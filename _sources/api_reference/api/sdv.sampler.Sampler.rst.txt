@@ -1,0 +1,33 @@
+﻿sdv.sampler.Sampler
+===================
+
+.. currentmodule:: sdv.sampler
+
+.. autoclass:: Sampler
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Sampler.__init__
+      ~Sampler.sample
+      ~Sampler.sample_all
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Sampler.metadata
+      ~Sampler.models
+      ~Sampler.primary_key
+      ~Sampler.remaining_primary_key
+   
+   

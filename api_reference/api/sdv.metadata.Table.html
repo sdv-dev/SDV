@@ -1,29 +1,50 @@
 
-
 <!DOCTYPE html>
 
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.Table &#8212; SDV 0.4.0 documentation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
-    <link href="../../_static/css/index.css" rel="stylesheet">
+    <title>sdv.metadata.Table &#8212; SDV 0.4.1 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/language_data.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="sdv.metadata.Table.from_dict" href="sdv.metadata.Table.from_dict.html" />
     <link rel="prev" title="sdv.metadata.Metadata.load_tables" href="sdv.metadata.Metadata.load_tables.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="docsearch:language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
@@ -107,6 +128,12 @@
       
       
       
+        
+          
+              <li class="">
+                  <a href="../sdv.html">sdv</a>
+              </li>
+          
         
           
               <li class="">
@@ -316,7 +343,7 @@
 <h1>sdv.metadata.Table<a class="headerlink" href="#sdv-metadata-table" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.metadata.Table">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.metadata.</code><code class="sig-name descname">Table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.metadata.</code><code class="sig-name descname">Table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Table Metadata.</p>
 <p>The Metadata class provides a unified layer of abstraction over the metadata
 of a single Table, which includes all the necessary details to handle the
@@ -364,23 +391,24 @@ This argument exists mostly to ensure that the models are
 fitted using the same arguments when the same Table is used
 to fit different model instances on different slices of the
 same table.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of this table. Optional.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.metadata.Table.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
-<table class="longtable table">
+<table class="longtable table autosummary">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.__init__" title="sdv.metadata.Table.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([field_names, field_types, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metadata.Table.__init__" title="sdv.metadata.Table.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([name, field_names, field_types, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.metadata.Table.filter_valid.html#sdv.metadata.Table.filter_valid" title="sdv.metadata.Table.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(data)</p></td>
@@ -425,7 +453,7 @@ same table.</p></li>
 </tbody>
 </table>
 <p class="rubric">Attributes</p>
-<table class="longtable table">
+<table class="longtable table autosummary">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -457,12 +485,15 @@ same table.</p></li>
       </div>
     </div>
 
-    <script src="../../_static/js/index.js"></script>
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
           &copy; Copyright 2018, MIT Data To AI Lab.<br/>
-        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>
 </footer>

@@ -1,0 +1,6 @@
+﻿sdv.modeler.Modeler.cpa
+=======================
+
+.. currentmodule:: sdv.modeler
+
+.. automethod:: Modeler.cpa

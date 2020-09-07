@@ -1,29 +1,50 @@
 
-
 <!DOCTYPE html>
 
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.CTGAN &#8212; SDV 0.4.0 documentation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous">
-    <link href="../../_static/css/index.css" rel="stylesheet">
+    <title>sdv.tabular.CTGAN &#8212; SDV 0.4.1 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/language_data.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="sdv.tabular.CTGAN.fit" href="sdv.tabular.CTGAN.fit.html" />
     <link rel="prev" title="sdv.tabular.GaussianCopula.load" href="sdv.tabular.GaussianCopula.load.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="docsearch:language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
@@ -107,6 +128,12 @@
       
       
       
+        
+          
+              <li class="">
+                  <a href="../sdv.html">sdv</a>
+              </li>
+          
         
           
 
@@ -228,7 +255,7 @@
 <h1>sdv.tabular.CTGAN<a class="headerlink" href="#sdv-tabular-ctgan" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.tabular.CTGAN">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.</code><code class="sig-name descname">CTGAN</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">epochs</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">log_frequency</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">embedding_dim</span><span class="o">=</span><span class="default_value">128</span></em>, <em class="sig-param"><span class="n">gen_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">dis_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">l2scale</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">500</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/ctgan.html#CTGAN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.CTGAN" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.</code><code class="sig-name descname">CTGAN</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">epochs</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">log_frequency</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">embedding_dim</span><span class="o">=</span><span class="default_value">128</span></em>, <em class="sig-param"><span class="n">gen_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">dis_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">l2scale</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/ctgan.html#CTGAN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.CTGAN" title="Permalink to this definition">¶</a></dt>
 <dd><p>Model wrapping <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code> model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -275,17 +302,18 @@ will be created for each one of the values provided. Defaults to (256, 256).</p>
 Layer will be created for each one of the values provided. Defaults to (256, 256).</p></li>
 <li><p><strong>l2scale</strong> (<em>float</em>) – Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>) – Number of data samples to process in each step.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Whether to print fit progress on stdout. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.tabular.CTGAN.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">epochs</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">log_frequency</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">embedding_dim</span><span class="o">=</span><span class="default_value">128</span></em>, <em class="sig-param"><span class="n">gen_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">dis_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">l2scale</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">500</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/ctgan.html#CTGAN.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.CTGAN.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">epochs</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">log_frequency</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">embedding_dim</span><span class="o">=</span><span class="default_value">128</span></em>, <em class="sig-param"><span class="n">gen_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">dis_dim</span><span class="o">=</span><span class="default_value">256, 256</span></em>, <em class="sig-param"><span class="n">l2scale</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/ctgan.html#CTGAN.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.CTGAN.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
-<table class="longtable table">
+<table class="longtable table autosummary">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -338,12 +366,15 @@ Layer will be created for each one of the values provided. Defaults to (256, 256
       </div>
     </div>
 
-    <script src="../../_static/js/index.js"></script>
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
           &copy; Copyright 2018, MIT Data To AI Lab.<br/>
-        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.0.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>
 </footer>

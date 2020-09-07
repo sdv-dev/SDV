@@ -1,0 +1,6 @@
+﻿sdv.sampler.Sampler.sample\_all
+===============================
+
+.. currentmodule:: sdv.sampler
+
+.. automethod:: Sampler.sample_all

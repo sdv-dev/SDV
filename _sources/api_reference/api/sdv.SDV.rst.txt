@@ -1,0 +1,33 @@
+﻿sdv.SDV
+=======
+
+.. currentmodule:: sdv
+
+.. autoclass:: SDV
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SDV.__init__
+      ~SDV.fit
+      ~SDV.load
+      ~SDV.sample
+      ~SDV.sample_all
+      ~SDV.save
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SDV.sampler
+   
+   

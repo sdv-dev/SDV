@@ -1,0 +1,6 @@
+﻿sdv.benchmark.score\_dataset
+============================
+
+.. currentmodule:: sdv.benchmark
+
+.. autofunction:: score_dataset
