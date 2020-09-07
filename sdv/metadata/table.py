@@ -10,7 +10,7 @@ import rdt
 from faker import Faker
 
 from sdv.constraints.base import Constraint
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,14 +68,16 @@ class Table:
             fitted using the same arguments when the same Table is used
             to fit different model instances on different slices of the
             same table.
+        name (str):
+            Name of this table. Optional.
     """
 
     _hyper_transformer = None
-    _anonymization_mappings = None
     _fakers = None
     _constraint_instances = None
     fitted = False
 
+    _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
         'integer': rdt.transformers.NumericalTransformer(dtype=int),
         'float': rdt.transformers.NumericalTransformer(dtype=float),
@@ -159,9 +161,10 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+    def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None):
+        self._name = name or str(id(self))
         self._field_names = field_names
         self._field_types = field_types or {}
         self._field_transformers = field_transformers or {}
@@ -173,6 +176,9 @@ class Table:
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
+
+    def __repr__(self):
+        return 'Table(name={}, field_names={})'.format(self._name, self._field_names)
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -410,12 +416,15 @@ class Table:
                 fake_values = [faker() for _ in range(len(uniques))]
                 mappings[name] = dict(zip(uniques, fake_values))
 
-        self._anonymization_mappings = mappings
+        self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
+
+        return mappings
 
     def _anonymize(self, data):
-        if self._anonymization_mappings:
+        anonymization_mappings = self._ANONYMIZATION_MAPPINGS.get(id(self))
+        if anonymization_mappings:
             data = data.copy()
-            for name, mapping in self._anonymization_mappings.items():
+            for name, mapping in anonymization_mappings.items():
                 data[name] = data[name].map(mapping)
 
         return data
@@ -451,6 +460,9 @@ class Table:
             pandas.DataFrame:
                 Transformed data.
         """
+        if not self.fitted:
+            raise MetadataNotFittedError()
+
         fields = self.get_dtypes(ids=False)
         data = self._anonymize(data[fields])
 
@@ -469,6 +481,9 @@ class Table:
         Returns:
             pandas.DataFrame
         """
+        if not self.fitted:
+            raise MetadataNotFittedError()
+
         reversed_data = self._hyper_transformer.reverse_transform(data)
 
         for constraint in self._constraints:
@@ -546,8 +561,10 @@ class Table:
         """
         instance = cls()
         instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
+        instance._field_names = list(instance._fields_metadata.keys())
         instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
         instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs'))
+        instance._primary_key = metadata_dict.get('primary_key')
         return instance
 
     @classmethod

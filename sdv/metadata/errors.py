@@ -4,4 +4,6 @@
 class MetadataError(Exception):
     """Error to raise when Metadata is not valid."""
 
-    pass
+
+class MetadataNotFittedError(MetadataError):
+    """Error to raise when Metadata is used before fitting."""
