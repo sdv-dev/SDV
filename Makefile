@@ -49,10 +49,7 @@ clean-pyc: ## remove Python file artifacts
 
 .PHONY: clean-docs
 clean-docs: ## remove previously built docs
-	rm -rf docs/api/
-	rm -rf docs/api_reference/api/
-	rm -rf docs/tutorials
-	-$(MAKE) -C docs clean 2>/dev/null  # this fails if sphinx is not yet installed
+	rm -rf docs/api/ docs/api_reference/api/ docs/tutorials docs/build docs/_build
 
 .PHONY: clean-coverage
 clean-coverage: ## remove coverage artifacts
@@ -122,7 +119,8 @@ test-readme: ## run the readme snippets
 
 .PHONY: test-tutorials
 test-tutorials: ## run the tutorial notebooks
-	jupyter nbconvert --execute --ExecutePreprocessor.timeout=600 tutorials/*.ipynb --stdout > /dev/null
+	find tutorials -path "*/.ipynb_checkpoints" -prune -false -o -name "*.ipynb" -exec \
+		jupyter nbconvert --execute --ExecutePreprocessor.timeout=600 --stdout {} > /dev/null \;
 
 .PHONY: test
 test: test-unit test-readme test-tutorials ## test everything that needs test dependencies

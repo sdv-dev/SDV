@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.4.1 - 2020-09-07
+
+This release fixes a couple of minor issues and introduces an important rework of the
+User Guides section of the documentation.
+
+### Issues fixed
+
+* Error Message: "make sure the Graphviz executables are on your systems' PATH" - [Issue #182](https://github.com/sdv-dev/SDV/issues/182) by @csala
+* Anonymization mappings leak - [Issue #187](https://github.com/sdv-dev/SDV/issues/187) by @csala
+
 ## 0.4.0 - 2020-08-08
 
 In this release SDV gets new documentation, new tutorials, improvements to the Tabular API

@@ -20,8 +20,6 @@ DEFAULT_MODEL_KWARGS = {
 class NotFittedError(Exception):
     """Error to raise when sample is called and SDV is not fitted."""
 
-    pass
-
 
 class SDV:
     """Automated generative modeling and sampling tool.
