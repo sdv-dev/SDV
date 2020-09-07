@@ -1,5 +1,7 @@
 """Functions for Metadata visualization."""
 
+import warnings
+
 import graphviz
 
 
@@ -120,4 +122,14 @@ def visualize(metadata, path=None):
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
     else:
+        try:
+            graphviz.version()
+        except graphviz.ExecutableNotFound:
+            warning_message = (
+                'Graphviz does not seem to be installed on this system. For full '
+                'metadata visualization capabilities, please make sure to have its '
+                'binaries propertly installed: https://graphviz.gitlab.io/download/'
+            )
+            warnings.warn(warning_message, RuntimeWarning)
+
         return digraph
