@@ -370,23 +370,6 @@ class TestMetadata(TestCase):
         with pytest.raises(MetadataError):
             Metadata.get_dtypes(metadata, 'test')
 
-    def test_get_dtypes_error_id(self):
-        """Test get data types with an id that is not a primary or foreign key."""
-        # Setup
-        table_meta = {
-            'fields': {
-                'item': {'type': 'id'}
-            }
-        }
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_table_meta.return_value = table_meta
-        metadata.get_children.return_value = []
-        metadata._DTYPES = Metadata._DTYPES
-
-        # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test', ids=True)
-
     def test_get_dtypes_error_subtype_numerical(self):
         """Test get data types with an invalid numerical subtype."""
         # Setup

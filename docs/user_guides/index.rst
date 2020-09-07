@@ -3,12 +3,10 @@
 User Guides
 ===========
 
-The User Guides section covers different topics about SDV usage.
+The User Guides section covers different topics about SDV usage for different types of data:
 
 .. toctree::
     :maxdepth: 2
 
-    ../tutorials/02_Single_Table_Modeling
-    ../tutorials/03_Relational_Data_Modeling
-    ../tutorials/04_Working_with_Metadata
-    ../tutorials/05_Handling_Constraints
+    single_table
+    relational

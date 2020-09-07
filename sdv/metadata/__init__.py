@@ -407,10 +407,6 @@ class Metadata:
                         if name == self.get_foreign_key(table_name, child_table):
                             break
 
-                    else:
-                        raise MetadataError(
-                            'id field `{}` is neither a primary or a foreign key'.format(name))
-
             if ids or (field_type != 'id'):
                 dtypes[name] = dtype
 
