@@ -218,7 +218,7 @@ class Table:
 
         Args:
             ids (bool):
-                Whether or not include the id fields. Defaults to ``False``.
+                Whether or not to include the id fields. Defaults to ``False``.
 
         Returns:
             dict:
@@ -403,7 +403,7 @@ class Table:
     def _make_anonymization_mappings(self, data):
         mappings = {}
         for name, field_metadata in self._fields_metadata.items():
-            if field_metadata.get('pii'):
+            if field_metadata['type'] != 'id' and field_metadata.get('pii'):
                 faker = self._get_faker(field_metadata['pii_category'])
 
                 uniques = data[name].unique()
@@ -451,7 +451,8 @@ class Table:
             pandas.DataFrame:
                 Transformed data.
         """
-        data = self._anonymize(data[self._field_names])
+        fields = self.get_dtypes(ids=False)
+        data = self._anonymize(data[fields])
 
         for constraint in self._constraints:
             data = constraint.transform(data)
@@ -475,11 +476,15 @@ class Table:
 
         fields = self._fields_metadata
         for name, dtype in self.get_dtypes(ids=True).items():
-            field_type = fields[name]['type']
-            if field_type == 'id':
-                field_data = pd.Series(np.arange(len(reversed_data)))
-            else:
+            field_metadata = fields[name]
+            field_type = field_metadata['type']
+            if field_type != 'id':
                 field_data = reversed_data[name]
+            elif field_metadata.get('pii', False):
+                faker = self._get_faker(field_metadata['pii_category'])
+                field_data = pd.Series([faker() for _ in range(len(reversed_data))])
+            else:
+                field_data = pd.Series(np.arange(len(reversed_data)))
 
             reversed_data[name] = field_data.dropna().astype(dtype)
 
