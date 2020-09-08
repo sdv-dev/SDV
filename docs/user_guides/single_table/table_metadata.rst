@@ -1,3 +1,5 @@
+.. _table_metadata:
+
 Table Metadata
 ==============
 

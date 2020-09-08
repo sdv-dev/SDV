@@ -1,3 +1,5 @@
+.. _single_table_data_description:
+
 Data Description
 ================
 

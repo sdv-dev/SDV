@@ -38,8 +38,11 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
 ]
 
+ipython_warning_is_error = False
 
 autosummary_generate = True
 autodoc_typehints = "none"
