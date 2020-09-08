@@ -1,0 +1,678 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RCPA Model &#8212; SDV 0.4.1 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Timeseries Data" href="../timeseries/index.html" />
+    <link rel="prev" title="Models" href="models.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="../single_table/index.html">Single Table Data</a>
+              </li>
+          
+        
+          
+
+              <li class="active">
+                  <a href="index.html">Relational Data</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="data_description.html">Data Description</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="models.html">Models</a>
+                      </li>
+                  
+                  </ul>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../timeseries/index.html">Timeseries Data</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#about-the-datset" class="nav-link">About the datset</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#data-model-summary" class="nav-link">Data model summary</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#load-relational-data" class="nav-link">Load relational data</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#model-the-data-with-sdv" class="nav-link">Model the data with SDV</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#generate-synthetic-data" class="nav-link">Generate synthetic data</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="rcpa-model">
+<span id="rcpa"></span><h1>RCPA Model<a class="headerlink" href="#rcpa-model" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we will be showing how to model a real world
+multi-table dataset using SDV.</p>
+<div class="section" id="about-the-datset">
+<h2>About the datset<a class="headerlink" href="#about-the-datset" title="Permalink to this headline">¶</a></h2>
+<p>We have a store series, each of those have a size and a category and
+additional information in a given date: average temperature in the
+region, cost of fuel in the region, promotional data, the customer price
+index, the unemployment rate and whether the date is a special holiday.</p>
+<p>From those stores we obtained a training of historical data between
+2010-02-05 and 2012-11-01. This historical data includes the sales of
+each department on a specific date. In this notebook, we will show you
+step-by-step how to download the “Walmart” dataset, explain the
+structure and sample the data.</p>
+<p>In this demonstration we will show how SDV can be used to generate
+synthetic data. And lately, this data can be used to train machine
+learning models.</p>
+<p><em>The dataset used in this example can be found in
+`Kaggle &lt;https://www.kaggle.com/c/walmart-recruiting-store-sales-forecasting/data&gt;`__,
+but we will show how to download it from SDV.</em></p>
+<div class="section" id="data-model-summary">
+<h3>Data model summary<a class="headerlink" href="#data-model-summary" title="Permalink to this headline">¶</a></h3>
+<p style="text-align: center"><p>stores</p>
+<p><table class="table">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 25%" />
+<col style="width: 18%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Subtype</p></th>
+<th class="head"><p>Additional Properties</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Store</p></td>
+<td><p>id</p></td>
+<td><p>integer</p></td>
+<td><p>Primary key</p></td>
+</tr>
+<tr class="row-odd"><td><p>Size</p></td>
+<td><p>numerical</p></td>
+<td><p>integer</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Type</p></td>
+<td><p>categorical</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Contains information about the 45 stores, indicating the type and size
+of store.</p>
+<p style="text-align: center"><p>features</p>
+<p><table class="table">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 19%" />
+<col style="width: 16%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Fields</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Subtype</p></th>
+<th class="head"><p>Additional Properties</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Store</p></td>
+<td><p>id</p></td>
+<td><p>integer</p></td>
+<td><p>foreign key (stores.Store)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Date</p></td>
+<td><p>datetime</p></td>
+<td></td>
+<td><p>format: “%Y-%m-%d”</p></td>
+</tr>
+<tr class="row-even"><td><p>IsHoliday</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Fuel_Price</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Unemployment</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Temperature</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>CPI</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>MarkDown1</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>MarkDown2</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>MarkDown3</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>MarkDown4</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>MarkDown5</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Contains historical training data, which covers to 2010-02-05 to
+2012-11-01.</p>
+<p style="text-align: center"><p>depts</p>
+<p><table class="table">
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 18%" />
+<col style="width: 15%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Fields</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Subtype</p></th>
+<th class="head"><p>Additional Properties</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Store</p></td>
+<td><p>id</p></td>
+<td><p>integer</p></td>
+<td><p>foreign key (stores.Stores)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Date</p></td>
+<td><p>datetime</p></td>
+<td></td>
+<td><p>format: “%Y-%m-%d”</p></td>
+</tr>
+<tr class="row-even"><td><p>Weekly_Sales</p></td>
+<td><p>numerical</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Dept</p></td>
+<td><p>numerical</p></td>
+<td><p>integer</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>IsHoliday</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Contains additional data related to the store, department, and regional
+activity for the given dates.</p>
+</div>
+</div>
+<div class="section" id="load-relational-data">
+<h2>Load relational data<a class="headerlink" href="#load-relational-data" title="Permalink to this headline">¶</a></h2>
+<p>Let’s start downloading the data set. In this case, we will download the
+data set <em>walmart</em>. We will use the SDV function <code class="docutils literal notranslate"><span class="pre">load_demo</span></code>, we can
+specify the name of the dataset we want to use and if we want its
+Metadata object or not. To know more about the <code class="docutils literal notranslate"><span class="pre">load_demo</span></code> function
+<a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.demo.load_demo.html">see its
+documentation</a>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s1">&#39;walmart&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Our dataset is downloaded from an <a class="reference external" href="http://sdv-datasets.s3.amazonaws.com/index.html">Amazon S3
+bucket</a> that
+contains all available data sets of the <code class="docutils literal notranslate"><span class="pre">load_demo</span></code> method.</p>
+<p>We can now visualize the metadata structure and the tables</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [3]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">visualize</span><span class="p">();</span>
+</pre></div>
+</div>
+<img alt="images/rcpa_1.png" src="images/rcpa_1.png" />
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="n">tables</span>
+<span class="gh">Out[4]: </span><span class="go"></span>
+<span class="go">{&#39;stores&#39;:     Store Type    Size</span>
+<span class="go"> 0       1    A  151315</span>
+<span class="go"> 1       2    A  202307</span>
+<span class="go"> 2       3    B   37392</span>
+<span class="go"> 3       4    A  205863</span>
+<span class="go"> 4       5    B   34875</span>
+<span class="go"> 5       6    A  202505</span>
+<span class="go"> 6       7    B   70713</span>
+<span class="go"> 7       8    A  155078</span>
+<span class="go"> 8       9    B  125833</span>
+<span class="go"> 9      10    B  126512</span>
+<span class="go"> 10     11    A  207499</span>
+<span class="go"> 11     12    B  112238</span>
+<span class="go"> 12     13    A  219622</span>
+<span class="go"> 13     14    A  200898</span>
+<span class="go"> 14     15    B  123737</span>
+<span class="go"> 15     16    B   57197</span>
+<span class="go"> 16     17    B   93188</span>
+<span class="go"> 17     18    B  120653</span>
+<span class="go"> 18     19    A  203819</span>
+<span class="go"> 19     20    A  203742</span>
+<span class="go"> 20     21    B  140167</span>
+<span class="go"> 21     22    B  119557</span>
+<span class="go"> 22     23    B  114533</span>
+<span class="go"> 23     24    A  203819</span>
+<span class="go"> 24     25    B  128107</span>
+<span class="go"> 25     26    A  152513</span>
+<span class="go"> 26     27    A  204184</span>
+<span class="go"> 27     28    A  206302</span>
+<span class="go"> 28     29    B   93638</span>
+<span class="go"> 29     30    C   42988</span>
+<span class="go"> 30     31    A  203750</span>
+<span class="go"> 31     32    A  203007</span>
+<span class="go"> 32     33    A   39690</span>
+<span class="go"> 33     34    A  158114</span>
+<span class="go"> 34     35    B  103681</span>
+<span class="go"> 35     36    A   39910</span>
+<span class="go"> 36     37    C   39910</span>
+<span class="go"> 37     38    C   39690</span>
+<span class="go"> 38     39    A  184109</span>
+<span class="go"> 39     40    A  155083</span>
+<span class="go"> 40     41    A  196321</span>
+<span class="go"> 41     42    C   39690</span>
+<span class="go"> 42     43    C   41062</span>
+<span class="go"> 43     44    C   39910</span>
+<span class="go"> 44     45    B  118221,</span>
+<span class="go"> &#39;features&#39;:       Store       Date  Temperature  ...         CPI  Unemployment  IsHoliday</span>
+<span class="go"> 0         1 2010-02-05        42.31  ...  211.096358         8.106      False</span>
+<span class="go"> 1         1 2010-02-12        38.51  ...  211.242170         8.106       True</span>
+<span class="go"> 2         1 2010-02-19        39.93  ...  211.289143         8.106      False</span>
+<span class="go"> 3         1 2010-02-26        46.63  ...  211.319643         8.106      False</span>
+<span class="go"> 4         1 2010-03-05        46.50  ...  211.350143         8.106      False</span>
+<span class="go"> ...     ...        ...          ...  ...         ...           ...        ...</span>
+<span class="go"> 8185     45 2013-06-28        76.05  ...         NaN           NaN      False</span>
+<span class="go"> 8186     45 2013-07-05        77.50  ...         NaN           NaN      False</span>
+<span class="go"> 8187     45 2013-07-12        79.37  ...         NaN           NaN      False</span>
+<span class="go"> 8188     45 2013-07-19        82.84  ...         NaN           NaN      False</span>
+<span class="go"> 8189     45 2013-07-26        76.06  ...         NaN           NaN      False</span>
+<span class="go"> </span>
+<span class="go"> [8190 rows x 12 columns],</span>
+<span class="go"> &#39;depts&#39;:         Store  Dept       Date  Weekly_Sales  IsHoliday</span>
+<span class="go"> 0           1     1 2010-02-05      24924.50      False</span>
+<span class="go"> 1           1     1 2010-02-12      46039.49       True</span>
+<span class="go"> 2           1     1 2010-02-19      41595.55      False</span>
+<span class="go"> 3           1     1 2010-02-26      19403.54      False</span>
+<span class="go"> 4           1     1 2010-03-05      21827.90      False</span>
+<span class="go"> ...       ...   ...        ...           ...        ...</span>
+<span class="go"> 421565     45    98 2012-09-28        508.37      False</span>
+<span class="go"> 421566     45    98 2012-10-05        628.10      False</span>
+<span class="go"> 421567     45    98 2012-10-12       1061.02      False</span>
+<span class="go"> 421568     45    98 2012-10-19        760.01      False</span>
+<span class="go"> 421569     45    98 2012-10-26       1076.80      False</span>
+<span class="go"> </span>
+<span class="go"> [421570 rows x 5 columns]}</span>
+</pre></div>
+</div>
+<p>And also validate that the metadata is correctly defined for our data</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="model-the-data-with-sdv">
+<h2>Model the data with SDV<a class="headerlink" href="#model-the-data-with-sdv" title="Permalink to this headline">¶</a></h2>
+<p>Once we download it, we have to create an SDV instance. With that
+instance, we have to analyze the loaded tables to generate a statistical
+model from the data. In this case, the process of adjusting the model is
+quickly because the dataset is small. However, with larger datasets it
+can be a slow process.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">SDV</span>
+
+<span class="gp">In [7]: </span><span class="n">sdv</span> <span class="o">=</span> <span class="n">SDV</span><span class="p">()</span>
+
+<span class="gp">In [8]: </span><span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="n">tables</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note: We may not want to train the model every time we want to generate
+new synthetic data. We can
+<a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sdv.html#sdv.sdv.SDV.save">save</a>
+the SDV instance to
+<a class="reference external" href="https://sdv-dev.github.io/SDV/api/sdv.sdv.html#sdv.sdv.SDV.save">load</a>
+it later.</p>
+</div>
+<div class="section" id="generate-synthetic-data">
+<h2>Generate synthetic data<a class="headerlink" href="#generate-synthetic-data" title="Permalink to this headline">¶</a></h2>
+<p>Once the instance is trained, we are ready to generate the synthetic
+data.</p>
+<p>The easiest way to generate synthetic data for the entire dataset is to
+call the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method. By default, this method generates only 5
+rows, but we can specify the row number that will be generated with the
+<code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sdv</span><span class="o">.</span><span class="n">sample_all</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This returns a dictionary with the same format as the input <code class="docutils literal notranslate"><span class="pre">tables</span></code>,
+with a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> for each table.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">samples</span>
+<span class="gh">Out[10]: </span><span class="go"></span>
+<span class="go">{&#39;stores&#39;:    Type    Size  Store</span>
+<span class="go"> 0     A  134908      0</span>
+<span class="go"> 1     A  152628      1</span>
+<span class="go"> 2     A   71185      2</span>
+<span class="go"> 3     B  132809      3</span>
+<span class="go"> 4     A   35804      4</span>
+<span class="go"> 5     A  125342      5</span>
+<span class="go"> 6     B  133512      6</span>
+<span class="go"> 7     C  128922      7</span>
+<span class="go"> 8     A  193100      8</span>
+<span class="go"> 9     A  163862      9</span>
+<span class="go"> 10    A  241282     10</span>
+<span class="go"> 11    B   84020     11</span>
+<span class="go"> 12    A  -32757     12</span>
+<span class="go"> 13    A  119983     13</span>
+<span class="go"> 14    B  142040     14</span>
+<span class="go"> 15    A  230633     15</span>
+<span class="go"> 16    A  189054     16</span>
+<span class="go"> 17    B   50544     17</span>
+<span class="go"> 18    A  129299     18</span>
+<span class="go"> 19    B  114690     19</span>
+<span class="go"> 20    A  197126     20</span>
+<span class="go"> 21    B  105785     21</span>
+<span class="go"> 22    A  179665     22</span>
+<span class="go"> 23    B   75239     23</span>
+<span class="go"> 24    B  111782     24</span>
+<span class="go"> 25    B   -1797     25</span>
+<span class="go"> 26    A  139782     26</span>
+<span class="go"> 27    B  113926     27</span>
+<span class="go"> 28    A  148539     28</span>
+<span class="go"> 29    B  136886     29</span>
+<span class="go"> 30    A  187137     30</span>
+<span class="go"> 31    B   78720     31</span>
+<span class="go"> 32    B  126802     32</span>
+<span class="go"> 33    B  110711     33</span>
+<span class="go"> 34    A  178389     34</span>
+<span class="go"> 35    A  130304     35</span>
+<span class="go"> 36    A   54392     36</span>
+<span class="go"> 37    A  154684     37</span>
+<span class="go"> 38    B   72644     38</span>
+<span class="go"> 39    C   61099     39</span>
+<span class="go"> 40    A  129333     40</span>
+<span class="go"> 41    B  152287     41</span>
+<span class="go"> 42    B   76741     42</span>
+<span class="go"> 43    A  163268     43</span>
+<span class="go"> 44    B  163138     44,</span>
+<span class="go"> &#39;features&#39;:                               Date     MarkDown1  ...     MarkDown2         CPI</span>
+<span class="go"> 0    2012-07-06 15:34:16.922856192           NaN  ...   5896.910836  225.489993</span>
+<span class="go"> 1    2011-06-08 14:04:50.780003328   6544.059091  ...           NaN  240.958188</span>
+<span class="go"> 2    2012-11-22 14:47:09.663985664           NaN  ...   6873.736128  231.849935</span>
+<span class="go"> 3    2011-12-24 11:31:44.137853440   7259.073114  ...           NaN  234.276688</span>
+<span class="go"> 4    2012-01-13 10:16:02.018190336   6374.508171  ...           NaN  239.372772</span>
+<span class="go"> ...                            ...           ...  ...           ...         ...</span>
+<span class="go"> 8185 2011-08-05 11:52:03.534498560           NaN  ...   3200.394632  200.123409</span>
+<span class="go"> 8186 2012-03-22 12:33:04.753911808  12744.816884  ...   5413.376225  192.354737</span>
+<span class="go"> 8187 2013-06-01 22:57:33.622164736  24876.209047  ...  14191.950644  179.051313</span>
+<span class="go"> 8188 2010-03-12 08:09:38.521931008   1275.817597  ...           NaN  205.408244</span>
+<span class="go"> 8189 2011-10-20 08:20:03.720103936           NaN  ...   4693.995753  194.758959</span>
+<span class="go"> </span>
+<span class="go"> [8190 rows x 12 columns],</span>
+<span class="go"> &#39;depts&#39;:                                 Date  Weekly_Sales  Store  Dept  IsHoliday</span>
+<span class="go"> 0      2010-02-24 22:35:49.535354624  -1781.554695      0    68      False</span>
+<span class="go"> 1      2012-04-03 20:23:49.016994816  16282.671571      0    37      False</span>
+<span class="go"> 2      2011-06-19 00:17:57.142694144  28253.636442      0   -13       True</span>
+<span class="go"> 3      2011-10-09 23:43:55.548804608   4676.160302      0    62      False</span>
+<span class="go"> 4      2012-05-03 11:34:17.204748032  -5440.092642      0    38      False</span>
+<span class="go"> ...                              ...           ...    ...   ...        ...</span>
+<span class="go"> 421492 2010-11-29 20:35:31.517774592  20984.621697     44    24      False</span>
+<span class="go"> 421493 2011-09-16 11:16:25.371694848  48270.390896     44    51      False</span>
+<span class="go"> 421494 2012-04-06 01:19:49.443648000  12854.696428     44    45      False</span>
+<span class="go"> 421495 2011-04-05 12:24:39.816315136  -8994.995337     44    43      False</span>
+<span class="go"> 421496 2012-04-30 14:09:46.787632128  25430.874369     44    34      False</span>
+<span class="go"> </span>
+<span class="go"> [421497 rows x 5 columns]}</span>
+</pre></div>
+</div>
+<p>We may not want to generate data for all tables in the dataset, rather
+for just one table. This is possible with SDV using the <code class="docutils literal notranslate"><span class="pre">sample</span></code>
+method. To use it we only need to specify the name of the table we want
+to synthesize and the row numbers to generate. In this case, the
+“walmart” data set has 3 tables: stores, features and depts.</p>
+<p>In the following example, we will generate 1000 rows of the “features”
+table.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">sdv</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[11]: </span><span class="go"></span>
+<span class="go">                             Date    MarkDown1  ...  MarkDown2         CPI</span>
+<span class="go">0   2012-01-19 08:08:38.123055872          NaN  ...        NaN  166.470492</span>
+<span class="go">1   2011-08-02 04:03:33.812614400    80.042768  ...        NaN  157.866971</span>
+<span class="go">2   2011-04-08 14:07:12.141046528          NaN  ...        NaN  176.613579</span>
+<span class="go">3   2011-05-02 08:31:33.999448320          NaN  ...        NaN  153.297457</span>
+<span class="go">4   2011-09-28 07:24:24.131271936          NaN  ...        NaN  162.380353</span>
+<span class="go">..                            ...          ...  ...        ...         ...</span>
+<span class="go">995 2011-07-01 15:23:40.408955904          NaN  ...        NaN  154.057000</span>
+<span class="go">996 2012-02-08 10:03:37.316439552 -4314.757966  ...        NaN  180.319489</span>
+<span class="go">997 2011-08-08 16:21:41.904248064  5521.141004  ...        NaN  133.040797</span>
+<span class="go">998 2013-07-22 23:56:08.675416064  2174.517061  ...        NaN         NaN</span>
+<span class="go">999 2011-11-30 09:44:19.985236224 -3956.548161  ...        NaN  178.694887</span>
+
+<span class="go">[1000 rows x 12 columns]</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="models.html" title="previous page">Models</a>
+    <a class='right-next' id="next-link" href="../timeseries/index.html" title="next page">Timeseries Data</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

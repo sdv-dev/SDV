@@ -1,0 +1,968 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GaussianCopula Model &#8212; SDV 0.4.1 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="CTGAN Model" href="ctgan.html" />
+    <link rel="prev" title="Models" href="models.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+
+              <li class="active">
+                  <a href="index.html">Single Table Data</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="data_description.html">Data Description</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="models.html">Models</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="constraints.html">Handling Constraints</a>
+                      </li>
+                  
+                  </ul>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../relational/index.html">Relational Data</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../timeseries/index.html">Timeseries Data</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#what-is-gaussiancopula" class="nav-link">What is GaussianCopula?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#quick-usage" class="nav-link">Quick Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#generate-synthetic-data-from-the-model" class="nav-link">Generate synthetic data from the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#save-and-load-the-model" class="nav-link">Save and Load the model</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#save-and-share-the-model" class="nav-link">Save and share the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#load-the-model-and-generate-new-data" class="nav-link">Load the model and generate new data</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#specifying-the-primary-key-of-the-table" class="nav-link">Specifying the Primary Key of the table</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#anonymizing-personally-identifiable-information-pii" class="nav-link">Anonymizing Personally Identifiable Information (PII)</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#specifying-constraints" class="nav-link">Specifying constraints</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#advanced-usage" class="nav-link">Advanced Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#how-to-set-transforms-to-use" class="nav-link">How to set transforms to use?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#exploring-the-probability-distributions" class="nav-link">Exploring the Probability Distributions</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#setting-distributions-for-indvidual-variables" class="nav-link">Setting distributions for indvidual variables</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="gaussiancopula-model">
+<span id="gaussian-copula"></span><h1>GaussianCopula Model<a class="headerlink" href="#gaussiancopula-model" title="Permalink to this headline">¶</a></h1>
+<p>In this guide we will go through a series of steps that will let you
+discover functionalities of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model, including how
+to:</p>
+<ul class="simple">
+<li><p>Create an instance of a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>.</p></li>
+<li><p>Fit the instance to your data.</p></li>
+<li><p>Generate synthetic versions of your data.</p></li>
+<li><p>Use the a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to anonymize PII information.</p></li>
+<li><p>Customize the data tranformations to improve the learning process.</p></li>
+<li><p>Specify the column distributions to improve the output quality.</p></li>
+</ul>
+<div class="section" id="what-is-gaussiancopula">
+<h2>What is GaussianCopula?<a class="headerlink" href="#what-is-gaussiancopula" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">sdv.tabular.GaussianCopula</span></code> model is based on the the usage of
+<a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula funtions</a>.</p>
+<p>In mathematical terms, a <em>copula</em> is a distribution over the unit
+cube <span class="math notranslate nohighlight">\({\displaystyle [0,1]^{d}}\)</span> which is constructed from a
+multivariate normal distribution over
+<span class="math notranslate nohighlight">\({\displaystyle \mathbb {R} ^{d}}\)</span> by using the probability
+integral transform. Intuitively, a <em>copula</em> is a mathematical function
+that allows us to describe the joint distribution of multiple random
+variables by analyzing the dependencies between their marginal
+distributions.</p>
+<p>Let’s now discover how to learn a dataset and later on generate
+synthetic data with the same format and statistical properties by using
+the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
+</div>
+<div class="section" id="quick-usage">
+<h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
+<p>We will start by loading one of our demo datasets, the
+<code class="docutils literal notranslate"><span class="pre">student_placements</span></code>, which contains information about MBA students
+that applied for placements during the year 2020.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements&#39;</span><span class="p">)</span>
+
+<span class="gp">In [3]: </span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
+<span class="go">0      155368      M        67.00  ...  2020-01-08 2020-04-17       3.0</span>
+<span class="go">1      155369      M        79.33  ...  2020-01-15 2020-04-02       3.0</span>
+<span class="go">2      155370      M        65.00  ...  2020-01-30 2020-04-27       3.0</span>
+<span class="go">3      155371      M        56.00  ...         NaT        NaT       NaN</span>
+<span class="go">4      155372      M        85.80  ...  2020-01-16 2020-04-28       3.0</span>
+
+<span class="go">[5 rows x 17 columns]</span>
+</pre></div>
+</div>
+<p>As you can see, this table contains information about students which
+includes, among other things:</p>
+<ul class="simple">
+<li><p>Their id and gender</p></li>
+<li><p>Their grades and specializations</p></li>
+<li><p>Their work experience</p></li>
+<li><p>The salary that they where offered</p></li>
+<li><p>The duration and dates of their placement</p></li>
+</ul>
+<p>You will notice that there is data with the following characteristics:</p>
+<ul class="simple">
+<li><p>There are float, integer, boolean, categorical and datetime values.</p></li>
+<li><p>There are some variables that have missing data. In particular, all
+the data related to the placement details is missing in the rows
+where the studen was not placed.</p></li>
+</ul>
+<p>Let us use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to learn this data and then sample
+synthetic data about new students to see how well de model captures the
+characteristics indicated above. In order to do this you wil need to:</p>
+<ul class="simple">
+<li><p>Import the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.GaussianCopula</span></code> class and create an
+instance of it.</p></li>
+<li><p>Call its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method passing our table.</p></li>
+<li><p>Call its <code class="docutils literal notranslate"><span class="pre">sample</span></code> method indicating the number of synthetic rows
+that you want to generate.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="gp">In [5]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">()</span>
+
+<span class="gp">In [6]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notice that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the
+different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data
+Transforms</a> to ensure that the data
+has a format that the <code class="docutils literal notranslate"><span class="pre">GaussianMultivariate</span></code> model can handle.</p>
+</div>
+<div class="section" id="generate-synthetic-data-from-the-model">
+<h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
+<p>Once the modeling has finished you are ready to generate new synthetic
+data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model passing the number
+of rows that we want to generate.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [7]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will return a table identical to the one which the model was fitted
+on, but filled with new data which resembles the original one.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[8]: </span><span class="go"></span>
+<span class="go">   student_id gender  ...                      end_date  duration</span>
+<span class="go">0      155547      M  ... 2020-09-07 05:21:30.394424832      12.0</span>
+<span class="go">1      155466      F  ... 2020-11-28 16:15:07.651699968       3.0</span>
+<span class="go">2      155552      M  ...                           NaT      12.0</span>
+<span class="go">3      155470      F  ...                           NaT       6.0</span>
+<span class="go">4      155574      M  ...                           NaT       3.0</span>
+
+<span class="go">[5 rows x 17 columns]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can control the number of rows by specifying the number of
+<code class="docutils literal notranslate"><span class="pre">samples</span></code> in the <code class="docutils literal notranslate"><span class="pre">model.sample(&lt;num_rows&gt;)</span></code>. To test, try
+<code class="docutils literal notranslate"><span class="pre">model.sample(10000)</span></code>. Note that the original table only had ~200
+rows.</p>
+</div>
+</div>
+<div class="section" id="save-and-load-the-model">
+<h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In many scenarios it will be convenient to generate synthetic versions
+of your data directly in systems that do not have access to the original
+data source. For example, if you may want to generate testing data on
+the fly inside a testing environment that does not have access to your
+production database. In these scenarios, fitting the model with real
+data every time that you need to generate new data is feasible, so you
+will need to fit a model in your production environment, save the fitted
+model into a file, send this file to the testing environment and then
+load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
+<p>Let’s see how this process works.</p>
+<div class="section" id="save-and-share-the-model">
+<h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
+<p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
+method passing the name of the file in which you want to save the model.
+Note that the extension of the filename is not relevant, but we will be
+using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization
+protocol used is
+<a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will have created a file called <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> in the same
+directory in which you are running SDV.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If you inspect the generated file you will notice that its size is much
+smaller than the size of the data that you used to generate it. This is
+because the serialized model contains <strong>no information about the
+original data</strong>, other than the parameters it needs to generate
+synthetic versions of it. This means that you can safely share this
+<code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risc of disclosing any of your real
+data!</p>
+</div>
+</div>
+<div class="section" id="load-the-model-and-generate-new-data">
+<h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
+<p>The file you just generated can be send over to the system where the
+synthetic data will be generated. Once it is there, you can load it
+using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula.load</span></code> method, and then you are ready to
+sample new data from the loaded instance:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">loaded</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+
+<span class="gp">In [11]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">loaded</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Notice that the system where the model is loaded needs to also have
+<code class="docutils literal notranslate"><span class="pre">sdv</span></code> installed, otherwise it will not be able to load the model and
+use it.</p>
+</div>
+</div>
+</div>
+<div class="section" id="specifying-the-primary-key-of-the-table">
+<h3>Specifying the Primary Key of the table<a class="headerlink" href="#specifying-the-primary-key-of-the-table" title="Permalink to this headline">¶</a></h3>
+<p>One of the first things that you may have noticed when looking that demo
+data is that there is a <code class="docutils literal notranslate"><span class="pre">student_id</span></code> column which acts as the primary
+key of the table, and which is supposed to have unique values. Indeed,
+if we look at the number of times that each value appears, we see that
+all of them appear at most once:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="gh">Out[12]: </span><span class="go">1</span>
+</pre></div>
+</div>
+<p>However, if we look at the synthetic data that we generated, we observe
+that there are some values that appear more than once:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="gh">Out[13]: </span><span class="go">5</span>
+
+<span class="gp">In [14]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="gh">Out[14]: </span><span class="go"></span>
+<span class="go">     student_id gender  ...                      end_date  duration</span>
+<span class="go">19       155581      M  ... 2020-04-24 11:42:44.948000000       3.0</span>
+<span class="go">117      155581      F  ... 2020-06-29 17:12:16.876372736       3.0</span>
+<span class="go">120      155581      F  ... 2020-05-26 03:19:17.016966656       3.0</span>
+<span class="go">188      155581      F  ...                           NaT      12.0</span>
+<span class="go">196      155581      M  ...                           NaT       3.0</span>
+
+<span class="go">[5 rows x 17 columns]</span>
+</pre></div>
+</div>
+<p>This happens because the model was not notified at any point about the
+fact that the <code class="docutils literal notranslate"><span class="pre">student_id</span></code> had to be unique, so when it generates new
+data it will provoke collisions sooner or later. In order to solve this,
+we can pass the argument <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to our model when we create it,
+indicating the name of the column that is the index of the table.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="gp">In [17]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As a result, the model will learn that this column must be unique and
+generate a unique sequence of valures for the column:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[18]: </span><span class="go"></span>
+<span class="go">   student_id gender  ...                      end_date  duration</span>
+<span class="go">0           0      M  ... 2020-06-25 04:56:13.060632576       3.0</span>
+<span class="go">1           1      F  ...                           NaT       6.0</span>
+<span class="go">2           2      M  ... 2020-09-02 07:24:00.166256640      12.0</span>
+<span class="go">3           3      F  ... 2020-10-10 08:14:33.572433664       3.0</span>
+<span class="go">4           4      F  ...                           NaT       3.0</span>
+
+<span class="go">[5 rows x 17 columns]</span>
+
+<span class="gp">In [19]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="gh">Out[19]: </span><span class="go">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="anonymizing-personally-identifiable-information-pii">
+<h3>Anonymizing Personally Identifiable Information (PII)<a class="headerlink" href="#anonymizing-personally-identifiable-information-pii" title="Permalink to this headline">¶</a></h3>
+<p>There will be many cases where the data will contain Personally
+Identifiable Information which we cannot disclose. In these cases, we
+will want our Tabular Models to replace the information within these
+fields with fake, simulated data that looks similar to the real one but
+does not contain any of the original values.</p>
+<p>Let’s load a new dataset that contains a PII field, the
+<code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> demo, and try to generate synthetic versions
+of it that do not contain any of the PII fields.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset is a modified version of the
+<code class="docutils literal notranslate"><span class="pre">student_placements</span></code> dataset with one new field, <code class="docutils literal notranslate"><span class="pre">address</span></code>, which
+contains PII information about the students. Notice that this additional
+<code class="docutils literal notranslate"><span class="pre">address</span></code> field has been simulated and does not correspond to data
+from the real users.</p>
+</div>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">data_pii</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements_pii&#39;</span><span class="p">)</span>
+
+<span class="gp">In [21]: </span><span class="n">data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[21]: </span><span class="go"></span>
+<span class="go">   student_id              name gender  ...  start_date   end_date duration</span>
+<span class="go">0      155368       Ryan Massey      M  ...  2020-01-08 2020-04-17      3.0</span>
+<span class="go">1      155369      Charles Frye      M  ...  2020-01-15 2020-04-02      3.0</span>
+<span class="go">2      155370     Corey Compton      M  ...  2020-01-30 2020-04-27      3.0</span>
+<span class="go">3      155371    John White III      M  ...         NaT        NaT      NaN</span>
+<span class="go">4      155372  Jeffery Robinson      M  ...  2020-01-16 2020-04-28      3.0</span>
+
+<span class="go">[5 rows x 18 columns]</span>
+</pre></div>
+</div>
+<p>If we use our tabular model on this new data we will see how the
+synthetic data that it generates discloses the addresses from the real
+students:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [22]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [23]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
+
+<span class="gp">In [24]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [25]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[25]: </span><span class="go"></span>
+<span class="go">   student_id             name  ...                      end_date  duration</span>
+<span class="go">0           0     Malik Bryant  ... 2020-06-27 21:58:45.584426496       3.0</span>
+<span class="go">1           1   Jerry Ferguson  ... 2020-08-16 07:35:00.650851072       3.0</span>
+<span class="go">2           2     Robert Brown  ... 2020-05-13 16:17:20.911742976       3.0</span>
+<span class="go">3           3  Danielle Madden  ... 2020-12-07 22:37:36.837577216      12.0</span>
+<span class="go">4           4  Patrick Johnson  ... 2020-10-09 12:38:33.387603712       3.0</span>
+
+<span class="go">[5 rows x 18 columns]</span>
+
+<span class="gp">In [26]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">26</span><span class="o">-</span><span class="n">f486e02a70b3</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+<span class="nn">/opt/hostedtoolcache/Python/3.7.9/x64/lib/python3.7/site-packages/pandas/core/generic.py</span> in <span class="ni">__getattr__</span><span class="nt">(self, name)</span>
+<span class="g g-Whitespace">   </span><span class="mi">5128</span>             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info_axis</span><span class="o">.</span><span class="n">_can_hold_identifiers_and_holds_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="g g-Whitespace">   </span><span class="mi">5129</span>                 <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="ne">-&gt; </span><span class="mi">5130</span>             <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">5131</span> 
+<span class="g g-Whitespace">   </span><span class="mi">5132</span>     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<span class="ne">AttributeError</span>: &#39;DataFrame&#39; object has no attribute &#39;address&#39;
+</pre></div>
+</div>
+<p>In order to solve this, we can pass an additional argument
+<code class="docutils literal notranslate"><span class="pre">anonymize_fields</span></code> to our model when we create the instance. This
+<code class="docutils literal notranslate"><span class="pre">anonymize_fields</span></code> argument will need to be a dictionary that
+contains:</p>
+<ul class="simple">
+<li><p>The name of the field that we want to anonymize.</p></li>
+<li><p>The category of the field that we want to use when we generate fake
+values for it.</p></li>
+</ul>
+<p>The list complete list of possible categories can be seen in the <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker
+Providers</a>
+page, and it contains a huge list of concepts such as:</p>
+<ul class="simple">
+<li><p>name</p></li>
+<li><p>address</p></li>
+<li><p>country</p></li>
+<li><p>city</p></li>
+<li><p>ssn</p></li>
+<li><p>credit_card_number</p></li>
+<li><p>credit_card_expier</p></li>
+<li><p>credit_card_security_code</p></li>
+<li><p>email</p></li>
+<li><p>telephone</p></li>
+<li><p>…</p></li>
+</ul>
+<p>In this case, since the field is an e-mail address, we will pass a
+dictionary indicating the category <code class="docutils literal notranslate"><span class="pre">address</span></code></p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [27]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
+<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
+<span class="gp">   ....: </span>    <span class="p">}</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [28]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As a result, we can see how the real <code class="docutils literal notranslate"><span class="pre">address</span></code> values have been
+replaced by other fake addresses that were not taken from the real data
+that we learned.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [29]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [30]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[30]: </span><span class="go"></span>
+<span class="go">   student_id            name  ...                      end_date  duration</span>
+<span class="go">0           0  Jason Sullivan  ... 2021-01-25 02:31:57.769034752      12.0</span>
+<span class="go">1           1  Jason Sullivan  ... 2020-06-23 06:30:22.202402560       3.0</span>
+<span class="go">2           2    Malik Bryant  ... 2020-05-26 16:57:27.838258432       3.0</span>
+<span class="go">3           3    Cassie Mcgee  ... 2020-10-12 15:53:48.164349952       3.0</span>
+<span class="go">4           4  John White III  ... 2020-11-15 14:26:22.291102976      12.0</span>
+
+<span class="go">[5 rows x 18 columns]</span>
+
+<span class="gp">In [31]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">31</span><span class="o">-</span><span class="n">f486e02a70b3</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+<span class="nn">/opt/hostedtoolcache/Python/3.7.9/x64/lib/python3.7/site-packages/pandas/core/generic.py</span> in <span class="ni">__getattr__</span><span class="nt">(self, name)</span>
+<span class="g g-Whitespace">   </span><span class="mi">5128</span>             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info_axis</span><span class="o">.</span><span class="n">_can_hold_identifiers_and_holds_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="g g-Whitespace">   </span><span class="mi">5129</span>                 <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="ne">-&gt; </span><span class="mi">5130</span>             <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">5131</span> 
+<span class="g g-Whitespace">   </span><span class="mi">5132</span>     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<span class="ne">AttributeError</span>: &#39;DataFrame&#39; object has no attribute &#39;address&#39;
+</pre></div>
+</div>
+</div>
+<div class="section" id="specifying-constraints">
+<h3>Specifying constraints<a class="headerlink" href="#specifying-constraints" title="Permalink to this headline">¶</a></h3>
+<p>If you look closely at the data you may notice that some properties were
+not completely captured by the model. For example, you may have seen
+that sometimes the model produces an <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> number greater
+than <code class="docutils literal notranslate"><span class="pre">0</span></code> while also indicating that <code class="docutils literal notranslate"><span class="pre">work_experience</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.
+These type of properties are what we call <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> and can also
+be handled using <code class="docutils literal notranslate"><span class="pre">SDV</span></code>. For further details about them please visit
+the <a class="reference internal" href="constraints.html#single-table-constraints"><span class="std std-ref">Handling Constraints</span></a> guide.</p>
+</div>
+</div>
+<div class="section" id="advanced-usage">
+<h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have discovered the basics, let’s go over a few more
+advanced usage examples and see the different arguments that we can pass
+to our <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> Model in order to customize it to our needs.</p>
+<div class="section" id="how-to-set-transforms-to-use">
+<h3>How to set transforms to use?<a class="headerlink" href="#how-to-set-transforms-to-use" title="Permalink to this headline">¶</a></h3>
+<p>One thing that you may have noticed when executing the previous steps is
+that the fitting process took much longer on the
+<code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset than it took on the previous version
+that did not contain the sudent <code class="docutils literal notranslate"><span class="pre">address</span></code>. This happens because the
+<code class="docutils literal notranslate"><span class="pre">address</span></code> field is interpreted as a categorical variable, which the
+<code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> <a class="reference external" href="https://en.wikipedia.org/wiki/One-hot">one-hot
+encoded</a> generating 215 new
+columns that it had to learn afterwards.</p>
+<p>This transformation, which in this case was very inefficient, happens
+because the Tabular Models apply <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data
+Transforms</a> under the hood to
+transform all the non-numerical variables, which the underlying models
+cannot handle, into numerical representations which they can properly
+work with. In the case of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>, the default
+transformation is a One-Hot encoding, which can work very well with
+variables that have a little number of different values, but which is
+very inefficient in cases where there is a large number of values.</p>
+<p>For this reason, the Tabular Models have an additional argument called
+<code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> that let you select which transformer to apply to
+each column. This <code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> argument must be passed as a
+<code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the fields for which we want to use
+a transformer different than the default, and the name of the
+transformer that we want to use.</p>
+<p>Possible transformer names are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">integer</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">float</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">float</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> without gaussian
+noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> adding
+gaussian noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">one_hot_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">OneHotEncodingTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">LabelEncodingTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">boolean</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">BooleanTransformer</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">datetime</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">DatetimeTransformer</span></code>.</p></li>
+</ul>
+<p><strong>NOTE</strong>: For additional details about each one of the transformers,
+please visit <a class="reference external" href="https://github.com/sdv-dev/RDT">RDT</a></p>
+<p>Let’s now try to improve the previous fitting process by changing the
+transformer that we use for the <code class="docutils literal notranslate"><span class="pre">address</span></code> field to something other
+than the default. As an example, we will use the <code class="docutils literal notranslate"><span class="pre">label_encoding</span></code>
+transformer, which instead of generating one column for each possible
+value, it just replaces each value with a unique integer value.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [32]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
+<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
+<span class="gp">   ....: </span>    <span class="p">},</span>
+<span class="gp">   ....: </span>    <span class="n">field_transformers</span><span class="o">=</span><span class="p">{</span>
+<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
+<span class="gp">   ....: </span>    <span class="p">}</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [33]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
+
+<span class="gp">In [34]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [35]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[35]: </span><span class="go"></span>
+<span class="go">   student_id             name  ...                      end_date  duration</span>
+<span class="go">0           0     Joseph Gomez  ...                           NaT       3.0</span>
+<span class="go">1           1   Darrell Wilson  ... 2020-03-23 03:12:12.452396544       3.0</span>
+<span class="go">2           2  Patricia Miller  ... 2020-12-17 16:59:59.139966464      12.0</span>
+<span class="go">3           3    Jessica Davis  ...                           NaT      12.0</span>
+<span class="go">4           4  Virginia Bishop  ...                           NaT       3.0</span>
+
+<span class="go">[5 rows x 18 columns]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploring-the-probability-distributions">
+<h3>Exploring the Probability Distributions<a class="headerlink" href="#exploring-the-probability-distributions" title="Permalink to this headline">¶</a></h3>
+<p>During the previous steps, every time we fitted the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>
+it performed the following operations:</p>
+<ol class="arabic simple">
+<li><p>Learn the format and data types of the passed data</p></li>
+<li><p>Transform the non-numerical and null data using <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data
+Transforms</a> to obtain a fully
+numerical representation of the data from which we can learn the
+probability distributions.</p></li>
+<li><p>Learn the probability distribution of each column from the table</p></li>
+<li><p>Learn the correlation between the marginal probabilities using a
+Gaussian Copula.</p></li>
+</ol>
+<p>After this, when we used the model to generate new data for our table
+using the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method, it did:</p>
+<ol class="arabic simple" start="5">
+<li><p>Sample from a Multivariate Standard Normal distribution with the
+learned correlations.</p></li>
+<li><p>Reverse the sampled probabilities using the marginal distributions.</p></li>
+<li><p>Reverse the RDT transformations to go back to the original data
+format.</p></li>
+</ol>
+<p>As you can see, during these steps the <em>Marginal Probability
+Distributions</em> have a very important role, since the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>
+had to learn and reproduce the individual distributions of each column
+in our table. We can explore the distributions which the
+<code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used to model each column using its
+<code class="docutils literal notranslate"><span class="pre">get_distributions</span></code> method:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [36]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [37]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="gp">In [38]: </span><span class="n">distributions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will return us a <code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the
+distribution class used for each column:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [39]: </span><span class="n">distributions</span>
+<span class="gh">Out[39]: </span><span class="go"></span>
+<span class="go">{&#39;gender#0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;gender#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;second_perc&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;high_perc&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;high_spec#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;high_spec#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;high_spec#2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;degree_perc&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
+<span class="go"> &#39;degree_type#0&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
+<span class="go"> &#39;degree_type#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;degree_type#2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;work_experience&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
+<span class="go"> &#39;experience_years&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;employability_perc&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;mba_spec#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;mba_spec#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;mba_perc&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;salary#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;salary#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;placed&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;start_date#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;start_date#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;end_date#0&#39;: &#39;copulas.univariate.beta.BetaUnivariate&#39;,</span>
+<span class="go"> &#39;end_date#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;duration#0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;duration#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;duration#2&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In this list we will see multiple distributions for each one of the
+columns that we have in our data. This is because the RDT
+transformations used to encode the data numerically often use more than
+one column to represent each one of the input variables.</p>
+</div>
+<p>Let’s explore the individual distribution of one of the columns in our
+data to better understand how the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> processed them and
+see if we can improve the results by manually specifying a different
+distribution. For example, let’s explore the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column
+by looking at the frequency of its values within the original data:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [40]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[40]: </span><span class="go"></span>
+<span class="go">0    141</span>
+<span class="go">1     62</span>
+<span class="go">2      9</span>
+<span class="go">3      2</span>
+<span class="go">4      1</span>
+<span class="go">Name: experience_years, dtype: int64</span>
+
+<span class="gp">In [41]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/experience_years_1.png"><img alt="../../_images/experience_years_1.png" src="../../_images/experience_years_1.png" style="width: 4in;" /></a>
+<p>By observing the data we can see that the behavior of the values in this
+column is very similar to a Gamma or even some types of Beta
+distribution, where the majority of the values are 0 and the frequency
+decreases as the values increase.</p>
+<p>Was the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> able to capture this distribution on its own?</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [42]: </span><span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;experience_years&#39;</span><span class="p">]</span>
+<span class="gh">Out[42]: </span><span class="go">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+</pre></div>
+</div>
+<p>It seems that the it was not, as it rather thought that the behavior was
+closer to a Gaussian distribution. And, as a result, we can see how the
+generated values now contain negative values which are invalid for this
+column:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [43]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[43]: </span><span class="go"></span>
+<span class="go"> 1    90</span>
+<span class="go"> 0    84</span>
+<span class="go">-1    14</span>
+<span class="go"> 2    12</span>
+<span class="go">Name: experience_years, dtype: int64</span>
+
+<span class="gp">In [44]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/experience_years_2.png"><img alt="../../_images/experience_years_2.png" src="../../_images/experience_years_2.png" style="width: 4in;" /></a>
+<p>Let’s see how we can improve this situation by passing the
+<code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> the exact distribution that we want it to use for
+this column.</p>
+</div>
+<div class="section" id="setting-distributions-for-indvidual-variables">
+<h3>Setting distributions for indvidual variables<a class="headerlink" href="#setting-distributions-for-indvidual-variables" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> class offers the possibility to indicate which
+distribution to use for each one of the columns in the table, in order
+to solve situations like the one that we just described. In order to do
+this, we need to pass a <code class="docutils literal notranslate"><span class="pre">distributions</span></code> argument with <code class="docutils literal notranslate"><span class="pre">dict</span></code> that
+indicates, the distribution that we want to use for each column.</p>
+<p>Possible values for the distribution argument are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
+distribution. This may result in non-parametric models being used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
+distribution, but restrict the selection to parametric distributions
+only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
+distribution, but restrict the selection to bounded distributions
+only. This may result in non-parametric models being used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
+distribution, but restrict the selection to semi-bounded
+distributions only. This may result in non-parametric models being
+used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
+distribution, but restrict the selection to parametric and bounded
+distributions only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric_semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal
+univariate distribution, but restrict the selection to parametric and
+semi-bounded distributions only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian</span></code>: Use a Gaussian distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">student_t</span></code>: Use a Student T distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gussian_kde</span></code>: Use a GaussianKDE distribution. This model is
+non-parametric, so using this will make <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> unusable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">truncated_gaussian</span></code>: Use a Truncated Gaussian distribution.</p></li>
+</ul>
+<p>Let’s see what happens if we make the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> use the
+<code class="docutils literal notranslate"><span class="pre">beta</span></code> distribution for our column.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [45]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="gp">In [46]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">distribution</span><span class="o">=</span><span class="p">{</span>
+<span class="gp">   ....: </span>        <span class="s1">&#39;experience_years&#39;</span><span class="p">:</span> <span class="s1">&#39;beta&#39;</span>
+<span class="gp">   ....: </span>    <span class="p">}</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [47]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After this, we can see how the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used the indicated
+distribution for the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [48]: </span><span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()[</span><span class="s1">&#39;experience_years&#39;</span><span class="p">]</span>
+<span class="gh">Out[48]: </span><span class="go">&#39;copulas.univariate.beta.BetaUnivariate&#39;</span>
+</pre></div>
+</div>
+<p>And, as a result, now we can see how the generated data now have a
+behavior which is closer to the original data and always stays within
+the valid values range.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [49]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+<span class="gp">In [50]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[50]: </span><span class="go"></span>
+<span class="go">0    136</span>
+<span class="go">1     35</span>
+<span class="go">2     19</span>
+<span class="go">3     17</span>
+<span class="go">4      8</span>
+<span class="go">Name: experience_years, dtype: int64</span>
+
+<span class="gp">In [51]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/experience_years_3.png"><img alt="../../_images/experience_years_3.png" src="../../_images/experience_years_3.png" style="width: 4in;" /></a>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Even though there are situations like the one show above where manually
+choosing a distribution seems to give better results, in most cases the
+<code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> will be able to find the optimal distribution on its
+own, making this manual search of the marginal distributions necessary
+on very little occasions.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="models.html" title="previous page">Models</a>
+    <a class='right-next' id="next-link" href="ctgan.html" title="next page">CTGAN Model</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

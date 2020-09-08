@@ -1,3 +1,5 @@
+.. _install:
+
 .. highlight:: shell
 
 Installation
