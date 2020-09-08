@@ -288,7 +288,7 @@ by executing the command <code class="docutils literal notranslate"><span class=
 <span class="gp">In [3]: </span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">                                      0  ...                    4</span>
-<span class="go">student_id                       155368  ...               155372</span>
+<span class="go">student_id                        17264  ...                17268</span>
 <span class="go">gender                                M  ...                    M</span>
 <span class="go">second_perc                          67  ...                 85.8</span>
 <span class="go">high_perc                            91  ...                 73.6</span>
@@ -302,8 +302,8 @@ by executing the command <code class="docutils literal notranslate"><span class=
 <span class="go">mba_perc                           58.8  ...                 55.5</span>
 <span class="go">salary                            27000  ...                42500</span>
 <span class="go">placed                             True  ...                 True</span>
-<span class="go">start_date          2020-01-08 00:00:00  ...  2020-01-16 00:00:00</span>
-<span class="go">end_date            2020-04-17 00:00:00  ...  2020-04-28 00:00:00</span>
+<span class="go">start_date          2020-07-23 00:00:00  ...  2020-07-04 00:00:00</span>
+<span class="go">end_date            2020-10-12 00:00:00  ...  2020-09-27 00:00:00</span>
 <span class="go">duration                            3.0  ...                  3.0</span>
 
 <span class="go">[17 rows x 5 columns]</span>
@@ -361,11 +361,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0      155431      M  ...                           NaT       3.0</span>
-<span class="go">1      155424      M  ...                           NaT       6.0</span>
-<span class="go">2      155395      M  ...                           NaT      12.0</span>
-<span class="go">3      155317      M  ... 2020-07-21 12:53:20.697745664       NaN</span>
-<span class="go">4      155457      F  ... 2020-08-17 17:10:43.819629568       3.0</span>
+<span class="go">0       17378      M  ...                           NaT       3.0</span>
+<span class="go">1       17332      M  ...                           NaT       3.0</span>
+<span class="go">2       17459      M  ... 2020-07-02 18:55:04.346224128       6.0</span>
+<span class="go">3       17443      M  ...                           NaT      12.0</span>
+<span class="go">4       17257      F  ... 2020-06-22 13:55:27.133563392      12.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -447,17 +447,18 @@ all of them appear at most once:</p>
 <p>However, if we look at the synthetic data that we generated, we observe
 that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-<span class="gh">Out[13]: </span><span class="go">4</span>
+<span class="gh">Out[13]: </span><span class="go">5</span>
 
 <span class="gp">In [14]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">     student_id gender  ...                      end_date  duration</span>
-<span class="go">43       155379      F  ... 2020-11-23 21:31:39.342682624       6.0</span>
-<span class="go">79       155379      M  ... 2021-02-18 20:12:07.013848576      12.0</span>
-<span class="go">112      155379      M  ... 2020-07-10 10:37:37.800980224       NaN</span>
-<span class="go">153      155379      F  ... 2020-02-04 01:38:46.331804160       NaN</span>
+<span class="go">132       17412      F  ...                           NaT       NaN</span>
+<span class="go">151       17412      M  ...                           NaT       NaN</span>
+<span class="go">164       17412      F  ... 2020-08-13 05:10:13.481310464       NaN</span>
+<span class="go">175       17412      F  ... 2020-04-03 11:11:30.284432896      12.0</span>
+<span class="go">198       17412      M  ... 2020-07-30 13:51:52.412418304       3.0</span>
 
-<span class="go">[4 rows x 17 columns]</span>
+<span class="go">[5 rows x 17 columns]</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -480,11 +481,11 @@ generate a unique sequence of valures for the column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[18]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ... 2020-08-18 05:40:54.067967488       3.0</span>
-<span class="go">1           1      M  ... 2020-07-13 01:37:02.775428352      12.0</span>
-<span class="go">2           2      M  ... 2021-01-01 09:46:07.447888896      12.0</span>
-<span class="go">3           3      F  ... 2020-11-21 00:00:05.219970048       3.0</span>
-<span class="go">4           4      M  ... 2020-12-08 07:30:56.035139840       NaN</span>
+<span class="go">0           0      F  ... 2020-09-03 04:49:02.323393280       3.0</span>
+<span class="go">1           1      M  ... 2020-09-01 19:30:37.992441856       NaN</span>
+<span class="go">2           2      F  ... 2020-09-16 05:31:31.507806720       3.0</span>
+<span class="go">3           3      M  ...                           NaT       NaN</span>
+<span class="go">4           4      M  ... 2020-11-24 10:37:44.956493824       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 
@@ -515,25 +516,25 @@ from the real users.</p>
 
 <span class="gp">In [21]: </span><span class="n">data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
 <span class="gh">Out[21]: </span><span class="go"></span>
-<span class="go">                                      0  ...                    4</span>
-<span class="go">student_id                       155368  ...               155372</span>
-<span class="go">name                        Ryan Massey  ...     Jeffery Robinson</span>
-<span class="go">gender                                M  ...                    M</span>
-<span class="go">second_perc                          67  ...                 85.8</span>
-<span class="go">high_perc                            91  ...                 73.6</span>
-<span class="go">high_spec                      Commerce  ...             Commerce</span>
-<span class="go">degree_perc                          58  ...                 73.3</span>
-<span class="go">degree_type                    Sci&amp;Tech  ...            Comm&amp;Mgmt</span>
-<span class="go">work_experience                   False  ...                False</span>
-<span class="go">experience_years                      0  ...                    0</span>
-<span class="go">employability_perc                   55  ...                 96.8</span>
-<span class="go">mba_spec                         Mkt&amp;HR  ...              Mkt&amp;Fin</span>
-<span class="go">mba_perc                           58.8  ...                 55.5</span>
-<span class="go">salary                            27000  ...                42500</span>
-<span class="go">placed                             True  ...                 True</span>
-<span class="go">start_date          2020-01-08 00:00:00  ...  2020-01-16 00:00:00</span>
-<span class="go">end_date            2020-04-17 00:00:00  ...  2020-04-28 00:00:00</span>
-<span class="go">duration                            3.0  ...                  3.0</span>
+<span class="go">                                                              0  ...                                                  4</span>
+<span class="go">student_id                                                17264  ...                                              17268</span>
+<span class="go">address             70304 Baker Turnpike\nEricborough, MS 15086  ...  96493 Kelly Canyon Apt. 145\nEast Steven, NC 3...</span>
+<span class="go">gender                                                        M  ...                                                  M</span>
+<span class="go">second_perc                                                  67  ...                                               85.8</span>
+<span class="go">high_perc                                                    91  ...                                               73.6</span>
+<span class="go">high_spec                                              Commerce  ...                                           Commerce</span>
+<span class="go">degree_perc                                                  58  ...                                               73.3</span>
+<span class="go">degree_type                                            Sci&amp;Tech  ...                                          Comm&amp;Mgmt</span>
+<span class="go">work_experience                                           False  ...                                              False</span>
+<span class="go">experience_years                                              0  ...                                                  0</span>
+<span class="go">employability_perc                                           55  ...                                               96.8</span>
+<span class="go">mba_spec                                                 Mkt&amp;HR  ...                                            Mkt&amp;Fin</span>
+<span class="go">mba_perc                                                   58.8  ...                                               55.5</span>
+<span class="go">salary                                                    27000  ...                                              42500</span>
+<span class="go">placed                                                     True  ...                                               True</span>
+<span class="go">start_date                                  2020-07-23 00:00:00  ...                                2020-07-04 00:00:00</span>
+<span class="go">end_date                                    2020-10-12 00:00:00  ...                                2020-09-27 00:00:00</span>
+<span class="go">duration                                                    3.0  ...                                                3.0</span>
 
 <span class="go">[18 rows x 5 columns]</span>
 </pre></div>
@@ -552,29 +553,17 @@ students:</p>
 
 <span class="gp">In [25]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[25]: </span><span class="go"></span>
-<span class="go">   student_id              name  ...                      end_date  duration</span>
-<span class="go">0           0      Isaac Harper  ... 2021-02-18 10:25:58.782738944       3.0</span>
-<span class="go">1           1   Cristina Dawson  ...                           NaT      12.0</span>
-<span class="go">2           2          Amy Snow  ... 2020-09-14 14:31:31.616211200       3.0</span>
-<span class="go">3           3  Jeffery Robinson  ... 2020-09-28 12:00:24.432193536       6.0</span>
-<span class="go">4           4   Natalie Vincent  ... 2020-08-16 12:39:09.602793728       6.0</span>
+<span class="go">   student_id  ... duration</span>
+<span class="go">0           0  ...      3.0</span>
+<span class="go">1           1  ...      NaN</span>
+<span class="go">2           2  ...      6.0</span>
+<span class="go">3           3  ...      3.0</span>
+<span class="go">4           4  ...      NaN</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 
 <span class="gp">In [26]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
-<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">26</span><span class="o">-</span><span class="n">f486e02a70b3</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
-<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="nn">/opt/hostedtoolcache/Python/3.7.9/x64/lib/python3.7/site-packages/pandas/core/generic.py</span> in <span class="ni">__getattr__</span><span class="nt">(self, name)</span>
-<span class="g g-Whitespace">   </span><span class="mi">5128</span>             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info_axis</span><span class="o">.</span><span class="n">_can_hold_identifiers_and_holds_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">5129</span>                 <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-<span class="ne">-&gt; </span><span class="mi">5130</span>             <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">5131</span> 
-<span class="g g-Whitespace">   </span><span class="mi">5132</span>     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-
-<span class="ne">AttributeError</span>: &#39;DataFrame&#39; object has no attribute &#39;address&#39;
+<span class="gh">Out[26]: </span><span class="go">200</span>
 </pre></div>
 </div>
 <p>In order to solve this, we can pass an additional argument
@@ -622,29 +611,17 @@ that we learned.</p>
 
 <span class="gp">In [30]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[30]: </span><span class="go"></span>
-<span class="go">   student_id              name  ...                      end_date  duration</span>
-<span class="go">0           0      Joseph Gomez  ... 2020-07-19 10:52:17.166849280       NaN</span>
-<span class="go">1           1  Benjamin Cameron  ... 2020-02-28 08:53:33.075123968       3.0</span>
-<span class="go">2           2     Sara Harrison  ... 2020-01-30 17:04:08.078390784       NaN</span>
-<span class="go">3           3   Michael Johnson  ... 2020-06-23 10:04:05.216708864       3.0</span>
-<span class="go">4           4    David Thompson  ...                           NaT       3.0</span>
+<span class="go">   student_id  ... duration</span>
+<span class="go">0           0  ...      6.0</span>
+<span class="go">1           1  ...     12.0</span>
+<span class="go">2           2  ...      6.0</span>
+<span class="go">3           3  ...      NaN</span>
+<span class="go">4           4  ...      6.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 
 <span class="gp">In [31]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
-<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">31</span><span class="o">-</span><span class="n">f486e02a70b3</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
-<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="nn">/opt/hostedtoolcache/Python/3.7.9/x64/lib/python3.7/site-packages/pandas/core/generic.py</span> in <span class="ni">__getattr__</span><span class="nt">(self, name)</span>
-<span class="g g-Whitespace">   </span><span class="mi">5128</span>             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info_axis</span><span class="o">.</span><span class="n">_can_hold_identifiers_and_holds_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">5129</span>                 <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-<span class="ne">-&gt; </span><span class="mi">5130</span>             <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">5131</span> 
-<span class="g g-Whitespace">   </span><span class="mi">5132</span>     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-
-<span class="ne">AttributeError</span>: &#39;DataFrame&#39; object has no attribute &#39;address&#39;
+<span class="gh">Out[31]: </span><span class="go">0</span>
 </pre></div>
 </div>
 </div>
@@ -715,7 +692,7 @@ generated data using the <code class="docutils literal notranslate"><span class=
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [32]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [33]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[33]: </span><span class="go">-130.63311515066758</span>
+<span class="gh">Out[33]: </span><span class="go">-117.28561782720017</span>
 </pre></div>
 </div>
 <p>Afterwards, we create a new instance of the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> model with the
@@ -743,26 +720,26 @@ hyperparameter values that we want to use</p>
 <span class="go">                                                0  ...                              4</span>
 <span class="go">student_id                                      0  ...                              4</span>
 <span class="go">gender                                          M  ...                              F</span>
-<span class="go">second_perc                                80.069  ...                        50.3297</span>
-<span class="go">high_perc                                 104.813  ...                        91.5463</span>
-<span class="go">high_spec                                Commerce  ...                        Science</span>
-<span class="go">degree_perc                               88.7899  ...                        43.8984</span>
-<span class="go">degree_type                                Others  ...                       Sci&amp;Tech</span>
-<span class="go">work_experience                             False  ...                          False</span>
-<span class="go">experience_years                                1  ...                              1</span>
-<span class="go">employability_perc                        49.0593  ...                        48.8025</span>
-<span class="go">mba_spec                                   Mkt&amp;HR  ...                        Mkt&amp;Fin</span>
-<span class="go">mba_perc                                  79.0853  ...                        50.3141</span>
-<span class="go">salary                                    16689.4  ...                        29177.1</span>
+<span class="go">second_perc                               65.4492  ...                        88.0614</span>
+<span class="go">high_perc                                 63.7795  ...                        72.5246</span>
+<span class="go">high_spec                                 Science  ...                        Science</span>
+<span class="go">degree_perc                               82.1092  ...                        94.2867</span>
+<span class="go">degree_type                                Others  ...                      Comm&amp;Mgmt</span>
+<span class="go">work_experience                             False  ...                           True</span>
+<span class="go">experience_years                                0  ...                              0</span>
+<span class="go">employability_perc                        43.5187  ...                        64.8249</span>
+<span class="go">mba_spec                                  Mkt&amp;Fin  ...                        Mkt&amp;Fin</span>
+<span class="go">mba_perc                                  69.7896  ...                        72.1558</span>
+<span class="go">salary                                    21084.5  ...                        30842.5</span>
 <span class="go">placed                                       True  ...                           True</span>
-<span class="go">start_date          2020-07-27 11:04:03.199952128  ...  2020-04-27 13:51:27.669085952</span>
-<span class="go">end_date            2020-08-16 05:51:54.321803008  ...  2020-08-09 21:19:53.039446784</span>
-<span class="go">duration                                      6.0  ...                            NaN</span>
+<span class="go">start_date          2020-07-16 15:33:33.059404800  ...  2020-01-19 06:04:42.577963520</span>
+<span class="go">end_date            2020-07-29 14:26:19.590369536  ...  2020-09-08 07:21:40.146332672</span>
+<span class="go">duration                                      6.0  ...                            3.0</span>
 
 <span class="go">[17 rows x 5 columns]</span>
 
 <span class="gp">In [38]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[38]: </span><span class="go">-158.22720543852645</span>
+<span class="gh">Out[38]: </span><span class="go">-126.9939287375091</span>
 </pre></div>
 </div>
 <p>As we can see, in this case these modifications changed the obtained
