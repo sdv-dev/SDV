@@ -164,21 +164,21 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#1.-Model-the-dataset-using-SDV" class="nav-link">1. Model the dataset using SDV</a><ul class="nav section-nav flex-column">
+            <a href="#Model-the-dataset-using-SDV" class="nav-link">Model the dataset using SDV</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#Step-1:-Load-example-data" class="nav-link">Step 1: Load example data</a>
+            <a href="#Load-example-data" class="nav-link">Load example data</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#2.-Fit-a-model-using-the-SDV-API." class="nav-link">2. Fit a model using the SDV API.</a>
+            <a href="#Fit-a-model-using-the-SDV-API." class="nav-link">Fit a model using the SDV API.</a>
         </li>
     
             </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#2.-Sample-data-from-the-fitted-model" class="nav-link">2. Sample data from the fitted model</a>
+            <a href="#Sample-data-from-the-fitted-model" class="nav-link">Sample data from the fitted model</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
@@ -426,11 +426,11 @@ div.rendered_html tbody tr:hover {
 </style><div class="section" id="Quickstart">
 <h1>Quickstart<a class="headerlink" href="#Quickstart" title="Permalink to this headline">¶</a></h1>
 <p>In this short tutorial we will guide you through a series of steps that will help you getting started using <strong>SDV</strong>.</p>
-<div class="section" id="1.-Model-the-dataset-using-SDV">
-<h2>1. Model the dataset using SDV<a class="headerlink" href="#1.-Model-the-dataset-using-SDV" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Model-the-dataset-using-SDV">
+<h2>Model the dataset using SDV<a class="headerlink" href="#Model-the-dataset-using-SDV" title="Permalink to this headline">¶</a></h2>
 <p>To model a multi table, relational dataset, we follow two steps. In the first step, we will load the data and configures the meta data. In the second step, we will use the sdv API to fit and save a hierarchical model. We will cover these two steps in this section using an example dataset.</p>
-<div class="section" id="Step-1:-Load-example-data">
-<h3>Step 1: Load example data<a class="headerlink" href="#Step-1:-Load-example-data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="Load-example-data">
+<h3>Load example data<a class="headerlink" href="#Load-example-data" title="Permalink to this headline">¶</a></h3>
 <p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code> function:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -733,8 +733,8 @@ Metadata
 </table></td></tr></table></div>
 </div>
 </div>
-<div class="section" id="2.-Fit-a-model-using-the-SDV-API.">
-<h3>2. Fit a model using the SDV API.<a class="headerlink" href="#2.-Fit-a-model-using-the-SDV-API." title="Permalink to this headline">¶</a></h3>
+<div class="section" id="Fit-a-model-using-the-SDV-API.">
+<h3>Fit a model using the SDV API.<a class="headerlink" href="#Fit-a-model-using-the-SDV-API." title="Permalink to this headline">¶</a></h3>
 <p>First, we build a hierarchical statistical model of the data using <strong>SDV</strong>. For this we will create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class and use its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
 <p>During this process, <strong>SDV</strong> will traverse across all the tables in your dataset following the primary key-foreign key relationships and learn the probability distributions of the values in the columns.</p>
 <div class="nbinput nblast docutils container">
@@ -751,8 +751,8 @@ Metadata
 </div>
 </div>
 </div>
-<div class="section" id="2.-Sample-data-from-the-fitted-model">
-<h2>2. Sample data from the fitted model<a class="headerlink" href="#2.-Sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Sample-data-from-the-fitted-model">
+<h2>Sample data from the fitted model<a class="headerlink" href="#Sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h2>
 <p>Once the modeling has finished you are ready to generate new synthetic data using the <code class="docutils literal notranslate"><span class="pre">sdv</span></code> instance that you have.</p>
 <p>For this, all you have to do is call the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method from your instance passing the number of rows that you want to generate:</p>
 <div class="nbinput nblast docutils container">

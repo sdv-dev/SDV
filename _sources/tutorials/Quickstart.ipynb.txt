@@ -9,13 +9,13 @@
     "In this short tutorial we will guide you through a series of steps that will help you\n",
     "getting started using **SDV**.\n",
     "\n",
-    "## 1. Model the dataset using SDV\n",
+    "## Model the dataset using SDV\n",
     "\n",
     "To model a multi table, relational dataset, we follow two steps. In the first step, we will load\n",
     "the data and configures the meta data. In the second step, we will use the sdv API to fit and\n",
     "save a hierarchical model. We will cover these two steps in this section using an example dataset.\n",
     "\n",
-    "### Step 1: Load example data\n",
+    "### Load example data\n",
     "\n",
     "**SDV** comes with a toy dataset to play with, which can be loaded using the `sdv.load_demo`\n",
     "function:"
@@ -445,7 +445,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "### 2. Fit a model using the SDV API.\n",
+    "### Fit a model using the SDV API.\n",
     "\n",
     "First, we build a hierarchical statistical model of the data using **SDV**. For this we will\n",
     "create an instance of the `sdv.SDV` class and use its `fit` method.\n",
@@ -473,7 +473,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## 2. Sample data from the fitted model\n",
+    "## Sample data from the fitted model\n",
     "\n",
     "Once the modeling has finished you are ready to generate new synthetic data using the `sdv` instance that you have.\n",
     "\n",

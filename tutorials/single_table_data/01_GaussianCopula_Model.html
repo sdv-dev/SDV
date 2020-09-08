@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tabular Models &#8212; SDV 0.4.1 documentation</title>
+    <title>GaussianCopula Model &#8212; SDV 0.4.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -41,8 +41,8 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="GaussianCopula Model" href="02_GaussianCopula_Model.html" />
-    <link rel="prev" title="Single Table Data" href="../../user_guides/single_table.html" />
+    <link rel="next" title="CTGAN Model" href="02_CTGAN_Model.html" />
+    <link rel="prev" title="Models" href="../../user_guides/single_table/models.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -130,23 +130,19 @@
           
 
               <li class="active">
-                  <a href="../../user_guides/single_table.html">Single Table Data</a>
+                  <a href="../../user_guides/single_table/index.html">Single Table Data</a>
                   <ul>
                   
+                      <li class="">
+                          <a href="../../user_guides/single_table/data_description.html">Data Description</a>
+                      </li>
+                  
                       <li class="active">
-                          <a href="">Tabular Models</a>
+                          <a href="../../user_guides/single_table/models.html">Models</a>
                       </li>
                   
                       <li class="">
-                          <a href="02_GaussianCopula_Model.html">GaussianCopula Model</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="03_CTGAN_Model.html">CTGAN Model</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="04_Handling_Constraints.html">Handling Constraints</a>
+                          <a href="03_Handling_Constraints.html">Handling Constraints</a>
                       </li>
                   
                   </ul>
@@ -155,7 +151,13 @@
         
           
               <li class="">
-                  <a href="../../user_guides/relational.html">Relational Data</a>
+                  <a href="../../user_guides/relational/index.html">Relational Data</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../../user_guides/timeseries/index.html">Timeseries Data</a>
               </li>
           
         
@@ -184,22 +186,40 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#Load-and-explore-tabular-data" class="nav-link">Load and explore tabular data</a>
+            <a href="#What-is-GaussianCopula?" class="nav-link">What is GaussianCopula?</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
+            <a href="#Quick-Usage" class="nav-link">Quick Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
             <a href="#Generate-synthetic-data-from-the-model" class="nav-link">Generate synthetic data from the model</a>
         </li>
     
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#Save-and-Load" class="nav-link">Save and Load</a><ul class="nav section-nav flex-column">
-                
         <li class="nav-item toc-entry toc-h3">
+            <a href="#Save-and-Load-the-model" class="nav-link">Save and Load the model</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
             <a href="#Save-and-share-the-model" class="nav-link">Save and share the model</a>
         </li>
     
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#Load-the-model-and-generate-new-data" class="nav-link">Load the model and generate new data</a>
+        </li>
+    
+            </ul>
+        </li>
+    
         <li class="nav-item toc-entry toc-h3">
-            <a href="#Load-the-model-and-sample-from-it" class="nav-link">Load the model and sample from it</a>
+            <a href="#Specifying-the-Primary-Key-of-the-table" class="nav-link">Specifying the Primary Key of the table</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#Anonymizing-Personally-Identifiable-Information-(PII)" class="nav-link">Anonymizing Personally Identifiable Information (PII)</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#Specifying-constraints" class="nav-link">Specifying constraints</a>
         </li>
     
             </ul>
@@ -209,15 +229,15 @@
             <a href="#Advanced-Usage" class="nav-link">Advanced Usage</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#Primary-Key" class="nav-link">Primary Key</a>
+            <a href="#How-to-set-transforms-to-use?" class="nav-link">How to set transforms to use?</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#Anonymize-fields-that-contain-Personally-Identifiable-Information-(PII)" class="nav-link">Anonymize fields that contain Personally Identifiable Information (PII)</a>
+            <a href="#Exploring-the-Probability-Distributions" class="nav-link">Exploring the Probability Distributions</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#Use-different-transformers" class="nav-link">Use different transformers</a>
+            <a href="#Setting-distributions-for-indvidual-variables" class="nav-link">Setting distributions for indvidual variables</a>
         </li>
     
             </ul>
@@ -461,32 +481,25 @@ div.rendered_html tbody tr:hover {
     .nboutput .prompt {
         display: none;
     }
-</style><div class="section" id="Tabular-Models">
-<h1>Tabular Models<a class="headerlink" href="#Tabular-Models" title="Permalink to this headline">¶</a></h1>
-<p><strong>SDV</strong> supports modeling single table datasets. It provides unique features for making it easy for the user to learn models and synthesize datasets. Some important features of <code class="docutils literal notranslate"><span class="pre">sdv.tabular</span></code> include:</p>
+</style><div class="section" id="GaussianCopula-Model">
+<h1>GaussianCopula Model<a class="headerlink" href="#GaussianCopula-Model" title="Permalink to this headline">¶</a></h1>
+<p>In this guide we will go through a series of steps that will let you discover functionalities of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model, including how to:</p>
 <ul class="simple">
-<li><p>Support for tables with primary key</p></li>
-<li><p>Support to anonymize certain fields like addresses, emails, phone numbers, names and other PII information.</p></li>
-<li><p>Support for a number of different data types - categorical, numerical, discrete-ordinal and datetimes.</p></li>
-<li><p>Support multiple types of statistical and deep learning models:</p></li>
-<li><p>GaussianCopula: A tool to model multivariate distributions using <a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula functions</a>. Based on our <a class="reference external" href="https://github.com/sdv-dev/Copulas">Copulas Library</a>.</p></li>
-<li><p>CTGAN: A GAN-based Deep Learning data synthesizer that can generate synthetic tabular data with high fidelity. Based on our <a class="reference external" href="https://github.com/sdv-dev/CTGAN">CTGAN Library</a>.</p></li>
-</ul>
-<p>In this guide we will go through a series of steps that will let you discover the common functionalities of the Tabular Models, including how to:</p>
-<ul class="simple">
-<li><p>Create an instance of a Tabular Model.</p></li>
+<li><p>Create an instance of a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>.</p></li>
 <li><p>Fit the instance to your data.</p></li>
 <li><p>Generate synthetic versions of your data.</p></li>
-<li><p>Use the a Tabular Model to anonymize PII information.</p></li>
+<li><p>Use the a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to anonymize PII information.</p></li>
 <li><p>Customize the data tranformations to improve the learning process.</p></li>
-<li><p>Specify inter-column constraints to improve the output quality.</p></li>
+<li><p>Specify the column distributions to improve the output quality.</p></li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title"><strong>NOTE</strong></p>
-<p>During this guide we will use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model as an example but we will be talking only about the functionalities that are shared across all the Tabular Models. To discover specific features of the GaussianCopula in particular please visit the <a class="reference internal" href="02_GaussianCopula_Model.html"><span class="doc">GaussianCopula User Guide</span></a>.</p>
+<div class="section" id="What-is-GaussianCopula?">
+<h2>What is GaussianCopula?<a class="headerlink" href="#What-is-GaussianCopula?" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">sdv.tabular.GaussianCopula</span></code> model from <code class="docutils literal notranslate"><span class="pre">SDV</span></code> is based on the <code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code> class from the <a class="reference external" href="https://sdv.dev/Copulas">Copulas library</a>, a library for modeling and sampling multivariate distributions based on <a class="reference external" href="https://en.wikipedia.org/wiki/Copula_%28probability_theory%29">copula funtions</a>.</p>
+<p>In mathematical terms, a Gaussian Copula is a distribution over the unit cube <span class="math notranslate nohighlight">\({\displaystyle [0,1]^{d}}\)</span> which is constructed from a multivariate normal distribution over <span class="math notranslate nohighlight">\({\displaystyle \mathbb {R} ^{d}}\)</span> by using the probability integral transform. Intuitively, a Copula is a mathematical function that allows us to describe the joint distribution of multiple random variables by analyzing the dependencies between their marginal distributions.</p>
+<p>Let’s now discover how to learn a dataset and later on generate synthetic data with the same format and statistical properties by using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
 </div>
-<div class="section" id="Load-and-explore-tabular-data">
-<h2>Load and explore tabular data<a class="headerlink" href="#Load-and-explore-tabular-data" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Quick-Usage">
+<h2>Quick Usage<a class="headerlink" href="#Quick-Usage" title="Permalink to this headline">¶</a></h2>
 <p>We will start by loading one of our demo datasets, the <code class="docutils literal notranslate"><span class="pre">student_placements</span></code>, which contains information about MBA students that applied for placements during the year 2020.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -533,11 +546,11 @@ div.rendered_html tbody tr:hover {
   <tbody>
     <tr>
       <th>student_id</th>
-      <td>155368</td>
-      <td>155369</td>
-      <td>155370</td>
-      <td>155371</td>
-      <td>155372</td>
+      <td>17264</td>
+      <td>17265</td>
+      <td>17266</td>
+      <td>17267</td>
+      <td>17268</td>
     </tr>
     <tr>
       <th>gender</th>
@@ -645,25 +658,25 @@ div.rendered_html tbody tr:hover {
     </tr>
     <tr>
       <th>start_date</th>
-      <td>2020-01-08 00:00:00</td>
-      <td>2020-01-15 00:00:00</td>
-      <td>2020-01-30 00:00:00</td>
+      <td>2020-07-23 00:00:00</td>
+      <td>2020-01-11 00:00:00</td>
+      <td>2020-01-26 00:00:00</td>
       <td>NaT</td>
-      <td>2020-01-16 00:00:00</td>
+      <td>2020-07-04 00:00:00</td>
     </tr>
     <tr>
       <th>end_date</th>
-      <td>2020-04-17 00:00:00</td>
-      <td>2020-04-02 00:00:00</td>
-      <td>2020-04-27 00:00:00</td>
+      <td>2020-10-12 00:00:00</td>
+      <td>2020-04-09 00:00:00</td>
+      <td>2020-07-13 00:00:00</td>
       <td>NaT</td>
-      <td>2020-04-28 00:00:00</td>
+      <td>2020-09-27 00:00:00</td>
     </tr>
     <tr>
       <th>duration</th>
       <td>3.0</td>
       <td>3.0</td>
-      <td>3.0</td>
+      <td>6.0</td>
       <td>NaN</td>
       <td>3.0</td>
     </tr>
@@ -684,8 +697,7 @@ div.rendered_html tbody tr:hover {
 <li><p>There are float, integer, boolean, categorical and datetime values.</p></li>
 <li><p>There are some variables that have missing data. In particular, all the data related to the placement details is missing in the rows where the studen was not placed.</p></li>
 </ul>
-<p>Let us use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to learn this data and then sample synthetic data about new students to see how well de model captures the characteristics indicated above.</p>
-<p>In order to do this you will need to:</p>
+<p>Let us use the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to learn this data and then sample synthetic data about new students to see how well de model captures the characteristics indicated above. In order to do this you wil need to:</p>
 <ul class="simple">
 <li><p>Import the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.GaussianCopula</span></code> class and create an instance of it.</p></li>
 <li><p>Call its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method passing our table.</p></li>
@@ -707,9 +719,8 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title"><strong>NOTE</strong></p>
 <p>Notice that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data Transforms</a> to ensure that the data has a format that the GaussianMultivariate model from the <a class="reference external" href="https://github.com/sdv-dev/Copulas">copulas</a> library can handle.</p>
 </div>
-</div>
 <div class="section" id="Generate-synthetic-data-from-the-model">
-<h2>Generate synthetic data from the model<a class="headerlink" href="#Generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h2>
+<h3>Generate synthetic data from the model<a class="headerlink" href="#Generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
 <p>Once the modeling has finished you are ready to generate new synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model passing the number of rows that we want to generate.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -775,103 +786,103 @@ div.rendered_html tbody tr:hover {
   <tbody>
     <tr>
       <th>0</th>
-      <td>155417</td>
-      <td>F</td>
-      <td>58.848130</td>
-      <td>60.248975</td>
-      <td>Commerce</td>
-      <td>53.125903</td>
-      <td>Sci&amp;Tech</td>
+      <td>17368</td>
+      <td>M</td>
+      <td>66.743129</td>
+      <td>57.694815</td>
+      <td>Science</td>
+      <td>64.060049</td>
+      <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>0</td>
-      <td>52.044813</td>
+      <td>1</td>
+      <td>90.864788</td>
       <td>Mkt&amp;Fin</td>
-      <td>58.476942</td>
-      <td>46048.581084</td>
-      <td>True</td>
-      <td>2020-01-06 12:35:56.536872704</td>
-      <td>2020-06-30 20:51:37.122674176</td>
-      <td>3.0</td>
+      <td>57.161136</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>12.0</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>155538</td>
-      <td>F</td>
-      <td>68.438562</td>
-      <td>68.928067</td>
-      <td>Science</td>
-      <td>66.369985</td>
-      <td>Sci&amp;Tech</td>
+      <td>17292</td>
+      <td>M</td>
+      <td>75.052202</td>
+      <td>78.434744</td>
+      <td>Commerce</td>
+      <td>58.510351</td>
+      <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>-1</td>
-      <td>66.771892</td>
+      <td>1</td>
+      <td>76.484395</td>
       <td>Mkt&amp;HR</td>
-      <td>57.947703</td>
-      <td>30979.983151</td>
+      <td>60.221195</td>
+      <td>25387.334991</td>
       <td>True</td>
-      <td>2020-01-04 15:57:33.060699136</td>
-      <td>2021-01-07 06:14:16.852958720</td>
+      <td>2020-01-11 09:36:25.015729152</td>
+      <td>2020-09-30 16:56:03.518998528</td>
       <td>12.0</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>155560</td>
-      <td>M</td>
-      <td>68.726441</td>
-      <td>72.474372</td>
+      <td>17392</td>
+      <td>F</td>
+      <td>42.189772</td>
+      <td>59.368185</td>
       <td>Commerce</td>
-      <td>55.974080</td>
+      <td>70.431029</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>1</td>
-      <td>66.006570</td>
-      <td>Mkt&amp;HR</td>
-      <td>63.455531</td>
-      <td>24842.286502</td>
-      <td>True</td>
-      <td>2020-10-11 23:23:38.246976512</td>
-      <td>2021-01-04 17:33:56.483195904</td>
+      <td>0</td>
+      <td>82.147580</td>
+      <td>Mkt&amp;Fin</td>
+      <td>56.906295</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>155406</td>
+      <td>17293</td>
       <td>F</td>
-      <td>85.530521</td>
-      <td>86.094248</td>
-      <td>Science</td>
-      <td>69.583043</td>
+      <td>53.692385</td>
+      <td>61.464708</td>
+      <td>Commerce</td>
+      <td>58.137745</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>0</td>
-      <td>68.556037</td>
+      <td>92.017948</td>
       <td>Mkt&amp;HR</td>
-      <td>65.335768</td>
-      <td>28112.501738</td>
-      <td>True</td>
-      <td>2020-03-30 15:41:52.219824896</td>
-      <td>2021-01-15 19:08:38.734086400</td>
-      <td>12.0</td>
+      <td>63.798860</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>3.0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>155438</td>
+      <td>17309</td>
       <td>M</td>
-      <td>78.127640</td>
-      <td>79.473957</td>
-      <td>Science</td>
-      <td>73.381697</td>
-      <td>Comm&amp;Mgmt</td>
+      <td>65.193352</td>
+      <td>69.087103</td>
+      <td>Commerce</td>
+      <td>64.888526</td>
+      <td>Sci&amp;Tech</td>
       <td>False</td>
-      <td>1</td>
-      <td>58.082379</td>
+      <td>0</td>
+      <td>76.833662</td>
       <td>Mkt&amp;Fin</td>
-      <td>76.427970</td>
-      <td>32819.921441</td>
+      <td>54.762587</td>
+      <td>23669.712175</td>
       <td>True</td>
-      <td>2020-01-25 22:46:28.564114688</td>
-      <td>2021-01-11 08:11:04.250991872</td>
-      <td>12.0</td>
+      <td>2020-01-11 23:20:11.280300544</td>
+      <td>2020-06-06 02:22:25.981686016</td>
+      <td>3.0</td>
     </tr>
   </tbody>
 </table>
@@ -882,14 +893,13 @@ div.rendered_html tbody tr:hover {
 <p>You can control the number of rows by specifying the number of <code class="docutils literal notranslate"><span class="pre">samples</span></code> in the <code class="docutils literal notranslate"><span class="pre">model.sample(&lt;num_rows&gt;)</span></code>. To test, try <code class="docutils literal notranslate"><span class="pre">model.sample(10000)</span></code>. Note that the original table only had ~200 rows.</p>
 </div>
 </div>
-<div class="section" id="Save-and-Load">
-<h2>Save and Load<a class="headerlink" href="#Save-and-Load" title="Permalink to this headline">¶</a></h2>
-<p>In many scenarios it will be convenient to generate synthetic versions of your data directly in systems that do not have access to the original data source.</p>
-<p>For example, if you may want to generate testing data on the fly inside a testing environment that does not have access to your production database.</p>
-<p>In these scenarios, fitting the model with real data every time that you need to generate new data is feasible, so you will need to fit a model in your production environment, save the fitted model into a file, send this file to the testing environment and then load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
+<div class="section" id="Save-and-Load-the-model">
+<h3>Save and Load the model<a class="headerlink" href="#Save-and-Load-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In many scenarios it will be convenient to generate synthetic versions of your data directly in systems that do not have access to the original data source. For example, if you may want to generate testing data on the fly inside a testing environment that does not have access to your production database. In these scenarios, fitting the model with real data every time that you need to generate new data is feasible, so you will need to fit a model in your production environment, save the fitted
+model into a file, send this file to the testing environment and then load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
 <p>Let’s see how this process works.</p>
 <div class="section" id="Save-and-share-the-model">
-<h3>Save and share the model<a class="headerlink" href="#Save-and-share-the-model" title="Permalink to this headline">¶</a></h3>
+<h4>Save and share the model<a class="headerlink" href="#Save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
 <p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code> method passing the name of the file in which you want to save the model. Note that the extension of the filename is not relevant, but we will be using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization protocol used is <a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -906,10 +916,9 @@ div.rendered_html tbody tr:hover {
 <p>If you inspect the generated file you will notice that its size is much smaller than the size of the data that you used to generate it. This is because the serialized model contains <strong>no information about the original data</strong>, other than the parameters it needs to generate synthetic versions of it. This means that you can safely share this <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risc of disclosing any of your real data!</p>
 </div>
 </div>
-<div class="section" id="Load-the-model-and-sample-from-it">
-<h3>Load the model and sample from it<a class="headerlink" href="#Load-the-model-and-sample-from-it" title="Permalink to this headline">¶</a></h3>
-<p>The file you just generated can be send over to the system where the synthetic data will be generated.</p>
-<p>Once it is there, you can load it using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula.load</span></code> method, and then you are ready to sample new data from the loaded instance:</p>
+<div class="section" id="Load-the-model-and-generate-new-data">
+<h4>Load the model and generate new data<a class="headerlink" href="#Load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
+<p>The file you just generated can be send over to the system where the synthetic data will be generated. Once it is there, you can load it using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula.load</span></code> method, and then you are ready to sample new data from the loaded instance:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -926,13 +935,9 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 </div>
-<div class="section" id="Advanced-Usage">
-<h2>Advanced Usage<a class="headerlink" href="#Advanced-Usage" title="Permalink to this headline">¶</a></h2>
-<p>Now that we have discovered the basics, let’s go over a few more advanced usage examples and see the different arguments that we can pass to our Tabular Models in order to customize them to our needs.</p>
-<div class="section" id="Primary-Key">
-<h3>Primary Key<a class="headerlink" href="#Primary-Key" title="Permalink to this headline">¶</a></h3>
-<p>One of the first things that you may have noticed when looking that demo data is that there is a <code class="docutils literal notranslate"><span class="pre">student_id</span></code> column which acts as the primary key of the table, and which is supposed to have unique values.</p>
-<p>Indeed, if we look at the number of times that each value appears, we see that all of them appear at most once:</p>
+<div class="section" id="Specifying-the-Primary-Key-of-the-table">
+<h3>Specifying the Primary Key of the table<a class="headerlink" href="#Specifying-the-Primary-Key-of-the-table" title="Permalink to this headline">¶</a></h3>
+<p>One of the first things that you may have noticed when looking that demo data is that there is a <code class="docutils literal notranslate"><span class="pre">student_id</span></code> column which acts as the primary key of the table, and which is supposed to have unique values. Indeed, if we look at the number of times that each value appears, we see that all of them appear at most once:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
@@ -967,7 +972,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-5
+4
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1023,111 +1028,90 @@ div.rendered_html tbody tr:hover {
   </thead>
   <tbody>
     <tr>
-      <th>46</th>
-      <td>155445</td>
+      <th>168</th>
+      <td>17475</td>
       <td>M</td>
-      <td>78.222479</td>
-      <td>60.275570</td>
+      <td>83.519196</td>
+      <td>64.860320</td>
       <td>Science</td>
-      <td>66.266143</td>
-      <td>Sci&amp;Tech</td>
-      <td>False</td>
-      <td>-1</td>
-      <td>83.893394</td>
-      <td>Mkt&amp;Fin</td>
-      <td>59.479104</td>
-      <td>NaN</td>
-      <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
-      <td>3.0</td>
-    </tr>
-    <tr>
-      <th>50</th>
-      <td>155445</td>
-      <td>F</td>
-      <td>69.658239</td>
-      <td>55.010616</td>
-      <td>Science</td>
-      <td>50.425832</td>
-      <td>Sci&amp;Tech</td>
-      <td>False</td>
-      <td>-1</td>
-      <td>77.397733</td>
-      <td>Mkt&amp;HR</td>
-      <td>65.678323</td>
-      <td>NaN</td>
-      <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
-      <td>12.0</td>
-    </tr>
-    <tr>
-      <th>72</th>
-      <td>155445</td>
-      <td>F</td>
-      <td>85.179974</td>
-      <td>78.274061</td>
-      <td>Commerce</td>
-      <td>77.341933</td>
+      <td>75.835143</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>1</td>
-      <td>58.049310</td>
+      <td>76.802052</td>
       <td>Mkt&amp;Fin</td>
-      <td>56.828981</td>
-      <td>28789.651560</td>
+      <td>77.205876</td>
+      <td>35177.781884</td>
       <td>True</td>
-      <td>2020-01-22 05:09:54.461448192</td>
-      <td>2020-09-14 14:00:04.591784960</td>
+      <td>2020-01-11 03:53:56.191939072</td>
+      <td>2020-09-15 13:34:02.551209472</td>
       <td>3.0</td>
     </tr>
     <tr>
-      <th>76</th>
-      <td>155445</td>
-      <td>M</td>
-      <td>72.600745</td>
-      <td>72.133035</td>
-      <td>Commerce</td>
-      <td>71.310510</td>
-      <td>Comm&amp;Mgmt</td>
+      <th>178</th>
+      <td>17475</td>
+      <td>F</td>
+      <td>49.160309</td>
+      <td>51.049199</td>
+      <td>Science</td>
+      <td>68.389502</td>
+      <td>Sci&amp;Tech</td>
       <td>False</td>
       <td>0</td>
-      <td>50.489956</td>
+      <td>78.959074</td>
       <td>Mkt&amp;HR</td>
-      <td>54.653373</td>
-      <td>20860.973523</td>
+      <td>66.175076</td>
+      <td>NaN</td>
       <td>True</td>
-      <td>2020-01-18 03:51:46.343341056</td>
-      <td>2020-11-10 05:20:25.560078592</td>
-      <td>12.0</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>6.0</td>
     </tr>
     <tr>
-      <th>145</th>
-      <td>155445</td>
+      <th>179</th>
+      <td>17475</td>
       <td>M</td>
-      <td>62.675550</td>
-      <td>43.687143</td>
-      <td>Commerce</td>
-      <td>58.685724</td>
+      <td>82.296637</td>
+      <td>74.135687</td>
+      <td>Science</td>
+      <td>68.742985</td>
+      <td>Comm&amp;Mgmt</td>
+      <td>False</td>
+      <td>-1</td>
+      <td>79.520267</td>
+      <td>Mkt&amp;HR</td>
+      <td>70.616967</td>
+      <td>26565.431483</td>
+      <td>True</td>
+      <td>2020-01-23 12:06:19.989317888</td>
+      <td>2020-07-11 02:12:49.176702976</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>180</th>
+      <td>17475</td>
+      <td>M</td>
+      <td>70.924552</td>
+      <td>71.276952</td>
+      <td>Science</td>
+      <td>77.192245</td>
       <td>Sci&amp;Tech</td>
       <td>False</td>
-      <td>1</td>
-      <td>51.021717</td>
-      <td>Mkt&amp;HR</td>
-      <td>58.171704</td>
+      <td>0</td>
+      <td>65.669497</td>
+      <td>Mkt&amp;Fin</td>
+      <td>66.286961</td>
       <td>NaN</td>
       <td>False</td>
       <td>NaT</td>
       <td>NaT</td>
-      <td>3.0</td>
+      <td>12.0</td>
     </tr>
   </tbody>
 </table>
 </div></div>
 </div>
-<p>This happens because the model was not notified at any point about the fact that the <code class="docutils literal notranslate"><span class="pre">student_id</span></code> had to be unique, so when it generates new data it will provoke collisions sooner or later.</p>
-<p>In order to solve this, we can pass the argument <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to our model when we create it, indicating the name of the column that is the index of the table.</p>
+<p>This happens because the model was not notified at any point about the fact that the <code class="docutils literal notranslate"><span class="pre">student_id</span></code> had to be unique, so when it generates new data it will provoke collisions sooner or later. In order to solve this, we can pass the argument <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to our model when we create it, indicating the name of the column that is the index of the table.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
@@ -1197,101 +1181,101 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>M</td>
-      <td>50.071382</td>
-      <td>49.652925</td>
+      <td>F</td>
+      <td>58.379733</td>
+      <td>78.612678</td>
       <td>Commerce</td>
-      <td>68.166421</td>
+      <td>66.750015</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>1</td>
-      <td>63.811532</td>
+      <td>97.164931</td>
       <td>Mkt&amp;HR</td>
-      <td>53.177856</td>
-      <td>24041.369372</td>
+      <td>65.112052</td>
+      <td>31756.170592</td>
       <td>True</td>
-      <td>2020-01-20 18:41:49.069841408</td>
-      <td>2020-07-18 13:47:11.445067008</td>
-      <td>3.0</td>
+      <td>2020-01-25 11:57:19.190447104</td>
+      <td>2020-05-30 11:56:12.963026688</td>
+      <td>6.0</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>M</td>
-      <td>79.737798</td>
-      <td>74.938517</td>
-      <td>Commerce</td>
-      <td>71.569118</td>
-      <td>Comm&amp;Mgmt</td>
+      <td>F</td>
+      <td>48.747070</td>
+      <td>43.218551</td>
+      <td>Arts</td>
+      <td>49.802315</td>
+      <td>Others</td>
       <td>False</td>
       <td>0</td>
-      <td>91.269893</td>
-      <td>Mkt&amp;Fin</td>
-      <td>59.599598</td>
-      <td>33869.082275</td>
-      <td>True</td>
-      <td>2020-01-03 18:25:35.109968128</td>
-      <td>2020-12-24 18:17:19.040092672</td>
+      <td>52.557584</td>
+      <td>Mkt&amp;HR</td>
+      <td>55.138039</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
       <td>12.0</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>F</td>
-      <td>83.937314</td>
-      <td>70.864656</td>
+      <td>M</td>
+      <td>64.927731</td>
+      <td>52.347965</td>
       <td>Science</td>
-      <td>63.084496</td>
+      <td>54.856979</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>1</td>
-      <td>59.049658</td>
-      <td>Mkt&amp;HR</td>
-      <td>61.443244</td>
-      <td>23321.557037</td>
+      <td>81.312669</td>
+      <td>Mkt&amp;Fin</td>
+      <td>59.343966</td>
+      <td>27085.112658</td>
       <td>True</td>
-      <td>2021-01-14 16:23:15.729193728</td>
-      <td>2020-08-11 19:03:28.923697664</td>
+      <td>2020-04-07 12:09:03.565864960</td>
+      <td>2020-06-29 07:46:48.778122240</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>M</td>
-      <td>62.121346</td>
-      <td>74.863317</td>
-      <td>Commerce</td>
-      <td>66.404244</td>
-      <td>Comm&amp;Mgmt</td>
+      <td>F</td>
+      <td>88.005098</td>
+      <td>74.759476</td>
+      <td>Science</td>
+      <td>75.701747</td>
+      <td>Sci&amp;Tech</td>
       <td>False</td>
       <td>1</td>
-      <td>84.516106</td>
-      <td>Mkt&amp;Fin</td>
-      <td>62.650750</td>
-      <td>NaN</td>
-      <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
+      <td>63.596649</td>
+      <td>Mkt&amp;HR</td>
+      <td>63.258500</td>
+      <td>22582.151012</td>
+      <td>True</td>
+      <td>2020-03-06 04:05:06.491953920</td>
+      <td>2020-10-13 18:06:08.437578496</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>M</td>
-      <td>83.228037</td>
-      <td>70.987571</td>
+      <td>F</td>
+      <td>59.656659</td>
+      <td>72.804763</td>
       <td>Science</td>
-      <td>69.160579</td>
-      <td>Sci&amp;Tech</td>
+      <td>61.829333</td>
+      <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>1</td>
-      <td>91.098498</td>
+      <td>0</td>
+      <td>64.036027</td>
       <td>Mkt&amp;Fin</td>
-      <td>70.512599</td>
-      <td>43315.490519</td>
-      <td>True</td>
-      <td>2020-01-06 18:45:25.895103232</td>
-      <td>2020-09-13 06:11:41.222711040</td>
+      <td>71.267070</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
       <td>3.0</td>
     </tr>
   </tbody>
@@ -1317,21 +1301,20 @@ div.rendered_html tbody tr:hover {
 </pre></div></div>
 </div>
 </div>
-<div class="section" id="Anonymize-fields-that-contain-Personally-Identifiable-Information-(PII)">
-<h3>Anonymize fields that contain Personally Identifiable Information (PII)<a class="headerlink" href="#Anonymize-fields-that-contain-Personally-Identifiable-Information-(PII)" title="Permalink to this headline">¶</a></h3>
-<p>There will be many cases where the data will contain Personally Identifiable Information which we cannot disclose.</p>
-<p>In these cases, we will want our Tabular Models to replace the information within these fields with fake, simulated data that looks similar to the real one but does not contain any of the original values.</p>
+<div class="section" id="Anonymizing-Personally-Identifiable-Information-(PII)">
+<h3>Anonymizing Personally Identifiable Information (PII)<a class="headerlink" href="#Anonymizing-Personally-Identifiable-Information-(PII)" title="Permalink to this headline">¶</a></h3>
+<p>There will be many cases where the data will contain Personally Identifiable Information which we cannot disclose. In these cases, we will want our Tabular Models to replace the information within these fields with fake, simulated data that looks similar to the real one but does not contain any of the original values.</p>
 <p>Let’s load a new dataset that contains a PII field, the <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> demo, and try to generate synthetic versions of it that do not contain any of the PII fields.</p>
 <div class="admonition note">
 <p class="admonition-title"><strong>NOTE</strong></p>
-<p>The <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset is a modified version of the <code class="docutils literal notranslate"><span class="pre">student_placements</span></code> dataset with one new field, <code class="docutils literal notranslate"><span class="pre">name</span></code>, which contains PII information about the students. Notice that this additional <code class="docutils literal notranslate"><span class="pre">name</span></code> field has been simulated and does not correspond to data from the real users.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset is a modified version of the <code class="docutils literal notranslate"><span class="pre">student_placements</span></code> dataset with one new field, <code class="docutils literal notranslate"><span class="pre">address</span></code>, which contains PII information about the students. Notice that this additional <code class="docutils literal notranslate"><span class="pre">address</span></code> field has been simulated and does not correspond to data from the real users.</p>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements_pii&#39;</span><span class="p">)</span>
+<span></span><span class="n">data_pii</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements_pii&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1340,7 +1323,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+<span></span><span class="n">data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
 </pre></div>
 </div>
 </div>
@@ -1377,19 +1360,19 @@ div.rendered_html tbody tr:hover {
   <tbody>
     <tr>
       <th>student_id</th>
-      <td>155368</td>
-      <td>155369</td>
-      <td>155370</td>
-      <td>155371</td>
-      <td>155372</td>
+      <td>17264</td>
+      <td>17265</td>
+      <td>17266</td>
+      <td>17267</td>
+      <td>17268</td>
     </tr>
     <tr>
-      <th>name</th>
-      <td>Ryan Massey</td>
-      <td>Charles Frye</td>
-      <td>Corey Compton</td>
-      <td>John White III</td>
-      <td>Jeffery Robinson</td>
+      <th>address</th>
+      <td>70304 Baker Turnpike\nEricborough, MS 15086</td>
+      <td>805 Herrera Avenue Apt. 134\nMaryview, NJ 36510</td>
+      <td>3702 Bradley Island\nNorth Victor, FL 12268</td>
+      <td>Unit 0879 Box 3878\nDPO AP 42663</td>
+      <td>96493 Kelly Canyon Apt. 145\nEast Steven, NC 3...</td>
     </tr>
     <tr>
       <th>gender</th>
@@ -1497,25 +1480,25 @@ div.rendered_html tbody tr:hover {
     </tr>
     <tr>
       <th>start_date</th>
-      <td>2020-01-08 00:00:00</td>
-      <td>2020-01-15 00:00:00</td>
-      <td>2020-01-30 00:00:00</td>
+      <td>2020-07-23 00:00:00</td>
+      <td>2020-01-11 00:00:00</td>
+      <td>2020-01-26 00:00:00</td>
       <td>NaT</td>
-      <td>2020-01-16 00:00:00</td>
+      <td>2020-07-04 00:00:00</td>
     </tr>
     <tr>
       <th>end_date</th>
-      <td>2020-04-17 00:00:00</td>
-      <td>2020-04-02 00:00:00</td>
-      <td>2020-04-27 00:00:00</td>
+      <td>2020-10-12 00:00:00</td>
+      <td>2020-04-09 00:00:00</td>
+      <td>2020-07-13 00:00:00</td>
       <td>NaT</td>
-      <td>2020-04-28 00:00:00</td>
+      <td>2020-09-27 00:00:00</td>
     </tr>
     <tr>
       <th>duration</th>
       <td>3.0</td>
       <td>3.0</td>
-      <td>3.0</td>
+      <td>6.0</td>
       <td>NaN</td>
       <td>3.0</td>
     </tr>
@@ -1523,7 +1506,7 @@ div.rendered_html tbody tr:hover {
 </table>
 </div></div>
 </div>
-<p>If we use our tabular model on this new data we will see how the synthetic data that it generates discloses the names from the real students:</p>
+<p>If we use our tabular model on this new data we will see how the synthetic data that it generates discloses the addresses from the real students:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -1532,7 +1515,7 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
     <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1541,8 +1524,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span></span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1570,7 +1553,7 @@ div.rendered_html tbody tr:hover {
     <tr style="text-align: right;">
       <th></th>
       <th>student_id</th>
-      <th>name</th>
+      <th>address</th>
       <th>gender</th>
       <th>second_perc</th>
       <th>high_perc</th>
@@ -1593,106 +1576,106 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>Andrew Mullins</td>
-      <td>F</td>
-      <td>57.424997</td>
-      <td>59.263592</td>
+      <td>252 Allen Ranch\nSouth Joshua, AK 02142</td>
+      <td>M</td>
+      <td>80.705808</td>
+      <td>80.323969</td>
       <td>Science</td>
-      <td>70.567620</td>
-      <td>Comm&amp;Mgmt</td>
+      <td>66.858239</td>
+      <td>Sci&amp;Tech</td>
       <td>False</td>
-      <td>1</td>
-      <td>93.250983</td>
-      <td>Mkt&amp;Fin</td>
-      <td>58.989587</td>
-      <td>19782.469650</td>
+      <td>0</td>
+      <td>78.254398</td>
+      <td>Mkt&amp;HR</td>
+      <td>61.783103</td>
+      <td>23396.557250</td>
       <td>True</td>
-      <td>2020-01-10 08:15:16.614227968</td>
-      <td>2020-07-18 11:04:08.337801728</td>
+      <td>2020-03-06 12:10:39.168600320</td>
+      <td>2020-07-14 13:06:41.632012032</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>Donna Gordon</td>
+      <td>31846 Alexa Manor Suite 441\nMckinneyville, OH...</td>
       <td>M</td>
-      <td>62.708564</td>
-      <td>55.000428</td>
-      <td>Arts</td>
-      <td>62.686418</td>
+      <td>57.578349</td>
+      <td>59.555049</td>
+      <td>Commerce</td>
+      <td>54.794423</td>
       <td>Comm&amp;Mgmt</td>
-      <td>True</td>
-      <td>-1</td>
-      <td>68.361411</td>
-      <td>Mkt&amp;Fin</td>
-      <td>55.430596</td>
-      <td>NaN</td>
       <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
+      <td>1</td>
+      <td>76.217130</td>
+      <td>Mkt&amp;Fin</td>
+      <td>64.720479</td>
+      <td>40195.685665</td>
+      <td>True</td>
+      <td>2020-01-11 04:23:40.212290304</td>
+      <td>2020-06-07 01:42:36.190681600</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>Jeffery Robinson</td>
-      <td>F</td>
-      <td>84.241653</td>
-      <td>72.279247</td>
+      <td>8303 Zachary Wells Apt. 628\nEast Melissatown,...</td>
+      <td>M</td>
+      <td>69.952890</td>
+      <td>64.357913</td>
       <td>Science</td>
-      <td>71.868468</td>
-      <td>Sci&amp;Tech</td>
+      <td>56.144042</td>
+      <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>0</td>
-      <td>75.353724</td>
+      <td>51.860634</td>
       <td>Mkt&amp;Fin</td>
-      <td>67.284781</td>
-      <td>25025.312840</td>
+      <td>60.812811</td>
+      <td>25849.025569</td>
       <td>True</td>
-      <td>2020-02-03 07:17:36.337038080</td>
-      <td>2020-08-01 04:33:07.830278912</td>
+      <td>2020-02-11 10:01:36.302944000</td>
+      <td>2020-07-29 19:04:54.208842752</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>Todd Edwards</td>
-      <td>F</td>
-      <td>44.676988</td>
-      <td>76.947303</td>
+      <td>793 Rebecca Isle Apt. 327\nSouth Nicoleport, H...</td>
+      <td>M</td>
+      <td>64.160065</td>
+      <td>67.948555</td>
       <td>Commerce</td>
-      <td>60.022930</td>
+      <td>58.413090</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>0</td>
-      <td>94.473634</td>
+      <td>1</td>
+      <td>80.946248</td>
       <td>Mkt&amp;HR</td>
-      <td>62.090481</td>
+      <td>55.743324</td>
       <td>NaN</td>
       <td>False</td>
       <td>NaT</td>
       <td>NaT</td>
-      <td>12.0</td>
+      <td>3.0</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>Timothy Rice</td>
+      <td>906 Castillo Lake Apt. 509\nPort Karenberg, NY...</td>
       <td>F</td>
-      <td>73.255932</td>
-      <td>61.226478</td>
+      <td>84.524454</td>
+      <td>78.129060</td>
       <td>Science</td>
-      <td>71.035746</td>
+      <td>63.617855</td>
       <td>Sci&amp;Tech</td>
       <td>False</td>
-      <td>0</td>
-      <td>59.232339</td>
+      <td>1</td>
+      <td>61.793073</td>
       <td>Mkt&amp;HR</td>
-      <td>58.741125</td>
-      <td>32162.825874</td>
+      <td>66.495270</td>
+      <td>24612.905113</td>
       <td>True</td>
-      <td>2020-01-19 11:44:16.728017152</td>
-      <td>2020-09-18 11:20:09.256338432</td>
+      <td>2020-05-17 00:17:01.324377088</td>
+      <td>2020-07-31 06:21:43.687667968</td>
       <td>3.0</td>
     </tr>
   </tbody>
@@ -1704,7 +1687,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_data</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span></span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1733,7 +1716,7 @@ div.rendered_html tbody tr:hover {
 <li><p>telephone</p></li>
 <li><p>…</p></li>
 </ul>
-<p>In this case, since the field is an e-mail address, we will pass a dictionary indicating the category <code class="docutils literal notranslate"><span class="pre">name</span></code></p>
+<p>In this case, since the field is an e-mail address, we will pass a dictionary indicating the category <code class="docutils literal notranslate"><span class="pre">address</span></code></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
@@ -1742,21 +1725,21 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
     <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
     <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
-        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
     <span class="p">}</span>
 <span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>As a result, we can see how the real <code class="docutils literal notranslate"><span class="pre">name</span></code> values have been replaced by other fake names that were not taken from the real data that we learned.</p>
+<p>As a result, we can see how the real <code class="docutils literal notranslate"><span class="pre">address</span></code> values have been replaced by other fake addresses that were not taken from the real data that we learned.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span></span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1784,7 +1767,7 @@ div.rendered_html tbody tr:hover {
     <tr style="text-align: right;">
       <th></th>
       <th>student_id</th>
-      <th>name</th>
+      <th>address</th>
       <th>gender</th>
       <th>second_perc</th>
       <th>high_perc</th>
@@ -1807,107 +1790,107 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>Teresa Ryan</td>
+      <td>731 Porter Roads Apt. 423\nBryanmouth, VA 63024</td>
       <td>M</td>
-      <td>54.256003</td>
-      <td>77.615606</td>
+      <td>57.558413</td>
+      <td>69.138476</td>
       <td>Commerce</td>
-      <td>63.051756</td>
+      <td>67.083624</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>0</td>
-      <td>86.167858</td>
-      <td>Mkt&amp;HR</td>
-      <td>59.828167</td>
-      <td>27934.882708</td>
+      <td>74.728540</td>
+      <td>Mkt&amp;Fin</td>
+      <td>62.234893</td>
+      <td>42961.370805</td>
       <td>True</td>
-      <td>2020-01-11 22:07:05.575592448</td>
-      <td>2020-04-02 13:37:12.388929024</td>
+      <td>2020-05-28 00:27:48.176910336</td>
+      <td>2020-08-06 12:27:07.054197504</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>Monique Williams</td>
+      <td>3761 Romero Hills\nRivershaven, NY 39404</td>
       <td>M</td>
-      <td>68.777674</td>
-      <td>77.677627</td>
+      <td>82.712735</td>
+      <td>78.923759</td>
       <td>Science</td>
-      <td>63.026272</td>
+      <td>72.957707</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>1</td>
-      <td>69.912596</td>
-      <td>Mkt&amp;HR</td>
-      <td>63.497502</td>
-      <td>40378.065476</td>
+      <td>83.681334</td>
+      <td>Mkt&amp;Fin</td>
+      <td>61.773650</td>
+      <td>36912.214845</td>
       <td>True</td>
-      <td>2020-01-01 21:04:52.466290944</td>
-      <td>2020-10-03 11:01:04.867149568</td>
+      <td>2020-01-27 03:25:33.174846720</td>
+      <td>2020-10-26 08:07:08.542487040</td>
       <td>12.0</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>Daniel Harrison</td>
-      <td>F</td>
-      <td>73.613542</td>
-      <td>52.495305</td>
+      <td>46643 Harris Lane Suite 661\nSmithfort, FL 71208</td>
+      <td>M</td>
+      <td>66.411091</td>
+      <td>60.545447</td>
       <td>Science</td>
-      <td>65.726555</td>
+      <td>66.282851</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>0</td>
-      <td>71.782044</td>
-      <td>Mkt&amp;Fin</td>
-      <td>55.769197</td>
-      <td>22549.833667</td>
+      <td>1</td>
+      <td>87.375115</td>
+      <td>Mkt&amp;HR</td>
+      <td>63.257541</td>
+      <td>22977.989782</td>
       <td>True</td>
-      <td>2020-01-06 13:59:51.250882304</td>
-      <td>2020-03-29 15:45:03.941601536</td>
+      <td>2020-01-07 10:48:58.089579520</td>
+      <td>2020-04-27 17:23:28.516048384</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>Jill Graham</td>
+      <td>9496 Mora Cove Apt. 897\nWest Jennifer, WI 77955</td>
       <td>M</td>
-      <td>59.150170</td>
-      <td>60.929126</td>
+      <td>82.612785</td>
+      <td>82.487669</td>
       <td>Commerce</td>
-      <td>61.275861</td>
+      <td>70.934630</td>
       <td>Comm&amp;Mgmt</td>
-      <td>False</td>
-      <td>0</td>
-      <td>51.176688</td>
-      <td>Mkt&amp;HR</td>
-      <td>54.188604</td>
-      <td>22532.337124</td>
       <td>True</td>
-      <td>2020-01-02 19:49:49.849142528</td>
-      <td>2020-08-14 07:41:18.155750400</td>
+      <td>2</td>
+      <td>56.806529</td>
+      <td>Mkt&amp;Fin</td>
+      <td>60.289064</td>
+      <td>37142.896469</td>
+      <td>True</td>
+      <td>2020-05-06 18:35:44.014931200</td>
+      <td>2020-06-24 19:45:10.638810880</td>
       <td>3.0</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>Tyler Mays</td>
-      <td>F</td>
-      <td>61.050104</td>
-      <td>62.028797</td>
+      <td>6129 Santiago Centers Apt. 181\nNew Kelsey, IN...</td>
+      <td>M</td>
+      <td>82.639168</td>
+      <td>85.491010</td>
       <td>Commerce</td>
-      <td>67.557193</td>
-      <td>Sci&amp;Tech</td>
+      <td>69.399257</td>
+      <td>Comm&amp;Mgmt</td>
       <td>False</td>
-      <td>1</td>
-      <td>88.806534</td>
-      <td>Mkt&amp;Fin</td>
-      <td>68.951671</td>
-      <td>NaN</td>
-      <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
-      <td>6.0</td>
+      <td>0</td>
+      <td>90.598163</td>
+      <td>Mkt&amp;HR</td>
+      <td>68.535546</td>
+      <td>21174.224829</td>
+      <td>True</td>
+      <td>2020-04-18 23:33:55.138288896</td>
+      <td>2021-03-16 02:14:16.926161664</td>
+      <td>12.0</td>
     </tr>
   </tbody>
 </table>
@@ -1918,7 +1901,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_data</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span></span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1932,12 +1915,19 @@ div.rendered_html tbody tr:hover {
 </pre></div></div>
 </div>
 </div>
-<div class="section" id="Use-different-transformers">
-<h3>Use different transformers<a class="headerlink" href="#Use-different-transformers" title="Permalink to this headline">¶</a></h3>
-<p>One thing that you may have noticed when executing the previous steps is that the fitting process took much longer on the <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset than it took on the previous version that did not contain the sudent <code class="docutils literal notranslate"><span class="pre">name</span></code>s.</p>
-<p>This happens because the <code class="docutils literal notranslate"><span class="pre">name</span></code> field is interpreted as a categorical variable, which the Tabular Model <a class="reference external" href="https://en.wikipedia.org/wiki/One-hot">one-hot encoded</a> generating 215 new columns that it had to learn afterwards.</p>
-<p>This transformation, which in this case was very inefficient, happens because the Tabular Models apply <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data Transforms</a> under the hood to transform all the non-numerical variables, which the underlying models cannot handle, into numerical representations which they can properly work with.</p>
-<p>In the case of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>, the default transformation is a One-Hot encoding, which can work very well with variables that have a little number of different values, but which is very inefficient in cases where there is a large number of values.</p>
+<div class="section" id="Specifying-constraints">
+<h3>Specifying constraints<a class="headerlink" href="#Specifying-constraints" title="Permalink to this headline">¶</a></h3>
+<p>If you look closely at the data you may notice that some properties were not completely captured by the model. For example, you may have seen that sometimes the model produces an <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> number greater than <code class="docutils literal notranslate"><span class="pre">0</span></code> while also indicating that <code class="docutils literal notranslate"><span class="pre">work_experience</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>. These type of properties are what we call <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> and can also be handled using <code class="docutils literal notranslate"><span class="pre">SDV</span></code>. For further details about them please visit the <a class="reference internal" href="03_Handling_Constraints.html"><span class="doc">Handling Constraints</span></a> guide.</p>
+</div>
+</div>
+<div class="section" id="Advanced-Usage">
+<h2>Advanced Usage<a class="headerlink" href="#Advanced-Usage" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have discovered the basics, let’s go over a few more advanced usage examples and see the different arguments that we can pass to our <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> Model in order to customize it to our needs.</p>
+<div class="section" id="How-to-set-transforms-to-use?">
+<h3>How to set transforms to use?<a class="headerlink" href="#How-to-set-transforms-to-use?" title="Permalink to this headline">¶</a></h3>
+<p>One thing that you may have noticed when executing the previous steps is that the fitting process took much longer on the <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset than it took on the previous version that did not contain the sudent <code class="docutils literal notranslate"><span class="pre">address</span></code>. This happens because the <code class="docutils literal notranslate"><span class="pre">address</span></code> field is interpreted as a categorical variable, which the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> <a class="reference external" href="https://en.wikipedia.org/wiki/One-hot">one-hot encoded</a> generating 215 new columns that it had to learn afterwards.</p>
+<p>This transformation, which in this case was very inefficient, happens because the Tabular Models apply <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data Transforms</a> under the hood to transform all the non-numerical variables, which the underlying models cannot handle, into numerical representations which they can properly work with. In the case of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>, the default transformation is a One-Hot encoding, which can work very well with variables that have a little number of
+different values, but which is very inefficient in cases where there is a large number of values.</p>
 <p>For this reason, the Tabular Models have an additional argument called <code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> that let you select which transformer to apply to each column. This <code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> argument must be passed as a <code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the fields for which we want to use a transformer different than the default, and the name of the transformer that we want to use.</p>
 <p>Possible transformer names are:</p>
 <ul class="simple">
@@ -1951,8 +1941,7 @@ div.rendered_html tbody tr:hover {
 <li><p><code class="docutils literal notranslate"><span class="pre">datetime</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">DatetimeTransformer</span></code>.</p></li>
 </ul>
 <p><strong>NOTE</strong>: For additional details about each one of the transformers, please visit <a class="reference external" href="https://github.com/sdv-dev/RDT">RDT</a></p>
-<p>Let’s now try to improve the previous fitting process by changing the transformer that we use for the <code class="docutils literal notranslate"><span class="pre">name</span></code> field to something other than the default.</p>
-<p>As an example, we will use the <code class="docutils literal notranslate"><span class="pre">label_encoding</span></code> transformer, which instead of generating one column for each possible value, it just replaces each value with a unique integer value.</p>
+<p>Let’s now try to improve the previous fitting process by changing the transformer that we use for the <code class="docutils literal notranslate"><span class="pre">address</span></code> field to something other than the default. As an example, we will use the <code class="docutils literal notranslate"><span class="pre">label_encoding</span></code> transformer, which instead of generating one column for each possible value, it just replaces each value with a unique integer value.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
@@ -1961,13 +1950,13 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
     <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
     <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
-        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
     <span class="p">},</span>
     <span class="n">field_transformers</span><span class="o">=</span><span class="p">{</span>
-        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
     <span class="p">}</span>
 <span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1976,8 +1965,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span></span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -2005,7 +1994,7 @@ div.rendered_html tbody tr:hover {
     <tr style="text-align: right;">
       <th></th>
       <th>student_id</th>
-      <th>name</th>
+      <th>address</th>
       <th>gender</th>
       <th>second_perc</th>
       <th>high_perc</th>
@@ -2028,81 +2017,18 @@ div.rendered_html tbody tr:hover {
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>Destiny Smith</td>
+      <td>4500 Sarah Lock Suite 202\nSouth Eric, NC 53926</td>
       <td>M</td>
-      <td>66.695636</td>
-      <td>34.614727</td>
-      <td>Commerce</td>
-      <td>58.947420</td>
-      <td>Comm&amp;Mgmt</td>
+      <td>63.178421</td>
+      <td>68.794811</td>
+      <td>Science</td>
+      <td>59.502442</td>
+      <td>Sci&amp;Tech</td>
       <td>False</td>
       <td>0</td>
-      <td>50.519559</td>
+      <td>53.251981</td>
       <td>Mkt&amp;HR</td>
-      <td>56.366306</td>
-      <td>20077.552474</td>
-      <td>True</td>
-      <td>2020-02-24 03:33:59.224180480</td>
-      <td>2020-09-12 22:28:20.817696512</td>
-      <td>3.0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>1</td>
-      <td>James Smith</td>
-      <td>F</td>
-      <td>44.054187</td>
-      <td>61.576188</td>
-      <td>Commerce</td>
-      <td>70.931004</td>
-      <td>Comm&amp;Mgmt</td>
-      <td>False</td>
-      <td>0</td>
-      <td>55.337901</td>
-      <td>Mkt&amp;HR</td>
-      <td>54.308815</td>
-      <td>31493.674567</td>
-      <td>True</td>
-      <td>2020-01-05 05:36:08.200440576</td>
-      <td>2020-04-04 22:29:32.324812544</td>
-      <td>3.0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2</td>
-      <td>Joseph Mclaughlin</td>
-      <td>M</td>
-      <td>59.157425</td>
-      <td>69.371756</td>
-      <td>Commerce</td>
-      <td>65.065871</td>
-      <td>Comm&amp;Mgmt</td>
-      <td>False</td>
-      <td>0</td>
-      <td>70.006051</td>
-      <td>Mkt&amp;Fin</td>
-      <td>59.370396</td>
-      <td>NaN</td>
-      <td>False</td>
-      <td>NaT</td>
-      <td>NaT</td>
-      <td>6.0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>3</td>
-      <td>Stephanie Mcdowell</td>
-      <td>M</td>
-      <td>57.413727</td>
-      <td>72.766079</td>
-      <td>Commerce</td>
-      <td>61.718940</td>
-      <td>Comm&amp;Mgmt</td>
-      <td>False</td>
-      <td>1</td>
-      <td>88.453349</td>
-      <td>Mkt&amp;HR</td>
-      <td>63.285239</td>
+      <td>65.177543</td>
       <td>NaN</td>
       <td>False</td>
       <td>NaT</td>
@@ -2110,29 +2036,415 @@ div.rendered_html tbody tr:hover {
       <td>12.0</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>4</td>
-      <td>Amy Gates</td>
+      <th>1</th>
+      <td>1</td>
+      <td>PSC 4256, Box 5091\nAPO AP 55950</td>
       <td>M</td>
-      <td>76.533955</td>
-      <td>72.549629</td>
+      <td>64.919090</td>
+      <td>63.506646</td>
       <td>Science</td>
-      <td>76.073706</td>
+      <td>62.828073</td>
+      <td>Sci&amp;Tech</td>
+      <td>False</td>
+      <td>0</td>
+      <td>57.958513</td>
+      <td>Mkt&amp;HR</td>
+      <td>59.876879</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2</td>
+      <td>9582 Joshua Loop\nEast Krystalshire, AR 49296</td>
+      <td>M</td>
+      <td>61.073571</td>
+      <td>52.469851</td>
+      <td>Commerce</td>
+      <td>60.102154</td>
+      <td>Comm&amp;Mgmt</td>
+      <td>False</td>
+      <td>1</td>
+      <td>66.848801</td>
+      <td>Mkt&amp;Fin</td>
+      <td>63.263124</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>12.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3</td>
+      <td>PSC 1293, Box 7143\nAPO AA 21107</td>
+      <td>M</td>
+      <td>65.331199</td>
+      <td>72.836305</td>
+      <td>Science</td>
+      <td>84.660716</td>
       <td>Comm&amp;Mgmt</td>
       <td>False</td>
       <td>0</td>
-      <td>84.343519</td>
+      <td>60.026474</td>
       <td>Mkt&amp;Fin</td>
-      <td>58.891185</td>
-      <td>21681.844305</td>
+      <td>65.581030</td>
+      <td>35793.972463</td>
       <td>True</td>
-      <td>2020-01-24 12:05:05.016603648</td>
-      <td>2020-10-13 21:33:49.999000064</td>
+      <td>2020-03-02 03:03:54.952036352</td>
+      <td>2020-10-23 12:23:53.366066944</td>
       <td>3.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>40055 Blanchard Stream\nEast Annland, IN 64263</td>
+      <td>M</td>
+      <td>72.506306</td>
+      <td>59.500025</td>
+      <td>Commerce</td>
+      <td>75.389494</td>
+      <td>Comm&amp;Mgmt</td>
+      <td>False</td>
+      <td>1</td>
+      <td>62.087030</td>
+      <td>Mkt&amp;Fin</td>
+      <td>57.195095</td>
+      <td>31757.415343</td>
+      <td>True</td>
+      <td>2020-02-18 02:37:18.078198784</td>
+      <td>2021-01-14 15:19:31.366381056</td>
+      <td>12.0</td>
     </tr>
   </tbody>
 </table>
 </div></div>
+</div>
+</div>
+<div class="section" id="Exploring-the-Probability-Distributions">
+<h3>Exploring the Probability Distributions<a class="headerlink" href="#Exploring-the-Probability-Distributions" title="Permalink to this headline">¶</a></h3>
+<p>During the previous steps, every time we fitted the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> it performed the following operations:</p>
+<ol class="arabic simple">
+<li><p>Learn the format and data types of the passed data</p></li>
+<li><p>Transform the non-numerical and null data using <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data Transforms</a> to obtain a fully numerical representation of the data from which we can learn the probability distributions.</p></li>
+<li><p>Learn the probability distribution of each column from the table</p></li>
+<li><p>Learn the correlation between the marginal probabilities using a Gaussian Copula.</p></li>
+</ol>
+<p>After this, when we used the model to generate new data for our table using the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method, it did:</p>
+<ol class="arabic simple" start="5">
+<li><p>Sample from a Multivariate Standard Normal distribution with the learned correlations.</p></li>
+<li><p>Reverse the sampled probabilities using the marginal distributions.</p></li>
+<li><p>Reverse the RDT transformations to go back to the original data format.</p></li>
+</ol>
+<p>As you can see, during these steps the <em>Marginal Probability Distributions</em> have a very important role, since the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> had to learn and reproduce the individual distributions of each column in our table.</p>
+<p>We can explore the distributions which the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used to model each column using its <code class="docutils literal notranslate"><span class="pre">get_distributions</span></code> method:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">distributions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>This will return us a <code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the distribution class used for each column:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">distributions</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;gender#0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;gender#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;second_perc&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,
+ &#39;high_perc&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;high_spec#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;high_spec#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;high_spec#2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;degree_perc&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,
+ &#39;degree_type#0&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,
+ &#39;degree_type#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;degree_type#2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;work_experience&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,
+ &#39;experience_years&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;employability_perc&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,
+ &#39;mba_spec#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;mba_spec#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;mba_perc&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;salary#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;salary#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;placed&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;start_date#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;start_date#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;end_date#0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,
+ &#39;end_date#1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;duration#0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,
+ &#39;duration#1&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,
+ &#39;duration#2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;}
+</pre></div></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title"><strong>NOTE</strong></p>
+<p>In this list we will see multiple distributions for each one of the columns that we have in our data. This is because the RDT transformations used to encode the data numerically often use more than one column to represent each one of the input variables.</p>
+</div>
+<p>Let’s explore the individual distribution of one of the columns in our data to better understand how the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> processed them and see if we can improve the results by manually specifying a different distribution.</p>
+<p>For example, let’s explore the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column by looking at the frequency of its values within the original data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0    141
+1     65
+2      8
+3      1
+Name: experience_years, dtype: int64
+</pre></div></div>
+</div>
+<p>And plotting it using the <code class="docutils literal notranslate"><span class="pre">copulas.visualization</span></code> functions:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="kn">from</span> <span class="nn">copulas.visualization</span> <span class="kn">import</span> <span class="n">hist_1d</span>
+
+<span class="n">hist_1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fac662940b8&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_59_1.png" src="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_59_1.png" />
+</div>
+</div>
+<p>By observing the data we can see that the behavior of the values in this column is very similar to a Gamma or even some types of Beta distribution, where the majority of the values are 0 and the frequency decreases as the values increase.</p>
+<p>Was the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> able to capture this distribution on its own?</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;experience_years&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;
+</pre></div></div>
+</div>
+<p>It seems that the it was not, as it rather thought that the behavior was closer to a Gaussian distribution.</p>
+<p>And, as a result, we can see how the generated values now contain negative values which are invalid for this column:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+ 0    107
+ 1     65
+-1     20
+ 2      8
+Name: experience_years, dtype: int64
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">hist_1d</span><span class="p">(</span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fac664aa0f0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_64_1.png" src="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_64_1.png" />
+</div>
+</div>
+<p>Let’s see how we can improve this situation by passing the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> the exact distribution that we want it to use for this column.</p>
+</div>
+<div class="section" id="Setting-distributions-for-indvidual-variables">
+<h3>Setting distributions for indvidual variables<a class="headerlink" href="#Setting-distributions-for-indvidual-variables" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> class offers the possibility to indicate which distribution to use for each one of the columns in the table, in order to solve situations like the one that we just described.</p>
+<p>In order to do this, we need to pass a <code class="docutils literal notranslate"><span class="pre">distributions</span></code> argument with <code class="docutils literal notranslate"><span class="pre">dict</span></code> that indicates, the distribution that we want to use for each column.</p>
+<p>Possible values for the distribution argument are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution. This may result in non-parametric models being used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution, but restrict the selection to parametric distributions only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution, but restrict the selection to bounded distributions only. This may result in non-parametric models being used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution, but restrict the selection to semi-bounded distributions only. This may result in non-parametric models being used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution, but restrict the selection to parametric and bounded distributions only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parametric_semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution, but restrict the selection to parametric and semi-bounded distributions only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian</span></code>: Use a Gaussian distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">student_t</span></code>: Use a Student T distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gussian_kde</span></code>: Use a GaussianKDE distribution. This model is non-parametric, so using this will make <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> unusable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">truncated_gaussian</span></code>: Use a Truncated Gaussian distribution.</p></li>
+</ul>
+<p>Let’s see what happens if we make the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> use the <code class="docutils literal notranslate"><span class="pre">beta</span></code> distribution for our column.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+    <span class="n">distribution</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;experience_years&#39;</span><span class="p">:</span> <span class="s1">&#39;beta&#39;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>After this, we can see how the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used the indicated distribution for the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()[</span><span class="s1">&#39;experience_years&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;copulas.univariate.beta.BetaUnivariate&#39;
+</pre></div></div>
+</div>
+<p>And, as a result, now we can see how the generated data now have a behavior which is closer to the original data and always stays within the valid values range.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0    153
+1     31
+2     20
+3     11
+Name: experience_years, dtype: int64
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fac632d4358&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_73_1.png" src="../../_images/tutorials_single_table_data_01_GaussianCopula_Model_73_1.png" />
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title"><strong>NOTE</strong></p>
+<p>Even though there are situations like the one show above where manually choosing a distribution seems to give better results, in most cases the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> will be able to find the optimal distribution on its own, making this manual search of the marginal distributions necessary on very little occasions.</p>
 </div>
 </div>
 </div>
@@ -2144,8 +2456,8 @@ div.rendered_html tbody tr:hover {
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="../../user_guides/single_table.html" title="previous page">Single Table Data</a>
-    <a class='right-next' id="next-link" href="02_GaussianCopula_Model.html" title="next page">GaussianCopula Model</a>
+    <a class='left-prev' id="prev-link" href="../../user_guides/single_table/models.html" title="previous page">Models</a>
+    <a class='right-next' id="next-link" href="02_CTGAN_Model.html" title="next page">CTGAN Model</a>
 
               </div>
               
