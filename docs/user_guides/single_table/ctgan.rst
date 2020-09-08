@@ -16,15 +16,10 @@ discover functionalities of the ``CTGAN`` model, including how to:
 What is CTGAN?
 --------------
 
-The ``sdv.tabular.CTGAN`` model from ``SDV`` is based on the
-``ctgan.CTGANSynthesizer`` class from the `CTGAN
-library <https://github.com/sdv-dev/CTGAN>`__, a Deep Learning based
-data synthesizer that uses Generative Adversarial Networks to generate
-tabular data and which was presented at the NeurIPS 2020 conference by
+The ``sdv.tabular.CTGAN`` model is based on the GAN-based Deep Learning
+data synthesizer which was presented at the NeurIPS 2020 conference by
 the paper titled `Modeling Tabular data using Conditional
-GAN <https://arxiv.org/abs/1907.00503>`__. For more details about the
-model, please read the linked paper and visit the `CTGAN
-library <https://github.com/sdv-dev/CTGAN>`__.
+GAN <https://arxiv.org/abs/1907.00503>`__.
 
 Let's now discover how to learn a dataset and later on generate
 synthetic data with the same format and statistical properties by using
@@ -90,7 +85,7 @@ indicated above. In order to do this you wil need to:
     Notice that the model ``fitting`` process took care of transforming the
     different fields using the appropriate `Reversible Data
     Transforms <http://github.com/sdv-dev/RDT>`__ to ensure that the data
-    has a format that the CTGANSynthesizer class can handle.
+    has a format that the underlying CTGANSynthesizer class can handle.
 
 Generate synthetic data from the model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -353,62 +348,45 @@ of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
 generated data and computationa time.
 
-``epochs`` and ``batch_size``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- ``epochs`` and ``batch_size``: these arguments control the number of
+  iterations that the model will perform to optimize its parameters, as well as the number
+  of samples used in each step. Its default values are ``300`` and ``500``
+  respectively, and ``batch_size`` needs to always be a value which is
+  multiple of ``10``.
 
-The first hyperparameters that we see are the ``epochs`` and
-``batch_size`` arguments, which control the number of iterations that
-the model will perform to optimize its parameters, as well as the number
-of samples used in each step. Its default values are ``300`` and ``500``
-respectively, and ``batch_size`` needs to always be a value which is
-multiple of ``10``.
+  These hyperparameters have a very direct effect in time the training
+  process lasts but also on the performance of the data, so for new
+  datasets, you might want to start by setting a low value on both of them
+  to see how long the training process takes on your data and later on
+  increase the number to acceptable values in order to improve the
+  performance.
 
-These hyperparameters have a very direct effect in time the training
-process lasts but also on the performance of the data, so for new
-datasets, you might want to start by setting a low value on both of them
-to see how long the training process takes on your data and later on
-increase the number to acceptable values in order to improve the
-performance.
+- ``log_frequency``: Whether to use log frequency of categorical levels in conditional
+  sampling. It defaults to ``True``.
 
-``log_frequency``
-^^^^^^^^^^^^^^^^^
-
-Whether to use log frequency of categorical levels in conditional
-sampling. It defaults to ``True``.
-
-This argument affects how the model processes the frequencies of the
-categorical values that are used to condition the rest of the values. In
-some cases, changing it to ``False`` could lead to better performance.
-
-Neural Network dimensions
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``CTGAN`` has the following hyperparameters that allow you to control
-the size of the different layers that compose its neural networks:
+  This argument affects how the model processes the frequencies of the
+  categorical values that are used to condition the rest of the values. In
+  some cases, changing it to ``False`` could lead to better performance.
 
 -  ``embedding_dim`` (int): Size of the random sample passed to the
    Generator. Defaults to 128.
+
 -  ``gen_dim`` (tuple or list of ints): Size of the output samples for each
    one of the Residuals. A Resiudal Layer will be created for each one
    of the values provided. Defaults to (256, 256).
+
 -  ``dis_dim`` (tuple or list of ints): Size of the output samples for each
    one of the Discriminator Layers. A Linear Layer will be created for
    each one of the values provided. Defaults to (256, 256).
 
-``l2scale``
-^^^^^^^^^^^
+- ``l2scale``: Weight Decay of the Adam Optimizer used to optimize the Neural Networks.
+  Defaults to ``1e-6``.
 
-The ``l2scale`` argument, which defaults to ``1e-6``, sets the wheight
-Decay of the Adam Optimizer used to optimize the Neural Networks.
-
-``verbose``
-^^^^^^^^^^^
-
-Whether to print fit progress on stdout. Defaults to ``False``.
+- ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
 
 .. warning::
 
-    The value that you set on the ``batch_size`` argument must always be a
+    Notice that the value that you set on the ``batch_size`` argument must always be a
     multiple of ``10``!
 
 As an example, we will try to fit the ``CTGAN`` model slightly

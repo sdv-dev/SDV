@@ -17,17 +17,14 @@ to:
 What is GaussianCopula?
 -----------------------
 
-The ``sdv.tabular.GaussianCopula`` model from ``SDV`` is based on the
-``copulas.multivariate.GaussianMultivariate`` class from the `Copulas
-library <https://sdv.dev/Copulas>`__, a library for modeling and
-sampling multivariate distributions based on `copula
-funtions <https://en.wikipedia.org/wiki/Copula_%28probability_theory%29>`__.
+The ``sdv.tabular.GaussianCopula`` model is based on the the usage of
+`copula funtions <https://en.wikipedia.org/wiki/Copula_%28probability_theory%29>`__.
 
-In mathematical terms, a Gaussian Copula is a distribution over the unit
+In mathematical terms, a *copula* is a distribution over the unit
 cube :math:`{\displaystyle [0,1]^{d}}` which is constructed from a
 multivariate normal distribution over
 :math:`{\displaystyle \mathbb {R} ^{d}}` by using the probability
-integral transform. Intuitively, a Copula is a mathematical function
+integral transform. Intuitively, a *copula* is a mathematical function
 that allows us to describe the joint distribution of multiple random
 variables by analyzing the dependencies between their marginal
 distributions.
@@ -90,8 +87,7 @@ characteristics indicated above. In order to do this you wil need to:
     Notice that the model ``fitting`` process took care of transforming the
     different fields using the appropriate `Reversible Data
     Transforms <http://github.com/sdv-dev/RDT>`__ to ensure that the data
-    has a format that the GaussianMultivariate model from the
-    `copulas <https://github.com/sdv-dev/Copulas>`__ library can handle.
+    has a format that the ``GaussianMultivariate`` model can handle.
 
 
 Generate synthetic data from the model

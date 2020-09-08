@@ -17,15 +17,12 @@ datasets. Some important features of ``sdv.tabular`` include:
 
 -  Support multiple types of statistical and deep learning models:
 
-   -  GaussianCopula: A tool to model multivariate distributions using
+   -  :ref:`gaussian_copula`: A tool to model multivariate distributions using
       `copula
       functions <https://en.wikipedia.org/wiki/Copula_%28probability_theory%29>`__.
-      Based on our `Copulas
-      Library <https://github.com/sdv-dev/Copulas>`__.
 
-   -  CTGAN: A GAN-based Deep Learning data synthesizer that can generate
-      synthetic tabular data with high fidelity. Based on our `CTGAN
-      Library <https://github.com/sdv-dev/CTGAN>`__.
+   -  :ref:`ctgan`: A GAN-based Deep Learning data synthesizer that can generate
+      synthetic tabular data with high fidelity.
 
 .. toctree::
     :titlesonly:
