@@ -1,3 +1,5 @@
+.. _single_table:
+
 Single Table Data
 =================
 
@@ -30,4 +32,4 @@ datasets. Some important features of ``sdv.tabular`` include:
 
     data_description
     models
-    ../../tutorials/single_table_data/03_Handling_Constraints
+    constraints

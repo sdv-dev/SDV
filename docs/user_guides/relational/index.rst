@@ -1,3 +1,5 @@
+.. _relational:
+
 Relational Data
 ===============
 

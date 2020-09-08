@@ -1,3 +1,5 @@
+.. _relational_data_description:
+
 Data Description
 ================
 
@@ -5,4 +7,4 @@ Data Description
     :titlesonly:
     :maxdepth: 2
 
-    ../../tutorials/relational_data/01_Relational_Metadata
+    relational_metadata

@@ -108,6 +108,10 @@ ENV/
 .*.swp
 
 sdv/data/
+docs/**/*.pkl
+docs/**/*metadata.json
+docs/images
+docs/savefig
 tutorials/**/*.pkl
-tutorials/**/*.json
+tutorials/**/*metadata.json
 notebooks
