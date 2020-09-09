@@ -271,21 +271,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department  ... age_when_joined years_in_the_company</span>
-<span class="go">0       Pear          Sales  ...              28                    7</span>
-<span class="go">1       Pear         Design  ...              38                    4</span>
-<span class="go">2    Glasses             AI  ...              40                    3</span>
-<span class="go">3    Glasses  Search Engine  ...              37                    8</span>
-<span class="go">4   Cheerper        BigData  ...              32                    2</span>
-<span class="go">5   Cheerper        Support  ...              28                    8</span>
-<span class="go">6       Pear          Sales  ...              44                    2</span>
-<span class="go">7       Pear         Design  ...              27                    9</span>
-<span class="go">8    Glasses             AI  ...              33                    4</span>
-<span class="go">9    Glasses  Search Engine  ...              31                    2</span>
-<span class="go">10  Cheerper        BigData  ...              36                    3</span>
-<span class="go">11  Cheerper        Support  ...              27                    4</span>
-
-<span class="go">[12 rows x 7 columns]</span>
+<span class="go">     company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   48               40                     8</span>
+<span class="go">1       Pear         Design            Ryan James    618 Tina Forges Suite 536\nEast Tonya, NJ 60119   30               24                     6</span>
+<span class="go">2    Glasses             AI          Shannon Hill  2468 Miller Stravenue Apt. 857\nSmithland, SC ...   43               38                     5</span>
+<span class="go">3    Glasses  Search Engine         Shelia Hanson  117 Williams Parks Apt. 158\nPort Rebeccaland,...   44               35                     9</span>
+<span class="go">4   Cheerper        BigData      Robert Rodriguez    753 Ross Fords Apt. 880\nNancychester, CA 24095   40               37                     3</span>
+<span class="go">5   Cheerper        Support  Mr. Benjamin Simpson          9463 Hicks Avenue\nMcmillantown, HI 23614   40               36                     4</span>
+<span class="go">6       Pear          Sales        Megan Erickson              127 Rachel Parks\nLisashire, VA 82898   43               43                     0</span>
+<span class="go">7       Pear         Design       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   35               30                     5</span>
+<span class="go">8    Glasses             AI           John Martin  1422 Gutierrez Drives Suite 351\nSouth Terri, ...   36               29                     7</span>
+<span class="go">9    Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   37               30                     7</span>
+<span class="go">10  Cheerper        BigData          Richard Hart       801 Tucker Plaza\nChristineborough, NH 12895   31               24                     7</span>
+<span class="go">11  Cheerper        Support           Robert Wong            89836 James Road\nCabrerastad, OH 32249   37               30                     7</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -447,19 +445,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department  ... age_when_joined years_in_the_company</span>
-<span class="go">0   Glasses             AI  ...              37                    3</span>
-<span class="go">1  Cheerper        Support  ...              26                    6</span>
-<span class="go">2      Pear         Design  ...              30                    4</span>
-<span class="go">3  Cheerper        Support  ...              32                    3</span>
-<span class="go">4   Glasses             AI  ...              35                    2</span>
-<span class="go">5  Cheerper        BigData  ...              41                    2</span>
-<span class="go">6  Cheerper        Support  ...              39                    4</span>
-<span class="go">7   Glasses  Search Engine  ...              35                   11</span>
-<span class="go">8   Glasses             AI  ...              45                    1</span>
-<span class="go">9      Pear          Sales  ...              34                    2</span>
-
-<span class="go">[10 rows x 7 columns]</span>
+<span class="go">   company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0  Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   30               24                     6</span>
+<span class="go">1  Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   46               42                     4</span>
+<span class="go">3     Pear         Design    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   42               24                    18</span>
+<span class="go">4  Glasses             AI          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   33               24                     9</span>
+<span class="go">5  Glasses             AI           John Martin  1422 Gutierrez Drives Suite 351\nSouth Terri, ...   46               43                     3</span>
+<span class="go">6  Glasses             AI           Robert Wong            89836 James Road\nCabrerastad, OH 32249   48               41                     7</span>
+<span class="go">7     Pear          Sales  Mr. Benjamin Simpson          9463 Hicks Avenue\nMcmillantown, HI 23614   48               43                     5</span>
+<span class="go">8  Glasses  Search Engine       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   47               42                     5</span>
+<span class="go">0     Pear          Sales    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   48               43                     5</span>
+<span class="go">1     Pear         Design       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   30               24                     6</span>
 </pre></div>
 </div>
 </div>
