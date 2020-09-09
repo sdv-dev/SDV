@@ -18,7 +18,7 @@ jobs:
 
     - name: Build
       run: |
-        sudo apt install pandoc
+        sudo apt-get install graphviz pandoc
         python -m pip install --upgrade pip
         pip install -e .[dev]
         make docs
