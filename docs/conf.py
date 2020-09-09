@@ -42,7 +42,11 @@ extensions = [
     'IPython.sphinxext.ipython_directive',
 ]
 
-ipython_execlines = ["import pandas as pd", "pd.set_option('display.width', 1000000)"]
+ipython_execlines = [
+    "import pandas as pd",
+    "pd.set_option('display.width', 1000000)",
+    "pd.set_option('max_columns', 1000)",
+]
 
 autosummary_generate = True
 autodoc_typehints = "none"
