@@ -359,11 +359,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0       17390      M  ...                           NaT       6.0</span>
-<span class="go">1       17464      M  ... 2020-08-28 11:58:19.327516672       3.0</span>
-<span class="go">2       17316      F  ...                           NaT       3.0</span>
-<span class="go">3       17338      M  ...                           NaT       3.0</span>
-<span class="go">4       17465      M  ... 2020-09-13 23:18:19.419004672      12.0</span>
+<span class="go">0       17387      M  ... 2020-10-19 07:23:41.636363520      12.0</span>
+<span class="go">1       17408      M  ...                           NaT       3.0</span>
+<span class="go">2       17416      M  ...                           NaT       3.0</span>
+<span class="go">3       17331      F  ... 2021-02-04 13:56:54.113767168      12.0</span>
+<span class="go">4       17468      M  ... 2020-08-01 18:13:40.557849856      12.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -450,10 +450,10 @@ that there are some values that appear more than once:</p>
 <span class="gp">In [14]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">     student_id gender  ...                      end_date  duration</span>
-<span class="go">36        17456      M  ...                           NaT       6.0</span>
-<span class="go">101       17456      M  ... 2020-07-20 22:52:55.157949952       3.0</span>
-<span class="go">112       17456      F  ... 2020-10-06 21:08:11.688205824       3.0</span>
-<span class="go">164       17456      F  ... 2020-06-17 05:55:17.566545920       3.0</span>
+<span class="go">98        17286      M  ... 2020-06-18 09:21:23.747749376       3.0</span>
+<span class="go">102       17286      M  ... 2020-09-27 12:18:59.330102784       3.0</span>
+<span class="go">112       17286      F  ... 2020-05-21 13:41:54.944771840       3.0</span>
+<span class="go">153       17286      M  ... 2020-04-05 18:47:15.337270016       3.0</span>
 
 <span class="go">[4 rows x 17 columns]</span>
 </pre></div>
@@ -478,11 +478,11 @@ generate a unique sequence of valures for the column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[18]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ... 2020-03-17 00:06:09.005826048       3.0</span>
-<span class="go">1           1      M  ... 2020-11-23 17:32:14.239660288      12.0</span>
-<span class="go">2           2      F  ... 2020-08-15 00:50:35.036805120       3.0</span>
-<span class="go">3           3      M  ...                           NaT       3.0</span>
-<span class="go">4           4      M  ...                           NaT       3.0</span>
+<span class="go">0           0      F  ... 2020-04-04 01:30:50.533210624       3.0</span>
+<span class="go">1           1      F  ... 2020-06-01 15:53:30.217948672       3.0</span>
+<span class="go">2           2      M  ... 2020-09-06 18:28:54.766068480       3.0</span>
+<span class="go">3           3      F  ... 2020-06-23 06:06:43.385469440       3.0</span>
+<span class="go">4           4      F  ... 2020-10-10 14:20:57.347373056      12.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 
@@ -596,11 +596,11 @@ that we learned.</p>
 <span class="gp">In [30]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[30]: </span><span class="go"></span>
 <span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...     12.0</span>
-<span class="go">1           1  ...      3.0</span>
+<span class="go">0           0  ...      3.0</span>
+<span class="go">1           1  ...     12.0</span>
 <span class="go">2           2  ...      3.0</span>
-<span class="go">3           3  ...      3.0</span>
-<span class="go">4           4  ...      3.0</span>
+<span class="go">3           3  ...     12.0</span>
+<span class="go">4           4  ...     12.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 
@@ -809,10 +809,10 @@ generated values now contain negative values which are invalid for this
 column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [43]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[43]: </span><span class="go"></span>
-<span class="go"> 0    92</span>
-<span class="go"> 1    82</span>
-<span class="go">-1    14</span>
-<span class="go"> 2    12</span>
+<span class="go"> 0    101</span>
+<span class="go"> 1     82</span>
+<span class="go">-1     11</span>
+<span class="go"> 2      6</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [44]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -886,10 +886,10 @@ the valid values range.</p>
 
 <span class="gp">In [50]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[50]: </span><span class="go"></span>
-<span class="go">0    151</span>
-<span class="go">1     36</span>
-<span class="go">2     16</span>
-<span class="go">3     12</span>
+<span class="go">0    158</span>
+<span class="go">2     25</span>
+<span class="go">1     21</span>
+<span class="go">3     11</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [51]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>

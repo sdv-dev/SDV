@@ -236,7 +236,7 @@ know about the dataset.</p></li>
 <span class="gp">In [4]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">visualize</span><span class="p">();</span>
 </pre></div>
 </div>
-<img alt="images/quickstart_1.png" src="images/quickstart_1.png" />
+<img alt="../_images/quickstart_1.png" src="../_images/quickstart_1.png" />
 <p>For more details about how to build the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> for your own
 dataset, please refer to the <a class="reference internal" href="../user_guides/relational/relational_metadata.html#relational-metadata"><span class="std std-ref">Relational Metadata</span></a> guide.</p>
 <ol class="arabic simple" start="2">
@@ -319,53 +319,51 @@ following the original distribution of your dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">sampled</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      FR      M   49</span>
-<span class="go"> 1        1      US      F   19</span>
-<span class="go"> 2        2      FR      F   62</span>
-<span class="go"> 3        3      US    NaN   36</span>
-<span class="go"> 4        4      ES      M   11</span>
-<span class="go"> 5        5      UK      F   62</span>
-<span class="go"> 6        6      UK    NaN   43</span>
-<span class="go"> 7        7      US    NaN   46</span>
-<span class="go"> 8        8      US      M   33</span>
-<span class="go"> 9        9      US      F   14,</span>
+<span class="go"> 0        0      FR      M   61</span>
+<span class="go"> 1        1      US      F   47</span>
+<span class="go"> 2        2      FR      F   23</span>
+<span class="go"> 3        3      UK    NaN    4</span>
+<span class="go"> 4        4      FR      M   39</span>
+<span class="go"> 5        5      US      F   44</span>
+<span class="go"> 6        6      UK      F   41</span>
+<span class="go"> 7        7      US      F   52</span>
+<span class="go"> 8        8      ES      M   46</span>
+<span class="go"> 9        9      UK    NaN   37,</span>
 <span class="go"> &#39;sessions&#39;:     session_id  user_id  device       os</span>
 <span class="go"> 0            0        0  mobile  android</span>
-<span class="go"> 1            1        0  tablet      ios</span>
-<span class="go"> 2            2        1  mobile  android</span>
-<span class="go"> 3            3        1  mobile  android</span>
-<span class="go"> 4            4        1  tablet      ios</span>
-<span class="go"> 5            5        2  mobile  android</span>
-<span class="go"> 6            6        2  mobile  android</span>
-<span class="go"> 7            7        3  tablet      ios</span>
-<span class="go"> 8            8        3  tablet      ios</span>
-<span class="go"> 9            9        5  mobile  android</span>
-<span class="go"> 10          10        5  mobile  android</span>
-<span class="go"> 11          11        5  mobile  android</span>
-<span class="go"> 12          12        8  mobile  android</span>
-<span class="go"> 13          13        9  mobile  android</span>
-<span class="go"> 14          14        9  tablet      ios,</span>
-<span class="go"> &#39;transactions&#39;:     transaction_id  session_id  ...      amount  approved</span>
-<span class="go"> 0                0           0  ...  101.935701     False</span>
-<span class="go"> 1                1           0  ...  101.938033     False</span>
-<span class="go"> 2                2           1  ...  101.938057     False</span>
-<span class="go"> 3                3           1  ...  101.937817     False</span>
-<span class="go"> 4                4           2  ...   76.387321      True</span>
-<span class="go"> 5                5           2  ...   76.574102      True</span>
-<span class="go"> 6                6           3  ...   76.621896      True</span>
-<span class="go"> 7                7           3  ...   76.697843      True</span>
-<span class="go"> 8                8           4  ...   76.587373      True</span>
-<span class="go"> 9                9           4  ...   76.665480      True</span>
-<span class="go"> 10              10           5  ...   47.060865      True</span>
-<span class="go"> 11              11           6  ...  101.413802      True</span>
-<span class="go"> 12              12           9  ...  114.744615     False</span>
-<span class="go"> 13              13          10  ...  114.744706     False</span>
-<span class="go"> 14              14          11  ...  114.744766     False</span>
-<span class="go"> 15              15          12  ...   93.007755      True</span>
-<span class="go"> 16              16          13  ...   86.138890      True</span>
-<span class="go"> 17              17          14  ...   86.137601      True</span>
+<span class="go"> 1            1        1  tablet      ios</span>
+<span class="go"> 2            2        2  mobile  android</span>
+<span class="go"> 3            3        2  tablet      ios</span>
+<span class="go"> 4            4        2  mobile  android</span>
+<span class="go"> 5            5        4  tablet      ios</span>
+<span class="go"> 6            6        7  mobile  android</span>
+<span class="go"> 7            7        7  tablet      ios</span>
+<span class="go"> 8            8        7  mobile  android</span>
+<span class="go"> 9            9        7  mobile  android</span>
+<span class="go"> 10          10        8  mobile  android</span>
+<span class="go"> 11          11        9  mobile  android,</span>
+<span class="go"> &#39;transactions&#39;:     transaction_id  session_id  ...        amount  approved</span>
+<span class="go"> 0                0           0  ...  9.495089e+01     False</span>
+<span class="go"> 1                1           1  ...  1.045787e+02      True</span>
+<span class="go"> 2                2           1  ...  1.159266e+02      True</span>
+<span class="go"> 3                3           2  ...  8.700998e+01      True</span>
+<span class="go"> 4                4           2  ...  8.700968e+01      True</span>
+<span class="go"> 5                5           3  ...  8.700739e+01      True</span>
+<span class="go"> 6                6           3  ...  8.700736e+01      True</span>
+<span class="go"> 7                7           4  ...  8.379759e+01      True</span>
+<span class="go"> 8                8           4  ...  9.025341e+01      True</span>
+<span class="go"> 9                9           5  ...  9.505204e+01      True</span>
+<span class="go"> 10              10           5  ...  9.606551e+01      True</span>
+<span class="go"> 11              11           6  ...  9.813189e+01      True</span>
+<span class="go"> 12              12           6  ...  9.813189e+01      True</span>
+<span class="go"> 13              13           7  ...  1.352053e+16      True</span>
+<span class="go"> 14              14           7  ...  3.360150e+15      True</span>
+<span class="go"> 15              15           8  ...  9.824465e+01      True</span>
+<span class="go"> 16              16           8  ...  9.824465e+01      True</span>
+<span class="go"> 17              17           9  ... -2.442134e+85      True</span>
+<span class="go"> 18              18           9  ...  6.259325e+85      True</span>
 <span class="go"> </span>
-<span class="go"> [18 rows x 5 columns]}</span>
+<span class="go"> [19 rows x 5 columns]}</span>
 </pre></div>
 </div>
 </div>
@@ -393,27 +391,21 @@ need to load it from its <code class="docutils literal notranslate"><span class=
 <span class="gp">In [14]: </span><span class="n">sampled</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      US      F   44</span>
-<span class="go"> 1       11      UK    NaN   40</span>
-<span class="go"> 2       12      UK      M   34</span>
-<span class="go"> 3       13      ES      F   34</span>
-<span class="go"> 4       14      US    NaN   46,</span>
+<span class="go"> 0       10      ES      F   28</span>
+<span class="go"> 1       11      US      M   32</span>
+<span class="go"> 2       12      US    NaN   39</span>
+<span class="go"> 3       13      US    NaN   55</span>
+<span class="go"> 4       14      BG    NaN   12,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
-<span class="go"> 0          15       10  mobile  android</span>
-<span class="go"> 1          16       10  mobile  android</span>
-<span class="go"> 2          17       13  mobile  android</span>
-<span class="go"> 3          18       13  tablet      ios</span>
-<span class="go"> 4          19       14  tablet      ios,</span>
-<span class="go"> &#39;transactions&#39;:    transaction_id  session_id  ...      amount  approved</span>
-<span class="go"> 0              18          15  ...  100.142365      True</span>
-<span class="go"> 1              19          16  ...  100.142407      True</span>
-<span class="go"> 2              20          17  ...   86.122418      True</span>
-<span class="go"> 3              21          17  ...  105.321400      True</span>
-<span class="go"> 4              22          18  ...   85.101665      True</span>
-<span class="go"> 5              23          18  ...   78.971233      True</span>
-<span class="go"> 6              24          19  ...  100.466396     False</span>
+<span class="go"> 0          12       10  mobile  android</span>
+<span class="go"> 1          13       10  tablet      ios</span>
+<span class="go"> 2          14       12  mobile  android,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id  ...     amount  approved</span>
+<span class="go"> 0              19          12  ...  88.206211      True</span>
+<span class="go"> 1              20          13  ...  88.206704      True</span>
+<span class="go"> 2              21          14  ...  94.935554      True</span>
 <span class="go"> </span>
-<span class="go"> [7 rows x 5 columns]}</span>
+<span class="go"> [3 rows x 5 columns]}</span>
 </pre></div>
 </div>
 </div>
