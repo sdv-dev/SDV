@@ -1,3 +1,5 @@
+.. _metadata_schema:
+
 Metadata Schema
 ===============
 

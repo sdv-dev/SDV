@@ -161,7 +161,9 @@ The complete list of possible metrics is:
 -  ``logistic_detection``: This metric tries to use a Logistic
    Regression classifier to detect whether each row is real or synthetic
    and then evaluates its performance using an Area under the ROC curve
-   metric.
+   metric. The returned score is 1 minus the ROC AUC score obtained
+   by the classifier.
 -  ``svc_detection``: This metric tries to use an Support Vector
    Classifier to detect whether each row is real or synthetic and then
    evaluates its performance using an Area under the ROC curve metric.
+   The returned score is 1 minus the ROC AUC score obtained by the classifier.
