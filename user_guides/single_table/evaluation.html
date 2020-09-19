@@ -1,0 +1,393 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evaluating Synthetic Data &#8212; SDV 0.4.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Relational Data" href="../relational/index.html" />
+    <link rel="prev" title="Handling Constraints" href="constraints.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+
+              <li class="active">
+                  <a href="index.html">Single Table Data</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="data_description.html">Data Description</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="models.html">Models</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="constraints.html">Handling Constraints</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="">Evaluating Synthetic Data</a>
+                      </li>
+                  
+                  </ul>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../relational/index.html">Relational Data</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../timeseries/index.html">Timeseries Data</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#using-the-sdv-evaluation-framework" class="nav-link">Using the SDV Evaluation Framework</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#computing-an-overall-score" class="nav-link">Computing an overall score</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#how-was-the-obtained-score-computed" class="nav-link">How was the obtained score computed?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#can-i-control-which-metrics-are-applied" class="nav-link">Can I control which metrics are applied?</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="evaluating-synthetic-data">
+<span id="evaluation"></span><h1>Evaluating Synthetic Data<a class="headerlink" href="#evaluating-synthetic-data" title="Permalink to this headline">¶</a></h1>
+<p>A very common question when someone starts using <strong>SDV</strong> to generate
+synthetic data is: <em>“How good is the data that I just generated?”</em></p>
+<p>In order to answer this question, <strong>SDV</strong> has a collection of metrics
+and tools that allow you to compare the <em>real</em> that you provided and the
+<em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
+<p>In this guide we will show you how to perform this evaluation and how to
+explore the different metrics that exist.</p>
+<div class="section" id="using-the-sdv-evaluation-framework">
+<h2>Using the SDV Evaluation Framework<a class="headerlink" href="#using-the-sdv-evaluation-framework" title="Permalink to this headline">¶</a></h2>
+<p>To evaluate the quality of synthetic data we essentially need two things:
+<em>real</em> data and <em>synthetic</em> data that pretends to resemble it.</p>
+<p>Let us start by loading a demo table and generate a synthetic replica of
+it using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
+
+<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="gp">In [3]: </span><span class="n">real_data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements&#39;</span><span class="p">)</span>
+
+<span class="gp">In [4]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">()</span>
+
+<span class="gp">In [5]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span>
+
+<span class="gp">In [6]: </span><span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>After the previous steps we will have two tables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">real_data</span></code>: A table containing data about student placements</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [7]: </span><span class="n">real_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[7]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date duration</span>
+<span class="go">0       17264      M        67.00      91.00  Commerce        58.00    Sci&amp;Tech            False                 0                55.0   Mkt&amp;HR     58.80  27000.0    True 2020-07-23 2020-10-12      3.0</span>
+<span class="go">1       17265      M        79.33      78.33   Science        77.48    Sci&amp;Tech             True                 1                86.5  Mkt&amp;Fin     66.28  20000.0    True 2020-01-11 2020-04-09      3.0</span>
+<span class="go">2       17266      M        65.00      68.00      Arts        64.00   Comm&amp;Mgmt            False                 0                75.0  Mkt&amp;Fin     57.80  25000.0    True 2020-01-26 2020-07-13      6.0</span>
+<span class="go">3       17267      M        56.00      52.00   Science        52.00    Sci&amp;Tech            False                 0                66.0   Mkt&amp;HR     59.43      NaN   False        NaT        NaT      NaN</span>
+<span class="go">4       17268      M        85.80      73.60  Commerce        73.30   Comm&amp;Mgmt            False                 0                96.8  Mkt&amp;Fin     55.50  42500.0    True 2020-07-04 2020-09-27      3.0</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>: A synthetically generated table that contains
+data in the same format and with similar statistical properties as
+the <code class="docutils literal notranslate"><span class="pre">real_data</span></code>.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[8]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed                    start_date                      end_date duration</span>
+<span class="go">0       17296      F    76.540029  62.163139   Science    66.326909    Sci&amp;Tech            False                 1           82.869965  Mkt&amp;Fin  67.918635           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">1       17273      F    79.172598  78.678768  Commerce    77.166307   Comm&amp;Mgmt            False                 0           77.711253  Mkt&amp;Fin  64.570445  34260.990972    True 2020-02-15 21:13:39.437897472 2020-07-26 23:15:47.431178240      3.0</span>
+<span class="go">2       17405      M    74.695113  71.146716  Commerce    71.807672    Sci&amp;Tech            False                 0           79.491285  Mkt&amp;Fin  68.275193  37387.881457    True 2020-03-15 06:24:46.870107136 2020-07-13 05:24:27.631849472      3.0</span>
+<span class="go">3       17452      F    60.010290  64.191134  Commerce    70.703121   Comm&amp;Mgmt            False                 1           73.384074  Mkt&amp;Fin  70.497850           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">4       17384      F    70.095223  56.526760   Science    71.227888    Sci&amp;Tech            False                 0           80.344055  Mkt&amp;Fin  66.920680           NaN   False                           NaT                           NaT      NaN</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details about this process, please visit the <a class="reference internal" href="gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> guide.</p>
+</div>
+<div class="section" id="computing-an-overall-score">
+<h3>Computing an overall score<a class="headerlink" href="#computing-an-overall-score" title="Permalink to this headline">¶</a></h3>
+<p>The simplest way to see how similar the two tables are is to import the
+<code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and run it passing both the
+<code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code> and the <code class="docutils literal notranslate"><span class="pre">real_data</span></code> tables.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+
+<span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
+<span class="gh">Out[10]: </span><span class="go">0.7001705031132084</span>
+</pre></div>
+</div>
+<p>The output of this function call will be a number between 0 and 1 that
+will indicate us how similar the two tables are, being 0 the worst and 1
+the best possible score.</p>
+</div>
+<div class="section" id="how-was-the-obtained-score-computed">
+<h3>How was the obtained score computed?<a class="headerlink" href="#how-was-the-obtained-score-computed" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function applies a collection of pre-configured metric
+functions and returns the average of the scores that the data obtained
+on each one of them. In most scenarios this can be enough to get an idea
+about the similarity of the two tables, but you might want to explore
+the metrics in more detail.</p>
+<p>In order to see the different metrics that were applied you can pass and
+additional argument <code class="docutils literal notranslate"><span class="pre">aggregate=False</span></code>, which will make the
+<code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function return a dictionary with the scores that each one
+of the metrics functions returned:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[11]: </span><span class="go"></span>
+<span class="go">{&#39;cstest&#39;: 0.8879538138952909,</span>
+<span class="go"> &#39;kstest&#39;: 0.3419397849483149,</span>
+<span class="go"> &#39;logistic_detection&#39;: 0.8012800310091,</span>
+<span class="go"> &#39;svc_detection&#39;: 0.7826990233582566}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="can-i-control-which-metrics-are-applied">
+<h3>Can I control which metrics are applied?<a class="headerlink" href="#can-i-control-which-metrics-are-applied" title="Permalink to this headline">¶</a></h3>
+<p>By default, the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function will apply all the metrics that
+are included within the SDV Evaluation framework. However, the list of
+metrics that are applied can be controlled by passing a list with the
+names of the metrics that you want to apply.</p>
+<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">cstest</span></code> and
+<code class="docutils literal notranslate"><span class="pre">kstest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">])</span>
+<span class="gh">Out[12]: </span><span class="go">0.614946799421803</span>
+</pre></div>
+</div>
+<p>Or, if we want to see the scores separately:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.8879538138952909, &#39;kstest&#39;: 0.3419397849483149}</span>
+</pre></div>
+</div>
+<p>The complete list of possible metrics is:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cstest</span></code>: This metric compares the distributions of all the
+categorical columns of the table by using a Chi-squared test and
+returns the average of the <code class="docutils literal notranslate"><span class="pre">p-values</span></code> obtained across all the
+columns. If the tables that you are evaluating do not contain any
+categorical columns the result will be <code class="docutils literal notranslate"><span class="pre">nan</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kstest</span></code>: This metric compares the distributions of all the
+numerical columns of the table with a two-sample Kolmogorov–Smirnov
+test using the empirical CDF and returns the average of the
+<code class="docutils literal notranslate"><span class="pre">p-values</span></code> obtained across all the columns. If the tables that you
+are evaluating do not contain any numerical columns the result will
+be <code class="docutils literal notranslate"><span class="pre">nan</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logistic_detection</span></code>: This metric tries to use a Logistic
+Regression classifier to detect whether each row is real or synthetic
+and then evaluates its performance using an Area under the ROC curve
+metric. The returned score is 1 minus the ROC AUC score obtained
+by the classifier.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">svc_detection</span></code>: This metric tries to use an Support Vector
+Classifier to detect whether each row is real or synthetic and then
+evaluates its performance using an Area under the ROC curve metric.
+The returned score is 1 minus the ROC AUC score obtained by the classifier.</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="constraints.html" title="previous page">Handling Constraints</a>
+    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

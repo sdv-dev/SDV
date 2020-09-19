@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RCPA Model &#8212; SDV 0.4.1 documentation</title>
+    <title>RCPA Model &#8212; SDV 0.4.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -542,79 +542,79 @@ with a <code class="docutils literal notranslate"><span class="pre">pandas.DataF
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">samples</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;stores&#39;:    Type    Size  Store</span>
-<span class="go"> 0     A  198472      0</span>
-<span class="go"> 1     A  249194      1</span>
-<span class="go"> 2     A  156624      2</span>
-<span class="go"> 3     A  118811      3</span>
-<span class="go"> 4     B  152618      4</span>
-<span class="go"> 5     A  242440      5</span>
-<span class="go"> 6     B  129548      6</span>
-<span class="go"> 7     A  184206      7</span>
-<span class="go"> 8     A  155881      8</span>
-<span class="go"> 9     A  153529      9</span>
-<span class="go"> 10    A  141258     10</span>
-<span class="go"> 11    B   80797     11</span>
-<span class="go"> 12    A  175654     12</span>
-<span class="go"> 13    B  114551     13</span>
-<span class="go"> 14    A  129071     14</span>
-<span class="go"> 15    A  226665     15</span>
-<span class="go"> 16    A  198972     16</span>
-<span class="go"> 17    A  113549     17</span>
-<span class="go"> 18    B  213684     18</span>
-<span class="go"> 19    B  166718     19</span>
-<span class="go"> 20    C   75103     20</span>
-<span class="go"> 21    A  169647     21</span>
-<span class="go"> 22    A  232107     22</span>
-<span class="go"> 23    B   71969     23</span>
-<span class="go"> 24    B   36599     24</span>
-<span class="go"> 25    B   13789     25</span>
-<span class="go"> 26    B   92735     26</span>
-<span class="go"> 27    B   99082     27</span>
-<span class="go"> 28    A  189751     28</span>
-<span class="go"> 29    B  142821     29</span>
-<span class="go"> 30    A  116265     30</span>
-<span class="go"> 31    A  196193     31</span>
-<span class="go"> 32    B  103558     32</span>
-<span class="go"> 33    A  185093     33</span>
-<span class="go"> 34    B  163541     34</span>
-<span class="go"> 35    A  124290     35</span>
-<span class="go"> 36    A  123804     36</span>
-<span class="go"> 37    A  215187     37</span>
-<span class="go"> 38    B   22109     38</span>
-<span class="go"> 39    A  217287     39</span>
-<span class="go"> 40    A  170018     40</span>
-<span class="go"> 41    B   96408     41</span>
-<span class="go"> 42    A  114628     42</span>
-<span class="go"> 43    B  311988     43</span>
-<span class="go"> 44    B  113037     44,</span>
-<span class="go"> &#39;features&#39;:                               Date     MarkDown1  Store  IsHoliday    MarkDown4     MarkDown3  Fuel_Price  Unemployment  Temperature    MarkDown5     MarkDown2         CPI</span>
-<span class="go"> 0    2009-08-19 05:57:55.327934720  -6343.753639      0      False  6747.845060           NaN    2.853568     12.133746    37.047205 -8188.174768           NaN  211.189132</span>
-<span class="go"> 1    2012-04-07 06:34:07.536096512           NaN      0      False          NaN  28184.590918    3.199772     11.138416    78.088515          NaN           NaN  183.579077</span>
-<span class="go"> 2    2011-09-03 20:11:50.856680960           NaN      0      False  9329.103854           NaN    4.454167     11.168540    63.480871  5195.533658           NaN  196.886339</span>
-<span class="go"> 3    2011-07-01 15:06:44.973673984           NaN      0      False          NaN   5480.851593    3.949111     11.783349    60.201602  4187.767475           NaN  193.039100</span>
-<span class="go"> 4    2014-04-11 12:48:41.195949312           NaN      0      False          NaN  27124.753741    3.499102     10.933316    99.875396          NaN  20420.193320  171.619262</span>
-<span class="go"> ...                            ...           ...    ...        ...          ...           ...         ...           ...          ...          ...           ...         ...</span>
-<span class="go"> 8185 2012-08-19 17:59:06.323056896  11389.315418     44      False          NaN           NaN    3.402077      9.417380    56.567617          NaN   6160.614234  135.839097</span>
-<span class="go"> 8186 2009-10-18 13:16:33.872179200  -4002.197545     44      False  5312.350714           NaN    3.523765     13.531509    22.323350  -847.300825           NaN  157.121752</span>
-<span class="go"> 8187 2011-05-01 09:27:05.646625792           NaN     44      False  4497.421562   -534.399757    3.410029      9.623320    27.685237          NaN           NaN  138.875579</span>
-<span class="go"> 8188 2013-08-21 19:33:39.619816192           NaN     44      False          NaN   9581.628459    3.906522      7.375883    75.580260          NaN   8395.608310  124.530689</span>
-<span class="go"> 8189 2012-02-20 13:37:19.756137472           NaN     44      False          NaN  -1782.371844    3.757167      7.253109    47.936010          NaN   3338.538768  139.262393</span>
-<span class="go"> </span>
-<span class="go"> [8190 rows x 12 columns],</span>
+<span class="go"> 0     B  122634      0</span>
+<span class="go"> 1     B  225369      1</span>
+<span class="go"> 2     B  114981      2</span>
+<span class="go"> 3     B  128126      3</span>
+<span class="go"> 4     B   14193      4</span>
+<span class="go"> 5     A  166394      5</span>
+<span class="go"> 6     B   29163      6</span>
+<span class="go"> 7     B   33358      7</span>
+<span class="go"> 8     B   74740      8</span>
+<span class="go"> 9     A  167747      9</span>
+<span class="go"> 10    A  179929     10</span>
+<span class="go"> 11    C   -3907     11</span>
+<span class="go"> 12    B   70942     12</span>
+<span class="go"> 13    A  185624     13</span>
+<span class="go"> 14    C   66853     14</span>
+<span class="go"> 15    A  149712     15</span>
+<span class="go"> 16    B   21690     16</span>
+<span class="go"> 17    B   84323     17</span>
+<span class="go"> 18    B   73715     18</span>
+<span class="go"> 19    A  151782     19</span>
+<span class="go"> 20    A    1864     20</span>
+<span class="go"> 21    A  148551     21</span>
+<span class="go"> 22    C   62640     22</span>
+<span class="go"> 23    C  -22941     23</span>
+<span class="go"> 24    B  123737     24</span>
+<span class="go"> 25    B   76150     25</span>
+<span class="go"> 26    B   92419     26</span>
+<span class="go"> 27    A  174731     27</span>
+<span class="go"> 28    B  107353     28</span>
+<span class="go"> 29    A  152792     29</span>
+<span class="go"> 30    A  153275     30</span>
+<span class="go"> 31    A  155610     31</span>
+<span class="go"> 32    A  161370     32</span>
+<span class="go"> 33    B  104816     33</span>
+<span class="go"> 34    A  151087     34</span>
+<span class="go"> 35    A  140431     35</span>
+<span class="go"> 36    C  279329     36</span>
+<span class="go"> 37    A  149248     37</span>
+<span class="go"> 38    B  104332     38</span>
+<span class="go"> 39    B   67951     39</span>
+<span class="go"> 40    B  160611     40</span>
+<span class="go"> 41    A  184442     41</span>
+<span class="go"> 42    C   89007     42</span>
+<span class="go"> 43    A  102880     43</span>
+<span class="go"> 44    B   81076     44,</span>
 <span class="go"> &#39;depts&#39;:                                 Date  Weekly_Sales  Store  Dept  IsHoliday</span>
-<span class="go"> 0      2011-03-12 01:03:30.135774464 -52183.421233      0    68      False</span>
-<span class="go"> 1      2011-09-04 08:30:08.955077120  54232.295330      0    27      False</span>
-<span class="go"> 2      2010-12-23 06:01:01.746107648   2620.678122      0    70      False</span>
-<span class="go"> 3      2012-07-01 02:04:06.166935808  43521.770369      0   -18      False</span>
-<span class="go"> 4      2010-12-14 14:48:25.897165312  36234.329391      0    64      False</span>
+<span class="go"> 0      2011-02-12 16:08:25.849948160  -4309.599985      0    58      False</span>
+<span class="go"> 1      2009-11-29 01:33:45.157835264  18000.938915      0    82      False</span>
+<span class="go"> 2      2010-06-08 04:56:53.113050880  25286.431450      0     7      False</span>
+<span class="go"> 3      2011-05-17 16:31:10.887311360  35597.432170      0    79      False</span>
+<span class="go"> 4      2010-08-20 09:20:54.231352832  34799.643251      0   -15      False</span>
 <span class="go"> ...                              ...           ...    ...   ...        ...</span>
-<span class="go"> 435223 2010-04-09 19:12:25.352249088  16761.153440     44    15      False</span>
-<span class="go"> 435224 2011-01-27 23:36:03.239384064  28482.256410     44    62      False</span>
-<span class="go"> 435225 2010-11-25 23:45:47.010686208   1013.268594     44    10      False</span>
-<span class="go"> 435226 2011-12-21 08:22:59.304510976  17027.659681     44    24      False</span>
-<span class="go"> 435227 2012-05-11 17:04:47.995854848   7986.973876     44    28       True</span>
+<span class="go"> 418969 2011-08-17 22:41:49.379490816     42.392115     44    34      False</span>
+<span class="go"> 418970 2011-02-20 14:40:35.987545344   1640.823452     44     2      False</span>
+<span class="go"> 418971 2010-11-21 10:43:27.654556672   4284.745972     44    26      False</span>
+<span class="go"> 418972 2011-06-02 03:21:03.549337600   5968.637957     44    17      False</span>
+<span class="go"> 418973 2012-06-11 14:02:01.286074112   1332.405928     44    36      False</span>
 <span class="go"> </span>
-<span class="go"> [435228 rows x 5 columns]}</span>
+<span class="go"> [418974 rows x 5 columns],</span>
+<span class="go"> &#39;features&#39;:                               Date     MarkDown1  Store  IsHoliday    MarkDown4     MarkDown3  Fuel_Price  Unemployment  Temperature    MarkDown5    MarkDown2         CPI</span>
+<span class="go"> 0    2010-04-23 13:51:22.523978496           NaN      0      False   996.921867           NaN    3.413699     11.115441    35.381381          NaN          NaN  150.209343</span>
+<span class="go"> 1    2011-04-08 13:45:55.059419136           NaN      0      False  7888.469338  -2499.856552    4.608742      8.520991    74.754018          NaN          NaN  141.542389</span>
+<span class="go"> 2    2010-07-24 10:17:57.209092864   4979.298213      0      False  5421.826641           NaN    3.779559           NaN    41.745682   197.568826          NaN  161.511510</span>
+<span class="go"> 3    2012-04-28 10:17:25.444903680  16588.640584      0      False  9251.169259           NaN    2.651131     10.688119    95.647866  7148.204469  8702.532698  114.601066</span>
+<span class="go"> 4    2012-07-12 11:46:46.569246976           NaN      0      False          NaN           NaN    3.671505      9.099983    75.747225          NaN          NaN  125.857022</span>
+<span class="go"> ...                            ...           ...    ...        ...          ...           ...         ...           ...          ...          ...          ...         ...</span>
+<span class="go"> 8185 2012-08-28 05:59:12.450033152  10766.429336     44       True          NaN   4303.406664    3.401860     10.023722    66.218796  4804.091678          NaN  166.399225</span>
+<span class="go"> 8186 2014-03-08 06:07:50.082000128  18204.730258     44       True          NaN  12579.295718    2.690871      9.391636    93.733803  7112.291414  6909.799764         NaN</span>
+<span class="go"> 8187 2012-01-02 08:28:47.632377344   7666.964010     44      False          NaN           NaN    3.253424     10.313754    53.569774          NaN          NaN  164.909435</span>
+<span class="go"> 8188 2011-05-15 03:48:49.319764736   6227.726715     44      False  2863.231661  -1457.995351    3.628643      9.390418    77.525091          NaN          NaN  181.336119</span>
+<span class="go"> 8189 2011-08-04 13:26:30.526125312           NaN     44      False  -146.202166           NaN    3.048663           NaN    36.094913  3159.973040  2831.451075  172.939385</span>
+<span class="go"> </span>
+<span class="go"> [8190 rows x 12 columns]}</span>
 </pre></div>
 </div>
 <p>We may not want to generate data for all tables in the dataset, rather
@@ -626,18 +626,18 @@ to synthesize and the row numbers to generate. In this case, the
 table.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">sdv</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">                             Date     MarkDown1  Store  IsHoliday    MarkDown4     MarkDown3  Fuel_Price  Unemployment  Temperature    MarkDown5    MarkDown2         CPI</span>
-<span class="go">0   2010-09-05 23:19:23.811928320           NaN     48      False          NaN           NaN    2.813072      8.567849    69.002677          NaN          NaN  239.219451</span>
-<span class="go">1   2011-03-21 20:36:14.030392320           NaN     46       True          NaN           NaN    3.162510      9.035280    64.055496          NaN  2895.325629  168.548849</span>
-<span class="go">2   2011-11-02 12:32:55.779409152   2341.474991     47      False          NaN   4171.098865    2.985152      8.488347    56.688812  3540.227771  4936.818130  103.064113</span>
-<span class="go">3   2011-04-08 10:07:31.962716416   7836.792526     49      False  2438.219578  -3652.812942    3.120468      7.743851    38.934080  9190.016967   931.378702  115.961175</span>
-<span class="go">4   2013-09-30 19:27:37.058080512   6312.644717     46      False  1456.166021   9145.037067    4.097951      6.931509    84.234195   954.636959 -2279.766673  221.782279</span>
-<span class="go">..                            ...           ...    ...        ...          ...           ...         ...           ...          ...          ...          ...         ...</span>
-<span class="go">995 2012-06-23 07:43:25.000220672   2579.228077     45      False   525.927115   5255.435295    3.883068      7.467875    50.426533   218.973849  3328.904728  136.223738</span>
-<span class="go">996 2012-01-12 12:00:52.985163264  12758.342273     46      False          NaN   -776.969814    3.883291      8.593578    68.383343  5825.286264          NaN  175.148463</span>
-<span class="go">997 2012-06-25 00:33:03.406548992  11356.283032     48      False  6897.395893 -10638.237193    3.584653           NaN    66.480815  7150.098750          NaN         NaN</span>
-<span class="go">998 2014-11-11 23:46:05.459564288   9788.651634     48      False  6622.167271   6163.136745    4.507827      9.617516    96.601586  9013.220673 -6084.140740  219.500451</span>
-<span class="go">999 2012-03-31 22:04:15.675127296   5964.538991     45      False  1848.703028  -2542.783548    3.831897      7.679676    72.724185   375.064502  6655.708000  108.649128</span>
+<span class="go">                             Date     MarkDown1  Store  IsHoliday    MarkDown4     MarkDown3  Fuel_Price  Unemployment  Temperature     MarkDown5     MarkDown2         CPI</span>
+<span class="go">0   2011-09-03 00:37:24.785901568  -1522.687622     46      False          NaN    660.054299    3.666451      9.054667    58.441234   9957.532494  14050.578158  136.800568</span>
+<span class="go">1   2011-02-04 11:17:34.351602176           NaN     48      False          NaN           NaN    3.293815     12.088917    79.516086           NaN           NaN  190.431467</span>
+<span class="go">2   2012-03-10 19:28:29.888150528   2720.511815     47      False          NaN   9574.768159    2.965789      7.023347    74.584797  -3565.433500           NaN  225.695168</span>
+<span class="go">3   2012-01-11 14:25:14.612705280   9100.130767     45      False  3469.889775 -17730.015606    3.005173     10.317728    60.745026   3900.099051           NaN  157.833029</span>
+<span class="go">4   2009-09-11 02:17:17.284487936           NaN     45      False          NaN           NaN    2.748735     12.108531    35.471851           NaN           NaN  142.573209</span>
+<span class="go">..                            ...           ...    ...        ...          ...           ...         ...           ...          ...           ...           ...         ...</span>
+<span class="go">995 2012-05-25 17:57:53.457838592  10559.343869     48      False  3657.384528   2204.818821    3.251221      5.637968    35.165022   9039.952174   8690.621016  216.514884</span>
+<span class="go">996 2012-03-22 06:05:09.311332864   3833.280140     46      False  -975.234359  -6792.006686    3.182185      4.138406    65.783213  -3062.184303   -100.123978  224.398594</span>
+<span class="go">997 2013-02-14 14:14:33.387559168  11440.212449     46      False  6650.419919  -3879.641980    3.503063      7.724032    53.648567  11588.484325   4065.856488  193.536021</span>
+<span class="go">998 2011-10-10 21:22:00.385863168           NaN     48      False          NaN   1478.920361    3.217526      7.730956    90.153383           NaN           NaN  195.929019</span>
+<span class="go">999 2011-01-05 15:26:45.850069760           NaN     45      False          NaN  10623.289890    3.117728      9.413828    85.325442           NaN           NaN  219.305279</span>
 
 <span class="go">[1000 rows x 12 columns]</span>
 </pre></div>

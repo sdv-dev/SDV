@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.4.1 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.4.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -41,7 +41,7 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Relational Data" href="../relational/index.html" />
+    <link rel="next" title="Evaluating Synthetic Data" href="evaluation.html" />
     <link rel="prev" title="CTGAN Model" href="ctgan.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -143,6 +143,10 @@
                   
                       <li class="active">
                           <a href="">Handling Constraints</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="evaluation.html">Evaluating Synthetic Data</a>
                       </li>
                   
                   </ul>
@@ -271,19 +275,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   48               40                     8</span>
-<span class="go">1       Pear         Design            Ryan James    618 Tina Forges Suite 536\nEast Tonya, NJ 60119   30               24                     6</span>
-<span class="go">2    Glasses             AI          Shannon Hill  2468 Miller Stravenue Apt. 857\nSmithland, SC ...   43               38                     5</span>
-<span class="go">3    Glasses  Search Engine         Shelia Hanson  117 Williams Parks Apt. 158\nPort Rebeccaland,...   44               35                     9</span>
-<span class="go">4   Cheerper        BigData      Robert Rodriguez    753 Ross Fords Apt. 880\nNancychester, CA 24095   40               37                     3</span>
-<span class="go">5   Cheerper        Support  Mr. Benjamin Simpson          9463 Hicks Avenue\nMcmillantown, HI 23614   40               36                     4</span>
-<span class="go">6       Pear          Sales        Megan Erickson              127 Rachel Parks\nLisashire, VA 82898   43               43                     0</span>
-<span class="go">7       Pear         Design       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   35               30                     5</span>
-<span class="go">8    Glasses             AI           John Martin  1422 Gutierrez Drives Suite 351\nSouth Terri, ...   36               29                     7</span>
-<span class="go">9    Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   37               30                     7</span>
-<span class="go">10  Cheerper        BigData          Richard Hart       801 Tucker Plaza\nChristineborough, NH 12895   31               24                     7</span>
-<span class="go">11  Cheerper        Support           Robert Wong            89836 James Road\nCabrerastad, OH 32249   37               30                     7</span>
+<span class="go">     company     department                     name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales            Joshua Vaughn   07412 Connor Ville\nNorth Blakeborough, MS 80335   33               32                     1</span>
+<span class="go">1       Pear         Design  Mrs. Catherine Bass DVM       139 Ashley Freeway\nSouth Julieton, VT 85964   41               36                     5</span>
+<span class="go">2    Glasses             AI           Nathaniel Love           901 Jesse Route\nPort Alanfort, MN 06122   43               40                     3</span>
+<span class="go">3    Glasses  Search Engine             Andrew Glenn  92818 Craig Lodge Suite 045\nWest Heatherfort,...   38               34                     4</span>
+<span class="go">4   Cheerper        BigData           Misty Thompson           1432 Amber Flats\nLawrencefurt, MA 83793   41               36                     5</span>
+<span class="go">5   Cheerper        Support           Kathleen Smith  87772 Mary Green Apt. 390\nChristinafurt, VT 5...   34               29                     5</span>
+<span class="go">6       Pear          Sales            Betty Sanchez   490 Brown Ville Suite 473\nEast Amyton, NE 38152   49               42                     7</span>
+<span class="go">7       Pear         Design            Johnny Carter           3762 Perry Pike\nArellanohaven, WV 97376   45               45                     0</span>
+<span class="go">8    Glasses             AI            Cynthia Adams           8738 Murphy Bypass\nStaceyview, NY 65096   36               34                     2</span>
+<span class="go">9    Glasses  Search Engine               Jose Vance            4303 Cook Common\nMicheleside, NY 37028   42               36                     6</span>
+<span class="go">10  Cheerper        BigData          Elizabeth Baird  17378 Walker Orchard Suite 450\nRobertport, GA...   40               31                     9</span>
+<span class="go">11  Cheerper        Support         Caitlin Griffith      7686 Ethan Streets\nJenniferchester, MN 37883   45               40                     5</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -445,17 +449,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">   company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0  Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   30               24                     6</span>
-<span class="go">1  Glasses  Search Engine          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   46               42                     4</span>
-<span class="go">3     Pear         Design    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   42               24                    18</span>
-<span class="go">4  Glasses             AI          Scott Ibarra     545 Brady Haven\nLake Christinaville, SC 17374   33               24                     9</span>
-<span class="go">5  Glasses             AI           John Martin  1422 Gutierrez Drives Suite 351\nSouth Terri, ...   46               43                     3</span>
-<span class="go">6  Glasses             AI           Robert Wong            89836 James Road\nCabrerastad, OH 32249   48               41                     7</span>
-<span class="go">7     Pear          Sales  Mr. Benjamin Simpson          9463 Hicks Avenue\nMcmillantown, HI 23614   48               43                     5</span>
-<span class="go">8  Glasses  Search Engine       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   47               42                     5</span>
-<span class="go">0     Pear          Sales    Christopher Fowler        499 Brown Forest\nRobinsonborough, AK 96043   48               43                     5</span>
-<span class="go">1     Pear         Design       Elizabeth Wolfe         45495 Romero Common\nLake Samuel, WI 13814   30               24                     6</span>
+<span class="go">    company     department                     name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0  Cheerper        Support           Nathaniel Love           901 Jesse Route\nPort Alanfort, MN 06122   40               38                     2</span>
+<span class="go">2      Pear          Sales            Joshua Vaughn   07412 Connor Ville\nNorth Blakeborough, MS 80335   41               36                     5</span>
+<span class="go">4  Cheerper        BigData          Elizabeth Baird  17378 Walker Orchard Suite 450\nRobertport, GA...   42               35                     7</span>
+<span class="go">5  Cheerper        Support           Kathleen Smith  87772 Mary Green Apt. 390\nChristinafurt, VT 5...   38               34                     4</span>
+<span class="go">6  Cheerper        Support         Caitlin Griffith      7686 Ethan Streets\nJenniferchester, MN 37883   44               37                     7</span>
+<span class="go">8  Cheerper        Support         Caitlin Griffith      7686 Ethan Streets\nJenniferchester, MN 37883   44               40                     4</span>
+<span class="go">9      Pear         Design  Mrs. Catherine Bass DVM       139 Ashley Freeway\nSouth Julieton, VT 85964   43               37                     6</span>
+<span class="go">0   Glasses  Search Engine             Andrew Glenn  92818 Craig Lodge Suite 045\nWest Heatherfort,...   47               46                     1</span>
+<span class="go">1  Cheerper        BigData           Misty Thompson           1432 Amber Flats\nLawrencefurt, MA 83793   40               36                     4</span>
+<span class="go">2  Cheerper        Support             Andrew Glenn  92818 Craig Lodge Suite 045\nWest Heatherfort,...   46               43                     3</span>
 </pre></div>
 </div>
 </div>
@@ -468,7 +472,7 @@ we defined:</p>
               <div class='prev-next-bottom'>
                 
     <a class='left-prev' id="prev-link" href="ctgan.html" title="previous page">CTGAN Model</a>
-    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
+    <a class='right-next' id="next-link" href="evaluation.html" title="next page">Evaluating Synthetic Data</a>
 
               </div>
               

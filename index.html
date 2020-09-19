@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.1 documentation</title>
+    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.2 documentation</title>
     
   <link rel="stylesheet" href="_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -194,7 +194,7 @@
 <a class="reference external" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a> <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
 <div class="section" id="sdv-the-synthetic-data-vault">
 <h1>SDV - The Synthetic Data Vault<a class="headerlink" href="#sdv-the-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
-<p><strong>Date</strong>: Sep 09, 2020 <strong>Version</strong>: 0.4.1</p>
+<p><strong>Date</strong>: Sep 19, 2020 <strong>Version</strong>: 0.4.2</p>
 <ul class="simple">
 <li><p>License: <a class="reference external" href="https://github.com/sdv-dev/SDV/blob/master/LICENSE">MIT</a></p></li>
 <li><p>Development Status:
@@ -205,11 +205,8 @@
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>The <strong>Synthetic Data Vault (SDV)</strong> is a <strong>Synthetic Data Generation</strong>
-ecosystem of libraries that allows users to easily learn
-<a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html">single-table</a>,
-<a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html">multi-table</a>
-and <a class="reference external" href="https://github.com/sdv-dev/DeepEcho">timeseries</a> datasets to
-later on generate new <strong>Synthetic Data</strong> that has the <strong>same format and
+ecosystem of libraries that allows users to easily learn <a class="reference internal" href="user_guides/single_table/index.html#single-table"><span class="std std-ref">single-table</span></a>, <a class="reference internal" href="user_guides/relational/index.html#relational"><span class="std std-ref">multi-table</span></a> and <a class="reference internal" href="user_guides/timeseries/index.html#timeseries"><span class="std std-ref">timeseries</span></a>
+datasets to later on generate new <strong>Synthetic Data</strong> that has the <strong>same format and
 statistical properties</strong> as the original dataset.</p>
 <p>Synthetic data can then be used to supplement, augment and in some cases
 replace real data when training Machine Learning models. Additionally,
@@ -223,30 +220,18 @@ recursive sampling techniques.</p>
 <div class="section" id="current-functionality-and-features">
 <h3>Current functionality and features:<a class="headerlink" href="#current-functionality-and-features" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Synthetic data generators for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html">single
-tables</a>
-with the following features:</p>
+<li><p>Synthetic data generators for <cite>single tables &lt;single_table&gt;</cite> with the following features:</p>
 <ul>
-<li><p>Using
-<a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula">Copulas</a>
-and <a class="reference external" href="https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html">Deep
-Learning</a>
-based models.</p></li>
-<li><p>Handling of multiple data types and missing data with minimum user
-input.</p></li>
-<li><p>Support for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html">pre-defined and custom
-constraints</a>
-and data validation.</p></li>
+<li><p>Using <cite>Copulas &lt;gaussian_copula&gt;</cite> and <cite>Deep Learning &lt;ctgan&gt;</cite> based models.</p></li>
+<li><p>Handling of multiple data types and missing data with minimum user input.</p></li>
+<li><p>Support for <cite>pre-defined and custom constraints &lt;constraints&gt;</cite> and data validation.</p></li>
 </ul>
 </li>
-<li><p>Synthetic data generators for <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html">complex multi-table, relational
-datasets</a>
+<li><p>Synthetic data generators for <cite>complex multi-table, relational datasets &lt;relational&gt;</cite>
 with the following features:</p>
 <ul>
-<li><p>Definition of entire <a class="reference external" href="https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html">multi-table datasets
-metadata</a>
-with a custom and flexible <a class="reference external" href="https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html">JSON
-schema</a>.</p></li>
+<li><p>Definition of entire <cite>multi-table datasets metadata &lt;relational_metadata&gt;</cite> with a custom
+and flexible <cite>JSON schema &lt;metadata_schema&gt;</cite>.</p></li>
 <li><p>Using Copulas and recursive modeling techniques.</p></li>
 </ul>
 </li>

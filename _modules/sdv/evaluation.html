@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation &#8212; SDV 0.4.1 documentation</title>
+    <title>sdv.evaluation &#8212; SDV 0.4.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -160,8 +160,11 @@
   <h1>Source code for sdv.evaluation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Tools to evaluate the synthesized data.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">sdmetrics</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.detection.tabular</span> <span class="kn">import</span> <span class="n">LogisticDetector</span><span class="p">,</span> <span class="n">SVCDetector</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.report</span> <span class="kn">import</span> <span class="n">MetricsReport</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.statistical</span> <span class="kn">import</span> <span class="n">CSTest</span><span class="p">,</span> <span class="n">KSTest</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
 
@@ -231,40 +234,96 @@
     <span class="k">return</span> <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span>
 
 
-<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api_reference/api/sdv.evaluation.evaluate.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_report</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute a score using SDMetrics.</span>
+<span class="k">def</span> <span class="nf">_tabular_metric</span><span class="p">(</span><span class="n">sdmetric</span><span class="p">,</span> <span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">()</span>
+        <span class="n">metadata</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">real</span><span class="p">)</span>
+        <span class="n">real</span> <span class="o">=</span> <span class="p">{</span><span class="kc">None</span><span class="p">:</span> <span class="n">real</span><span class="p">}</span>
+        <span class="n">synthetic</span> <span class="o">=</span> <span class="p">{</span><span class="kc">None</span><span class="p">:</span> <span class="n">synthetic</span><span class="p">}</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">sdmetric</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">synthetic</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">details</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">metric</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">_cstest</span><span class="p">(</span><span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_tabular_metric</span><span class="p">(</span><span class="n">CSTest</span><span class="p">(),</span> <span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_kstest</span><span class="p">(</span><span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_tabular_metric</span><span class="p">(</span><span class="n">KSTest</span><span class="p">(),</span> <span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_logistic_detection</span><span class="p">(</span><span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_tabular_metric</span><span class="p">(</span><span class="n">LogisticDetector</span><span class="p">(),</span> <span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_svc_detection</span><span class="p">(</span><span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_tabular_metric</span><span class="p">(</span><span class="n">SVCDetector</span><span class="p">(),</span> <span class="n">synthetic</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+
+
+<span class="n">METRICS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cstest&#39;</span><span class="p">:</span> <span class="n">_cstest</span><span class="p">,</span>
+    <span class="s1">&#39;kstest&#39;</span><span class="p">:</span> <span class="n">_kstest</span><span class="p">,</span>
+    <span class="s1">&#39;logistic_detection&#39;</span><span class="p">:</span> <span class="n">_logistic_detection</span><span class="p">,</span>
+    <span class="s1">&#39;svc_detection&#39;</span><span class="p">:</span> <span class="n">_svc_detection</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="evaluate"><a class="viewcode-back" href="../../api_reference/api/sdv.evaluation.evaluate.html#sdv.evaluation.evaluate">[docs]</a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_report</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply multiple metrics at once.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
-<span class="sd">            Map of names and tables of synthesized data.</span>
-<span class="sd">        real (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
-<span class="sd">            Map of names and tables of real data.</span>
+<span class="sd">        synthetic_data (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">            Map of names and tables of synthesized data. When evaluating a single table,</span>
+<span class="sd">            a single ``pandas.DataFrame`` can be passed alone.</span>
+<span class="sd">        real_data (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
+<span class="sd">            Map of names and tables of real data. When evaluating a single table,</span>
+<span class="sd">            a single ``pandas.DataFrame`` can be passed alone.</span>
 <span class="sd">        metadata (str, dict, Metadata or None):</span>
 <span class="sd">            Metadata instance or details needed to build it.</span>
 <span class="sd">        root_path (str):</span>
 <span class="sd">            Relative path to find the metadata.json file when needed.</span>
-<span class="sd">        descriptors (list[callable]):</span>
-<span class="sd">            List of descriptors.</span>
-<span class="sd">        metrics (list[callable]):</span>
-<span class="sd">            List of metrics.</span>
+<span class="sd">        metrics (list[str]):</span>
+<span class="sd">            List of metric names to apply.</span>
 <span class="sd">        table_name (str):</span>
 <span class="sd">            Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``</span>
 <span class="sd">            and ``real`` is ``None``.</span>
 <span class="sd">        get_report (bool):</span>
-<span class="sd">            whether to return the complete SDMetrics report. If False (default), only</span>
-<span class="sd">            the overall score is returned.</span>
+<span class="sd">            Whether to return the complete SDMetrics report or only the overall average score</span>
+<span class="sd">            of each metric applied. Defaults to ``False``.</span>
+<span class="sd">        aggregate (bool):</span>
+<span class="sd">            If ``get_report`` is ``False``, whether to compute the mean of all the scores to</span>
+<span class="sd">            return a single float value or return a ``dict`` containing the score that each</span>
+<span class="sd">            metric obtained. Defaults to ``True``.</span>
 
 <span class="sd">    Return:</span>
 <span class="sd">        float or sdmetrics.MetricsReport</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">_validate_arguments</span><span class="p">(</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+    <span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">_validate_arguments</span><span class="p">(</span>
+        <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
 
-    <span class="n">report</span> <span class="o">=</span> <span class="n">sdmetrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">synth</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">METRICS</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">computed</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="n">computed</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">METRICS</span><span class="p">[</span><span class="n">metric</span><span class="p">](</span><span class="n">synth</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="n">get_report</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">get_report</span><span class="p">:</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">MetricsReport</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">computed</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">add_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">report</span>
 
-    <span class="k">return</span> <span class="n">report</span><span class="o">.</span><span class="n">overall</span><span class="p">()</span></div>
+    <span class="k">elif</span> <span class="n">aggregate</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">computed</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">return</span> <span class="n">computed</span></div>
 </pre></div>
 
               </div>

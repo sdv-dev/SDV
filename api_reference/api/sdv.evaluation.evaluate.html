@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation.evaluate &#8212; SDV 0.4.1 documentation</title>
+    <title>sdv.evaluation.evaluate &#8212; SDV 0.4.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -259,21 +259,25 @@
 <h1>sdv.evaluation.evaluate<a class="headerlink" href="#sdv-evaluation-evaluate" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt id="sdv.evaluation.evaluate">
-<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">synth</span></em>, <em class="sig-param"><span class="n">real</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">root_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">get_report</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute a score using SDMetrics.</p>
+<code class="sig-prename descclassname">sdv.evaluation.</code><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">synthetic_data</span></em>, <em class="sig-param"><span class="n">real_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">root_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metrics</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">get_report</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">aggregate</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/evaluation.html#evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.evaluation.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply multiple metrics at once.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>synth</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data.</p></li>
-<li><p><strong>real</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data.</p></li>
+<li><p><strong>synthetic_data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data. When evaluating a single table,
+a single <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> can be passed alone.</p></li>
+<li><p><strong>real_data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data. When evaluating a single table,
+a single <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> can be passed alone.</p></li>
 <li><p><strong>metadata</strong> (<em>str</em><em>, </em><em>dict</em><em>, </em><a class="reference internal" href="sdv.metadata.Metadata.html#sdv.metadata.Metadata" title="sdv.metadata.Metadata"><em>Metadata</em></a><em> or </em><em>None</em>) – Metadata instance or details needed to build it.</p></li>
 <li><p><strong>root_path</strong> (<em>str</em>) – Relative path to find the metadata.json file when needed.</p></li>
-<li><p><strong>descriptors</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of descriptors.</p></li>
-<li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>callable</em><em>]</em>) – List of metrics.</p></li>
+<li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of metric names to apply.</p></li>
 <li><p><strong>table_name</strong> (<em>str</em>) – Table name to be evaluated, only used when <code class="docutils literal notranslate"><span class="pre">synth</span></code> is a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>
 and <code class="docutils literal notranslate"><span class="pre">real</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>get_report</strong> (<em>bool</em>) – whether to return the complete SDMetrics report. If False (default), only
-the overall score is returned.</p></li>
+<li><p><strong>get_report</strong> (<em>bool</em>) – Whether to return the complete SDMetrics report or only the overall average score
+of each metric applied. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>aggregate</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">get_report</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, whether to compute the mean of all the scores to
+return a single float value or return a <code class="docutils literal notranslate"><span class="pre">dict</span></code> containing the score that each
+metric obtained. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
