@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.4.2 - 2020-09-19
+
+In this release the `sdv.evaluation` module has been reworked to include 4 different
+metrics and in all cases return a normalized score between 0 and 1.
+
+Included metrics are:
+- `cstest`
+- `kstest`
+- `logistic_detection`
+- `svc_detection`
+
 ## 0.4.1 - 2020-09-07
 
 This release fixes a couple of minor issues and introduces an important rework of the

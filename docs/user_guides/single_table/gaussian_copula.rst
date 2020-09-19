@@ -324,18 +324,6 @@ that we learned.
     new_data_pii.head()
     new_data_pii.address.isin(data_pii.address).sum()
 
-
-Specifying constraints
-~~~~~~~~~~~~~~~~~~~~~~
-
-If you look closely at the data you may notice that some properties were
-not completely captured by the model. For example, you may have seen
-that sometimes the model produces an ``experience_years`` number greater
-than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
-be handled using ``SDV``. For further details about them please visit
-the :ref:`single_table_constraints` guide.
-
 Advanced Usage
 --------------
 
@@ -595,3 +583,28 @@ the valid values range.
     ``GaussianCopula`` will be able to find the optimal distribution on its
     own, making this manual search of the marginal distributions necessary
     on very little occasions.
+
+
+Specifying constraints
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you look closely at the data you may notice that some properties were
+not completely captured by the model. For example, you may have seen
+that sometimes the model produces an ``experience_years`` number greater
+than ``0`` while also indicating that ``work_experience`` is ``False``.
+These type of properties are what we call ``Constraints`` and can also
+be handled using ``SDV``. For further details about them please visit
+the :ref:`single_table_constraints` guide.
+
+
+Evaluating the Synthetic Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A very common question when someone starts using **SDV** to generate
+synthetic data is: *"How good is the data that I just generated?"*
+
+In order to answer this question, **SDV** has a collection of metrics
+and tools that allow you to compare the *real* that you provided and the
+*synthetic* data that you generated using **SDV** or any other tool.
+
+You can read more about this in the :ref:`evaluation` guide.

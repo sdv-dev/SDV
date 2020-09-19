@@ -26,10 +26,10 @@
 
 The **Synthetic Data Vault (SDV)** is a **Synthetic Data Generation** ecosystem of libraries
 that allows users to easily learn [single-table](
-https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html), [multi-table](
-https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html) and [timeseries](
-https://github.com/sdv-dev/DeepEcho) datasets to later on generate new **Synthetic Data** that
-has the **same format and statistical properties** as the original dataset.
+https://sdv.dev/SDV/user_guides/single_table/index.html), [multi-table](
+https://sdv.dev/SDV/user_guides/relational/index.html) and [timeseries](
+https://sdv.dev/SDV/user_guides/timeseries/index.html) datasets to later on generate new
+**Synthetic Data** that has the **same format and statistical properties** as the original dataset.
 
 Synthetic data can then be used to supplement, augment and in some cases replace real data when
 training Machine Learning models. Additionally, it enables the testing of Machine Learning or
@@ -43,19 +43,19 @@ hierarchical generative modeling and recursive sampling techniques.
 ### Current functionality and features:
 
 * Synthetic data generators for [single tables](
-  https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html) with the following
+  https://sdv-dev.github.io/SDV/user_guides/single_table/index.html) with the following
   features:
-    * Using [Copulas](https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula)
-      and [Deep Learning](https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html)
+    * Using [Copulas](https://sdv-dev.github.io/SDV/user_guides/single_table/gaussian_copula.html)
+      and [Deep Learning](https://sdv-dev.github.io/SDV/user_guides/single_table/ctgan.html)
       based models.
     * Handling of multiple data types and missing data with minimum user input.
     * Support for [pre-defined and custom constraints](
-      https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html) and data validation.
+      https://sdv-dev.github.io/SDV/user_guides/single_table/constraints.html) and data validation.
 * Synthetic data generators for [complex multi-table, relational datasets](
-  https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html) with the following
+  https://sdv-dev.github.io/SDV/user_guides/relational/index.html) with the following
   features:
     * Definition of entire [multi-table datasets metadata](
-      https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html) with a custom and
+      https://sdv-dev.github.io/SDV/user_guides/relational/relational_metadata.html) with a custom and
       flexible [JSON schema](https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html).
     * Using Copulas and recursive modeling techniques.
 
