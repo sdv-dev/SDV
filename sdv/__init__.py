@@ -8,13 +8,21 @@ __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
 __version__ = '0.4.3.dev0'
 
+from sdv import constraints, evaluation, metadata, relational, tabular
 from sdv.demo import get_available_demos, load_demo
-from sdv.metadata import Metadata
+from sdv.metadata import Metadata, Table
 from sdv.sdv import SDV
 
 __all__ = (
+    'demo',
+    'constraints',
+    'evaluation',
+    'metadata',
+    'relational',
+    'tabular',
     'get_available_demos',
     'load_demo',
     'Metadata',
+    'Table',
     'SDV',
 )
