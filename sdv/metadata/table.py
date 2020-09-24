@@ -334,7 +334,7 @@ class Table:
 
         return data
 
-    def _fit_hyper_transformer(self, data):
+    def _fit_hyper_transformer(self, data, extra_columns):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
         First get the ``dtypes`` and then use them to build a transformer dictionary
@@ -343,17 +343,22 @@ class Table:
         Args:
             data (pandas.DataFrame):
                 Data to transform.
+            extra_columns (set):
+                Names of columns that are not in the metadata but that should also
+                be transformed. In most cases, these are the fields that were added
+                by previous transformations which the data underwent.
 
         Returns:
             rdt.HyperTransformer
         """
-        # dtypes = {}
-        # fields = self._fields_metadata
-        # for column in data.columns:
-        #     if column not in fields or fields[column]['type'] != 'id':
-        #         dtypes[column] = data[column].dtype.kind
+        meta_dtypes = self.get_dtypes(ids=False)
+        dtypes = {}
+        for column in data.columns:
+            if column in meta_dtypes:
+                dtypes[column] = meta_dtypes[column]
+            elif column in extra_columns:
+                dtypes[column] = data[column].dtype.kind
 
-        dtypes = self.get_dtypes(ids=False)
         transformers_dict = self._get_transformers(dtypes)
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
         self._hyper_transformer.fit(data[list(dtypes.keys())])
@@ -451,10 +456,11 @@ class Table:
         data = self._anonymize(data)
 
         LOGGER.info('Fitting constraints for table %s', self.name)
-        data = self._fit_transform_constraints(data)
+        constrained = self._fit_transform_constraints(data)
+        extra_columns = set(constrained.columns) - set(data.columns)
 
         LOGGER.info('Fitting HyperTransformer for table %s', self.name)
-        self._fit_hyper_transformer(data)
+        self._fit_hyper_transformer(constrained, extra_columns)
         self.fitted = True
 
     def transform(self, data):

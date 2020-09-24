@@ -15,9 +15,6 @@ DEFAULT_MODEL = GaussianCopula
 class HMA1(BaseRelationalModel):
     """Hierarchical Modeling Alrogirhtm One.
 
-    Model datasets recursively using the RCPA algorithm described in
-    the Synthetic Data Vault paper.
-
     Args:
         metadata (dict, str or Metadata):
             Metadata dict, path to the metadata JSON file or Metadata instance itself.
@@ -90,7 +87,7 @@ class HMA1(BaseRelationalModel):
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata.get_children(table_name):
             child_key = self.metadata.get_foreign_key(table_name, child_name)
-            child_table = self.cpa(child_name, tables, child_key)
+            child_table = self._model_table(child_name, tables, child_key)
             extension = self._get_extension(child_name, child_table, child_key)
             table = table.merge(extension, how='left', right_index=True, left_index=True)
             table['__' + child_name + '__num_rows'].fillna(0, inplace=True)
@@ -124,8 +121,8 @@ class HMA1(BaseRelationalModel):
 
         return table_meta
 
-    def cpa(self, table_name, tables, foreign_key=None):
-        """Run the CPA algorithm over the indicated table and its children.
+    def _model_table(self, table_name, tables, foreign_key=None):
+        """Model the indicated table and its children.
 
         Args:
             table_name (str):
@@ -133,8 +130,8 @@ class HMA1(BaseRelationalModel):
             tables (dict):
                 Dict of original tables.
             foreign_key (str):
-                Name of the foreign key that references this table. Used only when applying
-                CPA on a child table.
+                Name of the foreign key that references this table. Used only when modeling
+                a child table.
 
         Returns:
             pandas.DataFrame:
@@ -187,7 +184,7 @@ class HMA1(BaseRelationalModel):
 
         for table_name in self.metadata.get_tables():
             if not self.metadata.get_parents(table_name):
-                self.cpa(table_name, tables)
+                self._model_table(table_name, tables)
 
         LOGGER.info('Modeling Complete')
 
