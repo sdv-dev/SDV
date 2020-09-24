@@ -1,6 +1,6 @@
 .. _sdv.relational:
 
-sdv-relational
+sdv.relational
 ==============
 
 .. currentmodule:: sdv.relational
