@@ -215,19 +215,14 @@ within the same python session.
 sdv = SDV.load('sdv.pkl')
 ```
 
-After loading the instance, we can sample synthetic data using its `sample_all` method,
-passing the number of rows that we want to generate.
+After loading the instance, we can sample synthetic data by calling its `sample` method.
 
 ```python3
-samples = sdv.sample_all(5)
+samples = sdv.sample()
 ```
 
 The output will be a dictionary with the same structure as the original `tables` dict,
 but filled with synthetic data instead of the real one.
-
-**Note** that only the parent tables of your dataset will have the specified number of rows,
-as the number of child rows that each row in the parent table has is also sampled following
-the original distribution of your dataset.
 
 Finally, if you want to evaluate how similar the sampled tables are to the real data,
 please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](

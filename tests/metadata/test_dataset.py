@@ -4,7 +4,8 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata import Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes
+from sdv.metadata.dataset import (
+    Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes)
 
 
 def test__read_csv_dtypes():
@@ -77,9 +78,9 @@ def test__parse_dtypes():
     pd.testing.assert_frame_equal(result, expected)
 
 
-@patch('sdv.metadata._parse_dtypes')
-@patch('sdv.metadata.pd.read_csv')
-@patch('sdv.metadata._read_csv_dtypes')
+@patch('sdv.metadata.dataset._parse_dtypes')
+@patch('sdv.metadata.dataset.pd.read_csv')
+@patch('sdv.metadata.dataset._read_csv_dtypes')
 def test__load_csv(rcdtypes_mock, read_csv_mock, pdtypes_mock):
     # Run
     table_meta = {
@@ -217,8 +218,8 @@ class TestMetadata(TestCase):
         }
         assert result == expected
 
-    @patch('sdv.metadata.Metadata._analyze_relationships')
-    @patch('sdv.metadata.Metadata._dict_metadata')
+    @patch('sdv.metadata.dataset.Metadata._analyze_relationships')
+    @patch('sdv.metadata.dataset.Metadata._dict_metadata')
     def test___init__default_metadata_dict(self, mock_meta, mock_relationships):
         """Test create Metadata instance default with a dict"""
         # Run
@@ -274,7 +275,7 @@ class TestMetadata(TestCase):
         # Asserts
         assert result == {'some': 'data'}
 
-    @patch('sdv.metadata._load_csv')
+    @patch('sdv.metadata.dataset._load_csv')
     def test_load_table(self, mock_load_csv):
         """Test load table"""
         # Setup
@@ -427,10 +428,10 @@ class TestMetadata(TestCase):
         # Asserts
         assert result == {'foo': 'email'}
 
-    @patch('sdv.metadata.transformers.DatetimeTransformer')
-    @patch('sdv.metadata.transformers.BooleanTransformer')
-    @patch('sdv.metadata.transformers.CategoricalTransformer')
-    @patch('sdv.metadata.transformers.NumericalTransformer')
+    @patch('sdv.metadata.dataset.transformers.DatetimeTransformer')
+    @patch('sdv.metadata.dataset.transformers.BooleanTransformer')
+    @patch('sdv.metadata.dataset.transformers.CategoricalTransformer')
+    @patch('sdv.metadata.dataset.transformers.NumericalTransformer')
     def test__get_transformers_no_error(self, numerical_mock, categorical_mock,
                                         boolean_mock, datetime_mock):
         """Test get transformers dict for each data type."""
@@ -481,7 +482,7 @@ class TestMetadata(TestCase):
         with pytest.raises(ValueError):
             Metadata._get_transformers(dtypes, None)
 
-    @patch('sdv.metadata.HyperTransformer')
+    @patch('sdv.metadata.dataset.HyperTransformer')
     def test__load_hyper_transformer(self, mock_ht):
         """Test load HyperTransformer"""
         # Setup
@@ -819,7 +820,7 @@ class TestMetadata(TestCase):
         metadata.set_primary_key.call_count == 0
         metadata.add_relationship.call_count == 0
 
-    @patch('sdv.metadata.pd.read_csv')
+    @patch('sdv.metadata.dataset.pd.read_csv')
     def test_add_table_with_data_str(self, mock_read_csv):
         """Add table with data as str"""
         # Setup

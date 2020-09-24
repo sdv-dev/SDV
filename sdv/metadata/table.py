@@ -75,6 +75,7 @@ class Table:
     _hyper_transformer = None
     _fakers = None
     _constraint_instances = None
+    _fields_metadata = None
     fitted = False
 
     _ANONYMIZATION_MAPPINGS = dict()
@@ -164,7 +165,7 @@ class Table:
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None):
-        self._name = name or str(id(self))
+        self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
         self._field_transformers = field_transformers or {}
@@ -178,7 +179,7 @@ class Table:
             self._dtype_transformers.update(dtype_transformers)
 
     def __repr__(self):
-        return 'Table(name={}, field_names={})'.format(self._name, self._field_names)
+        return 'Table(name={}, field_names={})'.format(self.name, self._field_names)
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -313,8 +314,8 @@ class Table:
             else:
                 transformer = copy.deepcopy(transformer_template)
 
-            LOGGER.info('Loading transformer %s for field %s',
-                        transformer.__class__.__name__, name)
+            LOGGER.debug('Loading transformer %s for field %s',
+                         transformer.__class__.__name__, name)
             transformers[name] = transformer
 
         return transformers
@@ -346,12 +347,13 @@ class Table:
         Returns:
             rdt.HyperTransformer
         """
-        dtypes = {}
-        fields = self._fields_metadata
-        for column in data.columns:
-            if column not in fields or fields[column]['type'] != 'id':
-                dtypes[column] = data[column].dtype.kind
+        # dtypes = {}
+        # fields = self._fields_metadata
+        # for column in data.columns:
+        #     if column not in fields or fields[column]['type'] != 'id':
+        #         dtypes[column] = data[column].dtype.kind
 
+        dtypes = self.get_dtypes(ids=False)
         transformers_dict = self._get_transformers(dtypes)
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
         self._hyper_transformer.fit(data[list(dtypes.keys())])
@@ -436,16 +438,22 @@ class Table:
             data (pandas.DataFrame):
                 Table to be analyzed.
         """
+        LOGGER.info('Fitting table %s metadata', self.name)
         self._field_names = self._field_names or list(data.columns)
-        self._fields_metadata = self._build_fields_metadata(data)
+        if not self._fields_metadata:
+            self._fields_metadata = self._build_fields_metadata(data)
 
         # Re-set the primary key to validate its name and type
         self.set_primary_key(self._primary_key)
 
         self._make_anonymization_mappings(data)
+        LOGGER.info('Anonymizing table %s', self.name)
         data = self._anonymize(data)
 
+        LOGGER.info('Fitting constraints for table %s', self.name)
         data = self._fit_transform_constraints(data)
+
+        LOGGER.info('Fitting HyperTransformer for table %s', self.name)
         self._fit_hyper_transformer(data)
         self.fitted = True
 
@@ -464,11 +472,14 @@ class Table:
             raise MetadataNotFittedError()
 
         fields = self.get_dtypes(ids=False)
+        LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
 
+        LOGGER.debug('Transforming constraints for table %s', self.name)
         for constraint in self._constraints:
             data = constraint.transform(data)
 
+        LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
 
     def reverse_transform(self, data):
@@ -539,6 +550,7 @@ class Table:
                 for constraint in self._constraints
             ],
             'model_kwargs': copy.deepcopy(self._model_kwargs),
+            'name': self.name,
         }
 
     def to_json(self, path):
@@ -563,8 +575,9 @@ class Table:
         instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
         instance._field_names = list(instance._fields_metadata.keys())
         instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
-        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs'))
+        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
         instance._primary_key = metadata_dict.get('primary_key')
+        instance.name = metadata_dict.get('name')
         return instance
 
     @classmethod

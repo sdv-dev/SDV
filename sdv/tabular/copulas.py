@@ -1,13 +1,20 @@
 """Wrappers around copulas models."""
 
+import logging
+
 import copulas
+import copulas.multivariate
+import copulas.univariate
 import numpy as np
+import pandas as pd
 
 from sdv.metadata import Table
 from sdv.tabular.base import BaseTabularModel
 from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
     unflatten_dict)
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GaussianCopula(BaseTabularModel):
@@ -263,6 +270,9 @@ class GaussianCopula(BaseTabularModel):
         """
         self._distribution = self._get_distribution(table_data)
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
+
+        LOGGER.debug('Fitting %s to table %s; shape: %s', self._model.__class__.__name__,
+                     self._metadata.name, table_data.shape)
         self._model.fit(table_data)
         self._update_metadata()
 
@@ -278,6 +288,10 @@ class GaussianCopula(BaseTabularModel):
                 Sampled data.
         """
         return self._model.sample(num_rows)
+
+    def _get_likelihood(self, table_data):
+        """Get the likelihood of each row belonging to this table."""
+        return self._model.probability_density(table_data)
 
     def get_parameters(self):
         """Get copula model parameters.
@@ -298,6 +312,8 @@ class GaussianCopula(BaseTabularModel):
         covariance = list()
         for index, row in enumerate(params['covariance']):
             covariance.append(row[:index + 1])
+
+        params['covariance'] = covariance
 
         univariates = dict()
         for name, univariate in zip(params.pop('columns'), params['univariates']):
@@ -379,5 +395,6 @@ class GaussianCopula(BaseTabularModel):
         parameters = unflatten_dict(parameters)
         parameters = self._rebuild_gaussian_copula(parameters)
 
-        self._num_rows = max(0, int(round(parameters.pop('num_rows'))))
+        num_rows = parameters.pop('num_rows')
+        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
