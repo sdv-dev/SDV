@@ -11,6 +11,7 @@ and classes in SDV.
 
    sdv
    tabular
+   relational
    metadata
    constraints
    demo

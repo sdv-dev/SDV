@@ -6,4 +6,4 @@ Models
 .. toctree::
     :maxdepth: 2
 
-    rcpa
+    hma1

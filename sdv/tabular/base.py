@@ -12,7 +12,7 @@ class NonParametricError(Exception):
     """Exception to indicate that a model is not parametric."""
 
 
-class BaseTabularModel():
+class BaseTabularModel:
     """Base class for all the tabular models.
 
     The ``BaseTabularModel`` class defines the common API that all the
@@ -98,12 +98,17 @@ class BaseTabularModel():
                 the path to a CSV file which can be loaded using
                 ``pandas.read_csv``.
         """
+        LOGGER.debug('Fitting %s to table %s; shape: %s', self.__class__.__name__,
+                     self._metadata.name, data.shape)
         if not self._metadata_fitted:
             self._metadata.fit(data)
 
         self._num_rows = len(data)
 
+        LOGGER.debug('Transforming table %s; shape: %s', self._metadata.name, data.shape)
         transformed = self._metadata.transform(data)
+
+        LOGGER.debug('Fitting %s model to table %s', self.__class__.__name__, self._metadata.name)
         self._fit(transformed)
 
     def get_metadata(self):
@@ -166,6 +171,15 @@ class BaseTabularModel():
             num_valid = len(sampled)
 
         return sampled.head(num_rows)
+
+    def _get_likelihood(self, table_data):
+        """Get the likelihood of each row belonging to this table."""
+        raise NotImplementedError()
+
+    def get_likelihood(self, table_data):
+        """Get the likelihood of each row belonging to this table."""
+        transformed = self._metadata.transform(table_data)
+        return self._model.probability_density(transformed)
 
     def get_parameters(self):
         """Get the parameters learned from the data.
