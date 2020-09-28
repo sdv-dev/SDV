@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.4.3 - 2020-09-28
+
+This release moves the models and algorithms related to generation of synthetic
+relational data to a new `sdv.relational` subpackage (Issue #198)
+
+As part of the change, also the old `sdv.models` have been removed and now
+relational model is based on the recently introduced `sdv.tabular` models.
+
 ## 0.4.2 - 2020-09-19
 
 In this release the `sdv.evaluation` module has been reworked to include 4 different
