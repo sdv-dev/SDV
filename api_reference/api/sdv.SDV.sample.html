@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.SDV.sample &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.SDV.sample &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -160,30 +160,6 @@
                       </li>
                   
                       <li class="">
-                          <a href="sdv.modeler.Modeler.html">sdv.modeler.Modeler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.cpa.html">sdv.modeler.Modeler.cpa</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.model_database.html">sdv.modeler.Modeler.model_database</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.html">sdv.sampler.Sampler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample.html">sdv.sampler.Sampler.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample_all.html">sdv.sampler.Sampler.sample_all</a>
-                      </li>
-                  
-                      <li class="">
                           <a href="sdv.evaluation.evaluate.html">sdv.evaluation.evaluate</a>
                       </li>
                   
@@ -202,6 +178,12 @@
           
               <li class="">
                   <a href="../tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../relational.html">sdv.relational</a>
               </li>
           
         
@@ -259,23 +241,43 @@
 <h1>sdv.SDV.sample<a class="headerlink" href="#sdv-sdv-sample" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.SDV.sample">
-<code class="sig-prename descclassname">SDV.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_name</span></em>, <em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sample_children</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">reset_primary_keys</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/sdv.html#SDV.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> rows from the indicated table.</p>
+<code class="sig-prename descclassname">SDV.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sample_children</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">reset_primary_keys</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/sdv.html#SDV.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.SDV.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate synthetic data for one table or the entire dataset.</p>
+<p>If a <code class="docutils literal notranslate"><span class="pre">table_name</span></code> is given and <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, a
+<code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> with the values from the indicated table is returned.
+Otherwise, if <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, a dictionary containing both
+the table and all its descendant tables is returned.</p>
+<p>If no <code class="docutils literal notranslate"><span class="pre">table_name</span></code> is given, the entire dataset is sampled and returned
+in a dictionary.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> is given, the root tables of the dataset will contain the
+indicated number of rows. Otherwise, the number of rows will be the same
+as in the original dataset. Number of rows in the child tables cannot be
+controlled and always will depend on the values from the sampled parent
+tables.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">reset_primary_keys</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, the primary key generators will be
+reset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to sample from.</p></li>
+<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to sample from. If not passed, sample the entire
+dataset.</p></li>
 <li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, sample the same number of rows
 as there were in the original table.</p></li>
-<li><p><strong>sample_children</strong> (<em>bool</em>) – Whether or not to sample children tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Wheter or not reset the primary key generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>sample_children</strong> (<em>bool</em>) – Whether or not sample child tables. Used only if <code class="docutils literal notranslate"><span class="pre">table_name</span></code> is
+given. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Whether or not reset the primary keys generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Sampled data with the number of rows specified in <code class="docutils literal notranslate"><span class="pre">num_rows</span></code>.</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p>Returns a <code class="docutils literal notranslate"><span class="pre">dict</span></code> when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> with the sampled table
+and child tables.</p></li>
+<li><p>Returns a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p>dict or pandas.DataFrame</p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>NotFittedError</strong> – A <code class="docutils literal notranslate"><span class="pre">NotFittedError</span></code> is raised when the <code class="docutils literal notranslate"><span class="pre">SDV</span></code> instance has not been fitted yet.</p>

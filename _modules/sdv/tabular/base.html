@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -172,7 +172,7 @@
     <span class="sd">&quot;&quot;&quot;Exception to indicate that a model is not parametric.&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">BaseTabularModel</span><span class="p">():</span>
+<span class="k">class</span> <span class="nc">BaseTabularModel</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Base class for all the tabular models.</span>
 
 <span class="sd">    The ``BaseTabularModel`` class defines the common API that all the</span>
@@ -258,12 +258,17 @@
 <span class="sd">                the path to a CSV file which can be loaded using</span>
 <span class="sd">                ``pandas.read_csv``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Fitting </span><span class="si">%s</span><span class="s1"> to table </span><span class="si">%s</span><span class="s1">; shape: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_fitted</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">; shape: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Fitting </span><span class="si">%s</span><span class="s1"> model to table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -326,6 +331,15 @@
             <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">probability_density</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the parameters learned from the data.</span>

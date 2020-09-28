@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.CTGAN &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.tabular.CTGAN &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -203,6 +203,12 @@
         
           
               <li class="">
+                  <a href="../relational.html">sdv.relational</a>
+              </li>
+          
+        
+          
+              <li class="">
                   <a href="../metadata.html">sdv.metadata</a>
               </li>
           
@@ -325,22 +331,25 @@ Layer will be created for each one of the values provided. Defaults to (256, 256
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.fit.html#sdv.tabular.CTGAN.fit" title="sdv.tabular.CTGAN.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(data)</p></td>
 <td><p>Fit this model to the data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.get_metadata.html#sdv.tabular.CTGAN.get_metadata" title="sdv.tabular.CTGAN.get_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_metadata</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_likelihood</span></code>(table_data)</p></td>
+<td><p>Get the likelihood of each row belonging to this table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.get_metadata.html#sdv.tabular.CTGAN.get_metadata" title="sdv.tabular.CTGAN.get_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_metadata</span></code></a>()</p></td>
 <td><p>Get metadata about the table.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameters</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameters</span></code>()</p></td>
 <td><p>Get the parameters learned from the data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.load.html#sdv.tabular.CTGAN.load" title="sdv.tabular.CTGAN.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.load.html#sdv.tabular.CTGAN.load" title="sdv.tabular.CTGAN.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
 <td><p>Load a TabularModel instance from a given path.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.sample.html#sdv.tabular.CTGAN.sample" title="sdv.tabular.CTGAN.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([num_rows, max_retries])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.sample.html#sdv.tabular.CTGAN.sample" title="sdv.tabular.CTGAN.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([num_rows, max_retries])</p></td>
 <td><p>Sample rows from this table.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.save.html#sdv.tabular.CTGAN.save" title="sdv.tabular.CTGAN.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.CTGAN.save.html#sdv.tabular.CTGAN.save" title="sdv.tabular.CTGAN.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
 <td><p>Save this model instance to the given path using pickle.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_parameters</span></code>(parameters)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_parameters</span></code>(parameters)</p></td>
 <td><p>Regenerate a previously learned model from its parameters.</p></td>
 </tr>
 </tbody>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -160,14 +160,21 @@
   <h1>Source code for sdv.tabular.copulas</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Wrappers around copulas models.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
+
 <span class="kn">import</span> <span class="nn">copulas</span>
+<span class="kn">import</span> <span class="nn">copulas.multivariate</span>
+<span class="kn">import</span> <span class="nn">copulas.univariate</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
 <span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span>
 <span class="kn">from</span> <span class="nn">sdv.tabular.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">check_matrix_symmetric_positive_definite</span><span class="p">,</span> <span class="n">flatten_dict</span><span class="p">,</span> <span class="n">make_positive_definite</span><span class="p">,</span> <span class="n">square_matrix</span><span class="p">,</span>
     <span class="n">unflatten_dict</span><span class="p">)</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="GaussianCopula"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula">[docs]</a><span class="k">class</span> <span class="nc">GaussianCopula</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
@@ -423,6 +430,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_distribution</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">)</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Fitting </span><span class="si">%s</span><span class="s1"> to table </span><span class="si">%s</span><span class="s1">; shape: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">table_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
 
@@ -438,6 +448,10 @@
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">probability_density</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GaussianCopula.get_parameters"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.get_parameters.html#sdv.tabular.GaussianCopula.get_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get copula model parameters.</span>
@@ -458,6 +472,8 @@
         <span class="n">covariance</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]):</span>
             <span class="n">covariance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">covariance</span>
 
         <span class="n">univariates</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">),</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]):</span>
@@ -539,7 +555,8 @@
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">unflatten_dict</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_gaussian_copula</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;num_rows&#39;</span><span class="p">))))</span>
+        <span class="n">num_rows</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;num_rows&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div></div>
 </pre></div>
 

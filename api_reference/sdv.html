@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -160,30 +160,6 @@
                       </li>
                   
                       <li class="">
-                          <a href="api/sdv.modeler.Modeler.html">sdv.modeler.Modeler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="api/sdv.modeler.Modeler.cpa.html">sdv.modeler.Modeler.cpa</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="api/sdv.modeler.Modeler.model_database.html">sdv.modeler.Modeler.model_database</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="api/sdv.sampler.Sampler.html">sdv.sampler.Sampler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="api/sdv.sampler.Sampler.sample.html">sdv.sampler.Sampler.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="api/sdv.sampler.Sampler.sample_all.html">sdv.sampler.Sampler.sample_all</a>
-                      </li>
-                  
-                      <li class="">
                           <a href="api/sdv.evaluation.evaluate.html">sdv.evaluation.evaluate</a>
                       </li>
                   
@@ -202,6 +178,12 @@
           
               <li class="">
                   <a href="tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="relational.html">sdv.relational</a>
               </li>
           
         
@@ -250,14 +232,6 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#modeler" class="nav-link">Modeler</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#sampler" class="nav-link">Sampler</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
             <a href="#evaluation-and-benchmark" class="nav-link">Evaluation and Benchmark</a>
         </li>
     
@@ -290,8 +264,8 @@
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.SDV.fit.html#sdv.SDV.fit" title="sdv.SDV.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SDV.fit</span></code></a>(metadata[, tables, root_path])</p></td>
 <td><p>Fit this SDV instance to the dataset data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.SDV.sample.html#sdv.SDV.sample" title="sdv.SDV.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SDV.sample</span></code></a>(table_name[, num_rows, …])</p></td>
-<td><p>Sample <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> rows from the indicated table.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.SDV.sample.html#sdv.SDV.sample" title="sdv.SDV.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SDV.sample</span></code></a>([table_name, num_rows, …])</p></td>
+<td><p>Generate synthetic data for one table or the entire dataset.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.SDV.sample_all.html#sdv.SDV.sample_all" title="sdv.SDV.sample_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SDV.sample_all</span></code></a>([num_rows, reset_primary_keys])</p></td>
 <td><p>Sample the entire dataset.</p></td>
@@ -301,46 +275,6 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.SDV.load.html#sdv.SDV.load" title="sdv.SDV.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SDV.load</span></code></a>(path)</p></td>
 <td><p>Load a SDV instance from a given path.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="modeler">
-<h2>Modeler<a class="headerlink" href="#modeler" title="Permalink to this headline">¶</a></h2>
-<table class="longtable table autosummary">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.modeler.Modeler.html#sdv.modeler.Modeler" title="sdv.modeler.Modeler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">modeler.Modeler</span></code></a>(metadata[, model, model_kwargs])</p></td>
-<td><p>Modeler class.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.modeler.Modeler.cpa.html#sdv.modeler.Modeler.cpa" title="sdv.modeler.Modeler.cpa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">modeler.Modeler.cpa</span></code></a>(table_name, tables[, …])</p></td>
-<td><p>Run the CPA algorithm over the indicated table and its children.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.modeler.Modeler.model_database.html#sdv.modeler.Modeler.model_database" title="sdv.modeler.Modeler.model_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">modeler.Modeler.model_database</span></code></a>([tables])</p></td>
-<td><p>Run CPA algorithm on all the tables of this dataset.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="sampler">
-<h2>Sampler<a class="headerlink" href="#sampler" title="Permalink to this headline">¶</a></h2>
-<table class="longtable table autosummary">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.sampler.Sampler.html#sdv.sampler.Sampler" title="sdv.sampler.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampler.Sampler</span></code></a>(metadata, models, model, …)</p></td>
-<td><p>Sampler class.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.sampler.Sampler.sample.html#sdv.sampler.Sampler.sample" title="sdv.sampler.Sampler.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampler.Sampler.sample</span></code></a>(table_name[, …])</p></td>
-<td><p>Sample one table.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.sampler.Sampler.sample_all.html#sdv.sampler.Sampler.sample_all" title="sdv.sampler.Sampler.sample_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampler.Sampler.sample_all</span></code></a>([num_rows, …])</p></td>
-<td><p>Sample the entire dataset.</p></td>
 </tr>
 </tbody>
 </table>

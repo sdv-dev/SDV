@@ -1,6 +1,0 @@
-﻿sdv.modeler.Modeler.model\_database
-===================================
-
-.. currentmodule:: sdv.modeler
-
-.. automethod:: Modeler.model_database

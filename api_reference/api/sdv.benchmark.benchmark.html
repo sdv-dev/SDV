@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.benchmark.benchmark &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.benchmark.benchmark &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -160,30 +160,6 @@
                       </li>
                   
                       <li class="">
-                          <a href="sdv.modeler.Modeler.html">sdv.modeler.Modeler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.cpa.html">sdv.modeler.Modeler.cpa</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.model_database.html">sdv.modeler.Modeler.model_database</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.html">sdv.sampler.Sampler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample.html">sdv.sampler.Sampler.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample_all.html">sdv.sampler.Sampler.sample_all</a>
-                      </li>
-                  
-                      <li class="">
                           <a href="sdv.evaluation.evaluate.html">sdv.evaluation.evaluate</a>
                       </li>
                   
@@ -202,6 +178,12 @@
           
               <li class="">
                   <a href="../tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../relational.html">sdv.relational</a>
               </li>
           
         
@@ -259,7 +241,7 @@
 <h1>sdv.benchmark.benchmark<a class="headerlink" href="#sdv-benchmark-benchmark" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt id="sdv.benchmark.benchmark">
-<code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">benchmark</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datasets</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">datasets_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">distributed</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/benchmark.html#benchmark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.benchmark" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sdv.benchmark.</code><code class="sig-name descname">benchmark</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datasets</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">datasets_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">distributed</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/benchmark.html#benchmark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.benchmark.benchmark" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the performance of SDV over a collection of datasets.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">distributed</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">dask</span></code> must be installed in order to
 distribute the load across multiple processors or workers.</p>

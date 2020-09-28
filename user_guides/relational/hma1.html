@@ -1,0 +1,563 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HMA1 Class &#8212; SDV 0.4.3 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Timeseries Data" href="../timeseries/index.html" />
+    <link rel="prev" title="Models" href="models.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    
+    <a class="navbar-brand" href="../../index.html">
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar">
+
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  
+
+  <ul class="nav bd-sidenav">
+      
+      
+      
+      
+        
+          
+              <li class="">
+                  <a href="../single_table/index.html">Single Table Data</a>
+              </li>
+          
+        
+          
+
+              <li class="active">
+                  <a href="index.html">Relational Data</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="data_description.html">Data Description</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="models.html">Models</a>
+                      </li>
+                  
+                  </ul>
+              </li>
+          
+        
+          
+              <li class="">
+                  <a href="../timeseries/index.html">Timeseries Data</a>
+              </li>
+          
+        
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+
+</nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#what-is-hma1" class="nav-link">What is HMA1?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#quick-usage" class="nav-link">Quick Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#generate-synthetic-data-from-the-model" class="nav-link">Generate synthetic data from the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#save-and-load-the-model" class="nav-link">Save and Load the model</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#save-and-share-the-model" class="nav-link">Save and share the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#load-the-model-and-generate-new-data" class="nav-link">Load the model and generate new data</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#how-to-control-the-number-of-rows" class="nav-link">How to control the number of rows?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#can-i-sample-a-subset-of-the-tables" class="nav-link">Can I sample a subset of the tables?</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="hma1-class">
+<h1>HMA1 Class<a class="headerlink" href="#hma1-class" title="Permalink to this headline">¶</a></h1>
+<p>In this guide we will go through a series of steps that will let you
+discover functionalities of the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class.</p>
+<div class="section" id="what-is-hma1">
+<h2>What is HMA1?<a class="headerlink" href="#what-is-hma1" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">sdv.relational.HMA1</span></code> class implements what is called a
+<em>Hierarchical Modeling Algorithm</em> which is an algorithm that allows to
+recursively walk through a relational dataset and apply tabular models
+across all the tables in a way that lets the models learn how all the
+fields from all the tables are related.</p>
+<p>Let’s now discover how to use the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class.</p>
+</div>
+<div class="section" id="quick-usage">
+<h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
+<p>We will start by loading and exploring one of our demo datasets.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="n">load_demo</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will return two objects:</p>
+<ol class="arabic simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object with all the information that <strong>SDV</strong> needs to
+know about the dataset.</p></li>
+</ol>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [3]: </span><span class="n">metadata</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">Metadata</span>
+<span class="go">  root_path: .</span>
+<span class="go">  tables: [&#39;users&#39;, &#39;sessions&#39;, &#39;transactions&#39;]</span>
+<span class="go">  relationships:</span>
+<span class="go">    sessions.user_id -&gt; users.user_id</span>
+<span class="go">    transactions.session_id -&gt; sessions.session_id</span>
+
+
+<span class="gp">In [4]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">visualize</span><span class="p">();</span>
+</pre></div>
+</div>
+<img alt="../../_images/hma1_1.png" src="../../_images/hma1_1.png" />
+<p>For more details about how to build the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> for your own
+dataset, please refer to the <a class="reference internal" href="relational_metadata.html#relational-metadata"><span class="std std-ref">Relational Metadata</span></a> Guide.</p>
+<ol class="arabic simple" start="2">
+<li><p>A dictionary containing three <code class="docutils literal notranslate"><span class="pre">pandas.DataFrames</span></code> with the tables
+described in the metadata object.</p></li>
+</ol>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">tables</span>
+<span class="gh">Out[5]: </span><span class="go"></span>
+<span class="go">{&#39;users&#39;:    user_id country gender  age</span>
+<span class="go"> 0        0      US      M   34</span>
+<span class="go"> 1        1      UK      F   23</span>
+<span class="go"> 2        2      ES   None   44</span>
+<span class="go"> 3        3      UK      M   22</span>
+<span class="go"> 4        4      US      F   54</span>
+<span class="go"> 5        5      DE      M   57</span>
+<span class="go"> 6        6      BG      F   45</span>
+<span class="go"> 7        7      ES   None   41</span>
+<span class="go"> 8        8      FR      F   23</span>
+<span class="go"> 9        9      UK   None   30,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0           0        0  mobile  android</span>
+<span class="go"> 1           1        1  tablet      ios</span>
+<span class="go"> 2           2        1  tablet  android</span>
+<span class="go"> 3           3        2  mobile  android</span>
+<span class="go"> 4           4        4  mobile      ios</span>
+<span class="go"> 5           5        5  mobile  android</span>
+<span class="go"> 6           6        6  mobile      ios</span>
+<span class="go"> 7           7        6  tablet      ios</span>
+<span class="go"> 8           8        6  mobile      ios</span>
+<span class="go"> 9           9        8  tablet      ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  approved</span>
+<span class="go"> 0               0           0 2019-01-01 12:34:32   100.0      True</span>
+<span class="go"> 1               1           0 2019-01-01 12:42:21    55.3      True</span>
+<span class="go"> 2               2           1 2019-01-07 17:23:11    79.5      True</span>
+<span class="go"> 3               3           3 2019-01-10 11:08:57   112.1     False</span>
+<span class="go"> 4               4           5 2019-01-10 21:54:08   110.0     False</span>
+<span class="go"> 5               5           5 2019-01-11 11:21:20    76.3      True</span>
+<span class="go"> 6               6           7 2019-01-22 14:44:10    89.5      True</span>
+<span class="go"> 7               7           8 2019-01-23 10:14:09   132.1     False</span>
+<span class="go"> 8               8           9 2019-01-27 16:09:17    68.0      True</span>
+<span class="go"> 9               9           9 2019-01-29 12:10:48    99.9      True}</span>
+</pre></div>
+</div>
+<p>Let us now use the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class to learn this data to be ready to
+sample synthetic data about new users. In order to do this you will need
+to:</p>
+<ul class="simple">
+<li><p>Import the <code class="docutils literal notranslate"><span class="pre">sdv.relational.HMA1</span></code> class and create an instance of it
+passing the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> that we just loaded.</p></li>
+<li><p>Call its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method passing the <code class="docutils literal notranslate"><span class="pre">tables</span></code> dict.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.relational</span> <span class="kn">import</span> <span class="n">HMA1</span>
+
+<span class="gp">In [7]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">HMA1</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+<span class="gp">In [8]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>During the previous steps SDV walked through all the tables in the
+dataset following the relationships specified by the metadata,
+learned each table using a <a class="reference internal" href="../single_table/gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> and then
+augmented the parent tables using the copula parameters before
+learning them. By doing this, each copula model was able to learn how
+the child table rows were related to their parent tables.</p>
+</div>
+<div class="section" id="generate-synthetic-data-from-the-model">
+<h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
+<p>Once the training process has finished you are ready to generate new
+synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method from your model.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will return a dictionary of tables identical to the one which the
+model was fitted on, but filled with new data which resembles the
+original one.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">new_data</span>
+<span class="gh">Out[10]: </span><span class="go"></span>
+<span class="go">{&#39;users&#39;:    user_id country gender  age</span>
+<span class="go"> 0        0      BG      F   19</span>
+<span class="go"> 1        1      FR      F   23</span>
+<span class="go"> 2        2      FR      F   42</span>
+<span class="go"> 3        3      BG      F   41</span>
+<span class="go"> 4        4      FR      F   33</span>
+<span class="go"> 5        5      BG      F   38</span>
+<span class="go"> 6        6      DE      F   34</span>
+<span class="go"> 7        7      UK      F   31</span>
+<span class="go"> 8        8      BG      F   27</span>
+<span class="go"> 9        9      DE      F   38,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0           0        0  mobile  android</span>
+<span class="go"> 1           1        1  tablet      ios</span>
+<span class="go"> 2           2        3  mobile  android</span>
+<span class="go"> 3           3        3  mobile  android</span>
+<span class="go"> 4           4        5  mobile  android</span>
+<span class="go"> 5           5        8  tablet      ios</span>
+<span class="go"> 6           6        9  mobile      ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id                     timestamp      amount  approved</span>
+<span class="go"> 0               0           0 2019-01-10 18:06:17.781737984   93.646638      True</span>
+<span class="go"> 1               1           0 2019-01-10 18:06:17.781737984   93.646690      True</span>
+<span class="go"> 2               2           2 2019-01-07 11:02:53.474793472         NaN      True</span>
+<span class="go"> 3               3           2 2019-01-07 11:02:53.474793472         NaN      True</span>
+<span class="go"> 4               4           3 2019-01-07 11:02:53.474441984  102.535759      True</span>
+<span class="go"> 5               5           3 2019-01-07 11:02:53.474441984  102.535759      True</span>
+<span class="go"> 6               6           4 2019-01-01 18:07:47.696471040   91.836849      True</span>
+<span class="go"> 7               7           5 2019-01-14 04:21:02.547306752  101.790922      True</span>
+<span class="go"> 8               8           6 2019-01-11 12:52:18.347243776  342.501856      True}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="save-and-load-the-model">
+<h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In many scenarios it will be convenient to generate synthetic versions
+of your data directly in systems that do not have access to the original
+data source. For example, if you may want to generate testing data on
+the fly inside a testing environment that does not have access to your
+production database. In these scenarios, fitting the model with real
+data every time that you need to generate new data is feasible, so you
+will need to fit a model in your production environment, save the fitted
+model into a file, send this file to the testing environment and then
+load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
+<p>Let’s see how this process works.</p>
+<div class="section" id="save-and-share-the-model">
+<h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
+<p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
+method passing the name of the file in which you want to save the model.
+Note that the extension of the filename is not relevant, but we will be
+using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization
+protocol used is
+<a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will have created a file called <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> in the same
+directory in which you are running SDV.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If you inspect the generated file you will notice that its size is
+much smaller than the size of the data that you used to generate it.
+This is because the serialized model contains <strong>no information about
+the original data</strong>, other than the parameters it needs to generate
+synthetic versions of it. This means that you can safely share this
+<code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risc of disclosing any of your real
+data!</p>
+</div>
+</div>
+<div class="section" id="load-the-model-and-generate-new-data">
+<h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
+<p>The file you just generated can be send over to the system where the
+synthetic data will be generated. Once it is there, you can load it
+using the <code class="docutils literal notranslate"><span class="pre">HMA1.load</span></code> method, and then you are ready to sample new
+data from the loaded instance:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">loaded</span> <span class="o">=</span> <span class="n">HMA1</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+
+<span class="gp">In [13]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">loaded</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+
+<span class="gp">In [14]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="gh">Out[14]: </span><span class="go">dict_keys([&#39;users&#39;, &#39;sessions&#39;, &#39;transactions&#39;])</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Notice that the system where the model is loaded needs to also have
+<code class="docutils literal notranslate"><span class="pre">sdv</span></code> installed, otherwise it will not be able to load the model
+and use it.</p>
+</div>
+</div>
+</div>
+<div class="section" id="how-to-control-the-number-of-rows">
+<h3>How to control the number of rows?<a class="headerlink" href="#how-to-control-the-number-of-rows" title="Permalink to this headline">¶</a></h3>
+<p>In the steps above we did not tell the model at any moment how many rows
+we wanted to sample, so it produced as many rows as there were in the
+original dataset.</p>
+<p>If you want to produce a different number of rows you can pass it as the
+<code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument and it will produce the indicated number of rows:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="gh">Out[15]: </span><span class="go"></span>
+<span class="go">{&#39;users&#39;:    user_id country gender  age</span>
+<span class="go"> 0       10      FR      F   29</span>
+<span class="go"> 1       11      FR      F   25</span>
+<span class="go"> 2       12      FR      F   28</span>
+<span class="go"> 3       13      BG      F   51</span>
+<span class="go"> 4       14      DE    NaN   41,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os</span>
+<span class="go"> 0           7       10  tablet  ios</span>
+<span class="go"> 1           8       11  tablet  ios</span>
+<span class="go"> 2           9       11  tablet  ios</span>
+<span class="go"> 3          10       12  tablet  ios</span>
+<span class="go"> 4          11       13  mobile  ios</span>
+<span class="go"> 5          12       13  mobile  ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id                     timestamp        amount  approved</span>
+<span class="go"> 0               9           7 2019-01-28 09:53:02.778557696    611.414458      True</span>
+<span class="go"> 1              10           8 2019-01-17 15:08:24.536880896 -87060.085132      True</span>
+<span class="go"> 2              11           8 2019-01-17 13:06:49.262999040 -87057.077968      True</span>
+<span class="go"> 3              12           9 2019-01-17 13:09:29.162514944 -87028.683183      True</span>
+<span class="go"> 4              13           9 2019-01-17 14:01:33.190726656 -87125.740212      True</span>
+<span class="go"> 5              14          11 2019-01-19 08:58:37.210703872           NaN      True</span>
+<span class="go"> 6              15          12 2019-01-19 08:58:37.210703872           NaN      True}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notice that the root table <code class="docutils literal notranslate"><span class="pre">users</span></code> has the indicated number of rows
+but some of the other tables do not. This is because the number of
+rows from the child tables is sampled based on the values form the
+parent table, which means that only the root table of the dataset is
+affected by the passed <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument.</p>
+</div>
+</div>
+<div class="section" id="can-i-sample-a-subset-of-the-tables">
+<h3>Can I sample a subset of the tables?<a class="headerlink" href="#can-i-sample-a-subset-of-the-tables" title="Permalink to this headline">¶</a></h3>
+<p>In some occasions you will not be interested in generating rows for the
+entire dataset and would rather generate data for only one table and its
+children.</p>
+<p>To do this you can simply pass the name of table that you want to
+sample.</p>
+<p>For example, pass the name <code class="docutils literal notranslate"><span class="pre">sessions</span></code> to the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method, the
+model will only generate data for the <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table and its child
+table, <code class="docutils literal notranslate"><span class="pre">transactions</span></code>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;sessions&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="gh">Out[16]: </span><span class="go"></span>
+<span class="go">{&#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0          13       17  mobile  android</span>
+<span class="go"> 1          14       16  mobile      ios</span>
+<span class="go"> 2          15       16  tablet      ios</span>
+<span class="go"> 3          16       19  tablet      ios</span>
+<span class="go"> 4          17       19  mobile      ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id                     timestamp       amount approved</span>
+<span class="go"> 0              16          13 2019-01-03 13:01:05.547779584  9383.754905     True</span>
+<span class="go"> 1              17          13 2019-01-03 13:01:56.302627328  9377.235334     True</span>
+<span class="go"> 2              18          15 2019-01-17 13:51:48.774799104          NaN     True</span>
+<span class="go"> 3              19          16 2019-01-15 06:13:39.732285696    74.670180      NaN</span>
+<span class="go"> 4              20          17 2019-01-10 16:19:40.971605248   101.952724      NaN}</span>
+</pre></div>
+</div>
+<p>If you want to further restrict the sampling process to only one table
+and also skip its child tables, you can add the argument
+<code class="docutils literal notranslate"><span class="pre">sample_children=False</span></code>.</p>
+<p>For example, you can sample data from the table <code class="docutils literal notranslate"><span class="pre">users</span></code> only without
+producing any rows for the tables <code class="docutils literal notranslate"><span class="pre">sessions</span></code> and <code class="docutils literal notranslate"><span class="pre">transactions</span></code>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[17]: </span><span class="go"></span>
+<span class="go">   user_id country gender  age</span>
+<span class="go">0       20      DE      F   54</span>
+<span class="go">1       21      BG      F   60</span>
+<span class="go">2       22      UK      F   46</span>
+<span class="go">3       23      DE      M   28</span>
+<span class="go">4       24      DE    NaN   30</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In this case, since we are only producing a single table, the output
+is given directly as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instead of a dictionary.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="models.html" title="previous page">Models</a>
+    <a class='right-next' id="next-link" href="../timeseries/index.html" title="next page">Timeseries Data</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

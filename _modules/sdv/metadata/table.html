@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -235,6 +235,7 @@
     <span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_fakers</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_constraint_instances</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_fields_metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">fitted</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="n">_ANONYMIZATION_MAPPINGS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
@@ -324,7 +325,7 @@
 <div class="viewcode-block" id="Table.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.html#sdv.metadata.Table.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">dtype_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="n">field_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_types</span> <span class="o">=</span> <span class="n">field_types</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_transformers</span> <span class="o">=</span> <span class="n">field_transformers</span> <span class="ow">or</span> <span class="p">{}</span>
@@ -338,7 +339,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_dtype_transformers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;Table(name=</span><span class="si">{}</span><span class="s1">, field_names=</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;Table(name=</span><span class="si">{}</span><span class="s1">, field_names=</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Table.get_model_kwargs"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.get_model_kwargs.html#sdv.metadata.Table.get_model_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the required model kwargs for the indicated model.</span>
@@ -473,8 +474,8 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">transformer</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">transformer_template</span><span class="p">)</span>
 
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading transformer </span><span class="si">%s</span><span class="s1"> for field </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
-                        <span class="n">transformer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading transformer </span><span class="si">%s</span><span class="s1"> for field </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                         <span class="n">transformer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="n">transformers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">transformer</span>
 
         <span class="k">return</span> <span class="n">transformers</span>
@@ -493,7 +494,7 @@
 
         <span class="k">return</span> <span class="n">data</span>
 
-    <span class="k">def</span> <span class="nf">_fit_hyper_transformer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_fit_hyper_transformer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extra_columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create and return a new ``rdt.HyperTransformer`` instance.</span>
 
 <span class="sd">        First get the ``dtypes`` and then use them to build a transformer dictionary</span>
@@ -502,14 +503,20 @@
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
 <span class="sd">                Data to transform.</span>
+<span class="sd">            extra_columns (set):</span>
+<span class="sd">                Names of columns that are not in the metadata but that should also</span>
+<span class="sd">                be transformed. In most cases, these are the fields that were added</span>
+<span class="sd">                by previous transformations which the data underwent.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            rdt.HyperTransformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta_dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">or</span> <span class="n">fields</span><span class="p">[</span><span class="n">column</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">meta_dtypes</span><span class="p">:</span>
+                <span class="n">dtypes</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta_dtypes</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">extra_columns</span><span class="p">:</span>
                 <span class="n">dtypes</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span>
 
         <span class="n">transformers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformers</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span>
@@ -596,17 +603,24 @@
 <span class="sd">            data (pandas.DataFrame):</span>
 <span class="sd">                Table to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Fitting table </span><span class="si">%s</span><span class="s1"> metadata&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fields_metadata</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_fields_metadata</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="c1"># Re-set the primary key to validate its name and type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_make_anonymization_mappings</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Anonymizing table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_hyper_transformer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Fitting constraints for table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">constrained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">extra_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">constrained</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Fitting HyperTransformer for table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_hyper_transformer</span><span class="p">(</span><span class="n">constrained</span><span class="p">,</span> <span class="n">extra_columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.transform.html#sdv.metadata.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -624,11 +638,14 @@
             <span class="k">raise</span> <span class="n">MetadataNotFittedError</span><span class="p">()</span>
 
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Anonymizing table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span>
 
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming constraints for table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.reverse_transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.reverse_transform.html#sdv.metadata.Table.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -699,6 +716,7 @@
                 <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span>
             <span class="p">],</span>
             <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">),</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Table.to_json"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.to_json.html#sdv.metadata.Table.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
@@ -723,8 +741,9 @@
         <span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;constraints&#39;</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">))</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_primary_key</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">instance</span></div>
 
 <div class="viewcode-block" id="Table.from_json"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.from_json.html#sdv.metadata.Table.from_json">[docs]</a>    <span class="nd">@classmethod</span>

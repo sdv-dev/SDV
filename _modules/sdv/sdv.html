@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.sdv &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.sdv &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -163,22 +163,11 @@
 <span class="sd">&quot;&quot;&quot;Main SDV module.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
-
-<span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
-<span class="kn">from</span> <span class="nn">sdv.modeler</span> <span class="kn">import</span> <span class="n">Modeler</span>
-<span class="kn">from</span> <span class="nn">sdv.models.copulas</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
-<span class="kn">from</span> <span class="nn">sdv.sampler</span> <span class="kn">import</span> <span class="n">Sampler</span>
-
-<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianCopula</span>
-<span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">GaussianUnivariate</span>
-<span class="p">}</span>
-
-
-<span class="k">class</span> <span class="nc">NotFittedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Error to raise when sample is called and SDV is not fitted.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">sdv.errors</span> <span class="kn">import</span> <span class="n">NotFittedError</span>
+<span class="kn">from</span> <span class="nn">sdv.relational.hma</span> <span class="kn">import</span> <span class="n">HMA1</span>
+<span class="kn">from</span> <span class="nn">sdv.tabular.copulas</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
 
 <div class="viewcode-block" id="SDV"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.html#sdv.SDV">[docs]</a><span class="k">class</span> <span class="nc">SDV</span><span class="p">:</span>
@@ -188,20 +177,29 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        model (type):</span>
-<span class="sd">            Class of the ``copula`` to use. Defaults to</span>
-<span class="sd">            ``sdv.models.copulas.GaussianCopula``.</span>
+<span class="sd">            Class of the model to use. Defaults to ``sdv.relational.HMA1``.</span>
 <span class="sd">        model_kwargs (dict):</span>
-<span class="sd">            Keyword arguments to pass to the model. Defaults to ``None``.</span>
+<span class="sd">            Keyword arguments to pass to the model. If no ``model`` is given,</span>
+<span class="sd">            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">sampler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_model_instance</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">HMA1</span>
+    <span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">GaussianCopula</span><span class="p">,</span>
+        <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
 
-<div class="viewcode-block" id="SDV.__init__"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.html#sdv.SDV.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">DEFAULT_MODEL</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">DEFAULT_MODEL_KWARGS</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span></div>
+<div class="viewcode-block" id="SDV.__init__"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.html#sdv.SDV.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">model</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MODEL</span>
+            <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MODEL_KWARGS</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="p">(</span><span class="n">model_kwargs</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">())</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="SDV.fit"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.fit.html#sdv.SDV.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit this SDV instance to the dataset data.</span>
@@ -218,44 +216,57 @@
 <span class="sd">                a path, the metadata location is used. If ``None`` and</span>
 <span class="sd">                metadata is a dict, the current working directory is used.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">Metadata</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_instance</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span></div>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
+<div class="viewcode-block" id="SDV.sample"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.sample.html#sdv.SDV.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate synthetic data for one table or the entire dataset.</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span> <span class="o">=</span> <span class="n">Modeler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">model_database</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                               <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeler</span><span class="o">.</span><span class="n">table_sizes</span><span class="p">)</span></div>
+<span class="sd">        If a ``table_name`` is given and ``sample_children`` is ``False``, a</span>
+<span class="sd">        ``pandas.DataFrame`` with the values from the indicated table is returned.</span>
+<span class="sd">        Otherwise, if ``sample_children`` is ``True``, a dictionary containing both</span>
+<span class="sd">        the table and all its descendant tables is returned.</span>
 
-<div class="viewcode-block" id="SDV.sample"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.sample.html#sdv.SDV.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample ``num_rows`` rows from the indicated table.</span>
+<span class="sd">        If no ``table_name`` is given, the entire dataset is sampled and returned</span>
+<span class="sd">        in a dictionary.</span>
+
+<span class="sd">        If ``num_rows`` is given, the root tables of the dataset will contain the</span>
+<span class="sd">        indicated number of rows. Otherwise, the number of rows will be the same</span>
+<span class="sd">        as in the original dataset. Number of rows in the child tables cannot be</span>
+<span class="sd">        controlled and always will depend on the values from the sampled parent</span>
+<span class="sd">        tables.</span>
+
+<span class="sd">        If ``reset_primary_keys`` is ``True``, the primary key generators will be</span>
+<span class="sd">        reset.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
-<span class="sd">                Name of the table to sample from.</span>
+<span class="sd">                Name of the table to sample from. If not passed, sample the entire</span>
+<span class="sd">                dataset.</span>
 <span class="sd">            num_rows (int):</span>
 <span class="sd">                Amount of rows to sample. If ``None``, sample the same number of rows</span>
 <span class="sd">                as there were in the original table.</span>
 <span class="sd">            sample_children (bool):</span>
-<span class="sd">                Whether or not to sample children tables. Defaults to ``True``.</span>
+<span class="sd">                Whether or not sample child tables. Used only if ``table_name`` is</span>
+<span class="sd">                given. Defaults to ``True``.</span>
 <span class="sd">            reset_primary_keys (bool):</span>
-<span class="sd">                Wheter or not reset the primary key generators. Defaults to ``False``.</span>
+<span class="sd">                Whether or not reset the primary keys generators. Defaults to ``False``.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pandas.DataFrame:</span>
-<span class="sd">                Sampled data with the number of rows specified in ``num_rows``.</span>
+<span class="sd">            dict or pandas.DataFrame:</span>
+<span class="sd">                - Returns a ``dict`` when ``sample_children`` is ``True`` with the sampled table</span>
+<span class="sd">                  and child tables.</span>
+<span class="sd">                - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotFittedError:</span>
 <span class="sd">                A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_instance</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
             <span class="n">table_name</span><span class="p">,</span>
             <span class="n">num_rows</span><span class="p">,</span>
             <span class="n">sample_children</span><span class="o">=</span><span class="n">sample_children</span><span class="p">,</span>
@@ -264,6 +275,9 @@
 
 <div class="viewcode-block" id="SDV.sample_all"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.sample_all.html#sdv.SDV.sample_all">[docs]</a>    <span class="k">def</span> <span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the entire dataset.</span>
+
+<span class="sd">        WARNING: This method is deprecated and will be removed in future relaeses. Please</span>
+<span class="sd">        use the ``sample`` method instead.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -280,10 +294,9 @@
 <span class="sd">            NotFittedError:</span>
 <span class="sd">                A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s1">&#39;SDV instance has not been fitted&#39;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_all</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;`sample_all` is deprecated and will be removed soon. Please use `sample`&#39;</span><span class="p">,</span>
+                      <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="n">reset_primary_keys</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SDV.save"><a class="viewcode-back" href="../../api_reference/api/sdv.SDV.save.html#sdv.SDV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Save this SDV instance to the given path using pickle.</span>

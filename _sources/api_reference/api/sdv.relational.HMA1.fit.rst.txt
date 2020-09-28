@@ -1,0 +1,6 @@
+﻿sdv.relational.HMA1.fit
+=======================
+
+.. currentmodule:: sdv.relational
+
+.. automethod:: HMA1.fit

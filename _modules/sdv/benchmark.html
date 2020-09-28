@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.benchmark &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.benchmark &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -249,7 +249,7 @@
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="benchmark"><a class="viewcode-back" href="../../api_reference/api/sdv.benchmark.benchmark.html#sdv.benchmark.benchmark">[docs]</a><span class="k">def</span> <span class="nf">benchmark</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datasets_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="benchmark"><a class="viewcode-back" href="../../api_reference/api/sdv.benchmark.benchmark.html#sdv.benchmark.benchmark">[docs]</a><span class="k">def</span> <span class="nf">benchmark</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datasets_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distributed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Evaluate the performance of SDV over a collection of datasets.</span>
 
 <span class="sd">    If ``distributed`` is ``True``, ``dask`` must be installed in order to</span>
@@ -298,12 +298,13 @@
             <span class="p">)</span>
             <span class="k">raise</span>
 
-        <span class="k">global</span> <span class="n">score_dataset</span>
-        <span class="n">score_dataset</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">score_dataset</span><span class="p">)</span>
+        <span class="n">score_dataset_</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">score_dataset</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">score_dataset_</span> <span class="o">=</span> <span class="n">score_dataset</span>
 
     <span class="n">scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
-        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score_dataset_</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">distributed</span><span class="p">:</span>
         <span class="n">scores</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="o">*</span><span class="n">scores</span><span class="p">)</span>

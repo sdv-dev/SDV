@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.modeler.Modeler.cpa &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.relational.HMA1.fit &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -41,8 +41,8 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="sdv.modeler.Modeler.model_database" href="sdv.modeler.Modeler.model_database.html" />
-    <link rel="prev" title="sdv.modeler.Modeler" href="sdv.modeler.Modeler.html" />
+    <link rel="next" title="sdv.relational.HMA1.sample" href="sdv.relational.HMA1.sample.html" />
+    <link rel="prev" title="sdv.relational.HMA1" href="sdv.relational.HMA1.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -130,78 +130,44 @@
       
         
           
-
-              <li class="active">
+              <li class="">
                   <a href="../sdv.html">sdv</a>
-                  <ul>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.html">sdv.SDV</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.fit.html">sdv.SDV.fit</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.sample.html">sdv.SDV.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.sample_all.html">sdv.SDV.sample_all</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.save.html">sdv.SDV.save</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.load.html">sdv.SDV.load</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.html">sdv.modeler.Modeler</a>
-                      </li>
-                  
-                      <li class="active">
-                          <a href="">sdv.modeler.Modeler.cpa</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.model_database.html">sdv.modeler.Modeler.model_database</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.html">sdv.sampler.Sampler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample.html">sdv.sampler.Sampler.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample_all.html">sdv.sampler.Sampler.sample_all</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.evaluation.evaluate.html">sdv.evaluation.evaluate</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.benchmark.score_dataset.html">sdv.benchmark.score_dataset</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.benchmark.benchmark.html">sdv.benchmark.benchmark</a>
-                      </li>
-                  
-                  </ul>
               </li>
           
         
           
               <li class="">
                   <a href="../tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+
+              <li class="active">
+                  <a href="../relational.html">sdv.relational</a>
+                  <ul>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.html">sdv.relational.HMA1</a>
+                      </li>
+                  
+                      <li class="active">
+                          <a href="">sdv.relational.HMA1.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.sample.html">sdv.relational.HMA1.sample</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.save.html">sdv.relational.HMA1.save</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.load.html">sdv.relational.HMA1.load</a>
+                      </li>
+                  
+                  </ul>
               </li>
           
         
@@ -255,26 +221,17 @@
               
               <div>
                 
-  <div class="section" id="sdv-modeler-modeler-cpa">
-<h1>sdv.modeler.Modeler.cpa<a class="headerlink" href="#sdv-modeler-modeler-cpa" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sdv-relational-hma1-fit">
+<h1>sdv.relational.HMA1.fit<a class="headerlink" href="#sdv-relational-hma1-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
-<dt id="sdv.modeler.Modeler.cpa">
-<code class="sig-prename descclassname">Modeler.</code><code class="sig-name descname">cpa</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_name</span></em>, <em class="sig-param"><span class="n">tables</span></em>, <em class="sig-param"><span class="n">foreign_key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/modeler.html#Modeler.cpa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.modeler.Modeler.cpa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the CPA algorithm over the indicated table and its children.</p>
+<dt id="sdv.relational.HMA1.fit">
+<code class="sig-prename descclassname">HMA1.</code><code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tables</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.relational.HMA1.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit this relational model instance to the dataset data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Name of the table to model.</p></li>
-<li><p><strong>tables</strong> (<em>dict</em>) – Dict of original tables.</p></li>
-<li><p><strong>foreign_key</strong> (<em>str</em>) – Name of the foreign key that references this table. Used only when applying
-CPA on a child table.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>table data with the extensions created while modeling its children.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p><strong>tables</strong> (<em>dict</em>) – Dictionary with the table names as key and <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instances as
+values.  If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the tables will be loaded from the paths
+indicated in <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -287,8 +244,8 @@ CPA on a child table.</p></li>
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="sdv.modeler.Modeler.html" title="previous page">sdv.modeler.Modeler</a>
-    <a class='right-next' id="next-link" href="sdv.modeler.Modeler.model_database.html" title="next page">sdv.modeler.Modeler.model_database</a>
+    <a class='left-prev' id="prev-link" href="sdv.relational.HMA1.html" title="previous page">sdv.relational.HMA1</a>
+    <a class='right-next' id="next-link" href="sdv.relational.HMA1.sample.html" title="next page">sdv.relational.HMA1.sample</a>
 
               </div>
               

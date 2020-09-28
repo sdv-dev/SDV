@@ -28,6 +28,6 @@
 
    .. autosummary::
    
-      ~SDV.sampler
+      ~SDV.DEFAULT_MODEL_KWARGS
    
    

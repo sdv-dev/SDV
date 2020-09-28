@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.sampler.Sampler.sample &#8212; SDV 0.4.2 documentation</title>
+    <title>sdv.relational.HMA1 &#8212; SDV 0.4.3 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -41,8 +41,8 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="sdv.sampler.Sampler.sample_all" href="sdv.sampler.Sampler.sample_all.html" />
-    <link rel="prev" title="sdv.sampler.Sampler" href="sdv.sampler.Sampler.html" />
+    <link rel="next" title="sdv.relational.HMA1.fit" href="sdv.relational.HMA1.fit.html" />
+    <link rel="prev" title="sdv.relational" href="../relational.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -130,78 +130,44 @@
       
         
           
-
-              <li class="active">
+              <li class="">
                   <a href="../sdv.html">sdv</a>
-                  <ul>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.html">sdv.SDV</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.fit.html">sdv.SDV.fit</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.sample.html">sdv.SDV.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.sample_all.html">sdv.SDV.sample_all</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.save.html">sdv.SDV.save</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.SDV.load.html">sdv.SDV.load</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.html">sdv.modeler.Modeler</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.cpa.html">sdv.modeler.Modeler.cpa</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.modeler.Modeler.model_database.html">sdv.modeler.Modeler.model_database</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.html">sdv.sampler.Sampler</a>
-                      </li>
-                  
-                      <li class="active">
-                          <a href="">sdv.sampler.Sampler.sample</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.sampler.Sampler.sample_all.html">sdv.sampler.Sampler.sample_all</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.evaluation.evaluate.html">sdv.evaluation.evaluate</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.benchmark.score_dataset.html">sdv.benchmark.score_dataset</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="sdv.benchmark.benchmark.html">sdv.benchmark.benchmark</a>
-                      </li>
-                  
-                  </ul>
               </li>
           
         
           
               <li class="">
                   <a href="../tabular.html">sdv.tabular</a>
+              </li>
+          
+        
+          
+
+              <li class="active">
+                  <a href="../relational.html">sdv.relational</a>
+                  <ul>
+                  
+                      <li class="active">
+                          <a href="">sdv.relational.HMA1</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.fit.html">sdv.relational.HMA1.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.sample.html">sdv.relational.HMA1.sample</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.save.html">sdv.relational.HMA1.save</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.relational.HMA1.load.html">sdv.relational.HMA1.load</a>
+                      </li>
+                  
+                  </ul>
               </li>
           
         
@@ -255,38 +221,67 @@
               
               <div>
                 
-  <div class="section" id="sdv-sampler-sampler-sample">
-<h1>sdv.sampler.Sampler.sample<a class="headerlink" href="#sdv-sampler-sampler-sample" title="Permalink to this headline">¶</a></h1>
-<dl class="py method">
-<dt id="sdv.sampler.Sampler.sample">
-<code class="sig-prename descclassname">Sampler.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_name</span></em>, <em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">reset_primary_keys</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">sample_children</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sample_parents</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/sampler.html#Sampler.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.sampler.Sampler.sample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample one table.</p>
-<p>Child tables will be sampled when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.
-If <code class="docutils literal notranslate"><span class="pre">sampled_data</span></code> is provided then append the sampled child tables there, if not
-create a new dict to fill.</p>
+  <div class="section" id="sdv-relational-hma1">
+<h1>sdv.relational.HMA1<a class="headerlink" href="#sdv-relational-hma1" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="sdv.relational.HMA1">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.relational.</code><code class="sig-name descname">HMA1</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">model=&lt;class 'sdv.tabular.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hierarchical Modeling Alrogirhtm One.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>table_name</strong> (<em>str</em>) – Table name to sample.</p></li>
-<li><p><strong>num_rows</strong> (<em>int</em>) – Amount of rows to sample. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, sample the same number of rows
-as there were in the original table.</p></li>
-<li><p><strong>reset_primary_keys</strong> (<em>bool</em>) – Whether or not reset the primary keys generators. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><strong>sample_children</strong> (<em>bool</em>) – Whether or not sample child tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-<li><p><strong>sample_parents</strong> (<em>bool</em>) – Whether or not sample parent tables. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>, </em><em>str</em><em> or </em><a class="reference internal" href="sdv.metadata.Metadata.html#sdv.metadata.Metadata" title="sdv.metadata.Metadata"><em>Metadata</em></a>) – Metadata dict, path to the metadata JSON file or Metadata instance itself.</p></li>
+<li><p><strong>root_path</strong> (<em>str</em><em> or </em><em>None</em>) – Path to the dataset directory. If <code class="docutils literal notranslate"><span class="pre">None</span></code> and metadata is
+a path, the metadata location is used. If <code class="docutils literal notranslate"><span class="pre">None</span></code> and
+metadata is a dict, the current working directory is used.</p></li>
+<li><p><strong>model</strong> (<em>type</em>) – Class of the <code class="docutils literal notranslate"><span class="pre">copula</span></code> to use. Defaults to
+<code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p>Returns a <code class="docutils literal notranslate"><span class="pre">dict</span></code> when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> with the sampled table
-and child tables.</p></li>
-<li><p>Returns a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> when <code class="docutils literal notranslate"><span class="pre">sample_children</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-</ul>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dict or pandas.DataFrame</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="sdv.relational.HMA1.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">model=&lt;class 'sdv.tabular.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.relational.HMA1.__init__" title="sdv.relational.HMA1.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(metadata[, root_path, model, …])</p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.relational.HMA1.fit.html#sdv.relational.HMA1.fit" title="sdv.relational.HMA1.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>([tables])</p></td>
+<td><p>Fit this relational model instance to the dataset data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.relational.HMA1.load.html#sdv.relational.HMA1.load" title="sdv.relational.HMA1.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(path)</p></td>
+<td><p>Load a model from a given path.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.relational.HMA1.sample.html#sdv.relational.HMA1.sample" title="sdv.relational.HMA1.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>([table_name, num_rows, …])</p></td>
+<td><p>Generate synthetic data for one table or the entire dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.relational.HMA1.save.html#sdv.relational.HMA1.save" title="sdv.relational.HMA1.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
+<td><p>Save this instance to the given path using pickle.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">metadata</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -297,8 +292,8 @@ and child tables.</p></li>
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="sdv.sampler.Sampler.html" title="previous page">sdv.sampler.Sampler</a>
-    <a class='right-next' id="next-link" href="sdv.sampler.Sampler.sample_all.html" title="next page">sdv.sampler.Sampler.sample_all</a>
+    <a class='left-prev' id="prev-link" href="../relational.html" title="previous page">sdv.relational</a>
+    <a class='right-next' id="next-link" href="sdv.relational.HMA1.fit.html" title="next page">sdv.relational.HMA1.fit</a>
 
               </div>
               

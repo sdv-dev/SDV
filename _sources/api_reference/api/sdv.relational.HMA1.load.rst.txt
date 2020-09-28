@@ -1,0 +1,6 @@
+﻿sdv.relational.HMA1.load
+========================
+
+.. currentmodule:: sdv.relational
+
+.. automethod:: HMA1.load
