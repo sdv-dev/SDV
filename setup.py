@@ -106,6 +106,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.4.3.dev0',
+    version='0.4.3',
     zip_safe=False,
 )
