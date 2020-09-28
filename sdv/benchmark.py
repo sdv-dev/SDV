@@ -89,7 +89,7 @@ def score_dataset(dataset, datasets_path, timeout=None):
         return dict(output)
 
 
-def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None):
+def benchmark(datasets=None, datasets_path=None, distributed=False, timeout=None):
     """Evaluate the performance of SDV over a collection of datasets.
 
     If ``distributed`` is ``True``, ``dask`` must be installed in order to
@@ -138,12 +138,13 @@ def benchmark(datasets=None, datasets_path=None, distributed=True, timeout=None)
             )
             raise
 
-        global score_dataset
-        score_dataset = dask.delayed(score_dataset)
+        score_dataset_ = dask.delayed(score_dataset)
+    else:
+        score_dataset_ = score_dataset
 
     scores = list()
     for dataset in datasets:
-        scores.append(score_dataset(dataset, datasets_path, timeout))
+        scores.append(score_dataset_(dataset, datasets_path, timeout))
 
     if distributed:
         scores = dask.compute(*scores)
