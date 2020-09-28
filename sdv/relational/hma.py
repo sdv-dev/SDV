@@ -154,7 +154,7 @@ class HMA1(BaseRelationalModel):
         table_meta = self._prepare_for_modeling(table, table_name, primary_key)
 
         if foreign_key:
-            foreign_key_values = table.pop(foreign_key)
+            foreign_key_values = table.pop(foreign_key).values
             del table_meta['fields'][foreign_key]
 
         LOGGER.info('Fitting %s for table %s; shape: %s', self._model.__name__,
