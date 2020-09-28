@@ -18,28 +18,6 @@ SDV
    SDV.save
    SDV.load
 
-Modeler
-~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   modeler.Modeler
-   modeler.Modeler.cpa
-   modeler.Modeler.model_database
-
-Sampler
-~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   sampler.Sampler
-   sampler.Sampler.sample
-   sampler.Sampler.sample_all
-
-.. currentmodule:: sdv
-
 Evaluation and Benchmark
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

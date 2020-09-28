@@ -70,6 +70,7 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
+    'importlib-metadata<2.0.0,>=0.12'
 ]
 
 setup(
@@ -105,6 +106,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.4.2',
+    version='0.4.3.dev0',
     zip_safe=False,
 )

@@ -8,7 +8,7 @@ def test_sdv():
     sdv.fit(metadata, tables)
 
     # Sample all
-    sampled = sdv.sample_all()
+    sampled = sdv.sample()
 
     assert set(sampled.keys()) == {'users', 'sessions', 'transactions'}
     assert len(sampled['users']) == 10
@@ -43,7 +43,7 @@ def test_sdv_multiparent():
     sdv.fit(metadata, tables)
 
     # Sample all
-    sampled = sdv.sample_all()
+    sampled = sdv.sample()
 
     assert set(sampled.keys()) == {'characters', 'families', 'character_families'}
     assert len(sampled['characters']) == 7

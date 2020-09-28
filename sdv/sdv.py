@@ -3,22 +3,11 @@
 """Main SDV module."""
 
 import pickle
+import warnings
 
-from copulas.univariate import GaussianUnivariate
-
-from sdv.metadata import Metadata
-from sdv.modeler import Modeler
-from sdv.models.copulas import GaussianCopula
-from sdv.sampler import Sampler
-
-DEFAULT_MODEL = GaussianCopula
-DEFAULT_MODEL_KWARGS = {
-    'distribution': GaussianUnivariate
-}
-
-
-class NotFittedError(Exception):
-    """Error to raise when sample is called and SDV is not fitted."""
+from sdv.errors import NotFittedError
+from sdv.relational.hma import HMA1
+from sdv.tabular.copulas import GaussianCopula
 
 
 class SDV:
@@ -28,20 +17,29 @@ class SDV:
 
     Args:
         model (type):
-            Class of the ``copula`` to use. Defaults to
-            ``sdv.models.copulas.GaussianCopula``.
+            Class of the model to use. Defaults to ``sdv.relational.HMA1``.
         model_kwargs (dict):
-            Keyword arguments to pass to the model. Defaults to ``None``.
+            Keyword arguments to pass to the model. If no ``model`` is given,
+            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution.
     """
 
-    sampler = None
+    _model_instance = None
+    DEFAULT_MODEL = HMA1
+    DEFAULT_MODEL_KWARGS = {
+        'model': GaussianCopula,
+        'model_kwargs': {
+            'distribution': 'gaussian'
+        }
+    }
 
-    def __init__(self, model=DEFAULT_MODEL, model_kwargs=None):
-        self.model = model
-        if model_kwargs is None:
-            self.model_kwargs = DEFAULT_MODEL_KWARGS.copy()
-        else:
-            self.model_kwargs = model_kwargs
+    def __init__(self, model=None, model_kwargs=None):
+        if model is None:
+            model = model or self.DEFAULT_MODEL
+            if model_kwargs is None:
+                model_kwargs = self.DEFAULT_MODEL_KWARGS
+
+        self._model = model
+        self._model_kwargs = (model_kwargs or dict()).copy()
 
     def fit(self, metadata, tables=None, root_path=None):
         """Fit this SDV instance to the dataset data.
@@ -58,44 +56,57 @@ class SDV:
                 a path, the metadata location is used. If ``None`` and
                 metadata is a dict, the current working directory is used.
         """
-        if isinstance(metadata, Metadata):
-            self.metadata = metadata
-        else:
-            self.metadata = Metadata(metadata, root_path)
+        self._model_instance = self._model(metadata, root_path, **self._model_kwargs)
+        self._model_instance.fit(tables)
 
-        self.metadata.validate(tables)
+    def sample(self, table_name=None, num_rows=None,
+               sample_children=True, reset_primary_keys=False):
+        """Generate synthetic data for one table or the entire dataset.
 
-        self.modeler = Modeler(self.metadata, self.model, self.model_kwargs)
-        self.modeler.model_database(tables)
-        self.sampler = Sampler(self.metadata, self.modeler.models, self.model,
-                               self.model_kwargs, self.modeler.table_sizes)
+        If a ``table_name`` is given and ``sample_children`` is ``False``, a
+        ``pandas.DataFrame`` with the values from the indicated table is returned.
+        Otherwise, if ``sample_children`` is ``True``, a dictionary containing both
+        the table and all its descendant tables is returned.
 
-    def sample(self, table_name, num_rows=None, sample_children=True, reset_primary_keys=False):
-        """Sample ``num_rows`` rows from the indicated table.
+        If no ``table_name`` is given, the entire dataset is sampled and returned
+        in a dictionary.
+
+        If ``num_rows`` is given, the root tables of the dataset will contain the
+        indicated number of rows. Otherwise, the number of rows will be the same
+        as in the original dataset. Number of rows in the child tables cannot be
+        controlled and always will depend on the values from the sampled parent
+        tables.
+
+        If ``reset_primary_keys`` is ``True``, the primary key generators will be
+        reset.
 
         Args:
             table_name (str):
-                Name of the table to sample from.
+                Name of the table to sample from. If not passed, sample the entire
+                dataset.
             num_rows (int):
                 Amount of rows to sample. If ``None``, sample the same number of rows
                 as there were in the original table.
             sample_children (bool):
-                Whether or not to sample children tables. Defaults to ``True``.
+                Whether or not sample child tables. Used only if ``table_name`` is
+                given. Defaults to ``True``.
             reset_primary_keys (bool):
-                Wheter or not reset the primary key generators. Defaults to ``False``.
+                Whether or not reset the primary keys generators. Defaults to ``False``.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data with the number of rows specified in ``num_rows``.
+            dict or pandas.DataFrame:
+                - Returns a ``dict`` when ``sample_children`` is ``True`` with the sampled table
+                  and child tables.
+                - Returns a ``pandas.DataFrame`` when ``sample_children`` is ``False``.
 
         Raises:
             NotFittedError:
                 A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
-        if self.sampler is None:
+        if self._model_instance is None:
             raise NotFittedError('SDV instance has not been fitted')
 
-        return self.sampler.sample(
+        return self._model_instance.sample(
             table_name,
             num_rows,
             sample_children=sample_children,
@@ -104,6 +115,9 @@ class SDV:
 
     def sample_all(self, num_rows=None, reset_primary_keys=False):
         """Sample the entire dataset.
+
+        WARNING: This method is deprecated and will be removed in future relaeses. Please
+        use the ``sample`` method instead.
 
         Args:
             num_rows (int):
@@ -120,10 +134,9 @@ class SDV:
             NotFittedError:
                 A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
-        if self.sampler is None:
-            raise NotFittedError('SDV instance has not been fitted')
-
-        return self.sampler.sample_all(num_rows, reset_primary_keys=reset_primary_keys)
+        warnings.warn('`sample_all` is deprecated and will be removed soon. Please use `sample`',
+                      DeprecationWarning)
+        return self.sample(num_rows=num_rows, reset_primary_keys=reset_primary_keys)
 
     def save(self, path):
         """Save this SDV instance to the given path using pickle.

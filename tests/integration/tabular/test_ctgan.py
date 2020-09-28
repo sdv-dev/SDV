@@ -41,5 +41,6 @@ def test_ctgan():
             }
         },
         'constraints': [],
-        'model_kwargs': {}
+        'model_kwargs': {},
+        'name': None
     }
