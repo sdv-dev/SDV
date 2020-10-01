@@ -119,6 +119,9 @@ class CopulaGAN(CTGAN):
             Number of data samples to process in each step.
         verbose (bool):
             Whether to print fit progress on stdout. Defaults to ``False``.
+        cuda (bool or str):
+            If ``True``, use CUDA. If an ``str``, use the indicated device.
+            If ``False``, do not use cuda at all.
         field_distributions (dict):
             Optionally specify a dictionary that maps the name of each field to the distribution
             that must be used in it. Fields that are not specified in the input ``dict`` will
@@ -133,7 +136,7 @@ class CopulaGAN(CTGAN):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False,
+                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False, cuda=True,
                  field_distributions=None, default_distribution=None):
         super().__init__(
             field_names=field_names,
@@ -150,6 +153,7 @@ class CopulaGAN(CTGAN):
             l2scale=l2scale,
             batch_size=batch_size,
             verbose=verbose,
+            cuda=cuda
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
