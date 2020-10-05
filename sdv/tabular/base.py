@@ -172,15 +172,6 @@ class BaseTabularModel:
 
         return sampled.head(num_rows)
 
-    def _get_likelihood(self, table_data):
-        """Get the likelihood of each row belonging to this table."""
-        raise NotImplementedError()
-
-    def get_likelihood(self, table_data):
-        """Get the likelihood of each row belonging to this table."""
-        transformed = self._metadata.transform(table_data)
-        return self._model.probability_density(transformed)
-
     def get_parameters(self):
         """Get the parameters learned from the data.
 

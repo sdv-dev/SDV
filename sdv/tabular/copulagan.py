@@ -9,19 +9,20 @@ from sdv.tabular.ctgan import CTGAN
 class CopulaGAN(CTGAN):
     """Combination of GaussianCopula transformation and GANs.
 
-    This model extends the ``CTGAN`` model to add the flexibility of the
-    GaussianCopula transformations provided by the
-    ``GaussianCopulaTransformer`` from ``RDT``.
+    This model extends the ``CTGAN`` model to add the flexibility of the GaussianCopula
+    transformations provided by the ``GaussianCopulaTransformer`` from ``RDT``.
 
     Overall, the fitting process consists of the following steps:
 
     1. Transform each non categorical variable from the input
        data using a ``GaussianCopulaTransformer``:
-        i. If not specified, find out the distribution which each one
-           of the variables from the input dataset has.
-        ii. Transform each variable to a standard normal space by applying
-            the CDF of the corresponding distribution and later on applying
-            an inverse CDF from a standard normal distribution.
+
+       i. If not specified, find out the distribution which each one
+          of the variables from the input dataset has.
+       ii. Transform each variable to a standard normal space by applying
+           the CDF of the corresponding distribution and later on applying
+           an inverse CDF from a standard normal distribution.
+
     2. Fit CTGAN with the transformed table.
 
     And the process of sampling is:
@@ -158,27 +159,19 @@ class CopulaGAN(CTGAN):
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
 
-    def get_distribution(self, field=None):
-        """Get the distributions used for each continuous field in the table.
-
-        Args:
-            field (str):
-                If passed, return only the distribution parameters of this
-                field. Otherwise, return all of them.
+    def get_distributions(self):
+        """Get the marginal distributions used by this CopulaGAN.
 
         Returns:
             dict:
-                Dictionary containing the univariate parameters for each
-                one of the fields that have been transformed by the
-                ``GaussianCopulaTransformers``.
+                Dictionary containing the distributions used or detected
+                for each column.
         """
-        if field:
-            return self._ht.transformers[field]._univariate.to_dict()
-
         return {
-            field: transformer._univariate.to_dict()
+            field: transformer._univariate.to_dict()['type']
             for field, transformer in self._ht.transformers.items()
         }
+
 
     def _fit(self, table_data):
         """Fit the model to the table.
