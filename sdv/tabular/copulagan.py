@@ -172,7 +172,6 @@ class CopulaGAN(CTGAN):
             for field, transformer in self._ht.transformers.items()
         }
 
-
     def _fit(self, table_data):
         """Fit the model to the table.
 
