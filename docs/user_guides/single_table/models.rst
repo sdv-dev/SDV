@@ -8,3 +8,4 @@ Models
 
     gaussian_copula
     ctgan
+    copulagan
