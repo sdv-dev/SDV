@@ -57,7 +57,7 @@ class GaussianCopula(BaseTabularModel):
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
-        distribution (copulas.univariate.Univariate or str):
+        field_distributions (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use. To choose from:
 
                 * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
@@ -86,7 +86,7 @@ class GaussianCopula(BaseTabularModel):
 
         default_distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use by default. To choose from the list
-            of possible ``distribution`` values. Defaults to ``parametric``.
+            of possible ``field_distribution`` values. Defaults to ``parametric``.
 
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, to choose
@@ -224,16 +224,12 @@ class GaussianCopula(BaseTabularModel):
         )
 
     def get_distributions(self):
-        """Get the arguments needed to reproduce this model.
-
-        Additional arguments include:
-            - Distribution found for each column
-            - categorical_transformer
+        """Get the marginal distributions used by this copula.
 
         Returns:
             dict:
-                Dictionary containing the categorical transformer used
-                and the distributions used or detected for each column.
+                Dictionary containing the distributions used or detected
+                for each column.
         """
         parameters = self._model.to_dict()
         univariates = parameters['univariates']
@@ -289,9 +285,10 @@ class GaussianCopula(BaseTabularModel):
         """
         return self._model.sample(num_rows)
 
-    def _get_likelihood(self, table_data):
+    def get_likelihood(self, table_data):
         """Get the likelihood of each row belonging to this table."""
-        return self._model.probability_density(table_data)
+        transformed = self._metadata.transform(table_data)
+        return self._model.probability_density(transformed)
 
     def get_parameters(self):
         """Get copula model parameters.
