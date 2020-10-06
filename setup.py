@@ -17,7 +17,7 @@ install_requires = [
     'pandas>=0.23.4,<2',
     'graphviz>=0.13.2,<1',
     'copulas>=0.3.2,<0.4',
-    'rdt>=0.2.4,<0.3',
+    'rdt>=0.2.6,<0.3',
     'sdmetrics>=0.0.2,<0.0.3',
 ]
 
@@ -106,6 +106,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.4.3',
+    version='0.4.4.dev1',
     zip_safe=False,
 )

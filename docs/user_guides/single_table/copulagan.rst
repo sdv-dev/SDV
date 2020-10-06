@@ -1,29 +1,29 @@
-.. _ctgan:
+.. _copulagan:
 
-CTGAN Model
-===========
+CopulaGAN Model
+===============
 
 In this guide we will go through a series of steps that will let you
-discover functionalities of the ``CTGAN`` model, including how to:
+discover functionalities of the ``CopulaGAN`` model, including how to:
 
--  Create an instance of ``CTGAN``.
+-  Create an instance of ``CopulaGAN``.
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
--  Use ``CTGAN`` to anonymize PII information.
+-  Use ``CopulaGAN`` to anonymize PII information.
 -  Customize the data transformations to improve the learning process.
+-  Specify the column distributions to improve the output quality.
 -  Specify hyperparameters to improve the output quality.
 
-What is CTGAN?
---------------
+What is CopulaGAN?
+------------------
 
-The ``sdv.tabular.CTGAN`` model is based on the GAN-based Deep Learning
-data synthesizer which was presented at the NeurIPS 2020 conference by
-the paper titled `Modeling Tabular data using Conditional
-GAN <https://arxiv.org/abs/1907.00503>`__.
+The ``sdv.tabular.CopulaGAN`` model is a variation of the :ref:`ctgan`
+which takes advantage of the CDF based transformation that the GaussianCopulas
+apply to make the underlying CTGAN model task of learning the data easier.
 
 Let's now discover how to learn a dataset and later on generate
 synthetic data with the same format and statistical properties by using
-the ``CTGAN`` class from SDV.
+the ``CopulaGAN`` class from SDV.
 
 Quick Usage
 -----------
@@ -46,7 +46,6 @@ that applied for placements during the year 2020.
     data = load_tabular_demo('student_placements')
     data.head().T
 
-
 As you can see, this table contains information about students which
 includes, among other things:
 
@@ -63,11 +62,11 @@ You will notice that there is data with the following characteristics:
    the data related to the placement details is missing in the rows
    where the student was not placed.
 
-Let us use ``CTGAN`` to learn this data and then sample synthetic data
+Let us use ``CopulaGAN`` to learn this data and then sample synthetic data
 about new students to see how well de model captures the characteristics
 indicated above. In order to do this you will need to:
 
--  Import the ``sdv.tabular.CTGAN`` class and create an instance of it.
+-  Import the ``sdv.tabular.CopulaGAN`` class and create an instance of it.
 -  Call its ``fit`` method passing our table.
 -  Call its ``sample`` method indicating the number of synthetic rows
    that you want to generate.
@@ -75,9 +74,9 @@ indicated above. In order to do this you will need to:
 .. ipython:: python
     :okwarning:
 
-    from sdv.tabular import CTGAN
+    from sdv.tabular import CopulaGAN
 
-    model = CTGAN()
+    model = CopulaGAN()
     model.fit(data)
 
 .. note::
@@ -163,13 +162,13 @@ Load the model and generate new data
 
 The file you just generated can be send over to the system where the
 synthetic data will be generated. Once it is there, you can load it
-using the ``CTGAN.load`` method, and then you are ready to sample new
+using the ``CopulaGAN.load`` method, and then you are ready to sample new
 data from the loaded instance:
 
 .. ipython:: python
     :okwarning:
 
-    loaded = CTGAN.load('my_model.pkl')
+    loaded = CopulaGAN.load('my_model.pkl')
     new_data = loaded.sample(200)
 
 .. warning::
@@ -210,7 +209,7 @@ indicating the name of the column that is the index of the table.
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = CopulaGAN(
         primary_key='student_id'
     )
     model.fit(data)
@@ -261,7 +260,7 @@ students:
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = CopulaGAN(
         primary_key='student_id',
     )
     model.fit(data_pii)
@@ -301,7 +300,7 @@ dictionary indicating the category ``address``
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = CopulaGAN(
         primary_key='student_id',
         anonymize_fields={
             'address': 'address'
@@ -326,15 +325,202 @@ Advanced Usage
 
 Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
-to our ``CTGAN`` Model in order to customize it to our needs.
+to our ``CopulaGAN`` Model in order to customize it to our needs.
 
-How to modify the CTGAN Hyperparameters?
+Exploring the Probability Distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+During the previous steps, every time we fitted the ``CopulaGAN``
+it performed the following operations:
+
+1. Learn the format and data types of the passed data
+2. Transform the non-numerical and null data using `Reversible Data
+   Transforms <https://github.com/sdv-dev/RDT>`__ to obtain a fully
+   numerical representation of the data from which we can learn the
+   probability distributions.
+3. Learn the probability distribution of each column from the table
+4. Transform the values of each numerical column by converting them
+   to their marginal distribution CDF values and then applying an
+   inverse CDF transformation of a standard normal on them.
+5. Fit a CTGAN model on the transformed data, which learns how each
+   column is correlated to the others.
+
+After this, when we used the model to generate new data for our table
+using the ``sample`` method, it did:
+
+5. Sample rows from the CTGAN model.
+6. Revert the sampled values by computing their standard normal CDF
+   and then applyting the inverse CDF of their marginal distributions.
+7. Revert the RDT transformations to go back to the original data
+   format.
+
+As you can see, during these steps the *Marginal Probability
+Distributions* have a very important role, since the ``CopulaGAN``
+had to learn and reproduce the individual distributions of each column
+in our table. We can explore the distributions which the
+``CopulaGAN`` used to model each column using its
+``get_distributions`` method:
+
+.. ipython:: python
+    :okwarning:
+
+    model = CopulaGAN(
+        primary_key='student_id'
+    )
+    model.fit(data)
+    distributions = model.get_distributions()
+
+This will return us a ``dict`` which contains the name of the
+distribution class used for each column:
+
+.. ipython:: python
+    :okwarning:
+
+    distributions
+
+.. note::
+
+    In this list we will see multiple distributions for each one of the
+    columns that we have in our data. This is because the RDT
+    transformations used to encode the data numerically often use more than
+    one column to represent each one of the input variables.
+
+Let's explore the individual distribution of one of the columns in our
+data to better understand how the ``CopulaGAN`` processed them and
+see if we can improve the results by manually specifying a different
+distribution. For example, let's explore the ``experience_years`` column
+by looking at the frequency of its values within the original data:
+
+.. ipython:: python
+    :okwarning:
+
+    data.experience_years.value_counts()
+
+    @savefig copulagan_experience_years_1.png width=4in
+    data.experience_years.hist();
+
+
+By observing the data we can see that the behavior of the values in this
+column is very similar to a Gamma or even some types of Beta
+distribution, where the majority of the values are 0 and the frequency
+decreases as the values increase.
+
+Was the ``CopulaGAN`` able to capture this distribution on its own?
+
+.. ipython:: python
+    :okwarning:
+
+    distributions['experience_years']
+
+
+It seems that the it was not, as it rather thought that the behavior was
+closer to a Gaussian distribution. And, as a result, we can see how the
+generated values now contain negative values which are invalid for this
+column:
+
+.. ipython:: python
+    :okwarning:
+
+    new_data.experience_years.value_counts()
+
+    @savefig copulagan_experience_years_2.png width=4in
+    new_data.experience_years.hist();
+
+
+Let's see how we can improve this situation by passing the
+``CopulaGAN`` the exact distribution that we want it to use for
+this column.
+
+Setting distributions for indvidual variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``CopulaGAN`` class offers the possibility to indicate which
+distribution to use for each one of the columns in the table, in order
+to solve situations like the one that we just described. In order to do
+this, we need to pass a ``field_distributions`` argument with ``dict`` that
+indicates, the distribution that we want to use for each column.
+
+Possible values for the distribution argument are:
+
+-  ``univariate``: Let ``copulas`` select the optimal univariate
+   distribution. This may result in non-parametric models being used.
+-  ``parametric``: Let ``copulas`` select the optimal univariate
+   distribution, but restrict the selection to parametric distributions
+   only.
+-  ``bounded``: Let ``copulas`` select the optimal univariate
+   distribution, but restrict the selection to bounded distributions
+   only. This may result in non-parametric models being used.
+-  ``semi_bounded``: Let ``copulas`` select the optimal univariate
+   distribution, but restrict the selection to semi-bounded
+   distributions only. This may result in non-parametric models being
+   used.
+-  ``parametric_bounded``: Let ``copulas`` select the optimal univariate
+   distribution, but restrict the selection to parametric and bounded
+   distributions only.
+-  ``parametric_semi_bounded``: Let ``copulas`` select the optimal
+   univariate distribution, but restrict the selection to parametric and
+   semi-bounded distributions only.
+-  ``gaussian``: Use a Gaussian distribution.
+-  ``gamma``: Use a Gamma distribution.
+-  ``beta``: Use a Beta distribution.
+-  ``student_t``: Use a Student T distribution.
+-  ``gussian_kde``: Use a GaussianKDE distribution. This model is
+   non-parametric, so using this will make ``get_parameters`` unusable.
+-  ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+
+Let's see what happens if we make the ``CopulaGAN`` use the
+``gamma`` distribution for our column.
+
+.. ipython:: python
+    :okwarning:
+
+    model = CopulaGAN(
+        primary_key='student_id',
+        field_distributions={
+            'experience_years': 'gamma'
+        }
+    )
+    model.fit(data)
+
+After this, we can see how the ``CopulaGAN`` used the indicated
+distribution for the ``experience_years`` column
+
+.. ipython:: python
+    :okwarning:
+
+    model.get_distributions()['experience_years']
+
+
+And, as a result, now we can see how the generated data now have a
+behavior which is closer to the original data and always stays within
+the valid values range.
+
+.. ipython:: python
+    :okwarning:
+
+    new_data = model.sample(len(data))
+    new_data.experience_years.value_counts()
+
+    @savefig copulagan_experience_years_3.png width=4in
+    new_data.experience_years.hist();
+
+
+.. note::
+
+    Even though there are situations like the one show above where manually
+    choosing a distribution seems to give better results, in most cases the
+    ``CopulaGAN`` will be able to find the optimal distribution on its
+    own, making this manual search of the marginal distributions necessary
+    on very little occasions.
+
+
+How to modify the CopulaGAN Hyperparameters?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A part from the common Tabular Model arguments, ``CTGAN`` has a number
+A part from the arguments explained above, ``CopulaGAN`` has a number
 of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
-generated data and computational time.
+generated data and computational time:
 
 - ``epochs`` and ``batch_size``: these arguments control the number of
   iterations that the model will perform to optimize its parameters, as well as the number
@@ -377,7 +563,7 @@ generated data and computational time.
     Notice that the value that you set on the ``batch_size`` argument must always be a
     multiple of ``10``!
 
-As an example, we will try to fit the ``CTGAN`` model slightly
+As an example, we will try to fit the ``CopulaGAN`` model slightly
 increasing the number of epochs, reducing the ``batch_size``, adding one
 additional layer to the models involved and using a smaller wright
 decay.
@@ -393,13 +579,13 @@ generated data using the ``sdv.evaluation.evaluate`` function
     evaluate(new_data, data)
 
 
-Afterwards, we create a new instance of the ``CTGAN`` model with the
+Afterwards, we create a new instance of the ``CopulaGAN`` model with the
 hyperparameter values that we want to use
 
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = CopulaGAN(
         primary_key='student_id',
         epochs=500,
         batch_size=100,
