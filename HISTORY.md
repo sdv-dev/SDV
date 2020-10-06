@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.4.4 - 2020-10-06
+
+This PR adds a new tabular model based on combining the CTGAN model with the reversible
+transformation applied in the GaussianCopula model that converts random variables with
+arbitrary distributions to new random variables with standard normal distribution.
+
+The reversible transformation is handled by the GaussianCopulaTransformer recently added to RDT.
+
+### New Features
+
+* Add CopulaGAN Model - [Issue #202](https://github.com/sdv-dev/SDV/issues/202) by @csala
+
 ## 0.4.3 - 2020-09-28
 
 This release moves the models and algorithms related to generation of synthetic
