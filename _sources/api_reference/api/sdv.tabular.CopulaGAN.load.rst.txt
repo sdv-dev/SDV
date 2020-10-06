@@ -1,0 +1,6 @@
+﻿sdv.tabular.CopulaGAN.load
+==========================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CopulaGAN.load

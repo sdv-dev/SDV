@@ -15,7 +15,6 @@
    
       ~CTGAN.__init__
       ~CTGAN.fit
-      ~CTGAN.get_likelihood
       ~CTGAN.get_metadata
       ~CTGAN.get_parameters
       ~CTGAN.load

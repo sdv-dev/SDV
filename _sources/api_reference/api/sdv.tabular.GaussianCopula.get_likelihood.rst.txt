@@ -1,0 +1,6 @@
+﻿sdv.tabular.GaussianCopula.get\_likelihood
+==========================================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: GaussianCopula.get_likelihood

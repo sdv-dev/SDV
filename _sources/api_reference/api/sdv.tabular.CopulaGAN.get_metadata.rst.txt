@@ -1,0 +1,6 @@
+﻿sdv.tabular.CopulaGAN.get\_metadata
+===================================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CopulaGAN.get_metadata

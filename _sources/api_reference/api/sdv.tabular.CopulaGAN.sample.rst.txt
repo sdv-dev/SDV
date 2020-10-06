@@ -1,0 +1,6 @@
+﻿sdv.tabular.CopulaGAN.sample
+============================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CopulaGAN.sample

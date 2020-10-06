@@ -1,0 +1,6 @@
+﻿sdv.tabular.CopulaGAN.fit
+=========================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CopulaGAN.fit

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluating Synthetic Data &#8212; SDV 0.4.3 documentation</title>
+    <title>Evaluating Synthetic Data &#8212; SDV 0.4.4 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -270,11 +270,11 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed                    start_date                      end_date duration</span>
-<span class="go">0       17454      F    52.626760  57.250870  Commerce    57.317231   Comm&amp;Mgmt            False                 0           58.671681  Mkt&amp;Fin  60.082212           NaN   False                           NaT                           NaT      NaN</span>
-<span class="go">1       17386      M    83.779961  64.340724  Commerce    72.593160   Comm&amp;Mgmt            False                 0           76.576067  Mkt&amp;Fin  58.904589  24507.977649    True 2020-03-01 07:02:09.643937792 2020-08-30 09:29:05.632335872      3.0</span>
-<span class="go">2       17416      F    63.585563  75.078188  Commerce    72.343781   Comm&amp;Mgmt            False                 1           91.517089  Mkt&amp;Fin  66.319650           NaN   False                           NaT                           NaT      NaN</span>
-<span class="go">3       17413      M    69.414060  63.687433   Science    66.451217    Sci&amp;Tech            False                 0           50.822001   Mkt&amp;HR  57.080414  21950.622113    True 2020-01-06 02:43:38.166582272 2020-07-17 04:57:42.433414144      3.0</span>
-<span class="go">4       17354      F    59.732135  70.432832  Commerce    71.873511   Comm&amp;Mgmt            False                 1           58.076848   Mkt&amp;HR  60.953915  23092.796241    True 2020-05-24 17:39:14.825029632 2020-11-29 23:00:53.042683904      3.0</span>
+<span class="go">0       17451      M    56.187839  63.491895      Arts    63.260513    Sci&amp;Tech            False                 0           91.840952   Mkt&amp;HR  63.877959           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">1       17393      M    81.382945  76.580876   Science    69.031648    Sci&amp;Tech            False                 1           80.474750  Mkt&amp;Fin  60.528079  32622.172772    True 2020-01-05 07:52:37.318146304 2020-09-18 11:41:36.664296448     12.0</span>
+<span class="go">2       17305      F    65.895434  67.824437   Science    62.484147    Sci&amp;Tech            False                 1           68.534540  Mkt&amp;Fin  67.107464           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">3       17350      M    64.316461  60.066894   Science    63.045476    Sci&amp;Tech            False                 1           69.284737  Mkt&amp;Fin  55.845643  23115.190171    True 2020-01-11 21:01:41.841555712 2020-02-18 01:06:55.558000896      3.0</span>
+<span class="go">4       17358      M    71.614642  87.142553  Commerce    75.812338   Comm&amp;Mgmt            False                 0           95.124233   Mkt&amp;HR  77.106101  29168.815368    True 2020-01-16 20:02:07.122753024 2020-07-10 04:07:04.823401216      3.0</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -289,7 +289,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.7502314223514207</span>
+<span class="gh">Out[10]: </span><span class="go">0.7460722082209255</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -309,10 +309,10 @@ additional argument <code class="docutils literal notranslate"><span class="pre"
 of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">{&#39;cstest&#39;: 0.9054361042513487,</span>
-<span class="go"> &#39;kstest&#39;: 0.5257671093530244,</span>
-<span class="go"> &#39;logistic_detection&#39;: 0.8232082826175158,</span>
-<span class="go"> &#39;svc_detection&#39;: 0.7739469222743871}</span>
+<span class="go">{&#39;cstest&#39;: 0.8863952581952075,</span>
+<span class="go"> &#39;kstest&#39;: 0.5293783164725323,</span>
+<span class="go"> &#39;logistic_detection&#39;: 0.7788056787225411,</span>
+<span class="go"> &#39;svc_detection&#39;: 0.792027111227033}</span>
 </pre></div>
 </div>
 </div>
@@ -325,12 +325,12 @@ names of the metrics that you want to apply.</p>
 <p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">cstest</span></code> and
 <code class="docutils literal notranslate"><span class="pre">kstest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.7156016068021865</span>
+<span class="gh">Out[12]: </span><span class="go">0.7078867873338699</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.9054361042513487, &#39;kstest&#39;: 0.5257671093530244}</span>
+<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.8863952581952075, &#39;kstest&#39;: 0.5293783164725323}</span>
 </pre></div>
 </div>
 <p>The complete list of possible metrics is:</p>

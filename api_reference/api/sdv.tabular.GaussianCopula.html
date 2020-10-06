@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.GaussianCopula &#8212; SDV 0.4.3 documentation</title>
+    <title>sdv.tabular.GaussianCopula &#8212; SDV 0.4.4 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -166,6 +166,14 @@
                       </li>
                   
                       <li class="">
+                          <a href="sdv.tabular.GaussianCopula.get_distributions.html">sdv.tabular.GaussianCopula.get_distributions</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.GaussianCopula.get_likelihood.html">sdv.tabular.GaussianCopula.get_likelihood</a>
+                      </li>
+                  
+                      <li class="">
                           <a href="sdv.tabular.GaussianCopula.save.html">sdv.tabular.GaussianCopula.save</a>
                       </li>
                   
@@ -195,6 +203,34 @@
                   
                       <li class="">
                           <a href="sdv.tabular.CTGAN.load.html">sdv.tabular.CTGAN.load</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.html">sdv.tabular.CopulaGAN</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.fit.html">sdv.tabular.CopulaGAN.fit</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.sample.html">sdv.tabular.CopulaGAN.sample</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.get_metadata.html">sdv.tabular.CopulaGAN.get_metadata</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.get_distributions.html">sdv.tabular.CopulaGAN.get_distributions</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.save.html">sdv.tabular.CopulaGAN.save</a>
+                      </li>
+                  
+                      <li class="">
+                          <a href="sdv.tabular.CopulaGAN.load.html">sdv.tabular.CopulaGAN.load</a>
                       </li>
                   
                   </ul>
@@ -298,7 +334,7 @@ If given alongside any other metadata-related arguments, an
 exception will be raised.
 If not given at all, it will be built using the other
 arguments or learned from the data.</p></li>
-<li><p><strong>distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – <p>Copulas univariate distribution to use. To choose from:</p>
+<li><p><strong>field_distributions</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – <p>Copulas univariate distribution to use. To choose from:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution.
@@ -328,7 +364,7 @@ so using this will make <code class="docutils literal notranslate"><span class="
 </div></blockquote>
 </p></li>
 <li><p><strong>default_distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – Copulas univariate distribution to use by default. To choose from the list
-of possible <code class="docutils literal notranslate"><span class="pre">distribution</span></code> values. Defaults to <code class="docutils literal notranslate"><span class="pre">parametric</span></code>.</p></li>
+of possible <code class="docutils literal notranslate"><span class="pre">field_distribution</span></code> values. Defaults to <code class="docutils literal notranslate"><span class="pre">parametric</span></code>.</p></li>
 <li><p><strong>categorical_transformer</strong> (<em>str</em>) – <p>Type of transformer to use for the categorical variables, to choose
 from:</p>
 <blockquote>
@@ -371,10 +407,10 @@ noise around each value.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.GaussianCopula.fit.html#sdv.tabular.GaussianCopula.fit" title="sdv.tabular.GaussianCopula.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(data)</p></td>
 <td><p>Fit this model to the data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_distributions</span></code>()</p></td>
-<td><p>Get the arguments needed to reproduce this model.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.GaussianCopula.get_distributions.html#sdv.tabular.GaussianCopula.get_distributions" title="sdv.tabular.GaussianCopula.get_distributions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_distributions</span></code></a>()</p></td>
+<td><p>Get the marginal distributions used by this copula.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_likelihood</span></code>(table_data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.tabular.GaussianCopula.get_likelihood.html#sdv.tabular.GaussianCopula.get_likelihood" title="sdv.tabular.GaussianCopula.get_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_likelihood</span></code></a>(table_data)</p></td>
 <td><p>Get the likelihood of each row belonging to this table.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.tabular.GaussianCopula.get_metadata.html#sdv.tabular.GaussianCopula.get_metadata" title="sdv.tabular.GaussianCopula.get_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_metadata</span></code></a>()</p></td>

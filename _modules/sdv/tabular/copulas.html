@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.4.3 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.4.4 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
 
@@ -217,7 +217,7 @@
 <span class="sd">            exception will be raised.</span>
 <span class="sd">            If not given at all, it will be built using the other</span>
 <span class="sd">            arguments or learned from the data.</span>
-<span class="sd">        distribution (copulas.univariate.Univariate or str):</span>
+<span class="sd">        field_distributions (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use. To choose from:</span>
 
 <span class="sd">                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.</span>
@@ -246,7 +246,7 @@
 
 <span class="sd">        default_distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use by default. To choose from the list</span>
-<span class="sd">            of possible ``distribution`` values. Defaults to ``parametric``.</span>
+<span class="sd">            of possible ``field_distribution`` values. Defaults to ``parametric``.</span>
 
 <span class="sd">        categorical_transformer (str):</span>
 <span class="sd">            Type of transformer to use for the categorical variables, to choose</span>
@@ -383,17 +383,13 @@
             <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
         <span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">get_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the arguments needed to reproduce this model.</span>
-
-<span class="sd">        Additional arguments include:</span>
-<span class="sd">            - Distribution found for each column</span>
-<span class="sd">            - categorical_transformer</span>
+<div class="viewcode-block" id="GaussianCopula.get_distributions"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.get_distributions.html#sdv.tabular.GaussianCopula.get_distributions">[docs]</a>    <span class="k">def</span> <span class="nf">get_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this copula.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
-<span class="sd">                Dictionary containing the categorical transformer used</span>
-<span class="sd">                and the distributions used or detected for each column.</span>
+<span class="sd">                Dictionary containing the distributions used or detected</span>
+<span class="sd">                for each column.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
         <span class="n">univariates</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span>
@@ -403,7 +399,7 @@
         <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">univariates</span><span class="p">):</span>
             <span class="n">distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">distributions</span>
+        <span class="k">return</span> <span class="n">distributions</span></div>
 
     <span class="k">def</span> <span class="nf">_update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add arguments needed to reproduce this model to the Metadata.</span>
@@ -449,9 +445,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="GaussianCopula.get_likelihood"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.get_likelihood.html#sdv.tabular.GaussianCopula.get_likelihood">[docs]</a>    <span class="k">def</span> <span class="nf">get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">probability_density</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">probability_density</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GaussianCopula.get_parameters"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.get_parameters.html#sdv.tabular.GaussianCopula.get_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get copula model parameters.</span>

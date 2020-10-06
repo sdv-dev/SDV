@@ -1,0 +1,6 @@
+﻿sdv.tabular.CopulaGAN.save
+==========================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: CopulaGAN.save
