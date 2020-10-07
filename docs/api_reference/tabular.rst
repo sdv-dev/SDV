@@ -35,8 +35,8 @@ CTGAN
    CTGAN.save
    CTGAN.load
 
-CTGAN
-~~~~~
+CouplaGAN
+~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
