@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Handling Constraints &#8212; SDV 0.4.4 documentation</title>
     
-  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
     
   <link rel="stylesheet"
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
-  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -51,11 +51,11 @@
     <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
 <div class="container-xl">
 
-    
     <a class="navbar-brand" href="../../index.html">
-      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
-    </a>
     
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -99,6 +99,12 @@
           </li>
         
         
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
@@ -108,74 +114,70 @@
     <div class="container-xl">
       <div class="row">
           
-          <div class="col-12 col-md-3 bd-sidebar">
-
-<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
-
-
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
 
-  <div class="bd-toc-item active">
+    <div class="bd-toc-item active">
+    
   
-
-  <ul class="nav bd-sidenav">
-      
-      
-      
-      
+    <ul class="nav bd-sidenav">
+        
+        
+        
         
           
-
-              <li class="active">
-                  <a href="index.html">Single Table Data</a>
-                  <ul>
-                  
-                      <li class="">
-                          <a href="data_description.html">Data Description</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="models.html">Models</a>
-                      </li>
-                  
-                      <li class="active">
-                          <a href="">Handling Constraints</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="evaluation.html">Evaluating Synthetic Data</a>
-                      </li>
-                  
-                  </ul>
-              </li>
+            
+  
+                <li class="active">
+                    <a href="index.html">Single Table Data</a>
+                    <ul>
+                    
+                        <li class="">
+                            <a href="data_description.html">Data Description</a>
+                        </li>
+                    
+                        <li class="">
+                            <a href="models.html">Models</a>
+                        </li>
+                    
+                        <li class="active">
+                            <a href="">Handling Constraints</a>
+                        </li>
+                    
+                        <li class="">
+                            <a href="evaluation.html">Evaluating Synthetic Data</a>
+                        </li>
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
           
         
-          
-              <li class="">
-                  <a href="../relational/index.html">Relational Data</a>
-              </li>
-          
         
-          
-              <li class="">
-                  <a href="../timeseries/index.html">Timeseries Data</a>
-              </li>
-          
         
-      
-      
-      
-      
-      
-      
-      
-      
-    </ul>
-
-</nav>
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
           </div>
           
 
@@ -275,19 +277,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department            name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales    Wanda Mooney               5442 Ware Haven\nWardhaven, DC 18619   49               49                     0</span>
-<span class="go">1       Pear         Design  Vincent Carter      10548 Long Club Apt. 309\nJasonport, ID 61251   41               37                     4</span>
-<span class="go">2    Glasses             AI  Richard Harper  3786 Erica Shores Apt. 463\nMichaelbury, MS 30488   48               43                     5</span>
-<span class="go">3    Glasses  Search Engine     Robert Gray         441 Ashley Squares\nBarreramouth, NJ 52627   45               44                     1</span>
-<span class="go">4   Cheerper        BigData     Lisa Hoover             4456 James Knoll\nSmithshire, MA 40863   47               42                     5</span>
-<span class="go">5   Cheerper        Support      Justin Lee  4917 John Mountain Apt. 335\nLake Brandyburgh,...   31               25                     6</span>
-<span class="go">6       Pear          Sales    Corey Harris  6620 Bush Mission Suite 386\nWest Christy, MO ...   42               41                     1</span>
-<span class="go">7       Pear         Design  Michael Torres             94804 Ryan Ville\nJavierstad, OR 28530   37               33                     4</span>
-<span class="go">8    Glasses             AI   Arthur Carter                   Unit 6396 Box 0940\nDPO AE 42652   36               34                     2</span>
-<span class="go">9    Glasses  Search Engine    Andrew Bates  10483 Krista Lodge Suite 812\nSmithmouth, LA 4...   35               35                     0</span>
-<span class="go">10  Cheerper        BigData     Tanya Hayes       42184 Wells Crossroad\nStevensside, VT 56129   30               23                     7</span>
-<span class="go">11  Cheerper        Support  Lorraine Roach  764 Pacheco Track Apt. 159\nNew Vincent, MI 62566   43               34                     9</span>
+<span class="go">     company     department               name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales      Maureen Bowen   94838 Christine Path\nEast Nathanmouth, MI 97046   36               33                     3</span>
+<span class="go">1       Pear         Design      Diana Johnson                   Unit 2737 Box 6934\nDPO AA 18958   33               33                     0</span>
+<span class="go">2    Glasses             AI           Jose Fox  08253 Mcdaniel Prairie Apt. 081\nChristinaland...   41               38                     3</span>
+<span class="go">3    Glasses  Search Engine   Michael Anderson                   PSC 2324, Box 1354\nAPO AA 97258   43               36                     7</span>
+<span class="go">4   Cheerper        BigData        James Smith        01783 Ryan Views\nWilliamsborough, AK 54713   36               34                     2</span>
+<span class="go">5   Cheerper        Support    Robert Franklin           4873 Hughes Ford\nMelissaville, IN 76641   40               35                     5</span>
+<span class="go">6       Pear          Sales     Andre Marshall               017 Park Ridges\nMarkmouth, ID 65581   48               48                     0</span>
+<span class="go">7       Pear         Design      Sandra Miller   55120 Melissa Isle Apt. 668\nKaylafurt, NC 71621   38               35                     3</span>
+<span class="go">8    Glasses             AI   Lindsay Anderson  5022 Joanne Ranch Apt. 029\nNorth Randall, NY ...   46               38                     8</span>
+<span class="go">9    Glasses  Search Engine  Elizabeth Herrera  0311 Watkins Highway Apt. 303\nPamelafort, PA ...   31               31                     0</span>
+<span class="go">10  Cheerper        BigData      Daniel Walker          831 Anderson Orchard\nNew Kayla, CO 52532   40               38                     2</span>
+<span class="go">11  Cheerper        Support       Sheri Garcia  2491 Catherine Court Apt. 142\nHallburgh, MS 6...   39               34                     5</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -449,17 +451,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department            name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0      Pear          Sales      Justin Lee  4917 John Mountain Apt. 335\nLake Brandyburgh,...   38               33                     5</span>
-<span class="go">1  Cheerper        BigData     Tanya Hayes       42184 Wells Crossroad\nStevensside, VT 56129   29               25                     4</span>
-<span class="go">2   Glasses  Search Engine    Andrew Bates  10483 Krista Lodge Suite 812\nSmithmouth, LA 4...   29               26                     3</span>
-<span class="go">3      Pear          Sales      Justin Lee  4917 John Mountain Apt. 335\nLake Brandyburgh,...   35               35                     0</span>
-<span class="go">5      Pear         Design  Vincent Carter      10548 Long Club Apt. 309\nJasonport, ID 61251   41               38                     3</span>
-<span class="go">6   Glasses             AI  Lorraine Roach  764 Pacheco Track Apt. 159\nNew Vincent, MI 62566   49               42                     7</span>
-<span class="go">7  Cheerper        Support      Justin Lee  4917 John Mountain Apt. 335\nLake Brandyburgh,...   25               14                    11</span>
-<span class="go">8   Glasses             AI   Arthur Carter                   Unit 6396 Box 0940\nDPO AE 42652   39               38                     1</span>
-<span class="go">9      Pear         Design  Michael Torres             94804 Ryan Ville\nJavierstad, OR 28530   44               39                     5</span>
-<span class="go">0   Glasses  Search Engine   Arthur Carter                   Unit 6396 Box 0940\nDPO AE 42652   37               37                     0</span>
+<span class="go">    company     department              name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0   Glasses             AI  Lindsay Anderson  5022 Joanne Ranch Apt. 029\nNorth Randall, NY ...   44               36                     8</span>
+<span class="go">1   Glasses  Search Engine      Sheri Garcia  2491 Catherine Court Apt. 142\nHallburgh, MS 6...   39               35                     4</span>
+<span class="go">2   Glasses  Search Engine     Daniel Walker          831 Anderson Orchard\nNew Kayla, CO 52532   38               33                     5</span>
+<span class="go">3      Pear          Sales     Maureen Bowen   94838 Christine Path\nEast Nathanmouth, MI 97046   41               35                     6</span>
+<span class="go">4   Glasses  Search Engine     Daniel Walker          831 Anderson Orchard\nNew Kayla, CO 52532   39               35                     4</span>
+<span class="go">5      Pear          Sales    Andre Marshall               017 Park Ridges\nMarkmouth, ID 65581   36               36                     0</span>
+<span class="go">6  Cheerper        BigData  Lindsay Anderson  5022 Joanne Ranch Apt. 029\nNorth Randall, NY ...   38               34                     4</span>
+<span class="go">7  Cheerper        Support   Robert Franklin           4873 Hughes Ford\nMelissaville, IN 76641   36               32                     4</span>
+<span class="go">8      Pear          Sales  Lindsay Anderson  5022 Joanne Ranch Apt. 029\nNorth Randall, NY ...   39               36                     3</span>
+<span class="go">9   Glasses  Search Engine     Maureen Bowen   94838 Christine Path\nEast Nathanmouth, MI 97046   33               30                     3</span>
 </pre></div>
 </div>
 </div>
@@ -483,7 +485,7 @@ we defined:</p>
     </div>
 
     
-  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

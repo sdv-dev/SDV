@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Evaluating Synthetic Data &#8212; SDV 0.4.4 documentation</title>
     
-  <link rel="stylesheet" href="../../_static/css/index.d431a4ee1c1efae0e38bdfebc22debff.css">
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
     
   <link rel="stylesheet"
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
-  <link rel="preload" as="script" href="../../_static/js/index.30270b6e4c972e43c488.js">
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -51,11 +51,11 @@
     <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
 <div class="container-xl">
 
-    
     <a class="navbar-brand" href="../../index.html">
-      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo">
-    </a>
     
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -99,6 +99,12 @@
           </li>
         
         
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
@@ -108,74 +114,70 @@
     <div class="container-xl">
       <div class="row">
           
-          <div class="col-12 col-md-3 bd-sidebar">
-
-<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
-
-
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
 
-  <div class="bd-toc-item active">
+    <div class="bd-toc-item active">
+    
   
-
-  <ul class="nav bd-sidenav">
-      
-      
-      
-      
+    <ul class="nav bd-sidenav">
+        
+        
+        
         
           
-
-              <li class="active">
-                  <a href="index.html">Single Table Data</a>
-                  <ul>
-                  
-                      <li class="">
-                          <a href="data_description.html">Data Description</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="models.html">Models</a>
-                      </li>
-                  
-                      <li class="">
-                          <a href="constraints.html">Handling Constraints</a>
-                      </li>
-                  
-                      <li class="active">
-                          <a href="">Evaluating Synthetic Data</a>
-                      </li>
-                  
-                  </ul>
-              </li>
+            
+  
+                <li class="active">
+                    <a href="index.html">Single Table Data</a>
+                    <ul>
+                    
+                        <li class="">
+                            <a href="data_description.html">Data Description</a>
+                        </li>
+                    
+                        <li class="">
+                            <a href="models.html">Models</a>
+                        </li>
+                    
+                        <li class="">
+                            <a href="constraints.html">Handling Constraints</a>
+                        </li>
+                    
+                        <li class="active">
+                            <a href="">Evaluating Synthetic Data</a>
+                        </li>
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
           
         
-          
-              <li class="">
-                  <a href="../relational/index.html">Relational Data</a>
-              </li>
-          
         
-          
-              <li class="">
-                  <a href="../timeseries/index.html">Timeseries Data</a>
-              </li>
-          
         
-      
-      
-      
-      
-      
-      
-      
-      
-    </ul>
-
-</nav>
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
           </div>
           
 
@@ -270,11 +272,11 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed                    start_date                      end_date duration</span>
-<span class="go">0       17451      M    56.187839  63.491895      Arts    63.260513    Sci&amp;Tech            False                 0           91.840952   Mkt&amp;HR  63.877959           NaN   False                           NaT                           NaT      NaN</span>
-<span class="go">1       17393      M    81.382945  76.580876   Science    69.031648    Sci&amp;Tech            False                 1           80.474750  Mkt&amp;Fin  60.528079  32622.172772    True 2020-01-05 07:52:37.318146304 2020-09-18 11:41:36.664296448     12.0</span>
-<span class="go">2       17305      F    65.895434  67.824437   Science    62.484147    Sci&amp;Tech            False                 1           68.534540  Mkt&amp;Fin  67.107464           NaN   False                           NaT                           NaT      NaN</span>
-<span class="go">3       17350      M    64.316461  60.066894   Science    63.045476    Sci&amp;Tech            False                 1           69.284737  Mkt&amp;Fin  55.845643  23115.190171    True 2020-01-11 21:01:41.841555712 2020-02-18 01:06:55.558000896      3.0</span>
-<span class="go">4       17358      M    71.614642  87.142553  Commerce    75.812338   Comm&amp;Mgmt            False                 0           95.124233   Mkt&amp;HR  77.106101  29168.815368    True 2020-01-16 20:02:07.122753024 2020-07-10 04:07:04.823401216      3.0</span>
+<span class="go">0       17328      F    53.345335  60.977951  Commerce    61.189454   Comm&amp;Mgmt            False                 1           64.858426  Mkt&amp;Fin  72.119790           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">1       17338      M    80.617919  70.775365   Science    71.768970   Comm&amp;Mgmt            False                 0           56.027940   Mkt&amp;HR  66.282532  40534.322061    True 2020-01-10 22:33:54.728645120 2020-04-12 14:14:46.510937344      3.0</span>
+<span class="go">2       17462      M    67.399163  46.413078   Science    46.025672   Comm&amp;Mgmt            False                 0           66.647328   Mkt&amp;HR  54.372538           NaN   False                           NaT                           NaT      NaN</span>
+<span class="go">3       17335      M    64.185360  72.151286  Commerce    72.095983   Comm&amp;Mgmt            False                 0           69.069411   Mkt&amp;HR  59.003879  21194.093182    True 2020-01-22 04:54:41.749111296 2020-04-15 13:11:45.349043200      3.0</span>
+<span class="go">4       17380      F    76.916262  72.559236   Science    76.868629   Comm&amp;Mgmt            False                 1           61.180055  Mkt&amp;Fin  64.370779  20711.892445    True 2020-01-07 12:02:05.226219264 2020-07-02 16:56:33.235093248      3.0</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -289,7 +291,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.7460722082209255</span>
+<span class="gh">Out[10]: </span><span class="go">0.7672091694894259</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -309,10 +311,10 @@ additional argument <code class="docutils literal notranslate"><span class="pre"
 of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">{&#39;cstest&#39;: 0.8863952581952075,</span>
-<span class="go"> &#39;kstest&#39;: 0.5293783164725323,</span>
-<span class="go"> &#39;logistic_detection&#39;: 0.7788056787225411,</span>
-<span class="go"> &#39;svc_detection&#39;: 0.792027111227033}</span>
+<span class="go">{&#39;cstest&#39;: 0.9123603887930466,</span>
+<span class="go"> &#39;kstest&#39;: 0.5207725347451355,</span>
+<span class="go"> &#39;logistic_detection&#39;: 0.8214757940648004,</span>
+<span class="go"> &#39;svc_detection&#39;: 0.793818013533878}</span>
 </pre></div>
 </div>
 </div>
@@ -325,12 +327,12 @@ names of the metrics that you want to apply.</p>
 <p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">cstest</span></code> and
 <code class="docutils literal notranslate"><span class="pre">kstest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.7078867873338699</span>
+<span class="gh">Out[12]: </span><span class="go">0.716566461769091</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.8863952581952075, &#39;kstest&#39;: 0.5293783164725323}</span>
+<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.9123603887930466, &#39;kstest&#39;: 0.5207725347451355}</span>
 </pre></div>
 </div>
 <p>The complete list of possible metrics is:</p>
@@ -378,7 +380,7 @@ The returned score is 1 minus the ROC AUC score obtained by the classifier.</p><
     </div>
 
     
-  <script src="../../_static/js/index.30270b6e4c972e43c488.js"></script>
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

@@ -42,17 +42,17 @@ recursive sampling techniques.
 Current functionality and features:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Synthetic data generators for `single tables <single_table>` with the following features:
+-  Synthetic data generators for :ref:`single tables <single_table>` with the following features:
 
-   -  Using `Copulas <gaussian_copula>` and `Deep Learning <ctgan>` based models.
+   -  Using :ref:`Copulas <gaussian_copula>` and :ref:`Deep Learning <ctgan>` based models.
    -  Handling of multiple data types and missing data with minimum user input.
-   -  Support for `pre-defined and custom constraints <constraints>` and data validation.
+   -  Support for :ref:`pre-defined and custom constraints <constraints>` and data validation.
 
--  Synthetic data generators for `complex multi-table, relational datasets <relational>`
+-  Synthetic data generators for :ref:`complex multi-table, relational datasets <relational>`
    with the following features:
 
-   -  Definition of entire `multi-table datasets metadata <relational_metadata>` with a custom
-      and flexible `JSON schema <metadata_schema>`.
+   -  Definition of entire :ref:`multi-table datasets metadata <relational_metadata>` with a custom
+      and flexible :ref:`JSON schema <metadata_schema>`.
    -  Using Copulas and recursive modeling techniques.
 
 Coming soon:
