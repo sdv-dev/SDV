@@ -292,6 +292,32 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
 
 
 def load_timeseries_demo(dataset_name=None, table_name=None, metadata=False):
+    """Load a timeseries demo.
+
+    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.
+    Otherwise, a the NASDAQ100_2019 dataset is loaded.
+
+    If ``metadata`` is ``True``, the output will be a tuple with a ``Metadata``
+    instance for the dataset and a ``pandas.DataFrame`` with the data from the table.
+    If ``metadata`` is ``False``, only the ``pandas.DataFrame`` is returned.
+
+    Args:
+        dataset_name (str):
+            Dataset name to be downloaded, if ``None`` use default dataset. Defaults to ``None``.
+        table_name (str):
+            If a table name is given, return this table from the indicated dataset.
+            Otherwise, return the first one.
+        data_path (str):
+            Data path to save the dataset files, only used if dataset_name is provided.
+            Defaults to ``DATA_PATH``.
+        metadata (bool):
+            If ``True`` also return a Table object. Defaults to ``False``.
+
+    Returns:
+        pandas.DataFrame or tuple:
+            If ``metadata`` is ``False`` return a ``pandas.DataFrame`` with the tables data.
+            If ``metadata`` is ``True`` return a ``tuple`` with a Table and the data.
+    """
     dataset_name = dataset_name or 'nasdaq100_2019'
     return load_tabular_demo(dataset_name, table_name, data_path=DATA_PATH, metadata=metadata)
 

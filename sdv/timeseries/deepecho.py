@@ -1,3 +1,15 @@
+"""Timeseries models based on the DeepEcho library.
+
+This modulde defines a base DeepEchoModel class which prepares the
+data in the format that the DeepEcho models expect.
+This class is also responsible for transforming the sequence index
+in a way that can be learned by the models and for transforming it
+back to the original data format after sampling.
+
+Currently implemented models are:
+    - PAR: Based on the deepecho.models.par.PARModel
+"""
+
 import numpy as np
 import pandas as pd
 import tqdm
@@ -131,6 +143,7 @@ class DeepEchoModel(BaseTimeseriesModel):
 
 
 class PAR(DeepEchoModel):
+    """DeepEcho model based on the deepecho.models.par.PARModel class."""
 
     _MODEL_CLASS = PARModel
 

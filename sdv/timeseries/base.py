@@ -1,7 +1,10 @@
 """Base Class for timeseries models."""
 
+import copy
 import logging
 import pickle
+
+import pandas as pd
 
 from sdv.metadata import Table
 from sdv.tabular.copulas import GaussianCopula
@@ -127,11 +130,6 @@ class BaseTimeseriesModel:
                 raise TypeError(
                     '`segment_size` must be of type `int` if '
                     'no `sequence_index` is given.'
-                )
-            if data[sequence_index].dtype.kind != 'M':
-                raise TypeError(
-                    '`segment_size` must be of type `int` if '
-                    '`sequence_index` is not a `datetime` column.'
                 )
 
             segment_size = pd.to_timedelta(segment_size)
