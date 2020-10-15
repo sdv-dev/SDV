@@ -291,6 +291,11 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
     return table
 
 
+def load_timeseries_demo(dataset_name=None, table_name=None, metadata=False):
+    dataset_name = dataset_name or 'nasdaq100_2019'
+    return load_tabular_demo(dataset_name, table_name, data_path=DATA_PATH, metadata=metadata)
+
+
 def get_available_demos():
     """Get available demos and information about them.
 
