@@ -24,6 +24,8 @@ class Table:
     and the constraints that affect this data.
 
     Args:
+        name (str):
+            Name of this table. Optional.
         field_names (list[str]):
             List of names of the fields that need to be modeled
             and included in the generated output data. Any additional
@@ -68,8 +70,18 @@ class Table:
             fitted using the same arguments when the same Table is used
             to fit different model instances on different slices of the
             same table.
-        name (str):
-            Name of this table. Optional.
+        sequence_index (str):
+            Name of the column that acts as the order index of each
+            sequence. The sequence index column can be of any type that can
+            be sorted, such as integer values or datetimes.
+        entity_columns (list[str]):
+            Names of the columns which identify different time series
+            sequences. These will be used to group the data in separated
+            training examples.
+        context_columns (list[str]):
+            The columns in the dataframe which are constant within each
+            group/entity. These columns will be provided at sampling time
+            (i.e. the samples will be conditioned on the context variables).
     """
 
     _hyper_transformer = None
@@ -87,7 +99,7 @@ class Table:
         'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
         'label_encoding': rdt.transformers.LabelEncodingTransformer,
         'boolean': rdt.transformers.BooleanTransformer,
-        'datetime': rdt.transformers.DatetimeTransformer,
+        'datetime': rdt.transformers.DatetimeTransformer(strip_constant=True),
     }
     _DTYPE_TRANSFORMERS = {
         'i': 'integer',
@@ -164,7 +176,8 @@ class Table:
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
-                 dtype_transformers=None, model_kwargs=None):
+                 dtype_transformers=None, model_kwargs=None, sequence_index=None,
+                 entity_columns=None, context_columns=None):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -173,6 +186,9 @@ class Table:
         self._model_kwargs = model_kwargs or {}
 
         self._primary_key = primary_key
+        self._sequence_index = sequence_index
+        self._entity_columns = entity_columns or []
+        self._context_columns = context_columns or []
         self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         if dtype_transformers:
@@ -304,6 +320,10 @@ class Table:
             transformer_template = field_metadata.get('transformer')
             if transformer_template is None:
                 transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
+                if transformer_template is None:
+                    # Skip this dtype
+                    continue
+
                 field_metadata['transformer'] = transformer_template
 
             if isinstance(transformer_template, str):
@@ -510,13 +530,13 @@ class Table:
         for name, dtype in self.get_dtypes(ids=True).items():
             field_metadata = fields[name]
             field_type = field_metadata['type']
-            if field_type != 'id':
-                field_data = reversed_data[name]
+            if field_type == 'id' and name not in reversed_data:
+                field_data = pd.Series(np.arange(len(reversed_data)))
             elif field_metadata.get('pii', False):
                 faker = self._get_faker(field_metadata['pii_category'])
                 field_data = pd.Series([faker() for _ in range(len(reversed_data))])
             else:
-                field_data = pd.Series(np.arange(len(reversed_data)))
+                field_data = reversed_data[name]
 
             reversed_data[name] = field_data.dropna().astype(dtype)
 
@@ -557,6 +577,10 @@ class Table:
             ],
             'model_kwargs': copy.deepcopy(self._model_kwargs),
             'name': self.name,
+            'primary_key': self._primary_key,
+            'sequence_index': self._sequence_index,
+            'entity_columns': self._entity_columns,
+            'context_columns': self._context_columns,
         }
 
     def to_json(self, path):
@@ -583,6 +607,9 @@ class Table:
         instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
         instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
         instance._primary_key = metadata_dict.get('primary_key')
+        instance._sequence_index = metadata_dict.get('sequence_index')
+        instance._entity_columns = metadata_dict.get('entity_columns')
+        instance._context_columns = metadata_dict.get('context_columns')
         instance.name = metadata_dict.get('name')
         return instance
 
