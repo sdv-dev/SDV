@@ -58,12 +58,10 @@ hierarchical generative modeling and recursive sampling techniques.
       https://sdv-dev.github.io/SDV/user_guides/relational/relational_metadata.html) with a custom and
       flexible [JSON schema](https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html).
     * Using Copulas and recursive modeling techniques.
-
-### Coming soon:
-
-* Synthetic data generators for **timeseries** with the following features:
+* Synthetic data generators for [multi-type, multi-variate timeseries](
+  https://sdv-dev.github.io/SDV/user_guides/timeseries/index.html) with the following features:
     * Using statistical, Autoregressive and Deep Learning models.
-    * Handling context.
+    * Conditional sampling based on contextual attributes.
 
 ## Try it out now!
 
@@ -83,7 +81,7 @@ our Slack Workspace!
 
 ## Requirements
 
-**SDV** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads)
+**SDV** has been developed and tested on [Python 3.6, 3.7 and 3.8](https://www.python.org/downloads)
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid

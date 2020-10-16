@@ -44,7 +44,11 @@ def test_copulagan():
                 'transformer': 'integer',
             }
         },
+        'primary_key': 'user_id',
         'constraints': [],
+        'sequence_index': None,
+        'context_columns': [],
+        'entity_columns': [],
         'model_kwargs': {},
         'name': None
     }

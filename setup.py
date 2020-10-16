@@ -13,12 +13,14 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'exrex>=0.9.4,<0.11',
+    'xeger>=0.3.5,<0.4',
     'numpy>=1.15.4,<2',
     'pandas>=0.23.4,<2',
     'graphviz>=0.13.2,<1',
     'copulas>=0.3.2,<0.4',
-    'rdt>=0.2.6,<0.3',
+    'rdt>=0.2.7,<0.3',
     'sdmetrics>=0.0.2,<0.0.3',
+    'deepecho==0.1.3',
 ]
 
 ctgan_requires = [
@@ -32,6 +34,7 @@ setup_requires = [
 tests_require = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
+    'pytest-rerunfailures>=9.1.1,<10',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
 ]
@@ -82,7 +85,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -101,7 +103,7 @@ setup(
     long_description_content_type='text/markdown',
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
-    python_requires='>=3.5,<3.9',
+    python_requires='>=3.6,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
