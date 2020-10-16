@@ -9,16 +9,16 @@ discover functionalities of the ``PAR`` model for timeseries data.
 What is PAR?
 ------------
 
-The ``PAR`` class is an implementation of a Probabilitic AutoRegressive
+The ``PAR`` class is an implementation of a Probabilistic AutoRegressive
 model that allows learning **multi-type, multivariate timeseries data**
 and later on generate new synthetic data that has the same format and
 properties as the learned one.
 
-Additionaly, the ``PAR`` model has the ability to generate new synthetic
+Additionally, the ``PAR`` model has the ability to generate new synthetic
 timeseries conditioned on the properties of the entity to which this
 timeseries data would be associated.
 
-.. warning::
+.. note::
 
    The PAR model is under active development. Please use it, try it on
    your data and give us feedback on a `github
@@ -134,7 +134,7 @@ Let now see how to use the ``PAR`` class to learn this timeseries
 dataset and generate new synthetic timeseries that replicate its
 properties.
 
-For this, you wil need to:
+For this, you will need to:
 
 -  Import the ``sdv.timeseries.PAR`` class and create an instance of it
    passing the variables that we just created.
@@ -264,8 +264,8 @@ On the previous examples we had the model generate random values for use
 to populate the ``context_columns`` and the ``entity_columns``. In order
 to do this, the model learned the context and entity values using a
 ``GaussianCopula``, which later on used to sample new realistic values
-for them. This is fine for cases in which we do not have any costraints
-regarding the type of data that we generte, but in some cases we might
+for them. This is fine for cases in which we do not have any constraints
+regarding the type of data that we generate, but in some cases we might
 want to control the values of the contextual columns to force the model
 into generating data of certain type.
 
@@ -328,7 +328,7 @@ How to customize the generated IDs?
 
 In the previous examples we saw how the ``Symbol`` values were generated
 as random strings that do not look like that ones typically seen for
-Tickers, which usually are strigs made of between 2 and 4 uppercase
+Tickers, which usually are strnigs made of between 2 and 4 uppercase
 letters.
 
 In order to fix this and force the model to generate values that are
@@ -371,11 +371,11 @@ indicated.
    ``Symbol`` field and the PAR model was able to handle the other
    fields appropriately without needing any indication from us.
 
-Can I control the lenght of the sequences?
+Can I control the length of the sequences?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When learning the data, the PAR model also learned the distribution of
-the lengths of the sequences, so each generted sequence may have a
+the lengths of the sequences, so each generated sequence may have a
 different length:
 
 .. ipython:: python
