@@ -26,10 +26,6 @@ class DeepEchoModel(BaseTimeseriesModel):
     _MODEL_CLASS = None
     _MODEL_KWARGS = None
 
-    _DTYPE_TRANSFORMERS = {
-        'O': None,
-        'M': DatetimeTransformer(strip_constant=True),
-    }
     _DATA_TYPES = {
         'numerical': 'continuous',
         'categorical': 'categorical',
@@ -160,6 +156,7 @@ class PAR(DeepEchoModel):
             entity_columns=entity_columns,
             context_columns=context_columns,
             sequence_index=sequence_index,
+            segment_size=segment_size,
             context_model=context_model,
             table_metadata=table_metadata,
         )

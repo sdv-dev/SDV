@@ -3,7 +3,9 @@
 import copy
 import logging
 import pickle
+import uuid
 
+import rdt
 import pandas as pd
 
 from sdv.metadata import Table
@@ -44,11 +46,9 @@ class BaseTimeseriesModel:
             the indicated size. The size can either can passed as an integer
             value, which will interpreted as the number of data points to
             put on each segment, or as a pd.Timedelta (or equivalent str
-            representation),
-            which will be interpreted as the segment length in time.
-            Timedelta
-            segment sizes can only be used with sequence indexes of type
-            datetime.
+            representation), which will be interpreted as the segment length
+            in time. Timedelta segment sizes can only be used with sequence
+            indexes of type datetime.
         sequence_index (str):
             Name of the column that acts as the order index of each
             sequence. The sequence index column can be of any type that can
@@ -70,7 +70,13 @@ class BaseTimeseriesModel:
             arguments or learned from the data.
     """
 
-    _DTYPE_TRANSFORMERS = None
+    _DTYPE_TRANSFORMERS = {
+        'i': None,
+        'f': None,
+        'M': rdt.transformers.DatetimeTransformer(strip_constant=True),
+        'b': None,
+        'O': None,
+    }
     _CONTEXT_MODELS = {
         'gaussian_copula': (GaussianCopula, {'categorical_transformer': 'categorical_fuzzy'})
     }
@@ -82,14 +88,6 @@ class BaseTimeseriesModel:
                  sequence_index=None, segment_size=None, context_model=None,
                  table_metadata=None):
         if table_metadata is None:
-            if entity_columns:
-                field_types = field_types or {}
-                for column in entity_columns:
-                    if column not in field_types:
-                        field_types[column] = {
-                            'type': 'id'
-                        }
-
             self._metadata = Table(
                 field_names=field_names,
                 primary_key=primary_key,
@@ -123,8 +121,6 @@ class BaseTimeseriesModel:
             self._metadata_fitted = table_metadata.fitted
 
         # Validate arguments
-        if not entity_columns and segment_size is None:
-            raise TypeError('If the data has no `entity_columns`, `segment_size` must be given.')
         if segment_size is not None and not isinstance(segment_size, int):
             if sequence_index is None:
                 raise TypeError(
@@ -150,17 +146,37 @@ class BaseTimeseriesModel:
 
     def _fit_context_model(self, transformed):
         template = self._context_model_template
+        default_kwargs = {
+            'primary_key': self._entity_columns,
+            'field_types': {
+                name: meta
+                for name, meta in self._metadata.get_fields().items()
+                if name in self._entity_columns
+            }
+        }
         if isinstance(template, tuple):
-            context_model_class, context_model_kwargs = template
+            context_model_class, context_model_kwargs = copy.deepcopy(template)
+            if 'primary_key' not in context_model_kwargs:
+                context_model_kwargs['primary_key'] = self._entity_columns
+                for keyword, argument in default_kwargs.items():
+                    if keyword not in context_model_kwargs:
+                        context_model_kwargs[keyword] = argument
+
             self._context_model = context_model_class(**context_model_kwargs)
         elif isinstance(template, type):
-            self._context_model = template()
+            self._context_model = template(**default_kwargs)
         else:
             self._context_model = copy.deepcopy(template)
 
         LOGGER.debug('Fitting context model %s', self._context_model.__class__.__name__)
-        context = transformed[self._context_columns + self._entity_columns]
-        context = context.groupby(self._entity_columns).first()
+        if self._context_columns:
+            context = transformed[self._entity_columns + self._context_columns]
+        else:
+            context = transformed[self._entity_columns].copy()
+            # Add constant column to allow modeling
+            context[str(uuid.uuid4())] = 0
+
+        context = context.groupby(self._entity_columns).first().reset_index()
         self._context_model.fit(context)
 
     def fit(self, timeseries_data):
@@ -183,7 +199,7 @@ class BaseTimeseriesModel:
         for column in self._entity_columns:
             transformed[column] = timeseries_data[column]
 
-        if self._context_columns:
+        if self._entity_columns:
             self._fit_context_model(transformed)
 
         LOGGER.debug('Fitting %s model to table %s', self.__class__.__name__, self._metadata.name)
@@ -232,7 +248,12 @@ class BaseTimeseriesModel:
                 Table containing the sampled sequences in the same
                 format as that he training data had.
         """
-        if context is None:
+        if not self._entity_columns:
+            if context is not None:
+                raise TypeError('If there are no entity_columns, context must be None')
+
+            context = pd.DataFrame(index=range(num_sequences or 1))
+        elif context is None:
             context = self._context_model.sample(num_sequences)
             for column in self._entity_columns or []:
                 if column not in context:
