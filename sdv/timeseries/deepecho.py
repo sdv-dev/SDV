@@ -15,7 +15,6 @@ import pandas as pd
 import tqdm
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
-from rdt.transformers import DatetimeTransformer
 
 from sdv.timeseries.base import BaseTimeseriesModel
 

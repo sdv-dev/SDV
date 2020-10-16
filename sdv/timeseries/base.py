@@ -5,8 +5,8 @@ import logging
 import pickle
 import uuid
 
-import rdt
 import pandas as pd
+import rdt
 
 from sdv.metadata import Table
 from sdv.tabular.copulas import GaussianCopula
