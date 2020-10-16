@@ -33,6 +33,8 @@ class DeepEchoModel(BaseTimeseriesModel):
         'datetime': 'datetime',
     }
 
+    _verbose = False
+
     def _build_model(self):
         return self._MODEL_CLASS(**self._MODEL_KWARGS)
 
@@ -105,9 +107,7 @@ class DeepEchoModel(BaseTimeseriesModel):
         if self._entity_columns:
             context = context.set_index(self._entity_columns)
 
-        iterator = context.iterrows()
-        if self._verbose:
-            iterator = tqdm.tqdm(iterator, total=len(context))
+        iterator = tqdm.tqdm(context.iterrows(), disable=not self._verbose, total=len(context))
 
         output = list()
         for entity_values, context_values in iterator:
@@ -139,15 +139,80 @@ class DeepEchoModel(BaseTimeseriesModel):
 
 
 class PAR(DeepEchoModel):
-    """DeepEcho model based on the deepecho.models.par.PARModel class."""
+    """DeepEcho model based on the deepecho.models.par.PARModel class.
+
+    Args:
+        field_names (list[str]):
+            List of names of the fields that need to be modeled
+            and included in the generated output data. Any additional
+            fields found in the data will be ignored and will not be
+            included in the generated output.
+            If ``None``, all the fields found in the data are used.
+        field_types (dict[str, dict]):
+            Dictinary specifying the data types and subtypes
+            of the fields that will be modeled. Field types and subtypes
+            combinations must be compatible with the SDV Metadata Schema.
+        anonymize_fields (dict[str, str]):
+            Dict specifying which fields to anonymize and what faker
+            category they belong to.
+        primary_key (str):
+            Name of the field which is the primary key of the table.
+        entity_columns (list[str]):
+            Names of the columns which identify different time series
+            sequences. These will be used to group the data in separated
+            training examples.
+        context_columns (list[str]):
+            The columns in the dataframe which are constant within each
+            group/entity. These columns will be provided at sampling time
+            (i.e. the samples will be conditioned on the context variables).
+        segment_size (int, pd.Timedelta or str):
+            If specified, cut each training sequence in several segments of
+            the indicated size. The size can either can passed as an integer
+            value, which will interpreted as the number of data points to
+            put on each segment, or as a pd.Timedelta (or equivalent str
+            representation), which will be interpreted as the segment length
+            in time. Timedelta segment sizes can only be used with sequence
+            indexes of type datetime.
+        sequence_index (str):
+            Name of the column that acts as the order index of each
+            sequence. The sequence index column can be of any type that can
+            be sorted, such as integer values or datetimes.
+        context_model (str or sdv.tabular.BaseTabularModel):
+            Model to use to sample the context rows. It can be passed as a
+            a string, which must be one of the following:
+
+            * `gaussian_copula` (default): Use a GaussianCopula model.
+
+            Alternatively, a preconfigured Tabular model instance can be
+            passed.
+
+        table_metadata (dict or metadata.Table):
+            Table metadata instance or dict representation.
+            If given alongside any other metadata-related arguments, an
+            exception will be raised.
+            If not given at all, it will be built using the other
+            arguments or learned from the data.
+        epochs (int):
+            The number of epochs to train for. Defaults to 128.
+        sample_size (int):
+            The number of times to sample (before choosing and
+            returning the sample which maximizes the likelihood).
+            Defaults to 1.
+        cuda (bool):
+            Whether to attempt to use cuda for GPU computation.
+            If this is False or CUDA is not available, CPU will be used.
+            Defaults to ``True``.
+        verbose (bool):
+            Whether to print progress to console or not.
+
+    """
 
     _MODEL_CLASS = PARModel
 
     def __init__(self, field_names=None, field_types=None, anonymize_fields=None,
                  primary_key=None, entity_columns=None, context_columns=None,
                  sequence_index=None, segment_size=None, context_model=None,
-                 table_metadata=None, epochs=128, max_seq_len=100, sample_size=1,
-                 cuda=True, verbose=True):
+                 table_metadata=None, epochs=128, sample_size=1, cuda=True, verbose=False):
         super().__init__(
             field_names=field_names,
             field_types=field_types,
@@ -163,7 +228,6 @@ class PAR(DeepEchoModel):
 
         self._MODEL_KWARGS = {
             'epochs': epochs,
-            'max_seq_len': max_seq_len,
             'sample_size': sample_size,
             'cuda': cuda,
             'verbose': verbose,
