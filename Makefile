@@ -109,7 +109,7 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 
 .PHONY: test-unit
 test-unit: ## run tests quickly with the default Python
-	python -m pytest --cov=sdv
+	python -m pytest --reruns 5 --cov=sdv
 
 .PHONY: test-readme
 test-readme: ## run the readme snippets
