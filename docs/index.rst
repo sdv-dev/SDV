@@ -46,7 +46,8 @@ Current functionality and features:
 
    -  Using :ref:`Copulas <gaussian_copula>` and :ref:`Deep Learning <ctgan>` based models.
    -  Handling of multiple data types and missing data with minimum user input.
-   -  Support for :ref:`pre-defined and custom constraints <constraints>` and data validation.
+   -  Support for :ref:`pre-defined and custom constraints <single_table_constraints>` and data
+      validation.
 
 -  Synthetic data generators for :ref:`complex multi-table, relational datasets <relational>`
    with the following features:
