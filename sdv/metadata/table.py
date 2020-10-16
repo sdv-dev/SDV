@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
+from xeger import Xeger
 
 from sdv.constraints.base import Constraint
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
@@ -405,33 +406,36 @@ class Table:
 
         return field_subtype
 
-    def set_primary_key(self, field_name):
+    def set_primary_key(self, primary_key):
         """Set the primary key of this table.
 
         The field must exist and either be an integer or categorical field.
 
         Args:
-            field_name (str):
-                Name of the field to be used as the new primary key.
+            primary_key (str or list):
+                Name of the field(s) to be used as the new primary key.
 
         Raises:
             ValueError:
                 If the table or the field do not exist or if the field has an
                 invalid type or subtype.
         """
-        if field_name is not None:
-            if field_name not in self._fields_metadata:
-                raise ValueError('Field "{}" does not exist in this table'.format(field_name))
+        if primary_key is not None:
+            fields = primary_key if isinstance(primary_key, list) else [primary_key]
+            for field_name in fields:
+                if field_name not in self._fields_metadata:
+                    raise ValueError('Field "{}" does not exist in this table'.format(field_name))
 
-            field_metadata = self._fields_metadata[field_name]
-            field_subtype = self._get_key_subtype(field_metadata)
+                field_metadata = self._fields_metadata[field_name]
+                if field_metadata['type'] != 'id':
+                    field_subtype = self._get_key_subtype(field_metadata)
 
-            field_metadata.update({
-                'type': 'id',
-                'subtype': field_subtype
-            })
+                    field_metadata.update({
+                        'type': 'id',
+                        'subtype': field_subtype
+                    })
 
-        self._primary_key = field_name
+        self._primary_key = primary_key
 
     def _make_anonymization_mappings(self, data):
         mappings = {}
@@ -508,6 +512,31 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
 
+    def _make_ids(self, name, field_metadata, length):
+        field_subtype = field_metadata.get('subtype', 'integer')
+        if field_subtype == 'string':
+            regex = field_metadata.get('regex', '[a-z][A-Z]+')
+            xeger = Xeger(limit=10)
+            values = {xeger.xeger(regex) for _ in range(length)}
+            for _ in range(10):
+                done = len(values)
+                if done >= length:
+                    break
+
+                remaining = length - done
+                generate = int(round((remaining / done) * length))
+                values.update({xeger.xeger(regex) for _ in range(generate)})
+
+            else:
+                msg = 'Unable to generate {} unique values for field {} regex "{}"'.format(
+                    length, name, regex
+                )
+                raise ValueError(msg)
+
+            return pd.Series(list(values)[:length])
+        else:
+            return pd.Series(np.arange(length))
+
     def reverse_transform(self, data):
         """Reverse the transformed data to the original format.
 
@@ -531,7 +560,7 @@ class Table:
             field_metadata = fields[name]
             field_type = field_metadata['type']
             if field_type == 'id' and name not in reversed_data:
-                field_data = pd.Series(np.arange(len(reversed_data)))
+                field_data = self._make_ids(name, field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
                 faker = self._get_faker(field_metadata['pii_category'])
                 field_data = pd.Series([faker() for _ in range(len(reversed_data))])
