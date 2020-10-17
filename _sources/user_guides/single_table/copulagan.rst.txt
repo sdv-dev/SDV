@@ -515,7 +515,7 @@ the valid values range.
 
 
 How to modify the CopulaGAN Hyperparameters?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A part from the arguments explained above, ``CopulaGAN`` has a number
 of additional hyperparameters that control its learning behavior and can

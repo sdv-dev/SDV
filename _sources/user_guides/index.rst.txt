@@ -11,3 +11,4 @@ The User Guides section covers different topics about SDV usage for different ty
     single_table/index
     relational/index
     timeseries/index
+    benchmarking/index

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.Table.set_primary_key &#8212; SDV 0.4.4 documentation</title>
+    <title>sdv.metadata.Table.set_primary_key &#8212; SDV 0.4.5 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -146,6 +146,12 @@
             
                 <li class="">
                     <a href="../relational.html">sdv.relational</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries.html">sdv.timeseries</a>
                 </li>
             
           
@@ -351,12 +357,12 @@
 <h1>sdv.metadata.Table.set_primary_key<a class="headerlink" href="#sdv-metadata-table-set-primary-key" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.metadata.Table.set_primary_key">
-<code class="sig-prename descclassname">Table.</code><code class="sig-name descname">set_primary_key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table.set_primary_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.set_primary_key" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">Table.</code><code class="sig-name descname">set_primary_key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">primary_key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/metadata/table.html#Table.set_primary_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.Table.set_primary_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the primary key of this table.</p>
 <p>The field must exist and either be an integer or categorical field.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>field_name</strong> (<em>str</em>) – Name of the field to be used as the new primary key.</p>
+<dd class="field-odd"><p><strong>primary_key</strong> (<em>str</em><em> or </em><em>list</em>) – Name of the field(s) to be used as the new primary key.</p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If the table or the field do not exist or if the field has an

@@ -1,0 +1,6 @@
+﻿sdv.timeseries.PAR.load
+=======================
+
+.. currentmodule:: sdv.timeseries
+
+.. automethod:: PAR.load

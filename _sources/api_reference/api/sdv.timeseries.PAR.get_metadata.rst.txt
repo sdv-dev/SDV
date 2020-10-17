@@ -1,0 +1,6 @@
+﻿sdv.timeseries.PAR.get\_metadata
+================================
+
+.. currentmodule:: sdv.timeseries
+
+.. automethod:: PAR.get_metadata

@@ -1,0 +1,6 @@
+﻿sdv.timeseries.PAR.sample
+=========================
+
+.. currentmodule:: sdv.timeseries
+
+.. automethod:: PAR.sample

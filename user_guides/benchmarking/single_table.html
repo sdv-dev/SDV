@@ -1,0 +1,644 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single Table Benchmarking &#8212; SDV 0.4.5 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="API Reference" href="../../api_reference/index.html" />
+    <link rel="prev" title="Benchmakring" href="index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../index.html">
+    
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+          
+            
+                <li class="">
+                    <a href="../single_table/index.html">Single Table Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
+          
+            
+  
+                <li class="active">
+                    <a href="index.html">Benchmakring</a>
+                    <ul>
+                    
+                        <li class="active">
+                            <a href="">Single Table Benchmarking</a>
+                        </li>
+                    
+                    </ul>
+                </li>
+            
+          
+        
+        
+        
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#sdgym-synthesizers" class="nav-link">SDGym Synthesizers</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#benchmark-datasets" class="nav-link">Benchmark datasets</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#current-leaderboard" class="nav-link">Current Leaderboard</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#gaussian-mixture-simulated-data" class="nav-link">Gaussian Mixture Simulated Data</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#bayesian-networks-simulated-data" class="nav-link">Bayesian Networks Simulated Data</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#real-world-datasets" class="nav-link">Real World Datasets</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#install" class="nav-link">Install</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#usage" class="nav-link">Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#benchmarking-your-own-synthesizer" class="nav-link">Benchmarking your own synthesizer</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#benchmarking-the-sdgym-synthesizers" class="nav-link">Benchmarking the SDGym Synthesizers</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="single-table-benchmarking">
+<span id="benchmarking-single-table"></span><h1>Single Table Benchmarking<a class="headerlink" href="#single-table-benchmarking" title="Permalink to this headline">¶</a></h1>
+<p>The benchmarking of synthetic data generators for single table datasets is
+done using the <a class="reference external" href="https://github.com/sdv-dev/SDGym">Synthetic Data Gym (SDGym)</a>,
+a library from the Synthetic Data Vault  Project that offers a collection of both
+real and simulated datasets to work on, <em>Machine Learning Efficacy</em> and <em>Bayesian
+Likelihood</em> based metrics and a number of classical and novel synehtic data generators
+to use as baselines to compare against.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The SDGym Library is not installed by default alongside <cite>sdv</cite>.
+If you want to use it, please install it using the <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sdgym</span></code>
+command.</p>
+</div>
+<div class="section" id="sdgym-synthesizers">
+<h2>SDGym Synthesizers<a class="headerlink" href="#sdgym-synthesizers" title="Permalink to this headline">¶</a></h2>
+<p><strong>SDGym</strong> evaluates the performance of <strong>Synthesizers</strong>.</p>
+<p>A Synthesizer is a Python function (or class method) that takes as input
+a numpy matrix with some data, which we call the <em>real</em> data, and
+outputs another numpy matrix with the same shape, filled with new
+<em>synthetic</em> data that has similar mathematical properties as the <em>real</em>
+one.</p>
+<p>Apart from the benchmark functionality and the SDV Tabular synthesizers, SDGym
+implements a collection of Synthesizers which are either custom demo synthesizers
+or re-implementations of synthesizers that have been presented in other publications.</p>
+<p>More details about the implemented synthesizers can be found in the <a class="reference external" href="https://github.com/sdv-dev/SDGym/blob/master/SYNTHESIZERS.md">SDGym Synthesizers
+documentation</a>.</p>
+</div>
+<div class="section" id="benchmark-datasets">
+<h2>Benchmark datasets<a class="headerlink" href="#benchmark-datasets" title="Permalink to this headline">¶</a></h2>
+<p><strong>SDGym</strong> evaluates the performance of <strong>Synthetic Data Generators</strong>
+using datasets that are in three families:</p>
+<ul class="simple">
+<li><p>Simulated data generated using Gaussian Mixtures</p></li>
+<li><p>Simulated data generated using Bayesian Networks</p></li>
+<li><p>Real world datasets</p></li>
+</ul>
+<p>Further details about how these datasets were generated can be found in
+the <a class="reference external" href="https://arxiv.org/abs/1907.00503">Modeling Tabular data using Conditional
+GAN</a> paper and in the <a class="reference external" href="https://github.com/sdv-dev/SDGym/blob/master/DATASETS.md">SDGym datasets
+documentation</a>.</p>
+</div>
+<div class="section" id="current-leaderboard">
+<h2>Current Leaderboard<a class="headerlink" href="#current-leaderboard" title="Permalink to this headline">¶</a></h2>
+<p>This is a summary of the current SDGym leaderboard showing the number
+of datasets in which each Synthesizer obtained the best score.</p>
+<p>Detailed leaderboard results for all the releases are available <a class="reference external" href="https://docs.google.com/spreadsheets/d/1iNJDVG_tIobcsGUG5Gn4iLa565vVhz2U/edit">in this
+Google Docs
+Spreadsheet</a>.</p>
+<div class="section" id="gaussian-mixture-simulated-data">
+<h3>Gaussian Mixture Simulated Data<a class="headerlink" href="#gaussian-mixture-simulated-data" title="Permalink to this headline">¶</a></h3>
+<table class="table">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Synthesizer</p></th>
+<th class="head"><p>0.2.2</p></th>
+<th class="head"><p>0.2.1</p></th>
+<th class="head"><p>0.2.0</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CLBNSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>1.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CTGAN</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>CTGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>1.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CopulaGAN</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaCategorical</p></td>
+<td><p>1</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>GaussianCopulaCategoricalFuzzy</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaOneHot</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>MedganSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-even"><td><p>PrivBNSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>TVAESynthesizer</p></td>
+<td><p>5</p></td>
+<td><p>5.0</p></td>
+<td><p>4.0</p></td>
+</tr>
+<tr class="row-even"><td><p>TableganSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>1.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>VEEGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="bayesian-networks-simulated-data">
+<h3>Bayesian Networks Simulated Data<a class="headerlink" href="#bayesian-networks-simulated-data" title="Permalink to this headline">¶</a></h3>
+<table class="table">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Synthesizer</p></th>
+<th class="head"><p>0.2.2</p></th>
+<th class="head"><p>0.2.1</p></th>
+<th class="head"><p>0.2.0</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CLBNSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CTGAN</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>CTGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CopulaGAN</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaCategorical</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>GaussianCopulaCategoricalFuzzy</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaOneHot</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>MedganSynthesizer</p></td>
+<td><p>4</p></td>
+<td><p>4.0</p></td>
+<td><p>1.0</p></td>
+</tr>
+<tr class="row-even"><td><p>PrivBNSynthesizer</p></td>
+<td><p>3</p></td>
+<td><p>3.0</p></td>
+<td><p>6.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>TVAESynthesizer</p></td>
+<td><p>1</p></td>
+<td><p>1.0</p></td>
+<td><p>3.0</p></td>
+</tr>
+<tr class="row-even"><td><p>TableganSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>VEEGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="real-world-datasets">
+<h3>Real World Datasets<a class="headerlink" href="#real-world-datasets" title="Permalink to this headline">¶</a></h3>
+<table class="table">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Synthesizer</p></th>
+<th class="head"><p>0.2.2</p></th>
+<th class="head"><p>0.2.1</p></th>
+<th class="head"><p>0.2.0</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CLBNSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CTGAN</p></td>
+<td><p>1</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>CTGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>3.0</p></td>
+<td><p>3.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CopulaGAN</p></td>
+<td><p>3</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaCategorical</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>GaussianCopulaCategoricalFuzzy</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianCopulaOneHot</p></td>
+<td><p>0</p></td>
+<td><p>N/E</p></td>
+<td><p>N/E</p></td>
+</tr>
+<tr class="row-odd"><td><p>MedganSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-even"><td><p>PrivBNSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>TVAESynthesizer</p></td>
+<td><p>4</p></td>
+<td><p>5.0</p></td>
+<td><p>5.0</p></td>
+</tr>
+<tr class="row-even"><td><p>TableganSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>VEEGANSynthesizer</p></td>
+<td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="install">
+<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
+<p>The easiest and recommended way to install <strong>SDGym</strong> is using
+<a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sdgym
+</pre></div>
+</div>
+<p>This will pull and install the latest stable release from
+<a class="reference external" href="https://pypi.org/">PyPi</a>.</p>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="benchmarking-your-own-synthesizer">
+<h3>Benchmarking your own synthesizer<a class="headerlink" href="#benchmarking-your-own-synthesizer" title="Permalink to this headline">¶</a></h3>
+<p>All you need to do in order to use the SDGym Benchmark, is to import
+<code class="docutils literal notranslate"><span class="pre">sdgym</span></code> and call its <code class="docutils literal notranslate"><span class="pre">run</span></code> function passing it your synthesizer
+function and the settings that you want to use for the evaluation.</p>
+<p>For example, if we want to evaluate a simple synthesizer function in the
+<code class="docutils literal notranslate"><span class="pre">adult</span></code> dataset we can execute:</p>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sdgym</span>
+
+<span class="k">def</span> <span class="nf">my_synthesizer_function</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="p">,</span> <span class="n">ordinal_columns</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;dummy synthesizer that just returns a permutation of the real data.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">synthesizers</span><span class="o">=</span><span class="n">my_synthesizer_function</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;adult&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The output of the <code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code> function will be a <code class="docutils literal notranslate"><span class="pre">pd.DataFrame</span></code>
+containing the results obtained by your synthesizer on each dataset, as
+well as the results obtained previously by the SDGym synthesizers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                        <span class="n">adult</span><span class="o">/</span><span class="n">accuracy</span>  <span class="n">adult</span><span class="o">/</span><span class="n">f1</span>  <span class="o">...</span>  <span class="n">ring</span><span class="o">/</span><span class="n">test_likelihood</span>
+<span class="n">IndependentSynthesizer</span>         <span class="mf">0.56530</span>  <span class="mf">0.134593</span>  <span class="o">...</span>             <span class="o">-</span><span class="mf">1.958888</span>
+<span class="n">UniformSynthesizer</span>             <span class="mf">0.39695</span>  <span class="mf">0.273753</span>  <span class="o">...</span>             <span class="o">-</span><span class="mf">2.519416</span>
+<span class="n">IdentitySynthesizer</span>            <span class="mf">0.82440</span>  <span class="mf">0.659250</span>  <span class="o">...</span>             <span class="o">-</span><span class="mf">1.705487</span>
+<span class="o">...</span>                                <span class="o">...</span>       <span class="o">...</span>  <span class="o">...</span>                   <span class="o">...</span>
+<span class="n">my_synthesizer_function</span>        <span class="mf">0.64865</span>  <span class="mf">0.210103</span>  <span class="o">...</span>             <span class="o">-</span><span class="mf">1.964966</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="benchmarking-the-sdgym-synthesizers">
+<h3>Benchmarking the SDGym Synthesizers<a class="headerlink" href="#benchmarking-the-sdgym-synthesizers" title="Permalink to this headline">¶</a></h3>
+<p>If you want to run the SDGym benchmark on the SDGym Synthesizers you can
+directly pass the corresponding class, or a list of classes, to the
+<code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code> function.</p>
+<p>For example, if you want to run the complete benchmark suite to evaluate
+all the existing synthesizers you can run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdgym.synthesizers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CLBNSynthesizer</span><span class="p">,</span> <span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">IdentitySynthesizer</span><span class="p">,</span> <span class="n">IndependentSynthesizer</span><span class="p">,</span>
+    <span class="n">MedganSynthesizer</span><span class="p">,</span> <span class="n">PrivBNSynthesizer</span><span class="p">,</span> <span class="n">TableganSynthesizer</span><span class="p">,</span> <span class="n">TVAESynthesizer</span><span class="p">,</span>
+    <span class="n">UniformSynthesizer</span><span class="p">,</span> <span class="n">VEEGANSynthesizer</span><span class="p">)</span>
+
+<span class="n">all_synthesizers</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">CLBNSynthesizer</span><span class="p">,</span>
+    <span class="n">IdentitySynthesizer</span><span class="p">,</span>
+    <span class="n">IndependentSynthesizer</span><span class="p">,</span>
+    <span class="n">MedganSynthesizer</span><span class="p">,</span>
+    <span class="n">PrivBNSynthesizer</span><span class="p">,</span>
+    <span class="n">TableganSynthesizer</span><span class="p">,</span>
+    <span class="n">CTGANSynthesizer</span><span class="p">,</span>
+    <span class="n">TVAESynthesizer</span><span class="p">,</span>
+    <span class="n">UniformSynthesizer</span><span class="p">,</span>
+    <span class="n">VEEGANSynthesizer</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">synthesizers</span><span class="o">=</span><span class="n">all_synthesizers</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This will take A LOT of time to run on a single machine!</p>
+</div>
+<p>For further details about all the arguments and possibilities that the
+<code class="docutils literal notranslate"><span class="pre">benchmark</span></code> function offers please refer to the <a class="reference external" href="https://github.com/sdv-dev/SDGym/blob/master/BENCHMARK.md">SDGym benchmark
+documentation</a></p>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">Benchmakring</a>
+    <a class='right-next' id="next-link" href="../../api_reference/index.html" title="next page">API Reference</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

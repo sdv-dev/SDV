@@ -21,3 +21,11 @@ Relational Demos
 
    get_available_demos
    load_demo
+
+Timeseries Demos
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   load_timeseries_demo

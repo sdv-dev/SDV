@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.4 documentation</title>
+    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.4.5 documentation</title>
     
   <link rel="stylesheet" href="_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -157,10 +157,6 @@
             <a href="#current-functionality-and-features" class="nav-link">Current functionality and features:</a>
         </li>
     
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#coming-soon" class="nav-link">Coming soon:</a>
-        </li>
-    
             </ul>
         </li>
     
@@ -196,7 +192,7 @@
 <a class="reference external" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a> <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
 <div class="section" id="sdv-the-synthetic-data-vault">
 <h1>SDV - The Synthetic Data Vault<a class="headerlink" href="#sdv-the-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
-<p><strong>Date</strong>: Oct 07, 2020 <strong>Version</strong>: 0.4.4</p>
+<p><strong>Date</strong>: Oct 17, 2020 <strong>Version</strong>: 0.4.5</p>
 <ul class="simple">
 <li><p>License: <a class="reference external" href="https://github.com/sdv-dev/SDV/blob/master/LICENSE">MIT</a></p></li>
 <li><p>Development Status:
@@ -222,14 +218,16 @@ recursive sampling techniques.</p>
 <div class="section" id="current-functionality-and-features">
 <h3>Current functionality and features:<a class="headerlink" href="#current-functionality-and-features" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Synthetic data generators for <a class="reference internal" href="user_guides/single_table/index.html#single-table"><span class="std std-ref">single tables</span></a> with the following features:</p>
+<li><p>Synthetic data generators for <a class="reference internal" href="user_guides/single_table/index.html#single-table"><span class="std std-ref">single table datasets</span></a> with the following
+features:</p>
 <ul>
 <li><p>Using <a class="reference internal" href="user_guides/single_table/gaussian_copula.html#gaussian-copula"><span class="std std-ref">Copulas</span></a> and <a class="reference internal" href="user_guides/single_table/ctgan.html#ctgan"><span class="std std-ref">Deep Learning</span></a> based models.</p></li>
 <li><p>Handling of multiple data types and missing data with minimum user input.</p></li>
-<li><p>Support for <span class="xref std std-ref">pre-defined and custom constraints</span> and data validation.</p></li>
+<li><p>Support for <a class="reference internal" href="user_guides/single_table/constraints.html#single-table-constraints"><span class="std std-ref">pre-defined and custom constraints</span></a> and data
+validation.</p></li>
 </ul>
 </li>
-<li><p>Synthetic data generators for <a class="reference internal" href="user_guides/relational/index.html#relational"><span class="std std-ref">complex multi-table, relational datasets</span></a>
+<li><p>Synthetic data generators for <a class="reference internal" href="user_guides/relational/index.html#relational"><span class="std std-ref">complex, multi-table, relational datasets</span></a>
 with the following features:</p>
 <ul>
 <li><p>Definition of entire <a class="reference internal" href="user_guides/relational/relational_metadata.html#relational-metadata"><span class="std std-ref">multi-table datasets metadata</span></a> with a custom
@@ -237,16 +235,11 @@ and flexible <a class="reference internal" href="developer_guides/sdv/metadata.h
 <li><p>Using Copulas and recursive modeling techniques.</p></li>
 </ul>
 </li>
-</ul>
-</div>
-<div class="section" id="coming-soon">
-<h3>Coming soon:<a class="headerlink" href="#coming-soon" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li><p>Synthetic data generators for <strong>timeseries</strong> with the following
-features:</p>
+<li><p>Synthetic data generators for <a class="reference internal" href="user_guides/timeseries/index.html#timeseries"><span class="std std-ref">multi-type, multi-variate timeseries datasets</span></a>
+with the following features:</p>
 <ul>
 <li><p>Using statistical, Autoregressive and Deep Learning models.</p></li>
-<li><p>Handling context.</p></li>
+<li><p>Conditional sampling based on contextual attributes.</p></li>
 </ul>
 </li>
 </ul>

@@ -3,4 +3,7 @@
 Timeseries Data
 ===============
 
-Coming Soon!
+.. toctree::
+    :titlesonly:
+
+    models

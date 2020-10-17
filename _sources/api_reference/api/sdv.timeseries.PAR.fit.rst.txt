@@ -1,0 +1,6 @@
+﻿sdv.timeseries.PAR.fit
+======================
+
+.. currentmodule:: sdv.timeseries
+
+.. automethod:: PAR.fit
