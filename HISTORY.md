@@ -1,14 +1,31 @@
 # Release Notes
 
+## 0.4.5 - 2020-10-17
+
+In this version a new family of models for Synthetic Time Series Generation is introduced
+under the `sdv.timeseries` sub-package. The new family of models now includes a new class
+called `PAR`, which implements a *Probabilistic AutoRegressive* model.
+
+This version also adds support for composite primary keys and regex based generation of id
+fields in tabular models and drops Python 3.5 support.
+
+### Issues resolved
+
+* Drop python 3.5 support - [Issue #204](https://github.com/sdv-dev/SDV/issues/204) by @csala
+* Support composite primary keys in tabular models - [Issue #207](https://github.com/sdv-dev/SDV/issues/207) by @csala
+* Add the option to generate string `id` fields based on regex on tabular models - [Issue #208](https://github.com/sdv-dev/SDV/issues/208) by @csala
+* Synthetic Time Series - [Issue #142](https://github.com/sdv-dev/SDV/issues/142) by @csala
+
+
 ## 0.4.4 - 2020-10-06
 
-This PR adds a new tabular model based on combining the CTGAN model with the reversible
+This version adds a new tabular model based on combining the CTGAN model with the reversible
 transformation applied in the GaussianCopula model that converts random variables with
 arbitrary distributions to new random variables with standard normal distribution.
 
 The reversible transformation is handled by the GaussianCopulaTransformer recently added to RDT.
 
-### New Features
+### Issues resolved
 
 * Add CopulaGAN Model - [Issue #202](https://github.com/sdv-dev/SDV/issues/202) by @csala
 
