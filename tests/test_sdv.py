@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from sdv.sdv import DEFAULT_MODEL, DEFAULT_MODEL_KWARGS, SDV, NotFittedError
+from sdv.errors import NotFittedError
+from sdv.sdv import SDV
 
 
 class TestSDV(TestCase):
@@ -38,9 +39,9 @@ class TestSDV(TestCase):
         sdv = SDV()
 
         # Asserts
-        assert sdv.model == DEFAULT_MODEL
-        assert sdv.model_kwargs == DEFAULT_MODEL_KWARGS
-        assert sdv.model_kwargs is not DEFAULT_MODEL_KWARGS
+        assert sdv._model == sdv.DEFAULT_MODEL
+        assert sdv._model_kwargs == sdv.DEFAULT_MODEL_KWARGS
+        assert sdv._model_kwargs is not sdv.DEFAULT_MODEL_KWARGS
 
     def test____init__users_params(self):
         """Create default instance"""
@@ -48,52 +49,28 @@ class TestSDV(TestCase):
         sdv = SDV(model='test', model_kwargs={'a': 2})
 
         # Asserts
-        assert sdv.model == 'test'
-        assert sdv.model_kwargs == {'a': 2}
+        assert sdv._model == 'test'
+        assert sdv._model_kwargs == {'a': 2}
 
     def test_sample_fitted(self):
         """Check that the sample is called."""
         # Sample
         sdv = Mock()
-        sdv.sampler.sample.return_value = 'test'
+        sdv._model_instance.sample.return_value = 'test'
 
         # Run
         result = SDV.sample(sdv, 'DEMO', 5)
 
         # Asserts
         assert result == 'test'
-        sdv.sampler.sample.assert_called_once_with(
+        sdv._model_instance.sample.assert_called_once_with(
             'DEMO', 5, sample_children=True, reset_primary_keys=False)
 
     def test_sample_not_fitted(self):
         """Check that the sample raise an exception when is not fitted."""
         # Setup
-        sdv = Mock()
-        sdv.sampler = None
+        sdv = SDV()
 
         # Run
         with pytest.raises(NotFittedError):
-            SDV.sample(sdv, 'DEMO', 5)
-
-    def test_sample_all_fitted(self):
-        """Check that the sample_all is called"""
-        # Setup
-        sdv = Mock()
-        sdv.sampler.sample_all.return_value = 'test'
-
-        # Run
-        result = SDV.sample_all(sdv)
-
-        # Asserts
-        assert result == 'test'
-        sdv.sampler.sample_all.assert_called_once_with(None, reset_primary_keys=False)
-
-    def test_sample_all_not_fitted(self):
-        """Check that the sample_all raise an exception when is not fitted."""
-        # Setup
-        sdv = Mock()
-        sdv.sampler = None
-
-        # Run
-        with pytest.raises(NotFittedError):
-            SDV.sample_all(sdv)
+            sdv.sample('DEMO', 5)

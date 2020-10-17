@@ -11,6 +11,8 @@ and classes in SDV.
 
    sdv
    tabular
+   relational
+   timeseries
    metadata
    constraints
    demo

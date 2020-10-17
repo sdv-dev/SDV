@@ -30,3 +30,4 @@ datasets. Some important features of ``sdv.tabular`` include:
     data_description
     models
     constraints
+    evaluation

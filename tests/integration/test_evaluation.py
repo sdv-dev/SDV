@@ -1,10 +1,7 @@
-import pytest
-
 from sdv import SDV, Metadata, load_demo
 from sdv.evaluation import evaluate
 
 
-@pytest.mark.xfail
 def test_evaluate_tables_from_demo():
     tables = load_demo(metadata=False)
 
@@ -30,6 +27,9 @@ def test_evaluate_tables_from_demo():
     table_scores = dict()
     for table in new_meta.get_tables():
         table_scores[table] = evaluate(
-            sampled[table], real=tables[table], metadata=new_meta, table_name=table)
+            sampled[table], tables[table], metadata=new_meta, table_name=table)
 
-    evaluate(sampled, real=tables, metadata=new_meta)
+    score = evaluate(sampled, tables, metadata=new_meta)
+
+    assert isinstance(score, float)
+    assert 0 <= score <= 1

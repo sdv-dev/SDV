@@ -140,7 +140,7 @@ html_context = {
 # }
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
-    # "twitter_url": "https://twitter.com/sdv_dev",
+    "twitter_url": "https://twitter.com/sdv_dev",
     "show_prev_next": True,
 }
 

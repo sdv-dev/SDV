@@ -9,9 +9,9 @@ discover functionalities of the ``CTGAN`` model, including how to:
 -  Create an instance of ``CTGAN``.
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
--  Use the a ``CTGAN`` to anonymize PII information.
--  Customize the data tranformations to improve the learning process.
--  Specify column hyperparameters to improve the output quality.
+-  Use ``CTGAN`` to anonymize PII information.
+-  Customize the data transformations to improve the learning process.
+-  Specify hyperparameters to improve the output quality.
 
 What is CTGAN?
 --------------
@@ -61,11 +61,11 @@ You will notice that there is data with the following characteristics:
 -  There are float, integer, boolean, categorical and datetime values.
 -  There are some variables that have missing data. In particular, all
    the data related to the placement details is missing in the rows
-   where the studen was not placed.
+   where the student was not placed.
 
 Let us use ``CTGAN`` to learn this data and then sample synthetic data
 about new students to see how well de model captures the characteristics
-indicated above. In order to do this you wil need to:
+indicated above. In order to do this you will need to:
 
 -  Import the ``sdv.tabular.CTGAN`` class and create an instance of it.
 -  Call its ``fit`` method passing our table.
@@ -217,7 +217,7 @@ indicating the name of the column that is the index of the table.
     new_data = model.sample(200)
 
 As a result, the model will learn that this column must be unique and
-generate a unique sequence of valures for the column:
+generate a unique sequence of values for the column:
 
 .. ipython:: python
     :okwarning:
@@ -289,7 +289,7 @@ page, and it contains a huge list of concepts such as:
 -  city
 -  ssn
 -  credit\_card\_number
--  credit\_card\_expier
+-  credit\_card\_expire
 -  credit\_card\_security\_code
 -  email
 -  telephone
@@ -321,18 +321,6 @@ that we learned.
     new_data_pii.head()
     new_data_pii.address.isin(data_pii.address).sum()
 
-
-Specifying constraints
-~~~~~~~~~~~~~~~~~~~~~~
-
-If you look closely at the data you may notice that some properties were
-not completely captured by the model. For example, you may have seen
-that sometimes the model produces an ``experience_years`` number greater
-than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
-be handled using ``SDV``. For further details about them please visit
-the :ref:`single_table_constraints` guide.
-
 Advanced Usage
 --------------
 
@@ -340,13 +328,13 @@ Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our ``CTGAN`` Model in order to customize it to our needs.
 
-CTGAN Hyperparameters
-~~~~~~~~~~~~~~~~~~~~~
+How to modify the CTGAN Hyperparameters?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A part from the common Tabular Model arguments, ``CTGAN`` has a number
 of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
-generated data and computationa time.
+generated data and computational time.
 
 - ``epochs`` and ``batch_size``: these arguments control the number of
   iterations that the model will perform to optimize its parameters, as well as the number
@@ -394,7 +382,7 @@ increasing the number of epochs, reducing the ``batch_size``, adding one
 additional layer to the models involved and using a smaller wright
 decay.
 
-Before we start, we will evaluate the qualtiy of the previously
+Before we start, we will evaluate the quality of the previously
 generated data using the ``sdv.evaluation.evaluate`` function
 
 .. ipython:: python
@@ -440,3 +428,28 @@ Finally, we are ready to generate new data and evaluate the results.
 As we can see, in this case these modifications changed the obtained
 results slightly, but they did neither introduce dramatic changes in the
 performance.
+
+
+How do I specify constraints?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you look closely at the data you may notice that some properties were
+not completely captured by the model. For example, you may have seen
+that sometimes the model produces an ``experience_years`` number greater
+than ``0`` while also indicating that ``work_experience`` is ``False``.
+These type of properties are what we call ``Constraints`` and can also
+be handled using ``SDV``. For further details about them please visit
+the :ref:`single_table_constraints` guide.
+
+
+Can I evaluate the Synthetic Data?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A very common question when someone starts using **SDV** to generate
+synthetic data is: *"How good is the data that I just generated?"*
+
+In order to answer this question, **SDV** has a collection of metrics
+and tools that allow you to compare the *real* that you provided and the
+*synthetic* data that you generated using **SDV** or any other tool.
+
+You can read more about this in the :ref:`evaluation` guide.

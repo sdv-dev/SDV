@@ -10,14 +10,14 @@ to:
 -  Create an instance of a ``GaussianCopula``.
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
--  Use the a ``GaussianCopula`` to anonymize PII information.
--  Customize the data tranformations to improve the learning process.
+-  Use ``GaussianCopula`` to anonymize PII information.
+-  Customize the data transformations to improve the learning process.
 -  Specify the column distributions to improve the output quality.
 
 What is GaussianCopula?
 -----------------------
 
-The ``sdv.tabular.GaussianCopula`` model is based on the the usage of
+The ``sdv.tabular.GaussianCopula`` model is based on
 `copula funtions <https://en.wikipedia.org/wiki/Copula_%28probability_theory%29>`__.
 
 In mathematical terms, a *copula* is a distribution over the unit
@@ -62,11 +62,11 @@ You will notice that there is data with the following characteristics:
 -  There are float, integer, boolean, categorical and datetime values.
 -  There are some variables that have missing data. In particular, all
    the data related to the placement details is missing in the rows
-   where the studen was not placed.
+   where the student was not placed.
 
 Let us use the ``GaussianCopula`` to learn this data and then sample
 synthetic data about new students to see how well de model captures the
-characteristics indicated above. In order to do this you wil need to:
+characteristics indicated above. In order to do this you will need to:
 
 -  Import the ``sdv.tabular.GaussianCopula`` class and create an
    instance of it.
@@ -221,7 +221,7 @@ indicating the name of the column that is the index of the table.
     new_data = model.sample(200)
 
 As a result, the model will learn that this column must be unique and
-generate a unique sequence of valures for the column:
+generate a unique sequence of values for the column:
 
 .. ipython:: python
     :okwarning:
@@ -293,7 +293,7 @@ page, and it contains a huge list of concepts such as:
 -  city
 -  ssn
 -  credit\_card\_number
--  credit\_card\_expier
+-  credit\_card\_expire
 -  credit\_card\_security\_code
 -  email
 -  telephone
@@ -324,18 +324,6 @@ that we learned.
     new_data_pii.head()
     new_data_pii.address.isin(data_pii.address).sum()
 
-
-Specifying constraints
-~~~~~~~~~~~~~~~~~~~~~~
-
-If you look closely at the data you may notice that some properties were
-not completely captured by the model. For example, you may have seen
-that sometimes the model produces an ``experience_years`` number greater
-than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
-be handled using ``SDV``. For further details about them please visit
-the :ref:`single_table_constraints` guide.
-
 Advanced Usage
 --------------
 
@@ -349,7 +337,7 @@ How to set transforms to use?
 One thing that you may have noticed when executing the previous steps is
 that the fitting process took much longer on the
 ``student_placements_pii`` dataset than it took on the previous version
-that did not contain the sudent ``address``. This happens because the
+that did not contain the student ``address``. This happens because the
 ``address`` field is interpreted as a categorical variable, which the
 ``GaussianCopula`` `one-hot
 encoded <https://en.wikipedia.org/wiki/One-hot>`__ generating 215 new
@@ -410,7 +398,6 @@ value, it just replaces each value with a unique integer value.
     new_data_pii = model.sample(200)
     new_data_pii.head()
 
-
 Exploring the Probability Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -423,16 +410,19 @@ it performed the following operations:
    numerical representation of the data from which we can learn the
    probability distributions.
 3. Learn the probability distribution of each column from the table
-4. Learn the correlation between the marginal probabilities using a
-   Gaussian Copula.
+4. Transform the values of each numerical column by converting them
+   to their marginal distribution CDF values and then applying an
+   inverse CDF transformation of a standard normal on them.
+5. Learn the correlations of the newly generated random variables.
 
 After this, when we used the model to generate new data for our table
 using the ``sample`` method, it did:
 
 5. Sample from a Multivariate Standard Normal distribution with the
    learned correlations.
-6. Reverse the sampled probabilities using the marginal distributions.
-7. Reverse the RDT transformations to go back to the original data
+6. Revert the sampled values by computing their standard normal CDF
+   and then applyting the inverse CDF of their marginal distributions.
+7. Revert the RDT transformations to go back to the original data
    format.
 
 As you can see, during these steps the *Marginal Probability
@@ -550,7 +540,7 @@ Possible values for the distribution argument are:
 -  ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
 Let's see what happens if we make the ``GaussianCopula`` use the
-``beta`` distribution for our column.
+``gamma`` distribution for our column.
 
 .. ipython:: python
     :okwarning:
@@ -560,7 +550,7 @@ Let's see what happens if we make the ``GaussianCopula`` use the
     model = GaussianCopula(
         primary_key='student_id',
         distribution={
-            'experience_years': 'beta'
+            'experience_years': 'gamma'
         }
     )
     model.fit(data)
@@ -595,3 +585,28 @@ the valid values range.
     ``GaussianCopula`` will be able to find the optimal distribution on its
     own, making this manual search of the marginal distributions necessary
     on very little occasions.
+
+
+How do I specify constraints?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you look closely at the data you may notice that some properties were
+not completely captured by the model. For example, you may have seen
+that sometimes the model produces an ``experience_years`` number greater
+than ``0`` while also indicating that ``work_experience`` is ``False``.
+These type of properties are what we call ``Constraints`` and can also
+be handled using ``SDV``. For further details about them please visit
+the :ref:`single_table_constraints` guide.
+
+
+Can I evaluate the Synthetic Data?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A very common question when someone starts using **SDV** to generate
+synthetic data is: *"How good is the data that I just generated?"*
+
+In order to answer this question, **SDV** has a collection of metrics
+and tools that allow you to compare the *real* that you provided and the
+*synthetic* data that you generated using **SDV** or any other tool.
+
+You can read more about this in the :ref:`evaluation` guide.

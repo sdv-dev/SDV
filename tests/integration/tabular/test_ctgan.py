@@ -19,7 +19,7 @@ def test_ctgan():
     # test user_id has been generated as an ID field
     assert list(sampled['user_id']) == list(range(0, len(users)))
 
-    assert ctgan.get_metadata().to_dict() == {
+    expected_metadata = {
         'fields': {
             'user_id': {
                 'type': 'id',
@@ -40,6 +40,12 @@ def test_ctgan():
                 'transformer': 'integer',
             }
         },
+        'primary_key': 'user_id',
         'constraints': [],
-        'model_kwargs': {}
+        'sequence_index': None,
+        'context_columns': [],
+        'entity_columns': [],
+        'model_kwargs': {},
+        'name': None
     }
+    assert ctgan.get_metadata().to_dict() == expected_metadata
