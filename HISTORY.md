@@ -1,5 +1,63 @@
 # Release Notes
 
+## 0.4.5 - 2020-10-17
+
+In this version a new family of models for Synthetic Time Series Generation is introduced
+under the `sdv.timeseries` sub-package. The new family of models now includes a new class
+called `PAR`, which implements a *Probabilistic AutoRegressive* model.
+
+This version also adds support for composite primary keys and regex based generation of id
+fields in tabular models and drops Python 3.5 support.
+
+### Issues resolved
+
+* Drop python 3.5 support - [Issue #204](https://github.com/sdv-dev/SDV/issues/204) by @csala
+* Support composite primary keys in tabular models - [Issue #207](https://github.com/sdv-dev/SDV/issues/207) by @csala
+* Add the option to generate string `id` fields based on regex on tabular models - [Issue #208](https://github.com/sdv-dev/SDV/issues/208) by @csala
+* Synthetic Time Series - [Issue #142](https://github.com/sdv-dev/SDV/issues/142) by @csala
+
+
+## 0.4.4 - 2020-10-06
+
+This version adds a new tabular model based on combining the CTGAN model with the reversible
+transformation applied in the GaussianCopula model that converts random variables with
+arbitrary distributions to new random variables with standard normal distribution.
+
+The reversible transformation is handled by the GaussianCopulaTransformer recently added to RDT.
+
+### Issues resolved
+
+* Add CopulaGAN Model - [Issue #202](https://github.com/sdv-dev/SDV/issues/202) by @csala
+
+## 0.4.3 - 2020-09-28
+
+This release moves the models and algorithms related to generation of synthetic
+relational data to a new `sdv.relational` subpackage (Issue #198)
+
+As part of the change, also the old `sdv.models` have been removed and now
+relational model is based on the recently introduced `sdv.tabular` models.
+
+## 0.4.2 - 2020-09-19
+
+In this release the `sdv.evaluation` module has been reworked to include 4 different
+metrics and in all cases return a normalized score between 0 and 1.
+
+Included metrics are:
+- `cstest`
+- `kstest`
+- `logistic_detection`
+- `svc_detection`
+
+## 0.4.1 - 2020-09-07
+
+This release fixes a couple of minor issues and introduces an important rework of the
+User Guides section of the documentation.
+
+### Issues fixed
+
+* Error Message: "make sure the Graphviz executables are on your systems' PATH" - [Issue #182](https://github.com/sdv-dev/SDV/issues/182) by @csala
+* Anonymization mappings leak - [Issue #187](https://github.com/sdv-dev/SDV/issues/187) by @csala
+
 ## 0.4.0 - 2020-08-08
 
 In this release SDV gets new documentation, new tutorials, improvements to the Tabular API

@@ -1,3 +1,5 @@
+.. _developer_tabular_models:
+
 Tabular Models
 ==============
 

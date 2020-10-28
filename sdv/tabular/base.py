@@ -12,7 +12,7 @@ class NonParametricError(Exception):
     """Exception to indicate that a model is not parametric."""
 
 
-class BaseTabularModel():
+class BaseTabularModel:
     """Base class for all the tabular models.
 
     The ``BaseTabularModel`` class defines the common API that all the
@@ -72,6 +72,7 @@ class BaseTabularModel():
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
             )
+            self._metadata_fitted = False
         else:
             for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
@@ -82,6 +83,7 @@ class BaseTabularModel():
                 table_metadata = Table.from_dict(table_metadata)
 
             self._metadata = table_metadata
+            self._metadata_fitted = table_metadata.fitted
 
     def fit(self, data):
         """Fit this model to the data.
@@ -96,12 +98,17 @@ class BaseTabularModel():
                 the path to a CSV file which can be loaded using
                 ``pandas.read_csv``.
         """
-        if not self._metadata.fitted:
+        LOGGER.debug('Fitting %s to table %s; shape: %s', self.__class__.__name__,
+                     self._metadata.name, data.shape)
+        if not self._metadata_fitted:
             self._metadata.fit(data)
 
         self._num_rows = len(data)
 
+        LOGGER.debug('Transforming table %s; shape: %s', self._metadata.name, data.shape)
         transformed = self._metadata.transform(data)
+
+        LOGGER.debug('Fitting %s model to table %s', self.__class__.__name__, self._metadata.name)
         self._fit(transformed)
 
     def get_metadata(self):

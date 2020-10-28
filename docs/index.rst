@@ -23,11 +23,9 @@ Overview
 --------
 
 The **Synthetic Data Vault (SDV)** is a **Synthetic Data Generation**
-ecosystem of libraries that allows users to easily learn
-`single-table <https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html>`__,
-`multi-table <https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html>`__
-and `timeseries <https://github.com/sdv-dev/DeepEcho>`__ datasets to
-later on generate new **Synthetic Data** that has the **same format and
+ecosystem of libraries that allows users to easily learn :ref:`single-table
+<single_table>`, :ref:`multi-table <relational>` and :ref:`timeseries <timeseries>`
+datasets to later on generate new **Synthetic Data** that has the **same format and
 statistical properties** as the original dataset.
 
 Synthetic data can then be used to supplement, augment and in some cases
@@ -44,39 +42,27 @@ recursive sampling techniques.
 Current functionality and features:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Synthetic data generators for `single
-   tables <https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html>`__
-   with the following features:
-
-   -  Using
-      `Copulas <https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula>`__
-      and `Deep
-      Learning <https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html>`__
-      based models.
-   -  Handling of multiple data types and missing data with minimum user
-      input.
-   -  Support for `pre-defined and custom
-      constraints <https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html>`__
-      and data validation.
-
--  Synthetic data generators for `complex multi-table, relational
-   datasets <https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html>`__
-   with the following features:
-
-   -  Definition of entire `multi-table datasets
-      metadata <https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html>`__
-      with a custom and flexible `JSON
-      schema <https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html>`__.
-   -  Using Copulas and recursive modeling techniques.
-
-Coming soon:
-~~~~~~~~~~~~
-
--  Synthetic data generators for **timeseries** with the following
+-  Synthetic data generators for :ref:`single table datasets <single_table>` with the following
    features:
 
+   -  Using :ref:`Copulas <gaussian_copula>` and :ref:`Deep Learning <ctgan>` based models.
+   -  Handling of multiple data types and missing data with minimum user input.
+   -  Support for :ref:`pre-defined and custom constraints <single_table_constraints>` and data
+      validation.
+
+-  Synthetic data generators for :ref:`complex, multi-table, relational datasets <relational>`
+   with the following features:
+
+   -  Definition of entire :ref:`multi-table datasets metadata <relational_metadata>` with a custom
+      and flexible :ref:`JSON schema <metadata_schema>`.
+   -  Using Copulas and recursive modeling techniques.
+
+-  Synthetic data generators for :ref:`multi-type, multi-variate timeseries datasets <timeseries>`
+   with the following features:
+
    -  Using statistical, Autoregressive and Deep Learning models.
-   -  Handling context.
+   -  Conditional sampling based on contextual attributes.
+
 
 Try it out now!
 ---------------

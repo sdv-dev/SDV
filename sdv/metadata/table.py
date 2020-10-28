@@ -8,9 +8,10 @@ import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
+from xeger import Xeger
 
 from sdv.constraints.base import Constraint
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ class Table:
     and the constraints that affect this data.
 
     Args:
+        name (str):
+            Name of this table. Optional.
         field_names (list[str]):
             List of names of the fields that need to be modeled
             and included in the generated output data. Any additional
@@ -68,14 +71,27 @@ class Table:
             fitted using the same arguments when the same Table is used
             to fit different model instances on different slices of the
             same table.
+        sequence_index (str):
+            Name of the column that acts as the order index of each
+            sequence. The sequence index column can be of any type that can
+            be sorted, such as integer values or datetimes.
+        entity_columns (list[str]):
+            Names of the columns which identify different time series
+            sequences. These will be used to group the data in separated
+            training examples.
+        context_columns (list[str]):
+            The columns in the dataframe which are constant within each
+            group/entity. These columns will be provided at sampling time
+            (i.e. the samples will be conditioned on the context variables).
     """
 
     _hyper_transformer = None
-    _anonymization_mappings = None
     _fakers = None
     _constraint_instances = None
+    _fields_metadata = None
     fitted = False
 
+    _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
         'integer': rdt.transformers.NumericalTransformer(dtype=int),
         'float': rdt.transformers.NumericalTransformer(dtype=float),
@@ -84,7 +100,7 @@ class Table:
         'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
         'label_encoding': rdt.transformers.LabelEncodingTransformer,
         'boolean': rdt.transformers.BooleanTransformer,
-        'datetime': rdt.transformers.DatetimeTransformer,
+        'datetime': rdt.transformers.DatetimeTransformer(strip_constant=True),
     }
     _DTYPE_TRANSFORMERS = {
         'i': 'integer',
@@ -159,9 +175,11 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+    def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
-                 dtype_transformers=None, model_kwargs=None):
+                 dtype_transformers=None, model_kwargs=None, sequence_index=None,
+                 entity_columns=None, context_columns=None):
+        self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
         self._field_transformers = field_transformers or {}
@@ -169,10 +187,16 @@ class Table:
         self._model_kwargs = model_kwargs or {}
 
         self._primary_key = primary_key
+        self._sequence_index = sequence_index
+        self._entity_columns = entity_columns or []
+        self._context_columns = context_columns or []
         self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
+
+    def __repr__(self):
+        return 'Table(name={}, field_names={})'.format(self.name, self._field_names)
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -218,7 +242,7 @@ class Table:
 
         Args:
             ids (bool):
-                Whether or not include the id fields. Defaults to ``False``.
+                Whether or not to include the id fields. Defaults to ``False``.
 
         Returns:
             dict:
@@ -297,6 +321,10 @@ class Table:
             transformer_template = field_metadata.get('transformer')
             if transformer_template is None:
                 transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
+                if transformer_template is None:
+                    # Skip this dtype
+                    continue
+
                 field_metadata['transformer'] = transformer_template
 
             if isinstance(transformer_template, str):
@@ -307,8 +335,8 @@ class Table:
             else:
                 transformer = copy.deepcopy(transformer_template)
 
-            LOGGER.info('Loading transformer %s for field %s',
-                        transformer.__class__.__name__, name)
+            LOGGER.debug('Loading transformer %s for field %s',
+                         transformer.__class__.__name__, name)
             transformers[name] = transformer
 
         return transformers
@@ -327,7 +355,7 @@ class Table:
 
         return data
 
-    def _fit_hyper_transformer(self, data):
+    def _fit_hyper_transformer(self, data, extra_columns):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
         First get the ``dtypes`` and then use them to build a transformer dictionary
@@ -336,14 +364,20 @@ class Table:
         Args:
             data (pandas.DataFrame):
                 Data to transform.
+            extra_columns (set):
+                Names of columns that are not in the metadata but that should also
+                be transformed. In most cases, these are the fields that were added
+                by previous transformations which the data underwent.
 
         Returns:
             rdt.HyperTransformer
         """
+        meta_dtypes = self.get_dtypes(ids=False)
         dtypes = {}
-        fields = self._fields_metadata
         for column in data.columns:
-            if column not in fields or fields[column]['type'] != 'id':
+            if column in meta_dtypes:
+                dtypes[column] = meta_dtypes[column]
+            elif column in extra_columns:
                 dtypes[column] = data[column].dtype.kind
 
         transformers_dict = self._get_transformers(dtypes)
@@ -372,50 +406,56 @@ class Table:
 
         return field_subtype
 
-    def set_primary_key(self, field_name):
+    def set_primary_key(self, primary_key):
         """Set the primary key of this table.
 
         The field must exist and either be an integer or categorical field.
 
         Args:
-            field_name (str):
-                Name of the field to be used as the new primary key.
+            primary_key (str or list):
+                Name of the field(s) to be used as the new primary key.
 
         Raises:
             ValueError:
                 If the table or the field do not exist or if the field has an
                 invalid type or subtype.
         """
-        if field_name is not None:
-            if field_name not in self._fields_metadata:
-                raise ValueError('Field "{}" does not exist in this table'.format(field_name))
+        if primary_key is not None:
+            fields = primary_key if isinstance(primary_key, list) else [primary_key]
+            for field_name in fields:
+                if field_name not in self._fields_metadata:
+                    raise ValueError('Field "{}" does not exist in this table'.format(field_name))
 
-            field_metadata = self._fields_metadata[field_name]
-            field_subtype = self._get_key_subtype(field_metadata)
+                field_metadata = self._fields_metadata[field_name]
+                if field_metadata['type'] != 'id':
+                    field_subtype = self._get_key_subtype(field_metadata)
 
-            field_metadata.update({
-                'type': 'id',
-                'subtype': field_subtype
-            })
+                    field_metadata.update({
+                        'type': 'id',
+                        'subtype': field_subtype
+                    })
 
-        self._primary_key = field_name
+        self._primary_key = primary_key
 
     def _make_anonymization_mappings(self, data):
         mappings = {}
         for name, field_metadata in self._fields_metadata.items():
-            if field_metadata.get('pii'):
+            if field_metadata['type'] != 'id' and field_metadata.get('pii'):
                 faker = self._get_faker(field_metadata['pii_category'])
 
                 uniques = data[name].unique()
                 fake_values = [faker() for _ in range(len(uniques))]
                 mappings[name] = dict(zip(uniques, fake_values))
 
-        self._anonymization_mappings = mappings
+        self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
+
+        return mappings
 
     def _anonymize(self, data):
-        if self._anonymization_mappings:
+        anonymization_mappings = self._ANONYMIZATION_MAPPINGS.get(id(self))
+        if anonymization_mappings:
             data = data.copy()
-            for name, mapping in self._anonymization_mappings.items():
+            for name, mapping in anonymization_mappings.items():
                 data[name] = data[name].map(mapping)
 
         return data
@@ -427,17 +467,24 @@ class Table:
             data (pandas.DataFrame):
                 Table to be analyzed.
         """
+        LOGGER.info('Fitting table %s metadata', self.name)
         self._field_names = self._field_names or list(data.columns)
-        self._fields_metadata = self._build_fields_metadata(data)
+        if not self._fields_metadata:
+            self._fields_metadata = self._build_fields_metadata(data)
 
         # Re-set the primary key to validate its name and type
         self.set_primary_key(self._primary_key)
 
         self._make_anonymization_mappings(data)
+        LOGGER.info('Anonymizing table %s', self.name)
         data = self._anonymize(data)
 
-        data = self._fit_transform_constraints(data)
-        self._fit_hyper_transformer(data)
+        LOGGER.info('Fitting constraints for table %s', self.name)
+        constrained = self._fit_transform_constraints(data)
+        extra_columns = set(constrained.columns) - set(data.columns)
+
+        LOGGER.info('Fitting HyperTransformer for table %s', self.name)
+        self._fit_hyper_transformer(constrained, extra_columns)
         self.fitted = True
 
     def transform(self, data):
@@ -451,12 +498,44 @@ class Table:
             pandas.DataFrame:
                 Transformed data.
         """
-        data = self._anonymize(data[self._field_names])
+        if not self.fitted:
+            raise MetadataNotFittedError()
 
+        fields = self.get_dtypes(ids=False)
+        LOGGER.debug('Anonymizing table %s', self.name)
+        data = self._anonymize(data[fields])
+
+        LOGGER.debug('Transforming constraints for table %s', self.name)
         for constraint in self._constraints:
             data = constraint.transform(data)
 
+        LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
+
+    def _make_ids(self, name, field_metadata, length):
+        field_subtype = field_metadata.get('subtype', 'integer')
+        if field_subtype == 'string':
+            regex = field_metadata.get('regex', '[a-z][A-Z]+')
+            xeger = Xeger(limit=10)
+            values = {xeger.xeger(regex) for _ in range(length)}
+            for _ in range(10):
+                done = len(values)
+                if done >= length:
+                    break
+
+                remaining = length - done
+                generate = int(round((remaining / done) * length))
+                values.update({xeger.xeger(regex) for _ in range(generate)})
+
+            else:
+                msg = 'Unable to generate {} unique values for field {} regex "{}"'.format(
+                    length, name, regex
+                )
+                raise ValueError(msg)
+
+            return pd.Series(list(values)[:length])
+        else:
+            return pd.Series(np.arange(length))
 
     def reverse_transform(self, data):
         """Reverse the transformed data to the original format.
@@ -468,6 +547,9 @@ class Table:
         Returns:
             pandas.DataFrame
         """
+        if not self.fitted:
+            raise MetadataNotFittedError()
+
         reversed_data = self._hyper_transformer.reverse_transform(data)
 
         for constraint in self._constraints:
@@ -475,9 +557,13 @@ class Table:
 
         fields = self._fields_metadata
         for name, dtype in self.get_dtypes(ids=True).items():
-            field_type = fields[name]['type']
-            if field_type == 'id':
-                field_data = pd.Series(np.arange(len(reversed_data)))
+            field_metadata = fields[name]
+            field_type = field_metadata['type']
+            if field_type == 'id' and name not in reversed_data:
+                field_data = self._make_ids(name, field_metadata, len(reversed_data))
+            elif field_metadata.get('pii', False):
+                faker = self._get_faker(field_metadata['pii_category'])
+                field_data = pd.Series([faker() for _ in range(len(reversed_data))])
             else:
                 field_data = reversed_data[name]
 
@@ -519,6 +605,11 @@ class Table:
                 for constraint in self._constraints
             ],
             'model_kwargs': copy.deepcopy(self._model_kwargs),
+            'name': self.name,
+            'primary_key': self._primary_key,
+            'sequence_index': self._sequence_index,
+            'entity_columns': self._entity_columns,
+            'context_columns': self._context_columns,
         }
 
     def to_json(self, path):
@@ -541,8 +632,14 @@ class Table:
         """
         instance = cls()
         instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
+        instance._field_names = list(instance._fields_metadata.keys())
         instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
-        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs'))
+        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
+        instance._primary_key = metadata_dict.get('primary_key')
+        instance._sequence_index = metadata_dict.get('sequence_index')
+        instance._entity_columns = metadata_dict.get('entity_columns')
+        instance._context_columns = metadata_dict.get('context_columns')
+        instance.name = metadata_dict.get('name')
         return instance
 
     @classmethod

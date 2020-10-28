@@ -1,0 +1,209 @@
+"""Combination of GaussianCopula transformation and GANs."""
+
+from rdt import HyperTransformer
+from rdt.transformers import GaussianCopulaTransformer
+
+from sdv.tabular.ctgan import CTGAN
+
+
+class CopulaGAN(CTGAN):
+    """Combination of GaussianCopula transformation and GANs.
+
+    This model extends the ``CTGAN`` model to add the flexibility of the GaussianCopula
+    transformations provided by the ``GaussianCopulaTransformer`` from ``RDT``.
+
+    Overall, the fitting process consists of the following steps:
+
+    1. Transform each non categorical variable from the input
+       data using a ``GaussianCopulaTransformer``:
+
+       i. If not specified, find out the distribution which each one
+          of the variables from the input dataset has.
+       ii. Transform each variable to a standard normal space by applying
+           the CDF of the corresponding distribution and later on applying
+           an inverse CDF from a standard normal distribution.
+
+    2. Fit CTGAN with the transformed table.
+
+    And the process of sampling is:
+
+    1. Sample using CTGAN
+    2. Reverse the previous transformation by applying the CDF of a standard normal
+       distribution and then inverting the CDF of the distribution that correpsonds
+       to each variable.
+
+    The arguments of this model are the same as for CTGAN except for two additional
+    arguments, ``field_distributions`` and ``default_distribution`` that give the
+    ability to define specific transformations for individual fields as well as
+    which distribution to use by default if no specific distribution has been selected.
+
+    Distributions can be passed as a ``copulas`` univariate instance or as one
+    of the following string values:
+
+    * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
+      This may result in non-parametric models being used.
+    * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
+      but restrict the selection to parametric distributions only.
+    * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
+      but restrict the selection to bounded distributions only.
+      This may result in non-parametric models being used.
+    * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
+      but restrict the selection to semi-bounded distributions only.
+      This may result in non-parametric models being used.
+    * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
+      distribution, but restrict the selection to parametric and bounded distributions
+      only.
+    * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
+      distribution, but restrict the selection to parametric and semi-bounded
+      distributions only.
+    * ``gaussian``: Use a Gaussian distribution.
+    * ``gamma``: Use a Gamma distribution.
+    * ``beta``: Use a Beta distribution.
+    * ``student_t``: Use a Student T distribution.
+    * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+      so using this will make ``get_parameters`` unusable.
+    * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+
+    Args:
+        field_names (list[str]):
+            List of names of the fields that need to be modeled
+            and included in the generated output data. Any additional
+            fields found in the data will be ignored and will not be
+            included in the generated output.
+            If ``None``, all the fields found in the data are used.
+        field_types (dict[str, dict]):
+            Dictinary specifying the data types and subtypes
+            of the fields that will be modeled. Field types and subtypes
+            combinations must be compatible with the SDV Metadata Schema.
+        field_transformers (dict[str, str]):
+            Dictinary specifying which transformers to use for each field.
+            Available transformers are:
+
+                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
+                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
+                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
+                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
+                * ``boolean``: Uses a ``BooleanTransformer``.
+                * ``datetime``: Uses a ``DatetimeTransformer``.
+
+        anonymize_fields (dict[str, str]):
+            Dict specifying which fields to anonymize and what faker
+            category they belong to.
+        primary_key (str):
+            Name of the field which is the primary key of the table.
+        constraints (list[Constraint, dict]):
+            List of Constraint objects or dicts.
+        table_metadata (dict or metadata.Table):
+            Table metadata instance or dict representation.
+            If given alongside any other metadata-related arguments, an
+            exception will be raised.
+            If not given at all, it will be built using the other
+            arguments or learned from the data.
+        epochs (int):
+            Number of training epochs. Defaults to 300.
+        log_frequency (boolean):
+            Whether to use log frequency of categorical levels in conditional
+            sampling. Defaults to ``True``.
+        embedding_dim (int):
+            Size of the random sample passed to the Generator. Defaults to 128.
+        gen_dim (tuple or list of ints):
+            Size of the output samples for each one of the Residuals. A Resiudal Layer
+            will be created for each one of the values provided. Defaults to (256, 256).
+        dis_dim (tuple or list of ints):
+            Size of the output samples for each one of the Discriminator Layers. A Linear
+            Layer will be created for each one of the values provided. Defaults to (256, 256).
+        l2scale (float):
+            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.
+        batch_size (int):
+            Number of data samples to process in each step.
+        verbose (bool):
+            Whether to print fit progress on stdout. Defaults to ``False``.
+        cuda (bool or str):
+            If ``True``, use CUDA. If an ``str``, use the indicated device.
+            If ``False``, do not use cuda at all.
+        field_distributions (dict):
+            Optionally specify a dictionary that maps the name of each field to the distribution
+            that must be used in it. Fields that are not specified in the input ``dict`` will
+            be modeled using the default distribution. Defaults to ``None``.
+        default_distribution (copulas.univariate.Univariate or str):
+            Distribution to use on the fields for which no specific distribution has been given.
+            Defaults to ``parametric``.
+    """
+
+    DEFAULT_DISTRIBUTION = 'parametric'
+
+    def __init__(self, field_names=None, field_types=None, field_transformers=None,
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
+                 epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
+                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False, cuda=True,
+                 field_distributions=None, default_distribution=None):
+        super().__init__(
+            field_names=field_names,
+            primary_key=primary_key,
+            field_types=field_types,
+            anonymize_fields=anonymize_fields,
+            constraints=constraints,
+            table_metadata=table_metadata,
+            epochs=epochs,
+            log_frequency=log_frequency,
+            embedding_dim=embedding_dim,
+            gen_dim=gen_dim,
+            dis_dim=dis_dim,
+            l2scale=l2scale,
+            batch_size=batch_size,
+            verbose=verbose,
+            cuda=cuda
+        )
+        self._field_distributions = field_distributions or dict()
+        self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
+
+    def get_distributions(self):
+        """Get the marginal distributions used by this CopulaGAN.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected
+                for each column.
+        """
+        return {
+            field: transformer._univariate.to_dict()['type']
+            for field, transformer in self._ht.transformers.items()
+        }
+
+    def _fit(self, table_data):
+        """Fit the model to the table.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        distributions = self._field_distributions
+        default = self._default_distribution
+        fields = self._metadata.get_fields()
+        transformers = {
+            field: GaussianCopulaTransformer(
+                distribution=distributions.get(field, default)
+            )
+            for field in table_data.columns
+            if fields.get(field, dict()).get('type') != 'categorical'
+        }
+        self._ht = HyperTransformer(transformers=transformers)
+        table_data = self._ht.fit_transform(table_data)
+
+        super()._fit(table_data)
+
+    def _sample(self, num_rows):
+        """Sample the indicated number of rows from the model.
+
+        Args:
+            num_rows (int):
+                Amount of rows to sample.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
+        sampled = super()._sample(num_rows)
+        return self._ht.reverse_transform(sampled)

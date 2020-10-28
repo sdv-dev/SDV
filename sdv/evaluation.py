@@ -1,7 +1,10 @@
 """Tools to evaluate the synthesized data."""
 
+import numpy as np
 import pandas as pd
-import sdmetrics
+from sdmetrics.detection.tabular import LogisticDetector, SVCDetector
+from sdmetrics.report import MetricsReport
+from sdmetrics.statistical import CSTest, KSTest
 
 from sdv.metadata import Metadata
 
@@ -71,37 +74,93 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
     return synth, real, metadata
 
 
-def evaluate(synth, real=None, metadata=None, root_path=None, table_name=None, get_report=False):
-    """Compute a score using SDMetrics.
+def _tabular_metric(sdmetric, synthetic, real, metadata=None, details=False):
+    if metadata is None:
+        metadata = Metadata()
+        metadata.add_table(None, real)
+        real = {None: real}
+        synthetic = {None: synthetic}
+
+    metrics = sdmetric.metrics(metadata, real, synthetic)
+    if details:
+        return list(metrics)
+
+    return np.mean([metric.value for metric in metrics])
+
+
+def _cstest(synthetic, real, metadata=None, details=False):
+    return _tabular_metric(CSTest(), synthetic, real, metadata, details)
+
+
+def _kstest(synthetic, real, metadata=None, details=False):
+    return _tabular_metric(KSTest(), synthetic, real, metadata, details)
+
+
+def _logistic_detection(synthetic, real, metadata=None, details=False):
+    return _tabular_metric(LogisticDetector(), synthetic, real, metadata, details)
+
+
+def _svc_detection(synthetic, real, metadata=None, details=False):
+    return _tabular_metric(SVCDetector(), synthetic, real, metadata, details)
+
+
+METRICS = {
+    'cstest': _cstest,
+    'kstest': _kstest,
+    'logistic_detection': _logistic_detection,
+    'svc_detection': _svc_detection,
+}
+
+
+def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
+             table_name=None, metrics=None, get_report=False, aggregate=True):
+    """Apply multiple metrics at once.
 
     Args:
-        synth (dict[str, pandas.DataFrame] or pandas.DataFrame):
-            Map of names and tables of synthesized data.
-        real (dict[str, pandas.DataFrame] or pandas.DataFrame):
-            Map of names and tables of real data.
+        synthetic_data (dict[str, pandas.DataFrame] or pandas.DataFrame):
+            Map of names and tables of synthesized data. When evaluating a single table,
+            a single ``pandas.DataFrame`` can be passed alone.
+        real_data (dict[str, pandas.DataFrame] or pandas.DataFrame):
+            Map of names and tables of real data. When evaluating a single table,
+            a single ``pandas.DataFrame`` can be passed alone.
         metadata (str, dict, Metadata or None):
             Metadata instance or details needed to build it.
         root_path (str):
             Relative path to find the metadata.json file when needed.
-        descriptors (list[callable]):
-            List of descriptors.
-        metrics (list[callable]):
-            List of metrics.
+        metrics (list[str]):
+            List of metric names to apply.
         table_name (str):
             Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``
             and ``real`` is ``None``.
         get_report (bool):
-            whether to return the complete SDMetrics report. If False (default), only
-            the overall score is returned.
+            Whether to return the complete SDMetrics report or only the overall average score
+            of each metric applied. Defaults to ``False``.
+        aggregate (bool):
+            If ``get_report`` is ``False``, whether to compute the mean of all the scores to
+            return a single float value or return a ``dict`` containing the score that each
+            metric obtained. Defaults to ``True``.
 
     Return:
         float or sdmetrics.MetricsReport
     """
-    synth, real, metadata = _validate_arguments(synth, real, metadata, root_path, table_name)
+    synth, real, metadata = _validate_arguments(
+        synthetic_data, real_data, metadata, root_path, table_name)
 
-    report = sdmetrics.evaluate(metadata, real, synth)
+    if metrics is None:
+        metrics = METRICS.keys()
+
+    computed = {}
+    for metric in metrics:
+        computed[metric] = METRICS[metric](synth, real, metadata, details=get_report)
 
     if get_report:
+        report = MetricsReport()
+        for metrics in computed.values():
+            report.add_metrics(metrics)
+
         return report
 
-    return report.overall()
+    elif aggregate:
+        return np.nanmean(list(computed.values()))
+
+    return computed

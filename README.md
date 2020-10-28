@@ -26,10 +26,10 @@
 
 The **Synthetic Data Vault (SDV)** is a **Synthetic Data Generation** ecosystem of libraries
 that allows users to easily learn [single-table](
-https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html), [multi-table](
-https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html) and [timeseries](
-https://github.com/sdv-dev/DeepEcho) datasets to later on generate new **Synthetic Data** that
-has the **same format and statistical properties** as the original dataset.
+https://sdv.dev/SDV/user_guides/single_table/index.html), [multi-table](
+https://sdv.dev/SDV/user_guides/relational/index.html) and [timeseries](
+https://sdv.dev/SDV/user_guides/timeseries/index.html) datasets to later on generate new
+**Synthetic Data** that has the **same format and statistical properties** as the original dataset.
 
 Synthetic data can then be used to supplement, augment and in some cases replace real data when
 training Machine Learning models. Additionally, it enables the testing of Machine Learning or
@@ -43,27 +43,25 @@ hierarchical generative modeling and recursive sampling techniques.
 ### Current functionality and features:
 
 * Synthetic data generators for [single tables](
-  https://sdv-dev.github.io/SDV/tutorials/02_Single_Table_Modeling.html) with the following
+  https://sdv-dev.github.io/SDV/user_guides/single_table/index.html) with the following
   features:
-    * Using [Copulas](https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula)
-      and [Deep Learning](https://sdv-dev.github.io/SDV/api_reference/api/sdv.tabular.CTGAN.html)
+    * Using [Copulas](https://sdv-dev.github.io/SDV/user_guides/single_table/gaussian_copula.html)
+      and [Deep Learning](https://sdv-dev.github.io/SDV/user_guides/single_table/ctgan.html)
       based models.
     * Handling of multiple data types and missing data with minimum user input.
     * Support for [pre-defined and custom constraints](
-      https://sdv-dev.github.io/SDV/tutorials/05_Handling_Constraints.html) and data validation.
+      https://sdv-dev.github.io/SDV/user_guides/single_table/constraints.html) and data validation.
 * Synthetic data generators for [complex multi-table, relational datasets](
-  https://sdv-dev.github.io/SDV/tutorials/03_Relational_Data_Modeling.html) with the following
+  https://sdv-dev.github.io/SDV/user_guides/relational/index.html) with the following
   features:
     * Definition of entire [multi-table datasets metadata](
-      https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html) with a custom and
+      https://sdv-dev.github.io/SDV/user_guides/relational/relational_metadata.html) with a custom and
       flexible [JSON schema](https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html).
     * Using Copulas and recursive modeling techniques.
-
-### Coming soon:
-
-* Synthetic data generators for **timeseries** with the following features:
+* Synthetic data generators for [multi-type, multi-variate timeseries](
+  https://sdv-dev.github.io/SDV/user_guides/timeseries/index.html) with the following features:
     * Using statistical, Autoregressive and Deep Learning models.
-    * Handling context.
+    * Conditional sampling based on contextual attributes.
 
 ## Try it out now!
 
@@ -83,7 +81,7 @@ our Slack Workspace!
 
 ## Requirements
 
-**SDV** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads)
+**SDV** has been developed and tested on [Python 3.6, 3.7 and 3.8](https://www.python.org/downloads)
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
@@ -215,19 +213,14 @@ within the same python session.
 sdv = SDV.load('sdv.pkl')
 ```
 
-After loading the instance, we can sample synthetic data using its `sample_all` method,
-passing the number of rows that we want to generate.
+After loading the instance, we can sample synthetic data by calling its `sample` method.
 
 ```python3
-samples = sdv.sample_all(5)
+samples = sdv.sample()
 ```
 
 The output will be a dictionary with the same structure as the original `tables` dict,
 but filled with synthetic data instead of the real one.
-
-**Note** that only the parent tables of your dataset will have the specified number of rows,
-as the number of child rows that each row in the parent table has is also sampled following
-the original distribution of your dataset.
 
 Finally, if you want to evaluate how similar the sampled tables are to the real data,
 please have a look at our [evaluation](EVALUATION.md) framework or visit the [SDMetrics](

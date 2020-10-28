@@ -38,9 +38,15 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    # 'autodocsumm',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
 ]
 
+ipython_execlines = [
+    "import pandas as pd",
+    "pd.set_option('display.width', 1000000)",
+    "pd.set_option('max_columns', 1000)",
+]
 
 autosummary_generate = True
 autodoc_typehints = "none"
@@ -61,6 +67,16 @@ master_doc = 'index'
 
 # Jupyter Notebooks
 nbsphinx_execute = 'never'
+nbsphinx_prolog = """
+.. raw:: html
+
+    <style>
+        .nbinput .prompt,
+        .nboutput .prompt {
+            display: none;
+        }
+    </style>
+"""
 
 # General information about the project.
 project = 'SDV'
@@ -124,7 +140,7 @@ html_context = {
 # }
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
-    # "twitter_url": "https://twitter.com/sdv_dev",
+    "twitter_url": "https://twitter.com/sdv_dev",
     "show_prev_next": True,
 }
 

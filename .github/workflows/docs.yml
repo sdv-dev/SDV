@@ -14,11 +14,11 @@ jobs:
     - name: Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
 
     - name: Build
       run: |
-        sudo apt install pandoc
+        sudo apt-get install graphviz pandoc
         python -m pip install --upgrade pip
         pip install -e .[dev]
         make docs

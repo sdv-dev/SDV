@@ -1,13 +1,20 @@
 """Wrappers around copulas models."""
 
+import logging
+
 import copulas
+import copulas.multivariate
+import copulas.univariate
 import numpy as np
+import pandas as pd
 
 from sdv.metadata import Table
 from sdv.tabular.base import BaseTabularModel, NonParametricError
 from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
     unflatten_dict)
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GaussianCopula(BaseTabularModel):
@@ -50,7 +57,7 @@ class GaussianCopula(BaseTabularModel):
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
-        distribution (copulas.univariate.Univariate or str):
+        field_distributions (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use. To choose from:
 
                 * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
@@ -76,6 +83,10 @@ class GaussianCopula(BaseTabularModel):
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+
+        default_distribution (copulas.univariate.Univariate or str):
+            Copulas univariate distribution to use by default. To choose from the list
+            of possible ``field_distribution`` values. Defaults to ``parametric``.
 
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, to choose
@@ -153,25 +164,36 @@ class GaussianCopula(BaseTabularModel):
     }
     _DEFAULT_TRANSFORMER = 'one_hot_encoding'
 
-    @classmethod
-    def _get_distribution(cls, distribution):
-        if not distribution:
-            return cls._DISTRIBUTIONS['parametric']
-
-        if isinstance(distribution, str):
-            return cls._DISTRIBUTIONS.get(distribution, distribution)
-
-        if isinstance(distribution, dict):
+    def _get_distribution(self, table_data):
+        default = self._DISTRIBUTIONS.get(self._default_distribution, self._default_distribution)
+        if self._distribution is None:
             return {
-                name: cls._get_distribution(distribution)
-                for name, distribution in distribution.items()
+                name: default
+                for name in table_data.columns
             }
 
-        return distribution
+        if not isinstance(self._distribution, dict):
+            distribution = self._DISTRIBUTIONS.get(self._distribution, self._distribution)
+            return {
+                name: distribution
+                for name in table_data.columns
+            }
+
+        distributions = {}
+        for column in table_data.columns:
+            distribution = self._distribution.get(column)
+            if not distribution:
+                distribution = default
+            else:
+                distribution = self._DISTRIBUTIONS.get(distribution, distribution)
+
+            distributions[column] = distribution
+
+        return distributions
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
-                 anonymize_fields=None, primary_key=None, constraints=None,
-                 table_metadata=None, distribution=None, categorical_transformer=None):
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
+                 distribution=None, default_distribution=None, categorical_transformer=None):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
@@ -185,7 +207,8 @@ class GaussianCopula(BaseTabularModel):
                 if categorical_transformer is None:
                     categorical_transformer = model_kwargs['categorical_transformer']
 
-        self._distribution = self._get_distribution(distribution)
+        self._distribution = distribution
+        self._default_distribution = default_distribution or 'parametric'
 
         categorical_transformer = categorical_transformer or self._DEFAULT_TRANSFORMER
         self._categorical_transformer = categorical_transformer
@@ -200,6 +223,24 @@ class GaussianCopula(BaseTabularModel):
             table_metadata=table_metadata
         )
 
+    def get_distributions(self):
+        """Get the marginal distributions used by this copula.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected
+                for each column.
+        """
+        parameters = self._model.to_dict()
+        univariates = parameters['univariates']
+        columns = parameters['columns']
+
+        distributions = {}
+        for column, univariate in zip(columns, univariates):
+            distributions[column] = univariate['type']
+
+        return distributions
+
     def _update_metadata(self):
         """Add arguments needed to reproduce this model to the Metadata.
 
@@ -210,14 +251,7 @@ class GaussianCopula(BaseTabularModel):
         class_name = self.__class__.__name__
         model_kwargs = self._metadata.get_model_kwargs(class_name)
         if not model_kwargs:
-            parameters = self._model.to_dict()
-            univariates = parameters['univariates']
-            columns = parameters['columns']
-
-            distributions = {}
-            for column, univariate in zip(columns, univariates):
-                distributions[column] = univariate['type']
-
+            distributions = self.get_distributions()
             self._metadata.set_model_kwargs(class_name, {
                 'distribution': distributions,
                 'categorical_transformer': self._categorical_transformer,
@@ -230,7 +264,11 @@ class GaussianCopula(BaseTabularModel):
             table_data (pandas.DataFrame):
                 Data to be fitted.
         """
+        self._distribution = self._get_distribution(table_data)
         self._model = copulas.multivariate.GaussianMultivariate(distribution=self._distribution)
+
+        LOGGER.debug('Fitting %s to table %s; shape: %s', self._model.__class__.__name__,
+                     self._metadata.name, table_data.shape)
         self._model.fit(table_data)
         self._update_metadata()
 
@@ -246,6 +284,11 @@ class GaussianCopula(BaseTabularModel):
                 Sampled data.
         """
         return self._model.sample(num_rows)
+
+    def get_likelihood(self, table_data):
+        """Get the likelihood of each row belonging to this table."""
+        transformed = self._metadata.transform(table_data)
+        return self._model.probability_density(transformed)
 
     def get_parameters(self):
         """Get copula model parameters.
@@ -273,6 +316,8 @@ class GaussianCopula(BaseTabularModel):
         covariance = list()
         for index, row in enumerate(params['covariance']):
             covariance.append(row[:index + 1])
+
+        params['covariance'] = covariance
 
         univariates = dict()
         for name, univariate in zip(params.pop('columns'), params['univariates']):
@@ -354,5 +399,6 @@ class GaussianCopula(BaseTabularModel):
         parameters = unflatten_dict(parameters)
         parameters = self._rebuild_gaussian_copula(parameters)
 
-        self._num_rows = max(0, int(round(parameters.pop('num_rows'))))
+        num_rows = parameters.pop('num_rows')
+        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)

@@ -1,7 +1,7 @@
 """Miscellaneous utility functions."""
 
 
-def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S'):
+def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=True):
     """Display mutiple tables side by side on a Jupyter Notebook.
 
     Args:
@@ -24,10 +24,19 @@ def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S'):
             if column_data.dtype.kind == 'M':
                 table[column] = column_data.dt.strftime(datetime_fmt)
 
-        names.append('<td><b>{}</b></td>'.format(name))
+        names.append('<td style="text-align:left"><b>{}</b></td>'.format(name))
         data.append('<td>{}</td>'.format(table.head(max_rows).to_html(index=False)))
 
-    return HTML('<table><tr>{}</tr><tr>{}</tr></table>'.format(
-        ''.join(names),
-        ''.join(data),
-    ))
+    if row:
+        html = '<table><tr>{}</tr><tr>{}</tr></table>'.format(
+            ''.join(names),
+            ''.join(data),
+        )
+    else:
+        rows = [
+            '<tr>{}</tr><tr>{}</tr>'.format(name, table)
+            for name, table in zip(names, data)
+        ]
+        html = '<table>{}</table>'.format(''.join(rows))
+
+    return HTML(html)
