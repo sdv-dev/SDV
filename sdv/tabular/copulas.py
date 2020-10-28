@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.metadata import Table
-from sdv.tabular.base import BaseTabularModel
+from sdv.tabular.base import BaseTabularModel, NonParametricError
 from sdv.tabular.utils import (
     check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
     unflatten_dict)
@@ -80,7 +80,7 @@ class GaussianCopula(BaseTabularModel):
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
                 * ``student_t``: Use a Student T distribution.
-                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+                * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
@@ -165,6 +165,7 @@ class GaussianCopula(BaseTabularModel):
     _DEFAULT_TRANSFORMER = 'one_hot_encoding'
 
     def _get_distribution(self, table_data):
+        """Build a dict with the univariate distribution of each column."""
         default = self._DISTRIBUTIONS.get(self._default_distribution, self._default_distribution)
         if self._distribution is None:
             return {
@@ -304,6 +305,13 @@ class GaussianCopula(BaseTabularModel):
             NonParametricError:
                 If a non-parametric distribution has been used.
         """
+        for univariate in self._model.univariates:
+            if type(univariate) is copulas.univariate.Univariate:
+                univariate = univariate._instance
+
+            if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:
+                raise NonParametricError("This GaussianCopula uses non parametric distributions")
+
         params = self._model.to_dict()
 
         covariance = list()
