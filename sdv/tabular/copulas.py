@@ -165,6 +165,7 @@ class GaussianCopula(BaseTabularModel):
     _DEFAULT_TRANSFORMER = 'one_hot_encoding'
 
     def _get_distribution(self, table_data):
+        """Build a dict with the univariate distribution of each column."""
         default = self._DISTRIBUTIONS.get(self._default_distribution, self._default_distribution)
         if self._distribution is None:
             return {

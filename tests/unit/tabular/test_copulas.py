@@ -3,97 +3,14 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
-from copulas.multivariate.gaussian import GaussianMultivariate, Univariate
-from copulas.univariate import BoundedType, GammaUnivariate, GaussianKDE, ParametricType
+from copulas.multivariate.gaussian import GaussianMultivariate
+from copulas.univariate import GaussianKDE
 
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
 
 
 class TestGaussianCopula:
-
-    def test__get_distribution_none(self):
-        """Test the ``_get_distribution`` passing None.
-
-        If ``None`` is passed, the output should be the a PARAMETRIC
-        Univariate.
-
-        Input:
-        - None
-
-        Expected Output:
-        - Instance of ``Univariate`` with:
-            - univariate.PARAMETRIC == NON_PARAMETRIC
-            - univariate.BOUNDED == UNBOUNDED
-        """
-        # Run
-        out = GaussianCopula._get_distribution(None)
-
-        # Asserts
-        assert isinstance(out, Univariate)
-        assert out.PARAMETRIC is ParametricType.NON_PARAMETRIC
-        assert out.BOUNDED is BoundedType.UNBOUNDED
-
-    def test__get_distribution_str(self):
-        """Test the ``_get_distribution method passing a known str.
-
-        If the name of a known distribution is passed, return the corresponding
-        instance.
-
-        Input:
-         - Name of a distribution (for example, ``gamma``)
-
-        Expected Output:
-        - Instance of the indicated distribution. (for example,
-          ``copulas.univariate.gamma.GammaUnivariate``)
-         """
-        # Run
-        out = GaussianCopula._get_distribution('gamma')
-
-        # Assert
-        assert isinstance(out(), GammaUnivariate)
-
-    def test__get_distribution_unknown(self):
-        """Test the ``_get_distribution`` passing an unknown str.
-
-        If an unknown str is passed, return it as it is.
-
-        Input:
-        - Unknown string
-
-        Expected Output:
-        - Input string
-        """
-        # Run
-        Result = GaussianCopula._get_distribution('unknown')
-
-        # Asserts
-        assert Result == 'unknown'
-
-    def test__get_distribution_dict(self):
-        """ Test the ``_get_distribution`` passing a dict.
-
-        If a dict is passed, a new dict with the same keys must be returned,
-        where each value has been resolved to the corresponding instance.
-
-        Input:
-        - dict passing one value and one key of each type:
-            - None
-            - a str with the name of a known distribution
-            - a str with an unknown name
-        - For example: {'a': None, 'b': 'gamma', 'c': 'unknown'}
-
-        Expected Output:
-        - dict containing the corresponding instances.
-        """
-        # Run
-        dictionary = {1: None, 2: 'gamma', 3: 'unknown'}
-        out = GaussianCopula._get_distribution(dictionary)
-
-        # Assert
-        assert isinstance(out[1], Univariate)
-        assert isinstance(out[2](), GammaUnivariate)
-        assert out[3] == 'unknown'
 
     def test___init__(self):
         """Test ``__init__`` with empty input values.
@@ -160,6 +77,7 @@ class TestGaussianCopula:
 
         Setup:
         - self._metadata.get_model_kwargs that returns None.
+        - self.get_distributions that returns a distribution dict.
 
         Expected Output
         - None
@@ -172,19 +90,9 @@ class TestGaussianCopula:
         gaussian_copula = Mock(spec_set=GaussianCopula)
         gaussian_copula._metadata.get_model_kwargs.return_value = dict()
         gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
-
-        model_parameters = {
-            'univariates': [{
-                'scale': 1.0,
-                'loc': 5,
-                'type': 'GaussianUnivariate'
-            }
-            ],
-            'columns': ['foo'],
-            'distribution': 'GaussianUnivariate',
-            'covariance': [[0.4, 0.17], [0.17, 0.07]]
+        gaussian_copula.get_distributions.return_value = {
+            'foo': 'copulas.univariate.gaussian.GaussianUnivariate'
         }
-        gaussian_copula._model.to_dict.return_value = model_parameters
 
         # Run
         out = GaussianCopula._update_metadata(gaussian_copula)
@@ -192,7 +100,7 @@ class TestGaussianCopula:
         # Asserts
         assert out is None
         expected_kwargs = {
-            'distribution': {'foo': 'GaussianUnivariate'},
+            'distribution': {'foo': 'copulas.univariate.gaussian.GaussianUnivariate'},
             'categorical_transformer': 'a_categorical_transformer_value',
         }
         gaussian_copula._metadata.set_model_kwargs.assert_called_once_with(
@@ -204,25 +112,32 @@ class TestGaussianCopula:
         """Test the ``GaussianCopula._fit`` method.
 
         The ``_fit`` method is expected to:
-        - Create a GaussianMultivriate object with the indicated distribution value
-        (``self._distribution``)
-        - Store the GaussianMultivariate instance in the `self._model` attribute.
+        - Call the _get_distribution method to build the distributions dict.
+        - Set the output from _get_distribution method as self._distribution.
+        - Create a GaussianMultivriate object with the self._distribution value.
+        - Store the GaussianMultivariate instance in the self._model attribute.
         - Fit the GaussianMultivariate instance with the given table data, unmodified.
-        - Call the `_update_metadata` method.
+        - Call the _update_metadata method.
+
+        Setup:
+            - mock _get_distribution to return a distribution dict
 
         Input:
-        - pandas.DataFrame
+            - pandas.DataFrame
+
         Expected Output:
-        - None
+            - None
+
         Side Effects:
-        - GaussianMultivariate is called with ``self._distribution`` as input
-        - GaussianMultivariate output is stored as ``self._model``
-        - ``self._model.fit`` is called with the input dataframe
-        - ``self._update_metadata`` is called without arguments
+            - self._distribution is set to the output from _get_distribution
+            - GaussianMultivariate is called with self._distribution as input
+            - GaussianMultivariate output is stored as self._model
+            - self._model.fit is called with the input dataframe
+            - self._update_metadata is called without arguments
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._distribution = 'a_distribution'
+        gaussian_copula._get_distribution.return_value = {'a': 'a_distribution'}
 
         # Run
         data = pd.DataFrame({
@@ -232,7 +147,8 @@ class TestGaussianCopula:
 
         # asserts
         assert out is None
-        gm_mock.assert_called_once_with(distribution='a_distribution')
+        assert gaussian_copula._distribution == {'a': 'a_distribution'}
+        gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
         expected_data = pd.DataFrame({
