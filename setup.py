@@ -48,7 +48,7 @@ development_requires = [
     # docs
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
-    'Sphinx>=3,<4',
+    'Sphinx>=3,<3.3',
     'pydata-sphinx-theme',
     'autodocsumm>=0.1.10',
     'PyYaml>=5.3.1,<6',
