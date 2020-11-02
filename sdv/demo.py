@@ -3,7 +3,7 @@
 import io
 import logging
 import os
-import urllib
+import urllib.request
 from zipfile import ZipFile
 
 import numpy as np
