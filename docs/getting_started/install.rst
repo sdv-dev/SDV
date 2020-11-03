@@ -5,28 +5,29 @@
 Installation
 ============
 
-**SDV** can be installed in two ways:
+Requirements
+------------
 
-* From PyPI
-* From source
+**SDV** has been tested and is supported on **GNU/Linux** and **macOS** systems running `Python 3.6,
+3.7 and 3.8`_ installed. Unfortunately, SDV **is not fully supported on Windows OSs**, but it can
+be run successfully on `WSL`_.
 
-Stable Release
---------------
+Also, although it is not strictly required, the usage of a `virtualenv`_ is highly recommended in
+order to avoid having conflicts with other software installed in the system where **SDV** is run.
 
-To install **SDV**, run the following command in your terminal `pip`:
+Install using pip
+-----------------
+
+The easiest and recommended way to install **SDV** is using `pip`_:
 
 .. code-block:: console
 
     pip install sdv
 
-This is the preffered method to install **SDV**, as it will always install the most recent
-and stable release.
+This will pull and install the latest stable release from `PyPI`_.
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
-
-From source
------------
+Install from source
+-------------------
 
 The source code of **SDV** can be downloaded from the `Github repository`_
 
@@ -51,6 +52,9 @@ from its sources, in the editable mode, and also including some additional depen
 order to be able to run the tests and build the documentation. Instructions about this process
 can be found in the :ref:`contributing` guide.
 
+.. _Python 3.6, 3.7 and 3.8: https://docs.python-guide.org/starting/installation/
+.. _WSL: https://docs.microsoft.com/en-us/windows/wsl/install-win10
+.. _virtualenv: https://virtualenv.pypa.io/en/latest/
 .. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+.. _PyPI: https://pypi.org/
 .. _Github repository: https://github.com/sdv-dev/SDV
