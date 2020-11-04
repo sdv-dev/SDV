@@ -12,37 +12,6 @@ from sdv.tabular.copulas import GaussianCopula
 
 class TestGaussianCopula:
 
-    def test___init__(self):
-        """Test ``__init__`` with empty input values.
-
-        All the parameters of the class are inicialized with the default values.
-
-        Expected Output
-        - None
-
-        Side Effects
-        - ``Table.from_dict`` is not called.
-        - ``table_metadata.get_model_kwargs`` is not called.
-        - ``_distribution`` is set to a instance of the indicated distribution.
-        """
-
-    def test__init__metadata(self):
-        """Test ``__init__`` with not empty input values for `table_metadata`.
-
-        Load the values of `table_metadata`
-
-        Input
-        - dict
-
-        Expected Output
-        - None
-
-        Side Effects
-        - ``Table.from_dict`` is called.
-        - ``table_metadata.get_model_kwargs`` is called.
-        - ``_distribution`` is set to a instance of the indicated distribution.
-        """
-
     def test__update_metadata_existing_model_kargs(self):
         """Test ``_update_metadata`` if metadata already has model_kwargs.
 
@@ -90,6 +59,7 @@ class TestGaussianCopula:
         gaussian_copula = Mock(spec_set=GaussianCopula)
         gaussian_copula._metadata.get_model_kwargs.return_value = dict()
         gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
+        gaussian_copula._default_distribution = 'a_distribution'
         gaussian_copula.get_distributions.return_value = {
             'foo': 'copulas.univariate.gaussian.GaussianUnivariate'
         }
@@ -100,7 +70,8 @@ class TestGaussianCopula:
         # Asserts
         assert out is None
         expected_kwargs = {
-            'distribution': {'foo': 'copulas.univariate.gaussian.GaussianUnivariate'},
+            'field_distributions': {'foo': 'copulas.univariate.gaussian.GaussianUnivariate'},
+            'default_distribution': 'a_distribution',
             'categorical_transformer': 'a_categorical_transformer_value',
         }
         gaussian_copula._metadata.set_model_kwargs.assert_called_once_with(
@@ -137,7 +108,7 @@ class TestGaussianCopula:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._get_distribution.return_value = {'a': 'a_distribution'}
+        gaussian_copula._field_distributions = {'a': 'a_distribution'}
 
         # Run
         data = pd.DataFrame({
@@ -147,7 +118,7 @@ class TestGaussianCopula:
 
         # asserts
         assert out is None
-        assert gaussian_copula._distribution == {'a': 'a_distribution'}
+        assert gaussian_copula._field_distributions == {'a': 'a_distribution'}
         gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
@@ -311,7 +282,7 @@ class TestGaussianCopula:
         # Setup
         gaussian_copula = Mock(autospec=GaussianCopula)
         gaussian_copula._rebuild_covariance_matrix.return_value = [[0.4, 0.17], [0.17, 0.07]]
-        gaussian_copula._distribution = {'foo': 'GaussianUnivariate'}
+        gaussian_copula._field_distributions = {'foo': 'GaussianUnivariate'}
 
         # Run
         model_parameters = {
