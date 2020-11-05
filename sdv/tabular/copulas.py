@@ -173,10 +173,13 @@ class GaussianCopula(BaseTabularModel):
             return distribution
         if distribution in cls._DISTRIBUTIONS:
             return cls._DISTRIBUTIONS[distribution]
-        if '.' in distribution:
-            return distribution
 
-        raise ValueError('Invalid distribution specification {}'.format(distribution))
+        try:
+            copulas.get_instance(distribution)
+            return distribution
+        except (ValueError, ImportError):
+            error_message = 'Invalid distribution specification {}'.format(distribution)
+            raise ValueError(error_message) from None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
