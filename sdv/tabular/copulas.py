@@ -201,6 +201,9 @@ class GaussianCopula(BaseTabularModel):
                 if categorical_transformer is None:
                     categorical_transformer = model_kwargs['categorical_transformer']
 
+        if field_distributions and not isinstance(field_distributions, dict):
+            raise TypeError('field_distributions can only be None or a dict instance')
+
         self._field_distributions = {
             field: self._validate_distribution(distribution)
             for field, distribution in (field_distributions or {}).items()
