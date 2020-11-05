@@ -446,3 +446,64 @@ class TestGaussianCopula:
         gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
         assert gaussian_copula._num_rows == 0
         assert isinstance(gaussian_copula._model, GaussianMultivariate)
+
+    def test__validate_distribution_none(self):
+        """Test the ``_validate_distribution`` method if None is passed.
+
+        If None is passed, it should just return None.
+
+        Input:
+        - None
+
+        Output:
+        - None
+        """
+        out = GaussianCopula._validate_distribution(None)
+
+        assert out is None
+
+    def test__validate_distribution_not_str(self):
+        """Test the ``_validate_distribution`` method if something that is not an str is passed.
+
+        If the input is not an str, it should be returned without modification.
+
+        Input:
+        - a dummy object
+
+        Output:
+        - the same dummy object
+        """
+        dummy = object()
+        out = GaussianCopula._validate_distribution(dummy)
+
+        assert out is dummy
+
+    def test__validate_distribution_distribution_name(self):
+        """Test the ``_validate_distribution`` method passing a valid distribution name.
+
+        If the input is one keys from the ``_DISTRIBUTIONS`` dict, the value should be returned.
+
+        Input:
+        - A key from the ``_DISTRIBUTIONS`` dict.
+
+        Output:
+        - The corresponding value.
+        """
+        out = GaussianCopula._validate_distribution('gaussian_kde')
+
+        assert out is GaussianKDE
+
+    def test__validate_distribution_fqn(self):
+        """Test the ``_validate_distribution`` method passing a FQN distribution name.
+
+        If the input is an importable FQN of a Python object, return the input.
+
+        Input:
+        - A univariate distribution FQN.
+
+        Output:
+        - The corresponding class.
+        """
+        out = GaussianCopula._validate_distribution('copulas.univariate.GaussianUnivariate')
+
+        assert out == 'copulas.univariate.GaussianUnivariate'
