@@ -6,7 +6,7 @@
 
 __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
-__version__ = '0.4.6.dev1'
+__version__ = '0.4.6.dev2'
 
 from sdv import constraints, evaluation, metadata, relational, tabular
 from sdv.demo import get_available_demos, load_demo
