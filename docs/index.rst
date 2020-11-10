@@ -96,8 +96,8 @@ Explore SDV
    :target: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
 .. |PyPi Shield| image:: https://img.shields.io/pypi/v/SDV.svg
    :target: https://pypi.python.org/pypi/SDV
-.. |Travis CI Shield| image:: https://travis-ci.org/sdv-dev/SDV.svg?branch=master
-   :target: https://travis-ci.org/sdv-dev/SDV
+.. |Travis CI Shield| image:: https://travis-ci.com/sdv-dev/SDV.svg?branch=master
+   :target: https://travis-ci.com/sdv-dev/SDV
 .. |Coverage Status| image:: https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/sdv-dev/SDV
 .. |Downloads| image:: https://pepy.tech/badge/sdv
