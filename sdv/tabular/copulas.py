@@ -219,9 +219,10 @@ class GaussianCopula(BaseTabularModel):
             field_names=field_names,
             primary_key=primary_key,
             field_types=field_types,
+            field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
         )
 
     def get_distributions(self):
