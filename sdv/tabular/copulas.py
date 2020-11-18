@@ -108,6 +108,7 @@ class GaussianCopula(BaseTabularModel):
     """
 
     _distribution = None
+    _default_distribution = None
     _categorical_transformer = None
     _model = None
 
@@ -217,11 +218,12 @@ class GaussianCopula(BaseTabularModel):
 
         super().__init__(
             field_names=field_names,
-            primary_key=primary_key,
             field_types=field_types,
+            field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
+            primary_key=primary_key,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
         )
 
     def get_distributions(self):

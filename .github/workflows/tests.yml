@@ -30,7 +30,7 @@ jobs:
       name: Install graphviz - MacOS
       run: |
         brew install graphviz pandoc
-        echo '::set-env name=TOX_SKIP_ENV::test-devel'
+        echo "TOX_SKIP_ENV=test-devel" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |
