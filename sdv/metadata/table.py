@@ -469,6 +469,8 @@ class Table:
         """
         LOGGER.info('Fitting table %s metadata', self.name)
         self._field_names = self._field_names or list(data.columns)
+        self._dtypes = data[self._field_names].dtypes
+
         if not self._fields_metadata:
             self._fields_metadata = self._build_fields_metadata(data)
 
@@ -555,9 +557,7 @@ class Table:
         for constraint in self._constraints:
             reversed_data = constraint.reverse_transform(reversed_data)
 
-        fields = self._fields_metadata
-        for name, dtype in self.get_dtypes(ids=True).items():
-            field_metadata = fields[name]
+        for name, field_metadata in self._fields_metadata.items():
             field_type = field_metadata['type']
             if field_type == 'id' and name not in reversed_data:
                 field_data = self._make_ids(name, field_metadata, len(reversed_data))
@@ -567,7 +567,7 @@ class Table:
             else:
                 field_data = reversed_data[name]
 
-            reversed_data[name] = field_data.dropna().astype(dtype)
+            reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
 
         return reversed_data[self._field_names]
 

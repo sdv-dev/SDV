@@ -88,3 +88,25 @@ def test_gaussian_copula():
 
     assert 'model_kwargs' in metadata
     assert 'GaussianCopula' in metadata['model_kwargs']
+
+
+def test_integer_categoricals():
+    """Ensure integer categoricals are still sampled as integers.
+
+    The origin of this tests can be found in the github issue #194:
+    https://github.com/sdv-dev/SDV/issues/194
+    """
+    users = load_demo(metadata=False)['users']
+
+    field_types = {
+        'age': {
+            'type': 'categorical',
+        },
+    }
+    gc = GaussianCopula(field_types=field_types, categorical_transformer='categorical')
+    gc.fit(users)
+
+    sampled = gc.sample()
+
+    assert  users['age'].dtype == 'int'
+    assert  sampled['age'].dtype == 'int'
