@@ -1,9 +1,7 @@
 # Config file for automatic testing at travis-ci.org
+os: linux
 dist: bionic
 language: python
-os:
-  - linux
-  - osx
 python:
   - 3.6
   - 3.7
