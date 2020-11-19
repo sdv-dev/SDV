@@ -1,6 +1,4 @@
-import pandas as pd
-
-from sdv import SDV, Metadata, load_demo
+from sdv import SDV, load_demo
 
 
 def test_sdv():

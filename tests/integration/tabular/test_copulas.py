@@ -108,5 +108,5 @@ def test_integer_categoricals():
 
     sampled = gc.sample()
 
-    assert  users['age'].dtype == 'int'
-    assert  sampled['age'].dtype == 'int'
+    assert users['age'].dtype == 'int'
+    assert sampled['age'].dtype == 'int'
