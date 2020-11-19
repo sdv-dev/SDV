@@ -27,6 +27,7 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
+        field_distributions={'age': 'gamma'},
         default_distribution='gaussian_kde',
     )
     gc.fit(users)
@@ -39,6 +40,7 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
+        field_distributions={'age': 'gamma'},
         default_distribution='bounded',
     )
     gc.fit(users)

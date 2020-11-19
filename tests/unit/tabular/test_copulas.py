@@ -4,13 +4,125 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
-from copulas.univariate import GaussianKDE
+from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
 
 
 class TestGaussianCopula:
+
+    @patch('sdv.tabular.copulas.BaseTabularModel.__init__')
+    def test___init__no_metadata(self, init_mock):
+        """Test ``__init__`` without passing a table_metadata.
+
+        In this case, the parent __init__ will be called and the metadata
+        will be created based on the given arguments
+
+        Input:
+            - field_names
+            - field_types
+            - field_transformers
+            - anonymize_fields
+            - primary_key
+            - constraints
+            - field_distributions
+            - default_distribution
+            - categorical_transformer
+
+        Side Effects
+            - attributes are set to the right values
+            - super().__init__ is called with the right arguments
+        """
+        gc = GaussianCopula(
+            field_names=['a_field'],
+            field_types={
+                'a_field': {
+                    'type': 'categorical',
+                }
+            },
+            field_transformers={'a_field': 'categorical'},
+            anonymize_fields={'a_field': 'name'},
+            primary_key=['a_field'],
+            constraints=['a_constraint'],
+            field_distributions={'a_field': 'gaussian'},
+            default_distribution='bounded',
+            categorical_transformer='categorical_fuzzy'
+        )
+
+        assert gc._field_distributions == {'a_field': GaussianUnivariate}
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
+        assert gc._categorical_transformer == 'categorical_fuzzy'
+        assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
+
+        init_mock.assert_called_once_with(
+            field_names=['a_field'],
+            primary_key=['a_field'],
+            field_types={
+                'a_field': {
+                    'type': 'categorical',
+                }
+            },
+            field_transformers={'a_field': 'categorical'},
+            anonymize_fields={'a_field': 'name'},
+            constraints=['a_constraint'],
+            table_metadata=None,
+        )
+
+    @patch('sdv.tabular.copulas.Table.from_dict')
+    @patch('sdv.tabular.copulas.BaseTabularModel.__init__')
+    def test___init__metadata_dict(self, init_mock, from_dict_mock):
+        """Test ``__init__`` without passing a table_metadata dict.
+
+        In this case, metadata will be loaded from the dict and passed
+        to the parent.
+
+        Input:
+            - table_metadata
+            - field_distributions
+            - default_distribution
+            - categorical_transformer
+
+        Side Effects
+            - attributes are set to the right values
+            - super().__init__ is called with the loaded metadata
+        """
+        table_metadata = {
+            'fields': {
+                'a_field': {
+                    'type': 'categorical'
+                },
+            },
+            'model_kwargs': {
+                'GaussianCopula': {
+                    'field_distributions': {
+                        'a_field': 'gaussian',
+                    },
+                    'categorical_transformer': 'categorical_fuzzy',
+                }
+            }
+        }
+        gc = GaussianCopula(
+            field_distributions={'a_field': 'gaussian'},
+            default_distribution='bounded',
+            categorical_transformer='categorical_fuzzy',
+            table_metadata=table_metadata,
+        )
+
+        assert gc._field_distributions == {'a_field': GaussianUnivariate}
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
+        assert gc._categorical_transformer == 'categorical_fuzzy'
+        assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
+
+        init_mock.assert_called_once_with(
+            field_names=None,
+            primary_key=None,
+            field_types=None,
+            field_transformers=None,
+            anonymize_fields=None,
+            constraints=None,
+            table_metadata=from_dict_mock.return_value,
+        )
 
     def test__update_metadata_existing_model_kargs(self):
         """Test ``_update_metadata`` if metadata already has model_kwargs.
