@@ -9,7 +9,7 @@ python:
 env:
   - TOXENV=lint
   - TOXENV=readme
-  - TOXENV=unit
+  - TOXENV=pytest
   - TOXENV=minimum
   - TOXENV=tutorials
 

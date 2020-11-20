@@ -106,7 +106,8 @@ check-dependencies: ## test if there are any broken dependencies
 	pip check
 
 .PHONY: lint
-lint: check-dependencies lint-sdv lint-tests  ## Run all code style and static testing validations
+lint: ## check style with flake8 and isort
+	invoke lint
 
 .PHONY: fix-lint
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
@@ -119,25 +120,18 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 
 .PHONY: test-unit
 test-unit: ## run tests quickly with the default Python
-	python -m pytest --reruns 5 --cov=sdv
+	invoke pytest
 
 .PHONY: test-readme
 test-readme: ## run the readme snippets
-	rm -rf tests/readme_test && mkdir tests/readme_test
-	cd tests/readme_test && rundoc run --single-session python3 -t python3 ../../README.md
-	rm -rf tests/readme_test
+	invoke readme
 
 .PHONY: test-tutorials
 test-tutorials: ## run the tutorial notebooks
-	find tutorials -path "*/.ipynb_checkpoints" -prune -false -o -name "*.ipynb" | \
-		xargs -n1 -I{} sh -c \
-		"jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 --to=html --stdout {} > /dev/null || exit 255"
+	invoke tutorials
 
 .PHONY: test
 test: test-unit test-readme test-tutorials ## test everything that needs test dependencies
-
-.PHONY: test-minimum
-test-minimum: install-minimum check-dependencies test-unit ## run tests using the minimum supported dependencies
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
