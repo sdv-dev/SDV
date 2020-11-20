@@ -28,7 +28,7 @@ class SDV:
     DEFAULT_MODEL_KWARGS = {
         'model': GaussianCopula,
         'model_kwargs': {
-            'distribution': 'gaussian'
+            'default_distribution': 'gaussian',
         }
     }
 

@@ -84,7 +84,7 @@ MINIMUM := $(shell sed -n '/install_requires = \[/,/]/p' setup.py | grep -v -e '
 
 .PHONY: install-minimum
 install-minimum: ## install the minimum supported versions of the package dependencies
-	echo pip install $(MINIMUM)
+	pip install $(MINIMUM)
 
 
 # LINT TARGETS
@@ -129,8 +129,9 @@ test-readme: ## run the readme snippets
 
 .PHONY: test-tutorials
 test-tutorials: ## run the tutorial notebooks
-	find tutorials -path "*/.ipynb_checkpoints" -prune -false -o -name "*.ipynb" -exec \
-		jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 --to=html --stdout {} > /dev/null \;
+	find tutorials -path "*/.ipynb_checkpoints" -prune -false -o -name "*.ipynb" | \
+		xargs -n1 -I{} sh -c \
+		"jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 --to=html --stdout {} > /dev/null || exit 255"
 
 .PHONY: test
 test: test-unit test-readme test-tutorials ## test everything that needs test dependencies

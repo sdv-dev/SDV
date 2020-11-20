@@ -1,4 +1,5 @@
 # Config file for automatic testing at travis-ci.org
+os: linux
 dist: bionic
 language: python
 python:
@@ -20,4 +21,4 @@ install:
 
 after_success: codecov
 
-scropt: travis_wait 60 tox
+script: travis_wait 60 tox

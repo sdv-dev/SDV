@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
-from copulas.univariate import GaussianKDE
+from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
@@ -26,7 +26,7 @@ class TestGaussianCopula:
             - anonymize_fields
             - primary_key
             - constraints
-            - distribution
+            - field_distributions
             - default_distribution
             - categorical_transformer
 
@@ -45,13 +45,13 @@ class TestGaussianCopula:
             anonymize_fields={'a_field': 'name'},
             primary_key=['a_field'],
             constraints=['a_constraint'],
-            distribution={'a_field': 'gaussian'},
+            field_distributions={'a_field': 'gaussian'},
             default_distribution='bounded',
             categorical_transformer='categorical_fuzzy'
         )
 
-        assert gc._distribution == {'a_field': 'gaussian'}
-        assert gc._default_distribution == 'bounded'
+        assert gc._field_distributions == {'a_field': GaussianUnivariate}
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -79,7 +79,7 @@ class TestGaussianCopula:
 
         Input:
             - table_metadata
-            - distribution
+            - field_distributions
             - default_distribution
             - categorical_transformer
 
@@ -95,7 +95,7 @@ class TestGaussianCopula:
             },
             'model_kwargs': {
                 'GaussianCopula': {
-                    'distribution': {
+                    'field_distributions': {
                         'a_field': 'gaussian',
                     },
                     'categorical_transformer': 'categorical_fuzzy',
@@ -103,12 +103,14 @@ class TestGaussianCopula:
             }
         }
         gc = GaussianCopula(
-            distribution={'a_field': 'gaussian'},
+            field_distributions={'a_field': 'gaussian'},
+            default_distribution='bounded',
             categorical_transformer='categorical_fuzzy',
             table_metadata=table_metadata,
         )
 
-        assert gc._distribution == {'a_field': 'gaussian'}
+        assert gc._field_distributions == {'a_field': GaussianUnivariate}
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -169,6 +171,7 @@ class TestGaussianCopula:
         gaussian_copula = Mock(spec_set=GaussianCopula)
         gaussian_copula._metadata.get_model_kwargs.return_value = dict()
         gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
+        gaussian_copula._default_distribution = 'a_distribution'
         gaussian_copula.get_distributions.return_value = {
             'foo': 'copulas.univariate.gaussian.GaussianUnivariate'
         }
@@ -179,7 +182,8 @@ class TestGaussianCopula:
         # Asserts
         assert out is None
         expected_kwargs = {
-            'distribution': {'foo': 'copulas.univariate.gaussian.GaussianUnivariate'},
+            'field_distributions': {'foo': 'copulas.univariate.gaussian.GaussianUnivariate'},
+            'default_distribution': 'a_distribution',
             'categorical_transformer': 'a_categorical_transformer_value',
         }
         gaussian_copula._metadata.set_model_kwargs.assert_called_once_with(
@@ -216,7 +220,7 @@ class TestGaussianCopula:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._get_distribution.return_value = {'a': 'a_distribution'}
+        gaussian_copula._field_distributions = {'a': 'a_distribution'}
 
         # Run
         data = pd.DataFrame({
@@ -226,7 +230,7 @@ class TestGaussianCopula:
 
         # asserts
         assert out is None
-        assert gaussian_copula._distribution == {'a': 'a_distribution'}
+        assert gaussian_copula._field_distributions == {'a': 'a_distribution'}
         gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
@@ -390,7 +394,7 @@ class TestGaussianCopula:
         # Setup
         gaussian_copula = Mock(autospec=GaussianCopula)
         gaussian_copula._rebuild_covariance_matrix.return_value = [[0.4, 0.17], [0.17, 0.07]]
-        gaussian_copula._distribution = {'foo': 'GaussianUnivariate'}
+        gaussian_copula._field_distributions = {'foo': 'GaussianUnivariate'}
 
         # Run
         model_parameters = {
@@ -554,3 +558,64 @@ class TestGaussianCopula:
         gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
         assert gaussian_copula._num_rows == 0
         assert isinstance(gaussian_copula._model, GaussianMultivariate)
+
+    def test__validate_distribution_none(self):
+        """Test the ``_validate_distribution`` method if None is passed.
+
+        If None is passed, it should just return None.
+
+        Input:
+        - None
+
+        Output:
+        - None
+        """
+        out = GaussianCopula._validate_distribution(None)
+
+        assert out is None
+
+    def test__validate_distribution_not_str(self):
+        """Test the ``_validate_distribution`` method if something that is not an str is passed.
+
+        If the input is not an str, it should be returned without modification.
+
+        Input:
+        - a dummy object
+
+        Output:
+        - the same dummy object
+        """
+        dummy = object()
+        out = GaussianCopula._validate_distribution(dummy)
+
+        assert out is dummy
+
+    def test__validate_distribution_distribution_name(self):
+        """Test the ``_validate_distribution`` method passing a valid distribution name.
+
+        If the input is one keys from the ``_DISTRIBUTIONS`` dict, the value should be returned.
+
+        Input:
+        - A key from the ``_DISTRIBUTIONS`` dict.
+
+        Output:
+        - The corresponding value.
+        """
+        out = GaussianCopula._validate_distribution('gaussian_kde')
+
+        assert out is GaussianKDE
+
+    def test__validate_distribution_fqn(self):
+        """Test the ``_validate_distribution`` method passing a FQN distribution name.
+
+        If the input is an importable FQN of a Python object, return the input.
+
+        Input:
+        - A univariate distribution FQN.
+
+        Output:
+        - The corresponding class.
+        """
+        out = GaussianCopula._validate_distribution('copulas.univariate.GaussianUnivariate')
+
+        assert out == 'copulas.univariate.GaussianUnivariate'

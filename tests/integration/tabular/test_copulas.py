@@ -27,7 +27,8 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
-        distribution='gaussian_kde',
+        field_distributions={'age': 'gamma'},
+        default_distribution='gaussian_kde',
     )
     gc.fit(users)
     with pytest.raises(NonParametricError):
@@ -39,7 +40,8 @@ def test_gaussian_copula():
         field_types=field_types,
         primary_key='user_id',
         anonymize_fields=anonymize_fields,
-        distribution='bounded',
+        field_distributions={'age': 'gamma'},
+        default_distribution='bounded',
     )
     gc.fit(users)
 
