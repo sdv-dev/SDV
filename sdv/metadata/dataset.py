@@ -37,9 +37,9 @@ def _parse_dtypes(data, table_meta):
             datetime_format = field.get('format')
             data[name] = pd.to_datetime(data[name], format=datetime_format, exact=False)
         elif field_type == 'numerical' and field.get('subtype') == 'integer':
-            data[name] = data[name].dropna().astype(int)
+            data[name] = data[name].dropna().astype(np.int64)
         elif field_type == 'id' and field.get('subtype', 'integer') == 'integer':
-            data[name] = data[name].dropna().astype(int)
+            data[name] = data[name].dropna().astype(np.int64)
 
     return data
 

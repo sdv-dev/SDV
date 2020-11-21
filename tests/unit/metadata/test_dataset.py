@@ -2,7 +2,6 @@ import os
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -73,8 +72,8 @@ def test__parse_dtypes():
     # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
-        'b_field': np.array([7, 14], dtype=np.int32),
-        'c_field': np.array([1, 2], dtype=np.int32),
+        'b_field': [7, 14],
+        'c_field': [1, 2],
         'd_field': ['other', 'data']
     })
     pd.testing.assert_frame_equal(result, expected)
