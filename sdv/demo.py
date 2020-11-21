@@ -96,6 +96,16 @@ DATA_URL = 'https://sdv-datasets.s3.amazonaws.com/{}.zip'
 DATASETS_URL = 'https://sdv-datasets.s3.amazonaws.com/datasets.csv'
 
 
+def _dtypes64(table):
+    for name, column in table.items():
+        if column.dtype == np.int32:
+            table[name] = column.astype('int64')
+        elif column.dtype == np.float32:
+            table[name] = column.astype('float64')
+
+    return table
+
+
 def _download(dataset_name, data_path):
     url = DATA_URL.format(dataset_name)
 
@@ -146,9 +156,9 @@ def _load_relational_dummy():
     transactions['timestamp'] = pd.to_datetime(transactions['timestamp'])
 
     tables = {
-        'users': users,
-        'sessions': sessions,
-        'transactions': transactions
+        'users': _dtypes64(users),
+        'sessions': _dtypes64(sessions),
+        'transactions': _dtypes64(transactions),
     }
 
     return Metadata(DEMO_METADATA), tables
@@ -157,7 +167,10 @@ def _load_relational_dummy():
 def _load_demo_dataset(dataset_name, data_path):
     dataset_path = _get_dataset_path(dataset_name, data_path)
     meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
-    tables = meta.load_tables()
+    tables = {
+        name: _dtypes64(table)
+        for name, table in meta.load_tables().items()
+    }
     return meta, tables
 
 
@@ -254,14 +267,14 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
         if table_name is None:
             table_name = meta.get_tables()[0]
 
-        table = tables[table_name]
+        table = _dtypes64(tables[table_name])
 
         if metadata:
             return Table.from_dict(meta.get_table_meta(table_name)), table
 
         return table
 
-    table = _load_tabular_dummy()
+    table = _dtypes64(_load_tabular_dummy())
     if metadata:
         table_meta = Table.from_dict({
             'fields': {

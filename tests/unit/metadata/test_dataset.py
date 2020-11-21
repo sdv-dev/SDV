@@ -1,6 +1,8 @@
+import os
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -71,8 +73,8 @@ def test__parse_dtypes():
     # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
-        'b_field': [7, 14],
-        'c_field': [1, 2],
+        'b_field': np.array([7, 14], dtype=np.int32),
+        'c_field': np.array([1, 2], dtype=np.int32),
         'd_field': ['other', 'data']
     })
     pd.testing.assert_frame_equal(result, expected)
@@ -87,13 +89,13 @@ def test__load_csv(rcdtypes_mock, read_csv_mock, pdtypes_mock):
         'path': 'filename.csv',
         'other': 'stuff'
     }
-    result = _load_csv('a/path', table_meta)
+    result = _load_csv(os.path.join('a', 'path'), table_meta)
 
     # Asserts
     assert result == pdtypes_mock.return_value
     rcdtypes_mock.assert_called_once_with(table_meta)
     dtypes = rcdtypes_mock.return_value
-    read_csv_mock.assert_called_once_with('a/path/filename.csv', dtype=dtypes)
+    read_csv_mock.assert_called_once_with(os.path.join('a', 'path', 'filename.csv'), dtype=dtypes)
     pdtypes_mock.assert_called_once_with(read_csv_mock.return_value, table_meta)
 
 
