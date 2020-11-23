@@ -81,9 +81,8 @@ our Slack Workspace!
 
 ## Requirements
 
-**SDV** has been tested and is supported on **GNU/Linux** and **macOS** systems running [Python 3.6,
-3.7 and 3.8](https://www.python.org/downloads). Unfortunately, SDV **is not fully supported on
-Windows OSs**, but it can be run successfully on [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+**SDV** has been tested and is supported on **GNU/Linux**, **macOS** and **Windows** systems running
+[Python 3.6, 3.7 and 3.8](https://www.python.org/downloads).
 
 Also, although it is not strictly required, the usage of a
 [virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid

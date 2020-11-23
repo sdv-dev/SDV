@@ -17,9 +17,9 @@ install_requires = [
     'numpy>=1.17.4,<2',
     'pandas>=1.1,<2',
     'graphviz>=0.13.2,<1',
-    'copulas>=0.3.2,<0.4',
-    'rdt>=0.2.7,<0.3',
-    'sdmetrics>=0.0.2,<0.1.0',
+    'copulas>=0.3.3,<0.4',
+    'rdt>=0.2.8,<0.3',
+    'sdmetrics>=0.0.3,<0.1.0',
     'deepecho==0.1.3',
 ]
 
@@ -73,7 +73,8 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
-    'importlib-metadata<2.0.0,>=0.12'
+    # 'importlib-metadata<2.0.0,>=0.12'
+    'invoke'
 ]
 
 setup(

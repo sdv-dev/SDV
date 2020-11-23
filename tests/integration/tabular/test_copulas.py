@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from sdv.demo import load_demo
@@ -110,5 +111,5 @@ def test_integer_categoricals():
 
     sampled = gc.sample()
 
-    assert users['age'].dtype == 'int'
-    assert sampled['age'].dtype == 'int'
+    assert users['age'].dtype == np.int64
+    assert sampled['age'].dtype == np.int64
