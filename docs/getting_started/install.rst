@@ -8,9 +8,8 @@ Installation
 Requirements
 ------------
 
-**SDV** has been tested and is supported on **GNU/Linux** and **macOS** systems running `Python 3.6,
-3.7 and 3.8`_ installed. Unfortunately, SDV **is not fully supported on Windows OSs**, but it can
-be run successfully on `WSL`_.
+**SDV** has been tested and is supported on **GNU/Linux**, **macOS** and **Windows** systems running
+`Python 3.6, 3.7 and 3.8`_ installed.
 
 Also, although it is not strictly required, the usage of a `virtualenv`_ is highly recommended in
 order to avoid having conflicts with other software installed in the system where **SDV** is run.
