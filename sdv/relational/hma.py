@@ -32,11 +32,8 @@ class HMA1(BaseRelationalModel):
 
     DEFAULT_MODEL = GaussianCopula
     DEFAULT_MODEL_KWARGS = {
-        'model': GaussianCopula,
-        'model_kwargs': {
-            'default_distribution': 'gaussian',
-            'categorical_transformer': 'categorical_fuzzy',
-        }
+        'default_distribution': 'gaussian',
+        'categorical_transformer': 'categorical_fuzzy',
     }
 
     def __init__(self, metadata, root_path=None, model=None, model_kwargs=None):
