@@ -631,8 +631,9 @@ class Table:
                 Dict metadata to load.
         """
         instance = cls()
-        instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
-        instance._field_names = list(instance._fields_metadata.keys())
+        fields = metadata_dict['fields']
+        instance._fields_metadata = copy.deepcopy(fields)
+        instance._field_names = list(fields.keys()) if fields else None
         instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
         instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
         instance._primary_key = metadata_dict.get('primary_key')

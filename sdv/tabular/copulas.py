@@ -212,9 +212,8 @@ class GaussianCopula(BaseTabularModel):
             self._validate_distribution(default_distribution) or self._DEFAULT_DISTRIBUTION
         )
 
-        categorical_transformer = categorical_transformer or self._DEFAULT_TRANSFORMER
-        self._categorical_transformer = categorical_transformer
-        self._DTYPE_TRANSFORMERS = {'O': categorical_transformer}
+        self._categorical_transformer = categorical_transformer or self._DEFAULT_TRANSFORMER
+        self._DTYPE_TRANSFORMERS = {'O': self._categorical_transformer}
 
         super().__init__(
             field_names=field_names,
@@ -225,6 +224,12 @@ class GaussianCopula(BaseTabularModel):
             constraints=constraints,
             table_metadata=table_metadata,
         )
+
+        self._metadata.set_model_kwargs(self.__class__.__name__, {
+            'field_distributions': field_distributions,
+            'default_distribution': default_distribution,
+            'categorical_transformer': categorical_transformer,
+        })
 
     def get_distributions(self):
         """Get the marginal distributions used by this copula.
@@ -252,14 +257,12 @@ class GaussianCopula(BaseTabularModel):
             - categorical_transformer
         """
         class_name = self.__class__.__name__
-        model_kwargs = self._metadata.get_model_kwargs(class_name)
-        if not model_kwargs:
-            distributions = self.get_distributions()
-            self._metadata.set_model_kwargs(class_name, {
-                'field_distributions': distributions,
-                'default_distribution': self._default_distribution,
-                'categorical_transformer': self._categorical_transformer,
-            })
+        distributions = self.get_distributions()
+        self._metadata.set_model_kwargs(class_name, {
+            'field_distributions': distributions,
+            'default_distribution': self._default_distribution,
+            'categorical_transformer': self._categorical_transformer,
+        })
 
     def _fit(self, table_data):
         """Fit the model to the table.
