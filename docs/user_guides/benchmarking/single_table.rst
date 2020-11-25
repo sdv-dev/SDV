@@ -7,7 +7,7 @@ The benchmarking of synthetic data generators for single table datasets is
 done using the `Synthetic Data Gym (SDGym) <https://github.com/sdv-dev/SDGym>`__,
 a library from the Synthetic Data Vault  Project that offers a collection of both
 real and simulated datasets to work on, *Machine Learning Efficacy* and *Bayesian
-Likelihood* based metrics and a number of classical and novel synehtic data generators
+Likelihood* based metrics and a number of classical and novel synthetic data generators
 to use as baselines to compare against.
 
 .. note::

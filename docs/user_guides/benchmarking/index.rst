@@ -1,6 +1,6 @@
 .. _benchmarking:
 
-Benchmakring
+Benchmarking
 ============
 
 The Synthetic Data Vault offers a collection of benchmarking tools that evaluate
