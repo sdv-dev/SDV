@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.demo &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.demo &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -165,7 +165,7 @@
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
 <span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -258,6 +258,16 @@
 <span class="n">DATASETS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://sdv-datasets.s3.amazonaws.com/datasets.csv&#39;</span>
 
 
+<span class="k">def</span> <span class="nf">_dtypes64</span><span class="p">(</span><span class="n">table</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">:</span>
+            <span class="n">table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int64&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">column</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span>
+            <span class="n">table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">table</span>
+
+
 <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
     <span class="n">url</span> <span class="o">=</span> <span class="n">DATA_URL</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
 
@@ -308,9 +318,9 @@
     <span class="n">transactions</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">transactions</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span>
 
     <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;users&#39;</span><span class="p">:</span> <span class="n">users</span><span class="p">,</span>
-        <span class="s1">&#39;sessions&#39;</span><span class="p">:</span> <span class="n">sessions</span><span class="p">,</span>
-        <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">transactions</span>
+        <span class="s1">&#39;users&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">users</span><span class="p">),</span>
+        <span class="s1">&#39;sessions&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">sessions</span><span class="p">),</span>
+        <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">transactions</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
@@ -319,7 +329,10 @@
 <span class="k">def</span> <span class="nf">_load_demo_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
     <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">_get_dataset_path</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">))</span>
-    <span class="n">tables</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
+    <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
     <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">tables</span>
 
 
@@ -416,14 +429,14 @@
         <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">table_name</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="n">table</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">tables</span><span class="p">[</span><span class="n">table_name</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Table</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)),</span> <span class="n">table</span>
 
         <span class="k">return</span> <span class="n">table</span>
 
-    <span class="n">table</span> <span class="o">=</span> <span class="n">_load_tabular_dummy</span><span class="p">()</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">_load_tabular_dummy</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
         <span class="n">table_meta</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span>
             <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">{</span>

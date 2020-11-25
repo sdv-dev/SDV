@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.sdv &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.sdv &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -182,7 +182,8 @@
 <span class="sd">            Class of the model to use. Defaults to ``sdv.relational.HMA1``.</span>
 <span class="sd">        model_kwargs (dict):</span>
 <span class="sd">            Keyword arguments to pass to the model. If no ``model`` is given,</span>
-<span class="sd">            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution.</span>
+<span class="sd">            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution</span>
+<span class="sd">            and ``categorical_fuzzy`` categorical transformer.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_model_instance</span> <span class="o">=</span> <span class="kc">None</span>
@@ -190,7 +191,8 @@
     <span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">GaussianCopula</span><span class="p">,</span>
         <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span>
+            <span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical_fuzzy&#39;</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="p">}</span>
 

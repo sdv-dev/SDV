@@ -44,7 +44,7 @@ that applied for placements during the year 2020.
     from sdv.demo import load_tabular_demo
 
     data = load_tabular_demo('student_placements')
-    data.head().T
+    data.head()
 
 As you can see, this table contains information about students which
 includes, among other things:
@@ -197,7 +197,6 @@ that there are some values that appear more than once:
 .. ipython:: python
     :okwarning:
 
-    new_data.student_id.value_counts().max()
     new_data[new_data.student_id == new_data.student_id.value_counts().index[0]]
 
 This happens because the model was not notified at any point about the
@@ -214,6 +213,7 @@ indicating the name of the column that is the index of the table.
     )
     model.fit(data)
     new_data = model.sample(200)
+    new_data.head()
 
 As a result, the model will learn that this column must be unique and
 generate a unique sequence of values for the column:
@@ -221,7 +221,6 @@ generate a unique sequence of values for the column:
 .. ipython:: python
     :okwarning:
 
-    new_data.head()
     new_data.student_id.value_counts().max()
 
 
@@ -250,7 +249,7 @@ of it that do not contain any of the PII fields.
     :okwarning:
 
     data_pii = load_tabular_demo('student_placements_pii')
-    data_pii.head().T
+    data_pii.head()
 
 
 If we use our tabular model on this new data we will see how the
@@ -266,6 +265,14 @@ students:
     model.fit(data_pii)
     new_data_pii = model.sample(200)
     new_data_pii.head()
+
+
+More specifically, we can see how all the addresses that have been generated
+actually come from the original dataset:
+
+.. ipython:: python
+    :okwarning:
+
     new_data_pii.address.isin(data_pii.address).sum()
 
 
@@ -318,7 +325,16 @@ that we learned.
 
     new_data_pii = model.sample(200)
     new_data_pii.head()
-    new_data_pii.address.isin(data_pii.address).sum()
+
+
+Which means that none of the original addresses can be found in the sampled
+data:
+
+.. ipython:: python
+    :okwarning:
+
+    data_pii.address.isin(new_data_pii.address).sum()
+
 
 Advanced Usage
 --------------
@@ -350,7 +366,7 @@ using the ``sample`` method, it did:
 
 5. Sample rows from the CTGAN model.
 6. Revert the sampled values by computing their standard normal CDF
-   and then applyting the inverse CDF of their marginal distributions.
+   and then applying the inverse CDF of their marginal distributions.
 7. Revert the RDT transformations to go back to the original data
    format.
 
@@ -464,7 +480,7 @@ Possible values for the distribution argument are:
 -  ``gamma``: Use a Gamma distribution.
 -  ``beta``: Use a Beta distribution.
 -  ``student_t``: Use a Student T distribution.
--  ``gussian_kde``: Use a GaussianKDE distribution. This model is
+-  ``gaussian_kde``: Use a GaussianKDE distribution. This model is
    non-parametric, so using this will make ``get_parameters`` unusable.
 -  ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
@@ -607,7 +623,6 @@ Finally, we are ready to generate new data and evaluate the results.
     :okwarning:
 
     new_data = model.sample(len(data))
-    new_data.head().T
     evaluate(new_data, data)
 
 

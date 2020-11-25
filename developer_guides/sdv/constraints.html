@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Constraints &#8212; SDV 0.4.5 documentation</title>
+    <title>Constraints &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -202,7 +202,7 @@
                 
   <div class="section" id="constraints">
 <span id="developer-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
-<p>The Constraints are implemented in the subpackage <a class="reference internal" href="../../api_reference/constraints.html#sdv-constraints"><span class="std std-ref">sdv.constraints</span></a>.</p>
+<p>The Constraints are implemented in the sub-package <a class="reference internal" href="../../api_reference/constraints.html#sdv-constraints"><span class="std std-ref">sdv.constraints</span></a>.</p>
 <div class="section" id="base-constraint">
 <h2>Base Constraint<a class="headerlink" href="#base-constraint" title="Permalink to this headline">¶</a></h2>
 <p>All the Constraints in SDV inherit from the <code class="docutils literal notranslate"><span class="pre">sdv.constraint.base.Constraint</span></code> class.</p>
@@ -244,7 +244,7 @@ calling the <code class="docutils literal notranslate"><span class="pre">super()
 <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> methods.</p>
 <p>Let us think, for example, of the following scenario: Suppose we have a dataset about invertebrate
 and that there is a column that indicates their number of legs. Insects, which are one of the most
-common invertebrae, always have 6 legs, but there are other families which have none, or just 2,
+common invertebrate, always have 6 legs, but there are other families which have none, or just 2,
 and some even extend to hundreds of legs. But this value has the following properties:</p>
 <ul class="simple">
 <li><p>It is always positive.</p></li>
@@ -283,7 +283,7 @@ so we know which column we need to validate.</p>
 </div>
 <p>With the current implementation modeling would happen as usual. However, during sampling,
 all the rows would be validated using the <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> method that we implemented, and invalid
-rows would be rejected and resampled until the number of desired rows has been generated.</p>
+rows would be rejected and re-sampled until the number of desired rows has been generated.</p>
 <p>In this case this might be acceptable because each row only has a 50% chance of being invalid,
 which means that, on average, we would need the model to sample only 2 times the number of rows
 that we need in order to get enough valid rows. However, in some other cases this can take a long

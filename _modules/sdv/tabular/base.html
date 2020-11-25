@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -230,6 +230,7 @@
                 <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
                 <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
                 <span class="n">field_types</span><span class="o">=</span><span class="n">field_types</span><span class="p">,</span>
+                <span class="n">field_transformers</span><span class="o">=</span><span class="n">field_transformers</span><span class="p">,</span>
                 <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
                 <span class="n">dtype_transformers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span><span class="p">,</span>
@@ -243,6 +244,8 @@
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">table_metadata</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">)</span>
+
+            <span class="n">table_metadata</span><span class="o">.</span><span class="n">_dtype_transformers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">table_metadata</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_fitted</span> <span class="o">=</span> <span class="n">table_metadata</span><span class="o">.</span><span class="n">fitted</span>

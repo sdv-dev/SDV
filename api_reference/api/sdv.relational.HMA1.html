@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.HMA1 &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.relational.HMA1 &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -233,7 +233,7 @@
 <h1>sdv.relational.HMA1<a class="headerlink" href="#sdv-relational-hma1" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.relational.HMA1">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.relational.</code><code class="sig-name descname">HMA1</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">model=&lt;class 'sdv.tabular.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.relational.</code><code class="sig-name descname">HMA1</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">metadata</span></em>, <em class="sig-param"><span class="n">root_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hierarchical Modeling Alrogirhtm One.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -244,13 +244,15 @@ a path, the metadata location is used. If <code class="docutils literal notransl
 metadata is a dict, the current working directory is used.</p></li>
 <li><p><strong>model</strong> (<em>type</em>) – Class of the <code class="docutils literal notranslate"><span class="pre">copula</span></code> to use. Defaults to
 <code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
-<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. If the default model is used, this
+defaults to using a <code class="docutils literal notranslate"><span class="pre">gaussian</span></code> distribution and a <code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code>
+transformer.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.relational.HMA1.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">metadata</em>, <em class="sig-param">root_path=None</em>, <em class="sig-param">model=&lt;class 'sdv.tabular.copulas.GaussianCopula'&gt;</em>, <em class="sig-param">model_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">metadata</span></em>, <em class="sig-param"><span class="n">root_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_kwargs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/relational/hma.html#HMA1.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.relational.HMA1.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -285,7 +287,10 @@ metadata is a dict, the current working directory is used.</p></li>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">metadata</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_MODEL_KWARGS</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">metadata</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

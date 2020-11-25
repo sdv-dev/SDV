@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -172,16 +172,25 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_qualified_name</span><span class="p">(</span><span class="n">_object</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_get_qualified_name</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the Fully Qualified Name from an instance or class.&quot;&quot;&quot;</span>
-    <span class="n">module</span> <span class="o">=</span> <span class="n">_object</span><span class="o">.</span><span class="vm">__module__</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_object</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">):</span>
-        <span class="n">_class</span> <span class="o">=</span> <span class="n">_object</span><span class="o">.</span><span class="vm">__name__</span>
-
+    <span class="n">module</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">):</span>
+        <span class="n">obj_name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">_class</span> <span class="o">=</span> <span class="n">_object</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">obj_name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 
-    <span class="k">return</span> <span class="n">module</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">_class</span>
+    <span class="k">return</span> <span class="n">module</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">obj_name</span>
+
+
+<span class="k">def</span> <span class="nf">get_subclasses</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursively find subclasses for the current class object.&quot;&quot;&quot;</span>
+    <span class="n">subclasses</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+        <span class="n">subclasses</span><span class="p">[</span><span class="n">subclass</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">subclass</span>
+        <span class="n">subclasses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_subclasses</span><span class="p">(</span><span class="n">subclass</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">subclasses</span>
 
 
 <span class="k">def</span> <span class="nf">import_object</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
@@ -237,7 +246,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        handling_strategy (str):</span>
 <span class="sd">            How this Constraint should be handled, which can be ``transform``,</span>
-<span class="sd">            ``reject_sampling`` or ``all``. Defaults to ``transform``.</span>
+<span class="sd">            ``reject_sampling`` or ``all``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
@@ -341,16 +350,6 @@
 
         <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span></div>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_get_subclasses</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Recursively find subclasses for the current class object.&quot;&quot;&quot;</span>
-        <span class="n">subclasses</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
-            <span class="n">subclasses</span><span class="p">[</span><span class="n">subclass</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">subclass</span>
-            <span class="n">subclasses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">subclass</span><span class="o">.</span><span class="n">_get_subclasses</span><span class="p">())</span>
-
-        <span class="k">return</span> <span class="n">subclasses</span>
-
 <div class="viewcode-block" id="Constraint.from_dict"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.from_dict.html#sdv.constraints.Constraint.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">constraint_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Build a Constraint object from a dict.</span>
@@ -366,7 +365,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">constraint_dict</span> <span class="o">=</span> <span class="n">constraint_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">constraint_class</span> <span class="o">=</span> <span class="n">constraint_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;constraint&#39;</span><span class="p">)</span>
-        <span class="n">subclasses</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_subclasses</span><span class="p">()</span>
+        <span class="n">subclasses</span> <span class="o">=</span> <span class="n">get_subclasses</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint_class</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">constraint_class</span><span class="p">:</span>
                 <span class="n">constraint_class</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">constraint_class</span><span class="p">)</span>
@@ -379,7 +378,7 @@
         <span class="sd">&quot;&quot;&quot;Return a dict representation of this Constraint.</span>
 
 <span class="sd">        The dictionary will contain the Qualified Name of the constraint</span>
-<span class="sd">        class in the key ``constriant``, as well as any other arguments</span>
+<span class="sd">        class in the key ``constraint``, as well as any other arguments</span>
 <span class="sd">        that were passed to the constructor when the instance was created.</span>
 
 <span class="sd">        Returns:</span>

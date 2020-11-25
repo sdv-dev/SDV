@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -171,7 +171,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
-<span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span>
+<span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span><span class="p">,</span> <span class="n">NonParametricError</span>
 <span class="kn">from</span> <span class="nn">sdv.tabular.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">check_matrix_symmetric_positive_definite</span><span class="p">,</span> <span class="n">flatten_dict</span><span class="p">,</span> <span class="n">make_positive_definite</span><span class="p">,</span> <span class="n">square_matrix</span><span class="p">,</span>
     <span class="n">unflatten_dict</span><span class="p">)</span>
@@ -219,8 +219,10 @@
 <span class="sd">            exception will be raised.</span>
 <span class="sd">            If not given at all, it will be built using the other</span>
 <span class="sd">            arguments or learned from the data.</span>
-<span class="sd">        field_distributions (copulas.univariate.Univariate or str):</span>
-<span class="sd">            Copulas univariate distribution to use. To choose from:</span>
+<span class="sd">        field_distributions (dict):</span>
+<span class="sd">            Dictionary that maps field names from the table that is being modeled with</span>
+<span class="sd">            the distribution that needs to be used. The distributions can be passed as either</span>
+<span class="sd">            a ``copulas.univariate`` instance or as one of the following values:</span>
 
 <span class="sd">                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.</span>
 <span class="sd">                  This may result in non-parametric models being used.</span>
@@ -242,17 +244,16 @@
 <span class="sd">                * ``gamma``: Use a Gamma distribution.</span>
 <span class="sd">                * ``beta``: Use a Beta distribution.</span>
 <span class="sd">                * ``student_t``: Use a Student T distribution.</span>
-<span class="sd">                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,</span>
+<span class="sd">                * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,</span>
 <span class="sd">                  so using this will make ``get_parameters`` unusable.</span>
 <span class="sd">                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.</span>
 
 <span class="sd">        default_distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use by default. To choose from the list</span>
 <span class="sd">            of possible ``field_distribution`` values. Defaults to ``parametric``.</span>
-
 <span class="sd">        categorical_transformer (str):</span>
-<span class="sd">            Type of transformer to use for the categorical variables, to choose</span>
-<span class="sd">            from:</span>
+<span class="sd">            Type of transformer to use for the categorical variables, which must be one of the</span>
+<span class="sd">            following values:</span>
 
 <span class="sd">                * ``one_hot_encoding``: Apply a OneHotEncodingTransformer to the</span>
 <span class="sd">                  categorical column, which replaces the  column with one boolean</span>
@@ -269,7 +270,8 @@
 <span class="sd">                  noise around each value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_distribution</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_field_distributions</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_default_distribution</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_categorical_transformer</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -296,6 +298,7 @@
         <span class="s1">&#39;gaussian_kde&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">GaussianKDE</span><span class="p">,</span>
         <span class="s1">&#39;truncated_gaussian&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">TruncatedGaussian</span><span class="p">,</span>
     <span class="p">}</span>
+    <span class="n">_DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="n">_DISTRIBUTIONS</span><span class="p">[</span><span class="s1">&#39;parametric&#39;</span><span class="p">]</span>
 
     <span class="n">_HYPERPARAMETERS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -326,36 +329,24 @@
     <span class="p">}</span>
     <span class="n">_DEFAULT_TRANSFORMER</span> <span class="o">=</span> <span class="s1">&#39;one_hot_encoding&#39;</span>
 
-    <span class="k">def</span> <span class="nf">_get_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="n">default</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DISTRIBUTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="n">name</span><span class="p">:</span> <span class="n">default</span>
-                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
-            <span class="p">}</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_validate_distribution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">distribution</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">distribution</span>
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DISTRIBUTIONS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DISTRIBUTIONS</span><span class="p">[</span><span class="n">distribution</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DISTRIBUTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="n">name</span><span class="p">:</span> <span class="n">distribution</span>
-                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
-            <span class="p">}</span>
-
-        <span class="n">distributions</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">distribution</span><span class="p">:</span>
-                <span class="n">distribution</span> <span class="o">=</span> <span class="n">default</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DISTRIBUTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
-
-            <span class="n">distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">distribution</span>
-
-        <span class="k">return</span> <span class="n">distributions</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">copulas</span><span class="o">.</span><span class="n">get_instance</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">distribution</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ImportError</span><span class="p">):</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="s1">&#39;Invalid distribution specification </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
 
 <div class="viewcode-block" id="GaussianCopula.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.html#sdv.tabular.GaussianCopula.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">categorical_transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">field_distributions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">categorical_transformer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">table_metadata</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">table_metadata</span><span class="p">)</span>
@@ -363,27 +354,44 @@
         <span class="k">if</span> <span class="n">table_metadata</span><span class="p">:</span>
             <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">table_metadata</span><span class="o">.</span><span class="n">get_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">model_kwargs</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">distribution</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;distribution&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">field_distributions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">field_distributions</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;field_distributions&#39;</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">default_distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">default_distribution</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;default_distribution&#39;</span><span class="p">]</span>
 
                 <span class="k">if</span> <span class="n">categorical_transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;categorical_transformer&#39;</span><span class="p">]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="o">=</span> <span class="n">distribution</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span> <span class="o">=</span> <span class="n">default_distribution</span> <span class="ow">or</span> <span class="s1">&#39;parametric&#39;</span>
+        <span class="k">if</span> <span class="n">field_distributions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field_distributions</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;field_distributions can only be None or a dict instance&#39;</span><span class="p">)</span>
 
-        <span class="n">categorical_transformer</span> <span class="o">=</span> <span class="n">categorical_transformer</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_TRANSFORMER</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span> <span class="o">=</span> <span class="n">categorical_transformer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="n">categorical_transformer</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">field</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_distribution</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="p">(</span><span class="n">field_distributions</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_distribution</span><span class="p">(</span><span class="n">default_distribution</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_DISTRIBUTION</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span> <span class="o">=</span> <span class="n">categorical_transformer</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_TRANSFORMER</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">}</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
-            <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
             <span class="n">field_types</span><span class="o">=</span><span class="n">field_types</span><span class="p">,</span>
+            <span class="n">field_transformers</span><span class="o">=</span><span class="n">field_transformers</span><span class="p">,</span>
             <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
+            <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
-        <span class="p">)</span></div>
+            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">set_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;field_distributions&#39;</span><span class="p">:</span> <span class="n">field_distributions</span><span class="p">,</span>
+            <span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="n">default_distribution</span><span class="p">,</span>
+            <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="n">categorical_transformer</span><span class="p">,</span>
+        <span class="p">})</span></div>
 
 <div class="viewcode-block" id="GaussianCopula.get_distributions"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.GaussianCopula.get_distributions.html#sdv.tabular.GaussianCopula.get_distributions">[docs]</a>    <span class="k">def</span> <span class="nf">get_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this copula.</span>
@@ -411,13 +419,12 @@
 <span class="sd">            - categorical_transformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_model_kwargs</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_kwargs</span><span class="p">:</span>
-            <span class="n">distributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">set_model_kwargs</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="p">{</span>
-                <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">distributions</span><span class="p">,</span>
-                <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">,</span>
-            <span class="p">})</span>
+        <span class="n">distributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">set_model_kwargs</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;field_distributions&#39;</span><span class="p">:</span> <span class="n">distributions</span><span class="p">,</span>
+            <span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">,</span>
+            <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_categorical_transformer</span><span class="p">,</span>
+        <span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
@@ -426,8 +433,13 @@
 <span class="sd">            table_data (pandas.DataFrame):</span>
 <span class="sd">                Data to be fitted.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_distribution</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">distribution</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span>
+            <span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Fitting </span><span class="si">%s</span><span class="s1"> to table </span><span class="si">%s</span><span class="s1">; shape: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                      <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">table_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
@@ -466,6 +478,13 @@
 <span class="sd">            NonParametricError:</span>
 <span class="sd">                If a non-parametric distribution has been used.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">univariates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">univariate</span><span class="p">)</span> <span class="ow">is</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">:</span>
+                <span class="n">univariate</span> <span class="o">=</span> <span class="n">univariate</span><span class="o">.</span><span class="n">_instance</span>
+
+            <span class="k">if</span> <span class="n">univariate</span><span class="o">.</span><span class="n">PARAMETRIC</span> <span class="o">==</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">ParametricType</span><span class="o">.</span><span class="n">NON_PARAMETRIC</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">NonParametricError</span><span class="p">(</span><span class="s2">&quot;This GaussianCopula uses non parametric distributions&quot;</span><span class="p">)</span>
+
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
         <span class="n">covariance</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -530,7 +549,7 @@
         <span class="n">univariates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
-            <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
+            <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
             <span class="k">if</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">univariate</span><span class="p">:</span>
                 <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
 

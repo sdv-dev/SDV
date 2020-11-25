@@ -27,6 +27,7 @@
 
    .. autosummary::
    
+      ~HMA1.DEFAULT_MODEL_KWARGS
       ~HMA1.metadata
    
    

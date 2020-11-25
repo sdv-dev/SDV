@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.hma &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.relational.hma &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -171,7 +171,6 @@
 <span class="kn">from</span> <span class="nn">sdv.tabular.copulas</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianCopula</span>
 
 
 <div class="viewcode-block" id="HMA1"><a class="viewcode-back" href="../../../api_reference/api/sdv.relational.HMA1.html#sdv.relational.HMA1">[docs]</a><span class="k">class</span> <span class="nc">HMA1</span><span class="p">(</span><span class="n">BaseRelationalModel</span><span class="p">):</span>
@@ -188,16 +187,29 @@
 <span class="sd">            Class of the ``copula`` to use. Defaults to</span>
 <span class="sd">            ``sdv.models.copulas.GaussianCopula``.</span>
 <span class="sd">        model_kwargs (dict):</span>
-<span class="sd">            Keyword arguments to pass to the model. Defaults to ``None``.</span>
+<span class="sd">            Keyword arguments to pass to the model. If the default model is used, this</span>
+<span class="sd">            defaults to using a ``gaussian`` distribution and a ``categorical_fuzzy``</span>
+<span class="sd">            transformer.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="HMA1.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.relational.HMA1.html#sdv.relational.HMA1.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">DEFAULT_MODEL</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="n">GaussianCopula</span>
+    <span class="n">DEFAULT_MODEL_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical_fuzzy&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="HMA1.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.relational.HMA1.html#sdv.relational.HMA1.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">root_path</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span> <span class="ow">or</span> <span class="n">DEFAULT_MODEL</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_models</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_table_sizes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MODEL</span>
+            <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MODEL_KWARGS</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_models</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table_sizes</span> <span class="o">=</span> <span class="p">{}</span></div>
 
     <span class="c1"># ######## #</span>
     <span class="c1"># MODELING #</span>

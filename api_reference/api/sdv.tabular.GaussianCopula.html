@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.GaussianCopula &#8212; SDV 0.4.5 documentation</title>
+    <title>sdv.tabular.GaussianCopula &#8212; SDV 0.5.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -305,7 +305,7 @@
 <h1>sdv.tabular.GaussianCopula<a class="headerlink" href="#sdv-tabular-gaussiancopula" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.tabular.GaussianCopula">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.</code><code class="sig-name descname">GaussianCopula</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default_distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">categorical_transformer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/copulas.html#GaussianCopula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.GaussianCopula" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.tabular.</code><code class="sig-name descname">GaussianCopula</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_distributions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default_distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">categorical_transformer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/copulas.html#GaussianCopula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.GaussianCopula" title="Permalink to this definition">¶</a></dt>
 <dd><p>Model wrapping <code class="docutils literal notranslate"><span class="pre">copulas.multivariate.GaussianMultivariate</span></code> copula.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -342,7 +342,9 @@ If given alongside any other metadata-related arguments, an
 exception will be raised.
 If not given at all, it will be built using the other
 arguments or learned from the data.</p></li>
-<li><p><strong>field_distributions</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – <p>Copulas univariate distribution to use. To choose from:</p>
+<li><p><strong>field_distributions</strong> (<em>dict</em>) – <p>Dictionary that maps field names from the table that is being modeled with
+the distribution that needs to be used. The distributions can be passed as either
+a <code class="docutils literal notranslate"><span class="pre">copulas.univariate</span></code> instance or as one of the following values:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution.
@@ -365,7 +367,7 @@ distributions only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">student_t</span></code>: Use a Student T distribution.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gussian_kde</span></code>: Use a GaussianKDE distribution. This model is non-parametric,
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_kde</span></code>: Use a GaussianKDE distribution. This model is non-parametric,
 so using this will make <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> unusable.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">truncated_gaussian</span></code>: Use a Truncated Gaussian distribution.</p></li>
 </ul>
@@ -373,8 +375,8 @@ so using this will make <code class="docutils literal notranslate"><span class="
 </p></li>
 <li><p><strong>default_distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – Copulas univariate distribution to use by default. To choose from the list
 of possible <code class="docutils literal notranslate"><span class="pre">field_distribution</span></code> values. Defaults to <code class="docutils literal notranslate"><span class="pre">parametric</span></code>.</p></li>
-<li><p><strong>categorical_transformer</strong> (<em>str</em>) – <p>Type of transformer to use for the categorical variables, to choose
-from:</p>
+<li><p><strong>categorical_transformer</strong> (<em>str</em>) – <p>Type of transformer to use for the categorical variables, which must be one of the
+following values:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">one_hot_encoding</span></code>: Apply a OneHotEncodingTransformer to the
@@ -398,7 +400,7 @@ noise around each value.</p></li>
 </dl>
 <dl class="py method">
 <dt id="sdv.tabular.GaussianCopula.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default_distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">categorical_transformer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/copulas.html#GaussianCopula.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.GaussianCopula.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">field_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_transformers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">anonymize_fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">table_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">field_distributions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default_distribution</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">categorical_transformer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/sdv/tabular/copulas.html#GaussianCopula.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.tabular.GaussianCopula.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
