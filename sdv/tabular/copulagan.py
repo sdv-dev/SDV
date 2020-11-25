@@ -60,7 +60,7 @@ class CopulaGAN(CTGAN):
     * ``gamma``: Use a Gamma distribution.
     * ``beta``: Use a Beta distribution.
     * ``student_t``: Use a Student T distribution.
-    * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+    * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
       so using this will make ``get_parameters`` unusable.
     * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
@@ -143,6 +143,7 @@ class CopulaGAN(CTGAN):
             field_names=field_names,
             primary_key=primary_key,
             field_types=field_types,
+            field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,

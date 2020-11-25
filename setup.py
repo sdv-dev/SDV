@@ -14,12 +14,12 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'exrex>=0.9.4,<0.11',
     'xeger>=0.3.5,<0.4',
-    'numpy>=1.15.4,<2',
-    'pandas>=0.23.4,<2',
+    'numpy>=1.17.4,<2',
+    'pandas>=1.1,<2',
     'graphviz>=0.13.2,<1',
-    'copulas>=0.3.2,<0.4',
-    'rdt>=0.2.7,<0.3',
-    'sdmetrics>=0.0.2,<0.0.3',
+    'copulas>=0.3.3,<0.4',
+    'rdt>=0.2.8,<0.3',
+    'sdmetrics>=0.0.3,<0.1.0',
     'deepecho==0.1.3',
 ]
 
@@ -48,7 +48,7 @@ development_requires = [
     # docs
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
-    'Sphinx>=3,<4',
+    'Sphinx>=3,<3.3',
     'pydata-sphinx-theme',
     'autodocsumm>=0.1.10',
     'PyYaml>=5.3.1,<6',
@@ -73,7 +73,8 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
-    'importlib-metadata<2.0.0,>=0.12'
+    # 'importlib-metadata<2.0.0,>=0.12'
+    'invoke'
 ]
 
 setup(
@@ -108,6 +109,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.4.5',
+    version='0.5.0.dev1',
     zip_safe=False,
 )

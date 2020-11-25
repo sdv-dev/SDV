@@ -93,7 +93,7 @@ may affect the quality of the learning process, **SDV** can apply a
 **Reject Sampling** strategy.
 
 When using this strategy, **SDV** validates the sampled rows, discards
-the ones that do not adjust to the constraint, and resamples them. This
+the ones that do not adjust to the constraint, and re-samples them. This
 process is repeated until enough rows have been sampled.
 
 Defining Constraints

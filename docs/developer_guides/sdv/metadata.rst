@@ -11,7 +11,7 @@ Top Level
 At the topmost level of the **Metadata** dictionary, there is only one element:
 
 :Tables:
-    Mapping of tables in the dataset, each one represented as a subdocument, with
+    Mapping of tables in the dataset, each one represented as a sub-document, with
     the table name as the corresponding key.
 
 Table

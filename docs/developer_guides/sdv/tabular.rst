@@ -8,7 +8,7 @@ of tabular models, such as ``Copulas`` and ``CTGAN``, while keeping all the comp
 with their usage hidden away and offering a very simple and intuitive interface to the users.
 
 All this functionalities are available in the ``sdv.tabular.BaseTabularModel``, which is inherited
-and used by all the models implemented in the :ref:`sdv.tabular` subpackage.
+and used by all the models implemented in the :ref:`sdv.tabular` sub-package.
 
 Tabular Modeling Overview
 -------------------------

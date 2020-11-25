@@ -68,6 +68,7 @@ class BaseTabularModel:
                 field_names=field_names,
                 primary_key=primary_key,
                 field_types=field_types,
+                field_transformers=field_transformers,
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
@@ -81,6 +82,8 @@ class BaseTabularModel:
 
             if isinstance(table_metadata, dict):
                 table_metadata = Table.from_dict(table_metadata)
+
+            table_metadata._dtype_transformers.update(self._DTYPE_TRANSFORMERS)
 
             self._metadata = table_metadata
             self._metadata_fitted = table_metadata.fitted
