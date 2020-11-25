@@ -20,7 +20,8 @@ class SDV:
             Class of the model to use. Defaults to ``sdv.relational.HMA1``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. If no ``model`` is given,
-            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution.
+            this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution
+            and ``categorical_fuzzy`` categorical transformer.
     """
 
     _model_instance = None
@@ -29,6 +30,7 @@ class SDV:
         'model': GaussianCopula,
         'model_kwargs': {
             'default_distribution': 'gaussian',
+            'categorical_transformer': 'categorical_fuzzy',
         }
     }
 

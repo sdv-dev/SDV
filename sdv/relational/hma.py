@@ -9,7 +9,6 @@ from sdv.relational.base import BaseRelationalModel
 from sdv.tabular.copulas import GaussianCopula
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_MODEL = GaussianCopula
 
 
 class HMA1(BaseRelationalModel):
@@ -26,16 +25,29 @@ class HMA1(BaseRelationalModel):
             Class of the ``copula`` to use. Defaults to
             ``sdv.models.copulas.GaussianCopula``.
         model_kwargs (dict):
-            Keyword arguments to pass to the model. Defaults to ``None``.
+            Keyword arguments to pass to the model. If the default model is used, this
+            defaults to using a ``gaussian`` distribution and a ``categorical_fuzzy``
+            transformer.
     """
 
-    def __init__(self, metadata, root_path=None, model=DEFAULT_MODEL, model_kwargs=None):
+    DEFAULT_MODEL = GaussianCopula
+    DEFAULT_MODEL_KWARGS = {
+        'default_distribution': 'gaussian',
+        'categorical_transformer': 'categorical_fuzzy',
+    }
+
+    def __init__(self, metadata, root_path=None, model=None, model_kwargs=None):
         super().__init__(metadata, root_path)
 
-        self._model = model or DEFAULT_MODEL
-        self._model_kwargs = model_kwargs or dict()
-        self._models = dict()
-        self._table_sizes = dict()
+        if model is None:
+            model = self.DEFAULT_MODEL
+            if model_kwargs is None:
+                model_kwargs = self.DEFAULT_MODEL_KWARGS
+
+        self._model = model
+        self._model_kwargs = model_kwargs or {}
+        self._models = {}
+        self._table_sizes = {}
 
     # ######## #
     # MODELING #

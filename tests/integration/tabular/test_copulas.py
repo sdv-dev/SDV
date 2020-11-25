@@ -113,3 +113,16 @@ def test_integer_categoricals():
 
     assert users['age'].dtype == np.int64
     assert sampled['age'].dtype == np.int64
+
+
+def test_parameters():
+    gc = GaussianCopula(
+        field_distributions={'foo': 'beta'},
+        default_distribution='gaussian_kde',
+        categorical_transformer='label_encoding'
+    )
+    new_gc = GaussianCopula(
+        table_metadata=gc.get_metadata().to_dict()
+    )
+
+    assert new_gc._metadata._dtype_transformers['O'] == 'label_encoding'
