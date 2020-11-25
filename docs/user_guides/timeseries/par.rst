@@ -328,7 +328,7 @@ How to customize the generated IDs?
 
 In the previous examples we saw how the ``Symbol`` values were generated
 as random strings that do not look like that ones typically seen for
-Tickers, which usually are strnigs made of between 2 and 4 uppercase
+Tickers, which usually are strings made of between 2 and 4 uppercase
 letters.
 
 In order to fix this and force the model to generate values that are

@@ -5,7 +5,7 @@
    <i>An open source project from Data to AI Lab at MIT.</i>
    </p>
 
-|Development Status| |PyPi Shield| |Travis CI Shield| |Coverage Status|
+|Development Status| |PyPi Shield| |Run Tests| |Coverage Status|
 |Downloads| |Binder| |Slack|
 
 SDV - The Synthetic Data Vault
@@ -96,8 +96,8 @@ Explore SDV
    :target: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
 .. |PyPi Shield| image:: https://img.shields.io/pypi/v/SDV.svg
    :target: https://pypi.python.org/pypi/SDV
-.. |Travis CI Shield| image:: https://travis-ci.com/sdv-dev/SDV.svg?branch=master
-   :target: https://travis-ci.com/sdv-dev/SDV
+.. |Run Tests| image:: https://github.com/sdv-dev/SDV/workflows/Run%20Tests/badge.svg
+   :target: https://github.com/sdv-dev/SDV/actions?query=workflow%3A%22Run+Tests%22+branch%3Amaster
 .. |Coverage Status| image:: https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/sdv-dev/SDV
 .. |Downloads| image:: https://pepy.tech/badge/sdv
