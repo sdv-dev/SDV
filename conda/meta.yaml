@@ -1,0 +1,52 @@
+{% set name = 'sdv' %}
+{% set version = '0.5.1.dev0' %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
+
+build:
+  number: 0
+  noarch: python
+  script: "{{ PYTHON }} -m pip install . -vv"
+
+requirements:
+  host:
+    - copulas >=0.3.3,<0.4
+    - deepecho ==0.1.3
+    - exrex >=0.9.4,<0.11
+    - graphviz >=0.13.2,<2.42.4
+    - numpy >=1.17.4,<2
+    - pandas >=1.1,<2
+    - pip
+    - python
+    - rdt >=0.2.8,<0.3
+    - xeger >=0.3.5,<0.4
+    - pytest-runner
+  run:
+    - copulas >=0.3.3,<0.4
+    - deepecho ==0.1.3
+    - exrex >=0.9.4,<0.11
+    - graphviz>=0.13.2,<2.42.4
+    - numpy >=1.17.4,<2
+    - pandas >=1.1,<2
+    - python
+    - rdt >=0.2.8,<0.3
+    - sdmetrics >=0.0.3,<0.1.0
+    - xeger >=0.3.5,<0.4
+
+about:
+  home: "https://github.com/sdv-dev/SDV"
+  license: MIT
+  license_family: MIT
+  license_file: 
+  summary: "Automated Generative Modeling and Sampling"
+  doc_url: 
+  dev_url: 
+
+extra:
+  recipe-maintainers:
+    - sdv-dev
