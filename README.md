@@ -96,21 +96,27 @@ The easiest and recommended way to install **SDV** is using [pip](https://pip.py
 pip install sdv
 ```
 
-This will pull and install the latest stable release from [PyPi](https://pypi.org/).
+This will pull and install the latest stable release from [PyPI](https://pypi.org/).
 
-If you want to install from source or contribute to the project please read the
-[Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html).
+> :warning: **NOTE**: When installing on windows systems pip may complain about not being able to
+find a valid version for PyTorch. In this case, please install PyTorch manually following
+[the PyTorch installation instructions](https://pytorch.org/get-started/locally/) and retry
+installing SDV again afterwards.
 
 ## Install with conda
 
 **SDV** can also be installed using [conda](https://docs.conda.io/en/latest/):
 
 ```bash
-conda install -c sdv-dev -c conda-forge sdv
+conda install -c sdv-dev -c pytorch -c conda-forge sdv
 ```
 
 This will pull and install the latest stable release from [Anaconda](https://anaconda.org/).
 
+## Development
+
+If you want to install from the source or contribute to the project please read the
+[Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html).
 
 # Quickstart
 

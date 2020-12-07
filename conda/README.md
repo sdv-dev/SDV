@@ -17,7 +17,7 @@ branch and build the conda package.
 ```bash
 git checkout stable
 cd conda
-conda build -c conda-forge.
+conda build -c sdv-dev -c pytorch -c conda-forge .
 ```
 
 ## Upload to Anaconda
