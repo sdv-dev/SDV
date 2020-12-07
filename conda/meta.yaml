@@ -18,9 +18,10 @@ requirements:
     - copulas >=0.3.3,<0.4
     - deepecho ==0.1.3
     - exrex >=0.9.4,<0.11
-    - graphviz >=0.13.2,<2.42.4
+    - graphviz
+    - python-graphviz >=0.13.2,<2.42.4
     - numpy >=1.17.4,<2
-    - pandas >=1.1,<2
+    - pandas >=1.1,<1.1.5
     - pip
     - python
     - rdt >=0.2.8,<0.3
@@ -30,9 +31,10 @@ requirements:
     - copulas >=0.3.3,<0.4
     - deepecho ==0.1.3
     - exrex >=0.9.4,<0.11
-    - graphviz>=0.13.2,<2.42.4
+    - graphviz
+    - python-graphviz >=0.13.2,<2.42.4
     - numpy >=1.17.4,<2
-    - pandas >=1.1,<2
+    - pandas >=1.1,<1.1.5
     - python
     - rdt >=0.2.8,<0.3
     - sdmetrics >=0.0.3,<0.1.0
