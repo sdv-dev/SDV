@@ -53,14 +53,12 @@ class CTGAN(BaseTabularModel):
             sampling. Defaults to ``True``.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        gen_dim (tuple or list of ints):
+        generator_dim (tuple or list of ints):
             Size of the output samples for each one of the Residuals. A Resiudal Layer
             will be created for each one of the values provided. Defaults to (256, 256).
-        dis_dim (tuple or list of ints):
+        discriminator_dim (tuple or list of ints):
             Size of the output samples for each one of the Discriminator Layers. A Linear
             Layer will be created for each one of the values provided. Defaults to (256, 256).
-        l2scale (float):
-            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.
         batch_size (int):
             Number of data samples to process in each step.
         verbose (bool):
@@ -79,8 +77,8 @@ class CTGAN(BaseTabularModel):
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False, cuda=True):
+                 epochs=300, log_frequency=True, embedding_dim=128, generator_dim=(256, 256),
+                 discriminator_dim=(256, 256), batch_size=500, verbose=False, cuda=True):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -102,9 +100,8 @@ class CTGAN(BaseTabularModel):
             raise
 
         self._embedding_dim = embedding_dim
-        self._gen_dim = gen_dim
-        self._dis_dim = dis_dim
-        self._l2scale = l2scale
+        self._generator_dim = generator_dim
+        self._discriminator_dim = discriminator_dim
         self._batch_size = batch_size
         self._epochs = epochs
         self._log_frequency = log_frequency
@@ -120,9 +117,8 @@ class CTGAN(BaseTabularModel):
         """
         self._model = self._CTGAN_CLASS(
             embedding_dim=self._embedding_dim,
-            gen_dim=self._gen_dim,
-            dis_dim=self._dis_dim,
-            l2scale=self._l2scale,
+            generator_dim=self._generator_dim,
+            discriminator_dim=self._discriminator_dim,
             batch_size=self._batch_size,
         )
 
@@ -147,7 +143,6 @@ class CTGAN(BaseTabularModel):
                 table_data,
                 epochs=self._epochs,
                 discrete_columns=categoricals,
-                log_frequency=self._log_frequency,
             )
         else:
             with contextlib.redirect_stdout(io.StringIO()):
@@ -155,7 +150,6 @@ class CTGAN(BaseTabularModel):
                     table_data,
                     epochs=self._epochs,
                     discrete_columns=categoricals,
-                    log_frequency=self._log_frequency,
                 )
 
     def _sample(self, num_rows):

@@ -108,14 +108,12 @@ class CopulaGAN(CTGAN):
             sampling. Defaults to ``True``.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        gen_dim (tuple or list of ints):
+        generator_dim (tuple or list of ints):
             Size of the output samples for each one of the Residuals. A Resiudal Layer
             will be created for each one of the values provided. Defaults to (256, 256).
-        dis_dim (tuple or list of ints):
+        discriminator_dim (tuple or list of ints):
             Size of the output samples for each one of the Discriminator Layers. A Linear
             Layer will be created for each one of the values provided. Defaults to (256, 256).
-        l2scale (float):
-            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.
         batch_size (int):
             Number of data samples to process in each step.
         verbose (bool):
@@ -136,8 +134,8 @@ class CopulaGAN(CTGAN):
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False, cuda=True,
+                 epochs=300, log_frequency=True, embedding_dim=128, generator_dim=(256, 256),
+                 discriminator_dim=(256, 256), batch_size=500, verbose=False, cuda=True,
                  field_distributions=None, default_distribution=None):
         super().__init__(
             field_names=field_names,
@@ -150,9 +148,8 @@ class CopulaGAN(CTGAN):
             epochs=epochs,
             log_frequency=log_frequency,
             embedding_dim=embedding_dim,
-            gen_dim=gen_dim,
-            dis_dim=dis_dim,
-            l2scale=l2scale,
+            generator_dim=generator_dim,
+            discriminator_dim=discriminator_dim,
             batch_size=batch_size,
             verbose=verbose,
             cuda=cuda
