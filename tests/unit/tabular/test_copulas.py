@@ -139,7 +139,6 @@ class TestGaussianCopula:
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
-            'name': None,
             'primary_key': None,
             'sequence_index': None,
             'entity_columns': [],
