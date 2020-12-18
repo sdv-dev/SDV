@@ -134,10 +134,10 @@ class CopulaGAN(CTGAN):
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, generator_dim=(256, 256),
-                 discriminator_dim=(256, 256), batch_size=500, verbose=False, cuda=True,
-                 field_distributions=None, default_distribution=None):
+                 cuda=True, field_distributions=None, default_distribution=None,
+                 synthesizer="CTGAN", **kwargs):
         super().__init__(
+            **kwargs,
             field_names=field_names,
             primary_key=primary_key,
             field_types=field_types,
@@ -145,14 +145,8 @@ class CopulaGAN(CTGAN):
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,
-            epochs=epochs,
-            log_frequency=log_frequency,
-            embedding_dim=embedding_dim,
-            generator_dim=generator_dim,
-            discriminator_dim=discriminator_dim,
-            batch_size=batch_size,
-            verbose=verbose,
-            cuda=cuda
+            cuda=cuda,
+            synthesizer=synthesizer
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION

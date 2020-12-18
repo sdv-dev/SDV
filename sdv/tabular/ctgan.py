@@ -1,7 +1,5 @@
 """Wrapper around CTGAN model."""
 
-import contextlib
-import io
 
 from sdv.tabular.base import BaseTabularModel
 
@@ -68,7 +66,6 @@ class CTGAN(BaseTabularModel):
             If ``False``, do not use cuda at all.
     """
 
-    _CTGAN_CLASS = None
     _model = None
 
     _DTYPE_TRANSFORMERS = {
@@ -77,8 +74,7 @@ class CTGAN(BaseTabularModel):
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, generator_dim=(256, 256),
-                 discriminator_dim=(256, 256), batch_size=500, verbose=False, cuda=True):
+                 cuda=True, synthesizer="CTGAN", **kwargs):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -89,9 +85,17 @@ class CTGAN(BaseTabularModel):
             table_metadata=table_metadata
         )
         try:
-            from ctgan import CTGANSynthesizer  # Lazy import to make dependency optional
+            from ctgan import CTGANSynthesizer, TVAESynthesizer
 
-            self._CTGAN_CLASS = CTGANSynthesizer
+            _default_parameters = {}
+            for parameter, default_value in kwargs.items():
+                _default_parameters[parameter] = default_value
+
+            if synthesizer == "CTGAN":
+                self._model = CTGANSynthesizer(**_default_parameters)
+            elif synthesizer == "TVAE":
+                self._model = TVAESynthesizer(**_default_parameters)
+
         except ImportError as ie:
             ie.msg += (
                 '\n\nIt seems like `ctgan` is not installed.\n'
@@ -99,13 +103,6 @@ class CTGAN(BaseTabularModel):
             )
             raise
 
-        self._embedding_dim = embedding_dim
-        self._generator_dim = generator_dim
-        self._discriminator_dim = discriminator_dim
-        self._batch_size = batch_size
-        self._epochs = epochs
-        self._log_frequency = log_frequency
-        self._verbose = verbose
         self._cuda = cuda
 
     def _fit(self, table_data):
@@ -115,13 +112,6 @@ class CTGAN(BaseTabularModel):
             table_data (pandas.DataFrame):
                 Data to be learned.
         """
-        self._model = self._CTGAN_CLASS(
-            embedding_dim=self._embedding_dim,
-            generator_dim=self._generator_dim,
-            discriminator_dim=self._discriminator_dim,
-            batch_size=self._batch_size,
-        )
-
         import torch
         if not self._cuda or not torch.cuda.is_available():
             device = 'cpu'
@@ -138,19 +128,10 @@ class CTGAN(BaseTabularModel):
             if meta['type'] == 'categorical'
         ]
 
-        if self._verbose:
-            self._model.fit(
-                table_data,
-                epochs=self._epochs,
-                discrete_columns=categoricals,
-            )
-        else:
-            with contextlib.redirect_stdout(io.StringIO()):
-                self._model.fit(
-                    table_data,
-                    epochs=self._epochs,
-                    discrete_columns=categoricals,
-                )
+        self._model.fit(
+            table_data,
+            discrete_columns=categoricals
+        )
 
     def _sample(self, num_rows):
         """Sample the indicated number of rows from the model.
