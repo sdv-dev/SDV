@@ -49,3 +49,34 @@ def test_ctgan():
         'name': None
     }
     assert ctgan.get_metadata().to_dict() == expected_metadata
+
+
+def test_recreate():
+    data = load_demo(metadata=False)['users']
+
+    # If distribution is non parametric, get_parameters fails
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    sampled = model.sample()
+
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()
+    assert (sampled.notnull().sum(axis=1) != 0).all()
+
+    # Metadata
+    model_meta = CTGAN(epochs=1, table_metadata=model.get_metadata())
+    model_meta.fit(data)
+    sampled = model_meta.sample()
+
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()
+    assert (sampled.notnull().sum(axis=1) != 0).all()
+
+    # Metadata dict
+    model_meta_dict = CTGAN(epochs=1, table_metadata=model.get_metadata().to_dict())
+    model_meta_dict.fit(data)
+    sampled = model_meta_dict.sample()
+
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()
+    assert (sampled.notnull().sum(axis=1) != 0).all()

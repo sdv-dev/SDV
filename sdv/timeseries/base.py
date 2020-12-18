@@ -115,7 +115,10 @@ class BaseTimeseriesModel:
                         'If table_metadata is given {} must be None'.format(arg.__name__))
 
             if isinstance(table_metadata, dict):
-                table_metadata = Table.from_dict(table_metadata)
+                table_metadata = Table.from_dict(
+                    table_metadata,
+                    dtype_transformers=self._DTYPE_TRANSFORMERS,
+                )
 
             self._metadata = table_metadata
             self._metadata_fitted = table_metadata.fitted
