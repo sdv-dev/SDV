@@ -1,6 +1,7 @@
 """Wrapper around CTGAN model."""
 
 from ctgan import CTGANSynthesizer, TVAESynthesizer
+
 from sdv.tabular.base import BaseTabularModel
 
 
@@ -141,7 +142,7 @@ class CTGAN(CTGANModel):
     """
 
     _MODEL_CLASS = CTGANSynthesizer
-    
+
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
@@ -174,6 +175,7 @@ class CTGAN(CTGANModel):
         }
 
         self._cuda = cuda
+
 
 class TVAE(CTGANModel):
     """Model wrapping ``TVAESynthesizer`` model.

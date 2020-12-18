@@ -561,11 +561,11 @@ generated data and computational time:
 -  ``embedding_dim`` (int): Size of the random sample passed to the
    Generator. Defaults to 128.
 
--  ``gen_dim`` (tuple or list of ints): Size of the output samples for each
+-  ``generator_dim`` (tuple or list of ints): Size of the output samples for each
    one of the Residuals. A Resiudal Layer will be created for each one
    of the values provided. Defaults to (256, 256).
 
--  ``dis_dim`` (tuple or list of ints): Size of the output samples for each
+-  ``discriminator_dim`` (tuple or list of ints): Size of the output samples for each
    one of the Discriminator Layers. A Linear Layer will be created for
    each one of the values provided. Defaults to (256, 256).
 
@@ -605,8 +605,8 @@ hyperparameter values that we want to use
         primary_key='student_id',
         epochs=500,
         batch_size=100,
-        gen_dim=(256, 256, 256),
-        dis_dim=(256, 256, 256),
+        generator_dim=(256, 256, 256),
+        discriminator_dim=(256, 256, 256),
         l2scale=1e-07
     )
 
