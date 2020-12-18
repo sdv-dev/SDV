@@ -1,5 +1,6 @@
 """Wrapper around CTGAN model."""
 
+from ctgan import CTGANSynthesizer, TVAESynthesizer
 from sdv.tabular.base import BaseTabularModel
 
 
@@ -10,7 +11,7 @@ class CTGANModel(BaseTabularModel):
     """
 
     _MODEL_CLASS = None
-    _MODEL_KWARGS = None
+    _model_kwargs = None
 
     _DTYPE_TRANSFORMERS = {
         'O': 'label_encoding'
@@ -19,7 +20,7 @@ class CTGANModel(BaseTabularModel):
     _cuda = True
 
     def _build_model(self):
-        return self._MODEL_CLASS(**self._MODEL_KWARGS)
+        return self._MODEL_CLASS(**self._model_kwargs)
 
     def _fit(self, table_data):
         """Fit the model to the table.
@@ -139,6 +140,8 @@ class CTGAN(CTGANModel):
             If ``False``, do not use cuda at all.
     """
 
+    _MODEL_CLASS = CTGANSynthesizer
+    
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
@@ -155,7 +158,7 @@ class CTGAN(CTGANModel):
             table_metadata=table_metadata
         )
 
-        self._MODEL_KWARGS = {
+        self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'generator_dim': generator_dim,
             'discriminator_dim': discriminator_dim,
@@ -171,18 +174,6 @@ class CTGAN(CTGANModel):
         }
 
         self._cuda = cuda
-
-        try:
-            from ctgan import CTGANSynthesizer  # Lazy import to make dependency optional
-            self._MODEL_CLASS = CTGANSynthesizer
-
-        except ImportError as ie:
-            ie.msg += (
-                '\n\nIt seems like `ctgan` is not installed.\n'
-                'Please install it using:\n\n    pip install sdv[ctgan]'
-            )
-            raise
-
 
 class TVAE(CTGANModel):
     """Model wrapping ``TVAESynthesizer`` model.
@@ -241,6 +232,8 @@ class TVAE(CTGANModel):
             If ``False``, do not use cuda at all.
     """
 
+    _MODEL_CLASS = TVAESynthesizer
+
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
@@ -255,7 +248,7 @@ class TVAE(CTGANModel):
             table_metadata=table_metadata
         )
 
-        self._MODEL_KWARGS = {
+        self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'compress_dims': compress_dims,
             'decompress_dims': decompress_dims,
@@ -265,14 +258,3 @@ class TVAE(CTGANModel):
         }
 
         self._cuda = cuda
-
-        try:
-            from ctgan import TVAESynthesizer  # Lazy import to make dependency optional
-            self._MODEL_CLASS = TVAESynthesizer
-
-        except ImportError as ie:
-            ie.msg += (
-                '\n\nIt seems like `ctgan` is not installed.\n'
-                'Please install it using:\n\n    pip install sdv[ctgan]'
-            )
-            raise

@@ -23,7 +23,7 @@ class DeepEchoModel(BaseTimeseriesModel):
     """Base class for all the SDV Time series models based on DeepEcho."""
 
     _MODEL_CLASS = None
-    _MODEL_KWARGS = None
+    _model_kwargs = None
 
     _DATA_TYPES = {
         'numerical': 'continuous',
@@ -35,7 +35,7 @@ class DeepEchoModel(BaseTimeseriesModel):
     _verbose = False
 
     def _build_model(self):
-        return self._MODEL_CLASS(**self._MODEL_KWARGS)
+        return self._MODEL_CLASS(**self._model_kwargs)
 
     def _transform_sequence_index(self, sequences):
         sequence_index_idx = self._data_columns.index(self._sequence_index)
@@ -225,7 +225,7 @@ class PAR(DeepEchoModel):
             table_metadata=table_metadata,
         )
 
-        self._MODEL_KWARGS = {
+        self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
             'cuda': cuda,
