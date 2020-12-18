@@ -135,7 +135,7 @@ class CopulaGAN(CTGAN):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  cuda=True, field_distributions=None, default_distribution=None,
-                 synthesizer="CTGAN", **kwargs):
+                 **kwargs):
         super().__init__(
             **kwargs,
             field_names=field_names,
@@ -145,8 +145,7 @@ class CopulaGAN(CTGAN):
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,
-            cuda=cuda,
-            synthesizer=synthesizer
+            cuda=cuda
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
