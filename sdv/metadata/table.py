@@ -468,7 +468,11 @@ class Table:
                 Table to be analyzed.
         """
         LOGGER.info('Fitting table %s metadata', self.name)
-        self._field_names = self._field_names or list(data.columns)
+        if not self._field_names:
+            self._field_names = list(data.columns)
+        elif isinstance(self._field_names, set):
+            self._field_names = [field for field in data.columns if field in self._field_names]
+
         self._dtypes = data[self._field_names].dtypes
 
         if not self._fields_metadata:
@@ -623,24 +627,28 @@ class Table:
             json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
-    def from_dict(cls, metadata_dict):
+    def from_dict(cls, metadata_dict, dtype_transformers=None):
         """Load a Table from a metadata dict.
 
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
         """
-        instance = cls()
-        fields = metadata_dict['fields']
-        instance._fields_metadata = copy.deepcopy(fields)
-        instance._field_names = list(fields.keys()) if fields else None
-        instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
-        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
-        instance._primary_key = metadata_dict.get('primary_key')
-        instance._sequence_index = metadata_dict.get('sequence_index')
-        instance._entity_columns = metadata_dict.get('entity_columns')
-        instance._context_columns = metadata_dict.get('context_columns')
-        instance.name = metadata_dict.get('name')
+        metadata_dict = copy.deepcopy(metadata_dict)
+        fields = metadata_dict['fields'] or {}
+        instance = cls(
+            name=metadata_dict.get('name'),
+            field_names=set(fields.keys()),
+            field_types=fields,
+            constraints=metadata_dict.get('constraints') or [],
+            model_kwargs=metadata_dict.get('model_kwargs') or {},
+            primary_key=metadata_dict.get('primary_key'),
+            sequence_index=metadata_dict.get('sequence_index'),
+            entity_columns=metadata_dict.get('entity_columns') or [],
+            context_columns=metadata_dict.get('context_columns') or [],
+            dtype_transformers=dtype_transformers,
+        )
+        instance._fields_metadata = fields
         return instance
 
     @classmethod
