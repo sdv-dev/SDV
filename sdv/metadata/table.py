@@ -633,6 +633,8 @@ class Table:
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
+            dtype_transformers (dict):
+                If passed, set the dtype_transformers on the new instance.
         """
         metadata_dict = copy.deepcopy(metadata_dict)
         fields = metadata_dict['fields'] or {}
