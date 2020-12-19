@@ -12,6 +12,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
+    'ctgan>=0.3.0,<0.4',
     'exrex>=0.9.4,<0.11',
     'xeger>=0.3.5,<0.4',
     'numpy>=1.17.4,<2',
@@ -21,10 +22,6 @@ install_requires = [
     'rdt>=0.2.8,<0.3',
     'sdmetrics>=0.0.3,<0.1.0',
     'deepecho==0.1.3',
-]
-
-ctgan_requires = [
-    'ctgan>=0.2.2.dev1,<0.3',
 ]
 
 setup_requires = [
@@ -92,9 +89,8 @@ setup(
     ],
     description='Automated Generative Modeling and Sampling',
     extras_require={
-        'ctgan': ctgan_requires,
-        'test': tests_require + ctgan_requires,
-        'dev': development_requires + tests_require + ctgan_requires,
+        'test': tests_require,
+        'dev': development_requires + tests_require,
     },
     include_package_data=True,
     install_requires=install_requires,
