@@ -1,38 +1,35 @@
 """Tools to evaluate the synthesized data."""
 
-import numpy as np
 import pandas as pd
-from sdmetrics.detection.tabular import LogisticDetector, SVCDetector
-from sdmetrics.report import MetricsReport
-from sdmetrics.statistical import CSTest, KSTest
+import sdmetrics
 
-from sdv.metadata import Metadata
+from sdv.metadata.dataset import Metadata
 
 
-def _validate_arguments(synth, real, metadata, root_path, table_name):
+def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_name):
     """Validate arguments needed to compute descriptors values.
 
     If ``metadata`` is an instance of dict create the ``Metadata`` object.
-    If ``metadata`` is ``None``, ``real`` has to be a ``pandas.DataFrane``.
+    If ``metadata`` is ``None``, ``real_data`` has to be a ``pandas.DataFrane``.
 
-    If ``real`` is ``None`` load all the tables and assert that ``synth`` is a ``dict``.
-    Otherwise, ``real`` and ``synth`` must be of the same type.
+    If ``real_data`` is ``None`` load all the tables and assert that ``synthetic_data`` is
+    a ``dict``. Otherwise, ``real_data`` and ``synthetic_data`` must be of the same type.
 
-    If ``synth`` is not a ``dict``, create a dictionary using the ``table_name``.
+    If ``synthetic_data`` is not a ``dict``, create a dictionary using the ``table_name``.
 
-    Assert that ``synth`` and ``real`` must have the same tables.
+    Assert that ``synthetic_data`` and ``real_data`` must have the same tables.
 
     Args:
-        synth (dict or pandas.DataFrame):
+        synthetic_data (dict or pandas.DataFrame):
             Synthesized data.
-        real (dict, pandas.DataFrame or None):
+        real_data (dict, pandas.DataFrame or None):
             Real data.
         metadata (str, dict, Metadata or None):
             Metadata instance or details needed to build it.
         root_path (str):
             Path to the metadata file.
         table_name (str):
-            Table name used to prepare the metadata object, real and synth dict.
+            Table name used to prepare the metadata object, real_data and synthetic_data dict.
 
     Returns:
         tuple (dict, dict, Metadata):
@@ -41,79 +38,63 @@ def _validate_arguments(synth, real, metadata, root_path, table_name):
     if isinstance(metadata, dict):
         metadata = Metadata(metadata, root_path)
     elif metadata is None:
-        if not isinstance(real, pd.DataFrame):
-            raise TypeError('If metadata is None, `real` has to be a DataFrame')
+        if not isinstance(real_data, pd.DataFrame):
+            raise TypeError('If metadata is None, `real_data` has to be a DataFrame')
 
         metadata = Metadata()
-        metadata.add_table(table_name, data=real)
+        metadata.add_table(table_name, data=real_data)
 
-    if real is None:
-        real = metadata.load_tables()
-        if not isinstance(synth, dict):
-            raise TypeError('If `real` is `None`, `synth` must be a dict')
+    if real_data is None:
+        real_data = metadata.load_tables()
+        if not isinstance(synthetic_data, dict):
+            raise TypeError('If `real_data` is `None`, `synthetic_data` must be a dict')
 
-    elif not isinstance(synth, type(real)):
-        raise TypeError('`real` and `synth` must be of the same type')
+    elif not isinstance(synthetic_data, type(real_data)):
+        raise TypeError('`real_data` and `synthetic_data` must be of the same type')
 
-    if not isinstance(synth, dict):
-        synth = {table_name: synth}
+    if not isinstance(synthetic_data, dict):
+        synthetic_data = {table_name: synthetic_data}
 
-    if not isinstance(real, dict):
-        real = {table_name: real}
+    if not isinstance(real_data, dict):
+        real_data = {table_name: real_data}
 
-    if not set(real.keys()) == set(synth.keys()):
-        raise ValueError('real and synthetic dataset must have the same tables')
+    if not set(real_data.keys()) == set(synthetic_data.keys()):
+        raise ValueError('real_data and synthetic dataset must have the same tables')
 
-    if len(real.keys()) < len(metadata.get_tables()):
+    if len(real_data.keys()) < len(metadata.get_tables()):
         meta_dict = {
             table: metadata.get_table_meta(table)
-            for table in real.keys()
+            for table in real_data.keys()
         }
         metadata = Metadata({'tables': meta_dict})
 
-    return synth, real, metadata
+    return synthetic_data, real_data, metadata.to_dict()
 
 
-def _tabular_metric(sdmetric, synthetic, real, metadata=None, details=False):
-    if metadata is None:
-        metadata = Metadata()
-        metadata.add_table(None, real)
-        real = {None: real}
-        synthetic = {None: synthetic}
+def _select_metrics(synthetic_data, metrics):
+    if isinstance(synthetic_data, dict):
+        modality = 'multi-table'
+        metric_classes = sdmetrics.multi_table.MultiTableMetric.get_subclasses()
+    else:
+        modality = 'single-table'
+        metric_classes = sdmetrics.single_table.SingleTableMetric.get_subclasses()
 
-    metrics = sdmetric.metrics(metadata, real, synthetic)
-    if details:
-        return list(metrics)
+    if metrics is None:
+        return metric_classes, modality
 
-    return np.mean([metric.value for metric in metrics])
+    final_metrics = {}
+    for metric in metrics:
+        if isinstance(metric, str):
+            try:
+                final_metrics[metric] = metric_classes[metric]
+            except KeyError:
+                raise ValueError(f'Unknown {modality} metric: {metric}')
 
-
-def _cstest(synthetic, real, metadata=None, details=False):
-    return _tabular_metric(CSTest(), synthetic, real, metadata, details)
-
-
-def _kstest(synthetic, real, metadata=None, details=False):
-    return _tabular_metric(KSTest(), synthetic, real, metadata, details)
-
-
-def _logistic_detection(synthetic, real, metadata=None, details=False):
-    return _tabular_metric(LogisticDetector(), synthetic, real, metadata, details)
-
-
-def _svc_detection(synthetic, real, metadata=None, details=False):
-    return _tabular_metric(SVCDetector(), synthetic, real, metadata, details)
-
-
-METRICS = {
-    'cstest': _cstest,
-    'kstest': _kstest,
-    'logistic_detection': _logistic_detection,
-    'svc_detection': _svc_detection,
-}
+    return final_metrics, modality
 
 
 def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
-             table_name=None, metrics=None, get_report=False, aggregate=True):
+             table_name=None, metrics=None, aggregate=True):
     """Apply multiple metrics at once.
 
     Args:
@@ -130,11 +111,8 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
         metrics (list[str]):
             List of metric names to apply.
         table_name (str):
-            Table name to be evaluated, only used when ``synth`` is a ``pandas.DataFrame``
-            and ``real`` is ``None``.
-        get_report (bool):
-            Whether to return the complete SDMetrics report or only the overall average score
-            of each metric applied. Defaults to ``False``.
+            Table name to be evaluated, only used when ``synthetic_data`` is a
+            ``pandas.DataFrame`` and ``real_data`` is ``None``.
         aggregate (bool):
             If ``get_report`` is ``False``, whether to compute the mean of all the scores to
             return a single float value or return a ``dict`` containing the score that each
@@ -143,24 +121,21 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
     Return:
         float or sdmetrics.MetricsReport
     """
-    synth, real, metadata = _validate_arguments(
+    metrics, modality = _select_metrics(synthetic_data, metrics)
+
+    synthetic_data, real_data, metadata = _validate_arguments(
         synthetic_data, real_data, metadata, root_path, table_name)
 
-    if metrics is None:
-        metrics = METRICS.keys()
+    if modality == 'single-table':
+        table = list(metadata['tables'].keys())[0]
+        metadata = metadata['tables'][table]
+        real_data = real_data[table]
+        synthetic_data = synthetic_data[table]
 
-    computed = {}
-    for metric in metrics:
-        computed[metric] = METRICS[metric](synth, real, metadata, details=get_report)
+    scores = sdmetrics.compute_metrics(metrics, real_data, synthetic_data, metadata=metadata)
+    scores.dropna(inplace=True)
 
-    if get_report:
-        report = MetricsReport()
-        for metrics in computed.values():
-            report.add_metrics(metrics)
+    if aggregate:
+        return scores.score.mean()
 
-        return report
-
-    elif aggregate:
-        return np.nanmean(list(computed.values()))
-
-    return computed
+    return scores
