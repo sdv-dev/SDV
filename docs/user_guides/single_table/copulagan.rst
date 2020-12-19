@@ -36,7 +36,7 @@ that applied for placements during the year 2020.
 
     In order to follow this guide you need to have ``ctgan`` installed on
     your system. If you have not done it yet, please install ``ctgan`` now
-    by executing the command ``pip install sdv[ctgan]`` in a terminal.
+    by executing the command ``pip install sdv`` in a terminal.
 
 .. ipython:: python
     :okwarning:

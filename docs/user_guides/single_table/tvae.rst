@@ -1,29 +1,29 @@
-.. _ctgan:
+.. _tvae:
 
-CTGAN Model
+TVAE Model
 ===========
 
 In this guide we will go through a series of steps that will let you
-discover functionalities of the ``CTGAN`` model, including how to:
+discover functionalities of the ``TVAE`` model, including how to:
 
--  Create an instance of ``CTGAN``.
+-  Create an instance of ``TVAE``.
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
--  Use ``CTGAN`` to anonymize PII information.
+-  Use ``TVAE`` to anonymize PII information.
 -  Customize the data transformations to improve the learning process.
 -  Specify hyperparameters to improve the output quality.
 
-What is CTGAN?
+What is TVAE?
 --------------
 
-The ``sdv.tabular.CTGAN`` model is based on the GAN-based Deep Learning
+The ``sdv.tabular.TVAE`` model is based on the VAE-based Deep Learning
 data synthesizer which was presented at the NeurIPS 2020 conference by
 the paper titled `Modeling Tabular data using Conditional
 GAN <https://arxiv.org/abs/1907.00503>`__.
 
 Let's now discover how to learn a dataset and later on generate
 synthetic data with the same format and statistical properties by using
-the ``CTGAN`` class from SDV.
+the ``TVAE`` class from SDV.
 
 Quick Usage
 -----------
@@ -34,9 +34,9 @@ that applied for placements during the year 2020.
 
 .. warning::
 
-    In order to follow this guide you need to have ``ctgan`` installed on
-    your system. If you have not done it yet, please install ``ctgan`` now
-    by executing the command ``pip install sdv`` in a terminal.
+    In order to follow this guide you need to have ``tvae`` installed on
+    your system. If you have not done it yet, please install ``tvae`` now
+    by executing the command ``pip install sdv[tvae]`` in a terminal.
 
 .. ipython:: python
     :okwarning:
@@ -63,11 +63,11 @@ You will notice that there is data with the following characteristics:
    the data related to the placement details is missing in the rows
    where the student was not placed.
 
-Let us use ``CTGAN`` to learn this data and then sample synthetic data
+Let us use ``TVAE`` to learn this data and then sample synthetic data
 about new students to see how well de model captures the characteristics
 indicated above. In order to do this you will need to:
 
--  Import the ``sdv.tabular.CTGAN`` class and create an instance of it.
+-  Import the ``sdv.tabular.TVAE`` class and create an instance of it.
 -  Call its ``fit`` method passing our table.
 -  Call its ``sample`` method indicating the number of synthetic rows
    that you want to generate.
@@ -75,9 +75,9 @@ indicated above. In order to do this you will need to:
 .. ipython:: python
     :okwarning:
 
-    from sdv.tabular import CTGAN
+    from sdv.tabular import TVAE
 
-    model = CTGAN()
+    model = TVAE()
     model.fit(data)
 
 .. note::
@@ -85,7 +85,7 @@ indicated above. In order to do this you will need to:
     Notice that the model ``fitting`` process took care of transforming the
     different fields using the appropriate `Reversible Data
     Transforms <http://github.com/sdv-dev/RDT>`__ to ensure that the data
-    has a format that the underlying CTGANSynthesizer class can handle.
+    has a format that the underlying TVAESynthesizer class can handle.
 
 Generate synthetic data from the model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,19 +163,19 @@ Load the model and generate new data
 
 The file you just generated can be send over to the system where the
 synthetic data will be generated. Once it is there, you can load it
-using the ``CTGAN.load`` method, and then you are ready to sample new
+using the ``TVAE.load`` method, and then you are ready to sample new
 data from the loaded instance:
 
 .. ipython:: python
     :okwarning:
 
-    loaded = CTGAN.load('my_model.pkl')
+    loaded = TVAE.load('my_model.pkl')
     new_data = loaded.sample(200)
 
 .. warning::
 
     Notice that the system where the model is loaded needs to also have
-    ``sdv`` and ``ctgan`` installed, otherwise it will not be able to load
+    ``sdv`` and ``tvae`` installed, otherwise it will not be able to load
     the model and use it.
 
 Specifying the Primary Key of the table
@@ -209,7 +209,7 @@ indicating the name of the column that is the index of the table.
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = TVAE(
         primary_key='student_id'
     )
     model.fit(data)
@@ -260,7 +260,7 @@ students:
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = TVAE(
         primary_key='student_id',
     )
     model.fit(data_pii)
@@ -307,7 +307,7 @@ dictionary indicating the category ``address``
 .. ipython:: python
     :okwarning:
 
-    model = CTGAN(
+    model = TVAE(
         primary_key='student_id',
         anonymize_fields={
             'address': 'address'
@@ -334,113 +334,6 @@ data:
 
     data_pii.address.isin(new_data_pii.address).sum()
 
-
-Advanced Usage
---------------
-
-Now that we have discovered the basics, let's go over a few more
-advanced usage examples and see the different arguments that we can pass
-to our ``CTGAN`` Model in order to customize it to our needs.
-
-How to modify the CTGAN Hyperparameters?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A part from the common Tabular Model arguments, ``CTGAN`` has a number
-of additional hyperparameters that control its learning behavior and can
-impact on the performance of the model, both in terms of quality of the
-generated data and computational time.
-
-- ``epochs`` and ``batch_size``: these arguments control the number of
-  iterations that the model will perform to optimize its parameters, as well as the number
-  of samples used in each step. Its default values are ``300`` and ``500``
-  respectively, and ``batch_size`` needs to always be a value which is
-  multiple of ``10``.
-
-  These hyperparameters have a very direct effect in time the training
-  process lasts but also on the performance of the data, so for new
-  datasets, you might want to start by setting a low value on both of them
-  to see how long the training process takes on your data and later on
-  increase the number to acceptable values in order to improve the
-  performance.
-
-- ``log_frequency``: Whether to use log frequency of categorical levels in conditional
-  sampling. It defaults to ``True``.
-
-  This argument affects how the model processes the frequencies of the
-  categorical values that are used to condition the rest of the values. In
-  some cases, changing it to ``False`` could lead to better performance.
-
--  ``embedding_dim`` (int): Size of the random sample passed to the
-   Generator. Defaults to 128.
-
--  ``generator_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Residuals. A Resiudal Layer will be created for each one
-   of the values provided. Defaults to (256, 256).
-
--  ``discriminator_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Discriminator Layers. A Linear Layer will be created for
-   each one of the values provided. Defaults to (256, 256).
-
-- ``l2scale``: Weight Decay of the Adam Optimizer used to optimize the Neural Networks.
-  Defaults to ``1e-6``.
-
-- ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
-
-.. warning::
-
-    Notice that the value that you set on the ``batch_size`` argument must always be a
-    multiple of ``10``!
-
-As an example, we will try to fit the ``CTGAN`` model slightly
-increasing the number of epochs, reducing the ``batch_size``, adding one
-additional layer to the models involved and using a smaller wright
-decay.
-
-Before we start, we will evaluate the quality of the previously
-generated data using the ``sdv.evaluation.evaluate`` function
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.evaluation import evaluate
-
-    evaluate(new_data, data)
-
-
-Afterwards, we create a new instance of the ``CTGAN`` model with the
-hyperparameter values that we want to use
-
-.. ipython:: python
-    :okwarning:
-
-    model = CTGAN(
-        primary_key='student_id',
-        epochs=500,
-        batch_size=100,
-        generator_dim=(256, 256, 256),
-        discriminator_dim=(256, 256, 256),
-        l2scale=1e-07
-    )
-
-And fit to our data.
-
-.. ipython:: python
-    :okwarning:
-
-    model.fit(data)
-
-Finally, we are ready to generate new data and evaluate the results.
-
-.. ipython:: python
-    :okwarning:
-
-    new_data = model.sample(len(data))
-    evaluate(new_data, data)
-
-
-As we can see, in this case these modifications changed the obtained
-results slightly, but they did neither introduce dramatic changes in the
-performance.
 
 
 How do I specify constraints?
