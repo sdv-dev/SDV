@@ -36,7 +36,7 @@ that applied for placements during the year 2020.
 
     In order to follow this guide you need to have ``tvae`` installed on
     your system. If you have not done it yet, please install ``tvae`` now
-    by executing the command ``pip install sdv[tvae]`` in a terminal.
+    by executing the command ``pip install sdv`` in a terminal.
 
 .. ipython:: python
     :okwarning:
