@@ -350,41 +350,42 @@ of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
 generated data and computational time.
 
-- ``epochs`` and ``batch_size``: these arguments control the number of
-  iterations that the model will perform to optimize its parameters, as well as the number
-  of samples used in each step. Its default values are ``300`` and ``500``
-  respectively, and ``batch_size`` needs to always be a value which is
-  multiple of ``10``.
-
-  These hyperparameters have a very direct effect in time the training
-  process lasts but also on the performance of the data, so for new
-  datasets, you might want to start by setting a low value on both of them
-  to see how long the training process takes on your data and later on
-  increase the number to acceptable values in order to improve the
-  performance.
-
-- ``log_frequency``: Whether to use log frequency of categorical levels in conditional
-  sampling. It defaults to ``True``.
-
-  This argument affects how the model processes the frequencies of the
-  categorical values that are used to condition the rest of the values. In
-  some cases, changing it to ``False`` could lead to better performance.
-
--  ``embedding_dim`` (int): Size of the random sample passed to the
-   Generator. Defaults to 128.
-
--  ``generator_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Residuals. A Resiudal Layer will be created for each one
-   of the values provided. Defaults to (256, 256).
-
--  ``discriminator_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Discriminator Layers. A Linear Layer will be created for
-   each one of the values provided. Defaults to (256, 256).
-
-- ``l2scale``: Weight Decay of the Adam Optimizer used to optimize the Neural Networks.
-  Defaults to ``1e-6``.
-
-- ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
+-   `epochs` and `batch_size`: these arguments control the number of
+    iterations that the model will perform to optimize its parameters,
+    as well as the number of samples used in each step. Its default
+    values are `300` and `500` respectively, and `batch_size` needs to
+    always be a value which is multiple of `10`. These hyperparameters
+    have a very direct effect in time the training process lasts but
+    also on the performance of the data, so for new datasets, you might
+    want to start by setting a low value on both of them to see how long
+    the training process takes on your data and later on increase the
+    number to acceptable values in order to improve the performance.
+-   `log_frequency`: Whether to use log frequency of categorical levels
+    in conditional sampling. It defaults to `True`. This argument affects
+    how the model processes the frequencies of the categorical values that
+    are used to condition the rest of the values. In some cases, changing
+    it to `False` could lead to better performance.
+-   `embedding_dim` (int): Size of the random sample passed to the
+    Generator. Defaults to 128.
+-   `generator_dim` (tuple or list of ints): Size of the output samples for
+    each one of the Residuals. A Resiudal Layer will be created for each
+    one of the values provided. Defaults to (256, 256).
+-   `discriminator_dim` (tuple or list of ints): Size of the output samples for
+    each one of the Discriminator Layers. A Linear Layer will be created
+    for each one of the values provided. Defaults to (256, 256).
+-   `generator_lr` (float): Learning rate for the generator. Defaults to 2e-4.
+-   `generator_decay` (float): Generator weight decay for the Adam Optimizer.
+    Defaults to 1e-6.
+-   `discriminator_lr` (float): Learning rate for the discriminator.
+    Defaults to 2e-4.
+-   `discriminator_decay` (float): Discriminator weight decay for the Adam
+    Optimizer. Defaults to 1e-6.
+-   `discriminator_steps` (int): Number of discriminator updates to do for
+    each generator update. From the WGAN paper: https://arxiv.org/abs/1701.07875.
+    WGAN paper default is 5. Default used is 1 to match original CTGAN
+    implementation.
+-   `verbose`: Whether to print fit progress on stdout. Defaults to
+    `False`.
 
 .. warning::
 
@@ -418,8 +419,7 @@ hyperparameter values that we want to use
         epochs=500,
         batch_size=100,
         generator_dim=(256, 256, 256),
-        discriminator_dim=(256, 256, 256),
-        l2scale=1e-07
+        discriminator_dim=(256, 256, 256)
     )
 
 And fit to our data.
