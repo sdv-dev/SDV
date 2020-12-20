@@ -1,6 +1,6 @@
 .. _evaluation_framework:
 
-Evaluating Framework
+Evaluation Framework
 ====================
 
 **SDV** contains a *Synthetic Data Evaluation Framework* that facilitates
