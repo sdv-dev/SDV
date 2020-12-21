@@ -14,3 +14,8 @@
     font-size: .9em;
     color: rgba(0,0,0,.65);
 }
+
+.nav-icon-img {
+    width: 19px;
+    margin-top: 2px;
+}

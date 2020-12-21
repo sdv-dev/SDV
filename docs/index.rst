@@ -13,12 +13,12 @@ SDV - The Synthetic Data Vault
 
 **Date**: |today| **Version**: |version|
 
--  Website: https://sdv.dev
--  Documentation: https://sdv.dev/SDV
--  Github: https://github.com/sdv-dev/SDV
--  License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
--  Development Status:
-   `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
+- Website: https://sdv.dev
+- Documentation: https://sdv.dev/SDV
+- Github: https://github.com/sdv-dev/SDV
+- License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
+- Development Status:
+  `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
 
 Overview
 --------

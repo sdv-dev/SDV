@@ -51,6 +51,7 @@ autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['sdv_theme/_templates']
+templates_path = ['sdv_theme/_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -142,7 +143,10 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ['sdv_theme/static']
+html_css_files = [
+    'sdv.css',
+]
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
