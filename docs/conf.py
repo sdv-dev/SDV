@@ -18,8 +18,6 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 
-# import sphinx_rtd_theme # For read the docs theme
-
 import sdv
 
 # -- General configuration ---------------------------------------------
@@ -51,12 +49,8 @@ ipython_execlines = [
 autosummary_generate = True
 autodoc_typehints = "none"
 
-# autodoc_default_options = {
-#     'autosummary': True,
-# }
-
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['sdv_theme/_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -119,8 +113,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'pydata_sphinx_theme'
-# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = 'sdv_theme'
+html_theme_path = ['.']
 
 # Readthedocs additions
 html_context = {
@@ -141,6 +135,7 @@ html_context = {
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
     "twitter_url": "https://twitter.com/sdv_dev",
+    "slack_url": "https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw",
     "show_prev_next": True,
 }
 

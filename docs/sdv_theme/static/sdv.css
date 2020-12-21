@@ -1,0 +1,16 @@
+.bd-sidebar .nav>li>ul>li>ul {
+    list-style: none;
+    padding: .25rem 1.5rem;
+}
+
+.bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a {
+    font-weight: 600;
+    color: #130654;
+}
+
+.bd-sidebar .nav>li>ul>li>ul>li>a {
+    display: block;
+    padding: .25rem 1.5rem;
+    font-size: .9em;
+    color: rgba(0,0,0,.65);
+}
