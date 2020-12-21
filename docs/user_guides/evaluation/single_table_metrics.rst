@@ -259,14 +259,19 @@ on the real data.
 The metrics on this family are organized by Machine Learning problem type and model.
 
 * Binary Classification Metrics:
+
   * ``BinaryDecisionTreeClassifier``
   * ``BinaryAdaBoostClassifier``
   * ``BinaryLogisticRegression``
   * ``BinaryMLPClassifier``
+
 * Multiclass Classification Metrics:
+
   * ``MulticlassDecisionTreeClassifier``
   * ``MulticlassMLPClassifier``
+
 * Regression Metrics:
+
   * ``LinearRegressionClassifier``
   * ``MLPRegressor``
 
