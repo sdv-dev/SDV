@@ -13,11 +13,12 @@ SDV - The Synthetic Data Vault
 
 **Date**: |today| **Version**: |version|
 
+-  Website: https://sdv.dev
+-  Documentation: https://sdv.dev/SDV
+-  Github: https://github.com/sdv-dev/SDV
 -  License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
 -  Development Status:
    `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
--  Documentation: https://sdv-dev.github.io/SDV
--  Homepage: https://github.com/sdv-dev/SDV
 
 Overview
 --------
@@ -62,6 +63,20 @@ Current functionality and features:
 
    -  Using statistical, Autoregressive and Deep Learning models.
    -  Conditional sampling based on contextual attributes.
+
+-  Metrics for :ref:`evaluation`, including:
+
+   -  An easy to use :ref:`evaluation_framework` to evaluate the quality of your synthetic
+      data with a single line of code.
+   -  Metrics for multiple data modalities, including :ref:`single_table_metrics` and
+      :ref:`multi_table_metrics`.
+
+-  A :ref:`benchmarking_framework` to easily compare multiple synthetic data generators, including:
+
+   -  Dozens of datasets of multiple data modalities already prepared to be run on.
+   -  Tools to easily add new synthetic data generators and datasets.
+   -  Distributed computing to reduce computing times.
+   -  Comprehensive results presented in multiple leaderboard formats.
 
 
 Try it out now!
