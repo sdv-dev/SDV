@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Benchmarking &#8212; SDV 0.5.0 documentation</title>
+    <title>Benchmarking Framework &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -42,14 +43,13 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Single Table Benchmarking" href="single_table.html" />
-    <link rel="prev" title="PAR Model" href="../timeseries/par.html" />
+    <link rel="prev" title="Multi Table Metrics" href="../evaluation/multi_table_metrics.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -148,14 +154,22 @@
             
           
             
-  
+                <li class="">
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
                 <li class="active">
-                    <a href="">Benchmarking</a>
+                    <a href="">Benchmarking Framework</a>
                     <ul>
                     
-                        <li class="">
-                            <a href="single_table.html">Single Table Benchmarking</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="single_table.html">Single Table Benchmarking</a>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -195,8 +209,8 @@
               
               <div>
                 
-  <div class="section" id="benchmarking">
-<span id="id1"></span><h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="benchmarking-framework">
+<span id="id1"></span><h1>Benchmarking Framework<a class="headerlink" href="#benchmarking-framework" title="Permalink to this headline">¶</a></h1>
 <p>The Synthetic Data Vault offers a collection of benchmarking tools that evaluate
 different types of <em>synthetic data generators</em> on large number of datasets under
 uniform conditions that allow their results to be compared.</p>
@@ -213,7 +227,7 @@ uniform conditions that allow their results to be compared.</p>
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="../timeseries/par.html" title="previous page">PAR Model</a>
+    <a class='left-prev' id="prev-link" href="../evaluation/multi_table_metrics.html" title="previous page">Multi Table Metrics</a>
     <a class='right-next' id="next-link" href="single_table.html" title="next page">Single Table Benchmarking</a>
 
               </div>

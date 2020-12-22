@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CopulaGAN Model &#8212; SDV 0.5.0 documentation</title>
+    <title>CopulaGAN Model &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -41,15 +42,14 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Handling Constraints" href="constraints.html" />
+    <link rel="next" title="TVAE Model" href="tvae.html" />
     <link rel="prev" title="CTGAN Model" href="ctgan.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -130,26 +136,49 @@
         
           
             
-  
                 <li class="active">
                     <a href="index.html">Single Table Data</a>
                     <ul>
                     
-                        <li class="">
-                            <a href="data_description.html">Data Description</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="data_description.html">Data Description</a>
+                            </li>
+                        
+
                     
-                        <li class="active">
-                            <a href="models.html">Models</a>
-                        </li>
+                        
+                            <li class="active">
+                                <a href="models.html">Models</a>
+                                <ul>
+                                
+                                    <li class="">
+                                        <a href="gaussian_copula.html">GaussianCopula Model</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="ctgan.html">CTGAN Model</a>
+                                    </li>
+                                
+                                    <li class="active">
+                                        <a href="">CopulaGAN Model</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="tvae.html">TVAE Model</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
                     
-                        <li class="">
-                            <a href="constraints.html">Handling Constraints</a>
-                        </li>
-                    
-                        <li class="">
-                            <a href="evaluation.html">Evaluating Synthetic Data</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="constraints.html">Handling Constraints</a>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -169,7 +198,13 @@
           
             
                 <li class="">
-                    <a href="../benchmarking/index.html">Benchmarking</a>
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -303,7 +338,7 @@ that applied for placements during the year 2020.</p>
 <p class="admonition-title">Warning</p>
 <p>In order to follow this guide you need to have <code class="docutils literal notranslate"><span class="pre">ctgan</span></code> installed on
 your system. If you have not done it yet, please install <code class="docutils literal notranslate"><span class="pre">ctgan</span></code> now
-by executing the command <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sdv[ctgan]</span></code> in a terminal.</p>
+by executing the command <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sdv</span></code> in a terminal.</p>
 </div>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
 
@@ -371,11 +406,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0       17264      M    86.821261  63.464538  Commerce    57.299332   Comm&amp;Mgmt            False                 1           84.984072  Mkt&amp;Fin  71.184974  29236.354241   False 2020-01-08 2020-10-12      NaN</span>
-<span class="go">1       17365      M    70.068419  67.474734  Commerce    72.843744    Sci&amp;Tech            False                 0           87.407972  Mkt&amp;Fin  60.074327  28517.600768   False 2020-01-09        NaT      6.0</span>
-<span class="go">2       17474      F    50.150392  34.682687  Commerce    71.258022   Comm&amp;Mgmt            False                 0           72.149954  Mkt&amp;Fin  78.753445  28148.600299   False 2020-01-12        NaT      NaN</span>
-<span class="go">3       17282      M    81.127435  52.297727   Science    58.879349   Comm&amp;Mgmt            False                 1           63.571842  Mkt&amp;Fin  70.315574           NaN   False 2020-06-23        NaT      3.0</span>
-<span class="go">4       17430      M    89.107432  68.930006   Science    69.424148    Sci&amp;Tech            False                 0           96.475414   Mkt&amp;HR  58.051018  25456.468344    True        NaT 2020-07-14      NaN</span>
+<span class="go">0       17280      M    76.507497  68.889914  Commerce    81.061943   Comm&amp;Mgmt            False                 1           65.867462  Mkt&amp;Fin  54.474152           NaN    True 2020-09-21 2020-08-03      6.0</span>
+<span class="go">1       17478      M    44.505629  64.908314  Commerce    72.075456   Comm&amp;Mgmt            False                 0           56.820980   Mkt&amp;HR  58.457044  59827.623681    True 2020-08-18 2020-08-27      NaN</span>
+<span class="go">2       17471      M    88.547907  62.303732  Commerce    88.360940    Sci&amp;Tech             True                 0           50.304225   Mkt&amp;HR  73.935094  26325.102155   False 2020-02-21        NaT      NaN</span>
+<span class="go">3       17459      F    83.574446  67.749789  Commerce    73.144404   Comm&amp;Mgmt            False                 0           53.052714   Mkt&amp;HR  73.799870  29933.723971    True 2020-03-21        NaT      NaN</span>
+<span class="go">4       17268      F    46.142829  83.723496   Science    80.861203   Comm&amp;Mgmt             True                 0           63.514623  Mkt&amp;Fin  57.650961           NaN    True 2020-06-23 2020-07-15      6.0</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -456,16 +491,15 @@ all of them appear at most once:</p>
 that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
-<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">6         17268      M    87.953343  41.443092  Commerce    64.291443   Comm&amp;Mgmt            False                 1           84.034370  Mkt&amp;Fin  55.891526  28536.234545    True 2020-02-28 2021-02-20      3.0</span>
-<span class="go">18        17268      M    77.044439  39.031327  Commerce    59.064986   Comm&amp;Mgmt            False                 1           72.855134   Mkt&amp;HR  65.664111  17919.367587    True 2020-01-05        NaT      NaN</span>
-<span class="go">45        17268      M    86.366964  91.881330   Science    56.453340   Comm&amp;Mgmt            False                 0           88.918846  Mkt&amp;Fin  67.097757  30438.503582    True        NaT        NaT      3.0</span>
-<span class="go">108       17268      F    70.712935  65.836217  Commerce    60.491139   Comm&amp;Mgmt            False                 1           85.002351   Mkt&amp;HR  69.898594  26078.939705    True 2020-01-13 2020-08-15     12.0</span>
-<span class="go">112       17268      M    89.245553  68.209467  Commerce    53.939803   Comm&amp;Mgmt            False                 1           95.321730  Mkt&amp;Fin  72.368767  40087.635455   False 2020-03-07        NaT     12.0</span>
-<span class="go">126       17268      M    78.642131  65.416557   Science    53.413246   Comm&amp;Mgmt            False                 0           65.560692  Mkt&amp;Fin  51.426397  29217.570027    True        NaT        NaT      6.0</span>
-<span class="go">159       17268      F    67.562687  64.086736   Science    54.337948   Comm&amp;Mgmt            False                 1           95.920933   Mkt&amp;HR  56.768458  27918.306885   False 2020-06-21        NaT      NaN</span>
-<span class="go">185       17268      M    84.253458  84.219350  Commerce    52.780111      Others            False                 1           96.025838   Mkt&amp;HR  63.118352  23939.248567    True 2020-01-22 2020-09-08      NaN</span>
-<span class="go">187       17268      F    89.230427  32.945867  Commerce    46.735492    Sci&amp;Tech            False                 0           76.863517  Mkt&amp;Fin  72.371879  25028.927760   False 2020-01-14 2021-02-02      NaN</span>
+<span class="go">     student_id gender  second_perc   high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">8         17266      M    79.795669   61.651581   Science    49.092921   Comm&amp;Mgmt            False                 0           66.076599   Mkt&amp;HR  53.181681           NaN    True 2020-08-28        NaT     12.0</span>
+<span class="go">27        17266      M    48.763567   52.933771  Commerce    70.507623   Comm&amp;Mgmt            False                 0           56.298727   Mkt&amp;HR  67.832881  27169.528575    True 2020-11-04 2020-09-05      3.0</span>
+<span class="go">36        17266      M    61.123460   71.739535      Arts    54.852325    Sci&amp;Tech            False                 0           50.843390   Mkt&amp;HR  59.828701           NaN    True 2020-01-12 2020-07-30      NaN</span>
+<span class="go">86        17266      M    51.952603   67.063023  Commerce    65.737381   Comm&amp;Mgmt            False                 0           50.873429   Mkt&amp;HR  59.680296           NaN    True        NaT 2020-09-06      3.0</span>
+<span class="go">97        17266      F    42.935988   53.603678  Commerce    65.062977   Comm&amp;Mgmt            False                 0           52.564234   Mkt&amp;HR  72.005844           NaN    True 2020-08-25 2020-03-06      3.0</span>
+<span class="go">134       17266      M    72.224384   81.867656  Commerce    70.583191    Sci&amp;Tech            False                 0           51.925594  Mkt&amp;Fin  56.682879           NaN    True 2020-07-16        NaT      3.0</span>
+<span class="go">156       17266      F    51.154110  121.911480   Science    85.282964   Comm&amp;Mgmt            False                 1           95.267525   Mkt&amp;HR  56.055770           NaN    True 2020-01-14        NaT      3.0</span>
+<span class="go">198       17266      M    44.268377   91.092872  Commerce    68.989058   Comm&amp;Mgmt            False                 0           84.755341  Mkt&amp;Fin  56.141294           NaN    True 2020-03-16        NaT     12.0</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -485,11 +519,11 @@ indicating the name of the column that is the index of the table.</p>
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0      M    79.544678  65.385061  Commerce    71.583186   Comm&amp;Mgmt            False                 0           83.728249   Mkt&amp;HR  59.646115  59083.111569    True 2020-03-31 2020-10-03     12.0</span>
-<span class="go">1           1      F    74.365409  33.114205   Science    75.221314   Comm&amp;Mgmt            False                 1           50.000532   Mkt&amp;HR  49.936314  26643.641547    True 2020-01-20        NaT      NaN</span>
-<span class="go">2           2      M    78.436518  76.183802   Science    64.291122    Sci&amp;Tech            False                 2           83.154173  Mkt&amp;Fin  49.897596  47407.179097    True 2020-03-22 2021-03-17      3.0</span>
-<span class="go">3           3      M    80.341489  43.198490   Science    73.301372   Comm&amp;Mgmt            False                 2           97.752853   Mkt&amp;HR  51.106142  28038.039588    True 2020-02-18 2020-09-08      6.0</span>
-<span class="go">4           4      M    65.351661  58.260485  Commerce    80.632997   Comm&amp;Mgmt            False                 0           76.233209  Mkt&amp;Fin  52.134907  28885.600426    True        NaT        NaT      3.0</span>
+<span class="go">0           0      M    66.289210  62.395759  Commerce    51.923570   Comm&amp;Mgmt            False                 0           96.167101  Mkt&amp;Fin  71.247640  22839.475470    True 2020-02-04 2020-09-28      3.0</span>
+<span class="go">1           1      M    65.472898  58.372960      Arts    76.966261   Comm&amp;Mgmt            False                 1           97.656944   Mkt&amp;HR  63.313271  33217.764432   False 2020-01-02 2020-10-03      3.0</span>
+<span class="go">2           2      M    76.499437  84.223449   Science    43.086686   Comm&amp;Mgmt            False                 0           77.768397   Mkt&amp;HR  71.837031           NaN    True 2020-01-24 2020-09-19      3.0</span>
+<span class="go">3           3      M    61.393842  66.951540  Commerce    71.236520      Others            False                 0           97.341642  Mkt&amp;Fin  68.431137  27540.158730    True        NaT 2020-06-29      NaN</span>
+<span class="go">4           4      F    46.262434  60.836957   Science    63.738731   Comm&amp;Mgmt            False                 0           65.636504  Mkt&amp;Fin  56.138421  54407.699806    True 2020-07-15 2020-09-04      NaN</span>
 </pre></div>
 </div>
 <p>As a result, the model will learn that this column must be unique and
@@ -544,11 +578,11 @@ students:</p>
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
 <span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0        9647 Martin Divide\nNorth William, NY 73345      M    51.756576  54.610567   Science    55.415337   Comm&amp;Mgmt            False                 0           54.867145   Mkt&amp;HR  59.991109           NaN    True        NaT 2020-08-11      3.0</span>
-<span class="go">1           1      21378 Russell Neck\nLake Robertstad, KS 49747      F    49.040104  66.697752  Commerce    58.804813   Comm&amp;Mgmt            False                 0           52.218090   Mkt&amp;HR  71.808853  25981.739293    True 2020-06-09 2020-07-06      3.0</span>
-<span class="go">2           2  036 Gregory Expressway Suite 918\nWest Jesus, ...      F    56.457902  63.793578   Science    58.083964   Comm&amp;Mgmt            False                 0           50.881097   Mkt&amp;HR  62.538974  26728.758288    True        NaT 2020-08-05      NaN</span>
-<span class="go">3           3  557 Stephanie Knolls Apt. 110\nLake Rachel, MN...      F    44.299664  59.764519      Arts    69.046628   Comm&amp;Mgmt            False                 0           50.179720   Mkt&amp;HR  73.167971  27544.754445    True 2020-05-19 2020-05-24     12.0</span>
-<span class="go">4           4               275 Aaron Neck\nEast Stacy, DC 62038      M    61.629030  38.603926  Commerce    75.500301   Comm&amp;Mgmt            False                 1           51.150177   Mkt&amp;HR  58.325000  26468.325655    True        NaT 2020-11-24      NaN</span>
+<span class="go">0           0            8497 Steven Estate\nCindyberg, WV 01019      F    87.171404  63.959715      Arts    91.955458      Others            False                 0           57.055327  Mkt&amp;Fin  76.685147  20535.184471    True        NaT 2020-04-08      3.0</span>
+<span class="go">1           1  96493 Kelly Canyon Apt. 145\nEast Steven, NC 3...      M    63.509094  65.230193   Science    73.770390   Comm&amp;Mgmt            False                 0           62.750057  Mkt&amp;Fin  76.878291           NaN    True 2020-01-30        NaT      3.0</span>
+<span class="go">2           2   0917 Shawn Grove Suite 337\nWhiteville, KS 92476      M    56.506838  68.696689  Commerce    64.516766    Sci&amp;Tech            False                 1           52.739270   Mkt&amp;HR  69.037251           NaN    True 2020-02-16 2020-11-29      6.0</span>
+<span class="go">3           3            941 Parker Inlet\nNew Kristen, FL 02090      M    54.843872  65.345879  Commerce    93.954968    Sci&amp;Tech            False                 1           78.764977   Mkt&amp;HR  67.890715  19423.162138    True 2020-01-09 2020-06-17      NaN</span>
+<span class="go">4           4                        USCGC Stanley\nFPO AP 68120      F    79.914548  60.423455   Science    83.799378   Comm&amp;Mgmt            False                 1           82.573046  Mkt&amp;Fin  72.655044           NaN   False 2020-07-09 2020-09-04      6.0</span>
 </pre></div>
 </div>
 <p>More specifically, we can see how all the addresses that have been generated
@@ -602,12 +636,12 @@ that we learned.</p>
 
 <span class="gp">In [29]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[29]: </span><span class="go"></span>
-<span class="go">   student_id                                         address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0    114 Christopher Passage\nNguyenton, CT 51832      M    73.281628  61.478022   Science    64.665817    Sci&amp;Tech            False                 0           70.447217   Mkt&amp;HR  70.004187  18595.397108   False 2020-01-01        NaT      3.0</span>
-<span class="go">1           1      5399 Anthony Isle\nMartinezhaven, SD 69381      F    55.042225  47.922225  Commerce    90.298944    Sci&amp;Tech            False                 0           97.506899   Mkt&amp;HR  60.409533           NaN    True 2020-06-10 2020-04-26      3.0</span>
-<span class="go">2           2    629 Foster Extensions\nWest Gerald, MO 99152      M    71.779910  55.689826   Science    73.967361      Others            False                 0           92.225620   Mkt&amp;HR  64.651343  30143.462033    True 2020-02-16 2020-09-14      3.0</span>
-<span class="go">3           3  31073 Brian Mews Apt. 298\nNew Maria, AL 24093      M    66.439141  64.135583      Arts    70.173231   Comm&amp;Mgmt            False                 1           61.096728   Mkt&amp;HR  66.262230           NaN   False 2020-01-14        NaT      3.0</span>
-<span class="go">4           4  26902 Rodriguez Locks\nNew Maryhaven, NC 03331      F    45.096236  60.252726   Science    67.112394   Comm&amp;Mgmt            False                 0           90.149693  Mkt&amp;Fin  66.545982           NaN    True 2020-03-26 2020-03-29      NaN</span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0       483 Stephenson Neck\nNew Stephanie, RI 50162      M    81.982918  38.767836  Commerce    47.989678   Comm&amp;Mgmt            False                 0           71.921323  Mkt&amp;Fin  74.729803  42321.103499    True 2020-03-25        NaT      3.0</span>
+<span class="go">1           1  5908 Moreno Center Suite 549\nWest Tammyberg, ...      F    60.883394  53.188808   Science    50.857187   Comm&amp;Mgmt             True                 0           52.590977   Mkt&amp;HR  59.052242  27539.453099   False 2020-02-20 2020-12-17      NaN</span>
+<span class="go">2           2     33310 Kimberly Lock\nNorth Loriville, NC 81724      M    80.950699  62.122714  Commerce    62.145908   Comm&amp;Mgmt            False                 0           92.385358  Mkt&amp;Fin  52.161343  26389.667779    True 2020-10-25 2020-08-05      NaN</span>
+<span class="go">3           3                   PSC 6610, Box 0684\nAPO AA 90992      M    78.126935  56.994551   Science    50.035183   Comm&amp;Mgmt             True                 0           57.158152  Mkt&amp;Fin  66.101558           NaN   False 2020-02-01 2020-09-19      NaN</span>
+<span class="go">4           4                   PSC 5677, Box 0615\nAPO AA 61378      M    67.129669  49.944416  Commerce    50.296403   Comm&amp;Mgmt            False                 1           52.451494  Mkt&amp;Fin  58.681726           NaN    True 2020-01-15        NaT      NaN</span>
 </pre></div>
 </div>
 <p>Which means that none of the original addresses can be found in the sampled
@@ -724,9 +758,10 @@ generated values now contain negative values which are invalid for this
 column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [38]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[38]: </span><span class="go"></span>
-<span class="go">1    106</span>
-<span class="go">0     88</span>
-<span class="go">2      6</span>
+<span class="go">0    112</span>
+<span class="go">1     83</span>
+<span class="go">2      4</span>
+<span class="go">3      1</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [39]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -799,10 +834,11 @@ the valid values range.</p>
 <span class="gp">In [44]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[44]: </span><span class="go"></span>
 <span class="go">0    182</span>
-<span class="go">1     15</span>
-<span class="go">2      9</span>
-<span class="go">3      7</span>
-<span class="go">4      2</span>
+<span class="go">2     11</span>
+<span class="go">3      8</span>
+<span class="go">1      7</span>
+<span class="go">4      6</span>
+<span class="go">5      1</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [45]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -826,33 +862,41 @@ impact on the performance of the model, both in terms of quality of the
 generated data and computational time:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">epochs</span></code> and <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>: these arguments control the number of
-iterations that the model will perform to optimize its parameters, as well as the number
-of samples used in each step. Its default values are <code class="docutils literal notranslate"><span class="pre">300</span></code> and <code class="docutils literal notranslate"><span class="pre">500</span></code>
-respectively, and <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> needs to always be a value which is
-multiple of <code class="docutils literal notranslate"><span class="pre">10</span></code>.</p>
+iterations that the model will perform to optimize its parameters,
+as well as the number of samples used in each step. Its default
+values are <code class="docutils literal notranslate"><span class="pre">300</span></code> and <code class="docutils literal notranslate"><span class="pre">500</span></code> respectively, and <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> needs
+to always be a value which is multiple of <code class="docutils literal notranslate"><span class="pre">10</span></code>.</p>
 <p>These hyperparameters have a very direct effect in time the training
 process lasts but also on the performance of the data, so for new
-datasets, you might want to start by setting a low value on both of them
-to see how long the training process takes on your data and later on
-increase the number to acceptable values in order to improve the
+datasets, you might want to start by setting a low value on both of
+them to see how long the training process takes on your data and later
+on increase the number to acceptable values in order to improve the
 performance.</p>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log_frequency</span></code>: Whether to use log frequency of categorical levels in conditional
-sampling. It defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
-<p>This argument affects how the model processes the frequencies of the
-categorical values that are used to condition the rest of the values. In
-some cases, changing it to <code class="docutils literal notranslate"><span class="pre">False</span></code> could lead to better performance.</p>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log_frequency</span></code>: Whether to use log frequency of categorical levels
+in conditional sampling. It defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+This argument affects how the model processes the frequencies of the
+categorical values that are used to condition the rest of the values.
+In some cases, changing it to <code class="docutils literal notranslate"><span class="pre">False</span></code> could lead to better performance.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">embedding_dim</span></code> (int): Size of the random sample passed to the
 Generator. Defaults to 128.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gen_dim</span></code> (tuple or list of ints): Size of the output samples for each
-one of the Residuals. A Resiudal Layer will be created for each one
-of the values provided. Defaults to (256, 256).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">dis_dim</span></code> (tuple or list of ints): Size of the output samples for each
-one of the Discriminator Layers. A Linear Layer will be created for
-each one of the values provided. Defaults to (256, 256).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">l2scale</span></code>: Weight Decay of the Adam Optimizer used to optimize the Neural Networks.
-Defaults to <code class="docutils literal notranslate"><span class="pre">1e-6</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generator_dim</span></code> (tuple or list of ints): Size of the output samples for
+each one of the Residuals. A Resiudal Layer will be created for each
+one of the values provided. Defaults to (256, 256).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator_dim</span></code> (tuple or list of ints): Size of the output samples for
+each one of the Discriminator Layers. A Linear Layer will be created
+for each one of the values provided. Defaults to (256, 256).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generator_lr</span></code> (float): Learning rate for the generator. Defaults to 2e-4.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generator_decay</span></code> (float): Generator weight decay for the Adam Optimizer.
+Defaults to 1e-6.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator_lr</span></code> (float): Learning rate for the discriminator.
+Defaults to 2e-4.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator_decay</span></code> (float): Discriminator weight decay for the Adam
+Optimizer. Defaults to 1e-6.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator_steps</span></code> (int): Number of discriminator updates to do for
+each generator update. From the WGAN paper: <a class="reference external" href="https://arxiv.org/abs/1701.07875">https://arxiv.org/abs/1701.07875</a>.
+WGAN paper default is 5. Default used is 1 to match original CTGAN
+implementation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Whether to print fit progress on stdout. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 <div class="admonition warning">
@@ -869,7 +913,7 @@ generated data using the <code class="docutils literal notranslate"><span class=
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [46]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [47]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[47]: </span><span class="go">0.7236760571557533</span>
+<span class="gh">Out[47]: </span><span class="go">0.5037238508835898</span>
 </pre></div>
 </div>
 <p>Afterwards, we create a new instance of the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> model with the
@@ -878,9 +922,8 @@ hyperparameter values that we want to use</p>
 <span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-<span class="gp">   ....: </span>    <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-<span class="gp">   ....: </span>    <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-07</span>
+<span class="gp">   ....: </span>    <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+<span class="gp">   ....: </span>    <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 </pre></div>
@@ -893,7 +936,7 @@ hyperparameter values that we want to use</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [50]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
 <span class="gp">In [51]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[51]: </span><span class="go">0.7278426288889951</span>
+<span class="gh">Out[51]: </span><span class="go">0.47323853953104095</span>
 </pre></div>
 </div>
 <p>As we can see, in this case these modifications changed the obtained
@@ -917,7 +960,7 @@ synthetic data is: <em>“How good is the data that I just generated?”</em></p
 <p>In order to answer this question, <strong>SDV</strong> has a collection of metrics
 and tools that allow you to compare the <em>real</em> that you provided and the
 <em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
-<p>You can read more about this in the <a class="reference internal" href="evaluation.html#evaluation"><span class="std std-ref">Evaluating Synthetic Data</span></a> guide.</p>
+<p>You can read more about this in the <a class="reference internal" href="../evaluation/index.html#evaluation"><span class="std std-ref">Synthetic Data Evaluation</span></a> guide.</p>
 </div>
 </div>
 </div>
@@ -929,7 +972,7 @@ and tools that allow you to compare the <em>real</em> that you provided and the
               <div class='prev-next-bottom'>
                 
     <a class='left-prev' id="prev-link" href="ctgan.html" title="previous page">CTGAN Model</a>
-    <a class='right-next' id="next-link" href="constraints.html" title="next page">Handling Constraints</a>
+    <a class='right-next' id="next-link" href="tvae.html" title="next page">TVAE Model</a>
 
               </div>
               

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.5.0 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -46,8 +47,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../../index.html">
     
@@ -103,9 +103,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -117,10 +125,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -630,7 +636,11 @@
 <span class="sd">                Table to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Fitting table </span><span class="si">%s</span><span class="s1"> metadata&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">]</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtypes</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">]</span><span class="o">.</span><span class="n">dtypes</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">:</span>
@@ -785,24 +795,30 @@
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.from_dict"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.from_dict.html#sdv.metadata.Table.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">,</span> <span class="n">dtype_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Load a Table from a metadata dict.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            metadata_dict (dict):</span>
 <span class="sd">                Dict metadata to load.</span>
+<span class="sd">            dtype_transformers (dict):</span>
+<span class="sd">                If passed, set the dtype_transformers on the new instance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_field_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">if</span> <span class="n">fields</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;constraints&#39;</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_primary_key</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_sequence_index</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sequence_index&#39;</span><span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_entity_columns</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_columns&#39;</span><span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_context_columns</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;context_columns&#39;</span><span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="n">metadata_dict</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata_dict</span><span class="p">)</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">),</span>
+            <span class="n">field_names</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">field_types</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;constraints&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">model_kwargs</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">primary_key</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">),</span>
+            <span class="n">sequence_index</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sequence_index&#39;</span><span class="p">),</span>
+            <span class="n">entity_columns</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_columns&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">context_columns</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;context_columns&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">dtype_transformers</span><span class="o">=</span><span class="n">dtype_transformers</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="n">fields</span>
         <span class="k">return</span> <span class="n">instance</span></div>
 
 <div class="viewcode-block" id="Table.from_json"><a class="viewcode-back" href="../../../api_reference/api/sdv.metadata.Table.from_json.html#sdv.metadata.Table.from_json">[docs]</a>    <span class="nd">@classmethod</span>

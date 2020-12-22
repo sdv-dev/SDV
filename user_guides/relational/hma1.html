@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HMA1 Class &#8212; SDV 0.5.0 documentation</title>
+    <title>HMA1 Class &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -48,8 +49,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -136,18 +142,30 @@
             
           
             
-  
                 <li class="active">
                     <a href="index.html">Relational Data</a>
                     <ul>
                     
-                        <li class="">
-                            <a href="data_description.html">Data Description</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="data_description.html">Data Description</a>
+                            </li>
+                        
+
                     
-                        <li class="active">
-                            <a href="models.html">Models</a>
-                        </li>
+                        
+                            <li class="active">
+                                <a href="models.html">Models</a>
+                                <ul>
+                                
+                                    <li class="active">
+                                        <a href="">HMA1 Class</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -161,7 +179,13 @@
           
             
                 <li class="">
-                    <a href="../benchmarking/index.html">Benchmarking</a>
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -358,49 +382,45 @@ original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">new_data</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      FR    NaN   30</span>
-<span class="go"> 1        1      US      F   28</span>
-<span class="go"> 2        2      ES      F   31</span>
-<span class="go"> 3        3      ES      M   39</span>
-<span class="go"> 4        4      ES      M   49</span>
-<span class="go"> 5        5      FR    NaN   47</span>
-<span class="go"> 6        6      ES      M   19</span>
-<span class="go"> 7        7      ES      F   34</span>
-<span class="go"> 8        8      ES      M   44</span>
-<span class="go"> 9        9      ES      M   32,</span>
+<span class="go"> 0        0      US    NaN   34</span>
+<span class="go"> 1        1      BG      F   27</span>
+<span class="go"> 2        2      ES      F   36</span>
+<span class="go"> 3        3      US      F   26</span>
+<span class="go"> 4        4      BG      M   36</span>
+<span class="go"> 5        5      BG      M   49</span>
+<span class="go"> 6        6      ES      F   60</span>
+<span class="go"> 7        7      ES    NaN   47</span>
+<span class="go"> 8        8      ES      M   57</span>
+<span class="go"> 9        9      US      M   26,</span>
 <span class="go"> &#39;sessions&#39;:     session_id  user_id  device       os</span>
-<span class="go"> 0            0        0  tablet      ios</span>
-<span class="go"> 1            1        0  tablet      ios</span>
-<span class="go"> 2            2        0  tablet      ios</span>
-<span class="go"> 3            3        1  tablet      ios</span>
-<span class="go"> 4            4        1  tablet      ios</span>
-<span class="go"> 5            5        2  tablet  android</span>
-<span class="go"> 6            6        2  tablet  android</span>
-<span class="go"> 7            7        3  mobile  android</span>
-<span class="go"> 8            8        4  mobile      ios</span>
-<span class="go"> 9            9        6  mobile  android</span>
-<span class="go"> 10          10        7  tablet      ios</span>
-<span class="go"> 11          11        8  mobile      ios</span>
-<span class="go"> 12          12        9  mobile  android,</span>
-<span class="go"> &#39;transactions&#39;:     transaction_id  session_id           timestamp       amount  approved</span>
-<span class="go"> 0                0           0 2019-01-23 15:29:08    98.625503      True</span>
-<span class="go"> 1                1           1 2019-01-23 15:30:16    98.682970      True</span>
-<span class="go"> 2                2           2 2019-01-23 15:30:00    98.669584      True</span>
-<span class="go"> 3                3           3 2019-01-25 02:20:13    93.746313      True</span>
-<span class="go"> 4                4           4 2019-01-25 02:20:40    93.774557      True</span>
-<span class="go"> 5                5           5 2019-01-13 19:04:34   256.943831      True</span>
-<span class="go"> 6                6           5 2019-01-14 07:45:07   812.665612      True</span>
-<span class="go"> 7                7           6 2019-01-13 02:06:33  1011.411193      True</span>
-<span class="go"> 8                8           6 2019-01-12 19:01:15  -539.479385      True</span>
-<span class="go"> 9                9           7 2019-01-09 18:29:28    95.202537      True</span>
-<span class="go"> 10              10           8 2019-01-17 23:19:11    91.919615      True</span>
-<span class="go"> 11              11           9 2019-01-11 00:27:29    91.162144      True</span>
-<span class="go"> 12              12           9 2019-01-11 00:27:30    91.114655      True</span>
-<span class="go"> 13              13          10 2019-01-20 12:17:37    87.649550      True</span>
-<span class="go"> 14              14          10 2019-01-21 02:18:14   130.945515      True</span>
-<span class="go"> 15              15          11 2019-01-18 16:16:13   104.801147     False</span>
-<span class="go"> 16              16          12 2019-01-17 04:11:29    98.666596     False</span>
-<span class="go"> 17              17          12 2019-01-17 04:11:29    98.666372     False}</span>
+<span class="go"> 0            0        0  mobile  android</span>
+<span class="go"> 1            1        2  mobile  android</span>
+<span class="go"> 2            2        2  mobile  android</span>
+<span class="go"> 3            3        3  mobile  android</span>
+<span class="go"> 4            4        3  mobile  android</span>
+<span class="go"> 5            5        4  mobile  android</span>
+<span class="go"> 6            6        5  mobile  android</span>
+<span class="go"> 7            7        6  mobile      ios</span>
+<span class="go"> 8            8        6  mobile      ios</span>
+<span class="go"> 9            9        8  mobile      ios</span>
+<span class="go"> 10          10        8  mobile      ios</span>
+<span class="go"> 11          11        9  tablet      ios,</span>
+<span class="go"> &#39;transactions&#39;:     transaction_id  session_id           timestamp      amount  approved</span>
+<span class="go"> 0                0           0 2019-01-04 06:53:26  101.293546     False</span>
+<span class="go"> 1                1           1 2019-01-09 09:44:49   88.500532      True</span>
+<span class="go"> 2                2           1 2019-01-09 09:44:33   87.705087      True</span>
+<span class="go"> 3                3           2 2019-01-09 09:44:18   87.786707      True</span>
+<span class="go"> 4                4           2 2019-01-09 09:45:03   88.519343      True</span>
+<span class="go"> 5                5           3 2019-01-09 05:26:00   93.305790      True</span>
+<span class="go"> 6                6           4 2019-01-09 05:26:00   93.305856      True</span>
+<span class="go"> 7                7           5 2019-01-20 07:37:34  107.619831     False</span>
+<span class="go"> 8                8           5 2019-01-20 07:37:34  107.619831     False</span>
+<span class="go"> 9                9           6 2019-01-09 02:41:33  102.718391      True</span>
+<span class="go"> 10              10           6 2019-01-07 20:30:14   31.141814      True</span>
+<span class="go"> 11              11           6 2019-01-07 13:56:10  177.163151      True</span>
+<span class="go"> 12              12           7 2019-01-09 17:23:14   97.183299     False</span>
+<span class="go"> 13              13           8 2019-01-09 17:23:14   97.183129     False</span>
+<span class="go"> 14              14          11 2019-01-23 21:11:28   91.051514      True}</span>
 </pre></div>
 </div>
 </div>
@@ -472,29 +492,17 @@ original dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[15]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      ES    NaN   31</span>
-<span class="go"> 1       11      ES      F   40</span>
-<span class="go"> 2       12      BG      F   45</span>
-<span class="go"> 3       13      UK    NaN   42</span>
-<span class="go"> 4       14      US      M   26,</span>
-<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
-<span class="go"> 0          13       10  tablet      ios</span>
-<span class="go"> 1          14       11  mobile      ios</span>
-<span class="go"> 2          15       11  mobile      ios</span>
-<span class="go"> 3          16       12  mobile  android</span>
-<span class="go"> 4          17       13  mobile  android</span>
-<span class="go"> 5          18       14  tablet  android</span>
-<span class="go"> 6          19       14  tablet  android,</span>
+<span class="go"> 0       10      ES      F   50</span>
+<span class="go"> 1       11      ES    NaN   31</span>
+<span class="go"> 2       12      ES      F   48</span>
+<span class="go"> 3       13      US      M   27</span>
+<span class="go"> 4       14      US      M   33,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os</span>
+<span class="go"> 0          12       10  mobile  ios</span>
+<span class="go"> 1          13       10  mobile  ios</span>
+<span class="go"> 2          14       13  mobile  ios,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  approved</span>
-<span class="go"> 0              18          13 2019-01-15 16:35:02   77.293341      True</span>
-<span class="go"> 1              19          13 2019-01-15 17:12:58   70.294863      True</span>
-<span class="go"> 2              20          14 2019-01-18 03:11:05  101.069185      True</span>
-<span class="go"> 3              21          15 2019-01-18 03:11:05  101.069030      True</span>
-<span class="go"> 4              22          16 2019-01-07 20:53:41  101.785020     False</span>
-<span class="go"> 5              23          16 2019-01-07 20:53:41  101.756614     False</span>
-<span class="go"> 6              24          17 2019-01-09 12:15:02   97.609593      True</span>
-<span class="go"> 7              25          18 2019-01-12 23:25:46   99.190378      True</span>
-<span class="go"> 8              26          19 2019-01-12 23:23:01   99.153864      True}</span>
+<span class="go"> 0              15          14 2019-01-14 00:57:00  103.107096     False}</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -518,17 +526,18 @@ model will only generate data for the <code class="docutils literal notranslate"
 table, <code class="docutils literal notranslate"><span class="pre">transactions</span></code>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;sessions&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">{&#39;sessions&#39;:    session_id  user_id  device       os</span>
-<span class="go"> 0          20       17  tablet  android</span>
-<span class="go"> 1          21       16  mobile      ios</span>
-<span class="go"> 2          22       18  mobile      ios</span>
-<span class="go"> 3          23       18  mobile  android</span>
-<span class="go"> 4          24       18  mobile  android,</span>
-<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp        amount  approved</span>
-<span class="go"> 0              27          20 2019-01-05 10:00:33     66.232956      True</span>
-<span class="go"> 1              28          21 2019-01-10 03:45:49    100.618492     False</span>
-<span class="go"> 2              29          22 2019-01-13 19:28:11    107.110591     False</span>
-<span class="go"> 3              30          24 1959-08-27 08:03:41 -12973.847576      True}</span>
+<span class="go">{&#39;sessions&#39;:    session_id  user_id  device   os</span>
+<span class="go"> 0          15       17  tablet  ios</span>
+<span class="go"> 1          16       17  mobile  ios</span>
+<span class="go"> 2          17       17  tablet  ios</span>
+<span class="go"> 3          18       17  tablet  ios</span>
+<span class="go"> 4          19       19  mobile  ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  approved</span>
+<span class="go"> 0              16          15 2019-01-22 12:01:48   96.668606      True</span>
+<span class="go"> 1              17          16 2019-01-27 16:20:46  110.133007      True</span>
+<span class="go"> 2              18          17 2019-01-13 15:25:47  116.770573     False</span>
+<span class="go"> 3              19          18 2019-01-14 14:58:56   67.861438      True</span>
+<span class="go"> 4              20          19 2019-01-11 01:52:04   90.205490      True}</span>
 </pre></div>
 </div>
 <p>If you want to further restrict the sampling process to only one table
@@ -539,11 +548,11 @@ producing any rows for the tables <code class="docutils literal notranslate"><sp
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   user_id country gender  age</span>
-<span class="go">0       20      US      F   38</span>
-<span class="go">1       21      ES      F   38</span>
-<span class="go">2       22      ES      F   44</span>
-<span class="go">3       23      US      M   41</span>
-<span class="go">4       24      US    NaN   47</span>
+<span class="go">0       20      UK      M   30</span>
+<span class="go">1       21      UK      F   45</span>
+<span class="go">2       22      UK      M   33</span>
+<span class="go">3       23      ES      F   44</span>
+<span class="go">4       24      ES    NaN   55</span>
 </pre></div>
 </div>
 <div class="admonition note">

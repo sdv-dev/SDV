@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.5.0 documentation</title>
+    <title>SDV - The Synthetic Data Vault &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/sdv.css" />
     
   <link rel="preload" as="script" href="_static/js/index.3da636dd464baa7582d2.js">
 
@@ -47,8 +48,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="#">
     
@@ -104,9 +104,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -118,10 +126,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -192,13 +198,14 @@
 <a class="reference external" href="https://pepy.tech/project/sdv"><img alt="Downloads" src="https://pepy.tech/badge/sdv" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a> <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw"><img alt="Slack" src="https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack" /></a></p>
 <div class="section" id="sdv-the-synthetic-data-vault">
 <h1>SDV - The Synthetic Data Vault<a class="headerlink" href="#sdv-the-synthetic-data-vault" title="Permalink to this headline">¶</a></h1>
-<p><strong>Date</strong>: Nov 25, 2020 <strong>Version</strong>: 0.5.0</p>
+<p><strong>Date</strong>: Dec 22, 2020 <strong>Version</strong>: 0.6.0</p>
 <ul class="simple">
+<li><p>Website: <a class="reference external" href="https://sdv.dev">https://sdv.dev</a></p></li>
+<li><p>Documentation: <a class="reference external" href="https://sdv.dev/SDV">https://sdv.dev/SDV</a></p></li>
+<li><p>Github: <a class="reference external" href="https://github.com/sdv-dev/SDV">https://github.com/sdv-dev/SDV</a></p></li>
 <li><p>License: <a class="reference external" href="https://github.com/sdv-dev/SDV/blob/master/LICENSE">MIT</a></p></li>
 <li><p>Development Status:
 <a class="reference external" href="https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha">Pre-Alpha</a></p></li>
-<li><p>Documentation: <a class="reference external" href="https://sdv-dev.github.io/SDV">https://sdv-dev.github.io/SDV</a></p></li>
-<li><p>Homepage: <a class="reference external" href="https://github.com/sdv-dev/SDV">https://github.com/sdv-dev/SDV</a></p></li>
 </ul>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
@@ -240,6 +247,22 @@ with the following features:</p>
 <ul>
 <li><p>Using statistical, Autoregressive and Deep Learning models.</p></li>
 <li><p>Conditional sampling based on contextual attributes.</p></li>
+</ul>
+</li>
+<li><p>Metrics for <a class="reference internal" href="user_guides/evaluation/index.html#evaluation"><span class="std std-ref">Synthetic Data Evaluation</span></a>, including:</p>
+<ul>
+<li><p>An easy to use <a class="reference internal" href="user_guides/evaluation/evaluation_framework.html#evaluation-framework"><span class="std std-ref">Evaluation Framework</span></a> to evaluate the quality of your synthetic
+data with a single line of code.</p></li>
+<li><p>Metrics for multiple data modalities, including <a class="reference internal" href="user_guides/evaluation/single_table_metrics.html#single-table-metrics"><span class="std std-ref">Single Table Metrics</span></a> and
+<a class="reference internal" href="user_guides/evaluation/multi_table_metrics.html#multi-table-metrics"><span class="std std-ref">Multi Table Metrics</span></a>.</p></li>
+</ul>
+</li>
+<li><p>A <a class="reference internal" href="user_guides/benchmarking/index.html#benchmarking-framework"><span class="std std-ref">Benchmarking Framework</span></a> to easily compare multiple synthetic data generators, including:</p>
+<ul>
+<li><p>Dozens of datasets of multiple data modalities already prepared to be run on.</p></li>
+<li><p>Tools to easily add new synthetic data generators and datasets.</p></li>
+<li><p>Distributed computing to reduce computing times.</p></li>
+<li><p>Comprehensive results presented in multiple leaderboard formats.</p></li>
 </ul>
 </li>
 </ul>

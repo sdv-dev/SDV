@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tabular Models &#8212; SDV 0.5.0 documentation</title>
+    <title>Tabular Models &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -48,8 +49,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -134,14 +140,31 @@
         
           
             
-  
                 <li class="active">
                     <a href="../overview.html">The Synthetic Data Vault</a>
                     <ul>
                     
-                        <li class="active">
-                            <a href="index.html">SDV</a>
-                        </li>
+                        
+                            <li class="active">
+                                <a href="index.html">SDV</a>
+                                <ul>
+                                
+                                    <li class="active">
+                                        <a href="">Tabular Models</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="constraints.html">Constraints</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="metadata.html">Metadata Schema</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -330,8 +353,8 @@ which adds a few arguments to the class but still captures all the other argumen
 <code class="docutils literal notranslate"><span class="pre">super().__init__</span></code> method with them:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-             <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-             <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
+             <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+             <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
         <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
         <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -341,8 +364,8 @@ which adds a few arguments to the class but still captures all the other argumen
         <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
     <span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_dim</span> <span class="o">=</span> <span class="n">embedding_dim</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_gen_dim</span> <span class="o">=</span> <span class="n">gen_dim</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_dis_dim</span> <span class="o">=</span> <span class="n">dis_dim</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_generator_dim</span> <span class="o">=</span> <span class="n">generator_dim</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_dim</span> <span class="o">=</span> <span class="n">discriminator_dim</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_l2scale</span> <span class="o">=</span> <span class="n">l2scale</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_epochs</span> <span class="o">=</span> <span class="n">epochs</span>
@@ -369,8 +392,8 @@ it expects alongside the data.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_CTGAN_CLASS</span><span class="p">(</span>
         <span class="n">embedding_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_dim</span><span class="p">,</span>
-        <span class="n">gen_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gen_dim</span><span class="p">,</span>
-        <span class="n">dis_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dis_dim</span><span class="p">,</span>
+        <span class="n">generator_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_generator_dim</span><span class="p">,</span>
+        <span class="n">discriminator_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_discriminator_dim</span><span class="p">,</span>
         <span class="n">l2scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_l2scale</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
     <span class="p">)</span>

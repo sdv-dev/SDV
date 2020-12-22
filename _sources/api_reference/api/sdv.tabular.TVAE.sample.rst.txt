@@ -1,0 +1,6 @@
+﻿sdv.tabular.TVAE.sample
+=======================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: TVAE.sample

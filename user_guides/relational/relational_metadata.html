@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relational Metadata &#8212; SDV 0.5.0 documentation</title>
+    <title>Relational Metadata &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -48,8 +49,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -136,18 +142,30 @@
             
           
             
-  
                 <li class="active">
                     <a href="index.html">Relational Data</a>
                     <ul>
                     
-                        <li class="active">
-                            <a href="data_description.html">Data Description</a>
-                        </li>
+                        
+                            <li class="active">
+                                <a href="data_description.html">Data Description</a>
+                                <ul>
+                                
+                                    <li class="active">
+                                        <a href="">Relational Metadata</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
                     
-                        <li class="">
-                            <a href="models.html">Models</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="models.html">Models</a>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -161,7 +179,13 @@
           
             
                 <li class="">
-                    <a href="../benchmarking/index.html">Benchmarking</a>
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -377,10 +401,10 @@ instance:</p>
 calling the <code class="docutils literal notranslate"><span class="pre">get_table_meta</span></code> method:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">)</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
-<span class="go">{&#39;fields&#39;: {&#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
-<span class="go">  &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">{&#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">  &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
 <span class="go">  &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
-<span class="go">  &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;}},</span>
+<span class="go">  &#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;}},</span>
 <span class="go"> &#39;primary_key&#39;: &#39;user_id&#39;}</span>
 </pre></div>
 </div>
@@ -461,27 +485,27 @@ is related to the previous <code class="docutils literal notranslate"><span clas
 
 <span class="gp">In [16]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">{&#39;tables&#39;: {&#39;users&#39;: {&#39;fields&#39;: {&#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;,</span>
+<span class="go">{&#39;tables&#39;: {&#39;users&#39;: {&#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
 <span class="go">     &#39;subtype&#39;: &#39;integer&#39;},</span>
-<span class="go">    &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
 <span class="go">    &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
-<span class="go">    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;}},</span>
+<span class="go">    &#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;}},</span>
 <span class="go">   &#39;primary_key&#39;: &#39;user_id&#39;},</span>
-<span class="go">  &#39;sessions&#39;: {&#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
+<span class="go">  &#39;sessions&#39;: {&#39;fields&#39;: {&#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
 <span class="go">     &#39;subtype&#39;: &#39;integer&#39;,</span>
 <span class="go">     &#39;ref&#39;: {&#39;table&#39;: &#39;users&#39;, &#39;field&#39;: &#39;user_id&#39;}},</span>
 <span class="go">    &#39;device&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
-<span class="go">    &#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
-<span class="go">    &#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;}},</span>
+<span class="go">    &#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;}},</span>
 <span class="go">   &#39;primary_key&#39;: &#39;session_id&#39;},</span>
 <span class="go">  &#39;transactions&#39;: {&#39;fields&#39;: {&#39;timestamp&#39;: {&#39;type&#39;: &#39;datetime&#39;,</span>
 <span class="go">     &#39;format&#39;: &#39;%Y-%m-%d&#39;},</span>
-<span class="go">    &#39;approved&#39;: {&#39;type&#39;: &#39;boolean&#39;},</span>
-<span class="go">    &#39;amount&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
 <span class="go">    &#39;transaction_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
 <span class="go">    &#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
 <span class="go">     &#39;subtype&#39;: &#39;integer&#39;,</span>
-<span class="go">     &#39;ref&#39;: {&#39;table&#39;: &#39;sessions&#39;, &#39;field&#39;: &#39;session_id&#39;}}},</span>
+<span class="go">     &#39;ref&#39;: {&#39;table&#39;: &#39;sessions&#39;, &#39;field&#39;: &#39;session_id&#39;}},</span>
+<span class="go">    &#39;amount&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">    &#39;approved&#39;: {&#39;type&#39;: &#39;boolean&#39;}},</span>
 <span class="go">   &#39;primary_key&#39;: &#39;transaction_id&#39;}}}</span>
 
 
@@ -510,25 +534,29 @@ the <code class="docutils literal notranslate"><span class="pre">dict</span></co
 <span class="go">    &quot;tables&quot;: {</span>
 <span class="go">        &quot;users&quot;: {</span>
 <span class="go">            &quot;fields&quot;: {</span>
-<span class="go">                &quot;age&quot;: {</span>
-<span class="go">                    &quot;type&quot;: &quot;numerical&quot;,</span>
-<span class="go">                    &quot;subtype&quot;: &quot;integer&quot;</span>
-<span class="go">                },</span>
 <span class="go">                &quot;user_id&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;id&quot;,</span>
 <span class="go">                    &quot;subtype&quot;: &quot;integer&quot;</span>
 <span class="go">                },</span>
+<span class="go">                &quot;country&quot;: {</span>
+<span class="go">                    &quot;type&quot;: &quot;categorical&quot;</span>
+<span class="go">                },</span>
 <span class="go">                &quot;gender&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;categorical&quot;</span>
 <span class="go">                },</span>
-<span class="go">                &quot;country&quot;: {</span>
-<span class="go">                    &quot;type&quot;: &quot;categorical&quot;</span>
+<span class="go">                &quot;age&quot;: {</span>
+<span class="go">                    &quot;type&quot;: &quot;numerical&quot;,</span>
+<span class="go">                    &quot;subtype&quot;: &quot;integer&quot;</span>
 <span class="go">                }</span>
 <span class="go">            },</span>
 <span class="go">            &quot;primary_key&quot;: &quot;user_id&quot;</span>
 <span class="go">        },</span>
 <span class="go">        &quot;sessions&quot;: {</span>
 <span class="go">            &quot;fields&quot;: {</span>
+<span class="go">                &quot;session_id&quot;: {</span>
+<span class="go">                    &quot;type&quot;: &quot;id&quot;,</span>
+<span class="go">                    &quot;subtype&quot;: &quot;integer&quot;</span>
+<span class="go">                },</span>
 <span class="go">                &quot;user_id&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;id&quot;,</span>
 <span class="go">                    &quot;subtype&quot;: &quot;integer&quot;,</span>
@@ -542,10 +570,6 @@ the <code class="docutils literal notranslate"><span class="pre">dict</span></co
 <span class="go">                },</span>
 <span class="go">                &quot;os&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;categorical&quot;</span>
-<span class="go">                },</span>
-<span class="go">                &quot;session_id&quot;: {</span>
-<span class="go">                    &quot;type&quot;: &quot;id&quot;,</span>
-<span class="go">                    &quot;subtype&quot;: &quot;integer&quot;</span>
 <span class="go">                }</span>
 <span class="go">            },</span>
 <span class="go">            &quot;primary_key&quot;: &quot;session_id&quot;</span>
@@ -555,13 +579,6 @@ the <code class="docutils literal notranslate"><span class="pre">dict</span></co
 <span class="go">                &quot;timestamp&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;datetime&quot;,</span>
 <span class="go">                    &quot;format&quot;: &quot;%Y-%m-%d&quot;</span>
-<span class="go">                },</span>
-<span class="go">                &quot;approved&quot;: {</span>
-<span class="go">                    &quot;type&quot;: &quot;boolean&quot;</span>
-<span class="go">                },</span>
-<span class="go">                &quot;amount&quot;: {</span>
-<span class="go">                    &quot;type&quot;: &quot;numerical&quot;,</span>
-<span class="go">                    &quot;subtype&quot;: &quot;float&quot;</span>
 <span class="go">                },</span>
 <span class="go">                &quot;transaction_id&quot;: {</span>
 <span class="go">                    &quot;type&quot;: &quot;id&quot;,</span>
@@ -574,6 +591,13 @@ the <code class="docutils literal notranslate"><span class="pre">dict</span></co
 <span class="go">                        &quot;table&quot;: &quot;sessions&quot;,</span>
 <span class="go">                        &quot;field&quot;: &quot;session_id&quot;</span>
 <span class="go">                    }</span>
+<span class="go">                },</span>
+<span class="go">                &quot;amount&quot;: {</span>
+<span class="go">                    &quot;type&quot;: &quot;numerical&quot;,</span>
+<span class="go">                    &quot;subtype&quot;: &quot;float&quot;</span>
+<span class="go">                },</span>
+<span class="go">                &quot;approved&quot;: {</span>
+<span class="go">                    &quot;type&quot;: &quot;boolean&quot;</span>
 <span class="go">                }</span>
 <span class="go">            },</span>
 <span class="go">            &quot;primary_key&quot;: &quot;transaction_id&quot;</span>

@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi Table Metrics &#8212; SDV 0.6.0 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Benchmarking Framework" href="../benchmarking/index.html" />
+    <link rel="prev" title="Single Table Metrics" href="single_table_metrics.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <a class="navbar-brand" href="../../index.html">
+    
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+</div>
+
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+    
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+          
+            
+                <li class="">
+                    <a href="../single_table/index.html">Single Table Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
+          
+            
+                <li class="active">
+                    <a href="index.html">Synthetic Data Evaluation</a>
+                    <ul>
+                    
+                        
+                            <li class="">
+                                <a href="evaluation_framework.html">Evaluation Framework</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="active">
+                                <a href="synthetic_data_metrics.html">Synthetic Data Metrics</a>
+                                <ul>
+                                
+                                    <li class="">
+                                        <a href="single_table_metrics.html">Single Table Metrics</a>
+                                    </li>
+                                
+                                    <li class="active">
+                                        <a href="">Multi Table Metrics</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
+                </li>
+            
+          
+        
+        
+        
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#multi-table-metric-families" class="nav-link">Multi Table Metric Families</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#multi-single-table-metrics" class="nav-link">Multi Single Table Metrics</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#parent-child-detection-metrics" class="nav-link">Parent Child Detection Metrics</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="multi-table-metrics">
+<span id="id1"></span><h1>Multi Table Metrics<a class="headerlink" href="#multi-table-metrics" title="Permalink to this headline">¶</a></h1>
+<p>In this section we will show you which metrics exist for multi table datasets and
+how to use them.</p>
+<p>Let us start by loading some demo data that we will use to explore the different
+metrics that exist.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.demos</span> <span class="kn">import</span> <span class="n">load_multi_table_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">load_multi_table_demo</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will return us three objects:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">real_data</span></code>, which is a dict containing the <code class="docutils literal notranslate"><span class="pre">SDV</span></code> demo dataset, with three tables:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [3]: </span><span class="n">real_data</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">{&#39;users&#39;:    user_id country gender  age</span>
+<span class="go"> 0        0      US      M   34</span>
+<span class="go"> 1        1      UK      F   23</span>
+<span class="go"> 2        2      ES   None   44</span>
+<span class="go"> 3        3      UK      M   22</span>
+<span class="go"> 4        4      US      F   54</span>
+<span class="go"> 5        5      DE      M   57</span>
+<span class="go"> 6        6      BG      F   45</span>
+<span class="go"> 7        7      ES   None   41</span>
+<span class="go"> 8        8      FR      F   23</span>
+<span class="go"> 9        9      UK   None   30,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0           0        0  mobile  android</span>
+<span class="go"> 1           1        1  tablet      ios</span>
+<span class="go"> 2           2        1  tablet  android</span>
+<span class="go"> 3           3        2  mobile  android</span>
+<span class="go"> 4           4        4  mobile      ios</span>
+<span class="go"> 5           5        5  mobile  android</span>
+<span class="go"> 6           6        6  mobile      ios</span>
+<span class="go"> 7           7        6  tablet      ios</span>
+<span class="go"> 8           8        6  mobile      ios</span>
+<span class="go"> 9           9        8  tablet      ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  approved</span>
+<span class="go"> 0               0           0 2019-01-01 12:34:32   100.0      True</span>
+<span class="go"> 1               1           0 2019-01-01 12:42:21    55.3      True</span>
+<span class="go"> 2               2           1 2019-01-07 17:23:11    79.5      True</span>
+<span class="go"> 3               3           3 2019-01-10 11:08:57   112.1     False</span>
+<span class="go"> 4               4           5 2019-01-10 21:54:08   110.0     False</span>
+<span class="go"> 5               5           5 2019-01-11 11:21:20    76.3      True</span>
+<span class="go"> 6               6           7 2019-01-22 14:44:10    89.5      True</span>
+<span class="go"> 7               7           8 2019-01-23 10:14:09   132.1     False</span>
+<span class="go"> 8               8           9 2019-01-27 16:09:17    68.0      True</span>
+<span class="go"> 9               9           9 2019-01-29 12:10:48    99.9      True}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>, which is a clone of the <code class="docutils literal notranslate"><span class="pre">real_data</span></code> which has been generated
+by the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> relational model.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="n">synthetic_data</span>
+<span class="gh">Out[4]: </span><span class="go"></span>
+<span class="go">{&#39;users&#39;:    user_id country gender  age</span>
+<span class="go"> 0        0      US      M   37</span>
+<span class="go"> 1        1      US      M   57</span>
+<span class="go"> 2        2      DE      F   56</span>
+<span class="go"> 3        3      DE      F   43</span>
+<span class="go"> 4        4      ES      M   30</span>
+<span class="go"> 5        5      ES      F   38</span>
+<span class="go"> 6        6      UK      F   30</span>
+<span class="go"> 7        7      BG      F   30</span>
+<span class="go"> 8        8      US      M   46</span>
+<span class="go"> 9        9      US      F   19,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0           0        0  mobile      ios</span>
+<span class="go"> 1           1        1  mobile  android</span>
+<span class="go"> 2           2        2  mobile      ios</span>
+<span class="go"> 3           3        3  tablet      ios</span>
+<span class="go"> 4           4        5  mobile  android</span>
+<span class="go"> 5           5        5  mobile  android</span>
+<span class="go"> 6           6        8  mobile  android</span>
+<span class="go"> 7           7        9  tablet  android</span>
+<span class="go"> 8           8        9  tablet  android,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  approved</span>
+<span class="go"> 0               0           0 2019-01-17 20:59:07   95.998821      True</span>
+<span class="go"> 1               1           1 2019-01-04 12:25:37   92.812296      True</span>
+<span class="go"> 2               2           2 2019-01-13 09:24:52   68.369142      True</span>
+<span class="go"> 3               3           3 2019-03-01 15:57:44  561.468787      True</span>
+<span class="go"> 4               4           3 2019-01-27 21:36:42  317.456320      True</span>
+<span class="go"> 5               5           4 2019-01-02 18:10:06   84.950110      True</span>
+<span class="go"> 6               6           5 2019-01-02 18:09:56   84.947125      True</span>
+<span class="go"> 7               7           6 2019-01-01 15:32:01  101.137274     False</span>
+<span class="go"> 8               8           7 2019-01-09 05:00:02   84.190594      True</span>
+<span class="go"> 9               9           8 2019-01-09 04:20:06   83.926505      True}</span>
+</pre></div>
+</div>
+<p>And a <code class="docutils literal notranslate"><span class="pre">metadata</span></code>, which is the <code class="docutils literal notranslate"><span class="pre">dict</span></code> representation of the dataset:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">metadata</span>
+<span class="gh">Out[5]: </span><span class="go"></span>
+<span class="go">{&#39;tables&#39;: {&#39;users&#39;: {&#39;primary_key&#39;: &#39;user_id&#39;,</span>
+<span class="go">   &#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">    &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">    &#39;age&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;}}},</span>
+<span class="go">  &#39;sessions&#39;: {&#39;primary_key&#39;: &#39;session_id&#39;,</span>
+<span class="go">   &#39;fields&#39;: {&#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;user_id&#39;: {&#39;ref&#39;: {&#39;field&#39;: &#39;user_id&#39;, &#39;table&#39;: &#39;users&#39;},</span>
+<span class="go">     &#39;type&#39;: &#39;id&#39;,</span>
+<span class="go">     &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;device&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">    &#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;}}},</span>
+<span class="go">  &#39;transactions&#39;: {&#39;primary_key&#39;: &#39;transaction_id&#39;,</span>
+<span class="go">   &#39;fields&#39;: {&#39;transaction_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;session_id&#39;: {&#39;ref&#39;: {&#39;field&#39;: &#39;session_id&#39;, &#39;table&#39;: &#39;sessions&#39;},</span>
+<span class="go">     &#39;type&#39;: &#39;id&#39;,</span>
+<span class="go">     &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">    &#39;timestamp&#39;: {&#39;type&#39;: &#39;datetime&#39;, &#39;format&#39;: &#39;%Y-%m-%d&#39;},</span>
+<span class="go">    &#39;amount&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">    &#39;approved&#39;: {&#39;type&#39;: &#39;boolean&#39;}}}}}</span>
+</pre></div>
+</div>
+<p>These three elements, or their corresponding equivalents, are all you will need to
+run most of the <em>Multi Table Metrics</em> on your own <em>Synthetic Dataset</em>.</p>
+<div class="section" id="multi-table-metric-families">
+<h2>Multi Table Metric Families<a class="headerlink" href="#multi-table-metric-families" title="Permalink to this headline">¶</a></h2>
+<p>The <em>Multi Table Metrics</em> are grouped in multiple families:</p>
+<ul class="simple">
+<li><p><strong>Multi Single Table Metrics</strong>: These metrics simply a <em>Single Table Metric</em> on each table
+in the dataset and report the average score obtained.</p></li>
+<li><p><strong>Parent-Child Detection Metrics</strong>: These metrics de-normalize the child tables on each
+parent-child relationship found in the dataset and then apply a <em>Single Table Detection Metric</em>
+on the resulting tables. If there is more than one parent-child relationship in the dataset,
+the overall score is the average of the scores obtained by the <em>Single Table Detection Metric</em>
+on each one of them.</p></li>
+</ul>
+<div class="section" id="multi-single-table-metrics">
+<h3>Multi Single Table Metrics<a class="headerlink" href="#multi-single-table-metrics" title="Permalink to this headline">¶</a></h3>
+<p>These metrics simply apply a <em>Single Table Metric</em> on each table from the dataset and then
+report back the average score obtained.</p>
+<p>The list of such metrics is:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CSTest</span></code>: Multi Single Table metric based on the Single Table CSTest metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KSTest</span></code>: Multi Single Table metric based on the Single Table KSTest metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KSTestExtended</span></code>: Multi Single Table metric based on the Single Table KSTestExtended metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LogisticDetection</span></code>: Multi Single Table metric based on the Single Table LogisticDetection metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SVCDetection</span></code>: Multi Single Table metric based on the Single Table SVCDetection metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BNLikelihood</span></code>: Multi Single Table metric based on the Single Table BNLikelihood metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BNLogLikelihood</span></code>: Multi Single Table metric based on the Single Table BNLogLikelihood metric.</p></li>
+</ul>
+<p>Let’s try to use the <code class="docutils literal notranslate"><span class="pre">KSTestExtended</span></code> metric:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.relational</span> <span class="kn">import</span> <span class="n">KSTestExtended</span>
+
+<span class="gp">In [7]: </span><span class="n">KSTestExtended</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[7]: </span><span class="go">0.8194444444444443</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parent-child-detection-metrics">
+<h3>Parent Child Detection Metrics<a class="headerlink" href="#parent-child-detection-metrics" title="Permalink to this headline">¶</a></h3>
+<p>These metrics will de-normalize each parent-child relationship on the dataset and build
+a table out of it. Afterwards, they will apply a <em>Single Table Detection Metric</em> on the
+resulting tables and report back the average of the obtained scores.</p>
+<p>Such metrics are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LogisticParentChildDetection</span></code>: Parent-child detection metric based on a <code class="docutils literal notranslate"><span class="pre">LogisticDetection</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SVCParentChildDetection</span></code>: Parent-child detection metric based on a <code class="docutils literal notranslate"><span class="pre">SVCDetection</span></code>.</p></li>
+</ul>
+<p>Since these metrics need to explit the table relationships, you will need to pass the
+<code class="docutils literal notranslate"><span class="pre">metadata</span></code> dict alongside the <code class="docutils literal notranslate"><span class="pre">real_data</span></code> and <code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>, so the metric
+is able to extract the relationships from it.</p>
+<p>Let’s see an example using the <code class="docutils literal notranslate"><span class="pre">LogisticParentChildDetection</span></code> metric:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.relational</span> <span class="kn">import</span> <span class="n">LogisticParentChildDetection</span>
+
+<span class="gp">In [9]: </span><span class="n">LogisticParentChildDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+<span class="gh">Out[9]: </span><span class="go">0.8472222222222222</span>
+</pre></div>
+</div>
+<p>If you want, instead of passing the <code class="docutils literal notranslate"><span class="pre">metadata</span></code>, you can build a <code class="docutils literal notranslate"><span class="pre">foreign_keys</span></code> list
+with a <code class="docutils literal notranslate"><span class="pre">tuple</span></code> for each relationship indicating:</p>
+<ul class="simple">
+<li><p>The parent table</p></li>
+<li><p>The parent field</p></li>
+<li><p>The child table</p></li>
+<li><p>The child field</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">fks</span> <span class="o">=</span> <span class="p">[</span>
+<span class="go">    ...: (&#39;users&#39;, &#39;user_id&#39;, &#39;sessions&#39;, &#39;user_id&#39;),</span>
+<span class="go">    ...: (&#39;sessions&#39;, &#39;session_id&#39;, &#39;transactions&#39;, &#39;session_id&#39;)</span>
+<span class="go">    ...: ]</span>
+
+<span class="gp">In [11]: </span><span class="n">LogisticParentChildDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">foreign_keys</span><span class="o">=</span><span class="n">fks</span><span class="p">)</span>
+<span class="gh">Out[11]: </span><span class="go">0.8333333333333333</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="single_table_metrics.html" title="previous page">Single Table Metrics</a>
+    <a class='right-next' id="next-link" href="../benchmarking/index.html" title="next page">Benchmarking Framework</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

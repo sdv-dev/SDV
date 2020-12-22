@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluating Synthetic Data &#8212; SDV 0.5.0 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -41,15 +42,14 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Relational Data" href="../relational/index.html" />
-    <link rel="prev" title="Handling Constraints" href="constraints.html" />
+    <link rel="next" title="Synthetic Data Metrics" href="synthetic_data_metrics.html" />
+    <link rel="prev" title="Synthetic Data Evaluation" href="index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -130,28 +136,8 @@
         
           
             
-  
-                <li class="active">
-                    <a href="index.html">Single Table Data</a>
-                    <ul>
-                    
-                        <li class="">
-                            <a href="data_description.html">Data Description</a>
-                        </li>
-                    
-                        <li class="">
-                            <a href="models.html">Models</a>
-                        </li>
-                    
-                        <li class="">
-                            <a href="constraints.html">Handling Constraints</a>
-                        </li>
-                    
-                        <li class="active">
-                            <a href="">Evaluating Synthetic Data</a>
-                        </li>
-                    
-                    </ul>
+                <li class="">
+                    <a href="../single_table/index.html">Single Table Data</a>
                 </li>
             
           
@@ -168,8 +154,31 @@
             
           
             
+                <li class="active">
+                    <a href="index.html">Synthetic Data Evaluation</a>
+                    <ul>
+                    
+                        
+                            <li class="active">
+                                <a href="">Evaluation Framework</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="">
+                                <a href="synthetic_data_metrics.html">Synthetic Data Metrics</a>
+                            </li>
+                        
+
+                    
+                    </ul>
+                </li>
+            
+          
+            
                 <li class="">
-                    <a href="../benchmarking/index.html">Benchmarking</a>
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -228,15 +237,12 @@
               
               <div>
                 
-  <div class="section" id="evaluating-synthetic-data">
-<span id="evaluation"></span><h1>Evaluating Synthetic Data<a class="headerlink" href="#evaluating-synthetic-data" title="Permalink to this headline">¶</a></h1>
-<p>A very common question when someone starts using <strong>SDV</strong> to generate
-synthetic data is: <em>“How good is the data that I just generated?”</em></p>
-<p>In order to answer this question, <strong>SDV</strong> has a collection of metrics
-and tools that allow you to compare the <em>real</em> that you provided and the
-<em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
-<p>In this guide we will show you how to perform this evaluation and how to
-explore the different metrics that exist.</p>
+  <div class="section" id="evaluation-framework">
+<span id="id1"></span><h1>Evaluation Framework<a class="headerlink" href="#evaluation-framework" title="Permalink to this headline">¶</a></h1>
+<p><strong>SDV</strong> contains a <em>Synthetic Data Evaluation Framework</em> that facilitates
+the task of evaluating the quality of your <em>Synthetic Dataset</em> by
+applying multiple <em>Synthetic Data Metrics</em> on it and reporting results
+in a comprehensive way.</p>
 <div class="section" id="using-the-sdv-evaluation-framework">
 <h2>Using the SDV Evaluation Framework<a class="headerlink" href="#using-the-sdv-evaluation-framework" title="Permalink to this headline">¶</a></h2>
 <p>To evaluate the quality of synthetic data we essentially need two things:
@@ -278,16 +284,16 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0       17303      M    53.740040  67.199206  Commerce    63.352045   Comm&amp;Mgmt            False                 0           62.320471  Mkt&amp;Fin  54.064006           NaN   False        NaT        NaT      NaN</span>
-<span class="go">1       17391      F    44.493269  55.499240   Science    57.038307    Sci&amp;Tech            False                 0           65.312603  Mkt&amp;Fin  55.468738           NaN   False        NaT        NaT      NaN</span>
-<span class="go">2       17327      M    60.493409  53.587783   Science    62.591557   Comm&amp;Mgmt            False                 0           76.644835   Mkt&amp;HR  60.340712           NaN   False        NaT        NaT      NaN</span>
-<span class="go">3       17357      M    59.419761  68.372944   Science    63.853763    Sci&amp;Tech            False                 1           62.512871   Mkt&amp;HR  57.673694           NaN   False        NaT        NaT      NaN</span>
-<span class="go">4       17345      M    67.747714  69.144713  Commerce    67.151783    Sci&amp;Tech            False                 1           78.600341  Mkt&amp;Fin  57.561521  38680.942183    True 2020-08-10 2020-10-22      3.0</span>
+<span class="go">0       17280      F    79.106395  83.146292  Commerce    72.947074   Comm&amp;Mgmt            False                 1           64.535826  Mkt&amp;Fin  66.824535  25748.321391    True 2020-01-06 2020-05-22      3.0</span>
+<span class="go">1       17449      M    58.179127  61.331105  Commerce    61.496595   Comm&amp;Mgmt            False                 0           67.722077  Mkt&amp;Fin  50.709059  32865.149017    True 2020-02-07 2021-01-03     12.0</span>
+<span class="go">2       17332      M    83.305461  78.243462  Commerce    76.120656   Comm&amp;Mgmt            False                 0           72.755687  Mkt&amp;Fin  77.552100           NaN   False        NaT        NaT     12.0</span>
+<span class="go">3       17317      M    50.726571  64.073903  Commerce    57.342759   Comm&amp;Mgmt            False                 0           60.890423  Mkt&amp;Fin  55.870542  24663.469660    True 2020-02-08 2020-07-29      3.0</span>
+<span class="go">4       17360      M    76.704995  80.787664   Science    69.033950   Comm&amp;Mgmt            False                 0           77.737421  Mkt&amp;Fin  63.142237  25468.687261    True 2020-01-26 2020-08-28      3.0</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For more details about this process, please visit the <a class="reference internal" href="gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> guide.</p>
+<p>For more details about this process, please visit the <a class="reference internal" href="../single_table/gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> guide.</p>
 </div>
 <div class="section" id="computing-an-overall-score">
 <h3>Computing an overall score<a class="headerlink" href="#computing-an-overall-score" title="Permalink to this headline">¶</a></h3>
@@ -297,7 +303,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.739716922410801</span>
+<span class="gh">Out[10]: </span><span class="go">0.6951077552023464</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -317,10 +323,14 @@ additional argument <code class="docutils literal notranslate"><span class="pre"
 of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">{&#39;cstest&#39;: 0.8839587132606631,</span>
-<span class="go"> &#39;kstest&#39;: 0.4821705758145236,</span>
-<span class="go"> &#39;logistic_detection&#39;: 0.8183223569813945,</span>
-<span class="go"> &#39;svc_detection&#39;: 0.7817290833478237}</span>
+<span class="go">                    metric                                     name     score  min_value  max_value      goal</span>
+<span class="go">1        LogisticDetection             LogisticRegression Detection  0.342341        0.0        1.0  MAXIMIZE</span>
+<span class="go">2             SVCDetection                            SVC Detection  0.378039        0.0        1.0  MAXIMIZE</span>
+<span class="go">12                  CSTest                              Chi-Squared  0.901720        0.0        1.0  MAXIMIZE</span>
+<span class="go">13                  KSTest  Inverted Kolmogorov-Smirnov D statistic  0.924419        0.0        1.0  MAXIMIZE</span>
+<span class="go">14          KSTestExtended  Inverted Kolmogorov-Smirnov D statistic  0.923488        0.0        1.0  MAXIMIZE</span>
+<span class="go">15  ContinuousKLDivergence   Continuous Kullback–Leibler Divergence  0.544995        0.0        1.0  MAXIMIZE</span>
+<span class="go">16    DiscreteKLDivergence     Discrete Kullback–Leibler Divergence  0.822111        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 </div>
@@ -330,40 +340,22 @@ of the metrics functions returned:</p>
 are included within the SDV Evaluation framework. However, the list of
 metrics that are applied can be controlled by passing a list with the
 names of the metrics that you want to apply.</p>
-<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">cstest</span></code> and
-<code class="docutils literal notranslate"><span class="pre">kstest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.6830646445375934</span>
+<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and
+<code class="docutils literal notranslate"><span class="pre">KSTest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">])</span>
+<span class="gh">Out[12]: </span><span class="go">0.9130691527969497</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cstest&#39;</span><span class="p">,</span> <span class="s1">&#39;kstest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gh">Out[13]: </span><span class="go">{&#39;cstest&#39;: 0.8839587132606631, &#39;kstest&#39;: 0.4821705758145236}</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[13]: </span><span class="go"></span>
+<span class="go">   metric                                     name     score  min_value  max_value      goal</span>
+<span class="go">0  CSTest                              Chi-Squared  0.901720        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic  0.924419        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
-<p>The complete list of possible metrics is:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">cstest</span></code>: This metric compares the distributions of all the
-categorical columns of the table by using a Chi-squared test and
-returns the average of the <code class="docutils literal notranslate"><span class="pre">p-values</span></code> obtained across all the
-columns. If the tables that you are evaluating do not contain any
-categorical columns the result will be <code class="docutils literal notranslate"><span class="pre">nan</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">kstest</span></code>: This metric compares the distributions of all the
-numerical columns of the table with a two-sample Kolmogorov–Smirnov
-test using the empirical CDF and returns the average of the
-<code class="docutils literal notranslate"><span class="pre">p-values</span></code> obtained across all the columns. If the tables that you
-are evaluating do not contain any numerical columns the result will
-be <code class="docutils literal notranslate"><span class="pre">nan</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logistic_detection</span></code>: This metric tries to use a Logistic
-Regression classifier to detect whether each row is real or synthetic
-and then evaluates its performance using an Area under the ROC curve
-metric. The returned score is 1 minus the ROC AUC score obtained
-by the classifier.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">svc_detection</span></code>: This metric tries to use an Support Vector
-Classifier to detect whether each row is real or synthetic and then
-evaluates its performance using an Area under the ROC curve metric.
-The returned score is 1 minus the ROC AUC score obtained by the classifier.</p></li>
-</ul>
+<p>For more details about all the metrix that exist for the different data modalities
+please check the corresponding guides.</p>
 </div>
 </div>
 </div>
@@ -374,8 +366,8 @@ The returned score is 1 minus the ROC AUC score obtained by the classifier.</p><
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="constraints.html" title="previous page">Handling Constraints</a>
-    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">Synthetic Data Evaluation</a>
+    <a class='right-next' id="next-link" href="synthetic_data_metrics.html" title="next page">Synthetic Data Metrics</a>
 
               </div>
               

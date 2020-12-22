@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Guides &#8212; SDV 0.5.0 documentation</title>
+    <title>User Guides &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -48,8 +49,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -149,7 +155,13 @@
           
             
                 <li class="">
-                    <a href="benchmarking/index.html">Benchmarking</a>
+                    <a href="evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -201,6 +213,7 @@
 <li class="toctree-l3"><a class="reference internal" href="single_table/gaussian_copula.html">GaussianCopula Model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="single_table/ctgan.html">CTGAN Model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="single_table/copulagan.html">CopulaGAN Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="single_table/tvae.html">TVAE Model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="single_table/constraints.html">Handling Constraints</a><ul>
@@ -208,10 +221,6 @@
 <li class="toctree-l3"><a class="reference internal" href="single_table/constraints.html#how-does-sdv-handle-constraints">How does SDV Handle Constraints?</a></li>
 <li class="toctree-l3"><a class="reference internal" href="single_table/constraints.html#defining-constraints">Defining Constraints</a></li>
 <li class="toctree-l3"><a class="reference internal" href="single_table/constraints.html#using-the-constraints">Using the Constraints</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="single_table/evaluation.html">Evaluating Synthetic Data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="single_table/evaluation.html#using-the-sdv-evaluation-framework">Using the SDV Evaluation Framework</a></li>
 </ul>
 </li>
 </ul>
@@ -234,7 +243,19 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking/index.html">Benchmarking</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="evaluation/index.html">Synthetic Data Evaluation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="evaluation/evaluation_framework.html">Evaluation Framework</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation/evaluation_framework.html#using-the-sdv-evaluation-framework">Using the SDV Evaluation Framework</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation/synthetic_data_metrics.html">Synthetic Data Metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation/single_table_metrics.html">Single Table Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="evaluation/multi_table_metrics.html">Multi Table Metrics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarking/index.html">Benchmarking Framework</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="benchmarking/single_table.html">Single Table Benchmarking</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="benchmarking/single_table.html#sdgym-synthesizers">SDGym Synthesizers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmarking/single_table.html#benchmark-datasets">Benchmark datasets</a></li>

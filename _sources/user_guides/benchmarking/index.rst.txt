@@ -1,7 +1,7 @@
-.. _benchmarking:
+.. _benchmarking_framework:
 
-Benchmarking
-============
+Benchmarking Framework
+======================
 
 The Synthetic Data Vault offers a collection of benchmarking tools that evaluate
 different types of *synthetic data generators* on large number of datasets under

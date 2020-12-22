@@ -1,0 +1,688 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TVAE Model &#8212; SDV 0.6.0 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Handling Constraints" href="constraints.html" />
+    <link rel="prev" title="CopulaGAN Model" href="copulagan.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <a class="navbar-brand" href="../../index.html">
+    
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+</div>
+
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+    
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+          
+            
+                <li class="active">
+                    <a href="index.html">Single Table Data</a>
+                    <ul>
+                    
+                        
+                            <li class="">
+                                <a href="data_description.html">Data Description</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="active">
+                                <a href="models.html">Models</a>
+                                <ul>
+                                
+                                    <li class="">
+                                        <a href="gaussian_copula.html">GaussianCopula Model</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="ctgan.html">CTGAN Model</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="copulagan.html">CopulaGAN Model</a>
+                                    </li>
+                                
+                                    <li class="active">
+                                        <a href="">TVAE Model</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="">
+                                <a href="constraints.html">Handling Constraints</a>
+                            </li>
+                        
+
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
+                </li>
+            
+          
+        
+        
+        
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#what-is-tvae" class="nav-link">What is TVAE?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#quick-usage" class="nav-link">Quick Usage</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#generate-synthetic-data-from-the-model" class="nav-link">Generate synthetic data from the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#save-and-load-the-model" class="nav-link">Save and Load the model</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#save-and-share-the-model" class="nav-link">Save and share the model</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#load-the-model-and-generate-new-data" class="nav-link">Load the model and generate new data</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#specifying-the-primary-key-of-the-table" class="nav-link">Specifying the Primary Key of the table</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#anonymizing-personally-identifiable-information-pii" class="nav-link">Anonymizing Personally Identifiable Information (PII)</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#how-do-i-specify-constraints" class="nav-link">How do I specify constraints?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#can-i-evaluate-the-synthetic-data" class="nav-link">Can I evaluate the Synthetic Data?</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="tvae-model">
+<span id="tvae"></span><h1>TVAE Model<a class="headerlink" href="#tvae-model" title="Permalink to this headline">¶</a></h1>
+<p>In this guide we will go through a series of steps that will let you
+discover functionalities of the <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> model, including how to:</p>
+<ul class="simple">
+<li><p>Create an instance of <code class="docutils literal notranslate"><span class="pre">TVAE</span></code>.</p></li>
+<li><p>Fit the instance to your data.</p></li>
+<li><p>Generate synthetic versions of your data.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> to anonymize PII information.</p></li>
+<li><p>Customize the data transformations to improve the learning process.</p></li>
+<li><p>Specify hyperparameters to improve the output quality.</p></li>
+</ul>
+<div class="section" id="what-is-tvae">
+<h2>What is TVAE?<a class="headerlink" href="#what-is-tvae" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">sdv.tabular.TVAE</span></code> model is based on the VAE-based Deep Learning
+data synthesizer which was presented at the NeurIPS 2020 conference by
+the paper titled <a class="reference external" href="https://arxiv.org/abs/1907.00503">Modeling Tabular data using Conditional
+GAN</a>.</p>
+<p>Let’s now discover how to learn a dataset and later on generate
+synthetic data with the same format and statistical properties by using
+the <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> class from SDV.</p>
+</div>
+<div class="section" id="quick-usage">
+<h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
+<p>We will start by loading one of our demo datasets, the
+<code class="docutils literal notranslate"><span class="pre">student_placements</span></code>, which contains information about MBA students
+that applied for placements during the year 2020.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In order to follow this guide you need to have <code class="docutils literal notranslate"><span class="pre">tvae</span></code> installed on
+your system. If you have not done it yet, please install <code class="docutils literal notranslate"><span class="pre">tvae</span></code> now
+by executing the command <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sdv</span></code> in a terminal.</p>
+</div>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements&#39;</span><span class="p">)</span>
+
+<span class="gp">In [3]: </span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date duration</span>
+<span class="go">0       17264      M        67.00      91.00  Commerce        58.00    Sci&amp;Tech            False                 0                55.0   Mkt&amp;HR     58.80  27000.0    True 2020-07-23 2020-10-12      3.0</span>
+<span class="go">1       17265      M        79.33      78.33   Science        77.48    Sci&amp;Tech             True                 1                86.5  Mkt&amp;Fin     66.28  20000.0    True 2020-01-11 2020-04-09      3.0</span>
+<span class="go">2       17266      M        65.00      68.00      Arts        64.00   Comm&amp;Mgmt            False                 0                75.0  Mkt&amp;Fin     57.80  25000.0    True 2020-01-26 2020-07-13      6.0</span>
+<span class="go">3       17267      M        56.00      52.00   Science        52.00    Sci&amp;Tech            False                 0                66.0   Mkt&amp;HR     59.43      NaN   False        NaT        NaT      NaN</span>
+<span class="go">4       17268      M        85.80      73.60  Commerce        73.30   Comm&amp;Mgmt            False                 0                96.8  Mkt&amp;Fin     55.50  42500.0    True 2020-07-04 2020-09-27      3.0</span>
+</pre></div>
+</div>
+<p>As you can see, this table contains information about students which
+includes, among other things:</p>
+<ul class="simple">
+<li><p>Their id and gender</p></li>
+<li><p>Their grades and specializations</p></li>
+<li><p>Their work experience</p></li>
+<li><p>The salary that they where offered</p></li>
+<li><p>The duration and dates of their placement</p></li>
+</ul>
+<p>You will notice that there is data with the following characteristics:</p>
+<ul class="simple">
+<li><p>There are float, integer, boolean, categorical and datetime values.</p></li>
+<li><p>There are some variables that have missing data. In particular, all
+the data related to the placement details is missing in the rows
+where the student was not placed.</p></li>
+</ul>
+<p>Let us use <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> to learn this data and then sample synthetic data
+about new students to see how well de model captures the characteristics
+indicated above. In order to do this you will need to:</p>
+<ul class="simple">
+<li><p>Import the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.TVAE</span></code> class and create an instance of it.</p></li>
+<li><p>Call its <code class="docutils literal notranslate"><span class="pre">fit</span></code> method passing our table.</p></li>
+<li><p>Call its <code class="docutils literal notranslate"><span class="pre">sample</span></code> method indicating the number of synthetic rows
+that you want to generate.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">TVAE</span>
+
+<span class="gp">In [5]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">()</span>
+
+<span class="gp">In [6]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notice that the model <code class="docutils literal notranslate"><span class="pre">fitting</span></code> process took care of transforming the
+different fields using the appropriate <a class="reference external" href="http://github.com/sdv-dev/RDT">Reversible Data
+Transforms</a> to ensure that the data
+has a format that the underlying TVAESynthesizer class can handle.</p>
+</div>
+<div class="section" id="generate-synthetic-data-from-the-model">
+<h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
+<p>Once the modeling has finished you are ready to generate new synthetic
+data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model passing the number
+of rows that we want to generate.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [7]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will return a table identical to the one which the model was fitted
+on, but filled with new data which resembles the original one.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[8]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0       17355      M    62.111550  64.397947   Science    63.283019      Others            False                 1           71.107421  Mkt&amp;Fin  63.623248  28167.105163    True        NaT        NaT      6.0</span>
+<span class="go">1       17343      M    76.785225  49.188045   Science    66.072039    Sci&amp;Tech             True                 0           79.709881  Mkt&amp;Fin  67.397844  28796.182803    True        NaT 2020-05-02     12.0</span>
+<span class="go">2       17311      M    74.400627  68.071715   Science    69.410865      Others            False                 1           64.317233  Mkt&amp;Fin  68.481137  27780.400981    True        NaT        NaT      3.0</span>
+<span class="go">3       17347      M    73.098322  67.072187   Science    64.203000      Others            False                 1           73.425949  Mkt&amp;Fin  62.580549  29363.242727    True        NaT        NaT      3.0</span>
+<span class="go">4       17333      M    80.538466  69.549635   Science    60.513487    Sci&amp;Tech             True                 0           86.140207  Mkt&amp;Fin  69.611122  28459.393474    True        NaT        NaT      3.0</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can control the number of rows by specifying the number of
+<code class="docutils literal notranslate"><span class="pre">samples</span></code> in the <code class="docutils literal notranslate"><span class="pre">model.sample(&lt;num_rows&gt;)</span></code>. To test, try
+<code class="docutils literal notranslate"><span class="pre">model.sample(10000)</span></code>. Note that the original table only had ~200
+rows.</p>
+</div>
+</div>
+<div class="section" id="save-and-load-the-model">
+<h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In many scenarios it will be convenient to generate synthetic versions
+of your data directly in systems that do not have access to the original
+data source. For example, if you may want to generate testing data on
+the fly inside a testing environment that does not have access to your
+production database. In these scenarios, fitting the model with real
+data every time that you need to generate new data is feasible, so you
+will need to fit a model in your production environment, save the fitted
+model into a file, send this file to the testing environment and then
+load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
+<p>Let’s see how this process works.</p>
+<div class="section" id="save-and-share-the-model">
+<h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
+<p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
+method passing the name of the file in which you want to save the model.
+Note that the extension of the filename is not relevant, but we will be
+using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization
+protocol used is
+<a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will have created a file called <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> in the same
+directory in which you are running SDV.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If you inspect the generated file you will notice that its size is much
+smaller than the size of the data that you used to generate it. This is
+because the serialized model contains <strong>no information about the
+original data</strong>, other than the parameters it needs to generate
+synthetic versions of it. This means that you can safely share this
+<code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risc of disclosing any of your real
+data!</p>
+</div>
+</div>
+<div class="section" id="load-the-model-and-generate-new-data">
+<h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
+<p>The file you just generated can be send over to the system where the
+synthetic data will be generated. Once it is there, you can load it
+using the <code class="docutils literal notranslate"><span class="pre">TVAE.load</span></code> method, and then you are ready to sample new
+data from the loaded instance:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">loaded</span> <span class="o">=</span> <span class="n">TVAE</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
+
+<span class="gp">In [11]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">loaded</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Notice that the system where the model is loaded needs to also have
+<code class="docutils literal notranslate"><span class="pre">sdv</span></code> and <code class="docutils literal notranslate"><span class="pre">tvae</span></code> installed, otherwise it will not be able to load
+the model and use it.</p>
+</div>
+</div>
+</div>
+<div class="section" id="specifying-the-primary-key-of-the-table">
+<h3>Specifying the Primary Key of the table<a class="headerlink" href="#specifying-the-primary-key-of-the-table" title="Permalink to this headline">¶</a></h3>
+<p>One of the first things that you may have noticed when looking that demo
+data is that there is a <code class="docutils literal notranslate"><span class="pre">student_id</span></code> column which acts as the primary
+key of the table, and which is supposed to have unique values. Indeed,
+if we look at the number of times that each value appears, we see that
+all of them appear at most once:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="gh">Out[12]: </span><span class="go">1</span>
+</pre></div>
+</div>
+<p>However, if we look at the synthetic data that we generated, we observe
+that there are some values that appear more than once:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="gh">Out[13]: </span><span class="go"></span>
+<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">39        17324      M    64.108569  69.578030   Science    59.773701      Others            False                 2           62.774136  Mkt&amp;Fin  63.148433  25934.547558    True        NaT        NaT      3.0</span>
+<span class="go">62        17324      M    63.624632  70.668550   Science    61.741411      Others            False                 2           64.563060  Mkt&amp;Fin  65.359934  29374.061711    True        NaT 2020-08-06      3.0</span>
+<span class="go">70        17324      M    58.350307  69.057563   Science    58.570231      Others            False                 2           75.076245  Mkt&amp;Fin  60.023041  34231.223217   False        NaT        NaT     12.0</span>
+<span class="go">90        17324      M    64.860372  51.356866   Science    64.315902      Others            False                 1           68.767961  Mkt&amp;Fin  67.693876  31571.506058   False        NaT        NaT     12.0</span>
+<span class="go">91        17324      M    81.193826  64.223350   Science    61.580230      Others            False                 1           55.886141  Mkt&amp;Fin  59.641059  31495.497934    True        NaT        NaT      3.0</span>
+<span class="go">114       17324      M    68.567800  61.826569   Science    62.702139      Others            False                 2           64.710930  Mkt&amp;Fin  63.356253  32821.127924    True        NaT        NaT      3.0</span>
+<span class="go">117       17324      M    60.400483  50.018838   Science    71.121504      Others            False                 0           59.232960  Mkt&amp;Fin  68.755721  30171.019160    True 2020-01-26        NaT      3.0</span>
+<span class="go">181       17324      M    70.626164  54.665992   Science    71.358222      Others            False                 1           87.247989  Mkt&amp;Fin  65.050539  31850.664148    True        NaT        NaT      3.0</span>
+<span class="go">196       17324      M    79.224827  62.879074   Science    63.635174      Others            False                 0           71.966043   Mkt&amp;HR  66.923246  36657.433073    True        NaT 2020-05-19     12.0</span>
+</pre></div>
+</div>
+<p>This happens because the model was not notified at any point about the
+fact that the <code class="docutils literal notranslate"><span class="pre">student_id</span></code> had to be unique, so when it generates new
+data it will provoke collisions sooner or later. In order to solve this,
+we can pass the argument <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> to our model when we create it,
+indicating the name of the column that is the index of the table.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [15]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="gp">In [16]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[17]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc  salary  placed start_date   end_date duration</span>
+<span class="go">0           0      M    64.342446  68.707145      Arts    69.193413    Sci&amp;Tech            False                 2           59.386940  Mkt&amp;Fin  64.883761     NaN    True 2020-07-09 2020-12-02      6.0</span>
+<span class="go">1           1      M    84.670164  76.726403   Science    70.122060    Sci&amp;Tech            False                 1           62.351785  Mkt&amp;Fin  59.536940     NaN    True 2020-03-04 2021-01-09      6.0</span>
+<span class="go">2           2      M    69.850146  71.973099  Commerce    63.204125      Others            False                 1           52.983538  Mkt&amp;Fin  64.430123     NaN   False 2020-03-05        NaT      6.0</span>
+<span class="go">3           3      M    74.248266  81.192730  Commerce    68.398574      Others            False                 1           58.887149  Mkt&amp;Fin  57.743044     NaN   False        NaT 2021-01-02      6.0</span>
+<span class="go">4           4      M    65.594011  81.358350      Arts    73.405232    Sci&amp;Tech             True                 1           57.492391  Mkt&amp;Fin  66.585591     NaN   False 2020-01-09 2021-01-12      6.0</span>
+</pre></div>
+</div>
+<p>As a result, the model will learn that this column must be unique and
+generate a unique sequence of values for the column:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="gh">Out[18]: </span><span class="go">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="anonymizing-personally-identifiable-information-pii">
+<h3>Anonymizing Personally Identifiable Information (PII)<a class="headerlink" href="#anonymizing-personally-identifiable-information-pii" title="Permalink to this headline">¶</a></h3>
+<p>There will be many cases where the data will contain Personally
+Identifiable Information which we cannot disclose. In these cases, we
+will want our Tabular Models to replace the information within these
+fields with fake, simulated data that looks similar to the real one but
+does not contain any of the original values.</p>
+<p>Let’s load a new dataset that contains a PII field, the
+<code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> demo, and try to generate synthetic versions
+of it that do not contain any of the PII fields.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset is a modified version of the
+<code class="docutils literal notranslate"><span class="pre">student_placements</span></code> dataset with one new field, <code class="docutils literal notranslate"><span class="pre">address</span></code>, which
+contains PII information about the students. Notice that this additional
+<code class="docutils literal notranslate"><span class="pre">address</span></code> field has been simulated and does not correspond to data
+from the real users.</p>
+</div>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [19]: </span><span class="n">data_pii</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements_pii&#39;</span><span class="p">)</span>
+
+<span class="gp">In [20]: </span><span class="n">data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[20]: </span><span class="go"></span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date duration</span>
+<span class="go">0       17264        70304 Baker Turnpike\nEricborough, MS 15086      M        67.00      91.00  Commerce        58.00    Sci&amp;Tech            False                 0                55.0   Mkt&amp;HR     58.80  27000.0    True 2020-07-23 2020-10-12      3.0</span>
+<span class="go">1       17265    805 Herrera Avenue Apt. 134\nMaryview, NJ 36510      M        79.33      78.33   Science        77.48    Sci&amp;Tech             True                 1                86.5  Mkt&amp;Fin     66.28  20000.0    True 2020-01-11 2020-04-09      3.0</span>
+<span class="go">2       17266        3702 Bradley Island\nNorth Victor, FL 12268      M        65.00      68.00      Arts        64.00   Comm&amp;Mgmt            False                 0                75.0  Mkt&amp;Fin     57.80  25000.0    True 2020-01-26 2020-07-13      6.0</span>
+<span class="go">3       17267                   Unit 0879 Box 3878\nDPO AP 42663      M        56.00      52.00   Science        52.00    Sci&amp;Tech            False                 0                66.0   Mkt&amp;HR     59.43      NaN   False        NaT        NaT      NaN</span>
+<span class="go">4       17268  96493 Kelly Canyon Apt. 145\nEast Steven, NC 3...      M        85.80      73.60  Commerce        73.30   Comm&amp;Mgmt            False                 0                96.8  Mkt&amp;Fin     55.50  42500.0    True 2020-07-04 2020-09-27      3.0</span>
+</pre></div>
+</div>
+<p>If we use our tabular model on this new data we will see how the
+synthetic data that it generates discloses the addresses from the real
+students:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [21]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [22]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
+
+<span class="gp">In [23]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[24]: </span><span class="go"></span>
+<span class="go">   student_id                                          address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0  82590 Morton Locks\nSouth Carmenhaven, DE 39534      M    49.993120  72.427553  Commerce    58.919557    Sci&amp;Tech             True                 0           81.948227  Mkt&amp;Fin  65.783156  60952.310914   False        NaT 2020-10-31      3.0</span>
+<span class="go">1           1         785 Snyder Bypass\nPort Joseph, CA 72779      M    67.900676  65.893899  Commerce    61.471803   Comm&amp;Mgmt             True                 0           78.002846   Mkt&amp;HR  69.075253           NaN    True        NaT        NaT      NaN</span>
+<span class="go">2           2       752 Johnson Turnpike\nWrightfurt, NY 74928      M    56.599340  67.286371   Science    65.457850   Comm&amp;Mgmt             True                 0           65.927471   Mkt&amp;HR  71.447619           NaN    True 2020-01-12        NaT      6.0</span>
+<span class="go">3           3  82590 Morton Locks\nSouth Carmenhaven, DE 39534      F    61.553139  54.659979  Commerce    60.417493    Sci&amp;Tech             True                 0           73.169891   Mkt&amp;HR  63.198974  55012.103448    True        NaT        NaT      NaN</span>
+<span class="go">4           4      4785 Cindy Trail\nEast Robertfurt, CT 03122      M    54.689757  59.810207      Arts    53.244400   Comm&amp;Mgmt             True                 0           74.965755   Mkt&amp;HR  66.219010           NaN    True        NaT        NaT      NaN</span>
+</pre></div>
+</div>
+<p>More specifically, we can see how all the addresses that have been generated
+actually come from the original dataset:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [25]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gh">Out[25]: </span><span class="go">200</span>
+</pre></div>
+</div>
+<p>In order to solve this, we can pass an additional argument
+<code class="docutils literal notranslate"><span class="pre">anonymize_fields</span></code> to our model when we create the instance. This
+<code class="docutils literal notranslate"><span class="pre">anonymize_fields</span></code> argument will need to be a dictionary that
+contains:</p>
+<ul class="simple">
+<li><p>The name of the field that we want to anonymize.</p></li>
+<li><p>The category of the field that we want to use when we generate fake
+values for it.</p></li>
+</ul>
+<p>The list complete list of possible categories can be seen in the <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker
+Providers</a>
+page, and it contains a huge list of concepts such as:</p>
+<ul class="simple">
+<li><p>name</p></li>
+<li><p>address</p></li>
+<li><p>country</p></li>
+<li><p>city</p></li>
+<li><p>ssn</p></li>
+<li><p>credit_card_number</p></li>
+<li><p>credit_card_expire</p></li>
+<li><p>credit_card_security_code</p></li>
+<li><p>email</p></li>
+<li><p>telephone</p></li>
+<li><p>…</p></li>
+</ul>
+<p>In this case, since the field is an e-mail address, we will pass a
+dictionary indicating the category <code class="docutils literal notranslate"><span class="pre">address</span></code></p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [26]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
+<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
+<span class="gp">   ....: </span>    <span class="p">}</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [27]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As a result, we can see how the real <code class="docutils literal notranslate"><span class="pre">address</span></code> values have been
+replaced by other fake addresses:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [28]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="gp">In [29]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[29]: </span><span class="go"></span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0  1130 William Fords Apt. 982\nNew Richard, DC 3...      F    75.604926  67.480589      Arts    70.972809    Sci&amp;Tech            False                 0           60.684154   Mkt&amp;HR  70.171339           NaN   False        NaT        NaT      6.0</span>
+<span class="go">1           1                   Unit 0834 Box 3566\nDPO AE 51400      F    74.868789  76.510422      Arts    65.055195    Sci&amp;Tech            False                 0           56.782134  Mkt&amp;Fin  63.827670  29644.278908   False        NaT        NaT      6.0</span>
+<span class="go">2           2        679 Amanda Ramp\nSouth Ashleyland, RI 39741      M    82.107458  78.263519      Arts    65.411241    Sci&amp;Tech            False                 0           55.117642   Mkt&amp;HR  69.236099           NaN   False        NaT        NaT      6.0</span>
+<span class="go">3           3  80353 Maynard Ferry Suite 281\nTravisshire, NY...      M    81.699807  64.048995  Commerce    67.711318    Sci&amp;Tech            False                 0           68.186141  Mkt&amp;Fin  55.130743           NaN   False        NaT        NaT      NaN</span>
+<span class="go">4           4  4032 Evan Terrace Suite 427\nNorth Nathanport,...      M    81.270387  66.448936      Arts    66.040824   Comm&amp;Mgmt            False                 0           82.336288  Mkt&amp;Fin  64.572070           NaN   False        NaT 2020-05-03      NaN</span>
+</pre></div>
+</div>
+<p>Which means that none of the original addresses can be found in the sampled
+data:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [30]: </span><span class="n">data_pii</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gh">Out[30]: </span><span class="go">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-do-i-specify-constraints">
+<h3>How do I specify constraints?<a class="headerlink" href="#how-do-i-specify-constraints" title="Permalink to this headline">¶</a></h3>
+<p>If you look closely at the data you may notice that some properties were
+not completely captured by the model. For example, you may have seen
+that sometimes the model produces an <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> number greater
+than <code class="docutils literal notranslate"><span class="pre">0</span></code> while also indicating that <code class="docutils literal notranslate"><span class="pre">work_experience</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.
+These type of properties are what we call <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> and can also
+be handled using <code class="docutils literal notranslate"><span class="pre">SDV</span></code>. For further details about them please visit
+the <a class="reference internal" href="constraints.html#single-table-constraints"><span class="std std-ref">Handling Constraints</span></a> guide.</p>
+</div>
+<div class="section" id="can-i-evaluate-the-synthetic-data">
+<h3>Can I evaluate the Synthetic Data?<a class="headerlink" href="#can-i-evaluate-the-synthetic-data" title="Permalink to this headline">¶</a></h3>
+<p>A very common question when someone starts using <strong>SDV</strong> to generate
+synthetic data is: <em>“How good is the data that I just generated?”</em></p>
+<p>In order to answer this question, <strong>SDV</strong> has a collection of metrics
+and tools that allow you to compare the <em>real</em> that you provided and the
+<em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
+<p>You can read more about this in the <a class="reference internal" href="../evaluation/index.html#evaluation"><span class="std std-ref">Synthetic Data Evaluation</span></a> guide.</p>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="copulagan.html" title="previous page">CopulaGAN Model</a>
+    <a class='right-next' id="next-link" href="constraints.html" title="next page">Handling Constraints</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

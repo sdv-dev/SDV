@@ -1,0 +1,6 @@
+﻿sdv.tabular.TVAE.save
+=====================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: TVAE.save

@@ -1,0 +1,6 @@
+﻿sdv.tabular.TVAE.fit
+====================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: TVAE.fit

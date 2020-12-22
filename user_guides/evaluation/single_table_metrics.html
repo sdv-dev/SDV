@@ -1,0 +1,575 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single Table Metrics &#8212; SDV 0.6.0 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Multi Table Metrics" href="multi_table_metrics.html" />
+    <link rel="prev" title="Synthetic Data Metrics" href="synthetic_data_metrics.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <a class="navbar-brand" href="../../index.html">
+    
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+</div>
+
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+    
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+          
+            
+                <li class="">
+                    <a href="../single_table/index.html">Single Table Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
+          
+            
+                <li class="active">
+                    <a href="index.html">Synthetic Data Evaluation</a>
+                    <ul>
+                    
+                        
+                            <li class="">
+                                <a href="evaluation_framework.html">Evaluation Framework</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="active">
+                                <a href="synthetic_data_metrics.html">Synthetic Data Metrics</a>
+                                <ul>
+                                
+                                    <li class="active">
+                                        <a href="">Single Table Metrics</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="multi_table_metrics.html">Multi Table Metrics</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
+                </li>
+            
+          
+        
+        
+        
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#single-table-metric-families" class="nav-link">Single Table Metric Families</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#statistical-metrics" class="nav-link">Statistical Metrics</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#likelihood-metrics" class="nav-link">Likelihood Metrics</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#detection-metrics" class="nav-link">Detection Metrics</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#machine-learning-efficacy-metrics" class="nav-link">Machine Learning Efficacy Metrics</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="single-table-metrics">
+<span id="id1"></span><h1>Single Table Metrics<a class="headerlink" href="#single-table-metrics" title="Permalink to this headline">¶</a></h1>
+<p>In this section we will show you which metrics exist for single table datasets and
+how to use them.</p>
+<p>Let us start by loading some demo data that we will use to explore the different
+metrics that exist.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.demos</span> <span class="kn">import</span> <span class="n">load_single_table_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">load_single_table_demo</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will return us three objects:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">real_data</span></code>, which is the single table <code class="docutils literal notranslate"><span class="pre">student_placements</span></code> demo dataset:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [3]: </span><span class="n">real_data</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc  ... mba_perc   salary  placed  start_date   end_date  duration</span>
+<span class="go">0         17264      M        67.00      91.00  Commerce        58.00  ...    58.80  27000.0    True  2020-07-23 2020-10-12       3.0</span>
+<span class="go">1         17265      M        79.33      78.33   Science        77.48  ...    66.28  20000.0    True  2020-01-11 2020-04-09       3.0</span>
+<span class="go">2         17266      M        65.00      68.00      Arts        64.00  ...    57.80  25000.0    True  2020-01-26 2020-07-13       6.0</span>
+<span class="go">3         17267      M        56.00      52.00   Science        52.00  ...    59.43      NaN   False         NaT        NaT       NaN</span>
+<span class="go">4         17268      M        85.80      73.60  Commerce        73.30  ...    55.50  42500.0    True  2020-07-04 2020-09-27       3.0</span>
+<span class="go">..          ...    ...          ...        ...       ...          ...  ...      ...      ...     ...         ...        ...       ...</span>
+<span class="go">210       17474      M        80.60      82.00  Commerce        77.60  ...    74.49  40000.0    True  2020-07-27 2020-10-20       3.0</span>
+<span class="go">211       17475      M        58.00      60.00   Science        72.00  ...    53.62  27500.0    True  2020-01-23 2020-08-04       6.0</span>
+<span class="go">212       17476      M        67.00      67.00  Commerce        73.00  ...    69.72  29500.0    True  2020-01-25 2020-08-05       6.0</span>
+<span class="go">213       17477      F        74.00      66.00  Commerce        58.00  ...    60.23  20400.0    True  2020-01-19 2020-04-20       3.0</span>
+<span class="go">214       17478      M        62.00      58.00   Science        53.00  ...    60.22      NaN   False         NaT        NaT       NaN</span>
+<span class="go">.</span>
+<span class="go">[215 rows x 17 columns]</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>, which is a clone of the <code class="docutils literal notranslate"><span class="pre">real_data</span></code> which has been generated
+by the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> tabular model.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="n">synthetic_data</span>
+<span class="gh">Out[4]: </span><span class="go"></span>
+<span class="go">     student_id gender  second_perc   high_perc high_spec  degree_perc  ...   mba_perc   salary  placed  start_date   end_date  duration</span>
+<span class="go">0             0      F    41.361060   85.425072  Commerce    74.972674  ...  57.291083      NaN    True  2020-02-11 2020-08-02       3.0</span>
+<span class="go">1             1      M    63.720169   99.059033  Commerce    62.769650  ...  79.068319      NaN   False         NaT        NaT       NaN</span>
+<span class="go">2             2      M    58.473884   89.241528   Science    83.066328  ...  77.042950  26727.0    True  2020-02-13 2020-05-27       3.0</span>
+<span class="go">3             3      F    77.232204  100.523788  Commerce    61.010445  ...  68.132991  22058.0    True  2020-09-24 2020-11-07       3.0</span>
+<span class="go">4             4      F    54.067830  109.611537  Commerce    72.846753  ...  66.363138      NaN   False         NaT        NaT       NaN</span>
+<span class="go">..          ...    ...          ...         ...       ...          ...  ...        ...      ...     ...         ...        ...       ...</span>
+<span class="go">210         210      M    58.981597   97.809826  Commerce    73.548889  ...  61.981631      NaN   False         NaT        NaT       NaN</span>
+<span class="go">211         211      M    42.643139   75.259843  Commerce    72.478613  ...  55.746391      NaN   False         NaT        NaT       NaN</span>
+<span class="go">212         212      M    58.202031  103.876132  Commerce    81.088376  ...  58.117902  28772.0    True  2020-01-23 2021-02-26       6.0</span>
+<span class="go">213         213      M    53.939037   70.498207  Commerce    65.284175  ...  53.206451  25441.0    True  2020-06-13 2020-06-14       6.0</span>
+<span class="go">214         214      M    35.696869  100.655357  Commerce    58.946189  ...  48.470545      NaN   False         NaT        NaT       NaN</span>
+<span class="go">.</span>
+<span class="go">[215 rows x 17 columns]</span>
+</pre></div>
+</div>
+<p>And a <code class="docutils literal notranslate"><span class="pre">metadata</span></code>, which is the <code class="docutils literal notranslate"><span class="pre">dict</span></code> representation of the <code class="docutils literal notranslate"><span class="pre">student_placements</span></code> metadata.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">metadata</span>
+<span class="gh">Out[5]: </span><span class="go"></span>
+<span class="go">{&#39;fields&#39;: {&#39;start_date&#39;: {&#39;type&#39;: &#39;datetime&#39;, &#39;format&#39;: &#39;%Y-%m-%d&#39;},</span>
+<span class="go">  &#39;end_date&#39;: {&#39;type&#39;: &#39;datetime&#39;, &#39;format&#39;: &#39;%Y-%m-%d&#39;},</span>
+<span class="go">  &#39;salary&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">  &#39;duration&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">  &#39;student_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
+<span class="go">  &#39;high_perc&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;high_spec&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">  &#39;mba_spec&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">  &#39;second_perc&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
+<span class="go">  &#39;degree_perc&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;placed&#39;: {&#39;type&#39;: &#39;boolean&#39;},</span>
+<span class="go">  &#39;experience_years&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;employability_perc&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;mba_perc&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;float&#39;},</span>
+<span class="go">  &#39;work_experience&#39;: {&#39;type&#39;: &#39;boolean&#39;},</span>
+<span class="go">  &#39;degree_type&#39;: {&#39;type&#39;: &#39;categorical&#39;}},</span>
+<span class="go"> &#39;constraints&#39;: [],</span>
+<span class="go"> &#39;model_kwargs&#39;: {},</span>
+<span class="go"> &#39;name&#39;: None,</span>
+<span class="go"> &#39;primary_key&#39;: &#39;student_id&#39;,</span>
+<span class="go"> &#39;sequence_index&#39;: None,</span>
+<span class="go"> &#39;entity_columns&#39;: [],</span>
+<span class="go"> &#39;context_columns&#39;: []}</span>
+</pre></div>
+</div>
+<p>These three elements, or their corresponding equivalents, are all you will need to
+run most of the <em>Single Table Metrics</em> on your own <em>Synthetic Dataset</em>.</p>
+<div class="section" id="single-table-metric-families">
+<h2>Single Table Metric Families<a class="headerlink" href="#single-table-metric-families" title="Permalink to this headline">¶</a></h2>
+<p>The <em>Single Table Metrics</em> are grouped in multiple families:</p>
+<ul class="simple">
+<li><p><strong>Statistical Metrics</strong>: These are metrics that compare the tables by running different
+statistical tests on them. Some of them work by comparing multiple columns at once, while
+other compare the different individual columns separately and later on return an aggregated
+result.</p></li>
+<li><p><strong>Likelihood Metrics</strong>: These metrics attempt to fit a probabilistic model to the
+real data and later on evaluate the likelihood of the synthetic data on it.</p></li>
+<li><p><strong>Detection Metrics</strong>: These metrics try to train a Machine Learning Classifier that learns
+to distinguish the real data from the synthetic data, and report a score of how successful
+this classifier is.</p></li>
+<li><p><strong>Machine Learning Efficacy Metrics</strong>: These metrics train a Machine Learning model on your
+synthetic data and later on evaluate the model performance on the real data. Since these
+metrics need to evaluate the performance of a Machine Learning model on the dataset, they
+work only on datasets that represent a Machine Learning problem.</p></li>
+</ul>
+<div class="section" id="statistical-metrics">
+<h3>Statistical Metrics<a class="headerlink" href="#statistical-metrics" title="Permalink to this headline">¶</a></h3>
+<p>The metrics of this family compare the tables by running different types of statistical tests
+on them.</p>
+<p>In the most simple scenario, these metrics compare individual columns from the real table
+with the corresponding column from the synthetic table, and at the end report the average
+outcome from the test.</p>
+<p>Such metrics are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.KSTest</span></code>: This metric uses the two-sample Kolmogorov–Smirnov test
+to compare the distributions of continuous columns using the empirical CDF.
+The output for each column is 1 minus the KS Test D statistic, which indicates the maximum
+distance between the expected CDF and the observed CDF values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CSTest</span></code>: This metric uses the Chi-Squared test to compare the
+distributions of two discrete columns. The output for each column is the CSTest p-value,
+which indicates the probability of the two columns having been sampled from the same
+distribution.</p></li>
+</ul>
+<p>Let us execute these two metrics on the loaded data:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">CSTest</span><span class="p">,</span> <span class="n">KSTest</span>
+
+<span class="gp">In [7]: </span><span class="n">CSTest</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[7]: </span><span class="go">0.8078084931103922</span>
+
+<span class="gp">In [8]: </span><span class="n">KSTest</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[8]: </span><span class="go">0.6372093023255814</span>
+</pre></div>
+</div>
+<p>In each case, the statistical test will be executed on all the compatible column (so, categorical
+or boolean columns for <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and numerical columns for <code class="docutils literal notranslate"><span class="pre">KSTest</span></code>), and report the average
+score obtained.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If your table does not contain any column of the compatible type, the output of
+either metric will be <code class="docutils literal notranslate"><span class="pre">nan</span></code>.</p>
+</div>
+<p>We can also compute the metrics by calling the <code class="docutils literal notranslate"><span class="pre">sdv.evaluate</span></code> function passing either the
+metric classes or their names:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+
+<span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gh">Out[10]: </span><span class="go"></span>
+<span class="go">   metric                                     name     score  min_value  max_value      goal</span>
+<span class="go">0  CSTest                              Chi-Squared  0.807808        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic  0.637209        0.0        1.0  MAXIMIZE</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="likelihood-metrics">
+<h3>Likelihood Metrics<a class="headerlink" href="#likelihood-metrics" title="Permalink to this headline">¶</a></h3>
+<p>The metrics of this family compare the tables by fitting the real data to a probabilistic
+model and afterwards compute the likelihood of the synthetic data belonging to the learned
+distribution.</p>
+<p>Such metrics are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.BNLikelihood</span></code>: This metric fits a BayesianNetwork to the real
+data and then evaluates the average likelihood of the rows from the synthetic data on it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.BNLogLikelihood</span></code>: This metric fits a BayesianNetwork to the real
+data and then evaluates the average log likelihood of the rows from the synthetic data on it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.GMLogLikelihood</span></code>: This metric fits multiple GaussianMixture models to
+the real data and then evaluates the average log likelihood of the synthetic data on them.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These metrics do not accept missing data, so we will replace all the missing
+values with a 0 before executing them.</p>
+</div>
+<p>Let us execute these metrics on the loaded data:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">BNLikelihood</span><span class="p">,</span> <span class="n">BNLogLikelihood</span><span class="p">,</span> <span class="n">GMLogLikelihood</span>
+
+<span class="gp">In [12]: </span><span class="n">BNLikelihood</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">synthetic_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="gh">Out[12]: </span><span class="go">0.004311090583670755</span>
+
+<span class="gp">In [13]: </span><span class="n">BNLogLikelihood</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">synthetic_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="gh">Out[13]: </span><span class="go">-14.62132601319649</span>
+
+<span class="gp">In [14]: </span><span class="n">GMLogLikelihood</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">synthetic_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="gh">Out[14]: </span><span class="go">-35024.711762921426</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="detection-metrics">
+<h3>Detection Metrics<a class="headerlink" href="#detection-metrics" title="Permalink to this headline">¶</a></h3>
+<p>The metrics of this family evaluate how hard it is to distinguish the synthetic data from the
+real data by using a Machine Learning model. To do this, the metrics will shuffle the real
+data and synthetic data together with flags indicating whether the data is real or synthetic,
+and then cross validate a Machine Learning model that tries to predict this flag.
+The output of the metrics will be the 1 minus the average ROC AUC score across all the cross
+validation splits.</p>
+<p>Such metrics are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.LogisticDetection</span></code>: Detection metric based on a <code class="docutils literal notranslate"><span class="pre">LogisticRegression</span></code>
+classifier from <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.SVCDetection</span></code>: Detection metric based on a <code class="docutils literal notranslate"><span class="pre">SVC</span></code> classifier from
+<code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>.</p></li>
+</ul>
+<p>Let us execute these metrics on the loaded data:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">LogisticDetection</span><span class="p">,</span> <span class="n">SVCDetection</span>
+
+<span class="gp">In [16]: </span><span class="n">LogisticDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[16]: </span><span class="go">0.0</span>
+
+<span class="gp">In [17]: </span><span class="n">SVCDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[17]: </span><span class="go">0.0009056395989102128</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="machine-learning-efficacy-metrics">
+<h3>Machine Learning Efficacy Metrics<a class="headerlink" href="#machine-learning-efficacy-metrics" title="Permalink to this headline">¶</a></h3>
+<p>This family of metrics will evaluate whether it is possible to replace the real data with
+synthetic data in order to solve a Machine Learning Problem by learning a Machine Learning
+model on the synthetic data and then evaluating the score which it obtains when evaluated
+on the real data.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since this metrics will be evaluated by trying to solve a Machine Learning problem,
+they can only be used on datasets that contain a target column that needs or can be predicted
+using the rest of the data, and the scores obtained by the metrics will be inversely
+proportional to how hard that Machine Problem is.</p>
+</div>
+<p>The metrics on this family are organized by Machine Learning problem type and model.</p>
+<ul class="simple">
+<li><p>Binary Classification Metrics:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryDecisionTreeClassifier</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryAdaBoostClassifier</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryLogisticRegression</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryMLPClassifier</span></code></p></li>
+</ul>
+</li>
+<li><p>Multiclass Classification Metrics:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">MulticlassDecisionTreeClassifier</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MulticlassMLPClassifier</span></code></p></li>
+</ul>
+</li>
+<li><p>Regression Metrics:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">LinearRegressionClassifier</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MLPRegressor</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>In order to run these metrics we will need to select a column from our dataset which we will
+use as the target for the prediction problem. For example, in the demo dataset there are multiple
+columns that can be used as possible targets for a Machine Learning problem:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">work_experience</span></code> and <code class="docutils literal notranslate"><span class="pre">placed</span></code> can be used for binary classification problems.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">high_spec</span></code>, <code class="docutils literal notranslate"><span class="pre">degree_type</span></code>, <code class="docutils literal notranslate"><span class="pre">mba_spec</span></code> and <code class="docutils literal notranslate"><span class="pre">duration</span></code> can be used for multiclass
+classification problems.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">second_perc</span></code>, <code class="docutils literal notranslate"><span class="pre">high_perc</span></code>, <code class="docutils literal notranslate"><span class="pre">degree_perc</span></code>, <code class="docutils literal notranslate"><span class="pre">experience_years</span></code>, <code class="docutils literal notranslate"><span class="pre">employability_perc</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mba_perc</span></code> and <code class="docutils literal notranslate"><span class="pre">salary</span></code> can be used for regression problems.</p></li>
+</ul>
+<p>Let’s select the <code class="docutils literal notranslate"><span class="pre">mba_spect</span></code> column as the target for our problem and let the Machine Learning
+Efficacy Metric attempt to predict it using the rest of the columns.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">MulticlassDecisionTreeClassifier</span>
+
+<span class="gp">In [19]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
+<span class="gh">Out[19]: </span><span class="go">0.5581012959477294</span>
+</pre></div>
+</div>
+<p>Notice that the value returned by the metric does not only depend on how good our synthetic data
+is, but also on how hard the Machine Learning problem that we are trying to solve is. For reference,
+we may want to compare this result with the one obtained when trying to make the prediction
+using real data as input. For this, we will need to split the data into train and test partitions
+and call the metric replacing the real data and synthetic data with the test and training data
+respectively.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">train</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">))</span>
+
+<span class="gp">In [21]: </span><span class="n">test</span> <span class="o">=</span> <span class="n">real_data</span><span class="p">[</span><span class="o">~</span><span class="n">real_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+
+<span class="gp">In [22]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
+<span class="gh">Out[22]: </span><span class="go">0.5703908682116914</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Apart from passing the <code class="docutils literal notranslate"><span class="pre">target</span></code> variable as an argument, we can also store its
+value inside the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> dict and pass it to the metric:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [23]: </span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mba_spec&#39;</span>
+
+<span class="gp">In [24]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+<span class="gh">Out[24]: </span><span class="go">0.5767075571709829</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="synthetic_data_metrics.html" title="previous page">Synthetic Data Metrics</a>
+    <a class='right-next' id="next-link" href="multi_table_metrics.html" title="next page">Multi Table Metrics</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

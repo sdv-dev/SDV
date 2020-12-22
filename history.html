@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Release Notes &#8212; SDV 0.5.0 documentation</title>
+    <title>Release Notes &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/sdv.css" />
     
   <link rel="preload" as="script" href="_static/js/index.3da636dd464baa7582d2.js">
 
@@ -47,8 +48,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="index.html">
     
@@ -104,9 +104,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -118,10 +126,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -153,22 +159,20 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id1" class="nav-link">0.5.0 - 2020-11-25</a><ul class="nav section-nav flex-column">
+            <a href="#id1" class="nav-link">0.6.0 - 2020-12-22</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#issues-resolved" class="nav-link">Issues resolved:</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#id2" class="nav-link">0.5.0 - 2020-11-25</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#api-breaking-changes" class="nav-link">API breaking changes</a>
         </li>
     
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#issues-resolved" class="nav-link">Issues resolved</a>
-        </li>
-    
-            </ul>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#id2" class="nav-link">0.4.5 - 2020-10-17</a><ul class="nav section-nav flex-column">
-                
         <li class="nav-item toc-entry toc-h3">
             <a href="#id3" class="nav-link">Issues resolved</a>
         </li>
@@ -177,7 +181,7 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id4" class="nav-link">0.4.4 - 2020-10-06</a><ul class="nav section-nav flex-column">
+            <a href="#id4" class="nav-link">0.4.5 - 2020-10-17</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#id5" class="nav-link">Issues resolved</a>
@@ -187,15 +191,25 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id6" class="nav-link">0.4.3 - 2020-09-28</a>
+            <a href="#id6" class="nav-link">0.4.4 - 2020-10-06</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#id7" class="nav-link">Issues resolved</a>
+        </li>
+    
+            </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id7" class="nav-link">0.4.2 - 2020-09-19</a>
+            <a href="#id8" class="nav-link">0.4.3 - 2020-09-28</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id8" class="nav-link">0.4.1 - 2020-09-07</a><ul class="nav section-nav flex-column">
+            <a href="#id9" class="nav-link">0.4.2 - 2020-09-19</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#id10" class="nav-link">0.4.1 - 2020-09-07</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#issues-fixed" class="nav-link">Issues fixed</a>
@@ -205,11 +219,11 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id9" class="nav-link">0.4.0 - 2020-08-08</a>
+            <a href="#id11" class="nav-link">0.4.0 - 2020-08-08</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id10" class="nav-link">0.3.6 - 2020-07-23</a><ul class="nav section-nav flex-column">
+            <a href="#id12" class="nav-link">0.3.6 - 2020-07-23</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#new-features" class="nav-link">New Features</a>
@@ -219,14 +233,14 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id11" class="nav-link">0.3.5 - 2020-07-09</a>
+            <a href="#id13" class="nav-link">0.3.5 - 2020-07-09</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id12" class="nav-link">0.3.4 - 2020-07-04</a><ul class="nav section-nav flex-column">
+            <a href="#id14" class="nav-link">0.3.4 - 2020-07-04</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id13" class="nav-link">New Features</a>
+            <a href="#id15" class="nav-link">New Features</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
@@ -237,17 +251,7 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id14" class="nav-link">0.3.3 - 2020-06-26</a><ul class="nav section-nav flex-column">
-                
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#id15" class="nav-link">General Improvements</a>
-        </li>
-    
-            </ul>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#id16" class="nav-link">0.3.2 - 2020-02-03</a><ul class="nav section-nav flex-column">
+            <a href="#id16" class="nav-link">0.3.3 - 2020-06-26</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#id17" class="nav-link">General Improvements</a>
@@ -257,31 +261,31 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id18" class="nav-link">0.3.1 - 2020-01-22</a><ul class="nav section-nav flex-column">
+            <a href="#id18" class="nav-link">0.3.2 - 2020-02-03</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id19" class="nav-link">New Features</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#id20" class="nav-link">General Improvements</a>
+            <a href="#id19" class="nav-link">General Improvements</a>
         </li>
     
             </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id21" class="nav-link">0.3.0 - 2019-12-23</a><ul class="nav section-nav flex-column">
+            <a href="#id20" class="nav-link">0.3.1 - 2020-01-22</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id22" class="nav-link">New Features</a>
+            <a href="#id21" class="nav-link">New Features</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#id22" class="nav-link">General Improvements</a>
         </li>
     
             </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id23" class="nav-link">0.2.2 - 2019-12-10</a><ul class="nav section-nav flex-column">
+            <a href="#id23" class="nav-link">0.3.0 - 2019-12-23</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#id24" class="nav-link">New Features</a>
@@ -291,7 +295,7 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id25" class="nav-link">0.2.1 - 2019-11-25</a><ul class="nav section-nav flex-column">
+            <a href="#id25" class="nav-link">0.2.2 - 2019-12-10</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#id26" class="nav-link">New Features</a>
@@ -301,14 +305,24 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id27" class="nav-link">0.2.0 - 2019-10-11</a><ul class="nav section-nav flex-column">
+            <a href="#id27" class="nav-link">0.2.1 - 2019-11-25</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
             <a href="#id28" class="nav-link">New Features</a>
         </li>
     
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#id29" class="nav-link">0.2.0 - 2019-10-11</a><ul class="nav section-nav flex-column">
+                
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id29" class="nav-link">General Improvements</a>
+            <a href="#id30" class="nav-link">New Features</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#id31" class="nav-link">General Improvements</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
@@ -319,18 +333,18 @@
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#id30" class="nav-link">0.1.2 - 2019-09-18</a><ul class="nav section-nav flex-column">
+            <a href="#id32" class="nav-link">0.1.2 - 2019-09-18</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id31" class="nav-link">New Features</a>
+            <a href="#id33" class="nav-link">New Features</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id33" class="nav-link">General Improvements</a>
+            <a href="#id35" class="nav-link">General Improvements</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#id36" class="nav-link">Bugs fixed</a>
+            <a href="#id38" class="nav-link">Bugs fixed</a>
         </li>
     
             </ul>
@@ -360,7 +374,22 @@
   <div class="section" id="release-notes">
 <h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
-<h2>0.5.0 - 2020-11-25<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>0.6.0 - 2020-12-22<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>This release updates to the latest CTGAN, RDT and SDMetrics libraries to introduce a
+new TVAE model, multiple new metrics for single table and multi table, and fixes
+issues in the re-creation of tabular models from a metadata dict.</p>
+</div>
+<div class="section" id="issues-resolved">
+<h2>Issues resolved:<a class="headerlink" href="#issues-resolved" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Upgrade to SDMetrics v0.1.0 and add <code class="docutils literal notranslate"><span class="pre">sdv.metrics</span></code> module - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/281">Issue #281</a> by &#64;csala</p></li>
+<li><p>Upgrade to CTGAN 0.3.0 and add TVAE model - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/278">Issue #278</a> by &#64;fealho</p></li>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">dtype_transformers</span></code> to <code class="docutils literal notranslate"><span class="pre">Table.from_dict</span></code> - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/276">Issue #276</a> by &#64;csala</p></li>
+<li><p>Fix Metadata <code class="docutils literal notranslate"><span class="pre">from_dict</span></code> behavior - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/275">Issue #275</a> by &#64;csala</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>0.5.0 - 2020-11-25<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <p>This version updates the dependencies and makes a few internal changes in order
 to ensure that SDV works properly on Windows Systems, making this the first
 release to be officially supported on Windows.</p>
@@ -375,8 +404,8 @@ processing relational datasets with the default parameters.</p>
 the <code class="docutils literal notranslate"><span class="pre">one_hot_encoding</span></code> one.</p></li>
 </ul>
 </div>
-<div class="section" id="issues-resolved">
-<h3>Issues resolved<a class="headerlink" href="#issues-resolved" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>Issues resolved<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>GaussianCopula: rename <code class="docutils literal notranslate"><span class="pre">distribution</span></code> argument to <code class="docutils literal notranslate"><span class="pre">field_distributions</span></code> - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/237">Issue #237</a> by &#64;csala</p></li>
 <li><p>GaussianCopula: Improve error message if an invalid distribution name is passed - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/220">Issue #220</a> by csala</p></li>
@@ -387,15 +416,15 @@ the <code class="docutils literal notranslate"><span class="pre">one_hot_encodin
 </ul>
 </div>
 </div>
-<div class="section" id="id2">
-<h2>0.4.5 - 2020-10-17<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2>0.4.5 - 2020-10-17<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>In this version a new family of models for Synthetic Time Series Generation is introduced
 under the <code class="docutils literal notranslate"><span class="pre">sdv.timeseries</span></code> sub-package. The new family of models now includes a new class
 called <code class="docutils literal notranslate"><span class="pre">PAR</span></code>, which implements a <em>Probabilistic AutoRegressive</em> model.</p>
 <p>This version also adds support for composite primary keys and regex based generation of id
 fields in tabular models and drops Python 3.5 support.</p>
-<div class="section" id="id3">
-<h3>Issues resolved<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id5">
+<h3>Issues resolved<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Drop python 3.5 support - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/204">Issue #204</a> by &#64;csala</p></li>
 <li><p>Support composite primary keys in tabular models - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/207">Issue #207</a> by &#64;csala</p></li>
@@ -404,28 +433,28 @@ fields in tabular models and drops Python 3.5 support.</p>
 </ul>
 </div>
 </div>
-<div class="section" id="id4">
-<h2>0.4.4 - 2020-10-06<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h2>0.4.4 - 2020-10-06<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <p>This version adds a new tabular model based on combining the CTGAN model with the reversible
 transformation applied in the GaussianCopula model that converts random variables with
 arbitrary distributions to new random variables with standard normal distribution.</p>
 <p>The reversible transformation is handled by the GaussianCopulaTransformer recently added to RDT.</p>
-<div class="section" id="id5">
-<h3>Issues resolved<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h3>Issues resolved<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add CopulaGAN Model - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/202">Issue #202</a> by &#64;csala</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id6">
-<h2>0.4.3 - 2020-09-28<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id8">
+<h2>0.4.3 - 2020-09-28<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
 <p>This release moves the models and algorithms related to generation of synthetic
 relational data to a new <code class="docutils literal notranslate"><span class="pre">sdv.relational</span></code> subpackage (Issue #198)</p>
 <p>As part of the change, also the old <code class="docutils literal notranslate"><span class="pre">sdv.models</span></code> have been removed and now
 relational model is based on the recently introduced <code class="docutils literal notranslate"><span class="pre">sdv.tabular</span></code> models.</p>
 </div>
-<div class="section" id="id7">
-<h2>0.4.2 - 2020-09-19<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id9">
+<h2>0.4.2 - 2020-09-19<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <p>In this release the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation</span></code> module has been reworked to include 4 different
 metrics and in all cases return a normalized score between 0 and 1.</p>
 <p>Included metrics are:</p>
@@ -436,8 +465,8 @@ metrics and in all cases return a normalized score between 0 and 1.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">svc_detection</span></code></p></li>
 </ul>
 </div>
-<div class="section" id="id8">
-<h2>0.4.1 - 2020-09-07<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id10">
+<h2>0.4.1 - 2020-09-07<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <p>This release fixes a couple of minor issues and introduces an important rework of the
 User Guides section of the documentation.</p>
 <div class="section" id="issues-fixed">
@@ -448,8 +477,8 @@ User Guides section of the documentation.</p>
 </ul>
 </div>
 </div>
-<div class="section" id="id9">
-<h2>0.4.0 - 2020-08-08<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id11">
+<h2>0.4.0 - 2020-08-08<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
 <p>In this release SDV gets new documentation, new tutorials, improvements to the Tabular API
 and broader python and dependency support.</p>
 <p>Complete list of changes:</p>
@@ -463,8 +492,8 @@ the ecosystem libraries and how to extend and contribute to the project.</p></li
 <li><p>New Slack Workspace for development discussions and community support.</p></li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h2>0.3.6 - 2020-07-23<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id12">
+<h2>0.3.6 - 2020-07-23<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
 <p>This release introduces a new concept of <code class="docutils literal notranslate"><span class="pre">Constraints</span></code>, which allow the user to define
 special relationships between columns that will not be handled via modeling.</p>
 <p>This is done via a new <code class="docutils literal notranslate"><span class="pre">sdv.constraints</span></code> subpackage which defines some well-known pre-defined
@@ -477,8 +506,8 @@ to their needs as much as necessary.</p>
 </ul>
 </div>
 </div>
-<div class="section" id="id11">
-<h2>0.3.5 - 2020-07-09<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id13">
+<h2>0.3.5 - 2020-07-09<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
 <p>This release introduces a new subpackage <code class="docutils literal notranslate"><span class="pre">sdv.tabular</span></code> with models designed specifically
 for single table modeling, while still providing all the usual conveniences from SDV, such
 as:</p>
@@ -495,10 +524,10 @@ datasets.</p></li>
 <li><p>CTGAN: GAN-based data synthesizer that can generate synthetic tabular data with high fidelity.</p></li>
 </ul>
 </div>
-<div class="section" id="id12">
-<h2>0.3.4 - 2020-07-04<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id13">
-<h3>New Features<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id14">
+<h2>0.3.4 - 2020-07-04<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h3>New Features<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Support for Multiple Parents - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/162">Issue #162</a> by &#64;csala</p></li>
 <li><p>Sample by default the same number of rows as in the original table - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/163">Issue #163</a> by &#64;csala</p></li>
@@ -511,79 +540,79 @@ datasets.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id14">
-<h2>0.3.3 - 2020-06-26<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id15">
-<h3>General Improvements<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id16">
+<h2>0.3.3 - 2020-06-26<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id17">
+<h3>General Improvements<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Use SDMetrics for evaluation - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/159">Issue #159</a> by &#64;csala</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id16">
-<h2>0.3.2 - 2020-02-03<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id17">
-<h3>General Improvements<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id18">
+<h2>0.3.2 - 2020-02-03<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id19">
+<h3>General Improvements<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Improve metadata visualization - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/151">Issue #151</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id18">
-<h2>0.3.1 - 2020-01-22<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id19">
-<h3>New Features<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id20">
+<h2>0.3.1 - 2020-01-22<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id21">
+<h3>New Features<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add Metadata Validation - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/134">Issue #134</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 <li><p>Add Metadata Visualization - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/135">Issue #135</a> by &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
-<div class="section" id="id20">
-<h3>General Improvements<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id22">
+<h3>General Improvements<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add path to metadata JSON - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/143">Issue #143</a> by &#64;JDTheRipperPC</p></li>
 <li><p>Use new Copulas and RDT versions - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/147">Issue #147</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id21">
-<h2>0.3.0 - 2019-12-23<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id22">
-<h3>New Features<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id23">
+<h2>0.3.0 - 2019-12-23<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id24">
+<h3>New Features<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Create sdv.models subpackage - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/141">Issue #141</a> by &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id23">
-<h2>0.2.2 - 2019-12-10<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id24">
-<h3>New Features<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id25">
+<h2>0.2.2 - 2019-12-10<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id26">
+<h3>New Features<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Adapt evaluation to the different data types - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/128">Issue #128</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 <li><p>Extend <code class="docutils literal notranslate"><span class="pre">load_demo</span></code> functionality to load other datasets - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/136">Issue #136</a> by &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id25">
-<h2>0.2.1 - 2019-11-25<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id26">
-<h3>New Features<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id27">
+<h2>0.2.1 - 2019-11-25<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id28">
+<h3>New Features<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Methods to generate Metadata from DataFrames - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/126">Issue #126</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id27">
-<h2>0.2.0 - 2019-10-11<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id28">
-<h3>New Features<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id29">
+<h2>0.2.0 - 2019-10-11<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id30">
+<h3>New Features<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>compatibility with rdt issue 72 - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/120">Issue #120</a> by &#64;csala &#64;JDTheRipperPC</p></li>
 </ul>
 </div>
-<div class="section" id="id29">
-<h3>General Improvements<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id31">
+<h3>General Improvements<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Error docstring sampler.__fill_text_columns - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/114">Issue #144</a> by &#64;JDTheRipperPC</p></li>
 <li><p>Reach 90% coverage - <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/112">Issue #112</a> by &#64;JDTheRipperPC</p></li>
@@ -597,23 +626,23 @@ datasets.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id30">
-<h2>0.1.2 - 2019-09-18<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id31">
-<h3>New Features<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id32">
+<h2>0.1.2 - 2019-09-18<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id33">
+<h3>New Features<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add option to model the amount of child rows - Issue <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/93">93</a> by &#64;ManuelAlvarezC</p></li>
 </ul>
 </div>
-<div class="section" id="id33">
-<h3>General Improvements<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id35">
+<h3>General Improvements<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add Evaluation Metrics - Issue <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/52">52</a> by &#64;ManuelAlvarezC</p></li>
 <li><p>Ensure unicity on primary keys on different calls - Issue <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/63">63</a> by &#64;ManuelAlvarezC</p></li>
 </ul>
 </div>
-<div class="section" id="id36">
-<h3>Bugs fixed<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id38">
+<h3>Bugs fixed<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>executing readme: ‘not supported between instances of ‘int’ and ‘NoneType’ - Issue <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/104">104</a> by &#64;csala</p></li>
 </ul>

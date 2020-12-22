@@ -128,8 +128,8 @@ which adds a few arguments to the class but still captures all the other argumen
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500):
+                 epochs=300, log_frequency=True, embedding_dim=128, generator_dim=(256, 256),
+                 discriminator_dim=(256, 256), l2scale=1e-6, batch_size=500):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -139,8 +139,8 @@ which adds a few arguments to the class but still captures all the other argumen
             table_metadata=table_metadata
         )
         self._embedding_dim = embedding_dim
-        self._gen_dim = gen_dim
-        self._dis_dim = dis_dim
+        self._generator_dim = generator_dim
+        self._discriminator_dim = discriminator_dim
         self._l2scale = l2scale
         self._batch_size = batch_size
         self._epochs = epochs
@@ -171,8 +171,8 @@ it expects alongside the data.
         """
         self._model = self._CTGAN_CLASS(
             embedding_dim=self._embedding_dim,
-            gen_dim=self._gen_dim,
-            dis_dim=self._dis_dim,
+            generator_dim=self._generator_dim,
+            discriminator_dim=self._discriminator_dim,
             l2scale=self._l2scale,
             batch_size=self._batch_size,
         )

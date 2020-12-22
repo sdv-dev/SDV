@@ -1,0 +1,6 @@
+﻿sdv.tabular.TVAE.load
+=====================
+
+.. currentmodule:: sdv.tabular
+
+.. automethod:: TVAE.load

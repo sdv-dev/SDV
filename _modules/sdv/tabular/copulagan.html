@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulagan &#8212; SDV 0.5.0 documentation</title>
+    <title>sdv.tabular.copulagan &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -46,8 +47,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../../index.html">
     
@@ -103,9 +103,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -117,10 +125,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -263,25 +269,23 @@
 <span class="sd">            exception will be raised.</span>
 <span class="sd">            If not given at all, it will be built using the other</span>
 <span class="sd">            arguments or learned from the data.</span>
-<span class="sd">        epochs (int):</span>
-<span class="sd">            Number of training epochs. Defaults to 300.</span>
 <span class="sd">        log_frequency (boolean):</span>
 <span class="sd">            Whether to use log frequency of categorical levels in conditional</span>
 <span class="sd">            sampling. Defaults to ``True``.</span>
 <span class="sd">        embedding_dim (int):</span>
 <span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
-<span class="sd">        gen_dim (tuple or list of ints):</span>
+<span class="sd">        generator_dim (tuple or list of ints):</span>
 <span class="sd">            Size of the output samples for each one of the Residuals. A Resiudal Layer</span>
 <span class="sd">            will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">        dis_dim (tuple or list of ints):</span>
+<span class="sd">        discriminator_dim (tuple or list of ints):</span>
 <span class="sd">            Size of the output samples for each one of the Discriminator Layers. A Linear</span>
 <span class="sd">            Layer will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">        l2scale (float):</span>
-<span class="sd">            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</span>
 <span class="sd">        batch_size (int):</span>
 <span class="sd">            Number of data samples to process in each step.</span>
 <span class="sd">        verbose (bool):</span>
 <span class="sd">            Whether to print fit progress on stdout. Defaults to ``False``.</span>
+<span class="sd">        epochs (int):</span>
+<span class="sd">            Number of training epochs. Defaults to 300.</span>
 <span class="sd">        cuda (bool or str):</span>
 <span class="sd">            If ``True``, use CUDA. If an ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
@@ -298,8 +302,10 @@
 
 <div class="viewcode-block" id="CopulaGAN.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.CopulaGAN.html#sdv.tabular.CopulaGAN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-                 <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+                 <span class="n">generator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span> <span class="n">generator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">discriminator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span>
+                 <span class="n">discriminator_decay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">discriminator_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">field_distributions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
@@ -309,14 +315,18 @@
             <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span><span class="p">,</span>
-            <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
-            <span class="n">log_frequency</span><span class="o">=</span><span class="n">log_frequency</span><span class="p">,</span>
             <span class="n">embedding_dim</span><span class="o">=</span><span class="n">embedding_dim</span><span class="p">,</span>
-            <span class="n">gen_dim</span><span class="o">=</span><span class="n">gen_dim</span><span class="p">,</span>
-            <span class="n">dis_dim</span><span class="o">=</span><span class="n">dis_dim</span><span class="p">,</span>
-            <span class="n">l2scale</span><span class="o">=</span><span class="n">l2scale</span><span class="p">,</span>
+            <span class="n">generator_dim</span><span class="o">=</span><span class="n">generator_dim</span><span class="p">,</span>
+            <span class="n">discriminator_dim</span><span class="o">=</span><span class="n">discriminator_dim</span><span class="p">,</span>
+            <span class="n">generator_lr</span><span class="o">=</span><span class="n">generator_lr</span><span class="p">,</span>
+            <span class="n">generator_decay</span><span class="o">=</span><span class="n">generator_decay</span><span class="p">,</span>
+            <span class="n">discriminator_lr</span><span class="o">=</span><span class="n">discriminator_lr</span><span class="p">,</span>
+            <span class="n">discriminator_decay</span><span class="o">=</span><span class="n">discriminator_decay</span><span class="p">,</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">discriminator_steps</span><span class="o">=</span><span class="n">discriminator_steps</span><span class="p">,</span>
+            <span class="n">log_frequency</span><span class="o">=</span><span class="n">log_frequency</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
             <span class="n">cuda</span><span class="o">=</span><span class="n">cuda</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span> <span class="o">=</span> <span class="n">field_distributions</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">()</span>

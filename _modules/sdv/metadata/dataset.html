@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.5.0 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -46,8 +47,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../../index.html">
     
@@ -103,9 +103,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -117,10 +125,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -1073,9 +1079,9 @@
 
                 <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-            <span class="n">fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
             <span class="k">if</span> <span class="n">fields_metadata</span><span class="p">:</span>
-                <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields_metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields_metadata</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">fields_metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 

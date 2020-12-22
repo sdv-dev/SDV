@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.5.0 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -41,15 +42,14 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Evaluating Synthetic Data" href="evaluation.html" />
-    <link rel="prev" title="CopulaGAN Model" href="copulagan.html" />
+    <link rel="next" title="Relational Data" href="../relational/index.html" />
+    <link rel="prev" title="TVAE Model" href="tvae.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../index.html">
     
@@ -105,9 +105,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -119,10 +127,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -130,26 +136,30 @@
         
           
             
-  
                 <li class="active">
                     <a href="index.html">Single Table Data</a>
                     <ul>
                     
-                        <li class="">
-                            <a href="data_description.html">Data Description</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="data_description.html">Data Description</a>
+                            </li>
+                        
+
                     
-                        <li class="">
-                            <a href="models.html">Models</a>
-                        </li>
+                        
+                            <li class="">
+                                <a href="models.html">Models</a>
+                            </li>
+                        
+
                     
-                        <li class="active">
-                            <a href="">Handling Constraints</a>
-                        </li>
-                    
-                        <li class="">
-                            <a href="evaluation.html">Evaluating Synthetic Data</a>
-                        </li>
+                        
+                            <li class="active">
+                                <a href="">Handling Constraints</a>
+                            </li>
+                        
+
                     
                     </ul>
                 </li>
@@ -169,7 +179,13 @@
           
             
                 <li class="">
-                    <a href="../benchmarking/index.html">Benchmarking</a>
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
                 </li>
             
           
@@ -283,19 +299,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department               name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales    Stephanie Chang  8772 Williams Fall Apt. 705\nPort Carol, OH 36184   48               42                     6</span>
-<span class="go">1       Pear         Design  Christopher Brown         500 Brock Way\nNorth Shannonside, IL 81940   34               33                     1</span>
-<span class="go">2    Glasses             AI      Michael Boone           1885 Kelly Loaf\nRodriguezbury, SD 09049   31               25                     6</span>
-<span class="go">3    Glasses  Search Engine     Derrick Warner   05067 Johns Inlet Apt. 617\nJasonmouth, OH 84875   32               31                     1</span>
-<span class="go">4   Cheerper        BigData    Christina Hanna  263 Franco Trace Apt. 059\nJocelynmouth, NE 85870   31               24                     7</span>
-<span class="go">5   Cheerper        Support       Nicole Dixon                         USNV Johnson\nFPO AE 55941   44               35                     9</span>
-<span class="go">6       Pear          Sales       Debra Malone  601 Alejandro Road Suite 453\nNew Elizabethche...   48               43                     5</span>
-<span class="go">7       Pear         Design      Bruce Roberts           3621 Kayla Corner\nSouth David, NH 85766   34               33                     1</span>
-<span class="go">8    Glasses             AI         John Huber        9392 Love Place\nSouth Cheryltown, NV 77921   39               38                     1</span>
-<span class="go">9    Glasses  Search Engine      Monica Foster        9528 Gregory Freeway\nEast Ashlee, OK 95462   46               39                     7</span>
-<span class="go">10  Cheerper        BigData     Curtis Bradley                   PSC 9922, Box 9007\nAPO AP 25326   38               30                     8</span>
-<span class="go">11  Cheerper        Support        Cory Kelley  8256 Anderson Shores Suite 852\nCliffordmouth,...   45               42                     3</span>
+<span class="go">     company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales            John Welch  4124 Jennifer Station Apt. 529\nSouth James, A...   31               25                     6</span>
+<span class="go">1       Pear         Design    Jennifer Jefferson  3267 Michelle Circle Suite 050\nWest Kevin, SD...   47               47                     0</span>
+<span class="go">2    Glasses             AI             Gary Reed  6733 Cortez Knoll Suite 289\nSouth Barbaraches...   37               34                     3</span>
+<span class="go">3    Glasses  Search Engine           Angel Hayes             7779 April Street\nNew Tammy, AR 63823   44               36                     8</span>
+<span class="go">4   Cheerper        BigData           Mary Warren            82253 William Loop\nMegantown, VA 85827   45               39                     6</span>
+<span class="go">5   Cheerper        Support       Sandra Martinez  2502 Debra Spring Apt. 482\nLake Christine, DE...   49               41                     8</span>
+<span class="go">6       Pear          Sales         Cheryl Dodson                   Unit 8578 Box 7083\nDPO AA 61585   40               40                     0</span>
+<span class="go">7       Pear         Design       Charles Fleming               6537 Perez Path\nFritztown, WY 81764   40               38                     2</span>
+<span class="go">8    Glasses             AI      Catherine Parker  8470 Wilson Mount Apt. 805\nPort Madisonshire,...   42               33                     9</span>
+<span class="go">9    Glasses  Search Engine  Christopher Gonzalez  34699 Jane Stravenue Apt. 047\nWilsonton, AZ 8...   45               45                     0</span>
+<span class="go">10  Cheerper        BigData           Johnny Diaz                   648 Li Ramp\nLucasbury, GA 56889   49               43                     6</span>
+<span class="go">11  Cheerper        Support    Javier Christensen                   PSC 3529, Box 6116\nAPO AA 71867   39               30                     9</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -457,17 +473,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department               name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0      Pear          Sales     Derrick Warner   05067 Johns Inlet Apt. 617\nJasonmouth, OH 84875   47               40                     7</span>
-<span class="go">1      Pear          Sales    Stephanie Chang  8772 Williams Fall Apt. 705\nPort Carol, OH 36184   45               39                     6</span>
-<span class="go">2      Pear         Design  Christopher Brown         500 Brock Way\nNorth Shannonside, IL 81940   48               44                     4</span>
-<span class="go">3  Cheerper        BigData    Christina Hanna  263 Franco Trace Apt. 059\nJocelynmouth, NE 85870   43               34                     9</span>
-<span class="go">4   Glasses             AI      Michael Boone           1885 Kelly Loaf\nRodriguezbury, SD 09049   31               27                     4</span>
-<span class="go">5   Glasses             AI      Michael Boone           1885 Kelly Loaf\nRodriguezbury, SD 09049   44               37                     7</span>
-<span class="go">6   Glasses  Search Engine      Monica Foster        9528 Gregory Freeway\nEast Ashlee, OK 95462   37               36                     1</span>
-<span class="go">7  Cheerper        Support        Cory Kelley  8256 Anderson Shores Suite 852\nCliffordmouth,...   33               33                     0</span>
-<span class="go">8   Glasses             AI      Michael Boone           1885 Kelly Loaf\nRodriguezbury, SD 09049   35               29                     6</span>
-<span class="go">9  Cheerper        BigData     Curtis Bradley                   PSC 9922, Box 9007\nAPO AP 25326   33               24                     9</span>
+<span class="go">    company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0   Glasses             AI            John Welch  4124 Jennifer Station Apt. 529\nSouth James, A...   34               25                     9</span>
+<span class="go">1   Glasses             AI       Charles Fleming               6537 Perez Path\nFritztown, WY 81764   40               32                     8</span>
+<span class="go">2      Pear          Sales            John Welch  4124 Jennifer Station Apt. 529\nSouth James, A...   39               37                     2</span>
+<span class="go">3   Glasses  Search Engine           Mary Warren            82253 William Loop\nMegantown, VA 85827   42               37                     5</span>
+<span class="go">4  Cheerper        Support       Sandra Martinez  2502 Debra Spring Apt. 482\nLake Christine, DE...   49               40                     9</span>
+<span class="go">5   Glasses             AI            John Welch  4124 Jennifer Station Apt. 529\nSouth James, A...   37               29                     8</span>
+<span class="go">6  Cheerper        BigData  Christopher Gonzalez  34699 Jane Stravenue Apt. 047\nWilsonton, AZ 8...   45               40                     5</span>
+<span class="go">7  Cheerper        Support         Cheryl Dodson                   Unit 8578 Box 7083\nDPO AA 61585   51               46                     5</span>
+<span class="go">8   Glasses  Search Engine           Angel Hayes             7779 April Street\nNew Tammy, AR 63823   38               35                     3</span>
+<span class="go">9  Cheerper        BigData           Johnny Diaz                   648 Li Ramp\nLucasbury, GA 56889   45               37                     8</span>
 </pre></div>
 </div>
 </div>
@@ -479,8 +495,8 @@ we defined:</p>
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="copulagan.html" title="previous page">CopulaGAN Model</a>
-    <a class='right-next' id="next-link" href="evaluation.html" title="next page">Evaluating Synthetic Data</a>
+    <a class='left-prev' id="prev-link" href="tvae.html" title="previous page">TVAE Model</a>
+    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
 
               </div>
               

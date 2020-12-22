@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan &#8212; SDV 0.5.0 documentation</title>
+    <title>sdv.tabular.ctgan &#8212; SDV 0.6.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -27,6 +27,7 @@
     
     <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
   <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
 
@@ -46,8 +47,7 @@
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
 
     <a class="navbar-brand" href="../../../index.html">
     
@@ -103,9 +103,17 @@
             </a>
           </li>
         
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../../_static/slack-32.png">
+            </a>
+          </li>
+        
       </ul>
     </div>
 </div>
+
     </nav>
     
 
@@ -117,10 +125,8 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form>
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
     <div class="bd-toc-item active">
     
-  
     <ul class="nav bd-sidenav">
         
         
@@ -162,13 +168,74 @@
   <h1>Source code for sdv.tabular.ctgan</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Wrapper around CTGAN model.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">contextlib</span>
-<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">from</span> <span class="nn">ctgan</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">TVAESynthesizer</span>
 
 <span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span>
 
 
-<div class="viewcode-block" id="CTGAN"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.CTGAN.html#sdv.tabular.CTGAN">[docs]</a><span class="k">class</span> <span class="nc">CTGAN</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">CTGANModel</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all the CTGAN models.</span>
+
+<span class="sd">    The ``CTGANModel`` class provides a wrapper for all the CTGAN models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_model_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_DTYPE_TRANSFORMERS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
+    <span class="p">}</span>
+
+    <span class="n">_cuda</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MODEL_CLASS</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Data to be learned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_model</span><span class="p">()</span>
+
+        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">categoricals</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">field</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span>
+        <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">table_data</span><span class="p">,</span>
+            <span class="n">discrete_columns</span><span class="o">=</span><span class="n">categoricals</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_rows (int):</span>
+<span class="sd">                Amount of rows to sample.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Sampled data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CTGAN"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.CTGAN.html#sdv.tabular.CTGAN">[docs]</a><span class="k">class</span> <span class="nc">CTGAN</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Model wrapping ``CTGANSynthesizer`` model.</span>
 
 <span class="sd">    Args:</span>
@@ -208,41 +275,48 @@
 <span class="sd">            exception will be raised.</span>
 <span class="sd">            If not given at all, it will be built using the other</span>
 <span class="sd">            arguments or learned from the data.</span>
-<span class="sd">        epochs (int):</span>
-<span class="sd">            Number of training epochs. Defaults to 300.</span>
+<span class="sd">        embedding_dim (int):</span>
+<span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
+<span class="sd">        generator_dim (tuple or list of ints):</span>
+<span class="sd">            Size of the output samples for each one of the Residuals. A Residual Layer</span>
+<span class="sd">            will be created for each one of the values provided. Defaults to (256, 256).</span>
+<span class="sd">        discriminator_dim (tuple or list of ints):</span>
+<span class="sd">            Size of the output samples for each one of the Discriminator Layers. A Linear Layer</span>
+<span class="sd">            will be created for each one of the values provided. Defaults to (256, 256).</span>
+<span class="sd">        generator_lr (float):</span>
+<span class="sd">            Learning rate for the generator. Defaults to 2e-4.</span>
+<span class="sd">        generator_decay (float):</span>
+<span class="sd">            Generator weight decay for the Adam Optimizer. Defaults to 1e-6.</span>
+<span class="sd">        discriminator_lr (float):</span>
+<span class="sd">            Learning rate for the discriminator. Defaults to 2e-4.</span>
+<span class="sd">        discriminator_decay (float):</span>
+<span class="sd">            Discriminator weight decay for the Adam Optimizer. Defaults to 1e-6.</span>
+<span class="sd">        batch_size (int):</span>
+<span class="sd">            Number of data samples to process in each step.</span>
+<span class="sd">        discriminator_steps (int):</span>
+<span class="sd">            Number of discriminator updates to do for each generator update.</span>
+<span class="sd">            From the WGAN paper: https://arxiv.org/abs/1701.07875. WGAN paper</span>
+<span class="sd">            default is 5. Default used is 1 to match original CTGAN implementation.</span>
 <span class="sd">        log_frequency (boolean):</span>
 <span class="sd">            Whether to use log frequency of categorical levels in conditional</span>
 <span class="sd">            sampling. Defaults to ``True``.</span>
-<span class="sd">        embedding_dim (int):</span>
-<span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
-<span class="sd">        gen_dim (tuple or list of ints):</span>
-<span class="sd">            Size of the output samples for each one of the Residuals. A Resiudal Layer</span>
-<span class="sd">            will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">        dis_dim (tuple or list of ints):</span>
-<span class="sd">            Size of the output samples for each one of the Discriminator Layers. A Linear</span>
-<span class="sd">            Layer will be created for each one of the values provided. Defaults to (256, 256).</span>
-<span class="sd">        l2scale (float):</span>
-<span class="sd">            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.</span>
-<span class="sd">        batch_size (int):</span>
-<span class="sd">            Number of data samples to process in each step.</span>
-<span class="sd">        verbose (bool):</span>
-<span class="sd">            Whether to print fit progress on stdout. Defaults to ``False``.</span>
+<span class="sd">        verbose (boolean):</span>
+<span class="sd">            Whether to have print statements for progress results. Defaults to ``False``.</span>
+<span class="sd">        epochs (int):</span>
+<span class="sd">            Number of training epochs. Defaults to 300.</span>
 <span class="sd">        cuda (bool or str):</span>
-<span class="sd">            If ``True``, use CUDA. If an ``str``, use the indicated device.</span>
+<span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_CTGAN_CLASS</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="n">_DTYPE_TRANSFORMERS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
-    <span class="p">}</span>
+    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">CTGANSynthesizer</span>
 
 <div class="viewcode-block" id="CTGAN.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.CTGAN.html#sdv.tabular.CTGAN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">gen_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-                 <span class="n">dis_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+                 <span class="n">generator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span> <span class="n">generator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">discriminator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span>
+                 <span class="n">discriminator_decay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">discriminator_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -252,86 +326,108 @@
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
         <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">ctgan</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span>  <span class="c1"># Lazy import to make dependency optional</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_CTGAN_CLASS</span> <span class="o">=</span> <span class="n">CTGANSynthesizer</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">ie</span><span class="p">:</span>
-            <span class="n">ie</span><span class="o">.</span><span class="n">msg</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">It seems like `ctgan` is not installed.</span><span class="se">\n</span><span class="s1">&#39;</span>
-                <span class="s1">&#39;Please install it using:</span><span class="se">\n\n</span><span class="s1">    pip install sdv[ctgan]&#39;</span>
-            <span class="p">)</span>
-            <span class="k">raise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;embedding_dim&#39;</span><span class="p">:</span> <span class="n">embedding_dim</span><span class="p">,</span>
+            <span class="s1">&#39;generator_dim&#39;</span><span class="p">:</span> <span class="n">generator_dim</span><span class="p">,</span>
+            <span class="s1">&#39;discriminator_dim&#39;</span><span class="p">:</span> <span class="n">discriminator_dim</span><span class="p">,</span>
+            <span class="s1">&#39;generator_lr&#39;</span><span class="p">:</span> <span class="n">generator_lr</span><span class="p">,</span>
+            <span class="s1">&#39;generator_decay&#39;</span><span class="p">:</span> <span class="n">generator_decay</span><span class="p">,</span>
+            <span class="s1">&#39;discriminator_lr&#39;</span><span class="p">:</span> <span class="n">discriminator_lr</span><span class="p">,</span>
+            <span class="s1">&#39;discriminator_decay&#39;</span><span class="p">:</span> <span class="n">discriminator_decay</span><span class="p">,</span>
+            <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
+            <span class="s1">&#39;discriminator_steps&#39;</span><span class="p">:</span> <span class="n">discriminator_steps</span><span class="p">,</span>
+            <span class="s1">&#39;log_frequency&#39;</span><span class="p">:</span> <span class="n">log_frequency</span><span class="p">,</span>
+            <span class="s1">&#39;verbose&#39;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">,</span>
+            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span>
+        <span class="p">}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_dim</span> <span class="o">=</span> <span class="n">embedding_dim</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gen_dim</span> <span class="o">=</span> <span class="n">gen_dim</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dis_dim</span> <span class="o">=</span> <span class="n">dis_dim</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_l2scale</span> <span class="o">=</span> <span class="n">l2scale</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_epochs</span> <span class="o">=</span> <span class="n">epochs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span> <span class="o">=</span> <span class="n">log_frequency</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="o">=</span> <span class="n">cuda</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="o">=</span> <span class="n">cuda</span></div></div>
 
-    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            table_data (pandas.DataFrame):</span>
-<span class="sd">                Data to be learned.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_CTGAN_CLASS</span><span class="p">(</span>
-            <span class="n">embedding_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_dim</span><span class="p">,</span>
-            <span class="n">gen_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gen_dim</span><span class="p">,</span>
-            <span class="n">dis_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dis_dim</span><span class="p">,</span>
-            <span class="n">l2scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_l2scale</span><span class="p">,</span>
-            <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
+<div class="viewcode-block" id="TVAE"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.TVAE.html#sdv.tabular.TVAE">[docs]</a><span class="k">class</span> <span class="nc">TVAE</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Model wrapping ``TVAESynthesizer`` model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        field_names (list[str]):</span>
+<span class="sd">            List of names of the fields that need to be modeled</span>
+<span class="sd">            and included in the generated output data. Any additional</span>
+<span class="sd">            fields found in the data will be ignored and will not be</span>
+<span class="sd">            included in the generated output.</span>
+<span class="sd">            If ``None``, all the fields found in the data are used.</span>
+<span class="sd">        field_types (dict[str, dict]):</span>
+<span class="sd">            Dictinary specifying the data types and subtypes</span>
+<span class="sd">            of the fields that will be modeled. Field types and subtypes</span>
+<span class="sd">            combinations must be compatible with the SDV Metadata Schema.</span>
+<span class="sd">        field_transformers (dict[str, str]):</span>
+<span class="sd">            Dictinary specifying which transformers to use for each field.</span>
+<span class="sd">            Available transformers are:</span>
+
+<span class="sd">                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.</span>
+<span class="sd">                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.</span>
+<span class="sd">                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.</span>
+<span class="sd">                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.</span>
+<span class="sd">                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.</span>
+<span class="sd">                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.</span>
+<span class="sd">                * ``boolean``: Uses a ``BooleanTransformer``.</span>
+<span class="sd">                * ``datetime``: Uses a ``DatetimeTransformer``.</span>
+
+<span class="sd">        anonymize_fields (dict[str, str]):</span>
+<span class="sd">            Dict specifying which fields to anonymize and what faker</span>
+<span class="sd">            category they belong to.</span>
+<span class="sd">        primary_key (str):</span>
+<span class="sd">            Name of the field which is the primary key of the table.</span>
+<span class="sd">        constraints (list[Constraint, dict]):</span>
+<span class="sd">            List of Constraint objects or dicts.</span>
+<span class="sd">        table_metadata (dict or metadata.Table):</span>
+<span class="sd">            Table metadata instance or dict representation.</span>
+<span class="sd">            If given alongside any other metadata-related arguments, an</span>
+<span class="sd">            exception will be raised.</span>
+<span class="sd">            If not given at all, it will be built using the other</span>
+<span class="sd">            arguments or learned from the data.</span>
+<span class="sd">        embedding_dim (int):</span>
+<span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
+<span class="sd">        compress_dim (tuple or list of ints):</span>
+<span class="sd">            Size of each hidden layer in the encoder. Defaults to (128, 128).</span>
+<span class="sd">        decompress_dim (tuple or list of ints):</span>
+<span class="sd">           Size of each hidden layer in the decoder. Defaults to (128, 128).</span>
+<span class="sd">        l2scale (int):</span>
+<span class="sd">            Regularization term. Defaults to 1e-5.</span>
+<span class="sd">        batch_size (int):</span>
+<span class="sd">            Number of data samples to process in each step.</span>
+<span class="sd">        epochs (int):</span>
+<span class="sd">            Number of training epochs. Defaults to 300.</span>
+<span class="sd">        cuda (bool or str):</span>
+<span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
+<span class="sd">            If ``False``, do not use cuda at all.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">TVAESynthesizer</span>
+
+<div class="viewcode-block" id="TVAE.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.tabular.TVAE.html#sdv.tabular.TVAE.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">compress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">decompress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                 <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
+            <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
+            <span class="n">field_types</span><span class="o">=</span><span class="n">field_types</span><span class="p">,</span>
+            <span class="n">field_transformers</span><span class="o">=</span><span class="n">field_transformers</span><span class="p">,</span>
+            <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
         <span class="p">)</span>
 
-        <span class="kn">import</span> <span class="nn">torch</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;embedding_dim&#39;</span><span class="p">:</span> <span class="n">embedding_dim</span><span class="p">,</span>
+            <span class="s1">&#39;compress_dims&#39;</span><span class="p">:</span> <span class="n">compress_dims</span><span class="p">,</span>
+            <span class="s1">&#39;decompress_dims&#39;</span><span class="p">:</span> <span class="n">decompress_dims</span><span class="p">,</span>
+            <span class="s1">&#39;l2scale&#39;</span><span class="p">:</span> <span class="n">l2scale</span><span class="p">,</span>
+            <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
+            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span>
+        <span class="p">}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-
-        <span class="n">categoricals</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">field</span>
-            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span>
-        <span class="p">]</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-                <span class="n">table_data</span><span class="p">,</span>
-                <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_epochs</span><span class="p">,</span>
-                <span class="n">discrete_columns</span><span class="o">=</span><span class="n">categoricals</span><span class="p">,</span>
-                <span class="n">log_frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">redirect_stdout</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-                    <span class="n">table_data</span><span class="p">,</span>
-                    <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_epochs</span><span class="p">,</span>
-                    <span class="n">discrete_columns</span><span class="o">=</span><span class="n">categoricals</span><span class="p">,</span>
-                    <span class="n">log_frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_frequency</span><span class="p">,</span>
-                <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            num_rows (int):</span>
-<span class="sd">                Amount of rows to sample.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            pandas.DataFrame:</span>
-<span class="sd">                Sampled data.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="o">=</span> <span class="n">cuda</span></div></div>
 </pre></div>
 
               </div>
