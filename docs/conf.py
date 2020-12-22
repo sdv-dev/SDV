@@ -51,7 +51,6 @@ autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['sdv_theme/_templates']
-templates_path = ['sdv_theme/_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -79,7 +78,7 @@ slug = 'sdv'
 title = project + ' Documentation',
 copyright = '2018, MIT Data To AI Lab'
 author = 'MIT Data To AI Lab'
-description = 'Automated Generative Modeling and Sampling'
+description = 'Synthetic Data Generation for tabular, relational and time series data.'
 user = 'sdv-dev'
 
 # The version info for the project you're documenting, acts as replacement
