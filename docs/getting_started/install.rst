@@ -25,6 +25,11 @@ The easiest and recommended way to install **SDV** is using `pip`_:
 
 This will pull and install the latest stable release from `PyPI`_.
 
+.. warning:: When installing on windows systems, pip may complain about not being able to
+   find a valid version for ``PyTorch``. In this case, please install ``PyTorch`` manually
+   following the `PyTorch installation instructions`_ and retry installing ``sdv`` again
+   afterwards.
+
 Install from source
 -------------------
 
@@ -57,3 +62,4 @@ can be found in the :ref:`contributing` guide.
 .. _pip: https://pip.pypa.io
 .. _PyPI: https://pypi.org/
 .. _Github repository: https://github.com/sdv-dev/SDV
+.. _PyTorch installation instructions: https://pytorch.org/get-started/locally/
