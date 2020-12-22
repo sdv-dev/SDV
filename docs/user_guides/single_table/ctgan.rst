@@ -36,7 +36,7 @@ that applied for placements during the year 2020.
 
     In order to follow this guide you need to have ``ctgan`` installed on
     your system. If you have not done it yet, please install ``ctgan`` now
-    by executing the command ``pip install sdv[ctgan]`` in a terminal.
+    by executing the command ``pip install sdv`` in a terminal.
 
 .. ipython:: python
     :okwarning:
@@ -44,7 +44,7 @@ that applied for placements during the year 2020.
     from sdv.demo import load_tabular_demo
 
     data = load_tabular_demo('student_placements')
-    data.head().T
+    data.head()
 
 
 As you can see, this table contains information about students which
@@ -198,7 +198,6 @@ that there are some values that appear more than once:
 .. ipython:: python
     :okwarning:
 
-    new_data.student_id.value_counts().max()
     new_data[new_data.student_id == new_data.student_id.value_counts().index[0]]
 
 This happens because the model was not notified at any point about the
@@ -215,6 +214,7 @@ indicating the name of the column that is the index of the table.
     )
     model.fit(data)
     new_data = model.sample(200)
+    new_data.head()
 
 As a result, the model will learn that this column must be unique and
 generate a unique sequence of values for the column:
@@ -222,7 +222,6 @@ generate a unique sequence of values for the column:
 .. ipython:: python
     :okwarning:
 
-    new_data.head()
     new_data.student_id.value_counts().max()
 
 
@@ -251,7 +250,7 @@ of it that do not contain any of the PII fields.
     :okwarning:
 
     data_pii = load_tabular_demo('student_placements_pii')
-    data_pii.head().T
+    data_pii.head()
 
 
 If we use our tabular model on this new data we will see how the
@@ -267,6 +266,13 @@ students:
     model.fit(data_pii)
     new_data_pii = model.sample(200)
     new_data_pii.head()
+
+More specifically, we can see how all the addresses that have been generated
+actually come from the original dataset:
+
+.. ipython:: python
+    :okwarning:
+
     new_data_pii.address.isin(data_pii.address).sum()
 
 
@@ -311,15 +317,23 @@ dictionary indicating the category ``address``
 
 
 As a result, we can see how the real ``address`` values have been
-replaced by other fake addresses that were not taken from the real data
-that we learned.
+replaced by other fake addresses:
 
 .. ipython:: python
     :okwarning:
 
     new_data_pii = model.sample(200)
     new_data_pii.head()
-    new_data_pii.address.isin(data_pii.address).sum()
+
+
+Which means that none of the original addresses can be found in the sampled
+data:
+
+.. ipython:: python
+    :okwarning:
+
+    data_pii.address.isin(new_data_pii.address).sum()
+
 
 Advanced Usage
 --------------
@@ -336,41 +350,53 @@ of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
 generated data and computational time.
 
-- ``epochs`` and ``batch_size``: these arguments control the number of
-  iterations that the model will perform to optimize its parameters, as well as the number
-  of samples used in each step. Its default values are ``300`` and ``500``
-  respectively, and ``batch_size`` needs to always be a value which is
-  multiple of ``10``.
+-   ``epochs`` and ``batch_size``: these arguments control the number of
+    iterations that the model will perform to optimize its parameters,
+    as well as the number of samples used in each step. Its default
+    values are ``300`` and ``500`` respectively, and ``batch_size`` needs
+    to always be a value which is multiple of ``10``.
+    
+    These hyperparameters have a very direct effect in time the training
+    process lasts but also on the performance of the data, so for new
+    datasets, you might want to start by setting a low value on both of
+    them to see how long the training process takes on your data and later
+    on increase the number to acceptable values in order to improve the
+    performance.
 
-  These hyperparameters have a very direct effect in time the training
-  process lasts but also on the performance of the data, so for new
-  datasets, you might want to start by setting a low value on both of them
-  to see how long the training process takes on your data and later on
-  increase the number to acceptable values in order to improve the
-  performance.
+-   ``log_frequency``: Whether to use log frequency of categorical levels
+    in conditional sampling. It defaults to ``True``.
+    This argument affects how the model processes the frequencies of the
+    categorical values that are used to condition the rest of the values.
+    In some cases, changing it to ``False`` could lead to better performance.
 
-- ``log_frequency``: Whether to use log frequency of categorical levels in conditional
-  sampling. It defaults to ``True``.
+-   ``embedding_dim`` (int): Size of the random sample passed to the
+    Generator. Defaults to 128.
 
-  This argument affects how the model processes the frequencies of the
-  categorical values that are used to condition the rest of the values. In
-  some cases, changing it to ``False`` could lead to better performance.
+-   ``generator_dim`` (tuple or list of ints): Size of the output samples for
+    each one of the Residuals. A Resiudal Layer will be created for each
+    one of the values provided. Defaults to (256, 256).
 
--  ``embedding_dim`` (int): Size of the random sample passed to the
-   Generator. Defaults to 128.
+-   ``discriminator_dim`` (tuple or list of ints): Size of the output samples for
+    each one of the Discriminator Layers. A Linear Layer will be created
+    for each one of the values provided. Defaults to (256, 256).
 
--  ``gen_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Residuals. A Resiudal Layer will be created for each one
-   of the values provided. Defaults to (256, 256).
+-   ``generator_lr`` (float): Learning rate for the generator. Defaults to 2e-4.
 
--  ``dis_dim`` (tuple or list of ints): Size of the output samples for each
-   one of the Discriminator Layers. A Linear Layer will be created for
-   each one of the values provided. Defaults to (256, 256).
+-   ``generator_decay`` (float): Generator weight decay for the Adam Optimizer.
+    Defaults to 1e-6.
 
-- ``l2scale``: Weight Decay of the Adam Optimizer used to optimize the Neural Networks.
-  Defaults to ``1e-6``.
+-   ``discriminator_lr`` (float): Learning rate for the discriminator.
+    Defaults to 2e-4.
 
-- ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
+-   ``discriminator_decay`` (float): Discriminator weight decay for the Adam
+    Optimizer. Defaults to 1e-6.
+
+-   ``discriminator_steps`` (int): Number of discriminator updates to do for
+    each generator update. From the WGAN paper: https://arxiv.org/abs/1701.07875.
+    WGAN paper default is 5. Default used is 1 to match original CTGAN
+    implementation.
+
+-   ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
 
 .. warning::
 
@@ -403,9 +429,8 @@ hyperparameter values that we want to use
         primary_key='student_id',
         epochs=500,
         batch_size=100,
-        gen_dim=(256, 256, 256),
-        dis_dim=(256, 256, 256),
-        l2scale=1e-07
+        generator_dim=(256, 256, 256),
+        discriminator_dim=(256, 256, 256)
     )
 
 And fit to our data.
@@ -421,7 +446,6 @@ Finally, we are ready to generate new data and evaluate the results.
     :okwarning:
 
     new_data = model.sample(len(data))
-    new_data.head().T
     evaluate(new_data, data)
 
 

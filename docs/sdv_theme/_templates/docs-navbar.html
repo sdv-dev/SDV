@@ -1,0 +1,59 @@
+<div class="container-xl">
+
+    <a class="navbar-brand" href="{{ pathto(master_doc) }}">
+    {% if logo %}
+      <img src="{{ pathto('_static/' + logo, 1) }}" class="logo" alt="logo" />
+    {% else %}
+      <p class="title">{{ project }}</p>
+    {% endif %}
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        {% set nav = get_nav_object(maxdepth=1, collapse=True) %}
+        {% for main_nav_item in nav %}
+        <li class="nav-item {% if main_nav_item.active%}active{% endif %}">
+            <a class="nav-link" href="{{ main_nav_item.url }}">{{ main_nav_item.title }}</a>
+        </li>
+        {% endfor %}
+        {% for external_link in theme_external_links %}
+        <li class="nav-item">
+            <a class="nav-link nav-external" href="{{ external_link.url }}">{{ external_link.name }}<i class="fas fa-external-link-alt"></i></a>
+        </li>
+        {% endfor %}
+      </ul>
+
+
+      {% if theme_search_bar_position == 'navbar' %}
+        {%- include "search-field.html" %}
+      {% endif %}
+
+      <ul class="navbar-nav">
+        {% if theme_github_url | length > 2 %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ theme_github_url }}" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        {% endif %}
+        {% if theme_twitter_url | length > 2 %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ theme_twitter_url }}" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        {% endif %}
+        {% if theme_slack_url | length > 2 %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ theme_slack_url }}" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="{{ pathto('_static/slack-32.png', 1) }}">
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+</div>
+

@@ -1,5 +1,43 @@
 # Release Notes
 
+## 0.6.0 - 2020-12-22
+
+This release updates to the latest CTGAN, RDT and SDMetrics libraries to introduce a
+new TVAE model, multiple new metrics for single table and multi table, and fixes
+issues in the re-creation of tabular models from a metadata dict.
+
+## Issues resolved:
+
+* Upgrade to SDMetrics v0.1.0 and add `sdv.metrics` module - [Issue #281](https://github.com/sdv-dev/SDV/issues/281) by @csala
+* Upgrade to CTGAN 0.3.0 and add TVAE model - [Issue #278](https://github.com/sdv-dev/SDV/issues/278) by @fealho
+* Add `dtype_transformers` to `Table.from_dict` - [Issue #276](https://github.com/sdv-dev/SDV/issues/276) by @csala
+* Fix Metadata `from_dict` behavior - [Issue #275](https://github.com/sdv-dev/SDV/issues/275) by @csala
+
+## 0.5.0 - 2020-11-25
+
+This version updates the dependencies and makes a few internal changes in order
+to ensure that SDV works properly on Windows Systems, making this the first
+release to be officially supported on Windows.
+
+Apart from this, some more internal changes have been made to solve a few minor
+issues from the older versions while also improving the processing speed when
+processing relational datasets with the default parameters.
+
+### API breaking changes
+
+* The `distribution` argument of the `GaussianCopula` has been renamed to `field_distributions`.
+* The `HMA1` and `SDV` classes now use the `categorical_fuzzy` transformer by default instead of
+  the `one_hot_encoding` one.
+
+### Issues resolved
+
+* GaussianCopula: rename `distribution` argument to `field_distributions` - [Issue #237](https://github.com/sdv-dev/SDV/issues/237) by @csala
+* GaussianCopula: Improve error message if an invalid distribution name is passed - [Issue #220](https://github.com/sdv-dev/SDV/issues/220) by csala
+* Import urllib.request explicitly - [Issue #227](https://github.com/sdv-dev/SDV/issues/227) by @csala
+* TypeError: cannot astype a datetimelike from [datetime64[ns]] to [int32] - [Issue #218](https://github.com/sdv-dev/SDV/issues/218) by @csala
+* Change default categorical transformer to `categorical_fuzzy` in HMA1 - [Issue #214](https://github.com/sdv-dev/SDV/issues/214) by @csala
+* Integer categoricals being sampled as strings instead of integer values - [Issue #194](https://github.com/sdv-dev/SDV/issues/194) by @csala
+
 ## 0.4.5 - 2020-10-17
 
 In this version a new family of models for Synthetic Time Series Generation is introduced

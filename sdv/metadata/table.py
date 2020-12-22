@@ -468,7 +468,13 @@ class Table:
                 Table to be analyzed.
         """
         LOGGER.info('Fitting table %s metadata', self.name)
-        self._field_names = self._field_names or list(data.columns)
+        if not self._field_names:
+            self._field_names = list(data.columns)
+        elif isinstance(self._field_names, set):
+            self._field_names = [field for field in data.columns if field in self._field_names]
+
+        self._dtypes = data[self._field_names].dtypes
+
         if not self._fields_metadata:
             self._fields_metadata = self._build_fields_metadata(data)
 
@@ -555,9 +561,7 @@ class Table:
         for constraint in self._constraints:
             reversed_data = constraint.reverse_transform(reversed_data)
 
-        fields = self._fields_metadata
-        for name, dtype in self.get_dtypes(ids=True).items():
-            field_metadata = fields[name]
+        for name, field_metadata in self._fields_metadata.items():
             field_type = field_metadata['type']
             if field_type == 'id' and name not in reversed_data:
                 field_data = self._make_ids(name, field_metadata, len(reversed_data))
@@ -567,7 +571,7 @@ class Table:
             else:
                 field_data = reversed_data[name]
 
-            reversed_data[name] = field_data.dropna().astype(dtype)
+            reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
 
         return reversed_data[self._field_names]
 
@@ -623,23 +627,30 @@ class Table:
             json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
-    def from_dict(cls, metadata_dict):
+    def from_dict(cls, metadata_dict, dtype_transformers=None):
         """Load a Table from a metadata dict.
 
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
+            dtype_transformers (dict):
+                If passed, set the dtype_transformers on the new instance.
         """
-        instance = cls()
-        instance._fields_metadata = copy.deepcopy(metadata_dict['fields'])
-        instance._field_names = list(instance._fields_metadata.keys())
-        instance._constraints = copy.deepcopy(metadata_dict.get('constraints', []))
-        instance._model_kwargs = copy.deepcopy(metadata_dict.get('model_kwargs', {}))
-        instance._primary_key = metadata_dict.get('primary_key')
-        instance._sequence_index = metadata_dict.get('sequence_index')
-        instance._entity_columns = metadata_dict.get('entity_columns')
-        instance._context_columns = metadata_dict.get('context_columns')
-        instance.name = metadata_dict.get('name')
+        metadata_dict = copy.deepcopy(metadata_dict)
+        fields = metadata_dict['fields'] or {}
+        instance = cls(
+            name=metadata_dict.get('name'),
+            field_names=set(fields.keys()),
+            field_types=fields,
+            constraints=metadata_dict.get('constraints') or [],
+            model_kwargs=metadata_dict.get('model_kwargs') or {},
+            primary_key=metadata_dict.get('primary_key'),
+            sequence_index=metadata_dict.get('sequence_index'),
+            entity_columns=metadata_dict.get('entity_columns') or [],
+            context_columns=metadata_dict.get('context_columns') or [],
+            dtype_transformers=dtype_transformers,
+        )
+        instance._fields_metadata = fields
         return instance
 
     @classmethod

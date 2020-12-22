@@ -5,7 +5,7 @@
    <i>An open source project from Data to AI Lab at MIT.</i>
    </p>
 
-|Development Status| |PyPi Shield| |Travis CI Shield| |Coverage Status|
+|Development Status| |PyPi Shield| |Run Tests| |Coverage Status|
 |Downloads| |Binder| |Slack|
 
 SDV - The Synthetic Data Vault
@@ -13,11 +13,12 @@ SDV - The Synthetic Data Vault
 
 **Date**: |today| **Version**: |version|
 
--  License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
--  Development Status:
-   `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
--  Documentation: https://sdv-dev.github.io/SDV
--  Homepage: https://github.com/sdv-dev/SDV
+- Website: https://sdv.dev
+- Documentation: https://sdv.dev/SDV
+- Github: https://github.com/sdv-dev/SDV
+- License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
+- Development Status:
+  `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
 
 Overview
 --------
@@ -63,6 +64,20 @@ Current functionality and features:
    -  Using statistical, Autoregressive and Deep Learning models.
    -  Conditional sampling based on contextual attributes.
 
+-  Metrics for :ref:`evaluation`, including:
+
+   -  An easy to use :ref:`evaluation_framework` to evaluate the quality of your synthetic
+      data with a single line of code.
+   -  Metrics for multiple data modalities, including :ref:`single_table_metrics` and
+      :ref:`multi_table_metrics`.
+
+-  A :ref:`benchmarking_framework` to easily compare multiple synthetic data generators, including:
+
+   -  Dozens of datasets of multiple data modalities already prepared to be run on.
+   -  Tools to easily add new synthetic data generators and datasets.
+   -  Distributed computing to reduce computing times.
+   -  Comprehensive results presented in multiple leaderboard formats.
+
 
 Try it out now!
 ---------------
@@ -96,8 +111,8 @@ Explore SDV
    :target: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
 .. |PyPi Shield| image:: https://img.shields.io/pypi/v/SDV.svg
    :target: https://pypi.python.org/pypi/SDV
-.. |Travis CI Shield| image:: https://travis-ci.org/sdv-dev/SDV.svg?branch=master
-   :target: https://travis-ci.org/sdv-dev/SDV
+.. |Run Tests| image:: https://github.com/sdv-dev/SDV/workflows/Run%20Tests/badge.svg
+   :target: https://github.com/sdv-dev/SDV/actions?query=workflow%3A%22Run+Tests%22+branch%3Amaster
 .. |Coverage Status| image:: https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/sdv-dev/SDV
 .. |Downloads| image:: https://pepy.tech/badge/sdv

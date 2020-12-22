@@ -70,3 +70,23 @@ def test_sdv_multiparent():
 
     assert character_families.shape == tables['character_families'].shape
     assert set(character_families.columns) == set(tables['character_families'].columns)
+
+
+def test_integer_categoricals():
+    """Ensure integer categoricals are still sampled as integers.
+
+    The origin of this tests can be found in the github issue #194:
+    https://github.com/sdv-dev/SDV/issues/194
+    """
+    metadata, tables = load_demo(metadata=True)
+    metadata_dict = metadata.to_dict()
+    metadata_dict['tables']['users']['fields']['age'] = {
+        'type': 'categorical'
+    }
+
+    sdv = SDV()
+    sdv.fit(metadata, tables)
+    sampled = sdv.sample()
+
+    for name, table in tables.items():
+        assert (sampled[name].dtypes == table.dtypes).all()

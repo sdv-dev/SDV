@@ -108,7 +108,7 @@ class UniqueCombinations(Constraint):
 
         The fit process consists on:
 
-            - finding a separtor that works for the
+            - Finding a separtor that works for the
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.

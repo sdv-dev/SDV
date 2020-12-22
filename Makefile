@@ -80,6 +80,12 @@ install-test: clean-build clean-pyc ## install the package and test dependencies
 install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
 	pip install -e .[dev]
 
+MINIMUM := $(shell sed -n '/install_requires = \[/,/]/p' setup.py | grep -v -e '[][]' | sed 's/ *\(.*\),$?$$/\1/g' | tr '>' '=')
+
+.PHONY: install-minimum
+install-minimum: ## install the minimum supported versions of the package dependencies
+	pip install $(MINIMUM)
+
 
 # LINT TARGETS
 
@@ -95,8 +101,13 @@ lint-tests: ## check style with flake8 and isort
 	flake8 --ignore=D,SFS2 tests
 	isort -c --recursive tests
 
+.PHONY: check-dependencies
+check-dependencies: ## test if there are any broken dependencies
+	pip check
+
 .PHONY: lint
-lint: lint-sdv lint-tests  ## Run all code style checks
+lint: ## check style with flake8 and isort
+	invoke lint
 
 .PHONY: fix-lint
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
@@ -109,28 +120,18 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 
 .PHONY: test-unit
 test-unit: ## run tests quickly with the default Python
-	python -m pytest --reruns 5 --cov=sdv
+	invoke pytest
 
 .PHONY: test-readme
 test-readme: ## run the readme snippets
-	rm -rf tests/readme_test && mkdir tests/readme_test
-	cd tests/readme_test && rundoc run --single-session python3 -t python3 ../../README.md
-	rm -rf tests/readme_test
+	invoke readme
 
 .PHONY: test-tutorials
 test-tutorials: ## run the tutorial notebooks
-	find tutorials -path "*/.ipynb_checkpoints" -prune -false -o -name "*.ipynb" -exec \
-		jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 --to=html --stdout {} > /dev/null \;
+	invoke tutorials
 
 .PHONY: test
 test: test-unit test-readme test-tutorials ## test everything that needs test dependencies
-
-.PHONY: check-dependencies
-check-dependencies: ## test if there are any broken dependencies
-	pip check
-
-.PHONY: test-devel
-test-devel: check-dependencies lint docs ## test everything that needs development dependencies
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
@@ -155,7 +156,7 @@ view-docs: ## view the docs in a browser
 	$(BROWSER) docs/_build/html/index.html
 
 .PHONY: serve-docs
-serve-docs: view-docs ## compile the docs watching for changes
+serve-docs: ## compile the docs watching for changes
 	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' docs
 
 

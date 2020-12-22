@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
@@ -87,13 +88,13 @@ def test__load_csv(rcdtypes_mock, read_csv_mock, pdtypes_mock):
         'path': 'filename.csv',
         'other': 'stuff'
     }
-    result = _load_csv('a/path', table_meta)
+    result = _load_csv(os.path.join('a', 'path'), table_meta)
 
     # Asserts
     assert result == pdtypes_mock.return_value
     rcdtypes_mock.assert_called_once_with(table_meta)
     dtypes = rcdtypes_mock.return_value
-    read_csv_mock.assert_called_once_with('a/path/filename.csv', dtype=dtypes)
+    read_csv_mock.assert_called_once_with(os.path.join('a', 'path', 'filename.csv'), dtype=dtypes)
     pdtypes_mock.assert_called_once_with(read_csv_mock.return_value, table_meta)
 
 

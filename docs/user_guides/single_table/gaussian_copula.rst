@@ -157,7 +157,7 @@ directory in which you are running SDV.
     because the serialized model contains **no information about the
     original data**, other than the parameters it needs to generate
     synthetic versions of it. This means that you can safely share this
-    ``my_model.pkl`` file without the risc of disclosing any of your real
+    ``my_model.pkl`` file without the risk of disclosing any of your real
     data!
 
 Load the model and generate new data
@@ -201,7 +201,6 @@ that there are some values that appear more than once:
 .. ipython:: python
     :okwarning:
 
-    new_data.student_id.value_counts().max()
     new_data[new_data.student_id == new_data.student_id.value_counts().index[0]]
 
 
@@ -219,6 +218,7 @@ indicating the name of the column that is the index of the table.
     )
     model.fit(data)
     new_data = model.sample(200)
+    new_data.head()
 
 As a result, the model will learn that this column must be unique and
 generate a unique sequence of values for the column:
@@ -226,7 +226,6 @@ generate a unique sequence of values for the column:
 .. ipython:: python
     :okwarning:
 
-    new_data.head()
     new_data.student_id.value_counts().max()
 
 
@@ -271,6 +270,13 @@ students:
     model.fit(data_pii)
     new_data_pii = model.sample(200)
     new_data_pii.head()
+
+More specifically, we can see how all the addresses that have been generated
+actually come from the original dataset:
+
+.. ipython:: python
+    :okwarning:
+
     new_data_pii.address.isin(data_pii.address).sum()
 
 
@@ -313,16 +319,25 @@ dictionary indicating the category ``address``
     )
     model.fit(data_pii)
 
+
 As a result, we can see how the real ``address`` values have been
-replaced by other fake addresses that were not taken from the real data
-that we learned.
+replaced by other fake addresses:
 
 .. ipython:: python
     :okwarning:
 
     new_data_pii = model.sample(200)
     new_data_pii.head()
-    new_data_pii.address.isin(data_pii.address).sum()
+
+
+Which means that none of the original addresses can be found in the sampled
+data:
+
+.. ipython:: python
+    :okwarning:
+
+    data_pii.address.isin(new_data_pii.address).sum()
+
 
 Advanced Usage
 --------------
@@ -421,7 +436,7 @@ using the ``sample`` method, it did:
 5. Sample from a Multivariate Standard Normal distribution with the
    learned correlations.
 6. Revert the sampled values by computing their standard normal CDF
-   and then applyting the inverse CDF of their marginal distributions.
+   and then applying the inverse CDF of their marginal distributions.
 7. Revert the RDT transformations to go back to the original data
    format.
 
@@ -502,14 +517,14 @@ Let's see how we can improve this situation by passing the
 ``GaussianCopula`` the exact distribution that we want it to use for
 this column.
 
-Setting distributions for indvidual variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting distributions for individual variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``GaussianCopula`` class offers the possibility to indicate which
 distribution to use for each one of the columns in the table, in order
 to solve situations like the one that we just described. In order to do
-this, we need to pass a ``distributions`` argument with ``dict`` that
-indicates, the distribution that we want to use for each column.
+this, we need to pass a ``field_distributions`` argument with ``dict``
+that indicates the distribution that we want to use for each column.
 
 Possible values for the distribution argument are:
 
@@ -535,7 +550,7 @@ Possible values for the distribution argument are:
 -  ``gamma``: Use a Gamma distribution.
 -  ``beta``: Use a Beta distribution.
 -  ``student_t``: Use a Student T distribution.
--  ``gussian_kde``: Use a GaussianKDE distribution. This model is
+-  ``gaussian_kde``: Use a GaussianKDE distribution. This model is
    non-parametric, so using this will make ``get_parameters`` unusable.
 -  ``truncated_gaussian``: Use a Truncated Gaussian distribution.
 
@@ -549,7 +564,7 @@ Let's see what happens if we make the ``GaussianCopula`` use the
 
     model = GaussianCopula(
         primary_key='student_id',
-        distribution={
+        field_distributions={
             'experience_years': 'gamma'
         }
     )

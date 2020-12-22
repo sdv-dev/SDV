@@ -10,16 +10,25 @@ import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 
-def _get_qualified_name(_object):
+def _get_qualified_name(obj):
     """Return the Fully Qualified Name from an instance or class."""
-    module = _object.__module__
-    if hasattr(_object, '__name__'):
-        _class = _object.__name__
-
+    module = obj.__module__
+    if hasattr(obj, '__name__'):
+        obj_name = obj.__name__
     else:
-        _class = _object.__class__.__name__
+        obj_name = obj.__class__.__name__
 
-    return module + '.' + _class
+    return module + '.' + obj_name
+
+
+def get_subclasses(cls):
+    """Recursively find subclasses for the current class object."""
+    subclasses = dict()
+    for subclass in cls.__subclasses__():
+        subclasses[subclass.__name__] = subclass
+        subclasses.update(get_subclasses(subclass))
+
+    return subclasses
 
 
 def import_object(obj):
@@ -75,7 +84,7 @@ class Constraint(metaclass=ConstraintMeta):
     Args:
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``. Defaults to ``transform``.
+            ``reject_sampling`` or ``all``.
     """
 
     def _identity(self, table_data):
@@ -180,16 +189,6 @@ class Constraint(metaclass=ConstraintMeta):
         return table_data[valid]
 
     @classmethod
-    def _get_subclasses(cls):
-        """Recursively find subclasses for the current class object."""
-        subclasses = dict()
-        for subclass in cls.__subclasses__():
-            subclasses[subclass.__name__] = subclass
-            subclasses.update(subclass._get_subclasses())
-
-        return subclasses
-
-    @classmethod
     def from_dict(cls, constraint_dict):
         """Build a Constraint object from a dict.
 
@@ -204,7 +203,7 @@ class Constraint(metaclass=ConstraintMeta):
         """
         constraint_dict = constraint_dict.copy()
         constraint_class = constraint_dict.pop('constraint')
-        subclasses = cls._get_subclasses()
+        subclasses = get_subclasses(cls)
         if isinstance(constraint_class, str):
             if '.' in constraint_class:
                 constraint_class = import_object(constraint_class)
@@ -217,7 +216,7 @@ class Constraint(metaclass=ConstraintMeta):
         """Return a dict representation of this Constraint.
 
         The dictionary will contain the Qualified Name of the constraint
-        class in the key ``constriant``, as well as any other arguments
+        class in the key ``constraint``, as well as any other arguments
         that were passed to the constructor when the instance was created.
 
         Returns:

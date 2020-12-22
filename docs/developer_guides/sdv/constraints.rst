@@ -3,7 +3,7 @@
 Constraints
 ===========
 
-The Constraints are implemented in the subpackage :ref:`sdv.constraints`.
+The Constraints are implemented in the sub-package :ref:`sdv.constraints`.
 
 Base Constraint
 ---------------
@@ -51,7 +51,7 @@ In order to implement a custom constraint, all you need to do is create a subcla
 
 Let us think, for example, of the following scenario: Suppose we have a dataset about invertebrate
 and that there is a column that indicates their number of legs. Insects, which are one of the most
-common invertebrae, always have 6 legs, but there are other families which have none, or just 2,
+common invertebrate, always have 6 legs, but there are other families which have none, or just 2,
 and some even extend to hundreds of legs. But this value has the following properties:
 
 * It is always positive.
@@ -92,7 +92,7 @@ so let's define the ``is_valid`` method accordingly:
 
 With the current implementation modeling would happen as usual. However, during sampling,
 all the rows would be validated using the ``is_valid`` method that we implemented, and invalid
-rows would be rejected and resampled until the number of desired rows has been generated.
+rows would be rejected and re-sampled until the number of desired rows has been generated.
 
 In this case this might be acceptable because each row only has a 50% chance of being invalid,
 which means that, on average, we would need the model to sample only 2 times the number of rows
