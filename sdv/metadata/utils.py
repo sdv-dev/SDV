@@ -82,10 +82,6 @@ def _category(category, max_repeat):
     return iter(characters), len(characters)
 
 
-_SIZES = {
-    sre_parse.LITERAL: _literal,
-}
-
 _GENERATORS = {
     sre_parse.LITERAL: _literal,
     sre_parse.IN: _in,
