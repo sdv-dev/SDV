@@ -172,10 +172,13 @@ class TestUniqueCombinations():
         instance.fit(table_data)
 
         # Asserts
-        expected_combinations = set(table_data[columns].itertuples(index=False))
+        expected_combinations = pd.DataFrame({
+            'b': ['d', 'e', 'f'],
+            'c': ['g', 'h', 'i']
+        })
         assert instance._separator == '#'
         assert instance._joint_column == 'b#c'
-        assert instance._combinations == expected_combinations
+        pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
 
     def test_is_valid_true(self):
         """Test the ``UniqueCombinations.is_valid`` method.
@@ -203,8 +206,7 @@ class TestUniqueCombinations():
         # Run
         out = instance.is_valid(table_data)
 
-        # Assert
-        expected_out = pd.Series([True, True, True])
+        expected_out = pd.Series([True, True, True], name='b#c')
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_false(self):
@@ -239,7 +241,7 @@ class TestUniqueCombinations():
         out = instance.is_valid(incorrect_table)
 
         # Assert
-        expected_out = pd.Series([False, False, False])
+        expected_out = pd.Series([False, False, False], name='b#c')
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_transform(self):
