@@ -41,7 +41,7 @@ def install_minimum(c):
 def minimum(c):
     install_minimum(c)
     c.run('python -m pip check')
-    c.run('python -m pytest')
+    c.run('python -m pytest --reruns 5')
 
 
 @task
@@ -75,7 +75,6 @@ def lint(c):
     c.run('flake8 tests --ignore=D,SFS2')
     c.run('isort -c --recursive sdv tests')
     c.run('pydocstyle sdv')
-    c.run('pylint rdt --rcfile=setup.cfg')
 
 
 def remove_readonly(func, path, _):

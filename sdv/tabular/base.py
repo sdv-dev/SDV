@@ -155,17 +155,17 @@ class BaseTabularModel:
         num_valid = len(sampled)
 
         counter = 0
+        total_sampled = num_to_sample
         while num_valid < num_rows:
             counter += 1
             if counter >= max_retries:
                 raise ValueError('Could not get enough valid rows within %s trials', max_retries)
 
-            invalid = num_rows - num_valid
             remaining = num_rows - num_valid
-            proportion = counter * num_rows / num_valid
-            num_to_sample = int(remaining * proportion)
+            valid_ratio = num_valid / total_sampled
+            num_to_sample = int(counter * remaining / (valid_ratio if valid_ratio != 0 else 1))
 
-            LOGGER.info('%s invalid rows found. Resampling %s rows', invalid, num_to_sample)
+            LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
             resampled = self._sample(num_to_sample)
             resampled = self._metadata.reverse_transform(resampled)
 

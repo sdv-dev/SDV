@@ -12,19 +12,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'exrex>=0.9.4,<0.11',
+    'ctgan>=0.3.0,<0.4',
     'xeger>=0.3.5,<0.4',
-    'numpy>=1.17.4,<2',
-    'pandas>=1.1,<2',
+    'numpy>=1.18.0,<2',
+    'pandas>=1.1,<1.1.5',
     'graphviz>=0.13.2,<1',
     'copulas>=0.3.3,<0.4',
-    'rdt>=0.2.8,<0.3',
-    'sdmetrics>=0.0.3,<0.1.0',
-    'deepecho==0.1.3',
-]
-
-ctgan_requires = [
-    'ctgan>=0.2.2.dev1,<0.3',
+    'rdt>=0.2.10,<0.3',
+    'sdmetrics>=0.1.1,<0.2.0',
+    'deepecho>=0.1.3,<0.2',
 ]
 
 setup_requires = [
@@ -50,9 +46,6 @@ development_requires = [
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme',
-    'autodocsumm>=0.1.10',
-    'PyYaml>=5.3.1,<6',
-    'argh>=0.26.2,<1',
 
     # style check
     'flake8>=3.7.7,<4',
@@ -60,7 +53,6 @@ development_requires = [
     'flake8-docstrings>=1.5.0,<2',
     'flake8-sfs>=0.0.3,<0.1',
     'isort>=4.3.4,<5',
-    'pylint>=2.5.3,<3',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -73,7 +65,6 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
-    # 'importlib-metadata<2.0.0,>=0.12'
     'invoke'
 ]
 
@@ -90,15 +81,14 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description='Automated Generative Modeling and Sampling',
+    description='Synthetic Data Generation for tabular, relational and time series data.',
     extras_require={
-        'ctgan': ctgan_requires,
-        'test': tests_require + ctgan_requires,
-        'dev': development_requires + tests_require + ctgan_requires,
+        'test': tests_require,
+        'dev': development_requires + tests_require,
     },
     include_package_data=True,
     install_requires=install_requires,
-    keywords='sdv sdv SDV',
+    keywords='sdv synthetic-data synhtetic-data-generation timeseries single-table multi-table',
     license='MIT license',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
@@ -109,6 +99,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.5.0',
+    version='0.6.1.dev0',
     zip_safe=False,
 )

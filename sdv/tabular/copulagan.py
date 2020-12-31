@@ -101,25 +101,23 @@ class CopulaGAN(CTGAN):
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
-        epochs (int):
-            Number of training epochs. Defaults to 300.
         log_frequency (boolean):
             Whether to use log frequency of categorical levels in conditional
             sampling. Defaults to ``True``.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        gen_dim (tuple or list of ints):
+        generator_dim (tuple or list of ints):
             Size of the output samples for each one of the Residuals. A Resiudal Layer
             will be created for each one of the values provided. Defaults to (256, 256).
-        dis_dim (tuple or list of ints):
+        discriminator_dim (tuple or list of ints):
             Size of the output samples for each one of the Discriminator Layers. A Linear
             Layer will be created for each one of the values provided. Defaults to (256, 256).
-        l2scale (float):
-            Wheight Decay for the Adam Optimizer. Defaults to 1e-6.
         batch_size (int):
             Number of data samples to process in each step.
         verbose (bool):
             Whether to print fit progress on stdout. Defaults to ``False``.
+        epochs (int):
+            Number of training epochs. Defaults to 300.
         cuda (bool or str):
             If ``True``, use CUDA. If an ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
@@ -136,8 +134,10 @@ class CopulaGAN(CTGAN):
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 epochs=300, log_frequency=True, embedding_dim=128, gen_dim=(256, 256),
-                 dis_dim=(256, 256), l2scale=1e-6, batch_size=500, verbose=False, cuda=True,
+                 embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
+                 generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
+                 discriminator_decay=0, batch_size=500, discriminator_steps=1,
+                 log_frequency=True, verbose=False, epochs=300, cuda=True,
                  field_distributions=None, default_distribution=None):
         super().__init__(
             field_names=field_names,
@@ -147,14 +147,18 @@ class CopulaGAN(CTGAN):
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,
-            epochs=epochs,
-            log_frequency=log_frequency,
             embedding_dim=embedding_dim,
-            gen_dim=gen_dim,
-            dis_dim=dis_dim,
-            l2scale=l2scale,
+            generator_dim=generator_dim,
+            discriminator_dim=discriminator_dim,
+            generator_lr=generator_lr,
+            generator_decay=generator_decay,
+            discriminator_lr=discriminator_lr,
+            discriminator_decay=discriminator_decay,
             batch_size=batch_size,
+            discriminator_steps=discriminator_steps,
+            log_frequency=log_frequency,
             verbose=verbose,
+            epochs=epochs,
             cuda=cuda
         )
         self._field_distributions = field_distributions or dict()

@@ -911,9 +911,9 @@ class Metadata:
 
                 data = pd.read_csv(data)
 
-            fields = set(fields or data.columns)
+            fields = fields or data.columns
             if fields_metadata:
-                fields = fields - set(fields_metadata.keys())
+                fields = [field for field in fields if field not in fields_metadata]
             else:
                 fields_metadata = dict()
 
