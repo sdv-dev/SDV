@@ -4,12 +4,11 @@ import itertools
 import logging
 import pickle
 
-import exrex
 import numpy as np
 import pandas as pd
 
 from sdv.errors import NotFittedError
-from sdv.metadata import Metadata
+from sdv.metadata import Metadata, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -105,8 +104,7 @@ class BaseRelationalModel:
                 remaining = np.inf
             elif subtype == 'string':
                 regex = field.get('regex', r'^[a-zA-Z]+$')
-                generator = exrex.generate(regex)
-                remaining = exrex.count(regex)
+                generator, remaining = utils.strings_from_regex(regex)
             elif subtype == 'datetime':
                 raise NotImplementedError('Datetime ids are not yet supported')
             else:
