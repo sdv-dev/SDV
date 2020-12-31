@@ -94,7 +94,6 @@ lint-sdv: ## check style with flake8 and isort
 	flake8 sdv
 	isort -c --recursive sdv
 	pydocstyle sdv
-	# pylint sdv --rcfile=setup.cfg
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort

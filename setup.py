@@ -46,9 +46,6 @@ development_requires = [
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme',
-    'autodocsumm>=0.1.10',
-    'PyYaml>=5.3.1,<6',
-    'argh>=0.26.2,<1',
 
     # style check
     'flake8>=3.7.7,<4',
@@ -56,7 +53,6 @@ development_requires = [
     'flake8-docstrings>=1.5.0,<2',
     'flake8-sfs>=0.0.3,<0.1',
     'isort>=4.3.4,<5',
-    'pylint>=2.5.3,<3',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -69,7 +65,6 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
-    # 'importlib-metadata<2.0.0,>=0.12'
     'invoke'
 ]
 

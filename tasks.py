@@ -75,7 +75,6 @@ def lint(c):
     c.run('flake8 tests --ignore=D,SFS2')
     c.run('isort -c --recursive sdv tests')
     c.run('pydocstyle sdv')
-    c.run('pylint rdt --rcfile=setup.cfg')
 
 
 def remove_readonly(func, path, _):
