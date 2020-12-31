@@ -7,7 +7,7 @@ def years_in_the_company(data):
     return data['age'] - data['age_when_joined']
 
 
-def test_constraints():
+def test_constraints(tmpdir):
 
     employees = load_tabular_demo()
 
@@ -35,4 +35,6 @@ def test_constraints():
     ]
     gc = GaussianCopula(constraints=constraints)
     gc.fit(employees)
+    gc.save(tmpdir / 'test.pkl')
+    gc = gc.load(tmpdir / 'test.pkl')
     gc.sample(10)

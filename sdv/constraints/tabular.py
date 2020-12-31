@@ -122,7 +122,7 @@ class UniqueCombinations(Constraint):
             self._separator += '#'
 
         self._joint_column = self._separator.join(self._columns)
-        self._combinations = set(table_data[self._columns].itertuples(index=False))
+        self._combinations = table_data[self._columns].drop_duplicates().copy()
 
     def is_valid(self, table_data):
         """Say whether the column values are within the original combinations.
@@ -135,11 +135,13 @@ class UniqueCombinations(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        tuples = pd.Series(
-            table_data[self._columns].itertuples(index=False),
-            index=table_data.index
+        merged = table_data.merge(
+            self._combinations,
+            how='left',
+            on=self._columns,
+            indicator=self._joint_column
         )
-        return tuples.isin(self._combinations)
+        return merged[self._joint_column] == 'both'
 
     def transform(self, table_data):
         """Transform the table data.
