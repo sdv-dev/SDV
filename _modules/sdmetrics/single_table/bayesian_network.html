@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.6.0 documentation</title>
+    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -180,7 +180,7 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.BNLikelihood.html#sdv.metrics.tabular.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLikelihood.html#sdv.metrics.tabular.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;BayesianNetwork Likelihood Single Table metric.</span>
 
 <span class="sd">    This metric fits a BayesianNetwork to the real data and then evaluates how</span>
@@ -232,7 +232,7 @@
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
 
-<div class="viewcode-block" id="BNLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.BNLikelihood.compute.html#sdv.metrics.tabular.BNLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="BNLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLikelihood.compute.html#sdv.metrics.tabular.BNLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
@@ -280,7 +280,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_likelihoods</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">structure</span><span class="p">))</span></div></div>
 
 
-<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.BNLogLikelihood.html#sdv.metrics.tabular.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">BNLikelihood</span><span class="p">):</span>
+<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLogLikelihood.html#sdv.metrics.tabular.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">BNLikelihood</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;BayesianNetwork Log Likelihood Single Table metric.</span>
 
 <span class="sd">    This metric fits a BayesianNetwork to the real data and then evaluates how</span>
@@ -304,7 +304,7 @@
     <span class="n">min_value</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
     <span class="n">max_value</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="BNLogLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.BNLogLikelihood.compute.html#sdv.metrics.tabular.BNLogLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="BNLogLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLogLikelihood.compute.html#sdv.metrics.tabular.BNLogLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 

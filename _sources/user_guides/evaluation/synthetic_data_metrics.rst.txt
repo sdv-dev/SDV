@@ -8,3 +8,4 @@ Synthetic Data Metrics
 
     single_table_metrics
     multi_table_metrics
+    timeseries_metrics

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.6.0 documentation</title>
+    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -177,7 +177,7 @@
 <span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">NestedAttrsMeta</span>
 
 
-<div class="viewcode-block" id="MultiColumnPairsMetric"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiColumnPairsMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;column_pairs_metric&#39;</span><span class="p">)):</span>
+<div class="viewcode-block" id="MultiColumnPairsMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiColumnPairsMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;column_pairs_metric&#39;</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a ColumnPairsMetric on each possible column pair.</span>
 
 <span class="sd">    Attributes:</span>
@@ -199,7 +199,7 @@
     <span class="n">column_pairs_metric_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">field_types</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MultiColumnPairsMetric.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_pairs_metric</span><span class="p">,</span> <span class="o">**</span><span class="n">column_pairs_metric_kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiColumnPairsMetric.__init__"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_pairs_metric</span><span class="p">,</span> <span class="o">**</span><span class="n">column_pairs_metric_kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column_pairs_metric</span> <span class="o">=</span> <span class="n">column_pairs_metric</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">column_pairs_metric_kwargs</span> <span class="o">=</span> <span class="n">column_pairs_metric_kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute</span></div>
@@ -262,7 +262,7 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ContinuousKLDivergence"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.ContinuousKLDivergence.html#sdv.metrics.tabular.ContinuousKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">ContinuousKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="ContinuousKLDivergence"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.ContinuousKLDivergence.html#sdv.metrics.tabular.ContinuousKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">ContinuousKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContinuousKLDivergence.</span>
 
 <span class="sd">    This approximates the KL divergence by binning the continuous values</span>
@@ -288,7 +288,7 @@
     <span class="n">column_pairs_metric</span> <span class="o">=</span> <span class="n">column_pairs</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">kl_divergence</span><span class="o">.</span><span class="n">ContinuousKLDivergence</span></div>
 
 
-<div class="viewcode-block" id="DiscreteKLDivergence"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.DiscreteKLDivergence.html#sdv.metrics.tabular.DiscreteKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">DiscreteKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="DiscreteKLDivergence"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.DiscreteKLDivergence.html#sdv.metrics.tabular.DiscreteKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">DiscreteKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs DiscreteKLDivergence.</span>
 
 <span class="sd">    This computes the KL divergence and afterwards normalizes the</span>

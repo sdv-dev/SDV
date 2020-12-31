@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.6.0 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -290,7 +290,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="UniqueCombinations.is_valid"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.tabular.UniqueCombinations.is_valid.html#sdv.constraints.tabular.UniqueCombinations.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
@@ -303,11 +303,13 @@
 <span class="sd">            pandas.Series:</span>
 <span class="sd">                Whether each row is valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">tuples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
-            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">index</span><span class="o">=</span><span class="n">table_data</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span><span class="p">,</span>
+            <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
+            <span class="n">on</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span>
+            <span class="n">indicator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">tuples</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">merged</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;both&#39;</span></div>
 
 <div class="viewcode-block" id="UniqueCombinations.transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.tabular.UniqueCombinations.transform.html#sdv.constraints.tabular.UniqueCombinations.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>

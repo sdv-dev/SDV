@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.6.0 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -323,17 +323,17 @@
         <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
 
         <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_sampled</span> <span class="o">=</span> <span class="n">num_to_sample</span>
         <span class="k">while</span> <span class="n">num_valid</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
             <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">%s</span><span class="s1"> trials&#39;</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">)</span>
 
-            <span class="n">invalid</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
             <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
-            <span class="n">proportion</span> <span class="o">=</span> <span class="n">counter</span> <span class="o">*</span> <span class="n">num_rows</span> <span class="o">/</span> <span class="n">num_valid</span>
-            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">remaining</span> <span class="o">*</span> <span class="n">proportion</span><span class="p">)</span>
+            <span class="n">valid_ratio</span> <span class="o">=</span> <span class="n">num_valid</span> <span class="o">/</span> <span class="n">total_sampled</span>
+            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">counter</span> <span class="o">*</span> <span class="n">remaining</span> <span class="o">/</span> <span class="p">(</span><span class="n">valid_ratio</span> <span class="k">if</span> <span class="n">valid_ratio</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span><span class="p">))</span>
 
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> invalid rows found. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">invalid</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> valid rows remaining. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
             <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
             <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
 

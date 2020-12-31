@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.base &#8212; SDV 0.6.0 documentation</title>
+    <title>sdv.relational.base &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -172,12 +172,11 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
-<span class="kn">import</span> <span class="nn">exrex</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.errors</span> <span class="kn">import</span> <span class="n">NotFittedError</span>
-<span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span>
+<span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">utils</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -273,8 +272,7 @@
                 <span class="n">remaining</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
             <span class="k">elif</span> <span class="n">subtype</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
                 <span class="n">regex</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;regex&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;^[a-zA-Z]+$&#39;</span><span class="p">)</span>
-                <span class="n">generator</span> <span class="o">=</span> <span class="n">exrex</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
-                <span class="n">remaining</span> <span class="o">=</span> <span class="n">exrex</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
+                <span class="n">generator</span><span class="p">,</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">strings_from_regex</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">subtype</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Datetime ids are not yet supported&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>

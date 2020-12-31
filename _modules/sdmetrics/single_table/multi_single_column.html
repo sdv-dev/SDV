@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.6.0 documentation</title>
+    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -176,7 +176,7 @@
 <span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">NestedAttrsMeta</span>
 
 
-<div class="viewcode-block" id="MultiSingleColumnMetric"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.MultiSingleColumnMetric.html#sdv.metrics.tabular.MultiSingleColumnMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiSingleColumnMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span>
+<div class="viewcode-block" id="MultiSingleColumnMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiSingleColumnMetric.html#sdv.metrics.tabular.MultiSingleColumnMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiSingleColumnMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span>
                               <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;single_column_metric&#39;</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a SingleColumnMetric on each column.</span>
 
@@ -204,7 +204,7 @@
     <span class="n">single_column_metric_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">field_types</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MultiSingleColumnMetric.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.MultiSingleColumnMetric.html#sdv.metrics.tabular.MultiSingleColumnMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_column_metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">single_column_metric_kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiSingleColumnMetric.__init__"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiSingleColumnMetric.html#sdv.metrics.tabular.MultiSingleColumnMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_column_metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">single_column_metric_kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column_metric</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric_kwargs</span> <span class="o">=</span> <span class="n">single_column_metric_kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute</span></div>
@@ -278,7 +278,7 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CSTest"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.CSTest.html#sdv.metrics.tabular.CSTest">[docs]</a><span class="k">class</span> <span class="nc">CSTest</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="CSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.CSTest.html#sdv.metrics.tabular.CSTest">[docs]</a><span class="k">class</span> <span class="nc">CSTest</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn CSTest.</span>
 
 <span class="sd">    This function applies the single column ``CSTest`` metric to all</span>
@@ -290,7 +290,7 @@
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">CSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.KSTest.html#sdv.metrics.tabular.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTest.html#sdv.metrics.tabular.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn KSTest.</span>
 
 <span class="sd">    This function applies the single column ``KSTest`` metric to all</span>
@@ -302,7 +302,7 @@
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.KSTestExtended.html#sdv.metrics.tabular.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTestExtended.html#sdv.metrics.tabular.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;KSTest variation that transforms everything to numerical before comparing the tables.</span>
 
 <span class="sd">    This is done by applying an ``rdt.HyperTransformer`` to the data with the</span>
@@ -313,7 +313,7 @@
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSTest</span>
     <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="KSTestExtended.compute"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.tabular.KSTestExtended.compute.html#sdv.metrics.tabular.KSTestExtended.compute">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="KSTestExtended.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTestExtended.compute.html#sdv.metrics.tabular.KSTestExtended.compute">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 

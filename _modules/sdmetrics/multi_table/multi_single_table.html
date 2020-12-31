@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.6.0 documentation</title>
+    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.6.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
 
@@ -177,7 +177,7 @@
 <span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">NestedAttrsMeta</span>
 
 
-<div class="viewcode-block" id="MultiSingleTableMetric"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.MultiSingleTableMetric.html#sdv.metrics.relational.MultiSingleTableMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiSingleTableMetric</span><span class="p">(</span><span class="n">MultiTableMetric</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;single_table_metric&#39;</span><span class="p">)):</span>
+<div class="viewcode-block" id="MultiSingleTableMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.MultiSingleTableMetric.html#sdv.metrics.relational.MultiSingleTableMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiSingleTableMetric</span><span class="p">(</span><span class="n">MultiTableMetric</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;single_table_metric&#39;</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot;MultiTableMetric subclass that applies a SingleTableMetric on each table.</span>
 
 <span class="sd">    This class can either be used by creating a subclass that inherits from it and</span>
@@ -200,7 +200,7 @@
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MultiSingleTableMetric.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.MultiSingleTableMetric.html#sdv.metrics.relational.MultiSingleTableMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_table_metric</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiSingleTableMetric.__init__"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.MultiSingleTableMetric.html#sdv.metrics.relational.MultiSingleTableMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_table_metric</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table_metric</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute</span></div>
 
@@ -270,43 +270,43 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CSTest"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.CSTest.html#sdv.metrics.relational.CSTest">[docs]</a><span class="k">class</span> <span class="nc">CSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="CSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.CSTest.html#sdv.metrics.relational.CSTest">[docs]</a><span class="k">class</span> <span class="nc">CSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable CSTest.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">CSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.KSTest.html#sdv.metrics.relational.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.KSTest.html#sdv.metrics.relational.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable KSTest.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">KSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.KSTestExtended.html#sdv.metrics.relational.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.KSTestExtended.html#sdv.metrics.relational.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable KSTestExtended.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">KSTestExtended</span></div>
 
 
-<div class="viewcode-block" id="LogisticDetection"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.LogisticDetection.html#sdv.metrics.relational.LogisticDetection">[docs]</a><span class="k">class</span> <span class="nc">LogisticDetection</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="LogisticDetection"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.LogisticDetection.html#sdv.metrics.relational.LogisticDetection">[docs]</a><span class="k">class</span> <span class="nc">LogisticDetection</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable LogisticDetection.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">detection</span><span class="o">.</span><span class="n">LogisticDetection</span></div>
 
 
-<div class="viewcode-block" id="SVCDetection"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.SVCDetection.html#sdv.metrics.relational.SVCDetection">[docs]</a><span class="k">class</span> <span class="nc">SVCDetection</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="SVCDetection"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.SVCDetection.html#sdv.metrics.relational.SVCDetection">[docs]</a><span class="k">class</span> <span class="nc">SVCDetection</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable SVCDetection.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">detection</span><span class="o">.</span><span class="n">SVCDetection</span></div>
 
 
-<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.BNLikelihood.html#sdv.metrics.relational.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.BNLikelihood.html#sdv.metrics.relational.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable BNLikelihood.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">bayesian_network</span><span class="o">.</span><span class="n">BNLikelihood</span></div>
 
 
-<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/api/sdv.metrics.relational.BNLogLikelihood.html#sdv.metrics.relational.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.BNLogLikelihood.html#sdv.metrics.relational.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable BNLogLikelihood.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">bayesian_network</span><span class="o">.</span><span class="n">BNLogLikelihood</span></div>
