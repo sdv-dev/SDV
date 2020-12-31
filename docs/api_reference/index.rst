@@ -15,5 +15,5 @@ and classes in SDV.
    timeseries
    metadata
    constraints
-   metrics
+   metrics/index
    demo

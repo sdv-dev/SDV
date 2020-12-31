@@ -19,7 +19,7 @@ install_requires = [
     'graphviz>=0.13.2,<1',
     'copulas>=0.3.3,<0.4',
     'rdt>=0.2.10,<0.3',
-    'sdmetrics>=0.1.0,<0.2.0',
+    'sdmetrics>=0.1.1,<0.2.0',
     'deepecho==0.1.3',
 ]
 
