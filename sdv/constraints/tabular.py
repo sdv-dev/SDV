@@ -259,12 +259,13 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        if pd.api.types.is_datetime64_ns_dtype(table_data[self._low]):
-            diff = table_data.pop(self._high) - table_data[self._low]
-            table_data[self._high] = np.log(pd.to_numeric(diff) + 1)
+        low_column = table_data[self._low]
+        diff = table_data[self._high] - low_column
 
-        else:
-            table_data[self._high] = np.log(table_data.pop(self._high) - table_data[self._low] + 1)
+        if pd.api.types.is_datetime64_ns_dtype(low_column):
+            diff = pd.to_numeric(diff)
+
+        table_data[self._high] = np.log(diff + 1)
 
         return table_data
 
@@ -287,14 +288,13 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        if pd.api.types.is_datetime64_ns_dtype(table_data[self._low]):
-            diff = (np.exp(pd.to_numeric(table_data[self._high])).round() - 1).clip(0)
-            diff = pd.to_timedelta(diff)
-            table_data[self._high] = (table_data[self._low] + diff).astype(self._dtype)
+        diff = (np.exp(table_data[self._high]).round() - 1).clip(0)
+        low_column = table_data[self._low]
 
-        else:
-            diff = (np.exp(table_data[self._high]).round().astype(self._dtype) - 1).clip(0)
-            table_data[self._high] = table_data[self._low] + diff
+        if pd.api.types.is_datetime64_ns_dtype(low_column):
+            diff = pd.to_timedelta(diff)
+
+        table_data[self._high] = (low_column + diff).astype(self._dtype)
 
         return table_data
 

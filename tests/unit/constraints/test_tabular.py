@@ -1,4 +1,6 @@
 """Tests for the sdv.constraints.tabular module."""
+
+import numpy as np
 import pandas as pd
 
 from sdv.constraints.tabular import (
@@ -316,8 +318,7 @@ class TestGreaterThan():
     def test___init___strict_false(self):
         """Test the ``GreaterThan.__init__`` method.
 
-        It is expected to create a new Constraint instance and receiving ``low`` and ``high``,
-        names of the columns that contain the low and high value.
+        The passed arguments should be stored as attributes.
 
         Input:
         - low = 'a'
@@ -338,9 +339,7 @@ class TestGreaterThan():
     def test___init___strict_true(self):
         """Test the ``GreaterThan.__init__`` method.
 
-        It is expected to create a new Constraint instance and receiving ``low`` and ``high``,
-        names of the columns that contain the low and high value. It also receives ``strict``,
-        a bool that indicates the comparison of the values should be strict.
+        The passed arguments should be stored as attributes.
 
         Input:
         - low = 'a'
@@ -359,42 +358,151 @@ class TestGreaterThan():
         assert instance._high == 'b'
         assert instance._strict is True
 
-    def test_fit(self):
+    def test_fit_int(self):
         """Test the ``GreaterThan.fit`` method.
 
-        It is expected to return the dtype of the ``high`` column.
+        The ``GreaterThan.fit`` method should only learn and store the
+        ``dtype`` of the ``high`` column as the ``_dtype`` attribute.
 
         Input:
-        - Table data (pandas.DataFrame)
-        Output:
-        - dtype of the ``high`` column.
+        - Table that contains two constrained columns with the high one
+          being made of integers.
+        Side Effect:
+        - The _dtype attribute gets `int` as the value even if the low
+          column has a different dtype.
         """
         # Setup
         instance = GreaterThan(low='a', high='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
+            'a': [1., 2., 3.],
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
         instance.fit(table_data)
 
         # Asserts
-        expected = table_data['b'].dtype
-        assert instance._dtype == expected
+        assert instance._dtype == 'int'
 
-    def test_is_valid_true_strict(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are valid
-        and the comparison is strict.
+    def test_fit_float(self):
+        """Test the ``GreaterThan.fit`` method.
 
-        If the columns satisfy the constraint, result is a series of ``True`` values.
+        The ``GreaterThan.fit`` method should only learn and store the
+        ``dtype`` of the ``high`` column as the ``_dtype`` attribute.
 
         Input:
-        - Table data, where the values of the ``low`` column are lower
-        than the values of the ``high`` column (pandas.DataFrame)
+        - Table that contains two constrained columns with the high one
+          being made of float values.
+        Side Effect:
+        - The _dtype attribute gets `float` as the value even if the low
+          column has a different dtype.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4., 5., 6.],
+            'c': [7, 8, 9]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._dtype == 'float'
+
+    def test_fit_datetime(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should only learn and store the
+        ``dtype`` of the ``high`` column as the ``_dtype`` attribute.
+
+        Input:
+        - Table that contains two constrained columns of datetimes.
+        Side Effect:
+        - The _dtype attribute gets `datetime` as the value.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+            'b': pd.to_datetime(['2020-01-02'])
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._dtype.kind == 'M'
+
+    def test_is_valid_strict_false(self):
+        """Test the ``GreaterThan.is_valid`` method with strict False.
+
+        If strict is False, equal values should count as valid
+
+        Input:
+        - Table with a strictly valid row, a strictly invalid row and
+          a row that has the same value for both high and low.
         Output:
-        - Series of ``True`` values (pandas.Series)
+        - False should be returned for the strictly invalid row and True
+          for the other two.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 2, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_strict_true(self):
+        """Test the ``GreaterThan.is_valid`` method with strict True.
+
+        If strict is True, equal values should count as invalid.
+
+        Input:
+        - Table with a strictly valid row, a strictly invalid row and
+          a row that has the same value for both high and low.
+        Output:
+        - True should be returned for the strictly valid row and False
+          for the other two.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=False)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 2, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_transform_int(self):
+        """Test the ``GreaterThan.transform`` method passing a high column of type int.
+
+        The ``GreaterThan.transform`` method is expected to compute the distance
+        between the high and low columns and replace the high column with the
+        logarithm of the distance + 1.
+
+        Input:
+        - Table with two columns two constrained columns at a constant distance of
+          exactly 3 and one additional dummy column.
+        Output:
+        - Same table with the high column transformed into the logarithms
+          of the distances + 1, which is np.log(4).
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
@@ -403,154 +511,183 @@ class TestGreaterThan():
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([True, True, True])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_false_strict(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are not valid
-        and the comparison is strict.
-
-        If the columns do not satisfy the costraint, result is a series of ``False`` values.
-
-        Input:
-        - Table data, where the values of the ``low`` column are higher or equal
-        than the values of the ``high`` column (pandas.DataFrame)
-        Output:
-        - Series of ``False`` values (pandas.Series)
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [1, 1, 1],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([False, False, False])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_true_not_strict(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are valid
-        and the comparison is not strict.
-
-        If the columns satisfy the constraint, result is a series of ``True`` values.
-
-        Input:
-        - Table data, where the values of the ``low`` column are lower or equal
-        than the values of the ``high`` column (pandas.DataFrame)
-        Output:
-        - Series of ``True`` values (pandas.Series)
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 3],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([True, True, True])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_false_not_strict(self):
-        """Test the ``GreaterThan.is_valid`` method when the column values are not valid
-        and the comparison is not strict.
-
-        If the columns do not satisfy the costraint, result is a series of ``False`` values.
-
-        Input:
-        - Table data, where the values of the ``low`` column are higher
-        than the values of the ``high`` column (pandas.DataFrame)
-        Output:
-        - Series of ``True`` values (pandas.Series)
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [0, 1, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([False, False, False])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_transform(self):
-        """Test the ``GreaterThan.transform`` method.
-
-        The ``GreaterThan.transform`` method is expected to:
-        - Transform the original table data.
-
-        Input:
-        - Table data (pandas.DataFrame)
-        Output:
-        - Table data transformed (pandas.DataFrame)
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
+            'c': [7, 8, 9],
         })
         out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [1.3862944, 1.3862944, 1.3862944]
+            'b': [np.log(4)] * 3,
+            'c': [7, 8, 9],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform(self):
-        """Test the ``GreaterThan.reverse_transform`` method.
+    def test_transform_float(self):
+        """Test the ``GreaterThan.transform`` method passing a high column of type float.
 
-        The ``GreaterThan.reverse_transform`` method is expected to:
-        - Return the original table data.
+        The ``GreaterThan.transform`` method is expected to compute the distance
+        between the high and low columns and replace the high column with the
+        logarithm of the distance + 1.
 
         Input:
-        - Table data transformed (pandas.DataFrame)
+        - Table with two constrained columns at a constant distance of
+          exactly 3 and one additional dummy column.
         Output:
-        - Table data (pandas.DataFrame)
-        Side effects:
-        - Since ``reverse_transform`` uses the class variable ``_dtype``, the ``fit`` method
-        must be called as well.
+        - Same table with the high column transformed into the logarithms
+          of the distances + 1, which is np.log(4).
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
         instance = GreaterThan(low='a', high='b', strict=True)
-        instance.fit(table_data)
 
         # Run
-        out = instance.reverse_transform(table_data)
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4., 5., 6.],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [55, 149, 405],
+            'b': [np.log(4)] * 3,
             'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_transform_datetime(self):
+        """Test the ``GreaterThan.transform`` method passing a high column of type datetime.
+
+        If the columns are of type datetime, ``transform`` is expected
+        to convert the timedelta distance into numeric before applying
+        the +1 and logarithm.
+
+        Input:
+        - Table with values at a distance of exactly 1 second.
+        Output:
+        - Same table with the high column transformed into the logarithms
+          of the dinstance in nanoseconds + 1, which is np.log(1_000_000_001).
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'c': [1, 2],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_int(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the low column
+            - convert the output to integers
+
+        Input:
+        - Table with a high column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as int.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+        instance._dtype = np.dtype('int')
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [np.log(4)] * 3,
+            'c': [7, 8, 9]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_float(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype float.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the low column
+            - convert the output to float values
+
+        Input:
+        - Table with a high column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as float values.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+        instance._dtype = np.dtype('float')
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1.1, 2.2, 3.3],
+            'b': [np.log(4)] * 3,
+            'c': [7, 8, 9]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1.1, 2.2, 3.3],
+            'b': [4.1, 5.2, 6.3],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - convert the distance to a timedelta
+            - add the low column
+            - convert the output to datetimes
+
+        Input:
+        - Table with a high column that contains the constant np.log(1_000_000_001).
+        Output:
+        - Same table with the high column replaced by the low one + one second.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+        instance._dtype = np.dtype('<M8[ns]')
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'c': [1, 2]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2]
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
