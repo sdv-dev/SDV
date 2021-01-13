@@ -95,11 +95,24 @@ class HMA1(BaseRelationalModel):
 
         return pd.DataFrame(extension_rows, index=foreign_key_values)
 
+    def _load_table(self, tables, table_name):
+        if tables:
+            table = tables[table_name].copy()
+        else:
+            table = self.metadata.load_table(table_name)
+            tables[table_name] = table
+
+        return table
+
     def _extend_table(self, table, tables, table_name):
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata.get_children(table_name):
             child_key = self.metadata.get_foreign_key(table_name, child_name)
-            child_table = self._model_table(child_name, tables, child_key)
+            if child_name not in self._models:
+                child_table = self._model_table(child_name, tables)
+            else:
+                child_table = tables[child_name]
+
             extension = self._get_extension(child_name, child_table, child_key)
             table = table.merge(extension, how='left', right_index=True, left_index=True)
             table['__' + child_name + '__num_rows'].fillna(0, inplace=True)
@@ -116,6 +129,12 @@ class HMA1(BaseRelationalModel):
             table_meta['primary_key'] = None
             del table_meta['fields'][primary_key]
 
+        keys = {}
+        for name, field in list(fields.items()):
+            if field['type'] == 'id':
+                keys[name] = table_data.pop(name).values
+                del fields[name]
+
         for column in table_data.columns:
             if column not in fields:
                 fields[column] = {
@@ -131,9 +150,9 @@ class HMA1(BaseRelationalModel):
 
                 table_data[column] = table_data[column].fillna(fill_value)
 
-        return table_meta
+        return table_meta, keys
 
-    def _model_table(self, table_name, tables, foreign_key=None):
+    def _model_table(self, table_name, tables):
         """Model the indicated table and its children.
 
         Args:
@@ -141,9 +160,6 @@ class HMA1(BaseRelationalModel):
                 Name of the table to model.
             tables (dict):
                 Dict of original tables.
-            foreign_key (str):
-                Name of the foreign key that references this table. Used only when modeling
-                a child table.
 
         Returns:
             pandas.DataFrame:
@@ -151,11 +167,7 @@ class HMA1(BaseRelationalModel):
         """
         LOGGER.info('Modeling %s', table_name)
 
-        if tables:
-            table = tables[table_name].copy()
-        else:
-            table = self.metadata.load_table(table_name)
-
+        table = self._load_table(tables, table_name)
         self._table_sizes[table_name] = len(table)
 
         primary_key = self.metadata.get_primary_key(table_name)
@@ -163,11 +175,7 @@ class HMA1(BaseRelationalModel):
             table = table.set_index(primary_key)
             table = self._extend_table(table, tables, table_name)
 
-        table_meta = self._prepare_for_modeling(table, table_name, primary_key)
-
-        if foreign_key:
-            foreign_key_values = table.pop(foreign_key).values
-            del table_meta['fields'][foreign_key]
+        table_meta, keys = self._prepare_for_modeling(table, table_name, primary_key)
 
         LOGGER.info('Fitting %s for table %s; shape: %s', self._model.__name__,
                     table_name, table.shape)
@@ -178,8 +186,10 @@ class HMA1(BaseRelationalModel):
         if primary_key:
             table.reset_index(inplace=True)
 
-        if foreign_key:
-            table[foreign_key] = foreign_key_values
+        for name, values in keys.items():
+            table[name] = values
+
+        tables[table_name] = table
 
         return table
 
@@ -193,6 +203,10 @@ class HMA1(BaseRelationalModel):
                 indicated in ``metadata``. Defaults to ``None``.
         """
         self.metadata.validate(tables)
+        if tables:
+            tables = tables.copy()
+        else:
+            tables = {}
 
         for table_name in self.metadata.get_tables():
             if not self.metadata.get_parents(table_name):
@@ -274,12 +288,11 @@ class HMA1(BaseRelationalModel):
         return sampled
 
     def _sample_children(self, table_name, sampled_data, table_rows=None):
-        if table_rows is None:
-            table_rows = sampled_data[table_name]
-
         for child_name in self.metadata.get_children(table_name):
-            for _, row in table_rows.iterrows():
-                self._sample_child_rows(child_name, table_name, row, sampled_data)
+            if child_name not in sampled_data:
+                LOGGER.info('Sampling rows from child table %s', child_name)
+                for _, row in table_rows.iterrows():
+                    self._sample_child_rows(child_name, table_name, row, sampled_data)
 
     def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
         parameters = self._extract_parameters(parent_row, table_name)
@@ -354,24 +367,24 @@ class HMA1(BaseRelationalModel):
         likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 
-    def _sample_table(self, table_name, num_rows=None, sample_children=True):
+    def _sample_table(self, table_name, num_rows=None, sample_children=True, sampled_data=None):
         """Sample a single table and optionally its children."""
+        if sampled_data is None:
+            sampled_data = {}
+
         if num_rows is None:
             num_rows = self._table_sizes[table_name]
 
+        LOGGER.info('Sampling %s rows from table %s', num_rows, table_name)
+
         model = self._models[table_name]
         table_rows = self._sample_rows(model, table_name, num_rows)
+        sampled_data[table_name] = table_rows
 
         if sample_children:
-            sampled_data = {
-                table_name: table_rows
-            }
+            self._sample_children(table_name, sampled_data, table_rows)
 
-            self._sample_children(table_name, sampled_data)
-            return self._finalize(sampled_data)
-
-        else:
-            return self._finalize({table_name: table_rows})[table_name]
+        return sampled_data
 
     def _sample(self, table_name=None, num_rows=None, sample_children=True):
         """Sample the entire dataset.
@@ -400,12 +413,16 @@ class HMA1(BaseRelationalModel):
                 A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
         if table_name:
-            return self._sample_table(table_name, num_rows, sample_children)
+            sampled_data = self._sample_table(table_name, num_rows, sample_children)
+            sampled_data = self._finalize(sampled_data)
+            if sample_children:
+                return sampled_data
+
+            return sampled_data[table_name]
 
         sampled_data = dict()
         for table in self.metadata.get_tables():
             if not self.metadata.get_parents(table):
-                sampled = self._sample_table(table, num_rows)
-                sampled_data.update(sampled)
+                self._sample_table(table, num_rows, sampled_data=sampled_data)
 
-        return sampled_data
+        return self._finalize(sampled_data)
