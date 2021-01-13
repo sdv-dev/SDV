@@ -105,6 +105,6 @@ jobs:
         pip install 'torch>=1,<2' -f https://download.pytorch.org/whl/torch_stable.html
         choco install graphviz
     - name: Install package and dependencies
-      run: pip install invoke jupyter .[ctgan]
+      run: pip install invoke jupyter .
     - name: invoke tutorials
       run: invoke tutorials

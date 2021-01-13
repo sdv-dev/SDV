@@ -1,5 +1,34 @@
 # Release Notes
 
+## 0.6.1 - 2020-12-31
+
+SDMetrics version is updated to include the new Time Series metrics, which have also
+been added to the API Reference and User Guides documentation. Additionally,
+a few code has been refactored to reduce external dependencies and a few minor bugs
+related to single table constraints have been fixed
+
+## Issues resolved:
+
+* Add timeseries metrics and user guides - [Issue #289](https://github.com/sdv-dev/SDV/issues/289) by @csala
+* Add functions to generate regex ids - [Issue #288](https://github.com/sdv-dev/SDV/issues/288) by @csala
+* Saving a fitted tabular model with UniqueCombinations constraint raises PicklingError -
+  [Issue #286](https://github.com/sdv-dev/SDV/issues/288) by @csala
+* Constraints: `handling_strategy='reject_sampling'` causes `'ZeroDivisionError: division by zero'` -
+  [Issue #285](https://github.com/sdv-dev/SDV/issues/285) by @csala
+
+## 0.6.0 - 2020-12-22
+
+This release updates to the latest CTGAN, RDT and SDMetrics libraries to introduce a
+new TVAE model, multiple new metrics for single table and multi table, and fixes
+issues in the re-creation of tabular models from a metadata dict.
+
+## Issues resolved:
+
+* Upgrade to SDMetrics v0.1.0 and add `sdv.metrics` module - [Issue #281](https://github.com/sdv-dev/SDV/issues/281) by @csala
+* Upgrade to CTGAN 0.3.0 and add TVAE model - [Issue #278](https://github.com/sdv-dev/SDV/issues/278) by @fealho
+* Add `dtype_transformers` to `Table.from_dict` - [Issue #276](https://github.com/sdv-dev/SDV/issues/276) by @csala
+* Fix Metadata `from_dict` behavior - [Issue #275](https://github.com/sdv-dev/SDV/issues/275) by @csala
+
 ## 0.5.0 - 2020-11-25
 
 This version updates the dependencies and makes a few internal changes in order

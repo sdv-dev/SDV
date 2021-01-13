@@ -1,17 +1,12 @@
-.. _evaluation:
+.. _evaluation_framework:
 
-Evaluating Synthetic Data
-=========================
+Evaluation Framework
+====================
 
-A very common question when someone starts using **SDV** to generate
-synthetic data is: *"How good is the data that I just generated?"*
-
-In order to answer this question, **SDV** has a collection of metrics
-and tools that allow you to compare the *real* that you provided and the
-*synthetic* data that you generated using **SDV** or any other tool.
-
-In this guide we will show you how to perform this evaluation and how to
-explore the different metrics that exist.
+**SDV** contains a *Synthetic Data Evaluation Framework* that facilitates
+the task of evaluating the quality of your *Synthetic Dataset* by
+applying multiple *Synthetic Data Metrics* on it and reporting results
+in a comprehensive way.
 
 Using the SDV Evaluation Framework
 ----------------------------------
@@ -21,7 +16,6 @@ To evaluate the quality of synthetic data we essentially need two things:
 
 Let us start by loading a demo table and generate a synthetic replica of
 it using the ``GaussianCopula`` model.
-
 
 .. ipython:: python
     :okwarning:
@@ -45,10 +39,6 @@ After the previous steps we will have two tables:
     real_data.head()
 
 
-
-
-
-
 -  ``synthetic_data``: A synthetically generated table that contains
    data in the same format and with similar statistical properties as
    the ``real_data``.
@@ -57,10 +47,6 @@ After the previous steps we will have two tables:
     :okwarning:
 
     synthetic_data.head()
-
-
-
-
 
 
 .. note:: For more details about this process, please visit the :ref:`gaussian_copula` guide.
@@ -78,10 +64,6 @@ The simplest way to see how similar the two tables are is to import the
     from sdv.evaluation import evaluate
     
     evaluate(synthetic_data, real_data)
-
-
-
-
 
 
 The output of this function call will be a number between 0 and 1 that
@@ -108,10 +90,6 @@ of the metrics functions returned:
     evaluate(synthetic_data, real_data, aggregate=False)
 
 
-
-
-
-
 Can I control which metrics are applied?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -120,17 +98,13 @@ are included within the SDV Evaluation framework. However, the list of
 metrics that are applied can be controlled by passing a list with the
 names of the metrics that you want to apply.
 
-For example, if you were interested on obtaining only the ``cstest`` and
-``kstest`` metrics you can call the ``evaluate`` function as follows:
+For example, if you were interested on obtaining only the ``CSTest`` and
+``KSTest`` metrics you can call the ``evaluate`` function as follows:
 
 .. ipython:: python
     :okwarning:
 
-    evaluate(synthetic_data, real_data, metrics=['cstest', 'kstest'])
-
-
-
-
+    evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'])
 
 
 Or, if we want to see the scores separately:
@@ -138,32 +112,8 @@ Or, if we want to see the scores separately:
 .. ipython:: python
     :okwarning:
 
-    evaluate(synthetic_data, real_data, metrics=['cstest', 'kstest'], aggregate=False)
+    evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
 
 
-
-
-
-
-The complete list of possible metrics is:
-
--  ``cstest``: This metric compares the distributions of all the
-   categorical columns of the table by using a Chi-squared test and
-   returns the average of the ``p-values`` obtained across all the
-   columns. If the tables that you are evaluating do not contain any
-   categorical columns the result will be ``nan``.
--  ``kstest``: This metric compares the distributions of all the
-   numerical columns of the table with a two-sample Kolmogorov–Smirnov
-   test using the empirical CDF and returns the average of the
-   ``p-values`` obtained across all the columns. If the tables that you
-   are evaluating do not contain any numerical columns the result will
-   be ``nan``.
--  ``logistic_detection``: This metric tries to use a Logistic
-   Regression classifier to detect whether each row is real or synthetic
-   and then evaluates its performance using an Area under the ROC curve
-   metric. The returned score is 1 minus the ROC AUC score obtained
-   by the classifier.
--  ``svc_detection``: This metric tries to use an Support Vector
-   Classifier to detect whether each row is real or synthetic and then
-   evaluates its performance using an Area under the ROC curve metric.
-   The returned score is 1 minus the ROC AUC score obtained by the classifier.
+For more details about all the metrix that exist for the different data modalities
+please check the corresponding guides.

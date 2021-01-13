@@ -67,6 +67,7 @@ docs/_build/
 docs/api/
 docs/tutorials/
 docs/api_reference/api
+docs/api_reference/metrics/api
 
 # PyBuilder
 target/

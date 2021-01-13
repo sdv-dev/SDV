@@ -1,0 +1,43 @@
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+    {% set nav = get_nav_object(maxdepth=4, collapse=True) %}
+    <ul class="nav bd-sidenav">
+        {% for main_nav_item in nav %}
+        {% if main_nav_item.active %}
+          {% for nav_item in main_nav_item.children %}
+            {% if nav_item.children %}
+                <li class="{% if nav_item.active%}active{% endif %}">
+                    <a href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+                    <ul>
+                    {% for nav_child in nav_item.children %}
+                        {% if nav_child.children %}
+                            <li class="{% if nav_child.active%}active{% endif %}">
+                                <a href="{{ nav_child.url }}">{{ nav_child.title }}</a>
+                                <ul>
+                                {% for nav_grandchild in nav_child.children %}
+                                    <li class="{% if nav_grandchild.active%}active{% endif %}">
+                                        <a href="{{ nav_grandchild.url }}">{{ nav_grandchild.title }}</a>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="{% if nav_child.active%}active{% endif %}">
+                                <a href="{{ nav_child.url }}">{{ nav_child.title }}</a>
+                            </li>
+                        {% endif %}
+
+                    {% endfor %}
+                    </ul>
+                </li>
+            {% else %}
+                <li class="{% if nav_item.active%}active{% endif %}">
+                    <a href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+                </li>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% endfor %}
+      </ul>
+  
+  </nav>

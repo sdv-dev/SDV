@@ -1,6 +1,8 @@
 <p align="left">
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
-<i>An open source project from Data to AI Lab at MIT.</i>
+  <a href="https://dai.lids.mit.edu">
+    <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
+  </a>
+  <i>An Open Source Project from the <a href="https://dai.lids.mit.edu">Data to AI Lab, at MIT</a></i>
 </p>
 
 [![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
@@ -11,16 +13,15 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 [![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
 
-<p>
-  <img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
-</p>
+<img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
 
+* Website: https://sdv.dev
+* Documentation: https://sdv.dev/SDV
+    * [User Guides](https://sdv.dev/SDV/user_guides/index.html)
+    * [Developer Guides](https://sdv.dev/SDV/developer_guides/index.html)
+* Github: https://github.com/sdv-dev/SDV
 * License: [MIT](https://github.com/sdv-dev/SDV/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
-* Documentation: https://sdv-dev.github.io/SDV
-    * [User Guides](https://sdv-dev.github.io/SDV/user_guides/index.html)
-    * [Developer Guides](https://sdv-dev.github.io/SDV/developer_guides/index.html)
-* Homepage: https://github.com/sdv-dev/SDV
 
 ## Overview
 
@@ -43,23 +44,23 @@ hierarchical generative modeling and recursive sampling techniques.
 ### Current functionality and features:
 
 * Synthetic data generators for [single tables](
-  https://sdv-dev.github.io/SDV/user_guides/single_table/index.html) with the following
+  https://sdv.dev/SDV/user_guides/single_table/index.html) with the following
   features:
-    * Using [Copulas](https://sdv-dev.github.io/SDV/user_guides/single_table/gaussian_copula.html)
-      and [Deep Learning](https://sdv-dev.github.io/SDV/user_guides/single_table/ctgan.html)
+    * Using [Copulas](https://sdv.dev/SDV/user_guides/single_table/gaussian_copula.html)
+      and [Deep Learning](https://sdv.dev/SDV/user_guides/single_table/ctgan.html)
       based models.
     * Handling of multiple data types and missing data with minimum user input.
     * Support for [pre-defined and custom constraints](
-      https://sdv-dev.github.io/SDV/user_guides/single_table/constraints.html) and data validation.
+      https://sdv.dev/SDV/user_guides/single_table/constraints.html) and data validation.
 * Synthetic data generators for [complex multi-table, relational datasets](
-  https://sdv-dev.github.io/SDV/user_guides/relational/index.html) with the following
+  https://sdv.dev/SDV/user_guides/relational/index.html) with the following
   features:
     * Definition of entire [multi-table datasets metadata](
-      https://sdv-dev.github.io/SDV/user_guides/relational/relational_metadata.html) with a custom and
-      flexible [JSON schema](https://sdv-dev.github.io/SDV/developer_guides/sdv/metadata.html).
+      https://sdv.dev/SDV/user_guides/relational/relational_metadata.html) with a custom and
+      flexible [JSON schema](https://sdv.dev/SDV/developer_guides/sdv/metadata.html).
     * Using Copulas and recursive modeling techniques.
 * Synthetic data generators for [multi-type, multi-variate timeseries](
-  https://sdv-dev.github.io/SDV/user_guides/timeseries/index.html) with the following features:
+  https://sdv.dev/SDV/user_guides/timeseries/index.html) with the following features:
     * Using statistical, Autoregressive and Deep Learning models.
     * Conditional sampling based on contextual attributes.
 
@@ -79,44 +80,20 @@ our Slack Workspace!
 
 # Install
 
-## Requirements
-
-**SDV** has been tested and is supported on **GNU/Linux**, **macOS** and **Windows** systems running
-[Python 3.6, 3.7 and 3.8](https://www.python.org/downloads).
-
-Also, although it is not strictly required, the usage of a
-[virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
-having conflicts with other software installed in the system where **SDV** is run.
-
-## Install with pip
-
-The easiest and recommended way to install **SDV** is using [pip](https://pip.pypa.io/en/stable/):
+**Using `pip`:**
 
 ```bash
 pip install sdv
 ```
 
-This will pull and install the latest stable release from [PyPI](https://pypi.org/).
-
-> :warning: **NOTE**: When installing on windows systems pip may complain about not being able to
-find a valid version for PyTorch. In this case, please install PyTorch manually following
-[the PyTorch installation instructions](https://pytorch.org/get-started/locally/) and retry
-installing SDV again afterwards.
-
-## Install with conda
-
-**SDV** can also be installed using [conda](https://docs.conda.io/en/latest/):
+**Using `conda`:**
 
 ```bash
-conda install -c sdv-dev -c pytorch -c conda-forge sdv
+conda install -c sdv-dev -c conda-forge sdv
 ```
 
-This will pull and install the latest stable release from [Anaconda](https://anaconda.org/).
-
-## Development
-
-If you want to install from the source or contribute to the project please read the
-[Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html).
+For more installation options please visit the [SDV installation Guide](
+https://sdv.dev/SDV/getting_started/install.html)
 
 # Quickstart
 
@@ -145,7 +122,7 @@ This will return two objects:
 1. A `Metadata` object with all the information that **SDV** needs to know about the dataset.
 
 For more details about how to build the `Metadata` for your own dataset, please refer to the
-[Working with Metadata](https://sdv-dev.github.io/SDV/tutorials/04_Working_with_Metadata.html)
+[Working with Metadata](https://sdv.dev/SDV/user_guides/relational/relational_metadata.html)
 tutorial.
 
 2. A dictionary containing three `pandas.DataFrames` with the tables described in the
@@ -248,12 +225,12 @@ https://github.com/sdv-dev/SDMetrics) library.
 1. If you would like to see more usage examples, please have a look at the [tutorials folder](
    https://github.com/sdv-dev/SDV/tree/master/tutorials) of the repository. Please contact us
    if you have a usage example that you would want to share with the community.
-2. Please have a look at the [Contributing Guide](https://sdv-dev.github.io/SDV/developer_guides/contributing.html)
+2. Please have a look at the [Contributing Guide](https://sdv.dev/SDV/developer_guides/contributing.html)
    to see how you can contribute to the project.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
    https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
    https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
-4. Also, do not forget to check the [project documentation site](https://sdv-dev.github.io/SDV/)!
+4. Also, do not forget to check the [project documentation site](https://sdv.dev/SDV/)!
 
 # Citation
 

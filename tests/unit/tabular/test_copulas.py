@@ -80,7 +80,7 @@ class TestGaussianCopula:
         }
 
     def test___init__metadata_dict(self):
-        """Test ``__init__`` without passing a table_metadata dict.
+        """Test ``__init__`` passing a table_metadata dict.
 
         In this case, metadata will be loaded from the dict and passed
         to the parent.
@@ -96,6 +96,7 @@ class TestGaussianCopula:
             - metadata is created with the right values
         """
         table_metadata = {
+            'name': 'test',
             'fields': {
                 'a_field': {
                     'type': 'categorical'
@@ -122,6 +123,7 @@ class TestGaussianCopula:
 
         metadata = gc._metadata.to_dict()
         assert metadata == {
+            'name': 'test',
             'fields': {
                 'a_field': {
                     'type': 'categorical'
@@ -137,11 +139,10 @@ class TestGaussianCopula:
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
-            'name': None,
             'primary_key': None,
             'sequence_index': None,
-            'entity_columns': None,
-            'context_columns': None,
+            'entity_columns': [],
+            'context_columns': [],
         }
 
     def test__update_metadata(self):

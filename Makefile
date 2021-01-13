@@ -94,7 +94,6 @@ lint-sdv: ## check style with flake8 and isort
 	flake8 sdv
 	isort -c --recursive sdv
 	pydocstyle sdv
-	# pylint sdv --rcfile=setup.cfg
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
@@ -156,7 +155,7 @@ view-docs: ## view the docs in a browser
 	$(BROWSER) docs/_build/html/index.html
 
 .PHONY: serve-docs
-serve-docs: view-docs ## compile the docs watching for changes
+serve-docs: ## compile the docs watching for changes
 	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' docs
 
 
