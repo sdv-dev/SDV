@@ -383,7 +383,7 @@ class TestGreaterThan():
         instance.fit(table_data)
 
         # Asserts
-        assert instance._dtype == 'int'
+        assert instance._dtype.kind == 'i'
 
     def test_fit_float(self):
         """Test the ``GreaterThan.fit`` method.
@@ -410,7 +410,7 @@ class TestGreaterThan():
         instance.fit(table_data)
 
         # Asserts
-        assert instance._dtype == 'float'
+        assert instance._dtype.kind == 'f'
 
     def test_fit_datetime(self):
         """Test the ``GreaterThan.fit`` method.
