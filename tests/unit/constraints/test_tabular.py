@@ -604,7 +604,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
-        instance._dtype = np.dtype('int')
+        instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
 
         # Run
         transformed = pd.DataFrame({
