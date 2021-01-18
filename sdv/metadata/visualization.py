@@ -56,8 +56,8 @@ def _add_nodes(metadata, digraph):
 
         parents = metadata.get_parents(table)
         for parent in parents:
-            foreign_key = metadata.get_foreign_key(parent, table)
-            extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
+            for foreign_key in metadata.get_foreign_keys(parent, table):
+                extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
 
         path = metadata.get_table_meta(table).get('path')
         if path is not None:
@@ -80,13 +80,17 @@ def _add_edges(metadata, digraph):
     """
     for table in metadata.get_tables():
         for parent in list(metadata.get_parents(table)):
+            label = '\n'.join([
+                '   {}.{} -> {}.{}'.format(
+                    table, foreign_key,
+                    parent, metadata.get_primary_key(parent)
+                )
+                for foreign_key in metadata.get_foreign_keys(parent, table)
+            ])
             digraph.edge(
                 parent,
                 table,
-                label='   {}.{} -> {}.{}'.format(
-                    table, metadata.get_foreign_key(parent, table),
-                    parent, metadata.get_primary_key(parent)
-                ),
+                label=label,
                 arrowhead='oinv'
             )
 

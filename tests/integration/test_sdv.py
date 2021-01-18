@@ -1,4 +1,5 @@
 from sdv import SDV, load_demo
+from tests.integration import datasets
 
 
 def test_sdv():
@@ -70,6 +71,24 @@ def test_sdv_multiparent():
 
     assert character_families.shape == tables['character_families'].shape
     assert set(character_families.columns) == set(tables['character_families'].columns)
+
+
+def test_sdv_multi_foreign_key():
+    """Ensure multi-foreign-key datasets are properly covered.
+
+    Multi-foreign-key datasets are those that have one table with
+    2 foreign keys to the same parent.
+    """
+    metadata, tables = datasets.load_multi_foreign_key()
+
+    sdv = SDV()
+    sdv.fit(metadata, tables)
+
+    # Sample all
+    sampled = sdv.sample()
+
+    assert set(sampled.keys()) == {'parent', 'child'}
+    assert len(sampled['parent']) == 10
 
 
 def test_integer_categoricals():

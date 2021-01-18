@@ -590,27 +590,45 @@ class TestMetadata(TestCase):
         assert result == 'a_primary_key'
         metadata.get_table_meta.assert_called_once_with('test')
 
-    def test_get_foreign_key(self):
+    def test_get_foreign_keys(self):
         """Test get foreign key"""
         # Setup
-        fields = {
-            'a_field': {
-                'ref': {
-                    'table': 'parent',
-                    'field': 'a_primary_key'
+        metadata = Metadata({
+            'tables': {
+                'parent': {
+                    'fields': {
+                        'parent_id': {
+                            'type': 'id',
+                        }
+                    },
+                    'primary_key': 'parent_id'
                 },
-                'name': 'a_field'
+                'child': {
+                    'fields': {
+                        'parent_id': {
+                            'type': 'id',
+                            'ref': {
+                                'table': 'parent',
+                                'field': 'id'
+                            }
+                        },
+                        'parent_id_2': {
+                            'type': 'id',
+                            'ref': {
+                                'table': 'parent',
+                                'field': 'id'
+                            }
+                        },
+                    }
+                }
             }
-        }
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_fields.return_value = fields
+        })
 
         # Run
-        result = Metadata.get_foreign_key(metadata, 'parent', 'child')
+        result = Metadata.get_foreign_keys(metadata, 'parent', 'child')
 
         # Asserts
-        assert result == 'a_field'
-        metadata.get_fields.assert_called_once_with('child')
+        assert result == ['parent_id', 'parent_id_2']
 
     def test_reverse_transform(self):
         """Test reverse transform"""

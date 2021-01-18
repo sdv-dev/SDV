@@ -90,7 +90,7 @@ class HMA1(BaseRelationalModel):
             model.fit(child_rows.reset_index(drop=True))
             row = model.get_parameters()
             row = pd.Series(row)
-            row.index = '__' + child_name + '__' + row.index
+            row.index = f'__{child_name}__{foreign_key}__' + row.index
             extension_rows.append(row)
 
         return pd.DataFrame(extension_rows, index=foreign_key_values)
@@ -107,15 +107,16 @@ class HMA1(BaseRelationalModel):
     def _extend_table(self, table, tables, table_name):
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata.get_children(table_name):
-            child_key = self.metadata.get_foreign_key(table_name, child_name)
             if child_name not in self._models:
                 child_table = self._model_table(child_name, tables)
             else:
                 child_table = tables[child_name]
 
-            extension = self._get_extension(child_name, child_table, child_key)
-            table = table.merge(extension, how='left', right_index=True, left_index=True)
-            table['__' + child_name + '__num_rows'].fillna(0, inplace=True)
+            foreign_keys = self.metadata.get_foreign_keys(table_name, child_name)
+            for index, foreign_key in enumerate(foreign_keys):
+                extension = self._get_extension(child_name, child_table, foreign_key)
+                table = table.merge(extension, how='left', right_index=True, left_index=True)
+                table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0, inplace=True)
 
         return table
 
@@ -238,18 +239,22 @@ class HMA1(BaseRelationalModel):
             parents = self.metadata.get_parents(table_name)
             if parents:
                 for parent_name in parents:
-                    foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
-                    if foreign_key not in table_rows:
-                        parent_ids = self._find_parent_ids(table_name, parent_name, sampled_data)
-                        table_rows[foreign_key] = parent_ids
+                    foreign_keys = self.metadata.get_foreign_keys(parent_name, table_name)
+                    for foreign_key in foreign_keys:
+                        if foreign_key not in table_rows:
+                            parent_ids = self._find_parent_ids(
+                                table_name, parent_name, foreign_key, sampled_data)
+                            table_rows[foreign_key] = parent_ids
 
-            fields = self.metadata.get_fields(table_name)
+            dtypes = self.metadata.get_dtypes(table_name, ids=True)
+            for name, dtype in dtypes.items():
+                table_rows[name] = table_rows[name].dropna().astype(dtype)
 
-            final_data[table_name] = table_rows[list(fields.keys())]
+            final_data[table_name] = table_rows[list(dtypes.keys())]
 
         return final_data
 
-    def _extract_parameters(self, parent_row, table_name):
+    def _extract_parameters(self, parent_row, table_name, foreign_key):
         """Get the params from a generated parent row.
 
         Args:
@@ -257,8 +262,11 @@ class HMA1(BaseRelationalModel):
                 A generated parent row.
             table_name (str):
                 Name of the table to make the model for.
+            foreign_key (str):
+                Name of the foreign key used to form this
+                parent child relationship.
         """
-        prefix = '__{}__'.format(table_name)
+        prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys]
@@ -295,7 +303,8 @@ class HMA1(BaseRelationalModel):
                     self._sample_child_rows(child_name, table_name, row, sampled_data)
 
     def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
-        parameters = self._extract_parameters(parent_row, table_name)
+        foreign_key = self.metadata.get_foreign_keys(parent_name, table_name)[0]
+        parameters = self._extract_parameters(parent_row, table_name, foreign_key)
 
         table_meta = self._models[table_name].get_metadata()
         model = self._model(table_metadata=table_meta)
@@ -304,7 +313,6 @@ class HMA1(BaseRelationalModel):
         table_rows = self._sample_rows(model, table_name)
         if not table_rows.empty:
             parent_key = self.metadata.get_primary_key(parent_name)
-            foreign_key = self.metadata.get_foreign_key(parent_name, table_name)
             table_rows[foreign_key] = parent_row[parent_key]
 
             previous = sampled_data.get(table_name)
@@ -336,10 +344,10 @@ class HMA1(BaseRelationalModel):
 
         return np.random.choice(likelihoods.index, p=weights)
 
-    def _get_likelihoods(self, table_rows, parent_rows, table_name):
+    def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         likelihoods = dict()
         for parent_id, row in parent_rows.iterrows():
-            parameters = self._extract_parameters(row, table_name)
+            parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._models[table_name].get_metadata()
             model = self._model(table_metadata=table_meta)
             model.set_parameters(parameters)
@@ -350,7 +358,7 @@ class HMA1(BaseRelationalModel):
 
         return pd.DataFrame(likelihoods, index=table_rows.index)
 
-    def _find_parent_ids(self, table_name, parent_name, sampled_data):
+    def _find_parent_ids(self, table_name, parent_name, foreign_key, sampled_data):
         table_rows = sampled_data[table_name]
         if parent_name in sampled_data:
             parent_rows = sampled_data[parent_name]
@@ -362,9 +370,9 @@ class HMA1(BaseRelationalModel):
 
         primary_key = self.metadata.get_primary_key(parent_name)
         parent_rows = parent_rows.set_index(primary_key)
-        num_rows = parent_rows['__' + table_name + '__num_rows'].fillna(0).clip(0)
+        num_rows = parent_rows[f'__{table_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
 
-        likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name)
+        likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name, foreign_key)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 
     def _sample_table(self, table_name, num_rows=None, sample_children=True, sampled_data=None):
