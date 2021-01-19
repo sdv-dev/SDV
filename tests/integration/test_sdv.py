@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from sdv import SDV, load_demo
 from tests.integration import datasets
 
@@ -107,5 +109,6 @@ def test_integer_categoricals():
     sdv.fit(metadata, tables)
     sampled = sdv.sample()
 
+    kind = attrgetter('kind')
     for name, table in tables.items():
-        assert (sampled[name].dtypes == table.dtypes).all()
+        assert (sampled[name].dtypes.apply(kind) == table.dtypes.apply(kind)).all()
