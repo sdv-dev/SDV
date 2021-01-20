@@ -54,7 +54,7 @@ def test__add_nodes():
 
     metadata.get_primary_key.return_value = 'b_field'
     metadata.get_parents.return_value = set(['other'])
-    metadata.get_foreign_key.return_value = 'c_field'
+    metadata.get_foreign_keys.return_value = ['c_field']
 
     metadata.get_table_meta.return_value = {'path': None}
 
@@ -72,7 +72,7 @@ def test__add_nodes():
     metadata.get_primary_key.assert_called_once_with('demo')
     metadata.get_parents.assert_called_once_with('demo')
     metadata.get_table_meta.assert_called_once_with('demo')
-    metadata.get_foreign_key.assert_called_once_with('other', 'demo')
+    metadata.get_foreign_keys.assert_called_once_with('other', 'demo')
     metadata.get_table_meta.assert_called_once_with('demo')
 
     plot.node.assert_called_once_with('demo', label=expected_node_label)
@@ -86,7 +86,7 @@ def test__add_edges():
     metadata.get_tables.return_value = ['demo', 'other']
     metadata.get_parents.side_effect = [set(['other']), set()]
 
-    metadata.get_foreign_key.return_value = 'fk'
+    metadata.get_foreign_keys.return_value = ['fk']
     metadata.get_primary_key.return_value = 'pk'
 
     plot = Mock()
@@ -98,7 +98,7 @@ def test__add_edges():
     expected_edge_label = '   {}.{} -> {}.{}'.format('demo', 'fk', 'other', 'pk')
 
     metadata.get_tables.assert_called_once_with()
-    metadata.get_foreign_key.assert_called_once_with('other', 'demo')
+    metadata.get_foreign_keys.assert_called_once_with('other', 'demo')
     metadata.get_primary_key.assert_called_once_with('other')
     assert metadata.get_parents.call_args_list == [call('demo'), call('other')]
 

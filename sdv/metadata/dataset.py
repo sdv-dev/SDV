@@ -299,10 +299,10 @@ class Metadata:
         """
         return self.get_table_meta(table_name).get('primary_key')
 
-    def get_foreign_key(self, parent, child):
-        """Get the name of the field in the child that is a foreign key to parent.
+    def get_foreign_keys(self, parent, child):
+        """Get the name of all the fields in the child that are foreign keys to this parent.
 
-        If there is no relationship between the two tables, a ``ValueError`` is raised.
+        If there is no relationship between the two tables an empty list is returned.
 
         Args:
             parent (str):
@@ -311,19 +311,16 @@ class Metadata:
                 Name of the child table.
 
         Returns:
-            str or None:
-                Foreign key field name.
-
-        Raises:
-            ValueError:
-                If the relationship does not exist.
+            list[str]:
+                List of foreign key names.
         """
+        foreign_keys = []
         for name, field in self.get_fields(child).items():
             ref = field.get('ref')
             if ref and ref['table'] == parent:
-                return name
+                foreign_keys.append(name)
 
-        raise ValueError('{} is not parent of {}'.format(parent, child))
+        return foreign_keys
 
     def load_table(self, table_name):
         """Load the data of the indicated table as a DataFrame.
@@ -396,7 +393,7 @@ class Metadata:
             if ids and field_type == 'id':
                 if (name != table_meta.get('primary_key')) and not field.get('ref'):
                     for child_table in self.get_children(table_name):
-                        if name == self.get_foreign_key(table_name, child_table):
+                        if name in self.get_foreign_keys(table_name, child_table):
                             break
 
             if ids or (field_type != 'id'):
@@ -967,11 +964,12 @@ class Metadata:
         tables = self.get_tables()
         relationships = [
             '    {}.{} -> {}.{}'.format(
-                table, self.get_foreign_key(parent, table),
+                table, foreign_key,
                 parent, self.get_primary_key(parent)
             )
             for table in tables
             for parent in list(self.get_parents(table))
+            for foreign_key in self.get_foreign_keys(parent, table)
         ]
 
         return (
