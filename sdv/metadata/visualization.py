@@ -23,7 +23,7 @@ def _get_graphviz_extension(path):
     return None, None
 
 
-def _add_nodes(metadata, digraph):
+def _add_nodes(metadata, digraph, names):
     """Add nodes into a `graphviz.Digraph`.
 
     Each node represent a metadata table.
@@ -35,42 +35,45 @@ def _add_nodes(metadata, digraph):
             graphviz.Digraph being built
     """
     for table in metadata.get_tables():
-        # Append table fields
-        fields = []
+        if names:
+            # Append table fields
+            fields = []
 
-        for name, value in metadata.get_fields(table).items():
-            if value.get('subtype') is not None:
-                fields.append('{} : {} - {}'.format(name, value['type'], value['subtype']))
+            for name, value in metadata.get_fields(table).items():
+                if value.get('subtype') is not None:
+                    fields.append('{} : {} - {}'.format(name, value['type'], value['subtype']))
+                else:
+                    fields.append('{} : {}'.format(name, value['type']))
 
-            else:
-                fields.append('{} : {}'.format(name, value['type']))
+            fields = r'\l'.join(fields)
 
-        fields = r'\l'.join(fields)
+            # Append table extra information
+            extras = []
 
-        # Append table extra information
-        extras = []
+            primary_key = metadata.get_primary_key(table)
+            if primary_key is not None:
+                extras.append('Primary key: {}'.format(primary_key))
 
-        primary_key = metadata.get_primary_key(table)
-        if primary_key is not None:
-            extras.append('Primary key: {}'.format(primary_key))
+            parents = metadata.get_parents(table)
+            for parent in parents:
+                for foreign_key in metadata.get_foreign_keys(parent, table):
+                    extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
 
-        parents = metadata.get_parents(table)
-        for parent in parents:
-            for foreign_key in metadata.get_foreign_keys(parent, table):
-                extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
+            path = metadata.get_table_meta(table).get('path')
+            if path is not None:
+                extras.append('Data path: {}'.format(path))
 
-        path = metadata.get_table_meta(table).get('path')
-        if path is not None:
-            extras.append('Data path: {}'.format(path))
+            extras = r'\l'.join(extras)
 
-        extras = r'\l'.join(extras)
+            # Add table node
+            title = r'{{{}|{}\l|{}\l}}'.format(table, fields, extras)
+        else:
+            title = ''
 
-        # Add table node
-        title = r'{{{}|{}\l|{}\l}}'.format(table, fields, extras)
         digraph.node(table, label=title)
 
 
-def _add_edges(metadata, digraph):
+def _add_edges(metadata, digraph, names):
     """Add edges into a `graphviz.Digraph`.
 
     Each edge represents a relationship between two metadata tables.
@@ -80,22 +83,26 @@ def _add_edges(metadata, digraph):
     """
     for table in metadata.get_tables():
         for parent in list(metadata.get_parents(table)):
-            label = '\n'.join([
-                '   {}.{} -> {}.{}'.format(
-                    table, foreign_key,
-                    parent, metadata.get_primary_key(parent)
+            if names:
+                label = '\n'.join([
+                    '   {}.{} > {}.{}'.format(
+                        table, foreign_key,
+                        parent, metadata.get_primary_key(parent)
+                    )
+                    for foreign_key in metadata.get_foreign_keys(parent, table)
+                ])
+                digraph.edge(
+                    parent,
+                    table,
+                    label=label,
+                    arrowhead='oinv'
                 )
-                for foreign_key in metadata.get_foreign_keys(parent, table)
-            ])
-            digraph.edge(
-                parent,
-                table,
-                label=label,
-                arrowhead='oinv'
-            )
+            else:
+                for foreign_key in metadata.get_foreign_keys(parent, table):
+                    digraph.edge(parent, table, arrowhead='oinv')
 
 
-def visualize(metadata, path=None):
+def visualize(metadata, path=None, names=True):
     """Plot metadata usign graphviz.
 
     Try to generate a plot using graphviz.
@@ -120,8 +127,8 @@ def visualize(metadata, path=None):
         },
     )
 
-    _add_nodes(metadata, digraph)
-    _add_edges(metadata, digraph)
+    _add_nodes(metadata, digraph, names)
+    _add_edges(metadata, digraph, names)
 
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)

@@ -61,7 +61,7 @@ def test__add_nodes():
     plot = Mock()
 
     # Run
-    visualization._add_nodes(metadata, plot)
+    visualization._add_nodes(metadata, plot, names=True)
 
     # Asserts
     expected_node_label = r"{demo|a_field : numerical - integer\lb_field : id\l" \
@@ -92,10 +92,10 @@ def test__add_edges():
     plot = Mock()
 
     # Run
-    visualization._add_edges(metadata, plot)
+    visualization._add_edges(metadata, plot, names=True)
 
     # Asserts
-    expected_edge_label = '   {}.{} -> {}.{}'.format('demo', 'fk', 'other', 'pk')
+    expected_edge_label = '   {}.{} > {}.{}'.format('demo', 'fk', 'other', 'pk')
 
     metadata.get_tables.assert_called_once_with()
     metadata.get_foreign_keys.assert_called_once_with('other', 'demo')
@@ -111,8 +111,8 @@ def test__add_edges():
 
 
 @patch('sdv.metadata.visualization.graphviz.Digraph', spec_set=graphviz.Digraph)
-@patch('sdv.metadata.visualization._add_nodes')
-@patch('sdv.metadata.visualization._add_edges')
+@patch('sdv.metadata.visualization._add_nodes', spec_set=visualization._add_nodes)
+@patch('sdv.metadata.visualization._add_edges', spec_set=visualization._add_edges)
 def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
     """Metadata visualize digraph"""
     # Setup
@@ -126,7 +126,7 @@ def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
 
     # Asserts
     digraph = digraph_mock.return_value
-    add_nodes_mock.assert_called_once_with(metadata, digraph)
-    add_edges_mock.assert_called_once_with(metadata, digraph)
+    add_nodes_mock.assert_called_once_with(metadata, digraph, True)
+    add_edges_mock.assert_called_once_with(metadata, digraph, True)
 
     digraph.render.assert_called_once_with(filename='output', cleanup=True, format='png')
