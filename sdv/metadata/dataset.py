@@ -740,7 +740,7 @@ class Metadata:
         }
         table_meta['primary_key'] = field
 
-    def add_relationship(self, parent, child, foreign_key=None):
+    def add_relationship(self, parent, child, foreign_key=None, validate=True):
         """Add a new relationship between the parent and child tables.
 
         The relationship is created by adding a reference (``ref``) on the ``foreign_key``
@@ -754,6 +754,9 @@ class Metadata:
             foreign_key (str):
                 Field in the child table through which the relationship is created.
                 If ``None``, use the parent primary key name.
+            validate (bool):
+                Whether to validate metadata after adding this relationship or not.
+                Defaults to ``True``.
 
         Raises:
             ValueError:
@@ -765,6 +768,9 @@ class Metadata:
                     * The child table already has a parent.
                     * The new relationship closes a relationship circle.
         """
+        # Make a backup
+        metadata_backup = copy.deepcopy(self._metadata)
+
         # Validate tables exists
         self.get_table_meta(parent)
         self.get_table_meta(child)
@@ -786,10 +792,6 @@ class Metadata:
             raise ValueError(
                 'Field "{}.{}" already defines a relationship'.format(child, foreign_key))
 
-        grandchildren = self.get_children(child)
-        if grandchildren:
-            self._validate_circular_relationships(parent, grandchildren)
-
         # Make sure that the parent key is an id
         if parent_key_meta['type'] != 'id':
             parent_key_meta['subtype'] = self._get_key_subtype(parent_key_meta)
@@ -807,20 +809,18 @@ class Metadata:
         if child_key_meta['subtype'] != parent_key_meta['subtype']:
             raise ValueError('Parent and Child key subtypes mismatch')
 
-        # Make a backup
-        metadata_backup = copy.deepcopy(self._metadata)
-
         self._metadata['tables'][parent]['fields'][primary_key] = parent_key_meta
         self._metadata['tables'][child]['fields'][foreign_key] = child_key_meta
 
         # Re-analyze the relationships
         self._analyze_relationships()
 
-        try:
-            self.validate()
-        except MetadataError:
-            self._metadata = metadata_backup
-            raise
+        if validate:
+            try:
+                self.validate()
+            except MetadataError:
+                self._metadata = metadata_backup
+                raise
 
     def _get_field_details(self, data, fields):
         """Get or build all the fields metadata.
@@ -984,7 +984,7 @@ class Metadata:
             '\n'.join(relationships)
         )
 
-    def visualize(self, path=None):
+    def visualize(self, path=None, names=True):
         """Plot metadata usign graphviz.
 
         Generate a plot using graphviz.
@@ -996,5 +996,7 @@ class Metadata:
                 supported extension. If ``None`` do not save the plot and
                 just return the ``graphviz.Digraph`` object.
                 Defaults to ``None``.
+            names (bool):
+                Whether to add names to the diagram or not. Defaults to ``True``
         """
-        return visualization.visualize(self, path)
+        return visualization.visualize(self, path, names=names)
