@@ -6,7 +6,6 @@ import copulas
 import copulas.multivariate
 import copulas.univariate
 import numpy as np
-import pandas as pd
 
 from sdv.metadata import Table
 from sdv.tabular.base import BaseTabularModel, NonParametricError
@@ -302,7 +301,7 @@ class GaussianCopula(BaseTabularModel):
         transformed = self._metadata.transform(table_data)
         return self._model.probability_density(transformed)
 
-    def get_parameters(self):
+    def _get_parameters(self):
         """Get copula model parameters.
 
         Compute model ``covariance`` and ``distribution.std``
@@ -342,7 +341,6 @@ class GaussianCopula(BaseTabularModel):
                 univariate['scale'] = np.log(scale)
 
         params['univariates'] = univariates
-        params['num_rows'] = self._num_rows
 
         return flatten_dict(params)
 
@@ -401,7 +399,7 @@ class GaussianCopula(BaseTabularModel):
 
         return model_parameters
 
-    def set_parameters(self, parameters):
+    def _set_parameters(self, parameters):
         """Set copula model parameters.
 
         Args:
@@ -411,6 +409,4 @@ class GaussianCopula(BaseTabularModel):
         parameters = unflatten_dict(parameters)
         parameters = self._rebuild_gaussian_copula(parameters)
 
-        num_rows = parameters.pop('num_rows')
-        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 
 from sdv.demo import load_demo
@@ -157,3 +158,25 @@ def test_recreate():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notnull().sum(axis=1) != 0).all()
+
+
+def test_ids_only():
+    """Ensure that tables that do not contain anything other than id fields can be modeled."""
+    ids_only = pd.DataFrame({
+        'id': range(10),
+        'other_id': range(10),
+    })
+
+    model = GaussianCopula(field_types={
+        'id': {
+            'type': 'id'
+        },
+        'other_id': {
+            'type': 'id'
+        }
+    })
+    model.fit(ids_only)
+    sampled = model.sample()
+
+    assert sampled.shape == ids_only.shape
+    assert ids_only.equals(sampled)

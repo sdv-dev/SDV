@@ -1,3 +1,4 @@
+import pandas as pd
 import rdt
 from copulas.univariate import BetaUnivariate
 
@@ -26,3 +27,71 @@ def test_sdv_model_kwargs():
         model._metadata._hyper_transformer._transformers['gender'],
         rdt.transformers.categorical.LabelEncodingTransformer
     )
+
+
+def test_ids_only_child():
+    """Ensure tables with nothing else than ids can be modeled and sampled."""
+    parent = pd.DataFrame({
+        'parent_id': range(10),
+    })
+    pk_child = pd.DataFrame({
+        'child_id': range(10),
+        'parent_id': range(10),
+    })
+    no_pk_child = pd.DataFrame({
+        'parent_id': range(10),
+    })
+
+    metadata = {
+        'tables': {
+            'parent': {
+                'fields': {
+                    'parent_id': {
+                        'type': 'id',
+                    },
+                },
+                'primary_key': 'parent_id',
+            },
+            'pk_child': {
+                'fields': {
+                    'child_id': {
+                        'type': 'id',
+                    },
+                    'parent_id': {
+                        'type': 'id',
+                        'ref': {
+                            'table': 'parent',
+                            'field': 'field_id'
+                        }
+                    },
+                },
+                'primary_key': 'child_id',
+            },
+            'no_pk_child': {
+                'fields': {
+                    'parent_id': {
+                        'type': 'id',
+                        'ref': {
+                            'table': 'parent',
+                            'field': 'field_id'
+                        }
+                    },
+                },
+            },
+        }
+    }
+    tables = {
+        'parent': parent,
+        'pk_child': pk_child,
+        'no_pk_child': no_pk_child,
+    }
+
+    hma1 = HMA1(metadata=metadata)
+    hma1.fit(tables)
+    sampled = hma1.sample()
+
+    assert set(sampled.keys()) == {'parent', 'pk_child', 'no_pk_child'}
+
+    for name, table in tables.items():
+        assert table.shape == sampled[name].shape
+        assert table.columns.tolist() == sampled[name].columns.tolist()
