@@ -3,6 +3,8 @@
 import logging
 import pickle
 
+import pandas as pd
+
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
@@ -111,8 +113,10 @@ class BaseTabularModel:
         LOGGER.debug('Transforming table %s; shape: %s', self._metadata.name, data.shape)
         transformed = self._metadata.transform(data)
 
-        LOGGER.debug('Fitting %s model to table %s', self.__class__.__name__, self._metadata.name)
-        self._fit(transformed)
+        if self._metadata.get_dtypes(ids=False):
+            LOGGER.debug(
+                'Fitting %s model to table %s', self.__class__.__name__, self._metadata.name)
+            self._fit(transformed)
 
     def get_metadata(self):
         """Get metadata about the table.
@@ -130,6 +134,12 @@ class BaseTabularModel:
                 Table metadata.
         """
         return self._metadata
+
+    def _sample_rows(self, num_to_sample):
+        if self._metadata.get_dtypes(ids=False):
+            return self._sample(num_to_sample)
+        else:
+            return pd.DataFrame(index=range(num_to_sample))
 
     def sample(self, num_rows=None, max_retries=100):
         """Sample rows from this table.
@@ -149,7 +159,7 @@ class BaseTabularModel:
         """
         num_rows = num_rows or self._num_rows
         num_to_sample = num_rows
-        sampled = self._sample(num_to_sample)
+        sampled = self._sample_rows(num_to_sample)
         sampled = self._metadata.reverse_transform(sampled)
         sampled = self._metadata.filter_valid(sampled)
         num_valid = len(sampled)
@@ -166,7 +176,7 @@ class BaseTabularModel:
             num_to_sample = int(counter * remaining / (valid_ratio if valid_ratio != 0 else 1))
 
             LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
-            resampled = self._sample(num_to_sample)
+            resampled = self._sample_rows(num_to_sample)
             resampled = self._metadata.reverse_transform(resampled)
 
             sampled = sampled.append(resampled)
@@ -174,6 +184,9 @@ class BaseTabularModel:
             num_valid = len(sampled)
 
         return sampled.head(num_rows)
+
+    def _get_parameters(self):
+        raise NonParametricError()
 
     def get_parameters(self):
         """Get the parameters learned from the data.
@@ -197,6 +210,15 @@ class BaseTabularModel:
                 If the model is not parametric or cannot be described
                 using a simple dictionary.
         """
+        if self._metadata.get_dtypes(ids=False):
+            parameters = self._get_parameters()
+        else:
+            parameters = {}
+
+        parameters['num_rows'] = self._num_rows
+        return parameters
+
+    def _set_parameters(self, parameters):
         raise NonParametricError()
 
     def set_parameters(self, parameters):
@@ -215,7 +237,11 @@ class BaseTabularModel:
                 If the model is not parametric or cannot be described
                 using a simple dictionary.
         """
-        raise NonParametricError()
+        num_rows = parameters.pop('num_rows')
+        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
+
+        if self._metadata.get_dtypes(ids=False):
+            self._set_parameters(parameters)
 
     def save(self, path):
         """Save this model instance to the given path using pickle.

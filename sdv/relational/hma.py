@@ -311,7 +311,7 @@ class HMA1(BaseRelationalModel):
         model.set_parameters(parameters)
 
         table_rows = self._sample_rows(model, table_name)
-        if not table_rows.empty:
+        if len(table_rows):
             parent_key = self.metadata.get_primary_key(parent_name)
             table_rows[foreign_key] = parent_row[parent_key]
 
@@ -353,7 +353,7 @@ class HMA1(BaseRelationalModel):
             model.set_parameters(parameters)
             try:
                 likelihoods[parent_id] = model.get_likelihood(table_rows)
-            except np.linalg.LinAlgError:
+            except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
 
         return pd.DataFrame(likelihoods, index=table_rows.index)
