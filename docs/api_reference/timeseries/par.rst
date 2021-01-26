@@ -1,12 +1,9 @@
-.. _sdv.timeseries:
+.. _sdv.timeseries.par:
 
-sdv.timeseries
-==============
-
-.. currentmodule:: sdv.timeseries
+.. currentmodule:: sdv.timeseries.deepecho
 
 PAR
-~~~
+===
 
 .. autosummary::
    :toctree: api/
