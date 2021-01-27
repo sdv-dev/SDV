@@ -1,6 +1,4 @@
-from unittest.mock import Mock, patch
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -13,7 +11,7 @@ class TestTable:
         """Test whether regex is correctly generating expressions."""
         metadata = {'subtype': 'string', 'regex': '[a-d]'}
         keys = Table._make_ids(metadata, 3)
-        assert (keys == pd.Series(['a','b','c'])).all()
+        assert (keys == pd.Series(['a', 'b', 'c'])).all()
 
     def test__make_ids_fail(self):
         """Test if regex fails with more requested ids than available unique values."""
