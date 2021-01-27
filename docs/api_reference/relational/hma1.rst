@@ -1,12 +1,9 @@
-.. _sdv.relational:
+.. _sdv.relational.hma1:
 
-sdv.relational
-==============
-
-.. currentmodule:: sdv.relational
+.. currentmodule:: sdv.relational.hma
 
 HMA1
-~~~~
+====
 
 .. autosummary::
    :toctree: api/
