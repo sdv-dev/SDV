@@ -523,7 +523,7 @@ class Table:
         if field_subtype == 'string':
             regex = field_metadata.get('regex', '[a-zA-Z]+')
             generator, max_size = strings_from_regex(regex)
-            if max_size > length:
+            if max_size < length:
                 raise ValueError(
                     """Unable to generate {} unique values for regex {}, the maximum number of
                     unique values is {}.""".format(length, regex, max_size))
