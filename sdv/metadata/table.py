@@ -498,7 +498,7 @@ class Table:
 
         Args:
             data (pandas.DataFrame):
-                Table data.
+                # Table data.
 
         Returns:
             pandas.DataFrame:
@@ -518,7 +518,8 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
 
-    def _make_ids(self, name, field_metadata, length):
+    @classmethod
+    def _make_ids(cls, field_metadata, length):
         field_subtype = field_metadata.get('subtype', 'integer')
         if field_subtype == 'string':
             regex = field_metadata.get('regex', '[a-zA-Z]+')
@@ -554,7 +555,7 @@ class Table:
         for name, field_metadata in self._fields_metadata.items():
             field_type = field_metadata['type']
             if field_type == 'id' and name not in reversed_data:
-                field_data = self._make_ids(name, field_metadata, len(reversed_data))
+                field_data = self._make_ids(field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
                 faker = self._get_faker(field_metadata['pii_category'])
                 field_data = pd.Series([faker() for _ in range(len(reversed_data))])
