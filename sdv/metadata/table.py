@@ -525,8 +525,8 @@ class Table:
             generator, max_size = strings_from_regex(regex)
             if max_size > length:
                 raise ValueError(
-                    "Unable to generate {} unique values for regex {}, the maximum # of unique values is {}.".format(
-                        length, regex, max_size))
+                    """Unable to generate {} unique values for regex {}, the maximum number of
+                    unique values is {}.""".format(length, regex, max_size))
             values = [next(generator) for _ in range(length)]
 
             return pd.Series(list(values)[:length])
