@@ -8,11 +8,10 @@ import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
-from xeger import Xeger
 
 from sdv.constraints.base import Constraint
-from sdv.metadata.utils import strings_from_regex
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
+from sdv.metadata.utils import strings_from_regex
 
 LOGGER = logging.getLogger(__name__)
 
@@ -525,7 +524,9 @@ class Table:
             regex = field_metadata.get('regex', '[a-zA-Z]+')
             generator, max_size = strings_from_regex(regex)
             if max_size > length:
-                raise ValueError("Unable to generate {} unique values for regex {}, the maximum # of unique values is {}.".format(length, regex, max_Size))
+                raise ValueError(
+                    "Unable to generate {} unique values for regex {}, the maximum # of unique values is {}.".format(
+                        length, regex, max_Size))
             values = [next(generator) for _ in range(length)]
 
             return pd.Series(list(values)[:length])
