@@ -12,15 +12,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'ctgan>=0.3.0,<0.4',
     'xeger>=0.3.5,<0.4',
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
     'graphviz>=0.13.2,<1',
-    'copulas>=0.3.3,<0.4',
-    'rdt>=0.2.10,<0.3',
-    'sdmetrics>=0.1.1,<0.2.0',
-    'deepecho>=0.1.3,<0.2',
+    'ctgan>=0.3.1.dev0,<0.4',
+    'copulas>=0.3.0,<0.5',
+    'rdt>=0.2.10,<0.4',
+    'sdmetrics>=0.1.2.dev0,<0.2.0',
+    'deepecho>=0.1.4.dev0,<0.2',
 ]
 
 setup_requires = [
