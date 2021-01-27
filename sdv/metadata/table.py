@@ -11,6 +11,7 @@ from faker import Faker
 from xeger import Xeger
 
 from sdv.constraints.base import Constraint
+from sdv.metadata.utils import strings_from_regex
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 
 LOGGER = logging.getLogger(__name__)
@@ -521,23 +522,11 @@ class Table:
     def _make_ids(self, name, field_metadata, length):
         field_subtype = field_metadata.get('subtype', 'integer')
         if field_subtype == 'string':
-            regex = field_metadata.get('regex', '[a-z][A-Z]+')
-            xeger = Xeger(limit=10)
-            values = {xeger.xeger(regex) for _ in range(length)}
-            for _ in range(10):
-                done = len(values)
-                if done >= length:
-                    break
-
-                remaining = length - done
-                generate = int(round((remaining / done) * length))
-                values.update({xeger.xeger(regex) for _ in range(generate)})
-
-            else:
-                msg = 'Unable to generate {} unique values for field {} regex "{}"'.format(
-                    length, name, regex
-                )
-                raise ValueError(msg)
+            regex = field_metadata.get('regex', '[a-zA-Z]+')
+            generator, max_size = strings_from_regex(regex)
+            if max_size > length:
+                raise ValueError("Unable to generate {} unique values for regex {}, the maximum # of unique values is {}.".format(length, regex, max_Size))
+            values = [next(generator) for _ in range(length)]
 
             return pd.Series(list(values)[:length])
         else:
