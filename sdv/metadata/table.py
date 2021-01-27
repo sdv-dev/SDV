@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
-from xeger import Xeger
 
 from sdv.constraints.base import Constraint
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
+from sdv.metadata.utils import strings_from_regex
 
 LOGGER = logging.getLogger(__name__)
 
@@ -498,7 +498,7 @@ class Table:
 
         Args:
             data (pandas.DataFrame):
-                Table data.
+                # Table data.
 
         Returns:
             pandas.DataFrame:
@@ -518,26 +518,17 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
 
-    def _make_ids(self, name, field_metadata, length):
+    @classmethod
+    def _make_ids(cls, field_metadata, length):
         field_subtype = field_metadata.get('subtype', 'integer')
         if field_subtype == 'string':
-            regex = field_metadata.get('regex', '[a-z][A-Z]+')
-            xeger = Xeger(limit=10)
-            values = {xeger.xeger(regex) for _ in range(length)}
-            for _ in range(10):
-                done = len(values)
-                if done >= length:
-                    break
-
-                remaining = length - done
-                generate = int(round((remaining / done) * length))
-                values.update({xeger.xeger(regex) for _ in range(generate)})
-
-            else:
-                msg = 'Unable to generate {} unique values for field {} regex "{}"'.format(
-                    length, name, regex
-                )
-                raise ValueError(msg)
+            regex = field_metadata.get('regex', '[a-zA-Z]+')
+            generator, max_size = strings_from_regex(regex)
+            if max_size < length:
+                raise ValueError(
+                    """Unable to generate {} unique values for regex {}, the maximum number of
+                    unique values is {}.""".format(length, regex, max_size))
+            values = [next(generator) for _ in range(length)]
 
             return pd.Series(list(values)[:length])
         else:
@@ -564,7 +555,7 @@ class Table:
         for name, field_metadata in self._fields_metadata.items():
             field_type = field_metadata['type']
             if field_type == 'id' and name not in reversed_data:
-                field_data = self._make_ids(name, field_metadata, len(reversed_data))
+                field_data = self._make_ids(field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
                 faker = self._get_faker(field_metadata['pii_category'])
                 field_data = pd.Series([faker() for _ in range(len(reversed_data))])
