@@ -299,10 +299,10 @@ class Metadata:
         """
         return self.get_table_meta(table_name).get('primary_key')
 
-    def get_foreign_key(self, parent, child):
-        """Get the name of the field in the child that is a foreign key to parent.
+    def get_foreign_keys(self, parent, child):
+        """Get the name of all the fields in the child that are foreign keys to this parent.
 
-        If there is no relationship between the two tables, a ``ValueError`` is raised.
+        If there is no relationship between the two tables an empty list is returned.
 
         Args:
             parent (str):
@@ -311,19 +311,16 @@ class Metadata:
                 Name of the child table.
 
         Returns:
-            str or None:
-                Foreign key field name.
-
-        Raises:
-            ValueError:
-                If the relationship does not exist.
+            list[str]:
+                List of foreign key names.
         """
+        foreign_keys = []
         for name, field in self.get_fields(child).items():
             ref = field.get('ref')
             if ref and ref['table'] == parent:
-                return name
+                foreign_keys.append(name)
 
-        raise ValueError('{} is not parent of {}'.format(parent, child))
+        return foreign_keys
 
     def load_table(self, table_name):
         """Load the data of the indicated table as a DataFrame.
@@ -396,7 +393,7 @@ class Metadata:
             if ids and field_type == 'id':
                 if (name != table_meta.get('primary_key')) and not field.get('ref'):
                     for child_table in self.get_children(table_name):
-                        if name == self.get_foreign_key(table_name, child_table):
+                        if name in self.get_foreign_keys(table_name, child_table):
                             break
 
             if ids or (field_type != 'id'):
@@ -743,7 +740,7 @@ class Metadata:
         }
         table_meta['primary_key'] = field
 
-    def add_relationship(self, parent, child, foreign_key=None):
+    def add_relationship(self, parent, child, foreign_key=None, validate=True):
         """Add a new relationship between the parent and child tables.
 
         The relationship is created by adding a reference (``ref``) on the ``foreign_key``
@@ -757,6 +754,9 @@ class Metadata:
             foreign_key (str):
                 Field in the child table through which the relationship is created.
                 If ``None``, use the parent primary key name.
+            validate (bool):
+                Whether to validate metadata after adding this relationship or not.
+                Defaults to ``True``.
 
         Raises:
             ValueError:
@@ -768,6 +768,9 @@ class Metadata:
                     * The child table already has a parent.
                     * The new relationship closes a relationship circle.
         """
+        # Make a backup
+        metadata_backup = copy.deepcopy(self._metadata)
+
         # Validate tables exists
         self.get_table_meta(parent)
         self.get_table_meta(child)
@@ -789,10 +792,6 @@ class Metadata:
             raise ValueError(
                 'Field "{}.{}" already defines a relationship'.format(child, foreign_key))
 
-        grandchildren = self.get_children(child)
-        if grandchildren:
-            self._validate_circular_relationships(parent, grandchildren)
-
         # Make sure that the parent key is an id
         if parent_key_meta['type'] != 'id':
             parent_key_meta['subtype'] = self._get_key_subtype(parent_key_meta)
@@ -810,20 +809,18 @@ class Metadata:
         if child_key_meta['subtype'] != parent_key_meta['subtype']:
             raise ValueError('Parent and Child key subtypes mismatch')
 
-        # Make a backup
-        metadata_backup = copy.deepcopy(self._metadata)
-
         self._metadata['tables'][parent]['fields'][primary_key] = parent_key_meta
         self._metadata['tables'][child]['fields'][foreign_key] = child_key_meta
 
         # Re-analyze the relationships
         self._analyze_relationships()
 
-        try:
-            self.validate()
-        except MetadataError:
-            self._metadata = metadata_backup
-            raise
+        if validate:
+            try:
+                self.validate()
+            except MetadataError:
+                self._metadata = metadata_backup
+                raise
 
     def _get_field_details(self, data, fields):
         """Get or build all the fields metadata.
@@ -967,11 +964,12 @@ class Metadata:
         tables = self.get_tables()
         relationships = [
             '    {}.{} -> {}.{}'.format(
-                table, self.get_foreign_key(parent, table),
+                table, foreign_key,
                 parent, self.get_primary_key(parent)
             )
             for table in tables
             for parent in list(self.get_parents(table))
+            for foreign_key in self.get_foreign_keys(parent, table)
         ]
 
         return (
@@ -986,7 +984,7 @@ class Metadata:
             '\n'.join(relationships)
         )
 
-    def visualize(self, path=None):
+    def visualize(self, path=None, names=True):
         """Plot metadata usign graphviz.
 
         Generate a plot using graphviz.
@@ -998,5 +996,7 @@ class Metadata:
                 supported extension. If ``None`` do not save the plot and
                 just return the ``graphviz.Digraph`` object.
                 Defaults to ``None``.
+            names (bool):
+                Whether to add names to the diagram or not. Defaults to ``True``
         """
-        return visualization.visualize(self, path)
+        return visualization.visualize(self, path, names=names)

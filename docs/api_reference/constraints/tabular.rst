@@ -1,33 +1,9 @@
-.. _sdv.constraints:
-
-sdv.constraints
-===============
-
-.. currentmodule:: sdv.constraints
-
-Base
-----
-
-Constraint
-~~~~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   Constraint
-   Constraint.fit
-   Constraint.transform
-   Constraint.fit_transform
-   Constraint.reverse_transform
-   Constraint.is_valid
-   Constraint.filter_valid
-   Constraint.from_dict
-   Constraint.to_dict
+.. _sdv.constraints.tabular:
 
 Tabular Constraints
--------------------
+===================
 
-.. currentmodule:: sdv.constraints.tabular
+.. currentmodule:: sdv.constraints
 
 CustomConstraint
 ~~~~~~~~~~~~~~~~

@@ -1,5 +1,23 @@
 # Release Notes
 
+## 0.7.0 - 2021-01-27
+
+This release introduces a few changes in the HMA1 relational algorithm to decrease modeling
+and sampling times, while also ensuring that correlations are properly kept across tables
+and also adding support for some relational schemas that were not supported before.
+
+A few changes in constraints and tabular models also ensure that situations that produced
+errors before now work without errors.
+
+### Issues resolved
+
+* Fix unique key generation - Issue [#306](https://github.com/sdv-dev/SDV/issues/306) by @fealho
+* Ensure tables that contain nothing but ids can be modeled - Issue [#302](https://github.com/sdv-dev/SDV/issues/302) by @csala
+* Metadata visualization improvements - Issue [#301](https://github.com/sdv-dev/SDV/issues/301) by @csala
+* Multi-parent re-model and re-sample issue - Issue [#298](https://github.com/sdv-dev/SDV/issues/298) by @csala
+* Support datetimes in GreaterThan constraint - Issue [#266](https://github.com/sdv-dev/SDV/issues/266) by @rollervan
+* Support for multiple foreign keys in one table - Issue [#185](https://github.com/sdv-dev/SDV/issues/185) by @csala
+
 ## 0.6.1 - 2020-12-31
 
 SDMetrics version is updated to include the new Time Series metrics, which have also
@@ -7,7 +25,7 @@ been added to the API Reference and User Guides documentation. Additionally,
 a few code has been refactored to reduce external dependencies and a few minor bugs
 related to single table constraints have been fixed
 
-## Issues resolved:
+### Issues resolved
 
 * Add timeseries metrics and user guides - [Issue #289](https://github.com/sdv-dev/SDV/issues/289) by @csala
 * Add functions to generate regex ids - [Issue #288](https://github.com/sdv-dev/SDV/issues/288) by @csala
@@ -22,7 +40,7 @@ This release updates to the latest CTGAN, RDT and SDMetrics libraries to introdu
 new TVAE model, multiple new metrics for single table and multi table, and fixes
 issues in the re-creation of tabular models from a metadata dict.
 
-## Issues resolved:
+### Issues resolved
 
 * Upgrade to SDMetrics v0.1.0 and add `sdv.metrics` module - [Issue #281](https://github.com/sdv-dev/SDV/issues/281) by @csala
 * Upgrade to CTGAN 0.3.0 and add TVAE model - [Issue #278](https://github.com/sdv-dev/SDV/issues/278) by @fealho

@@ -268,7 +268,7 @@ class TestGaussianCopula:
     def test_get_parameters(self):
         """Test the ``get_parameters`` method when model is parametric.
 
-        If all the distributions are parametric, ``get_parameters``
+        If all the distributions are parametric, ``_get_parameters``
         should return a flattened version of the parameters returned
         by the ``GaussianMultivariate`` instance.
 
@@ -301,8 +301,8 @@ class TestGaussianCopula:
             - ``np.log`` applied to the other ``scale`` parameter.
         """
 
-    def test_get_parameters_non_parametric(self):
-        """Test the ``get_parameters`` method when model is parametric.
+    def test__get_parameters_non_parametric(self):
+        """Test the ``_get_parameters`` method when model is parametric.
 
         If there is at least one distributions in the model that is not
         parametric, a NonParametricError should be raised.
@@ -323,7 +323,7 @@ class TestGaussianCopula:
 
         # Run, Assert
         with pytest.raises(NonParametricError):
-            GaussianCopula.get_parameters(gc)
+            GaussianCopula._get_parameters(gc)
 
     def test__rebuild_covariance_matrix_positive_definite(self):
         """Test the ``_rebuild_covariance_matrix``
@@ -420,15 +420,14 @@ class TestGaussianCopula:
         }
         assert result == expected
 
-    def test_set_parameters(self):
-        """Test the ``set_parameters`` method with positive num_rows.
+    def test__set_parameters(self):
+        """Test the ``_set_parameters`` method with positive num_rows.
 
-        The ``GaussianCopula.set_parameters`` method is expected to:
+        The ``GaussianCopula._set_parameters`` method is expected to:
         - Transform a flattened dict into its original form with
           the unflatten_dict function.
         - pass the unflattended dict to the ``self._rebuild_gaussian_copula``
           method.
-        - Store the number of rows in the `self._num_rows` attribute.
         - Create a GaussianMultivariate instance from the params dict
           and store it in the 'self._model' attribute.
 
@@ -440,7 +439,6 @@ class TestGaussianCopula:
 
         Side Effects:
         - Call ``_rebuild_gaussian_copula`` with the unflatted dict.
-        - ``self._num_rows`` gets the given value.
         - ``GaussianMultivariate`` is called
         - ``GaussianMultivariate`` return value is stored as `self._model`
         """
@@ -469,7 +467,7 @@ class TestGaussianCopula:
             'covariance__1__1': 0.1,
             'num_rows': 3
         }
-        GaussianCopula.set_parameters(gaussian_copula, flatten_parameters)
+        GaussianCopula._set_parameters(gaussian_copula, flatten_parameters)
 
         # Asserts
         expected = {
@@ -483,21 +481,19 @@ class TestGaussianCopula:
             }
         }
         gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
-        assert gaussian_copula._num_rows == 3
         assert isinstance(gaussian_copula._model, GaussianMultivariate)
 
-    def test_set_parameters_negative_max_rows(self):
-        """Test the ``set_parameters`` method with negative num_rows.
+    def test__set_parameters_negative_max_rows(self):
+        """Test the ``_set_parameters`` method with negative num_rows.
 
         If the max rows value is negative, it is expected to be set
         to zero.
 
-        The ``GaussianCopula.set_parameters`` method is expected to:
+        The ``GaussianCopula._set_parameters`` method is expected to:
         - Transform a flattened dict into its original form with
           the unflatten_dict function.
         - pass the unflattended dict to the ``self._rebuild_gaussian_copula``
           method.
-        - Store ``0`` in the `self._num_rows` attribute.
         - Create a GaussianMultivariate instance from the params dict
           and store it in the 'self._model' attribute.
 
@@ -509,7 +505,6 @@ class TestGaussianCopula:
 
         Side Effects:
         - Call ``_rebuild_gaussian_copula`` with the unflatted dict.
-        - ``self._num_rows`` is set to ``0``.
         - ``GaussianMultivariate`` is called
         - ``GaussianMultivariate`` return value is stored as `self._model`
         """
@@ -538,7 +533,7 @@ class TestGaussianCopula:
             'covariance__1__1': 0.1,
             'num_rows': -3
         }
-        GaussianCopula.set_parameters(gaussian_copula, flatten_parameters)
+        GaussianCopula._set_parameters(gaussian_copula, flatten_parameters)
 
         # Asserts
         expected = {
@@ -552,7 +547,6 @@ class TestGaussianCopula:
             }
         }
         gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
-        assert gaussian_copula._num_rows == 0
         assert isinstance(gaussian_copula._model, GaussianMultivariate)
 
     def test__validate_distribution_none(self):

@@ -1,5 +1,5 @@
 {% set name = 'sdv' %}
-{% set version = '0.6.1' %}
+{% set version = '0.7.0.dev2' %}
 
 package:
   name: "{{ name|lower }}"
@@ -19,29 +19,26 @@ requirements:
     - python
     - pytest-runner
     - graphviz
-    - ctgan >=0.3.0,<0.4
-    - exrex >=0.9.4,<0.11
-    - xeger >=0.3.5,<0.4
     - numpy >=1.17.4,<2
     - pandas >=1.1,<1.1.5
     - python-graphviz >=0.13.2,<2.42.4
-    - copulas >=0.3.3,<0.4
-    - rdt >=0.2.10,<0.3
-    - sdmetrics >=0.1.0,<0.2
-    - deepecho ==0.1.3
+    - ctgan >=0.3.1,<0.4
+    - copulas >=0.4.0,<0.5
+    - rdt >=0.2.10,<0.4
+    - sdmetrics >=0.1.2,<0.2
+    - deepecho >=0.1.4,<0.2
   run:
     - python
     - graphviz
-    - ctgan >=0.3.0,<0.4
-    - exrex >=0.9.4,<0.11
-    - xeger >=0.3.5,<0.4
     - numpy >=1.17.4,<2
     - pandas >=1.1,<1.1.5
     - python-graphviz >=0.13.2,<2.42.4
-    - copulas >=0.3.3,<0.4
-    - rdt >=0.2.10,<0.3
-    - sdmetrics >=0.1.0,<0.2
-    - deepecho ==0.1.3
+    - ctgan >=0.3.1,<0.4
+    - copulas >=0.4.0,<0.5
+    - rdt >=0.2.10,<0.4
+    - sdmetrics >=0.1.2,<0.2
+    - deepecho >=0.1.4,<0.2
+
 
 about:
   home: "https://sdv.dev"

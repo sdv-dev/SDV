@@ -10,10 +10,11 @@ and classes in SDV.
    :maxdepth: 2
 
    sdv
-   tabular
-   relational
-   timeseries
-   metadata
-   constraints
+   tabular/index
+   relational/index
+   timeseries/index
+   metadata/index
+   constraints/index
    metrics/index
+   evaluation
    demo

@@ -14,13 +14,11 @@ sdv.metrics.timeseries
 Time Series Detection Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sdv.metrics.timeseries
-
 .. autosummary::
    :toctree: api/
 
-    TimesSeriesDetectionMetric
-    TimesSeriesDetectionMetric.get_subclasses
+    TimeSeriesDetectionMetric
+    TimeSeriesDetectionMetric.get_subclasses
     TSFCDetection
     TSFCDetection.get_subclasses
     TSFCDetection.compute
@@ -34,8 +32,8 @@ Time Series Efficacy Metrics
 .. autosummary::
    :toctree: api/
 
-    TimesSeriesEfficacyMetric
-    TimesSeriesEfficacyMetric.get_subclasses
+    TimeSeriesEfficacyMetric
+    TimeSeriesEfficacyMetric.get_subclasses
     TSFClassifierEfficacy
     TSFClassifierEfficacy.get_subclasses
     TSFClassifierEfficacy.compute
