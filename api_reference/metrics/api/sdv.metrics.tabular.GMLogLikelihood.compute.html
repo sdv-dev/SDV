@@ -5,9 +5,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular.GMLogLikelihood.compute &#8212; SDV 0.6.1 documentation</title>
+    <title>sdv.metrics.tabular.GMLogLikelihood.compute &#8212; SDV 0.7.0 documentation</title>
     
-  <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
-  <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
 
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -145,31 +145,31 @@
           
             
                 <li class="">
-                    <a href="../../tabular.html">sdv.tabular</a>
+                    <a href="../../tabular/index.html">sdv.tabular</a>
                 </li>
             
           
             
                 <li class="">
-                    <a href="../../relational.html">sdv.relational</a>
+                    <a href="../../relational/index.html">sdv.relational</a>
                 </li>
             
           
             
                 <li class="">
-                    <a href="../../timeseries.html">sdv.timeseries</a>
+                    <a href="../../timeseries/index.html">sdv.timeseries</a>
                 </li>
             
           
             
                 <li class="">
-                    <a href="../../metadata.html">sdv.metadata</a>
+                    <a href="../../metadata/index.html">sdv.metadata</a>
                 </li>
             
           
             
                 <li class="">
-                    <a href="../../constraints.html">sdv.constraints</a>
+                    <a href="../../constraints/index.html">sdv.constraints</a>
                 </li>
             
           
@@ -503,6 +503,12 @@
           
             
                 <li class="">
+                    <a href="../../evaluation.html">sdv.evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
                     <a href="../../demo.html">sdv.demo</a>
                 </li>
             
@@ -543,27 +549,34 @@
 <h1>sdv.metrics.tabular.GMLogLikelihood.compute<a class="headerlink" href="#sdv-metrics-tabular-gmloglikelihood-compute" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.metrics.tabular.GMLogLikelihood.compute">
-<em class="property">classmethod </em><code class="sig-prename descclassname">GMLogLikelihood.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">real_data</span></em>, <em class="sig-param"><span class="n">synthetic_data</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_components</span><span class="o">=</span><span class="default_value">10, 20, 30</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdmetrics/single_table/gaussian_mixture.html#GMLogLikelihood.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.tabular.GMLogLikelihood.compute" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-prename descclassname">GMLogLikelihood.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">real_data</span></em>, <em class="sig-param"><span class="n">synthetic_data</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_components</span><span class="o">=</span><span class="default_value">1, 30</span></em>, <em class="sig-param"><span class="n">covariance_type</span><span class="o">=</span><span class="default_value">'diag'</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">retries</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdmetrics/single_table/gaussian_mixture.html#GMLogLikelihood.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.tabular.GMLogLikelihood.compute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute this metric.</p>
 <p>This fits multiple GaussianMixture models to the real data and then
 evaluates how likely it is that the synthetic data belongs to the same
 distribution as the real data.</p>
-<p>By default, GaussianMixture models with 10, 20 and 30 components are
-fitted a total of 3 times.</p>
+<p>By default, GaussianMixture models will search for the optimal number of
+components and covariance type using the real data and then evaluate
+the likelihood of the synthetic data using those arguments 3 times.</p>
 <p>Real data and synthetic data must be passed as <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instances
 and <code class="docutils literal notranslate"><span class="pre">metadata</span></code> as a <code class="docutils literal notranslate"><span class="pre">Table</span></code> metadata <code class="docutils literal notranslate"><span class="pre">dict</span></code> representation.</p>
 <p>If no <code class="docutils literal notranslate"><span class="pre">metadata</span></code> is given, one will be built from the values observed
 in the <code class="docutils literal notranslate"><span class="pre">real_data</span></code>.</p>
-<p>The output is the average log likelihood across all the GMMs.</p>
+<p>The output is the average log likelihood across all the GMMs evaluated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>real_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the real dataset.</p></li>
 <li><p><strong>synthetic_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the synthetic dataset.</p></li>
-<li><p><strong>n_components</strong> (<em>tuple</em><em>[</em><em>int</em><em>]</em>) – Tuple indicating the number of components to use
-for the tests. Defaults to (10, 20, 30)</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em>) – Table metadata dict.</p></li>
+<li><p><strong>n_components</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>tuple</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Number of components to use for the GMM. If a tuple with
+2 integers is passed, the optimal number of components within
+the range will be searched. Defaults to (1, 30)</p></li>
+<li><p><strong>covariance_type</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Covariange type to use for the GMM. If multiple values are
+passed, the best one will be searched. Defaults to <code class="docutils literal notranslate"><span class="pre">'diag'</span></code>.</p></li>
 <li><p><strong>iterations</strong> (<em>int</em>) – Number of times that each number of components should
-be evaluated.</p></li>
+be evaluated before averaging the scores. Defaults to 3.</p></li>
+<li><p><strong>retries</strong> (<em>int</em>) – Number of times that each iteration will be retried if the
+GMM model crashes during fit. Defaults to 3.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -595,7 +608,7 @@ be evaluated.</p></li>
     </div>
 
     
-  <script src="../../../_static/js/index.3da636dd464baa7582d2.js"></script>
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

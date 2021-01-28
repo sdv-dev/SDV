@@ -1,6 +1,0 @@
-﻿sdv.metadata.Table.filter\_valid
-================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Table.filter_valid

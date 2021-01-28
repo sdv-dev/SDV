@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.visualize
-===============================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.visualize

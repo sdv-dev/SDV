@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.get\_tables
-=================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.get_tables

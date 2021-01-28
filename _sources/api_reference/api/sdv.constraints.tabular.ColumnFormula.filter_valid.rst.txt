@@ -1,6 +1,0 @@
-﻿sdv.constraints.tabular.ColumnFormula.filter\_valid
-===================================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: ColumnFormula.filter_valid

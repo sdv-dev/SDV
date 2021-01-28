@@ -1,6 +1,0 @@
-﻿sdv.metadata.Table.set\_primary\_key
-====================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Table.set_primary_key

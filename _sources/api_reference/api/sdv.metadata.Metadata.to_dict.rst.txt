@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.to\_dict
-==============================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.to_dict

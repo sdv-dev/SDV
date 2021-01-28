@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.add\_field
-================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.add_field

@@ -5,9 +5,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.6.1 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.7.0 documentation</title>
     
-  <link rel="stylesheet" href="../../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sdv.css" />
     
-  <link rel="preload" as="script" href="../../../_static/js/index.3da636dd464baa7582d2.js">
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
 
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -238,7 +238,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span> <span class="o">=</span> <span class="fm">__init__</span>
 
 
-<div class="viewcode-block" id="Constraint"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint">[docs]</a><span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ConstraintMeta</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint">[docs]</a><span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ConstraintMeta</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Constraint base class.</span>
 
 <span class="sd">    This class is not intended to be used directly and should rather be</span>
@@ -258,7 +258,7 @@
     <span class="k">def</span> <span class="nf">_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">table_data</span>
 
-<div class="viewcode-block" id="Constraint.__init__"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.__init__"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">handling_strategy</span> <span class="o">==</span> <span class="s1">&#39;transform&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">filter_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity</span>
         <span class="k">elif</span> <span class="n">handling_strategy</span> <span class="o">==</span> <span class="s1">&#39;reject_sampling&#39;</span><span class="p">:</span>
@@ -267,7 +267,7 @@
         <span class="k">elif</span> <span class="n">handling_strategy</span> <span class="o">!=</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown handling strategy: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Constraint.fit"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.fit.html#sdv.constraints.Constraint.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.fit"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.fit.html#sdv.constraints.Constraint.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;No-op method written for completion. To be optionally overwritten by subclasses.</span>
 
 <span class="sd">        Args:</span>
@@ -276,7 +276,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="n">table_data</span></div>
 
-<div class="viewcode-block" id="Constraint.transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.transform.html#sdv.constraints.Constraint.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.transform.html#sdv.constraints.Constraint.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Identity method for completion. To be optionally overwritten by subclasses.</span>
 
 <span class="sd">        Args:</span>
@@ -289,7 +289,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">table_data</span></div>
 
-<div class="viewcode-block" id="Constraint.fit_transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.fit_transform.html#sdv.constraints.Constraint.fit_transform">[docs]</a>    <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.fit_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.fit_transform.html#sdv.constraints.Constraint.fit_transform">[docs]</a>    <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit this Constraint to the data and then transform it.</span>
 
 <span class="sd">        Args:</span>
@@ -303,7 +303,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Constraint.reverse_transform"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.reverse_transform.html#sdv.constraints.Constraint.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.reverse_transform.html#sdv.constraints.Constraint.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Identity method for completion. To be optionally overwritten by subclasses.</span>
 
 <span class="sd">        Args:</span>
@@ -316,7 +316,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">table_data</span></div>
 
-<div class="viewcode-block" id="Constraint.is_valid"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.is_valid.html#sdv.constraints.Constraint.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.is_valid.html#sdv.constraints.Constraint.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether the given table rows are valid.</span>
 
 <span class="sd">        This is a dummy version of the method that returns a series of ``True``</span>
@@ -334,7 +334,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">table_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Constraint.filter_valid"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.filter_valid.html#sdv.constraints.Constraint.filter_valid">[docs]</a>    <span class="k">def</span> <span class="nf">filter_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.filter_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.filter_valid.html#sdv.constraints.Constraint.filter_valid">[docs]</a>    <span class="k">def</span> <span class="nf">filter_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get only the rows that are valid.</span>
 
 <span class="sd">        The filtering is done by calling the method ``is_valid``, which should</span>
@@ -356,7 +356,7 @@
 
         <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Constraint.from_dict"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.from_dict.html#sdv.constraints.Constraint.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Constraint.from_dict"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.from_dict.html#sdv.constraints.Constraint.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">constraint_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Build a Constraint object from a dict.</span>
 
@@ -380,7 +380,7 @@
 
         <span class="k">return</span> <span class="n">constraint_class</span><span class="p">(</span><span class="o">**</span><span class="n">constraint_dict</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Constraint.to_dict"><a class="viewcode-back" href="../../../api_reference/api/sdv.constraints.Constraint.to_dict.html#sdv.constraints.Constraint.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.to_dict"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.to_dict.html#sdv.constraints.Constraint.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a dict representation of this Constraint.</span>
 
 <span class="sd">        The dictionary will contain the Qualified Name of the constraint</span>
@@ -419,7 +419,7 @@
     </div>
 
     
-  <script src="../../../_static/js/index.3da636dd464baa7582d2.js"></script>
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

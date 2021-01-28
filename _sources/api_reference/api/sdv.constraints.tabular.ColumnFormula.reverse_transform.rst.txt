@@ -1,6 +1,0 @@
-﻿sdv.constraints.tabular.ColumnFormula.reverse\_transform
-========================================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: ColumnFormula.reverse_transform

@@ -5,9 +5,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.6.1 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.7.0 documentation</title>
     
-  <link rel="stylesheet" href="../../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
     
-  <link rel="preload" as="script" href="../../_static/js/index.3da636dd464baa7582d2.js">
+  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
 
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -299,19 +299,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department              name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales        Amy Martin            002 Ball Hills\nJohnathanbury, NH 74299   47               46                     1</span>
-<span class="go">1       Pear         Design  Mrs. Tracy Davis  955 Hernandez Canyon Apt. 187\nRonaldland, PA ...   39               35                     4</span>
-<span class="go">2    Glasses             AI      Jamie Murphy                084 May Cape\nWalkerville, NJ 65165   37               32                     5</span>
-<span class="go">3    Glasses  Search Engine        Peter Hill   713 Lee Terrace Suite 569\nMikeborough, SD 15660   39               35                     4</span>
-<span class="go">4   Cheerper        BigData    Heather Thomas  056 Robert Crest Suite 782\nWest Jordan, IL 76721   42               33                     9</span>
-<span class="go">5   Cheerper        Support        Gary Scott  955 Robert Flats Suite 850\nAshleyville, KY 12375   31               29                     2</span>
-<span class="go">6       Pear          Sales      Emily Rogers  9172 Garner Port Suite 931\nLake Brianborough,...   44               42                     2</span>
-<span class="go">7       Pear         Design         John Lane  9893 Brandt Club Suite 770\nAndersonshire, TN ...   38               32                     6</span>
-<span class="go">8    Glasses             AI      Joseph Petty      40048 Patricia Junction\nGuerrafurt, CA 80991   44               41                     3</span>
-<span class="go">9    Glasses  Search Engine    William Austin      350 Medina Roads Apt. 221\nRyanview, NM 12499   46               45                     1</span>
-<span class="go">10  Cheerper        BigData    Joseph Schmidt  0492 Phillip Viaduct Apt. 222\nBradleyland, DE...   49               47                     2</span>
-<span class="go">11  Cheerper        Support      Scott Gibson  36683 Steven Haven Apt. 154\nNguyenstad, AR 19558   38               29                     9</span>
+<span class="go">     company     department                   name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales          Amanda Hansen             4724 Wang Alley\nEast Sophia, DE 63054   45               45                     0</span>
+<span class="go">1       Pear         Design         Michele Fisher  6068 Collins Drives Apt. 080\nSouth Nathanberg...   34               34                     0</span>
+<span class="go">2    Glasses             AI         David Williams         666 Pamela Villages\nAmandashire, VA 46459   31               31                     0</span>
+<span class="go">3    Glasses  Search Engine       Ms. Taylor Bryan   3144 Tammy Avenue Apt. 310\nWest Jacob, DC 80598   36               34                     2</span>
+<span class="go">4   Cheerper        BigData             Mark Moore      9835 Palmer Manor\nEast Waltermouth, OR 40581   31               22                     9</span>
+<span class="go">5   Cheerper        Support  Stephanie Christensen                   PSC 2194, Box 9507\nAPO AA 80997   40               36                     4</span>
+<span class="go">6       Pear          Sales            Angela Ross                   PSC 5776, Box 0290\nAPO AP 27277   36               29                     7</span>
+<span class="go">7       Pear         Design          Scott Johnson     545 Michael Falls Apt. 982\nNew Erin, FL 51471   45               37                     8</span>
+<span class="go">8    Glasses             AI         Brittney Mills         74799 Corey Mall\nTiffanyborough, TN 68480   48               48                     0</span>
+<span class="go">9    Glasses  Search Engine           Suzanne Wolf  9858 Turner Place Apt. 401\nFishermouth, TX 71720   41               40                     1</span>
+<span class="go">10  Cheerper        BigData      Jacqueline Tucker                          USNS Sparks\nFPO AE 16405   39               31                     8</span>
+<span class="go">11  Cheerper        Support            Megan Hayes  88749 Hale Squares Suite 744\nWest Richardland...   39               31                     8</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -473,17 +473,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department            name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0      Pear          Sales    Jamie Murphy                084 May Cape\nWalkerville, NJ 65165   48               47                     1</span>
-<span class="go">2  Cheerper        BigData  Heather Thomas  056 Robert Crest Suite 782\nWest Jordan, IL 76721   41               32                     9</span>
-<span class="go">3   Glasses  Search Engine  Heather Thomas  056 Robert Crest Suite 782\nWest Jordan, IL 76721   45               42                     3</span>
-<span class="go">5  Cheerper        Support    Joseph Petty      40048 Patricia Junction\nGuerrafurt, CA 80991   33               29                     4</span>
-<span class="go">7   Glasses             AI      Peter Hill   713 Lee Terrace Suite 569\nMikeborough, SD 15660   36               31                     5</span>
-<span class="go">8  Cheerper        BigData  Joseph Schmidt  0492 Phillip Viaduct Apt. 222\nBradleyland, DE...   44               38                     6</span>
-<span class="go">9   Glasses             AI    Joseph Petty      40048 Patricia Junction\nGuerrafurt, CA 80991   42               38                     4</span>
-<span class="go">0   Glasses             AI  Joseph Schmidt  0492 Phillip Viaduct Apt. 222\nBradleyland, DE...   46               38                     8</span>
-<span class="go">1  Cheerper        Support      Amy Martin            002 Ball Hills\nJohnathanbury, NH 74299   47               41                     6</span>
-<span class="go">2      Pear          Sales  Joseph Schmidt  0492 Phillip Viaduct Apt. 222\nBradleyland, DE...   49               47                     2</span>
+<span class="go">    company     department               name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0      Pear          Sales     Michele Fisher  6068 Collins Drives Apt. 080\nSouth Nathanberg...   39               36                     3</span>
+<span class="go">1      Pear          Sales      Amanda Hansen             4724 Wang Alley\nEast Sophia, DE 63054   46               42                     4</span>
+<span class="go">2  Cheerper        BigData         Mark Moore      9835 Palmer Manor\nEast Waltermouth, OR 40581   36               27                     9</span>
+<span class="go">3   Glasses             AI     David Williams         666 Pamela Villages\nAmandashire, VA 46459   38               34                     4</span>
+<span class="go">4      Pear          Sales  Jacqueline Tucker                          USNS Sparks\nFPO AE 16405   40               35                     5</span>
+<span class="go">5  Cheerper        BigData     David Williams         666 Pamela Villages\nAmandashire, VA 46459   33               29                     4</span>
+<span class="go">6  Cheerper        BigData         Mark Moore      9835 Palmer Manor\nEast Waltermouth, OR 40581   35               30                     5</span>
+<span class="go">7   Glasses  Search Engine       Suzanne Wolf  9858 Turner Place Apt. 401\nFishermouth, TX 71720   33               28                     5</span>
+<span class="go">8  Cheerper        Support        Megan Hayes  88749 Hale Squares Suite 744\nWest Richardland...   35               27                     8</span>
+<span class="go">0   Glasses             AI        Megan Hayes  88749 Hale Squares Suite 744\nWest Richardland...   44               39                     5</span>
 </pre></div>
 </div>
 </div>
@@ -507,7 +507,7 @@ we defined:</p>
     </div>
 
     
-  <script src="../../_static/js/index.3da636dd464baa7582d2.js"></script>
+  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

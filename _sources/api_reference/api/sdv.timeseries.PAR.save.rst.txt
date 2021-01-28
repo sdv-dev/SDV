@@ -1,6 +1,0 @@
-﻿sdv.timeseries.PAR.save
-=======================
-
-.. currentmodule:: sdv.timeseries
-
-.. automethod:: PAR.save

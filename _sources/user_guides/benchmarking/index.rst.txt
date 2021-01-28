@@ -3,11 +3,17 @@
 Benchmarking Framework
 ======================
 
-The Synthetic Data Vault offers a collection of benchmarking tools that evaluate
-different types of *synthetic data generators* on large number of datasets under
-uniform conditions that allow their results to be compared.
+The benchmarking of the SDV Synthetic Data Generators is done using the
+`Synthetic Data Gym (SDGym) <https://github.com/sdv-dev/SDGym>`__,
+a library from the Synthetic Data Vault Project that offers a collection of
+tools to run synthetic data generators in a large collection of datasets
+and then apply the metrics from our :ref:`evaluation_framework` to assess how
+good the generated data is.
 
 .. toctree::
     :titlesonly:
 
-    single_table
+    install
+    synthesizers
+    datasets
+    run

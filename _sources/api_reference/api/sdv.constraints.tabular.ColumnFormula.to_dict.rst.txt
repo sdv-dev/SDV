@@ -1,6 +1,0 @@
-﻿sdv.constraints.tabular.ColumnFormula.to\_dict
-==============================================
-
-.. currentmodule:: sdv.constraints.tabular
-
-.. automethod:: ColumnFormula.to_dict

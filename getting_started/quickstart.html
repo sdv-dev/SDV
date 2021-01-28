@@ -5,9 +5,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quickstart &#8212; SDV 0.6.1 documentation</title>
+    <title>Quickstart &#8212; SDV 0.7.0 documentation</title>
     
-  <link rel="stylesheet" href="../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+  <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/sdv.css" />
     
-  <link rel="preload" as="script" href="../_static/js/index.3da636dd464baa7582d2.js">
+  <link rel="preload" as="script" href="../_static/js/index.d3f166471bb80abb5163.js">
 
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -327,38 +327,29 @@ following the original distribution of your dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">sampled</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      ES      M   39</span>
-<span class="go"> 1        1      US      M   55</span>
-<span class="go"> 2        2      US    NaN   37</span>
-<span class="go"> 3        3      ES      F   52</span>
-<span class="go"> 4        4      ES      F   40</span>
-<span class="go"> 5        5      ES      F   54</span>
-<span class="go"> 6        6      ES      M   43</span>
-<span class="go"> 7        7      UK      M   26</span>
-<span class="go"> 8        8      ES      F   38</span>
-<span class="go"> 9        9      DE    NaN   40,</span>
-<span class="go"> &#39;sessions&#39;:     session_id  user_id  device       os</span>
-<span class="go"> 0            0        0  mobile      ios</span>
-<span class="go"> 1            1        1  mobile  android</span>
-<span class="go"> 2            2        2  tablet      ios</span>
-<span class="go"> 3            3        2  tablet      ios</span>
-<span class="go"> 4            4        3  mobile      ios</span>
-<span class="go"> 5            5        4  mobile      ios</span>
-<span class="go"> 6            6        4  mobile      ios</span>
-<span class="go"> 7            7        5  mobile      ios</span>
-<span class="go"> 8            8        6  mobile  android</span>
-<span class="go"> 9            9        7  tablet      ios</span>
-<span class="go"> 10          10        8  mobile      ios</span>
-<span class="go"> 11          11        8  mobile      ios,</span>
-<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  approved</span>
-<span class="go"> 0               0           0 2019-01-18 10:26:18  100.068818     False</span>
-<span class="go"> 1               1           0 2019-01-18 10:26:18  100.072386     False</span>
-<span class="go"> 2               2           1 2019-01-07 02:02:52  101.303152     False</span>
-<span class="go"> 3               3           4 2019-01-14 12:38:24   88.105085      True</span>
-<span class="go"> 4               4           7 2019-01-11 22:05:08   90.699881      True</span>
-<span class="go"> 5               5           8 2019-01-03 02:59:17   92.933921      True</span>
-<span class="go"> 6               6          10 2019-01-09 18:44:37   93.508463      True</span>
-<span class="go"> 7               7          11 2019-01-09 18:44:38   93.509013      True}</span>
+<span class="go"> 0        0      UK      F   37</span>
+<span class="go"> 1        1      ES      M   41</span>
+<span class="go"> 2        2      ES      M   34</span>
+<span class="go"> 3        3      UK    NaN   42</span>
+<span class="go"> 4        4      US      F   36</span>
+<span class="go"> 5        5      US    NaN   38</span>
+<span class="go"> 6        6      UK      M   23</span>
+<span class="go"> 7        7      UK    NaN   49</span>
+<span class="go"> 8        8      FR      M   43</span>
+<span class="go"> 9        9      US      M   23,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
+<span class="go"> 0           0        0  mobile      ios</span>
+<span class="go"> 1           1        1  mobile      ios</span>
+<span class="go"> 2           2        2  mobile      ios</span>
+<span class="go"> 3           3        3  mobile      ios</span>
+<span class="go"> 4           4        5  mobile  android</span>
+<span class="go"> 5           5        6  mobile      ios</span>
+<span class="go"> 6           6        7  mobile  android</span>
+<span class="go"> 7           7        8  mobile      ios</span>
+<span class="go"> 8           8        8  mobile      ios</span>
+<span class="go"> 9           9        9  mobile  android,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp    amount  approved</span>
+<span class="go"> 0               0           0 2019-01-17 04:57:02  87.70596      True}</span>
 </pre></div>
 </div>
 </div>
@@ -386,29 +377,18 @@ need to load it from its <code class="docutils literal notranslate"><span class=
 <span class="gp">In [14]: </span><span class="n">sampled</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      US      F   34</span>
-<span class="go"> 1       11      UK      M   21</span>
-<span class="go"> 2       12      UK    NaN   29</span>
-<span class="go"> 3       13      ES      F   30</span>
-<span class="go"> 4       14      FR      F   28,</span>
-<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os</span>
-<span class="go"> 0          12       10  mobile      ios</span>
-<span class="go"> 1          13       10  mobile      ios</span>
-<span class="go"> 2          14       12  tablet  android</span>
-<span class="go"> 3          15       13  tablet      ios</span>
-<span class="go"> 4          16       13  tablet      ios</span>
-<span class="go"> 5          17       14  tablet      ios</span>
-<span class="go"> 6          18       14  tablet      ios,</span>
-<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  approved</span>
-<span class="go"> 0               8          12 2019-01-04 07:23:39   81.271372      True</span>
-<span class="go"> 1               9          13 2019-01-04 07:26:09   81.328094      True</span>
-<span class="go"> 2              10          14 2019-01-07 03:38:30  102.661007     False</span>
-<span class="go"> 3              11          15 2019-01-20 13:24:31   49.658808      True</span>
-<span class="go"> 4              12          15 2019-01-26 08:21:40  529.961810      True</span>
-<span class="go"> 5              13          16 2019-01-24 04:47:43  -17.853099      True</span>
-<span class="go"> 6              14          16 2019-01-22 22:34:51   23.305019      True</span>
-<span class="go"> 7              15          17 2019-01-18 06:49:22   86.159834      True</span>
-<span class="go"> 8              16          18 2019-01-18 06:49:18   86.134607      True}</span>
+<span class="go"> 0       10      US    NaN   37</span>
+<span class="go"> 1       11      ES      F   27</span>
+<span class="go"> 2       12      UK    NaN   21</span>
+<span class="go"> 3       13      FR      F   29</span>
+<span class="go"> 4       14      US      M   54,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os</span>
+<span class="go"> 0          10       11  mobile  ios</span>
+<span class="go"> 1          11       13  tablet  ios</span>
+<span class="go"> 2          12       14  mobile  ios,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp       amount  approved</span>
+<span class="go"> 0               1          10 2019-01-12 05:25:59 -3541.090510      True</span>
+<span class="go"> 1               2          10 2018-12-21 07:41:12 -8402.847822      True}</span>
 </pre></div>
 </div>
 </div>
@@ -432,7 +412,7 @@ need to load it from its <code class="docutils literal notranslate"><span class=
     </div>
 
     
-  <script src="../_static/js/index.3da636dd464baa7582d2.js"></script>
+  <script src="../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
     <footer class="footer mt-5 mt-md-0">

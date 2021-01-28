@@ -1,6 +1,0 @@
-﻿sdv.tabular.TVAE.get\_metadata
-==============================
-
-.. currentmodule:: sdv.tabular
-
-.. automethod:: TVAE.get_metadata

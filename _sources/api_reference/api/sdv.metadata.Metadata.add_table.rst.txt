@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.add\_table
-================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.add_table

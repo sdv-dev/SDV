@@ -1,6 +1,0 @@
-﻿sdv.relational.HMA1.save
-========================
-
-.. currentmodule:: sdv.relational
-
-.. automethod:: HMA1.save

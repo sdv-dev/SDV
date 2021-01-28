@@ -1,6 +1,0 @@
-﻿sdv.metadata.Table.get\_dtypes
-==============================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Table.get_dtypes

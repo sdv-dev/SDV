@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.set\_primary\_key
-=======================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.set_primary_key

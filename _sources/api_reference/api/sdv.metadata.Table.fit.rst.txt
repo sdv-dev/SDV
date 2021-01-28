@@ -1,6 +1,0 @@
-﻿sdv.metadata.Table.fit
-======================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Table.fit

@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.to\_json
-==============================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.to_json

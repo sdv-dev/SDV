@@ -1,6 +1,0 @@
-﻿sdv.metadata.Table.to\_json
-===========================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Table.to_json

@@ -1,6 +1,0 @@
-﻿sdv.metadata.Metadata.load\_tables
-==================================
-
-.. currentmodule:: sdv.metadata
-
-.. automethod:: Metadata.load_tables

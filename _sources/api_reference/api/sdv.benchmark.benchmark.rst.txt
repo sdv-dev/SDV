@@ -1,6 +1,0 @@
-﻿sdv.benchmark.benchmark
-=======================
-
-.. currentmodule:: sdv.benchmark
-
-.. autofunction:: benchmark
