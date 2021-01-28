@@ -13,7 +13,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'numpy>=1.18.0,<2',
-    'scipy>=1.1.0,<1.6',
+    'scipy>=1.4,<1.6',
     'pandas>=1.1,<1.1.5',
     'graphviz>=0.13.2,<1',
     'ctgan>=0.3.1,<0.4',
