@@ -89,7 +89,7 @@ pip install sdv
 **Using `conda`:**
 
 ```bash
-conda install -c sdv-dev -c conda-forge sdv
+conda install -c sdv-dev -c pytorch -c conda-forge sdv
 ```
 
 For more installation options please visit the [SDV installation Guide](
