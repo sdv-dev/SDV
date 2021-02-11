@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from sdv.demo import load_demo
 from sdv.tabular.ctgan import CTGAN
