@@ -1,5 +1,6 @@
 from sdv.demo import load_demo
 from sdv.tabular.ctgan import CTGAN
+import pandas as pd
 
 
 def test_ctgan():
@@ -80,3 +81,60 @@ def test_recreate():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notnull().sum(axis=1) != 0).all()
+
+
+@pytest.mark.xfail(reason="not implemented")
+def test_conditional_sampling_n_rows():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5]*10,
+        "column2": ["a", "b", "c"]*10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": "b"
+    }
+    sampled = model.sample(30, conditions=conditions)
+
+    assert sampled.shape == data.shape
+    assert sampled["column2"].unique() == ["b"]
+
+
+@pytest.mark.xfail(reason="not implemented")
+def test_conditional_sampling_two_rows():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5]*10,
+        "column2": ["a", "b", "c"]*10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": ["b", "c"]
+    }
+    sampled = model.sample(conditions=conditions)
+
+    assert sampled.shape[0] == 2
+    assert sampled["column2"].unique() == ["b", "c"]
+
+
+@pytest.mark.xfail(reason="not implemented")
+def test_conditional_sampling_two_conditions():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5]*10,
+        "column2": ["a", "b", "c"]*10,
+        "column3": ["d", "e", "f"]*10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": ["b"],
+        "column3": ["f"]
+    }
+    sampled = model.sample(30, conditions=conditions)
+
+    assert sampled.shape == data.shape
+    assert sampled["column2"].unique() == ["b"]
+    assert sampled["column3"].unique() == ["f"]
