@@ -1,6 +1,7 @@
+import pandas as pd
+
 from sdv.demo import load_demo
 from sdv.tabular.ctgan import CTGAN
-import pandas as pd
 
 
 def test_ctgan():
@@ -86,8 +87,8 @@ def test_recreate():
 @pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_n_rows():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5]*10,
-        "column2": ["a", "b", "c"]*10
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
     })
 
     model = CTGAN(epochs=1)
@@ -104,8 +105,8 @@ def test_conditional_sampling_n_rows():
 @pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_two_rows():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5]*10,
-        "column2": ["a", "b", "c"]*10
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
     })
 
     model = CTGAN(epochs=1)
@@ -122,9 +123,9 @@ def test_conditional_sampling_two_rows():
 @pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_two_conditions():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5]*10,
-        "column2": ["a", "b", "c"]*10,
-        "column3": ["d", "e", "f"]*10
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10,
+        "column3": ["d", "e", "f"] * 10
     })
 
     model = CTGAN(epochs=1)
