@@ -86,7 +86,6 @@ def test_recreate():
     assert (sampled.notnull().sum(axis=1) != 0).all()
 
 
-@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_one_category():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
@@ -101,10 +100,9 @@ def test_conditional_sampling_one_category():
     sampled = model.sample(30, conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert sampled["column2"].unique() == ["b"]
+    assert set(sampled["column2"].unique()) == set(["b"])
 
 
-@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_multiple_categories():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
@@ -118,8 +116,8 @@ def test_conditional_sampling_multiple_categories():
     })
     sampled = model.sample(conditions=conditions)
 
-    assert sampled.shape[0] == len(conditions["column2"])
-    assert all(sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"]))
+    assert len(sampled) == len(conditions["column2"])
+    assert (sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"])).all()
 
 
 def test_conditional_sampling_two_conditions_fails():

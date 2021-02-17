@@ -163,7 +163,7 @@ class BaseTabularModel:
                 (not isinstance(conditions, pd.Series)):
             raise TypeError("`conditions` must be a dataframe, a dictionary or a pandas series.")
 
-        num_rows = num_rows or self._num_rows
+        num_rows = num_rows or (len(conditions) if isinstance(conditions, pd.DataFrame) else False) or self._num_rows
         num_to_sample = num_rows
         sampled = self._sample_rows(num_to_sample, conditions)
         sampled = self._metadata.reverse_transform(sampled)
@@ -182,7 +182,7 @@ class BaseTabularModel:
             num_to_sample = int(counter * remaining / (valid_ratio if valid_ratio != 0 else 1))
 
             LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
-            resampled = self._sample_rows(num_to_sample)
+            resampled = self._sample_rows(num_to_sample, conditions)
             resampled = self._metadata.reverse_transform(resampled)
 
             sampled = sampled.append(resampled)

@@ -81,13 +81,14 @@ class CTGANModel(BaseTabularModel):
                         rows = []
                         for i in range(len(conditions)):
                             condition_value = conditions.iloc[i, 0]
-                            # TODO: transform condition value with TabularModel._metadata
+                            # what about Table.constraint transformers?
+                            new_condition_value = self._metadata._hyper_transformer._transformers[condition_column].transform(pd.Series([condition_value]))[0]
                             rows.append(self._model.sample(
                                 1,
                                 condition_column=condition_column,
-                                condition_value=condition_value
+                                condition_value=new_condition_value
                             ))
-                        return pd.concat(rows)
+                        return pd.concat(rows, axis=0).reset_index()
                     else:
                         raise ValueError("conditions cannot be empty.")
 
@@ -99,8 +100,8 @@ class CTGANModel(BaseTabularModel):
                         if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
                             raise ValueError("conditions must be a categorical column.")
 
-                        # TODO: transform condition value with TabularModel._metadata
                         condition_value = conditions[condition_column]
+                        condition_value = self._metadata._hyper_transformer._transformers[condition_column].transform(pd.Series([condition_value]))[0]
                         return self._model.sample(
                             num_rows,
                             condition_column=condition_column,
