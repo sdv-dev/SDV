@@ -1,3 +1,6 @@
+import pandas as pd
+import pytest
+
 from sdv.demo import load_demo
 from sdv.tabular.copulagan import CopulaGAN
 
@@ -83,3 +86,56 @@ def test_recreate():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notnull().sum(axis=1) != 0).all()
+
+
+@pytest.mark.xfail(reason="not implemented")
+def test_conditional_sampling_one_category():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
+    })
+
+    model = CopulaGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": "b"
+    }
+    sampled = model.sample(30, conditions=conditions)
+
+    assert sampled.shape == data.shape
+    assert sampled["column2"].unique() == ["b"]
+
+
+@pytest.mark.xfail(reason="not implemented")
+def test_conditional_sampling_multiple_categories():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
+    })
+
+    model = CopulaGAN(epochs=1)
+    model.fit(data)
+    conditions = pd.DataFrame({
+        "column2": ["b", "b", "b", "c", "c"]
+    })
+    sampled = model.sample(conditions=conditions)
+
+    assert sampled.shape[0] == len(conditions["column2"])
+    assert all(sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"]))
+
+
+def test_conditional_sampling_two_conditions_fails():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10,
+        "column3": ["d", "e", "f"] * 10
+    })
+
+    model = CopulaGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": "b",
+        "column3": "f"
+    }
+    with pytest.raises(NotImplementedError):
+        model.sample(30, conditions=conditions)

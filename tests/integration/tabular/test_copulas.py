@@ -180,3 +180,19 @@ def test_ids_only():
 
     assert sampled.shape == ids_only.shape
     assert ids_only.equals(sampled)
+
+
+def test_conditional_sampling_copulas_fails():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10,
+        "column3": ["d", "e", "f"] * 10
+    })
+
+    model = GaussianCopula()
+    model.fit(data)
+    conditions = {
+        "column2": "b",
+    }
+    with pytest.raises(NotImplementedError):
+        model.sample(30, conditions=conditions)

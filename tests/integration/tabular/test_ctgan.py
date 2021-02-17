@@ -1,3 +1,4 @@
+
 import pandas as pd
 import pytest
 
@@ -86,7 +87,7 @@ def test_recreate():
 
 
 @pytest.mark.xfail(reason="not implemented")
-def test_conditional_sampling_n_rows():
+def test_conditional_sampling_one_category():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
         "column2": ["a", "b", "c"] * 10
@@ -104,7 +105,7 @@ def test_conditional_sampling_n_rows():
 
 
 @pytest.mark.xfail(reason="not implemented")
-def test_conditional_sampling_two_rows():
+def test_conditional_sampling_multiple_categories():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
         "column2": ["a", "b", "c"] * 10
@@ -112,17 +113,16 @@ def test_conditional_sampling_two_rows():
 
     model = CTGAN(epochs=1)
     model.fit(data)
-    conditions = {
-        "column2": ["b", "c"]
-    }
+    conditions = pd.DataFrame({
+        "column2": ["b", "b", "b", "c", "c"]
+    })
     sampled = model.sample(conditions=conditions)
 
-    assert sampled.shape[0] == 2
-    assert sampled["column2"].unique() == ["b", "c"]
+    assert sampled.shape[0] == len(conditions["column2"])
+    assert all(sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"]))
 
 
-@pytest.mark.xfail(reason="not implemented")
-def test_conditional_sampling_two_conditions():
+def test_conditional_sampling_two_conditions_fails():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
         "column2": ["a", "b", "c"] * 10,
@@ -132,11 +132,8 @@ def test_conditional_sampling_two_conditions():
     model = CTGAN(epochs=1)
     model.fit(data)
     conditions = {
-        "column2": ["b"],
-        "column3": ["f"]
+        "column2": "b",
+        "column3": "f"
     }
-    sampled = model.sample(30, conditions=conditions)
-
-    assert sampled.shape == data.shape
-    assert sampled["column2"].unique() == ["b"]
-    assert sampled["column3"].unique() == ["f"]
+    with pytest.raises(NotImplementedError):
+        model.sample(30, conditions=conditions)

@@ -1,5 +1,6 @@
 """Wrapper around CTGAN model."""
 
+import pandas as pd
 from ctgan import CTGANSynthesizer, TVAESynthesizer
 
 from sdv.tabular.base import BaseTabularModel
@@ -53,17 +54,64 @@ class CTGANModel(BaseTabularModel):
             discrete_columns=categoricals
         )
 
-    def _sample(self, num_rows):
+    def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
         Args:
-            num_rows (int):
-                Amount of rows to sample.
+            num_rows (int or None):
+                Amount of rows to sample. If `None`, sample a row per condition.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
+        if conditions is not None:
+            if self._MODEL_CLASS == CTGANSynthesizer:
+                condition_column = None
+                condition_value = None
+
+                if isinstance(conditions, pd.DataFrame):
+                    if len(conditions.columns) > 1:
+                        raise NotImplementedError("CTGAN only supports conditions on one column.")
+                    elif len(conditions.columns) == 1:
+                        condition_column = conditions.columns[0]
+                        if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
+                            raise ValueError("conditions must be a categorical column.")
+
+                        rows = []
+                        for i in range(len(conditions)):
+                            condition_value = conditions.iloc[i, 0]
+                            # TODO: transform condition value with TabularModel._metadata
+                            rows.append(self._model.sample(
+                                1,
+                                condition_column=condition_column,
+                                condition_value=condition_value
+                            ))
+                        return pd.concat(rows)
+                    else:
+                        raise ValueError("conditions cannot be empty.")
+
+                else:
+                    if len(conditions) > 1:
+                        raise NotImplementedError("CTGAN only supports conditions on one column.")
+                    elif len(conditions) == 1:
+                        condition_column = list(conditions.keys())[0]
+                        if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
+                            raise ValueError("conditions must be a categorical column.")
+
+                        # TODO: transform condition value with TabularModel._metadata
+                        condition_value = conditions[condition_column]
+                        return self._model.sample(
+                            num_rows,
+                            condition_column=condition_column,
+                            condition_value=condition_value
+                        )
+                    else:
+                        raise ValueError("conditions cannot be empty.")
+
+            else:
+                raise NotImplementedError("TVAE does not support conditional sampling.")
+
         return self._model.sample(num_rows)
 
 

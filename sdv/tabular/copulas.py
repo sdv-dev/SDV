@@ -283,7 +283,7 @@ class GaussianCopula(BaseTabularModel):
         self._model.fit(table_data)
         self._update_metadata()
 
-    def _sample(self, num_rows):
+    def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
         Args:
@@ -294,6 +294,8 @@ class GaussianCopula(BaseTabularModel):
             pandas.DataFrame:
                 Sampled data.
         """
+        if conditions is not None:
+            raise NotImplementedError("Copula-based models don't support conditional sampling.")
         return self._model.sample(num_rows)
 
     def get_likelihood(self, table_data):

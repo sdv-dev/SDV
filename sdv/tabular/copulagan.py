@@ -199,7 +199,7 @@ class CopulaGAN(CTGAN):
 
         super()._fit(table_data)
 
-    def _sample(self, num_rows):
+    def _sample(self, num_rows, conditions):
         """Sample the indicated number of rows from the model.
 
         Args:
@@ -210,5 +210,5 @@ class CopulaGAN(CTGAN):
             pandas.DataFrame:
                 Sampled data.
         """
-        sampled = super()._sample(num_rows)
+        sampled = super()._sample(num_rows, conditions)
         return self._ht.reverse_transform(sampled)

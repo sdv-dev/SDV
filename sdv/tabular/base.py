@@ -135,13 +135,13 @@ class BaseTabularModel:
         """
         return self._metadata
 
-    def _sample_rows(self, num_to_sample):
+    def _sample_rows(self, num_to_sample=None, conditions=None):
         if self._metadata.get_dtypes(ids=False):
-            return self._sample(num_to_sample)
+            return self._sample(num_to_sample, conditions)
         else:
             return pd.DataFrame(index=range(num_to_sample))
 
-    def sample(self, num_rows=None, max_retries=100):
+    def sample(self, num_rows=None, max_retries=100, conditions=None):
         """Sample rows from this table.
 
         Args:
@@ -157,9 +157,15 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
+        if conditions is not None and \
+            (not isinstance(conditions, pd.DataFrame)) and \
+            (not isinstance(conditions, dict)) and           \
+                (not isinstance(conditions, pd.Series)):
+            raise TypeError("`conditions` must be a dataframe, a dictionary or a pandas series.")
+
         num_rows = num_rows or self._num_rows
         num_to_sample = num_rows
-        sampled = self._sample_rows(num_to_sample)
+        sampled = self._sample_rows(num_to_sample, conditions)
         sampled = self._metadata.reverse_transform(sampled)
         sampled = self._metadata.filter_valid(sampled)
         num_valid = len(sampled)
