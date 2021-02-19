@@ -318,7 +318,7 @@ class GaussianCopula(BaseTabularModel):
                 If a non-parametric distribution has been used.
         """
         for univariate in self._model.univariates:
-            if type(univariate) is copulas.univariate.Univariate:
+            if isinstance(univariate, copulas.univariate.Univariate):
                 univariate = univariate._instance
 
             if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:

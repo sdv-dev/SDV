@@ -89,6 +89,7 @@ def test_recreate():
     assert (sampled.notnull().sum(axis=1) != 0).all()
 
 
+@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_one_category():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
@@ -106,6 +107,7 @@ def test_conditional_sampling_one_category():
     assert set(sampled["column2"].unique()) == set(["b"])
 
 
+@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_multiple_categories():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
