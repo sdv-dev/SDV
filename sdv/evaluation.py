@@ -1,8 +1,8 @@
 """Tools to evaluate the synthesized data."""
 
 import pandas as pd
-import sdmetrics
 
+import sdmetrics
 from sdv.metadata.dataset import Metadata
 
 

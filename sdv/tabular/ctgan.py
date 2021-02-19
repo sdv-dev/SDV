@@ -1,6 +1,5 @@
 """Wrapper around CTGAN model."""
 
-import pandas as pd
 from ctgan import CTGANSynthesizer, TVAESynthesizer
 
 from sdv.tabular.base import BaseTabularModel
@@ -65,55 +64,34 @@ class CTGANModel(BaseTabularModel):
             pandas.DataFrame:
                 Sampled data.
         """
-        if conditions is not None:
-            if self._MODEL_CLASS == CTGANSynthesizer:
-                condition_column = None
-                condition_value = None
+        if conditions is None:
+            return self._model.sample(num_rows)
 
-                if isinstance(conditions, pd.DataFrame):
-                    if len(conditions.columns) > 1:
-                        raise NotImplementedError("CTGAN only supports conditions on one column.")
-                    elif len(conditions.columns) == 1:
-                        condition_column = conditions.columns[0]
-                        if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
-                            raise ValueError("conditions must be a categorical column.")
+        if self._MODEL_CLASS == CTGANSynthesizer:
+            condition_column = None
+            condition_value = None
+            if len(conditions.columns) > 1:
+                raise NotImplementedError("CTGAN only supports `conditions` on one column.")
 
-                        rows = []
-                        for i in range(len(conditions)):
-                            condition_value = conditions.iloc[i, 0]
-                            # what about Table.constraint transformers?
-                            new_condition_value = self._metadata._hyper_transformer._transformers[condition_column].transform(pd.Series([condition_value]))[0]
-                            rows.append(self._model.sample(
-                                1,
-                                condition_column=condition_column,
-                                condition_value=new_condition_value
-                            ))
-                        return pd.concat(rows, axis=0).reset_index()
-                    else:
-                        raise ValueError("conditions cannot be empty.")
+            elif len(conditions.columns) == 1:
+                condition_column = conditions.columns[0]
+                if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
+                    raise ValueError("`conditions` must be a categorical column.")
 
-                else:
-                    if len(conditions) > 1:
-                        raise NotImplementedError("CTGAN only supports conditions on one column.")
-                    elif len(conditions) == 1:
-                        condition_column = list(conditions.keys())[0]
-                        if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
-                            raise ValueError("conditions must be a categorical column.")
+                condition_value = conditions[condition_column][0]
+                rows = self._model.sample(
+                    num_rows,
+                    condition_column=condition_column,
+                    condition_value=condition_value
+                )
 
-                        condition_value = conditions[condition_column]
-                        condition_value = self._metadata._hyper_transformer._transformers[condition_column].transform(pd.Series([condition_value]))[0]
-                        return self._model.sample(
-                            num_rows,
-                            condition_column=condition_column,
-                            condition_value=condition_value
-                        )
-                    else:
-                        raise ValueError("conditions cannot be empty.")
+                return rows
 
             else:
-                raise NotImplementedError("TVAE does not support conditional sampling.")
+                raise ValueError("conditions cannot be empty.")
 
-        return self._model.sample(num_rows)
+        else:
+            raise NotImplementedError("TVAE does not support conditional sampling.")
 
 
 class CTGAN(CTGANModel):

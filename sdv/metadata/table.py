@@ -456,7 +456,8 @@ class Table:
         if anonymization_mappings:
             data = data.copy()
             for name, mapping in anonymization_mappings.items():
-                data[name] = data[name].map(mapping)
+                if name in data:
+                    data[name] = data[name].map(mapping)
 
         return data
 
@@ -508,8 +509,13 @@ class Table:
             raise MetadataNotFittedError()
 
         fields = self.get_dtypes(ids=False)
+        partial_fields = dict()
+        for field in data.columns:
+            if field in fields:
+                partial_fields[field] = fields[field]
+
         LOGGER.debug('Anonymizing table %s', self.name)
-        data = self._anonymize(data[fields])
+        data = self._anonymize(data[partial_fields])
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
         for constraint in self._constraints:

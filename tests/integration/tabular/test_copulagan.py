@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -102,7 +103,7 @@ def test_conditional_sampling_one_category():
     sampled = model.sample(30, conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert sampled["column2"].unique() == ["b"]
+    assert set(sampled["column2"].unique()) == set(["b"])
 
 
 def test_conditional_sampling_multiple_categories():
@@ -119,7 +120,7 @@ def test_conditional_sampling_multiple_categories():
     sampled = model.sample(conditions=conditions)
 
     assert sampled.shape[0] == len(conditions["column2"])
-    assert all(sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"]))
+    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
 
 
 def test_conditional_sampling_two_conditions_fails():

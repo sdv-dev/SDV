@@ -3,6 +3,7 @@
 import logging
 import pickle
 
+import numpy as np
 import pandas as pd
 
 from sdv.metadata import Table
@@ -141,7 +142,7 @@ class BaseTabularModel:
         else:
             return pd.DataFrame(index=range(num_to_sample))
 
-    def sample(self, num_rows=None, max_retries=100, conditions=None):
+    def _sample_conditioned_rows(self, num_rows=None, max_retries=100, conditions=None):
         """Sample rows from this table.
 
         Args:
@@ -157,13 +158,8 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
-        if conditions is not None and \
-            (not isinstance(conditions, pd.DataFrame)) and \
-            (not isinstance(conditions, dict)) and           \
-                (not isinstance(conditions, pd.Series)):
-            raise TypeError("`conditions` must be a dataframe, a dictionary or a pandas series.")
-
-        num_rows = num_rows or (len(conditions) if isinstance(conditions, pd.DataFrame) else False) or self._num_rows
+        num_rows = num_rows or (len(conditions) if isinstance(
+            conditions, pd.DataFrame) else False) or self._num_rows
         num_to_sample = num_rows
         sampled = self._sample_rows(num_to_sample, conditions)
         sampled = self._metadata.reverse_transform(sampled)
@@ -190,6 +186,61 @@ class BaseTabularModel:
             num_valid = len(sampled)
 
         return sampled.head(num_rows)
+
+    def _make_conditions_df(self, conditions, num_rows):
+        if isinstance(conditions, pd.Series):
+            conditions = pd.DataFrame([conditions] * num_rows)
+
+        elif isinstance(conditions, dict):
+            try:
+                conditions = pd.DataFrame(conditions)
+            except ValueError:
+                conditions = pd.DataFrame([conditions] * num_rows)
+
+        elif not isinstance(conditions, pd.DataFrame):
+            raise TypeError("`conditions` must be a dataframe, a dictionary or a pandas series.")
+
+        return conditions
+
+    def sample(self, num_rows=None, max_retries=100, conditions=None):
+        if conditions is None:
+            return self._sample_conditioned_rows(num_rows, max_retries, None)
+
+        # convert conditions to dataframe
+        conditions = self._make_conditions_df(conditions, num_rows)
+
+        # transform conditions, will use RDT when that's ready
+        all_conditions = []
+        for condition_column_name in conditions.columns:
+            condition_column = conditions[[condition_column_name]]
+            try:
+                transformed_conditions = self._metadata.transform(condition_column)
+                if len(transformed_conditions.columns) == 0:
+                    raise ValueError()
+                all_conditions.append(transformed_conditions)
+
+            except Exception:
+                raise ValueError(f'Cannot condition on {conditions}') from None
+
+        transformed_conditions = pd.concat(all_conditions, axis=1)
+        columns = transformed_conditions.columns
+        transformed_conditions["__condition_idx__"] = np.arange(len(transformed_conditions))
+        grouped_conditions = transformed_conditions.groupby(list(columns))
+
+        # sample
+        all_sampled_rows = list()
+        for index, dataframe in grouped_conditions:
+            one_condition = pd.DataFrame([index], columns=columns)
+            sampled_rows = self._sample_conditioned_rows(
+                len(dataframe), max_retries, one_condition)
+            sampled_rows["__condition_idx__"] = dataframe["__condition_idx__"]
+            all_sampled_rows.append(sampled_rows)
+
+        all_sampled_rows = pd.concat(sampled_rows)
+        all_sampled_rows = sampled_rows.sort_values("__condition_idx__")
+        all_sampled_rows = sampled_rows.drop("__condition_idx__", axis=1)
+
+        return all_sampled_rows
 
     def _get_parameters(self):
         raise NonParametricError()

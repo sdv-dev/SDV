@@ -1,4 +1,4 @@
-
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -117,7 +117,7 @@ def test_conditional_sampling_multiple_categories():
     sampled = model.sample(conditions=conditions)
 
     assert len(sampled) == len(conditions["column2"])
-    assert (sampled["column2"] == pd.Series(["b", "b", "b", "c", "c"])).all()
+    assert (sampled["column2"].values == np.array(["b", "b", "b", "c", "c"])).all()
 
 
 def test_conditional_sampling_two_conditions_fails():
