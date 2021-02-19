@@ -203,8 +203,7 @@ class BaseTabularModel:
         return conditions
 
     def sample(self, num_rows=None, max_retries=100, conditions=None):
-        """TODO: write this.
-        """
+        """Write this."""
         if conditions is None:
             return self._sample_conditioned_rows(num_rows, max_retries, None)
 
