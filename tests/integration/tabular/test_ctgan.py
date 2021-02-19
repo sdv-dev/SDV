@@ -122,6 +122,7 @@ def test_conditional_sampling_multiple_categories():
     assert (sampled["column2"].values == np.array(["b", "b", "b", "c", "c"])).all()
 
 
+@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_two_conditions_fails():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
