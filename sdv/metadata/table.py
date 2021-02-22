@@ -508,14 +508,9 @@ class Table:
         if not self.fitted:
             raise MetadataNotFittedError()
 
-        fields = self.get_dtypes(ids=False)
-        partial_fields = dict()
-        for field in data.columns:
-            if field in fields:
-                partial_fields[field] = fields[field]
-
+        fields = [field for field in self.get_dtypes(ids=False) if field in data.columns]
         LOGGER.debug('Anonymizing table %s', self.name)
-        data = self._anonymize(data[partial_fields])
+        data = self._anonymize(data[fields])
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
         for constraint in self._constraints:

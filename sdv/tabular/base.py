@@ -136,7 +136,7 @@ class BaseTabularModel:
         """
         return self._metadata
 
-    def _sample_rows(self, num_to_sample=None, conditions=None):
+    def _sample_rows(self, num_to_sample, conditions=None):
         if self._metadata.get_dtypes(ids=False):
             return self._sample(num_to_sample, conditions)
         else:
@@ -153,13 +153,22 @@ class BaseTabularModel:
             max_retries (int):
                 Number of times to retry sampling discarded rows.
                 Defaults to 100.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        num_rows = num_rows or (len(conditions) if isinstance(
-            conditions, pd.DataFrame) else False) or self._num_rows
+        if isinstance(conditions, pd.DataFrame):
+            if num_rows is not None:
+                assert len(conditions) == num_rows, "`num_rows`/`conditions` must be compatible."
+            num_rows = len(conditions)
+        elif num_rows is None:
+            num_rows = self._num_rows
+
         num_to_sample = num_rows
         sampled = self._sample_rows(num_to_sample, conditions)
         sampled = self._metadata.reverse_transform(sampled)
@@ -188,6 +197,25 @@ class BaseTabularModel:
         return sampled.head(num_rows)
 
     def _make_conditions_df(self, conditions, num_rows):
+        """Transform `conditions` into a dataframe.
+
+        Args:
+            conditions (pd.DataFrame, dict or pd.Series):
+                If this is a dictionary/Series which maps column names to the column
+                value, then this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
+
+                If this is a DataFrame, then it generates an output DataFrame
+                such that each row in the output is sampled conditional on
+                the corresponding row in the input.
+            num_rows (int):
+                Number of rows to sample.
+
+        Returns:
+            pandas.DataFrame:
+                `conditions` as a dataframe.
+
+        """
         if isinstance(conditions, pd.Series):
             conditions = pd.DataFrame([conditions] * num_rows)
 
@@ -203,27 +231,48 @@ class BaseTabularModel:
         return conditions
 
     def sample(self, num_rows=None, max_retries=100, conditions=None):
-        """Write this."""
+        """Sample rows from this table.
+
+        Args:
+            num_rows (int):
+                Number of rows to sample. If not given the model
+                will generate as many rows as there were in the
+                data passed to the ``fit`` method.
+            max_retries (int):
+                Number of times to retry sampling discarded rows.
+                Defaults to 100.
+            conditions (pd.DataFrame, dict or pd.Series):
+                If this is a dictionary/Series which maps column names to the column
+                value, then this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
+
+                If this is a DataFrame, then it generates an output DataFrame
+                such that each row in the output is sampled conditional on
+                the corresponding row in the input.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
         if conditions is None:
-            return self._sample_conditioned_rows(num_rows, max_retries, None)
+            return self._sample_conditioned_rows(num_rows, max_retries)
 
         # convert conditions to dataframe
         conditions = self._make_conditions_df(conditions, num_rows)
 
-        # transform conditions, will use RDT when that's ready
-        all_conditions = []
-        for condition_column_name in conditions.columns:
-            condition_column = conditions[[condition_column_name]]
-            try:
-                transformed_conditions = self._metadata.transform(condition_column)
-                if len(transformed_conditions.columns) == 0:
+        try:
+            condition_columns = conditions.columns
+            transformed_conditions = self._metadata.transform(conditions)
+
+            # health check
+            for condition_columns in conditions.columns:
+                condition_column = conditions[[condition_columns]]
+                if len(self._metadata.transform(condition_column).columns) == 0:
                     raise ValueError()
-                all_conditions.append(transformed_conditions)
 
-            except Exception:
-                raise ValueError(f'Cannot condition on {conditions}') from None
+        except Exception:
+            raise ValueError(f'Cannot condition on {condition_columns}') from None
 
-        transformed_conditions = pd.concat(all_conditions, axis=1)
         columns = transformed_conditions.columns
         transformed_conditions["__condition_idx__"] = np.arange(len(transformed_conditions))
         grouped_conditions = transformed_conditions.groupby(list(columns))
@@ -231,15 +280,15 @@ class BaseTabularModel:
         # sample
         all_sampled_rows = list()
         for index, dataframe in grouped_conditions:
-            one_condition = pd.DataFrame([index], columns=columns)
+            one_condition = dict(zip(columns, index if isinstance(index, tuple) else [index]))
             sampled_rows = self._sample_conditioned_rows(
                 len(dataframe), max_retries, one_condition)
-            sampled_rows["__condition_idx__"] = dataframe["__condition_idx__"]
+            sampled_rows["__condition_idx__"] = dataframe["__condition_idx__"].values
             all_sampled_rows.append(sampled_rows)
 
-        all_sampled_rows = pd.concat(sampled_rows)
-        all_sampled_rows = sampled_rows.sort_values("__condition_idx__")
-        all_sampled_rows = sampled_rows.drop("__condition_idx__", axis=1)
+        all_sampled_rows = pd.concat(all_sampled_rows)
+        all_sampled_rows = all_sampled_rows.sort_values("__condition_idx__")
+        all_sampled_rows = all_sampled_rows.drop("__condition_idx__", axis=1)
 
         return all_sampled_rows
 

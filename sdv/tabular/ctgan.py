@@ -57,8 +57,12 @@ class CTGANModel(BaseTabularModel):
         """Sample the indicated number of rows from the model.
 
         Args:
-            num_rows (int or None):
-                Amount of rows to sample. If `None`, sample a row per condition.
+            num_rows (int):
+                Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
 
         Returns:
             pandas.DataFrame:
@@ -70,15 +74,15 @@ class CTGANModel(BaseTabularModel):
         if self._MODEL_CLASS == CTGANSynthesizer:
             condition_column = None
             condition_value = None
-            if len(conditions.columns) > 1:
+            if len(conditions) > 1:
                 raise NotImplementedError("CTGAN only supports `conditions` on one column.")
 
-            elif len(conditions.columns) == 1:
-                condition_column = conditions.columns[0]
+            elif len(conditions) == 1:
+                condition_column = list(conditions.keys())[0]
                 if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
                     raise ValueError("`conditions` must be a categorical column.")
 
-                condition_value = conditions[condition_column][0]
+                condition_value = list(conditions.values())[0]
                 rows = self._model.sample(
                     num_rows,
                     condition_column=condition_column,

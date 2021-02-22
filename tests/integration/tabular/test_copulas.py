@@ -182,7 +182,6 @@ def test_ids_only():
     assert ids_only.equals(sampled)
 
 
-@pytest.mark.xfail(reason="not implemented")
 def test_conditional_sampling_copulas_fails():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,

@@ -289,6 +289,10 @@ class GaussianCopula(BaseTabularModel):
         Args:
             num_rows (int):
                 Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
 
         Returns:
             pandas.DataFrame:
@@ -296,6 +300,7 @@ class GaussianCopula(BaseTabularModel):
         """
         if conditions is not None:
             raise NotImplementedError("Copula-based models don't support conditional sampling.")
+
         return self._model.sample(num_rows)
 
     def get_likelihood(self, table_data):
