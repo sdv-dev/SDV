@@ -12,15 +12,18 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.18.0,<2',
-    'scipy>=1.4,<1.6',
-    'pandas>=1.1,<1.1.5',
+    'Faker>=1.0.1,<4.15',
     'graphviz>=0.13.2,<1',
-    'ctgan>=0.3.1,<0.4',
+    'numpy>=1.18.0,<2',
+    'pandas>=1.1,<1.1.5',
+    'torch>=1.4,<2',
+    'tqdm>=4.10,<5',
     'copulas>=0.4.0,<0.5',
+    'ctgan>=0.3.1,<0.4',
+    'deepecho>=0.1.4,<0.2',
     'rdt>=0.2.10,<0.4',
     'sdmetrics>=0.1.2,<0.2.0',
-    'deepecho>=0.1.4,<0.2',
+    'torchvision>=0.5.0,<1',  # fix dependency conflicts
 ]
 
 setup_requires = [
