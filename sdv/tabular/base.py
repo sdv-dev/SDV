@@ -163,9 +163,10 @@ class BaseTabularModel:
                 Sampled data.
         """
         if isinstance(conditions, pd.DataFrame):
-            if num_rows is not None:
-                assert len(conditions) == num_rows, "`num_rows`/`conditions` must be compatible."
+            if num_rows is not None and len(conditions) != num_rows:
+                raise ValueError("`num_rows` and `conditions` must be compatible.")
             num_rows = len(conditions)
+
         elif num_rows is None:
             num_rows = self._num_rows
 
