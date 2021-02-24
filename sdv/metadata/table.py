@@ -456,7 +456,8 @@ class Table:
         if anonymization_mappings:
             data = data.copy()
             for name, mapping in anonymization_mappings.items():
-                data[name] = data[name].map(mapping)
+                if name in data:
+                    data[name] = data[name].map(mapping)
 
         return data
 
@@ -507,7 +508,7 @@ class Table:
         if not self.fitted:
             raise MetadataNotFittedError()
 
-        fields = self.get_dtypes(ids=False)
+        fields = [field for field in self.get_dtypes(ids=False) if field in data.columns]
         LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
 
