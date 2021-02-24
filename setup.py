@@ -19,10 +19,10 @@ install_requires = [
     'torch>=1.4,<2',
     'tqdm>=4.10,<5',
     'copulas>=0.4.0,<0.5',
-    'ctgan>=0.3.1,<0.4',
-    'deepecho>=0.1.4,<0.2',
-    'rdt>=0.2.10,<0.5',
-    'sdmetrics>=0.1.2,<0.2.0',
+    'ctgan>=0.4.0.dev0,<0.5',
+    'deepecho>=0.1.4,<0.3',
+    'rdt>=0.4.0.dev0,<0.5',
+    'sdmetrics>=0.2.0.dev0,<0.3',
     'torchvision>=0.5.0,<1',  # fix dependency conflicts
 ]
 
