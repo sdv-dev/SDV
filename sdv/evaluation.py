@@ -1,5 +1,6 @@
 """Tools to evaluate the synthesized data."""
 
+import numpy as np
 import pandas as pd
 import sdmetrics
 
@@ -136,6 +137,9 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
     scores.dropna(inplace=True)
 
     if aggregate:
+        infinites = (scores.min_value == -np.inf) & (scores.max_value == np.inf)
+        scores.loc[infinites, 'score'] = np.tanh(scores.loc[infinites, 'score'])
+
         return scores.score.mean()
 
     return scores
