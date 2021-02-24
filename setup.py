@@ -17,13 +17,15 @@ install_requires = [
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
     'torch>=1.4,<2',
-    'tqdm>=4.10,<5',
+    'tqdm>=4.14,<5',
     'copulas>=0.4.0,<0.5',
     'ctgan>=0.4.0.dev0,<0.5',
-    'deepecho>=0.1.4,<0.3',
+    'deepecho>=0.1.4,<0.2',
     'rdt>=0.4.0.dev0,<0.5',
     'sdmetrics>=0.2.0.dev0,<0.3',
-    'torchvision>=0.5.0,<1',  # fix dependency conflicts
+    'torchvision>=0.5.0,<1',
+    'sktime>=0.4,<0.6',
+    'pomegranate>=0.13.4,<0.14.2',
 ]
 
 setup_requires = [
