@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -171,6 +171,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
@@ -303,13 +304,201 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span>
 
-    <span class="k">def</span> <span class="nf">_sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">))</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_filter_conditions</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Filter the sampled rows that match the conditions.</span>
 
-    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="sd">        If condition columns are float values, consider a match anything that</span>
+<span class="sd">        is closer than the given ``float_rtol`` and then make the value exact.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sampled (pandas.DataFrame):</span>
+<span class="sd">                The sampled rows, reverse transformed.</span>
+<span class="sd">            conditions (dict):</span>
+<span class="sd">                The dictionary of conditioning values.</span>
+<span class="sd">            float_rtol (float):</span>
+<span class="sd">                Maximum tolerance when considering a float match.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Rows from the sampled data that match the conditions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">conditions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">column_values</span> <span class="o">=</span> <span class="n">sampled</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">column_values</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span><span class="p">:</span>
+                <span class="n">distance</span> <span class="o">=</span> <span class="n">value</span> <span class="o">*</span> <span class="n">float_rtol</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="n">sampled</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">column_values</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">distance</span><span class="p">]</span>
+                <span class="n">sampled</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="n">sampled</span><span class="p">[</span><span class="n">column_values</span> <span class="o">==</span> <span class="n">value</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">sampled</span>
+
+    <span class="k">def</span> <span class="nf">_sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">previous_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample rows with the given conditions.</span>
+
+<span class="sd">        Input conditions is taken both in the raw input format, which will be used</span>
+<span class="sd">        for filtering during the reject-sampling loop, and already transformed</span>
+<span class="sd">        to the model format, which will be passed down to the model if it supports</span>
+<span class="sd">        conditional sampling natively.</span>
+
+<span class="sd">        If condition columns are float values, consider a match anything that</span>
+<span class="sd">        is closer than the given ``float_rtol`` and then make the value exact.</span>
+
+<span class="sd">        If the model does not have any data columns, the result of this call</span>
+<span class="sd">        is a dataframe of the requested length with no columns in it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_rows (int):</span>
+<span class="sd">                Number of rows to sample.</span>
+<span class="sd">            conditions (dict):</span>
+<span class="sd">                The dictionary of conditioning values in the original format.</span>
+<span class="sd">            transformed_conditions (dict):</span>
+<span class="sd">                The dictionary of conditioning values transformed to the model format.</span>
+<span class="sd">            float_rtol (float):</span>
+<span class="sd">                Maximum tolerance when considering a float match.</span>
+<span class="sd">            previous_rows (pandas.DataFrame):</span>
+<span class="sd">                Valid rows sampled in the previous iterations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple:</span>
+<span class="sd">                * pandas.DataFrame:</span>
+<span class="sd">                    Rows from the sampled data that match the conditions.</span>
+<span class="sd">                * int:</span>
+<span class="sd">                    Number of rows that are considered valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                    <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+            <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">previous_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="n">previous_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+            <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_conditions</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">)</span>
+
+            <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">sampled</span><span class="p">,</span> <span class="n">num_valid</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sampled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">num_rows</span><span class="p">))</span>
+            <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">sampled</span><span class="p">,</span> <span class="n">num_rows</span>
+
+    <span class="k">def</span> <span class="nf">_sample_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_rows_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                      <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample a batch of rows with the given conditions.</span>
+
+<span class="sd">        This will enter a reject-sampling loop in which rows will be sampled until</span>
+<span class="sd">        all of them are valid and match the requested conditions.</span>
+
+<span class="sd">        Input conditions is taken both in the raw input format, which will be used</span>
+<span class="sd">        for filtering during the reject-sampling loop, and already transformed</span>
+<span class="sd">        to the model format, which will be passed down to the model if it supports</span>
+<span class="sd">        conditional sampling natively.</span>
+
+<span class="sd">        If condition columns are float values, consider a match anything that is</span>
+<span class="sd">        relatively closer than the given ``float_rtol`` and then make the value exact.</span>
+
+<span class="sd">        If the model does not have any data columns, the result of this call</span>
+<span class="sd">        is a dataframe of the requested length with no columns in it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_rows (int):</span>
+<span class="sd">                Number of rows to sample. If not given the model</span>
+<span class="sd">                will generate as many rows as there were in the</span>
+<span class="sd">                data passed to the ``fit`` method.</span>
+<span class="sd">            max_retries (int):</span>
+<span class="sd">                Number of times to retry sampling discarded rows.</span>
+<span class="sd">                Defaults to 100.</span>
+<span class="sd">            max_rows_multiplier (int):</span>
+<span class="sd">                Multiplier to use when computing the maximum number of rows</span>
+<span class="sd">                that can be sampled during the reject-sampling loop.</span>
+<span class="sd">                The maximum number of rows that are sampled at each iteration</span>
+<span class="sd">                will be equal to this number multiplied by the requested num_rows.</span>
+<span class="sd">                Defaults to 10.</span>
+<span class="sd">            conditions (dict):</span>
+<span class="sd">                The dictionary of conditioning values in the original input format.</span>
+<span class="sd">            transformed_conditions (dict):</span>
+<span class="sd">                The dictionary of conditioning values transformed to the model format.</span>
+<span class="sd">            float_rtol (float):</span>
+<span class="sd">                Maximum tolerance when considering a float match.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Sampled data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sampled</span><span class="p">,</span> <span class="n">num_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span>
+            <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">)</span>
+
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_sampled</span> <span class="o">=</span> <span class="n">num_rows</span>
+        <span class="k">while</span> <span class="n">num_valid</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s1"> trials&#39;</span><span class="p">)</span>
+
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
+            <span class="n">valid_probability</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_valid</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_sampled</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">max_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">*</span> <span class="n">max_rows_multiplier</span>
+            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">remaining</span> <span class="o">/</span> <span class="n">valid_probability</span><span class="p">),</span> <span class="n">max_rows</span><span class="p">)</span>
+            <span class="n">total_sampled</span> <span class="o">+=</span> <span class="n">num_to_sample</span>
+
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> valid rows remaining. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
+            <span class="n">sampled</span><span class="p">,</span> <span class="n">num_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span>
+                <span class="n">num_to_sample</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">,</span> <span class="n">sampled</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_make_conditions_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform `conditions` into a dataframe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            conditions (pd.DataFrame, dict or pd.Series):</span>
+<span class="sd">                If this is a dictionary/Series which maps column names to the column</span>
+<span class="sd">                value, then this method generates `num_rows` samples, all of</span>
+<span class="sd">                which are conditioned on the given variables. If this is a DataFrame,</span>
+<span class="sd">                then it generates an output DataFrame such that each row in the output</span>
+<span class="sd">                is sampled conditional on the corresponding row in the input.</span>
+<span class="sd">            num_rows (int):</span>
+<span class="sd">                Number of rows to sample. If a conditions dataframe is given, this must</span>
+<span class="sd">                either be ``None`` or match the length of the ``conditions`` dataframe.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                `conditions` as a dataframe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">conditions</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_rows</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">conditions</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_rows</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;`conditions` must be a dataframe, a dictionary or a pandas series.&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">num_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_rows</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;If `conditions` is a `DataFrame`, `num_rows` must be `None` or match its lenght.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">conditions</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_rows_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+               <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
@@ -320,38 +509,74 @@
 <span class="sd">            max_retries (int):</span>
 <span class="sd">                Number of times to retry sampling discarded rows.</span>
 <span class="sd">                Defaults to 100.</span>
+<span class="sd">            max_rows_multiplier (int):</span>
+<span class="sd">                Multiplier to use when computing the maximum number of rows</span>
+<span class="sd">                that can be sampled during the reject-sampling loop.</span>
+<span class="sd">                The maximum number of rows that are sampled at each iteration</span>
+<span class="sd">                will be equal to this number multiplied by the requested num_rows.</span>
+<span class="sd">                Defaults to 10.</span>
+<span class="sd">            conditions (pd.DataFrame, dict or pd.Series):</span>
+<span class="sd">                If this is a dictionary/Series which maps column names to the column</span>
+<span class="sd">                value, then this method generates `num_rows` samples, all of</span>
+<span class="sd">                which are conditioned on the given variables. If this is a DataFrame,</span>
+<span class="sd">                then it generates an output DataFrame such that each row in the output</span>
+<span class="sd">                is sampled conditional on the corresponding row in the input.</span>
+<span class="sd">            float_rtol (float):</span>
+<span class="sd">                Maximum tolerance when considering a float match. This is the maximum</span>
+<span class="sd">                relative distance at which a float value will be considered a match</span>
+<span class="sd">                when performing reject-sampling based conditioning. Defaults to 0.01.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">num_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span>
-        <span class="n">num_to_sample</span> <span class="o">=</span> <span class="n">num_rows</span>
-        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
-        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
-        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
-        <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_batch</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">,</span> <span class="n">max_rows_multiplier</span><span class="p">)</span>
 
-        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total_sampled</span> <span class="o">=</span> <span class="n">num_to_sample</span>
-        <span class="k">while</span> <span class="n">num_valid</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
-            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">%s</span><span class="s1"> trials&#39;</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">)</span>
+        <span class="c1"># convert conditions to dataframe</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_conditions_df</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span>
 
-            <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
-            <span class="n">valid_ratio</span> <span class="o">=</span> <span class="n">num_valid</span> <span class="o">/</span> <span class="n">total_sampled</span>
-            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">counter</span> <span class="o">*</span> <span class="n">remaining</span> <span class="o">/</span> <span class="p">(</span><span class="n">valid_ratio</span> <span class="k">if</span> <span class="n">valid_ratio</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># validate columns</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid column name `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
 
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> valid rows remaining. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
-            <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span><span class="n">num_to_sample</span><span class="p">)</span>
-            <span class="n">resampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">[[</span><span class="n">column</span><span class="p">]])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Conditioning on column `</span><span class="si">{column}</span><span class="s1">` is not possible&#39;</span><span class="p">)</span>
 
-            <span class="n">sampled</span> <span class="o">=</span> <span class="n">sampled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
-            <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
-            <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+        <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+        <span class="n">condition_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;__condition_idx__&#39;</span>
+        <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">grouped_conditions</span> <span class="o">=</span> <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+        <span class="c1"># sample</span>
+        <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">dataframe</span> <span class="ow">in</span> <span class="n">grouped_conditions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">conditions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">transformed_condition</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
+
+            <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_batch</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">),</span>
+                <span class="n">max_retries</span><span class="p">,</span>
+                <span class="n">max_rows_multiplier</span><span class="p">,</span>
+                <span class="n">condition</span><span class="p">,</span>
+                <span class="n">transformed_condition</span><span class="p">,</span>
+                <span class="n">float_rtol</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sampled_rows</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span>
+
+        <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_sampled_rows</span><span class="p">)</span>
+        <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">)</span>
+        <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">conditions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">all_sampled_rows</span>
 
     <span class="k">def</span> <span class="nf">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">NonParametricError</span><span class="p">()</span>

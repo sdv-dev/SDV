@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.demo &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.demo &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,10 +172,12 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy</span> <span class="k">as</span> <span class="nn">sp</span>
 <span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">Table</span>
@@ -224,6 +226,10 @@
                 <span class="p">},</span>
                 <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span>
+                <span class="p">},</span>
+                <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span>
                 <span class="p">}</span>
             <span class="p">}</span>
         <span class="p">},</span>
@@ -244,13 +250,13 @@
                 <span class="p">},</span>
                 <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;datetime&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span>
+                    <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M&#39;</span>
                 <span class="p">},</span>
                 <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span>
                 <span class="p">},</span>
-                <span class="s1">&#39;approved&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;cancelled&#39;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;boolean&#39;</span>
                 <span class="p">}</span>
             <span class="p">}</span>
@@ -309,7 +315,8 @@
         <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span>
                    <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">],</span>
         <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">]</span>
+               <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">34</span><span class="p">],</span>
     <span class="p">})</span>
     <span class="n">transactions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;transaction_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
@@ -319,7 +326,7 @@
                       <span class="s1">&#39;2019-01-22T14:44:10&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-23T10:14:09&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-27T16:09:17&#39;</span><span class="p">,</span>
                       <span class="s1">&#39;2019-01-29T12:10:48&#39;</span><span class="p">],</span>
         <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">55.3</span><span class="p">,</span> <span class="mf">79.5</span><span class="p">,</span> <span class="mf">112.1</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">,</span> <span class="mf">76.3</span><span class="p">,</span> <span class="mf">89.5</span><span class="p">,</span> <span class="mf">132.1</span><span class="p">,</span> <span class="mf">68.0</span><span class="p">,</span> <span class="mf">99.9</span><span class="p">],</span>
-        <span class="s1">&#39;approved&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span>
+        <span class="s1">&#39;cancelled&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
     <span class="p">})</span>
     <span class="n">transactions</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">transactions</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span>
 
@@ -329,6 +336,103 @@
         <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">transactions</span><span class="p">),</span>
     <span class="p">}</span>
 
+    <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
+
+
+<span class="k">def</span> <span class="nf">sample_relational_demo</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sample demo data with the indicate number of rows in the parent table.&quot;&quot;&quot;</span>
+    <span class="c1"># Users</span>
+    <span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
+    <span class="n">countries</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">country_code</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+    <span class="n">country</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">countries</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">gender</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">truncnorm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">gender</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">country</span> <span class="o">==</span> <span class="n">countries</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">num_sessions</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+        <span class="o">*</span> <span class="p">(</span><span class="mf">0.8</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">gender</span> <span class="o">==</span> <span class="s1">&#39;F&#39;</span><span class="p">))</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">users</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="n">country</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="n">gender</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="n">age</span><span class="p">,</span>
+        <span class="s1">&#39;num_sessions&#39;</span><span class="p">:</span> <span class="n">num_sessions</span>
+    <span class="p">})</span>
+    <span class="n">users</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;user_id&#39;</span>
+
+    <span class="c1"># Sessions</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">device_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span> <span class="k">else</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;pc&#39;</span><span class="p">],</span>
+            <span class="n">size</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">num_sessions</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">device_weights</span>
+        <span class="p">)</span>
+        <span class="n">os</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pc_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;</span> <span class="mi">30</span> <span class="k">else</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]</span>
+        <span class="n">pc_os</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="s1">&#39;windows&#39;</span><span class="p">,</span> <span class="s1">&#39;macos&#39;</span><span class="p">,</span> <span class="s1">&#39;linux&#39;</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">pc_weights</span><span class="p">)</span>
+        <span class="n">phone_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;</span> <span class="mi">30</span> <span class="k">else</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+        <span class="n">phone_os</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">phone_weights</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pc_os</span> <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s1">&#39;pc&#39;</span> <span class="k">else</span> <span class="n">phone_os</span><span class="p">)</span>
+
+        <span class="n">minutes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">truncnorm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">num_sessions</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">))</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">devices</span> <span class="o">==</span> <span class="s1">&#39;pc&#39;</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">num_transactions</span> <span class="o">=</span> <span class="p">(</span><span class="n">minutes</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="s1">&#39;F&#39;</span><span class="p">))</span>
+
+        <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">num_sessions</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">user_id</span><span class="p">)),</span>
+            <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="n">devices</span><span class="p">,</span>
+            <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="n">os</span><span class="p">,</span>
+            <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="n">minutes</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+            <span class="s1">&#39;num_transactions&#39;</span><span class="p">:</span> <span class="n">num_transactions</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+        <span class="p">}),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sessions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;session_id&#39;</span>
+    <span class="k">del</span> <span class="n">users</span><span class="p">[</span><span class="s1">&#39;num_sessions&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Transactions</span>
+    <span class="n">transactions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">sessions</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">num_transactions</span>
+        <span class="k">if</span> <span class="n">size</span><span class="p">:</span>
+            <span class="n">amount_base</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">truncnorm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">is_apple</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s1">&#39;os&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;macos&#39;</span><span class="p">)</span>
+            <span class="n">amount_modif</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">is_apple</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">amount_base</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">amount_modif</span>
+
+            <span class="n">seconds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">seconds</span><span class="p">)</span>
+
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span>
+                <span class="n">start</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">seconds</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="n">session</span><span class="o">.</span><span class="n">minutes</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+            <span class="p">])</span>
+            <span class="n">cancelled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">size</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">transactions</span> <span class="o">=</span> <span class="n">transactions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">num_transactions</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">session_id</span><span class="p">)),</span>
+                <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+                <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="n">amount</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+                <span class="s1">&#39;cancelled&#39;</span><span class="p">:</span> <span class="n">cancelled</span><span class="p">,</span>
+            <span class="p">}),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">transactions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;transaction_id&#39;</span>
+    <span class="k">del</span> <span class="n">sessions</span><span class="p">[</span><span class="s1">&#39;num_transactions&#39;</span><span class="p">]</span>
+
+    <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;users&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()),</span>
+        <span class="s1">&#39;sessions&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">sessions</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()),</span>
+        <span class="s1">&#39;transactions&#39;</span><span class="p">:</span> <span class="n">_dtypes64</span><span class="p">(</span><span class="n">transactions</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()),</span>
+    <span class="p">}</span>
     <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">DEMO_METADATA</span><span class="p">),</span> <span class="n">tables</span>
 
 

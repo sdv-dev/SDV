@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.7.0 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -299,19 +299,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales      Matthew Williams         4976 Thomas Streets\nLake Samuel, HI 89951   31               23                     8</span>
-<span class="go">1       Pear         Design            Gina Fritz             097 Charles Hills\nAdammouth, OK 83208   37               33                     4</span>
-<span class="go">2    Glasses             AI      Marissa Mitchell   4272 Robles Extensions\nEast Seanshire, LA 65457   30               27                     3</span>
-<span class="go">3    Glasses  Search Engine          Diane Wright               5618 Amy Ranch\nNunezshire, TX 63676   41               34                     7</span>
-<span class="go">4   Cheerper        BigData    Mrs. Rachel Levine       7396 Mitchell Ford\nEast Lindaside, KS 36219   40               40                     0</span>
-<span class="go">5   Cheerper        Support         Kimberly Bell  6739 Jennings Place Apt. 463\nBenjaminland, WY...   31               26                     5</span>
-<span class="go">6       Pear          Sales       Jeffrey Johnson  47491 John Path Apt. 964\nNorth Jennifercheste...   41               39                     2</span>
-<span class="go">7       Pear         Design  Dr. Renee Bennett MD  557 Moss Ports Suite 111\nSouth Jacqueline, TN...   40               39                     1</span>
-<span class="go">8    Glasses             AI           Arthur Bond  4569 Zachary Mission Apt. 581\nCohenstad, NC 3...   36               31                     5</span>
-<span class="go">9    Glasses  Search Engine         Melvin Brewer  148 Daniel Mountain Suite 590\nSouth Christine...   43               36                     7</span>
-<span class="go">10  Cheerper        BigData      Colleen Robinson           475 Charles Lodge\nHessborough, CO 27618   44               38                     6</span>
-<span class="go">11  Cheerper        Support        Maria Marshall                         USCGC Thomas\nFPO AP 14560   43               40                     3</span>
+<span class="go">     company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales        Jesse Foster                   Unit 5991 Box 6162\nDPO AA 47534   32               29                     3</span>
+<span class="go">1       Pear         Design       Brenda Castro         0544 Kevin Meadow\nNorth Roberta, AR 79225   44               43                     1</span>
+<span class="go">2    Glasses             AI       Johnny Morris  80150 Wiggins Creek Suite 015\nMichaelstad, MA...   35               33                     2</span>
+<span class="go">3    Glasses  Search Engine     Katie Schneider                            USNV King\nFPO AE 99441   38               37                     1</span>
+<span class="go">4   Cheerper        BigData         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   38               31                     7</span>
+<span class="go">5   Cheerper        Support       Mark Thompson            298 Austin Mount\nPort Amanda, GA 83384   34               29                     5</span>
+<span class="go">6       Pear          Sales          Gary Smith   30462 Perkins Bypass\nLake Nicolehaven, NY 76642   44               39                     5</span>
+<span class="go">7       Pear         Design        Clayton Vega                           USS Morgan\nFPO AE 43425   40               33                     7</span>
+<span class="go">8    Glasses             AI    Mathew Alexander  46588 Rebekah Village Suite 277\nNorth Margare...   42               38                     4</span>
+<span class="go">9    Glasses  Search Engine   Matthew Hernandez                   PSC 6446, Box 3099\nAPO AP 17483   39               35                     4</span>
+<span class="go">10  Cheerper        BigData  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   46               39                     7</span>
+<span class="go">11  Cheerper        Support          Caleb Hill          3390 Davis Meadow\nNicholsshire, NM 51752   32               31                     1</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -473,17 +473,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department                  name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0   Glasses             AI      Marissa Mitchell   4272 Robles Extensions\nEast Seanshire, LA 65457   30               24                     6</span>
-<span class="go">2  Cheerper        BigData    Mrs. Rachel Levine       7396 Mitchell Ford\nEast Lindaside, KS 36219   40               40                     0</span>
-<span class="go">3  Cheerper        Support        Maria Marshall                         USCGC Thomas\nFPO AP 14560   44               39                     5</span>
-<span class="go">5      Pear          Sales      Matthew Williams         4976 Thomas Streets\nLake Samuel, HI 89951   44               27                    17</span>
-<span class="go">6  Cheerper        BigData         Kimberly Bell  6739 Jennings Place Apt. 463\nBenjaminland, WY...   44               35                     9</span>
-<span class="go">7   Glasses  Search Engine         Melvin Brewer  148 Daniel Mountain Suite 590\nSouth Christine...   44               40                     4</span>
-<span class="go">8      Pear         Design  Dr. Renee Bennett MD  557 Moss Ports Suite 111\nSouth Jacqueline, TN...   44               37                     7</span>
-<span class="go">9      Pear          Sales       Jeffrey Johnson  47491 John Path Apt. 964\nNorth Jennifercheste...   36               32                     4</span>
-<span class="go">0   Glasses  Search Engine          Diane Wright               5618 Amy Ranch\nNunezshire, TX 63676   39               36                     3</span>
-<span class="go">1  Cheerper        BigData           Arthur Bond  4569 Zachary Mission Apt. 581\nCohenstad, NC 3...   44               36                     8</span>
+<span class="go">    company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0  Cheerper        Support          Caleb Hill          3390 Davis Meadow\nNicholsshire, NM 51752   35               32                     3</span>
+<span class="go">1   Glasses  Search Engine   Matthew Hernandez                   PSC 6446, Box 3099\nAPO AP 17483   42               34                     8</span>
+<span class="go">2   Glasses             AI         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   40               37                     3</span>
+<span class="go">3      Pear         Design        Jesse Foster                   Unit 5991 Box 6162\nDPO AA 47534   36               33                     3</span>
+<span class="go">4   Glasses             AI    Mathew Alexander  46588 Rebekah Village Suite 277\nNorth Margare...   39               37                     2</span>
+<span class="go">5   Glasses  Search Engine     Katie Schneider                            USNV King\nFPO AE 99441   34               32                     2</span>
+<span class="go">6  Cheerper        Support  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   40               38                     2</span>
+<span class="go">7      Pear         Design        Clayton Vega                           USS Morgan\nFPO AE 43425   45               38                     7</span>
+<span class="go">8   Glasses             AI  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   40               34                     6</span>
+<span class="go">9  Cheerper        BigData         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   43               37                     6</span>
 </pre></div>
 </div>
 </div>

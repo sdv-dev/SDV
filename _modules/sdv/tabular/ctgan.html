@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.tabular.ctgan &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -221,18 +221,25 @@
             <span class="n">discrete_columns</span><span class="o">=</span><span class="n">categoricals</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
 <span class="sd">                Amount of rows to sample.</span>
+<span class="sd">            conditions (dict):</span>
+<span class="sd">                If specified, this dictionary maps column names to the column</span>
+<span class="sd">                value. Then, this method generates `num_rows` samples, all of</span>
+<span class="sd">                which are conditioned on the given variables.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_MODEL_CLASS</span><span class="si">}</span><span class="s2"> doesn&#39;t support conditional sampling.&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="CTGAN"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.CTGAN.html#sdv.tabular.ctgan.CTGAN">[docs]</a><span class="k">class</span> <span class="nc">CTGAN</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>

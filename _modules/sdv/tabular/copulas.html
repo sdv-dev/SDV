@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -174,12 +174,11 @@
 <span class="kn">import</span> <span class="nn">copulas.multivariate</span>
 <span class="kn">import</span> <span class="nn">copulas.univariate</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
 
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
 <span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span><span class="p">,</span> <span class="n">NonParametricError</span>
-<span class="kn">from</span> <span class="nn">sdv.tabular.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">check_matrix_symmetric_positive_definite</span><span class="p">,</span> <span class="n">flatten_dict</span><span class="p">,</span> <span class="n">make_positive_definite</span><span class="p">,</span> <span class="n">square_matrix</span><span class="p">,</span>
-    <span class="n">unflatten_dict</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sdv.tabular.utils</span> <span class="kn">import</span> <span class="n">flatten_dict</span><span class="p">,</span> <span class="n">unflatten_dict</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -451,18 +450,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
 <span class="sd">                Amount of rows to sample.</span>
+<span class="sd">            conditions (dict):</span>
+<span class="sd">                If specified, this dictionary maps column names to the column</span>
+<span class="sd">                value. Then, this method generates `num_rows` samples, all of</span>
+<span class="sd">                which are conditioned on the given variables.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GaussianCopula.get_likelihood"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.get_likelihood.html#sdv.tabular.copulas.GaussianCopula.get_likelihood">[docs]</a>    <span class="k">def</span> <span class="nf">get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
@@ -493,50 +496,96 @@
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
         <span class="n">covariance</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:]):</span>
             <span class="n">covariance</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 
         <span class="n">params</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">covariance</span>
-
-        <span class="n">univariates</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">),</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]):</span>
-            <span class="n">univariates</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariate</span>
-            <span class="k">if</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">univariate</span><span class="p">:</span>
-                <span class="n">scale</span> <span class="o">=</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">scale</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">EPSILON</span>
-
-                <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
-
-        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">univariates</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">),</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;univariates&#39;</span><span class="p">]))</span>
 
         <span class="k">return</span> <span class="n">flatten_dict</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_rebuild_covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Rebuild the covariance matrix from its parameter values.</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_nearest_correlation_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find the nearest correlation matrix.</span>
 
-<span class="sd">        This method follows the steps:</span>
+<span class="sd">        If the given matrix is not Positive Semi-definite, which means</span>
+<span class="sd">        that any of its eigenvalues is negative, find the nearest PSD matrix</span>
+<span class="sd">        by setting the negative eigenvalues to 0 and rebuilding the matrix</span>
+<span class="sd">        from the same eigenvectors and the modified eigenvalues.</span>
 
-<span class="sd">            * Rebuild a square matrix out of a triangular one.</span>
-<span class="sd">            * Add the missing half of the matrix by adding its transposed and</span>
-<span class="sd">              then removing the duplicated diagonal values.</span>
-<span class="sd">            * ensure the matrix is positive definite</span>
+<span class="sd">        After this, the matrix will be PSD but may not have 1s in the diagonal,</span>
+<span class="sd">        so the diagonal is replaced by 1s and then the PSD condition of the</span>
+<span class="sd">        matrix is validated again, repeating the process until the built matrix</span>
+<span class="sd">        contains 1s in all the diagonal and is PSD.</span>
+
+<span class="sd">        After 10 iterations, the last step is skipped and the current PSD matrix</span>
+<span class="sd">        is returned even if it does not have all 1s in the diagonal.</span>
+
+<span class="sd">        Insipired by: https://stackoverflow.com/a/63131250</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eigenvalues</span><span class="p">,</span> <span class="n">eigenvectors</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+        <span class="n">negative</span> <span class="o">=</span> <span class="n">eigenvalues</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="p">))</span>
+
+        <span class="n">iterations</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">negative</span><span class="p">):</span>
+            <span class="n">eigenvalues</span><span class="p">[</span><span class="n">negative</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">eigenvectors</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">))</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">iterations</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span> <span class="o">-</span> <span class="n">matrix</span> <span class="o">*</span> <span class="n">identity</span> <span class="o">+</span> <span class="n">identity</span>
+
+            <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">max_value</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">matrix</span> <span class="o">/=</span> <span class="n">max_value</span>
+
+            <span class="n">eigenvalues</span><span class="p">,</span> <span class="n">eigenvectors</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+            <span class="n">negative</span> <span class="o">=</span> <span class="n">eigenvalues</span> <span class="o">&lt;</span> <span class="mi">0</span>
+            <span class="n">iterations</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">matrix</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_rebuild_correlation_matrix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">triangular_covariance</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Rebuild a valid correlation matrix from its lower half triangle.</span>
+
+<span class="sd">        The input of this function is a list of lists of floats of size 1, 2, 3...n-1:</span>
+
+<span class="sd">           [[c_{2,1}], [c_{3,1}, c_{3,2}], ..., [c_{n,1},...,c_{n,n-1}]]</span>
+
+<span class="sd">        Corresponding to the values from the lower half of the original correlation matrix,</span>
+<span class="sd">        **excluding** the diagonal.</span>
+
+<span class="sd">        The output is the complete correlation matrix reconstructed using the given values</span>
+<span class="sd">        and scaled to the :math:`[-1, 1]` range if necessary.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            covariance (list):</span>
-<span class="sd">                covariance values after unflattening model parameters.</span>
+<span class="sd">            triangle_covariange (list[list[float]]):</span>
+<span class="sd">                A list that contains lists of floats of size 1, 2, 3... up to ``n-1``,</span>
+<span class="sd">                where ``n`` is the size of the target covariance matrix.</span>
 
-<span class="sd">        Result:</span>
-<span class="sd">            list[list[float]]:</span>
-<span class="sd">                Symmetric positive semi-definite matrix.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.ndarray:</span>
+<span class="sd">                rebuilt correlation matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">square_matrix</span><span class="p">(</span><span class="n">covariance</span><span class="p">))</span>
-        <span class="n">covariance</span> <span class="o">=</span> <span class="p">(</span><span class="n">covariance</span> <span class="o">+</span> <span class="n">covariance</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">covariance</span><span class="p">))</span>
+        <span class="n">zero</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">triangular_covariance</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">triangular_covariance</span><span class="p">):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span> <span class="o">+</span> <span class="n">zero</span> <span class="o">*</span> <span class="p">(</span><span class="n">size</span> <span class="o">-</span> <span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">left</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">values</span>
+            <span class="n">right</span><span class="p">[:,</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_matrix_symmetric_positive_definite</span><span class="p">(</span><span class="n">covariance</span><span class="p">):</span>
-            <span class="n">covariance</span> <span class="o">=</span> <span class="n">make_positive_definite</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+        <span class="n">correlation</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">right</span>
+        <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">max_value</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">correlation</span> <span class="o">/=</span> <span class="n">max_value</span>
 
-        <span class="k">return</span> <span class="n">covariance</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">correlation</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_nearest_correlation_matrix</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_rebuild_gaussian_copula</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Rebuild the model params to recreate a Gaussian Multivariate instance.</span>
@@ -555,7 +604,7 @@
             <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
             <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
             <span class="k">if</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">univariate</span><span class="p">:</span>
-                <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
+                <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">univariate</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
 
             <span class="n">univariates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">univariate</span><span class="p">)</span>
 
@@ -563,7 +612,10 @@
         <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">columns</span>
 
         <span class="n">covariance</span> <span class="o">=</span> <span class="n">model_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;covariance&#39;</span><span class="p">)</span>
-        <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_covariance_matrix</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">covariance</span><span class="p">:</span>
+            <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_correlation_matrix</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">model_parameters</span><span class="p">[</span><span class="s1">&#39;covariance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">1.0</span><span class="p">]]</span>
 
         <span class="k">return</span> <span class="n">model_parameters</span>
 

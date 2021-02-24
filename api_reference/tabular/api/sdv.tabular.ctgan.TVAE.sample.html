@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan.TVAE.sample &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.tabular.ctgan.TVAE.sample &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -285,7 +285,7 @@
 <h1>sdv.tabular.ctgan.TVAE.sample<a class="headerlink" href="#sdv-tabular-ctgan-tvae-sample" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.tabular.ctgan.TVAE.sample">
-<code class="sig-prename descclassname">TVAE.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_retries</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.ctgan.TVAE.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">TVAE.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_retries</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">max_rows_multiplier</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">conditions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">float_rtol</span><span class="o">=</span><span class="default_value">0.01</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.ctgan.TVAE.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample rows from this table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -295,6 +295,19 @@ will generate as many rows as there were in the
 data passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p></li>
 <li><p><strong>max_retries</strong> (<em>int</em>) – Number of times to retry sampling discarded rows.
 Defaults to 100.</p></li>
+<li><p><strong>max_rows_multiplier</strong> (<em>int</em>) – Multiplier to use when computing the maximum number of rows
+that can be sampled during the reject-sampling loop.
+The maximum number of rows that are sampled at each iteration
+will be equal to this number multiplied by the requested num_rows.
+Defaults to 10.</p></li>
+<li><p><strong>conditions</strong> (<em>pd.DataFrame</em><em>, </em><em>dict</em><em> or </em><em>pd.Series</em>) – If this is a dictionary/Series which maps column names to the column
+value, then this method generates <cite>num_rows</cite> samples, all of
+which are conditioned on the given variables. If this is a DataFrame,
+then it generates an output DataFrame such that each row in the output
+is sampled conditional on the corresponding row in the input.</p></li>
+<li><p><strong>float_rtol</strong> (<em>float</em>) – Maximum tolerance when considering a float match. This is the maximum
+relative distance at which a float value will be considered a match
+when performing reject-sampling based conditioning. Defaults to 0.01.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

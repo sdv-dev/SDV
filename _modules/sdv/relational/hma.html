@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.hma &#8212; SDV 0.7.0 documentation</title>
+    <title>sdv.relational.hma &#8212; SDV 0.8.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -215,7 +215,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_models</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_table_sizes</span> <span class="o">=</span> <span class="p">{}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table_sizes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_child_rows</span> <span class="o">=</span> <span class="p">{}</span></div>
 
     <span class="c1"># ######## #</span>
     <span class="c1"># MODELING #</span>
@@ -249,19 +250,37 @@
         <span class="n">child_table</span> <span class="o">=</span> <span class="n">child_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">foreign_key</span><span class="p">)</span>
         <span class="n">child_primary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">child_name</span><span class="p">)</span>
 
+        <span class="n">index</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">scale_columns</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">foreign_key_value</span> <span class="ow">in</span> <span class="n">foreign_key_values</span><span class="p">:</span>
             <span class="n">child_rows</span> <span class="o">=</span> <span class="n">child_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="n">foreign_key_value</span><span class="p">]]</span>
             <span class="k">if</span> <span class="n">child_primary</span> <span class="ow">in</span> <span class="n">child_rows</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">child_rows</span><span class="p">[</span><span class="n">child_primary</span><span class="p">]</span>
 
-            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">table_metadata</span><span class="o">=</span><span class="n">table_meta</span><span class="p">)</span>
-            <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">child_rows</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="n">row</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
-            <span class="n">row</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-            <span class="n">row</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">child_name</span><span class="si">}</span><span class="s1">__</span><span class="si">{</span><span class="n">foreign_key</span><span class="si">}</span><span class="s1">__&#39;</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span>
-            <span class="n">extension_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">table_metadata</span><span class="o">=</span><span class="n">table_meta</span><span class="p">)</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">child_rows</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">child_name</span><span class="si">}</span><span class="s1">__</span><span class="si">{</span><span class="n">foreign_key</span><span class="si">}</span><span class="s1">__&#39;</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span>
 
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">extension_rows</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">foreign_key_values</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">scale_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">scale_columns</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">column</span>
+                        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span>
+                        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;scale&#39;</span><span class="p">)</span>
+                    <span class="p">]</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">row</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">scale_columns</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="n">extension_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">foreign_key_value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Skip children rows subsets that fail</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">extension_rows</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_load_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">tables</span><span class="p">:</span>
@@ -284,7 +303,9 @@
             <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">foreign_key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">foreign_keys</span><span class="p">):</span>
                 <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_extension</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">child_table</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">)</span>
                 <span class="n">table</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">left_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">table</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">child_name</span><span class="si">}</span><span class="s1">__</span><span class="si">{</span><span class="n">foreign_key</span><span class="si">}</span><span class="s1">__num_rows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">num_rows_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">child_name</span><span class="si">}</span><span class="s1">__</span><span class="si">{</span><span class="n">foreign_key</span><span class="si">}</span><span class="s1">__num_rows&#39;</span>
+                <span class="n">table</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_max_child_rows</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">table</span>
 
@@ -435,9 +456,16 @@
 <span class="sd">                parent child relationship.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s1">__</span><span class="si">{</span><span class="n">foreign_key</span><span class="si">}</span><span class="s1">__&#39;</span>
+
         <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">parent_row</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
         <span class="n">new_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
         <span class="n">flat_parameters</span> <span class="o">=</span> <span class="n">parent_row</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span>
+
+        <span class="n">num_rows_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">num_rows&#39;</span>
+        <span class="k">if</span> <span class="n">num_rows_key</span> <span class="ow">in</span> <span class="n">flat_parameters</span><span class="p">:</span>
+            <span class="n">num_rows</span> <span class="o">=</span> <span class="n">flat_parameters</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">]</span>
+            <span class="n">flat_parameters</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_child_rows</span><span class="p">[</span><span class="n">num_rows_key</span><span class="p">],</span> <span class="n">num_rows</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">flat_parameters</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">new_keys</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -456,19 +484,13 @@
 <span class="sd">                Sampled rows, shape (, num_rows)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">sampled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+
         <span class="n">primary_key_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_primary_key</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">primary_key_name</span><span class="p">:</span>
             <span class="n">primary_key_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_keys</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">))</span>
             <span class="n">sampled</span><span class="p">[</span><span class="n">primary_key_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">primary_key_values</span>
 
         <span class="k">return</span> <span class="n">sampled</span>
-
-    <span class="k">def</span> <span class="nf">_sample_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">,</span> <span class="n">table_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">child_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_data</span><span class="p">:</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling rows from child table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">child_name</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_sample_child_rows</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample_child_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">,</span> <span class="n">parent_row</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">):</span>
         <span class="n">foreign_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_foreign_keys</span><span class="p">(</span><span class="n">parent_name</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -490,7 +512,15 @@
                 <span class="n">sampled_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
                     <span class="p">[</span><span class="n">previous</span><span class="p">,</span> <span class="n">table_rows</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">,</span> <span class="n">table_rows</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_sample_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">,</span> <span class="n">table_rows</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">child_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_data</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling rows from child table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">child_name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sample_child_rows</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">)</span>
+
+                <span class="n">child_rows</span> <span class="o">=</span> <span class="n">sampled_data</span><span class="p">[</span><span class="n">child_name</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sample_children</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">sampled_data</span><span class="p">,</span> <span class="n">child_rows</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_find_parent_id</span><span class="p">(</span><span class="n">likelihoods</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
@@ -508,7 +538,14 @@
             <span class="c1"># rows that got a singular matrix error with the mean</span>
             <span class="n">likelihoods</span> <span class="o">=</span> <span class="n">likelihoods</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
 
-        <span class="n">weights</span> <span class="o">=</span> <span class="n">likelihoods</span><span class="o">.</span><span class="n">values</span> <span class="o">/</span> <span class="n">likelihoods</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">likelihoods</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Worse case scenario: we have no likelihoods</span>
+            <span class="c1"># and all num_rows are 0, so we fallback to uniform</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">likelihoods</span><span class="p">)</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">length</span><span class="p">)</span> <span class="o">/</span> <span class="n">length</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">likelihoods</span><span class="o">.</span><span class="n">values</span> <span class="o">/</span> <span class="n">total</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">likelihoods</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 
