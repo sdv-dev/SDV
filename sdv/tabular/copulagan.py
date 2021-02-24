@@ -199,7 +199,7 @@ class CopulaGAN(CTGAN):
 
         super()._fit(table_data)
 
-    def _sample(self, num_rows, conditions):
+    def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
         Args:

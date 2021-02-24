@@ -297,10 +297,7 @@ class GaussianCopula(BaseTabularModel):
             pandas.DataFrame:
                 Sampled data.
         """
-        if conditions is not None:
-            raise NotImplementedError("Copula-based models don't support conditional sampling.")
-
-        return self._model.sample(num_rows)
+        return self._model.sample(num_rows, conditions=conditions)
 
     def get_likelihood(self, table_data):
         """Get the likelihood of each row belonging to this table."""
