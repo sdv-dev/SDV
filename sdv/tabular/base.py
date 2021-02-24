@@ -136,14 +136,115 @@ class BaseTabularModel:
         """
         return self._metadata
 
-    def _sample_rows(self, num_to_sample, conditions=None):
-        if self._metadata.get_dtypes(ids=False):
-            return self._sample(num_to_sample, conditions)
-        else:
-            return pd.DataFrame(index=range(num_to_sample))
+    @staticmethod
+    def _filter_conditions(sampled, conditions, float_rtol):
+        """Filter the sampled rows that match the conditions.
 
-    def _sample_conditioned_rows(self, num_rows=None, max_retries=100, conditions=None):
-        """Sample rows from this table.
+        If condition columns are float values, consider a match anything that
+        is closer than the given ``float_rtol`` and then make the value exact.
+
+        Args:
+            sampled (pandas.DataFrame):
+                The sampled rows, reverse transformed.
+            conditions (dict):
+                The dictionary of conditioning values.
+            float_rtol (float):
+                Maximum tolerance when considering a float match.
+
+        Returns:
+            pandas.DataFrame:
+                Rows from the sampled data that match the conditions.
+        """
+        for column, value in conditions.items():
+            column_values = sampled[column]
+            if column_values.dtype.kind == 'f':
+                distance = value * float_rtol
+                sampled = sampled[np.abs(column_values - value) < distance]
+                sampled[column] = value
+            else:
+                sampled = sampled[column_values == value]
+
+        return sampled
+
+    def _sample_rows(self, num_rows, conditions=None, transformed_conditions=None,
+                     float_rtol=0.1, previous_rows=None):
+        """Sample rows with the given conditions.
+
+        Input conditions is taken both in the raw input format, which will be used
+        for filtering during the reject-sampling loop, and already transformed
+        to the model format, which will be passed down to the model if it supports
+        conditional sampling natively.
+
+        If condition columns are float values, consider a match anything that
+        is closer than the given ``float_rtol`` and then make the value exact.
+
+        If the model does not have any data columns, the result of this call
+        is a dataframe of the requested length with no columns in it.
+
+        Args:
+            num_rows (int):
+                Number of rows to sample.
+            conditions (dict):
+                The dictionary of conditioning values in the original format.
+            transformed_conditions (dict):
+                The dictionary of conditioning values transformed to the model format.
+            float_rtol (float):
+                Maximum tolerance when considering a float match.
+            previous_rows (pandas.DataFrame):
+                Valid rows sampled in the previous iterations.
+
+        Returns:
+            tuple:
+                * pandas.DataFrame:
+                    Rows from the sampled data that match the conditions.
+                * int:
+                    Number of rows that are considered valid.
+        """
+        if self._metadata.get_dtypes(ids=False):
+            if conditions is None:
+                sampled = self._sample(num_rows)
+            else:
+                try:
+                    sampled = self._sample(num_rows, transformed_conditions)
+                except NotImplementedError:
+                    sampled = self._sample(num_rows)
+
+            sampled = self._metadata.reverse_transform(sampled)
+
+            if previous_rows is not None:
+                sampled = previous_rows.append(sampled)
+
+            sampled = self._metadata.filter_valid(sampled)
+
+            if conditions is not None:
+                sampled = self._filter_conditions(sampled, conditions, float_rtol)
+
+            num_valid = len(sampled)
+
+            return sampled, num_valid
+
+        else:
+            sampled = pd.DataFrame(index=range(num_rows))
+            sampled = self._metadata.reverse_transform(sampled)
+            return sampled, num_rows
+
+    def _sample_batch(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
+                      conditions=None, transformed_conditions=None, float_rtol=0.01):
+        """Sample a batch of rows with the given conditions.
+
+        This will enter a reject-sampling loop in which rows will be sampled until
+        all of them are valid and match the requested conditions.
+
+        Input conditions is taken both in the raw input format, which will be used
+        for filtering during the reject-sampling loop, and already transformed
+        to the model format, which will be passed down to the model if it supports
+        conditional sampling natively.
+
+        If condition columns are float values, consider a match anything that is
+        relatively closer than the given ``float_rtol`` and then make the value exact.
+
+        If the model does not have any data columns, the result of this call
+        is a dataframe of the requested length with no columns in it.
 
         Args:
             num_rows (int):
@@ -153,47 +254,42 @@ class BaseTabularModel:
             max_retries (int):
                 Number of times to retry sampling discarded rows.
                 Defaults to 100.
+            max_rows_multiplier (int):
+                Multiplier to use when computing the maximum number of rows
+                that can be sampled during the reject-sampling loop.
+                The maximum number of rows that are sampled at each iteration
+                will be equal to this number multiplied by the requested num_rows.
+                Defaults to 10.
             conditions (dict):
-                If specified, this dictionary maps column names to the column
-                value. Then, this method generates `num_rows` samples, all of
-                which are conditioned on the given variables.
+                The dictionary of conditioning values in the original input format.
+            transformed_conditions (dict):
+                The dictionary of conditioning values transformed to the model format.
+            float_rtol (float):
+                Maximum tolerance when considering a float match.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        if isinstance(conditions, pd.DataFrame):
-            if num_rows is not None and len(conditions) != num_rows:
-                raise ValueError("`num_rows` and `conditions` must be compatible.")
-            num_rows = len(conditions)
-
-        elif num_rows is None:
-            num_rows = self._num_rows
-
-        num_to_sample = num_rows
-        sampled = self._sample_rows(num_to_sample, conditions)
-        sampled = self._metadata.reverse_transform(sampled)
-        sampled = self._metadata.filter_valid(sampled)
-        num_valid = len(sampled)
+        sampled, num_valid = self._sample_rows(
+            num_rows, conditions, transformed_conditions, float_rtol)
 
         counter = 0
-        total_sampled = num_to_sample
+        total_sampled = num_rows
         while num_valid < num_rows:
             counter += 1
             if counter >= max_retries:
-                raise ValueError('Could not get enough valid rows within %s trials', max_retries)
+                raise ValueError(f'Could not get enough valid rows within {max_retries} trials')
 
             remaining = num_rows - num_valid
-            valid_ratio = num_valid / total_sampled
-            num_to_sample = int(counter * remaining / (valid_ratio if valid_ratio != 0 else 1))
+            valid_probability = (num_valid + 1) / (total_sampled + 1)
+            max_rows = num_rows * max_rows_multiplier
+            num_to_sample = min(int(remaining / valid_probability), max_rows)
+            total_sampled += num_to_sample
 
             LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
-            resampled = self._sample_rows(num_to_sample, conditions)
-            resampled = self._metadata.reverse_transform(resampled)
-
-            sampled = sampled.append(resampled)
-            sampled = self._metadata.filter_valid(sampled)
-            num_valid = len(sampled)
+            sampled, num_valid = self._sample_rows(
+                num_to_sample, conditions, transformed_conditions, float_rtol, sampled)
 
         return sampled.head(num_rows)
 
@@ -204,18 +300,16 @@ class BaseTabularModel:
             conditions (pd.DataFrame, dict or pd.Series):
                 If this is a dictionary/Series which maps column names to the column
                 value, then this method generates `num_rows` samples, all of
-                which are conditioned on the given variables.
-
-                If this is a DataFrame, then it generates an output DataFrame
-                such that each row in the output is sampled conditional on
-                the corresponding row in the input.
+                which are conditioned on the given variables. If this is a DataFrame,
+                then it generates an output DataFrame such that each row in the output
+                is sampled conditional on the corresponding row in the input.
             num_rows (int):
-                Number of rows to sample.
+                Number of rows to sample. If a conditions dataframe is given, this must
+                either be ``None`` or match the length of the ``conditions`` dataframe.
 
         Returns:
             pandas.DataFrame:
                 `conditions` as a dataframe.
-
         """
         if isinstance(conditions, pd.Series):
             conditions = pd.DataFrame([conditions] * num_rows)
@@ -227,11 +321,16 @@ class BaseTabularModel:
                 conditions = pd.DataFrame([conditions] * num_rows)
 
         elif not isinstance(conditions, pd.DataFrame):
-            raise TypeError("`conditions` must be a dataframe, a dictionary or a pandas series.")
+            raise TypeError('`conditions` must be a dataframe, a dictionary or a pandas series.')
 
-        return conditions
+        elif num_rows is not None and len(conditions) != num_rows:
+            raise ValueError(
+                'If `conditions` is a `DataFrame`, `num_rows` must be `None` or match its lenght.')
 
-    def sample(self, num_rows=None, max_retries=100, conditions=None):
+        return conditions.copy()
+
+    def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
+               conditions=None, float_rtol=0.01):
         """Sample rows from this table.
 
         Args:
@@ -242,54 +341,72 @@ class BaseTabularModel:
             max_retries (int):
                 Number of times to retry sampling discarded rows.
                 Defaults to 100.
+            max_rows_multiplier (int):
+                Multiplier to use when computing the maximum number of rows
+                that can be sampled during the reject-sampling loop.
+                The maximum number of rows that are sampled at each iteration
+                will be equal to this number multiplied by the requested num_rows.
+                Defaults to 10.
             conditions (pd.DataFrame, dict or pd.Series):
                 If this is a dictionary/Series which maps column names to the column
                 value, then this method generates `num_rows` samples, all of
-                which are conditioned on the given variables.
-
-                If this is a DataFrame, then it generates an output DataFrame
-                such that each row in the output is sampled conditional on
-                the corresponding row in the input.
+                which are conditioned on the given variables. If this is a DataFrame,
+                then it generates an output DataFrame such that each row in the output
+                is sampled conditional on the corresponding row in the input.
+            float_rtol (float):
+                Maximum tolerance when considering a float match. This is the maximum
+                relative distance at which a float value will be considered a match
+                when performing reject-sampling based conditioning. Defaults to 0.01.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
         if conditions is None:
-            return self._sample_conditioned_rows(num_rows, max_retries)
+            num_rows = num_rows or self._num_rows
+            return self._sample_batch(num_rows, max_retries, max_rows_multiplier)
 
         # convert conditions to dataframe
         conditions = self._make_conditions_df(conditions, num_rows)
 
-        try:
-            condition_columns = conditions.columns
-            transformed_conditions = self._metadata.transform(conditions)
+        # validate columns
+        for column in conditions.columns:
+            if column not in self._metadata.get_fields():
+                raise ValueError(f'Invalid column name `{column}`')
 
-            # health check
-            for condition_columns in conditions.columns:
-                condition_column = conditions[[condition_columns]]
-                if len(self._metadata.transform(condition_column).columns) == 0:
-                    raise ValueError()
+            if len(self._metadata.transform(conditions[[column]]).columns) == 0:
+                raise ValueError('Conditioning on column `{column}` is not possible')
 
-        except Exception:
-            raise ValueError(f'Cannot condition on {condition_columns}') from None
-
-        columns = transformed_conditions.columns
-        transformed_conditions["__condition_idx__"] = np.arange(len(transformed_conditions))
-        grouped_conditions = transformed_conditions.groupby(list(columns))
+        transformed_conditions = self._metadata.transform(conditions)
+        condition_columns = list(transformed_conditions.columns)
+        transformed_conditions.index.name = '__condition_idx__'
+        transformed_conditions.reset_index(inplace=True)
+        grouped_conditions = transformed_conditions.groupby(condition_columns)
 
         # sample
         all_sampled_rows = list()
         for index, dataframe in grouped_conditions:
-            one_condition = dict(zip(columns, index if isinstance(index, tuple) else [index]))
-            sampled_rows = self._sample_conditioned_rows(
-                len(dataframe), max_retries, one_condition)
-            sampled_rows["__condition_idx__"] = dataframe["__condition_idx__"].values
+            if not isinstance(index, tuple):
+                index = [index]
+
+            condition = conditions.loc[dataframe['__condition_idx__'].iloc[0]]
+            transformed_condition = dict(zip(condition_columns, index))
+
+            sampled_rows = self._sample_batch(
+                len(dataframe),
+                max_retries,
+                max_rows_multiplier,
+                condition,
+                transformed_condition,
+                float_rtol,
+            )
+            sampled_rows['__condition_idx__'] = dataframe['__condition_idx__'].values
             all_sampled_rows.append(sampled_rows)
 
         all_sampled_rows = pd.concat(all_sampled_rows)
-        all_sampled_rows = all_sampled_rows.sort_values("__condition_idx__")
-        all_sampled_rows = all_sampled_rows.drop("__condition_idx__", axis=1)
+        all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
+        all_sampled_rows.index.name = conditions.index.name
+        all_sampled_rows = all_sampled_rows.sort_index()
 
         return all_sampled_rows
 

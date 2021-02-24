@@ -244,26 +244,26 @@ class TestGaussianCopula:
         """Test the ``GaussianCopula._sample`` method.
 
         The GaussianCopula._sample method is expected to:
-        - call ``self._model.sample`` method passing the given num_rows.
+        - call ``self._model.sample`` method passing the given num_rows and conditions.
         - Return the output from the ``self._model.sample call``.
 
         Input:
-        - Integer
+        - Integer + dict
         Expected Output:
         - ``self._model.sample.return_value``
         Side Effects:
         - ``self._model.sample`` is called with the given integer as input
         """
         # Setup
-        n_rows = 2
         gaussian_copula = Mock(spec_set=GaussianCopula)
         expected = pd.DataFrame([1, 2, 3])
         gaussian_copula._model.sample.return_value = expected
+
         # Run
-        out = GaussianCopula._sample(gaussian_copula, n_rows)
+        out = GaussianCopula._sample(gaussian_copula, 2, {'a': 'a'})
 
         # Asserts
-        gaussian_copula._model.sample.assert_called_once_with(n_rows)
+        gaussian_copula._model.sample.assert_called_once_with(2, conditions={'a': 'a'})
         assert expected.equals(out)
 
     def test_get_parameters(self):
