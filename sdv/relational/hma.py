@@ -324,12 +324,6 @@ class HMA1(BaseRelationalModel):
 
         return sampled
 
-    def _sample_children(self, table_name, sampled_data, table_rows=None):
-        for child_name in self.metadata.get_children(table_name):
-            LOGGER.info('Sampling rows from child table %s', child_name)
-            for _, row in table_rows.iterrows():
-                self._sample_child_rows(child_name, table_name, row, sampled_data)
-
     def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
         foreign_key = self.metadata.get_foreign_keys(parent_name, table_name)[0]
         parameters = self._extract_parameters(parent_row, table_name, foreign_key)
@@ -350,7 +344,15 @@ class HMA1(BaseRelationalModel):
                 sampled_data[table_name] = pd.concat(
                     [previous, table_rows]).reset_index(drop=True)
 
-            self._sample_children(table_name, sampled_data, table_rows)
+    def _sample_children(self, table_name, sampled_data, table_rows):
+        for child_name in self.metadata.get_children(table_name):
+            if child_name not in sampled_data:
+                LOGGER.info('Sampling rows from child table %s', child_name)
+                for _, row in table_rows.iterrows():
+                    self._sample_child_rows(child_name, table_name, row, sampled_data)
+
+                child_rows = sampled_data[child_name]
+                self._sample_children(child_name, sampled_data, child_rows)
 
     @staticmethod
     def _find_parent_id(likelihoods, num_rows):
@@ -368,7 +370,14 @@ class HMA1(BaseRelationalModel):
             # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
 
-        weights = likelihoods.values / likelihoods.sum()
+        total = likelihoods.sum()
+        if total == 0:
+            # Worse case scenario: we have no likelihoods
+            # and all num_rows are 0, so we fallback to uniform
+            length = len(likelihoods)
+            weights = np.ones(length) / length
+        else:
+            weights = likelihoods.values / total
 
         return np.random.choice(likelihoods.index, p=weights)
 
