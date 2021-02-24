@@ -17,7 +17,7 @@ def test_build_demo_metadata_from_tables():
     transactions_fields = {
         'timestamp': {
             'type': 'datetime',
-            'format': '%Y-%m-%d'
+            'format': '%Y-%m-%dT%H:%M'
         }
     }
     new_meta.add_table('transactions', tables['transactions'],
@@ -42,15 +42,17 @@ def test_build_demo_metadata_without_tables():
     metadata.add_field('sessions', 'user_id', 'id', 'integer')
     metadata.add_field('sessions', 'device', 'categorical')
     metadata.add_field('sessions', 'os', 'categorical')
+    metadata.add_field('sessions', 'minutes', 'numerical', 'integer')
     metadata.set_primary_key('sessions', 'session_id')
     metadata.add_relationship('users', 'sessions')
 
     metadata.add_table('transactions')
     metadata.add_field('transactions', 'transaction_id', 'id', 'integer')
     metadata.add_field('transactions', 'session_id', 'id', 'integer')
-    metadata.add_field('transactions', 'timestamp', 'datetime', properties={'format': '%Y-%m-%d'})
+    metadata.add_field('transactions', 'timestamp', 'datetime',
+                       properties={'format': '%Y-%m-%dT%H:%M'})
     metadata.add_field('transactions', 'amount', 'numerical', 'float')
-    metadata.add_field('transactions', 'approved', 'boolean')
+    metadata.add_field('transactions', 'cancelled', 'boolean')
     metadata.set_primary_key('transactions', 'transaction_id')
     metadata.add_relationship('sessions', 'transactions')
 

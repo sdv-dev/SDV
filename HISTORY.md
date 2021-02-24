@@ -1,5 +1,21 @@
 # Release Notes
 
+## 0.8.0 - 2021-02-24
+
+This version adds conditional sampling for tabular models by combining a reject-sampling
+strategy with the native conditional sampling capabilities from the gaussian copulas.
+
+It also introduces several upgrades on the HMA1 algorith that improve data quality and
+robustness in the multi-table scenarios by making changes in how the parameters of the child
+tables are aggregated on the parent tables, including a complete rework of how the correlation
+matrices are modeled and rebuild after sampling.
+
+### Issues resolved
+
+* Fix probabilities contain NaN error - Issue [#326](https://github.com/sdv-dev/SDV/issues/326) by @csala
+* Conditional Sampling for tabular models - Issue [#316](https://github.com/sdv-dev/SDV/issues/316) by @fealho and @csala
+* HMA1: LinAlgError: SVD did not converge - Issue [#240](https://github.com/sdv-dev/SDV/issues/240) by @csala
+
 ## 0.7.0 - 2021-01-27
 
 This release introduces a few changes in the HMA1 relational algorithm to decrease modeling

@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 from sdv.demo import load_demo
 from sdv.tabular.ctgan import CTGAN
 
@@ -80,3 +83,72 @@ def test_recreate():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notnull().sum(axis=1) != 0).all()
+
+
+def test_conditional_sampling_dict():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": "b"
+    }
+    sampled = model.sample(30, conditions=conditions)
+
+    assert sampled.shape == data.shape
+    assert set(sampled["column2"].unique()) == set(["b"])
+
+
+def test_conditional_sampling_dataframe():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = pd.DataFrame({
+        "column2": ["b", "b", "b", "c", "c"]
+    })
+    sampled = model.sample(conditions=conditions)
+
+    assert sampled.shape[0] == len(conditions["column2"])
+    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
+
+
+def test_conditional_sampling_two_conditions():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10,
+        "column3": ["d", "e", "f"] * 10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column2": "b",
+        "column3": "f"
+    }
+    samples = model.sample(5, conditions=conditions)
+    assert list(samples.column2) == ['b'] * 5
+    assert list(samples.column3) == ['f'] * 5
+
+
+def test_conditional_sampling_numerical():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10,
+        "column3": ["d", "e", "f"] * 10
+    })
+
+    model = CTGAN(epochs=1)
+    model.fit(data)
+    conditions = {
+        "column1": 1.0,
+    }
+    sampled = model.sample(5, conditions=conditions)
+
+    assert list(sampled.column1) == [1.0] * 5

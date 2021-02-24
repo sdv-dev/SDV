@@ -12,15 +12,20 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.18.0,<2',
-    'scipy>=1.4,<1.6',
-    'pandas>=1.1,<1.1.5',
+    'Faker>=1.0.1,<4.15',
     'graphviz>=0.13.2,<1',
-    'ctgan>=0.3.1,<0.4',
-    'copulas>=0.4.0,<0.5',
-    'rdt>=0.2.10,<0.4',
-    'sdmetrics>=0.1.2,<0.2.0',
+    'numpy>=1.18.0,<2',
+    'pandas>=1.1,<1.1.5',
+    'torch>=1.4,<2',
+    'tqdm>=4.14,<5',
+    'copulas>=0.5.0,<0.6',
+    'ctgan>=0.4.0,<0.5',
     'deepecho>=0.1.4,<0.2',
+    'rdt>=0.4.0,<0.5',
+    'sdmetrics>=0.2.0,<0.3',
+    'torchvision>=0.5.0,<1',
+    'sktime>=0.4,<0.6',
+    'pomegranate>=0.13.4,<0.14.2',
 ]
 
 setup_requires = [
@@ -99,6 +104,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.7.0',
+    version='0.8.0.dev1',
     zip_safe=False,
 )

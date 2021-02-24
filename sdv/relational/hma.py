@@ -48,6 +48,7 @@ class HMA1(BaseRelationalModel):
         self._model_kwargs = model_kwargs or {}
         self._models = {}
         self._table_sizes = {}
+        self._max_child_rows = {}
 
     # ######## #
     # MODELING #
@@ -81,19 +82,37 @@ class HMA1(BaseRelationalModel):
         child_table = child_table.set_index(foreign_key)
         child_primary = self.metadata.get_primary_key(child_name)
 
+        index = []
+        scale_columns = None
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
             if child_primary in child_rows.columns:
                 del child_rows[child_primary]
 
-            model = self._model(table_metadata=table_meta)
-            model.fit(child_rows.reset_index(drop=True))
-            row = model.get_parameters()
-            row = pd.Series(row)
-            row.index = f'__{child_name}__{foreign_key}__' + row.index
-            extension_rows.append(row)
+            try:
+                model = self._model(table_metadata=table_meta)
+                model.fit(child_rows.reset_index(drop=True))
+                row = model.get_parameters()
+                row = pd.Series(row)
+                row.index = f'__{child_name}__{foreign_key}__' + row.index
 
-        return pd.DataFrame(extension_rows, index=foreign_key_values)
+                if scale_columns is None:
+                    scale_columns = [
+                        column
+                        for column in row.index
+                        if column.endswith('scale')
+                    ]
+
+                if len(child_rows) == 1:
+                    row.loc[scale_columns] = None
+
+                extension_rows.append(row)
+                index.append(foreign_key_value)
+            except Exception:
+                # Skip children rows subsets that fail
+                pass
+
+        return pd.DataFrame(extension_rows, index=index)
 
     def _load_table(self, tables, table_name):
         if tables:
@@ -116,7 +135,9 @@ class HMA1(BaseRelationalModel):
             for index, foreign_key in enumerate(foreign_keys):
                 extension = self._get_extension(child_name, child_table, foreign_key)
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
-                table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0, inplace=True)
+                num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
+                table[num_rows_key].fillna(0, inplace=True)
+                self._max_child_rows[num_rows_key] = table[num_rows_key].max()
 
         return table
 
@@ -267,9 +288,16 @@ class HMA1(BaseRelationalModel):
                 parent child relationship.
         """
         prefix = f'__{table_name}__{foreign_key}__'
+
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys]
+
+        num_rows_key = f'{prefix}num_rows'
+        if num_rows_key in flat_parameters:
+            num_rows = flat_parameters[num_rows_key]
+            flat_parameters[num_rows_key] = min(self._max_child_rows[num_rows_key], num_rows)
+
         return flat_parameters.rename(new_keys).to_dict()
 
     def _sample_rows(self, model, table_name, num_rows=None):
@@ -288,19 +316,13 @@ class HMA1(BaseRelationalModel):
                 Sampled rows, shape (, num_rows)
         """
         sampled = model.sample(num_rows)
+
         primary_key_name = self.metadata.get_primary_key(table_name)
         if primary_key_name:
             primary_key_values = self._get_primary_keys(table_name, len(sampled))
             sampled[primary_key_name] = primary_key_values
 
         return sampled
-
-    def _sample_children(self, table_name, sampled_data, table_rows=None):
-        for child_name in self.metadata.get_children(table_name):
-            if child_name not in sampled_data:
-                LOGGER.info('Sampling rows from child table %s', child_name)
-                for _, row in table_rows.iterrows():
-                    self._sample_child_rows(child_name, table_name, row, sampled_data)
 
     def _sample_child_rows(self, table_name, parent_name, parent_row, sampled_data):
         foreign_key = self.metadata.get_foreign_keys(parent_name, table_name)[0]
@@ -322,7 +344,15 @@ class HMA1(BaseRelationalModel):
                 sampled_data[table_name] = pd.concat(
                     [previous, table_rows]).reset_index(drop=True)
 
-            self._sample_children(table_name, sampled_data, table_rows)
+    def _sample_children(self, table_name, sampled_data, table_rows):
+        for child_name in self.metadata.get_children(table_name):
+            if child_name not in sampled_data:
+                LOGGER.info('Sampling rows from child table %s', child_name)
+                for _, row in table_rows.iterrows():
+                    self._sample_child_rows(child_name, table_name, row, sampled_data)
+
+                child_rows = sampled_data[child_name]
+                self._sample_children(child_name, sampled_data, child_rows)
 
     @staticmethod
     def _find_parent_id(likelihoods, num_rows):
@@ -340,7 +370,14 @@ class HMA1(BaseRelationalModel):
             # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
 
-        weights = likelihoods.values / likelihoods.sum()
+        total = likelihoods.sum()
+        if total == 0:
+            # Worse case scenario: we have no likelihoods
+            # and all num_rows are 0, so we fallback to uniform
+            length = len(likelihoods)
+            weights = np.ones(length) / length
+        else:
+            weights = likelihoods.values / total
 
         return np.random.choice(likelihoods.index, p=weights)
 

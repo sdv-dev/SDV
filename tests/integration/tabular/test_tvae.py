@@ -2,23 +2,19 @@ import numpy as np
 import pandas as pd
 
 from sdv.demo import load_demo
-from sdv.tabular.copulagan import CopulaGAN
+from sdv.tabular.ctgan import TVAE
 
 
-def test_copulagan():
+def test_tvae():
     users = load_demo(metadata=False)['users']
 
-    model = CopulaGAN(
+    tvae = TVAE(
         primary_key='user_id',
-        epochs=1,
-        field_distributions={
-            'age': 'beta'
-        },
-        default_distribution='bounded'
+        epochs=1
     )
-    model.fit(users)
+    tvae.fit(users)
 
-    sampled = model.sample()
+    sampled = tvae.sample()
 
     # test shape is right
     assert sampled.shape == users.shape
@@ -26,7 +22,7 @@ def test_copulagan():
     # test user_id has been generated as an ID field
     assert list(sampled['user_id']) == list(range(0, len(users)))
 
-    assert model.get_metadata().to_dict() == {
+    expected_metadata = {
         'fields': {
             'user_id': {
                 'type': 'id',
@@ -55,13 +51,14 @@ def test_copulagan():
         'model_kwargs': {},
         'name': None
     }
+    assert tvae.get_metadata().to_dict() == expected_metadata
 
 
 def test_recreate():
     data = load_demo(metadata=False)['users']
 
     # If distribution is non parametric, get_parameters fails
-    model = CopulaGAN(epochs=1)
+    model = TVAE(epochs=1)
     model.fit(data)
     sampled = model.sample()
 
@@ -70,7 +67,7 @@ def test_recreate():
     assert (sampled.notnull().sum(axis=1) != 0).all()
 
     # Metadata
-    model_meta = CopulaGAN(epochs=1, table_metadata=model.get_metadata())
+    model_meta = TVAE(epochs=1, table_metadata=model.get_metadata())
     model_meta.fit(data)
     sampled = model_meta.sample()
 
@@ -79,7 +76,7 @@ def test_recreate():
     assert (sampled.notnull().sum(axis=1) != 0).all()
 
     # Metadata dict
-    model_meta_dict = CopulaGAN(epochs=1, table_metadata=model.get_metadata().to_dict())
+    model_meta_dict = TVAE(epochs=1, table_metadata=model.get_metadata().to_dict())
     model_meta_dict.fit(data)
     sampled = model_meta_dict.sample()
 
@@ -94,7 +91,7 @@ def test_conditional_sampling_dict():
         "column2": ["a", "b", "c"] * 10
     })
 
-    model = CopulaGAN(epochs=1)
+    model = TVAE(epochs=1)
     model.fit(data)
     conditions = {
         "column2": "b"
@@ -111,7 +108,7 @@ def test_conditional_sampling_dataframe():
         "column2": ["a", "b", "c"] * 10
     })
 
-    model = CopulaGAN(epochs=1)
+    model = TVAE(epochs=1)
     model.fit(data)
     conditions = pd.DataFrame({
         "column2": ["b", "b", "b", "c", "c"]
@@ -129,7 +126,7 @@ def test_conditional_sampling_two_conditions():
         "column3": ["d", "e", "f"] * 10
     })
 
-    model = CopulaGAN(epochs=1)
+    model = TVAE(epochs=1)
     model.fit(data)
     conditions = {
         "column2": "b",
@@ -147,7 +144,7 @@ def test_conditional_sampling_numerical():
         "column3": ["d", "e", "f"] * 10
     })
 
-    model = CopulaGAN(epochs=1)
+    model = TVAE(epochs=1)
     model.fit(data)
     conditions = {
         "column1": 1.0,

@@ -4,10 +4,12 @@ import io
 import logging
 import os
 import urllib.request
+from datetime import datetime, timedelta
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
+import scipy as sp
 from faker import Faker
 
 from sdv.metadata import Metadata, Table
@@ -56,6 +58,10 @@ DEMO_METADATA = {
                 },
                 'os': {
                     'type': 'categorical'
+                },
+                'minutes': {
+                    'type': 'numerical',
+                    'subtype': 'integer'
                 }
             }
         },
@@ -76,13 +82,13 @@ DEMO_METADATA = {
                 },
                 'timestamp': {
                     'type': 'datetime',
-                    'format': '%Y-%m-%d'
+                    'format': '%Y-%m-%dT%H:%M'
                 },
                 'amount': {
                     'type': 'numerical',
                     'subtype': 'float'
                 },
-                'approved': {
+                'cancelled': {
                     'type': 'boolean'
                 }
             }
@@ -141,7 +147,8 @@ def _load_relational_dummy():
         'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
                    'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
         'os': ['android', 'ios', 'android', 'android', 'ios',
-               'android', 'ios', 'ios', 'ios', 'ios']
+               'android', 'ios', 'ios', 'ios', 'ios'],
+        'minutes': [23, 12, 8, 13, 9, 32, 7, 21, 29, 34],
     })
     transactions = pd.DataFrame({
         'transaction_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -151,7 +158,7 @@ def _load_relational_dummy():
                       '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
                       '2019-01-29T12:10:48'],
         'amount': [100.0, 55.3, 79.5, 112.1, 110.0, 76.3, 89.5, 132.1, 68.0, 99.9],
-        'approved': [True, True, True, False, False, True, True, False, True, True],
+        'cancelled': [False, False, False, True, True, False, False, True, False, False],
     })
     transactions['timestamp'] = pd.to_datetime(transactions['timestamp'])
 
@@ -161,6 +168,103 @@ def _load_relational_dummy():
         'transactions': _dtypes64(transactions),
     }
 
+    return Metadata(DEMO_METADATA), tables
+
+
+def sample_relational_demo(size=30):
+    """Sample demo data with the indicate number of rows in the parent table."""
+    # Users
+    faker = Faker()
+    countries = [faker.country_code() for _ in range(5)]
+    country = np.random.choice(countries, size=size)
+    gender = np.random.choice(['F', 'M', None], p=[0.5, 0.4, 0.1], size=size)
+    age = (
+        sp.stats.truncnorm.rvs(-1.2, 1.5, loc=30, scale=10, size=size).astype(int)
+        + 3 * (gender == 'M')
+        + 3 * (country == countries[0]).astype(int)
+    )
+    num_sessions = (
+        sp.stats.gamma.rvs(1, loc=0, scale=2, size=size)
+        * (0.8 + 0.2 * (gender == 'F'))
+    ).round().astype(int)
+
+    users = pd.DataFrame({
+        'country': country,
+        'gender': gender,
+        'age': age,
+        'num_sessions': num_sessions
+    })
+    users.index.name = 'user_id'
+
+    # Sessions
+    sessions = pd.DataFrame()
+    for user_id, user in users.iterrows():
+        device_weights = [0.1, 0.4, 0.5] if user.gender == 'M' else [0.3, 0.4, 0.3]
+        devices = np.random.choice(
+            ['mobile', 'tablet', 'pc'],
+            size=user.num_sessions,
+            p=device_weights
+        )
+        os = []
+        pc_weights = [0.6, 0.3, 0.1] if user.age > 30 else [0.2, 0.4, 0.4]
+        pc_os = np.random.choice(['windows', 'macos', 'linux'], p=pc_weights)
+        phone_weights = [0.7, 0.3] if user.age > 30 else [0.9, 0.1]
+        phone_os = np.random.choice(['android', 'ios'], p=phone_weights)
+        for device in devices:
+            os.append(pc_os if device == 'pc' else phone_os)
+
+        minutes = (
+            sp.stats.truncnorm.rvs(-3, 3, loc=30, scale=10, size=user.num_sessions)
+            * (1 + 0.1 * (user.gender == 'M'))
+            * (1 + user.age / 100)
+            * (1 + 0.1 * (devices == 'pc'))
+        )
+        num_transactions = (minutes / 10) * (0.5 + (user.gender == 'F'))
+
+        sessions = sessions.append(pd.DataFrame({
+            'user_id': np.full(user.num_sessions, int(user_id)),
+            'device': devices,
+            'os': os,
+            'minutes': minutes.round().astype(int),
+            'num_transactions': num_transactions.round().astype(int),
+        }), ignore_index=True)
+
+    sessions.index.name = 'session_id'
+    del users['num_sessions']
+
+    # Transactions
+    transactions = pd.DataFrame()
+    for session_id, session in sessions.iterrows():
+        size = session.num_transactions
+        if size:
+            amount_base = sp.stats.truncnorm.rvs(-2, 4, loc=100, scale=50, size=size)
+            is_apple = session['os'] in ('ios', 'macos')
+            amount_modif = np.random.random(size) * 100 * is_apple
+            amount = amount_base / np.random.randint(1, size + 1) + amount_modif
+
+            seconds = np.random.randint(3600 * 24 * 365)
+            start = datetime(2019, 1, 1) + timedelta(seconds=seconds)
+
+            timestamp = sorted([
+                start + timedelta(seconds=int(seconds))
+                for seconds in np.random.randint(60 * session.minutes, size=size)
+            ])
+            cancelled = np.random.random(size=size) < (1 / (size * 2))
+            transactions = transactions.append(pd.DataFrame({
+                'session_id': np.full(session.num_transactions, int(session_id)),
+                'timestamp': timestamp,
+                'amount': amount.round(2),
+                'cancelled': cancelled,
+            }), ignore_index=True)
+
+    transactions.index.name = 'transaction_id'
+    del sessions['num_transactions']
+
+    tables = {
+        'users': _dtypes64(users.reset_index()),
+        'sessions': _dtypes64(sessions.reset_index()),
+        'transactions': _dtypes64(transactions.reset_index()),
+    }
     return Metadata(DEMO_METADATA), tables
 
 

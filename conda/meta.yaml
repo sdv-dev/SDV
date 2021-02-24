@@ -1,5 +1,5 @@
 {% set name = 'sdv' %}
-{% set version = '0.7.0' %}
+{% set version = '0.8.0.dev1' %}
 
 package:
   name: "{{ name|lower }}"
@@ -16,35 +16,46 @@ build:
 requirements:
   host:
     - pip
-    - python
     - pytest-runner
     - graphviz
-    - numpy >=1.17.4,<2
+    - python >=3.6,<3.9
+    - faker >=1.0.1,<4.15.0
+    - python-graphviz >=0.13.2,<1
+    - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
-    - python-graphviz >=0.13.2,<2.42.4
-    - ctgan >=0.3.1,<0.4
+    - pytorch >=1.4,<2
+    - tqdm >=4.14,<5
     - copulas >=0.4.0,<0.5
-    - rdt >=0.2.10,<0.4
-    - sdmetrics >=0.1.2,<0.2
+    - ctgan >=0.4.0,<0.5
     - deepecho >=0.1.4,<0.2
+    - rdt >=0.4.0,<0.5
+    - sdmetrics >=0.2.0,<0.3
+    - torchvision >=0.5.0,<1
+    - sktime >=0.4,<0.6
+    - pomegranate >=0.13.4,<0.14.2
   run:
-    - python
     - graphviz
-    - numpy >=1.17.4,<2
+    - python >=3.6,<3.9
+    - faker >=1.0.1,<4.15.0
+    - python-graphviz >=0.13.2,<1
+    - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
-    - python-graphviz >=0.13.2,<2.42.4
-    - ctgan >=0.3.1,<0.4
+    - pytorch >=1.4,<2
+    - tqdm >=4.14,<5
     - copulas >=0.4.0,<0.5
-    - rdt >=0.2.10,<0.4
-    - sdmetrics >=0.1.2,<0.2
+    - ctgan >=0.4.0,<0.5
     - deepecho >=0.1.4,<0.2
-
+    - rdt >=0.4.0,<0.5
+    - sdmetrics >=0.2.0,<0.3
+    - torchvision >=0.5.0,<1
+    - sktime >=0.4,<0.6
+    - pomegranate >=0.13.4,<0.14.2
 
 about:
   home: "https://sdv.dev"
   license: MIT
   license_family: MIT
-  license_file: "https://github.com/sdv-dev/SDV/blob/master/LICENSE"
+  license_file: "LICENSE"
   summary: "Synthetic Data Generation for tabular, relational and time series data."
   doc_url: "https://sdv.dev/SDV"
   dev_url: "https://github.com/sdv-dev/SDV"
