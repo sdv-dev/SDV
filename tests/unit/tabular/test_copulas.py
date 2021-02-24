@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+import scipy
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
@@ -325,55 +326,119 @@ class TestGaussianCopula:
         with pytest.raises(NonParametricError):
             GaussianCopula._get_parameters(gc)
 
-    def test__rebuild_covariance_matrix_positive_definite(self):
-        """Test the ``_rebuild_covariance_matrix``
-        method for a positive definide covariance matrix.
+    def test__get_nearest_correlation_matrix_valid(self):
+        """Test ``_get_nearest_correlation_matrix`` with a psd input.
 
-        The _rebuild_covariance_matrix method is expected to:
-        - Rebuild a square covariance matrix out of a triangular one.
-        - Call ``make_positive_definite`` if input matrix is not positive definite,
+        If the matrix is positive semi-definite, do nothing.
 
-        Input
-        - numpy array, Symmetric positive definite matrix triangular format
+        Input:
+        - matrix which is positive semi-definite.
 
-        output
-        - numpy array, Square matrix positive definite
-
-        Side Effects:
-        - ``make_positive_definite`` is not called.
+        Expected Output:
+        - the input, unmodified.
         """
         # Run
-        covariance = [[1], [0, 1]]
-        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
+        correlation_matrix = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ])
+        output = GaussianCopula._get_nearest_correlation_matrix(correlation_matrix)
 
-        # Asserts
-        expected = np.array([[1., 0.], [0., 1.0]])
-        np.testing.assert_almost_equal(result, expected)
+        # Assert
+        expected = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ]
+        assert expected == output.tolist()
+        assert output is correlation_matrix
 
-    def test__rebuild_covariance_matrix_not_positive_definite(self):
-        """Test the ``_rebuild_covariance_matrix``
-        method for a not positive definide covariance matrix.
+    def test__get_nearest_correlation_matrix_invalid(self):
+        """Test ``_get_nearest_correlation_matrix`` with a non psd input.
 
-        The _rebuild_covariance_matrix method is expected to:
-        - Rebuild a square covariance matrix out of a triangular one.
-        - Call ``make_positive_definite`` if input matrix is not positive definite,
+        If the matrix is not positive semi-definite, modify it to make it PSD.
 
-        Input
-        - numpy array, Symmetric no positive definite matrix triangular format
+        Input:
+        - matrix which is not positive semi-definite.
 
-        output
-        - numpy array, Square matrix positive definite
-
-        Side Effects:
-        - ``make_positive_definite`` is called.
+        Expected Output:
+        - modified matrix which is positive semi-definite.
         """
         # Run
-        covariance = [[1], [-1, 1]]
-        result = GaussianCopula._rebuild_covariance_matrix(Mock(), covariance)
+        not_psd_matrix = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, -1],
+        ])
+        output = GaussianCopula._get_nearest_correlation_matrix(not_psd_matrix)
 
-        # Asserts
-        expected = np.array([[1, -1.0], [-1.0, 1.0]])
-        np.testing.assert_almost_equal(result, expected)
+        # Assert
+        expected = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ]
+        assert expected == output.tolist()
+
+        not_psd_eigenvalues = scipy.linalg.eigh(not_psd_matrix)[0]
+        output_eigenvalues = scipy.linalg.eigh(output)[0]
+        assert (not_psd_eigenvalues < 0).any()
+        assert (output_eigenvalues >= 0).all()
+
+    def test__rebuild_correlation_matrix_valid(self):
+        """Test ``_rebuild_correlation_matrix`` with a valid correlation input.
+
+        If the input contains values between -1 and 1, the method is expected
+        to simply rebuild the square matrix with the same values.
+
+        Input:
+        - list of lists with values between -1 and 1
+
+        Expected Output:
+        - numpy array with the square correlation matrix
+        """
+        # Run
+        triangular_covariance = [
+            [0.1],
+            [0.2, 0.3]
+        ]
+        correlation = GaussianCopula._rebuild_correlation_matrix(triangular_covariance)
+
+        # Assert
+        expected = [
+            [1.0, 0.1, 0.2],
+            [0.1, 1.0, 0.3],
+            [0.2, 0.3, 1.0]
+        ]
+        assert expected == correlation
+
+    def test__rebuild_correlation_matrix_outside(self):
+        """Test ``_rebuild_correlation_matrix`` with an invalid correlation input.
+
+        If the input contains values outside -1 and 1, the method is expected
+        to scale them down to the valid range.
+
+        Input:
+        - list of lists with values outside of -1 and 1
+
+        Expected Output:
+        - numpy array with the square correlation matrix
+        """
+        # Run
+        triangular_covariance = [
+            [1.0],
+            [2.0, 1.0]
+        ]
+        correlation = GaussianCopula._rebuild_correlation_matrix(triangular_covariance)
+
+        # Assert
+        expected = [
+            [1.0, 0.5, 1.0],
+            [0.5, 1.0, 0.5],
+            [1.0, 0.5, 1.0]
+        ]
+        assert expected == correlation
 
     def test__rebuild_gaussian_copula(self):
         """Test the ``GaussianCopula._rebuild_gaussian_copula`` method.
@@ -382,25 +447,36 @@ class TestGaussianCopula:
         - Rebuild a square covariance matrix out of a triangular one.
 
         Input:
-        - numpy array, Triangular covariance matrix
+        - numpy array, Triangular correlation matrix
 
         Expected Output:
-        - numpy array, Square covariance matrix
+        - numpy array, Square correlation matrix
         """
         # Setup
-        gaussian_copula = Mock(autospec=GaussianCopula)
-        gaussian_copula._rebuild_covariance_matrix.return_value = [[0.4, 0.17], [0.17, 0.07]]
-        gaussian_copula._field_distributions = {'foo': 'GaussianUnivariate'}
+        gaussian_copula = GaussianCopula()
+        gaussian_copula._field_distributions = {
+            'foo': 'GaussianUnivariate',
+            'bar': 'GaussianUnivariate',
+            'baz': 'GaussianUnivariate',
+        }
 
         # Run
         model_parameters = {
             'univariates': {
                 'foo': {
                     'scale': 0.0,
-                    'loc': 5
+                    'loc': 0.0
+                },
+                'bar': {
+                    'scale': 1.0,
+                    'loc': 1.0
+                },
+                'baz': {
+                    'scale': 2.0,
+                    'loc': 2.0
                 },
             },
-            'covariance': [[0.1], [0.4, 0.1]],
+            'covariance': [[0.1], [0.2, 0.3]],
             'distribution': 'GaussianUnivariate',
         }
         result = GaussianCopula._rebuild_gaussian_copula(gaussian_copula, model_parameters)
@@ -409,19 +485,33 @@ class TestGaussianCopula:
         expected = {
             'univariates': [
                 {
-                    'scale': 1.0,
-                    'loc': 5,
+                    'scale': 0.0,
+                    'loc': 0.0,
                     'type': 'GaussianUnivariate'
-                }
+                },
+                {
+                    'scale': 1.0,
+                    'loc': 1.0,
+                    'type': 'GaussianUnivariate'
+                },
+                {
+                    'scale': 2.0,
+                    'loc': 2.0,
+                    'type': 'GaussianUnivariate'
+                },
             ],
-            'columns': ['foo'],
+            'covariance': [
+                [1.0, 0.1, 0.2],
+                [0.1, 1.0, 0.3],
+                [0.2, 0.3, 1.0]
+            ],
             'distribution': 'GaussianUnivariate',
-            'covariance': [[0.4, 0.17], [0.17, 0.07]]
+            'columns': ['foo', 'bar', 'baz'],
         }
         assert result == expected
 
     def test__set_parameters(self):
-        """Test the ``_set_parameters`` method with positive num_rows.
+        """Test the ``_set_parameters`` method.
 
         The ``GaussianCopula._set_parameters`` method is expected to:
         - Transform a flattened dict into its original form with
@@ -447,12 +537,17 @@ class TestGaussianCopula:
         returned = {
             'univariates': [
                 {
+                    'scale': 0.0,
+                    'loc': 0.0,
+                    'type': 'copulas.univariate.gaussian.GaussianUnivariate'
+                },
+                {
                     'scale': 1.0,
-                    'loc': 5,
+                    'loc': 1.0,
                     'type': 'copulas.univariate.gaussian.GaussianUnivariate'
                 }
             ],
-            'columns': ['foo'],
+            'columns': ['foo', 'bar'],
             'num_rows': 3,
             'covariance': [[0.4, 0.17], [0.17, 0.07]]
         }
@@ -461,7 +556,9 @@ class TestGaussianCopula:
         # Run
         flatten_parameters = {
             'univariates__foo__scale': 0.0,
-            'univariates__foo__loc': 5,
+            'univariates__foo__loc': 0.0,
+            'univariates__bar__scale': 1.0,
+            'univariates__bar__loc': 1.0,
             'covariance__0__0': 0.1,
             'covariance__1__0': 0.4,
             'covariance__1__1': 0.1,
@@ -475,74 +572,12 @@ class TestGaussianCopula:
             'num_rows': 3,
             'univariates': {
                 'foo': {
-                    'loc': 5,
-                    'scale': 0.0
-                }
-            }
-        }
-        gaussian_copula._rebuild_gaussian_copula.assert_called_once_with(expected)
-        assert isinstance(gaussian_copula._model, GaussianMultivariate)
-
-    def test__set_parameters_negative_max_rows(self):
-        """Test the ``_set_parameters`` method with negative num_rows.
-
-        If the max rows value is negative, it is expected to be set
-        to zero.
-
-        The ``GaussianCopula._set_parameters`` method is expected to:
-        - Transform a flattened dict into its original form with
-          the unflatten_dict function.
-        - pass the unflattended dict to the ``self._rebuild_gaussian_copula``
-          method.
-        - Create a GaussianMultivariate instance from the params dict
-          and store it in the 'self._model' attribute.
-
-        Input:
-        - flat parameters dict
-
-        Output:
-        - None
-
-        Side Effects:
-        - Call ``_rebuild_gaussian_copula`` with the unflatted dict.
-        - ``GaussianMultivariate`` is called
-        - ``GaussianMultivariate`` return value is stored as `self._model`
-        """
-        # Setup
-        gaussian_copula = Mock(autospec=GaussianCopula)
-        returned = {
-            'univariates': [
-                {
+                    'scale': 0.0,
+                    'loc': 0.0,
+                },
+                'bar': {
                     'scale': 1.0,
-                    'loc': 5,
-                    'type': 'copulas.univariate.gaussian.GaussianUnivariate'
-                }
-            ],
-            'columns': ['foo'],
-            'num_rows': -3,
-            'covariance': [[0.4, 0.17], [0.17, 0.07]]
-        }
-        gaussian_copula._rebuild_gaussian_copula.return_value = returned
-
-        # Run
-        flatten_parameters = {
-            'univariates__foo__scale': 0.0,
-            'univariates__foo__loc': 5,
-            'covariance__0__0': 0.1,
-            'covariance__1__0': 0.4,
-            'covariance__1__1': 0.1,
-            'num_rows': -3
-        }
-        GaussianCopula._set_parameters(gaussian_copula, flatten_parameters)
-
-        # Asserts
-        expected = {
-            'covariance': [[0.1], [0.4, 0.1]],
-            'num_rows': -3,
-            'univariates': {
-                'foo': {
-                    'loc': 5,
-                    'scale': 0.0
+                    'loc': 1.0,
                 }
             }
         }

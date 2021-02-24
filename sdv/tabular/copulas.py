@@ -6,12 +6,11 @@ import copulas
 import copulas.multivariate
 import copulas.univariate
 import numpy as np
+import scipy
 
 from sdv.metadata import Table
 from sdv.tabular.base import BaseTabularModel, NonParametricError
-from sdv.tabular.utils import (
-    check_matrix_symmetric_positive_definite, flatten_dict, make_positive_definite, square_matrix,
-    unflatten_dict)
+from sdv.tabular.utils import flatten_dict, unflatten_dict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -332,50 +331,96 @@ class GaussianCopula(BaseTabularModel):
         params = self._model.to_dict()
 
         covariance = list()
-        for index, row in enumerate(params['covariance']):
+        for index, row in enumerate(params['covariance'][1:]):
             covariance.append(row[:index + 1])
 
         params['covariance'] = covariance
-
-        univariates = dict()
-        for name, univariate in zip(params.pop('columns'), params['univariates']):
-            univariates[name] = univariate
-            if 'scale' in univariate:
-                scale = univariate['scale']
-                if scale == 0:
-                    scale = copulas.EPSILON
-
-                univariate['scale'] = np.log(scale)
-
-        params['univariates'] = univariates
+        params['univariates'] = dict(zip(params.pop('columns'), params['univariates']))
 
         return flatten_dict(params)
 
-    def _rebuild_covariance_matrix(self, covariance):
-        """Rebuild the covariance matrix from its parameter values.
+    @staticmethod
+    def _get_nearest_correlation_matrix(matrix):
+        """Find the nearest correlation matrix.
 
-        This method follows the steps:
+        If the given matrix is not Positive Semi-definite, which means
+        that any of its eigenvalues is negative, find the nearest PSD matrix
+        by setting the negative eigenvalues to 0 and rebuilding the matrix
+        from the same eigenvectors and the modified eigenvalues.
 
-            * Rebuild a square matrix out of a triangular one.
-            * Add the missing half of the matrix by adding its transposed and
-              then removing the duplicated diagonal values.
-            * ensure the matrix is positive definite
+        After this, the matrix will be PSD but may not have 1s in the diagonal,
+        so the diagonal is replaced by 1s and then the PSD condition of the
+        matrix is validated again, repeating the process until the built matrix
+        contains 1s in all the diagonal and is PSD.
+
+        After 10 iterations, the last step is skipped and the current PSD matrix
+        is returned even if it does not have all 1s in the diagonal.
+
+        Insipired by: https://stackoverflow.com/a/63131250
+        """
+        eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+        negative = eigenvalues < 0
+        identity = np.identity(len(matrix))
+
+        iterations = 0
+        while np.any(negative):
+            eigenvalues[negative] = 0
+            matrix = eigenvectors.dot(np.diag(eigenvalues)).dot(eigenvectors.T)
+            if iterations >= 10:
+                break
+
+            matrix = matrix - matrix * identity + identity
+
+            max_value = np.abs(np.abs(matrix).max())
+            if max_value > 1:
+                matrix /= max_value
+
+            eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+            negative = eigenvalues < 0
+            iterations += 1
+
+        return matrix
+
+    @classmethod
+    def _rebuild_correlation_matrix(cls, triangular_covariance):
+        """Rebuild a valid correlation matrix from its lower half triangle.
+
+        The input of this function is a list of lists of floats of size 1, 2, 3...n-1:
+
+           [[c_{2,1}], [c_{3,1}, c_{3,2}], ..., [c_{n,1},...,c_{n,n-1}]]
+
+        Corresponding to the values from the lower half of the original correlation matrix,
+        **excluding** the diagonal.
+
+        The output is the complete correlation matrix reconstructed using the given values
+        and scaled to the :math:`[-1, 1]` range if necessary.
 
         Args:
-            covariance (list):
-                covariance values after unflattening model parameters.
+            triangle_covariange (list[list[float]]):
+                A list that contains lists of floats of size 1, 2, 3... up to ``n-1``,
+                where ``n`` is the size of the target covariance matrix.
 
-        Result:
-            list[list[float]]:
-                Symmetric positive semi-definite matrix.
+        Returns:
+            numpy.ndarray:
+                rebuilt correlation matrix.
         """
-        covariance = np.array(square_matrix(covariance))
-        covariance = (covariance + covariance.T - (np.identity(covariance.shape[0]) * covariance))
+        zero = [0.0]
+        size = len(triangular_covariance) + 1
+        left = np.zeros((size, size))
+        right = np.zeros((size, size))
+        for idx, values in enumerate(triangular_covariance):
+            values = values + zero * (size - idx - 1)
+            left[idx + 1, :] = values
+            right[:, idx + 1] = values
 
-        if not check_matrix_symmetric_positive_definite(covariance):
-            covariance = make_positive_definite(covariance)
+        correlation = left + right
+        max_value = np.abs(correlation).max()
+        if max_value > 1:
+            correlation /= max_value
 
-        return covariance.tolist()
+        correlation += np.identity(size)
+
+        return cls._get_nearest_correlation_matrix(correlation).tolist()
 
     def _rebuild_gaussian_copula(self, model_parameters):
         """Rebuild the model params to recreate a Gaussian Multivariate instance.
@@ -394,7 +439,7 @@ class GaussianCopula(BaseTabularModel):
             columns.append(column)
             univariate['type'] = self._field_distributions[column]
             if 'scale' in univariate:
-                univariate['scale'] = np.exp(univariate['scale'])
+                univariate['scale'] = max(0, univariate['scale'])
 
             univariates.append(univariate)
 
@@ -402,7 +447,10 @@ class GaussianCopula(BaseTabularModel):
         model_parameters['columns'] = columns
 
         covariance = model_parameters.get('covariance')
-        model_parameters['covariance'] = self._rebuild_covariance_matrix(covariance)
+        if covariance:
+            model_parameters['covariance'] = self._rebuild_correlation_matrix(covariance)
+        else:
+            model_parameters['covariance'] = [[1.0]]
 
         return model_parameters
 
