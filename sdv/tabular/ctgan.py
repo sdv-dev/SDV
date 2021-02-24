@@ -53,18 +53,25 @@ class CTGANModel(BaseTabularModel):
             discrete_columns=categoricals
         )
 
-    def _sample(self, num_rows):
+    def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
         Args:
             num_rows (int):
                 Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        return self._model.sample(num_rows)
+        if conditions is None:
+            return self._model.sample(num_rows)
+
+        raise NotImplementedError(f"{self._MODEL_CLASS} doesn't support conditional sampling.")
 
 
 class CTGAN(CTGANModel):
@@ -175,6 +182,29 @@ class CTGAN(CTGANModel):
         }
 
         self._cuda = cuda
+
+    def _sample(self, num_rows, conditions=None):
+        if not conditions:
+            return self._model.sample(num_rows)
+
+        condition_column = None
+        condition_value = None
+        if len(conditions) > 1:
+            raise NotImplementedError("CTGAN only supports `conditions` on one column.")
+
+        elif len(conditions) == 1:
+            condition_column = list(conditions.keys())[0]
+            if self._metadata.get_fields()[condition_column]['type'] != 'categorical':
+                raise ValueError("`conditions` must be a categorical column.")
+
+            condition_value = list(conditions.values())[0]
+            rows = self._model.sample(
+                num_rows,
+                condition_column=condition_column,
+                condition_value=condition_value
+            )
+
+            return rows
 
 
 class TVAE(CTGANModel):
