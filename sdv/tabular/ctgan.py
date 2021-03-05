@@ -1,5 +1,6 @@
 """Wrapper around CTGAN model."""
 
+import numpy as np
 from ctgan import CTGANSynthesizer, TVAESynthesizer
 
 from sdv.tabular.base import BaseTabularModel
@@ -42,11 +43,24 @@ class CTGANModel(BaseTabularModel):
 
         self._model.device = torch.device(device)
 
-        categoricals = [
-            field
-            for field, meta in self._metadata.get_fields().items()
-            if meta['type'] == 'categorical'
-        ]
+        categoricals = []
+        fields_before_transform = self._metadata.get_fields()
+        for field in table_data.columns:
+            if field in fields_before_transform:
+                meta = fields_before_transform[field]
+                if meta['type'] == 'categorical':
+                    categoricals.append(field)
+
+            else:
+                dtype = table_data[field].dropna().infer_objects().dtype
+                try:
+                    kind = np.dtype(dtype).kind
+                except TypeError:
+                    # probably category
+                    kind = 'O'
+
+                if kind in ['O', 'b']:
+                    categoricals.append(field)
 
         self._model.fit(
             table_data,
