@@ -143,6 +143,9 @@ class CTGAN(CTGANModel):
             Whether to have print statements for progress results. Defaults to ``False``.
         epochs (int):
             Number of training epochs. Defaults to 300.
+        pac (int):
+            Number of samples to group together when applying the discriminator.
+            Defaults to 10.
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
@@ -155,7 +158,7 @@ class CTGAN(CTGANModel):
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=0, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, cuda=True):
+                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -178,7 +181,9 @@ class CTGAN(CTGANModel):
             'discriminator_steps': discriminator_steps,
             'log_frequency': log_frequency,
             'verbose': verbose,
-            'epochs': epochs
+            'epochs': epochs,
+            'pac': pac,
+            'cuda': cuda
         }
 
         self._cuda = cuda
@@ -236,6 +241,8 @@ class TVAE(CTGANModel):
             Number of data samples to process in each step.
         epochs (int):
             Number of training epochs. Defaults to 300.
+        loss_factor (int):
+            TODO. Defaults to 2.
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
@@ -246,7 +253,7 @@ class TVAE(CTGANModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, epochs=300, cuda=True):
+                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -263,7 +270,10 @@ class TVAE(CTGANModel):
             'decompress_dims': decompress_dims,
             'l2scale': l2scale,
             'batch_size': batch_size,
-            'epochs': epochs
+            'epochs': epochs,
+            'loss_factor': loss_factor,
+            'cuda': cuda
         }
 
+        #update the cuda logic
         self._cuda = cuda
