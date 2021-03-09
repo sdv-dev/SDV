@@ -275,5 +275,5 @@ class TVAE(CTGANModel):
             'cuda': cuda
         }
 
-        #update the cuda logic
+        # update the cuda logic
         self._cuda = cuda
