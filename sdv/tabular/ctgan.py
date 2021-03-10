@@ -18,8 +18,6 @@ class CTGANModel(BaseTabularModel):
         'O': 'label_encoding'
     }
 
-    _cuda = True
-
     def _build_model(self):
         return self._MODEL_CLASS(**self._model_kwargs)
 
@@ -31,16 +29,6 @@ class CTGANModel(BaseTabularModel):
                 Data to be learned.
         """
         self._model = self._build_model()
-
-        import torch
-        if not self._cuda or not torch.cuda.is_available():
-            device = 'cpu'
-        elif isinstance(self._cuda, str):
-            device = self._cuda
-        else:
-            device = 'cuda'
-
-        self._model.device = torch.device(device)
 
         categoricals = [
             field
@@ -186,8 +174,6 @@ class CTGAN(CTGANModel):
             'cuda': cuda
         }
 
-        self._cuda = cuda
-
 
 class TVAE(CTGANModel):
     """Model wrapping ``TVAESynthesizer`` model.
@@ -274,6 +260,3 @@ class TVAE(CTGANModel):
             'loss_factor': loss_factor,
             'cuda': cuda
         }
-
-        # update the cuda logic
-        self._cuda = cuda
