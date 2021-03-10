@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from sdv.demo import load_demo
+from sdv.constraints import UniqueCombinations
+from sdv.demo import load_demo, load_tabular_demo
 from sdv.tabular.copulagan import CopulaGAN
 
 
@@ -155,3 +156,16 @@ def test_conditional_sampling_numerical():
     sampled = model.sample(5, conditions=conditions)
 
     assert list(sampled.column1) == [1.0] * 5
+
+
+def test_unique_combination_constraint():
+    employees = load_tabular_demo()
+
+    unique_company_department_constraint = UniqueCombinations(
+        columns=['company', 'department'],
+        handling_strategy='transform'
+    )
+
+    model = CopulaGAN(constraints=[unique_company_department_constraint])
+    model.fit(employees)
+    model.sample(10)
