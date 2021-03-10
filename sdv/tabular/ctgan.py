@@ -49,7 +49,7 @@ class CTGANModel(BaseTabularModel):
 
                 if kind in ['O', 'b']:
                     categoricals.append(field)
-   
+
         self._model.fit(
             table_data,
             discrete_columns=categoricals
