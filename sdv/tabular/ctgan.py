@@ -228,7 +228,7 @@ class TVAE(CTGANModel):
         epochs (int):
             Number of training epochs. Defaults to 300.
         loss_factor (int):
-            TODO. Defaults to 2.
+            Multiplier for the reconstruction error. Defaults to 2.
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
