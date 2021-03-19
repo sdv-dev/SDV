@@ -984,7 +984,7 @@ class Metadata:
             '\n'.join(relationships)
         )
 
-    def visualize(self, path=None, names=True):
+    def visualize(self, path=None, names=True, details=True):
         """Plot metadata usign graphviz.
 
         Generate a plot using graphviz.
@@ -999,4 +999,4 @@ class Metadata:
             names (bool):
                 Whether to add names to the diagram or not. Defaults to ``True``
         """
-        return visualization.visualize(self, path, names=names)
+        return visualization.visualize(self, path, names=names, details=details)
