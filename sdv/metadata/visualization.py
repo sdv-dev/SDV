@@ -23,7 +23,7 @@ def _get_graphviz_extension(path):
     return None, None
 
 
-def _add_nodes(metadata, digraph, names):
+def _add_nodes(metadata, digraph, names, details):
     """Add nodes into a `graphviz.Digraph`.
 
     Each node represent a metadata table.
@@ -35,7 +35,9 @@ def _add_nodes(metadata, digraph, names):
             graphviz.Digraph being built
     """
     for table in metadata.get_tables():
-        if names:
+        if not names:
+            title = ''
+        elif details:
             # Append table fields
             fields = []
 
@@ -68,12 +70,13 @@ def _add_nodes(metadata, digraph, names):
             # Add table node
             title = r'{{{}|{}\l|{}\l}}'.format(table, fields, extras)
         else:
-            title = ''
+            # Add table node only
+            title = r'{{{}}}'.format(table)
 
         digraph.node(table, label=title)
 
 
-def _add_edges(metadata, digraph, names):
+def _add_edges(metadata, digraph, names, details):
     """Add edges into a `graphviz.Digraph`.
 
     Each edge represents a relationship between two metadata tables.
@@ -83,7 +86,7 @@ def _add_edges(metadata, digraph, names):
     """
     for table in metadata.get_tables():
         for parent in list(metadata.get_parents(table)):
-            if names:
+            if names and details:
                 label = '\n'.join([
                     '   {}.{} > {}.{}'.format(
                         table, foreign_key,
@@ -102,7 +105,7 @@ def _add_edges(metadata, digraph, names):
                     digraph.edge(parent, table, arrowhead='oinv')
 
 
-def visualize(metadata, path=None, names=True):
+def visualize(metadata, path=None, names=True, details=True):
     """Plot metadata usign graphviz.
 
     Try to generate a plot using graphviz.
@@ -127,8 +130,8 @@ def visualize(metadata, path=None, names=True):
         },
     )
 
-    _add_nodes(metadata, digraph, names)
-    _add_edges(metadata, digraph, names)
+    _add_nodes(metadata, digraph, names, details)
+    _add_edges(metadata, digraph, names, details)
 
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
