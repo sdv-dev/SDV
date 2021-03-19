@@ -269,7 +269,7 @@ class BaseTabularModel:
             float_rtol (float):
                 Maximum tolerance when considering a float match.
             graceful_reject_sampling (bool):
-                If `False` raises an exception if not enough valid rows could be sampled
+                If `False` raises a `ValueError` if not enough valid rows could be sampled
                 within `max_retries` trials. If `True` prints a warning and returns
                 as many rows as it was able to sample within `max_retries`.
                 Defaults to True.
@@ -304,7 +304,7 @@ class BaseTabularModel:
 
             counter += 1
 
-        return sampled.head()
+        return sampled.head(min(len(sampled), num_rows))
 
     def _make_conditions_df(self, conditions, num_rows):
         """Transform `conditions` into a dataframe.
@@ -371,7 +371,7 @@ class BaseTabularModel:
                 relative distance at which a float value will be considered a match
                 when performing reject-sampling based conditioning. Defaults to 0.01.
             graceful_reject_sampling (bool):
-                If `False` raises an exception if not enough valid rows could be sampled
+                If `False` raises a `ValueError` if not enough valid rows could be sampled
                 within `max_retries` trials. If `True` prints a warning and returns
                 as many rows as it was able to sample within `max_retries`.
                 Defaults to True.
