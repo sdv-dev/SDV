@@ -2,6 +2,7 @@
 
 import logging
 import pickle
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -229,7 +230,8 @@ class BaseTabularModel:
             return sampled, num_rows
 
     def _sample_batch(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-                      conditions=None, transformed_conditions=None, float_rtol=0.01):
+                      conditions=None, transformed_conditions=None, float_rtol=0.01,
+                      graceful_reject_sampling=True):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -266,6 +268,11 @@ class BaseTabularModel:
                 The dictionary of conditioning values transformed to the model format.
             float_rtol (float):
                 Maximum tolerance when considering a float match.
+            graceful_reject_sampling (bool):
+                If `False` raises an exception if not enough valid rows could be sampled
+                within `max_retries` trials. If `True` prints a warning and returns
+                as many rows as it was able to sample within `max_retries`.
+                Defaults to True.
 
         Returns:
             pandas.DataFrame:
@@ -277,9 +284,12 @@ class BaseTabularModel:
         counter = 0
         total_sampled = num_rows
         while num_valid < num_rows:
-            counter += 1
             if counter >= max_retries:
-                raise ValueError(f'Could not get enough valid rows within {max_retries} trials')
+                if graceful_reject_sampling:
+                    warn(f'Only {num_valid} rows could be sampled within {max_retries} trials.')
+                    break
+
+                raise ValueError(f'Could not get enough valid rows within {max_retries} trials.')
 
             remaining = num_rows - num_valid
             valid_probability = (num_valid + 1) / (total_sampled + 1)
@@ -289,9 +299,12 @@ class BaseTabularModel:
 
             LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
             sampled, num_valid = self._sample_rows(
-                num_to_sample, conditions, transformed_conditions, float_rtol, sampled)
+                num_to_sample, conditions, transformed_conditions, float_rtol, sampled
+            )
 
-        return sampled.head(num_rows)
+            counter += 1
+
+        return sampled.head()
 
     def _make_conditions_df(self, conditions, num_rows):
         """Transform `conditions` into a dataframe.
@@ -330,7 +343,7 @@ class BaseTabularModel:
         return conditions.copy()
 
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-               conditions=None, float_rtol=0.01):
+               conditions=None, float_rtol=0.01, graceful_reject_sampling=True):
         """Sample rows from this table.
 
         Args:
@@ -357,6 +370,11 @@ class BaseTabularModel:
                 Maximum tolerance when considering a float match. This is the maximum
                 relative distance at which a float value will be considered a match
                 when performing reject-sampling based conditioning. Defaults to 0.01.
+            graceful_reject_sampling (bool):
+                If `False` raises an exception if not enough valid rows could be sampled
+                within `max_retries` trials. If `True` prints a warning and returns
+                as many rows as it was able to sample within `max_retries`.
+                Defaults to True.
 
         Returns:
             pandas.DataFrame:
@@ -375,7 +393,7 @@ class BaseTabularModel:
                 raise ValueError(f'Invalid column name `{column}`')
 
             if len(self._metadata.transform(conditions[[column]]).columns) == 0:
-                raise ValueError('Conditioning on column `{column}` is not possible')
+                raise ValueError(f'Conditioning on column `{column}` is not possible')
 
         transformed_conditions = self._metadata.transform(conditions)
         condition_columns = list(transformed_conditions.columns)
@@ -385,13 +403,13 @@ class BaseTabularModel:
 
         # sample
         all_sampled_rows = list()
+
         for index, dataframe in grouped_conditions:
             if not isinstance(index, tuple):
                 index = [index]
 
             condition = conditions.loc[dataframe['__condition_idx__'].iloc[0]]
             transformed_condition = dict(zip(condition_columns, index))
-
             sampled_rows = self._sample_batch(
                 len(dataframe),
                 max_retries,
@@ -399,9 +417,16 @@ class BaseTabularModel:
                 condition,
                 transformed_condition,
                 float_rtol,
+                graceful_reject_sampling
             )
-            sampled_rows['__condition_idx__'] = dataframe['__condition_idx__'].values
-            all_sampled_rows.append(sampled_rows)
+
+            if len(sampled_rows) > 0:
+                sampled_rows['__condition_idx__'] = \
+                    dataframe['__condition_idx__'].values[:len(sampled_rows)]
+                all_sampled_rows.append(sampled_rows)
+
+        if len(all_sampled_rows) == 0:
+            return pd.DataFrame()
 
         all_sampled_rows = pd.concat(all_sampled_rows)
         all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
