@@ -390,15 +390,15 @@ class Metadata:
                     'Invalid type and subtype combination for field {}: ({}, {})'.format(
                         name, field_type, field_subtype)
                 )
+            else:
+                if ids and field_type == 'id':
+                    if (name != table_meta.get('primary_key')) and not field.get('ref'):
+                        for child_table in self.get_children(table_name):
+                            if name in self.get_foreign_keys(table_name, child_table):
+                                break
 
-            if ids and field_type == 'id':
-                if (name != table_meta.get('primary_key')) and not field.get('ref'):
-                    for child_table in self.get_children(table_name):
-                        if name in self.get_foreign_keys(table_name, child_table):
-                            break
-
-            if ids or (field_type != 'id'):
-                dtypes[name] = dtype
+                if ids or (field_type != 'id'):
+                    dtypes[name] = dtype
 
         return dtypes
 

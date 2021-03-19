@@ -369,8 +369,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test')
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', errors=errors)
+
+        assert len(errors) == 1
 
     def test_get_dtypes_error_subtype_numerical(self):
         """Test get data types with an invalid numerical subtype."""
@@ -385,8 +387,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test')
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', errors=errors)
+
+        assert len(errors) == 1
 
     def test_get_dtypes_error_subtype_id(self):
         """Test get data types with an invalid id subtype."""
@@ -401,8 +405,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test', ids=True)
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', ids=True, errors=errors)
+
+        assert len(errors) == 1
 
     def test__get_pii_fields(self):
         """Test get pii fields"""
