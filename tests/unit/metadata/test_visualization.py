@@ -61,12 +61,14 @@ def test__add_nodes():
     plot = Mock()
 
     # Run
-    visualization._add_nodes(metadata, plot, names=True)
+    visualization._add_nodes(metadata, plot, names=True, details=True)
 
     # Asserts
-    expected_node_label = r"{demo|a_field : numerical - integer\lb_field : id\l" \
-                          r"c_field : id\l|Primary key: b_field\l" \
-                          r"Foreign key (other): c_field\l}"
+    expected_node_label = (
+        r"{demo|a_field : numerical - integer\lb_field : id\l"
+        r"c_field : id\l|Primary key: b_field\l"
+        r"Foreign key (other): c_field\l}"
+    )
 
     metadata.get_fields.assert_called_once_with('demo')
     metadata.get_primary_key.assert_called_once_with('demo')
@@ -92,7 +94,7 @@ def test__add_edges():
     plot = Mock()
 
     # Run
-    visualization._add_edges(metadata, plot, names=True)
+    visualization._add_edges(metadata, plot, names=True, details=True)
 
     # Asserts
     expected_edge_label = '   {}.{} > {}.{}'.format('demo', 'fk', 'other', 'pk')
@@ -126,7 +128,7 @@ def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
 
     # Asserts
     digraph = digraph_mock.return_value
-    add_nodes_mock.assert_called_once_with(metadata, digraph, True)
-    add_edges_mock.assert_called_once_with(metadata, digraph, True)
+    add_nodes_mock.assert_called_once_with(metadata, digraph, True, True)
+    add_edges_mock.assert_called_once_with(metadata, digraph, True, True)
 
     digraph.render.assert_called_once_with(filename='output', cleanup=True, format='png')
