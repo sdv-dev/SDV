@@ -1,8 +1,8 @@
 """Wrapper around CTGAN model."""
 
 import numpy as np
-from ctgan import CTGANSynthesizer, TVAESynthesizer
 
+from ctgan import CTGANSynthesizer, TVAESynthesizer
 from sdv.tabular.base import BaseTabularModel
 
 

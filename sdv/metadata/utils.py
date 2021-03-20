@@ -1,10 +1,10 @@
 """Tools to generate strings from regular expressions."""
 
 import re
-import sre_parse
 import string
 
 import numpy as np
+import sre_parse
 
 
 def _literal(character, max_repeat):

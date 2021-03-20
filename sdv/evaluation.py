@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-import sdmetrics
 
+import sdmetrics
 from sdv.metadata.dataset import Metadata
 
 
