@@ -1,14 +1,8 @@
-import numpy as np
 import pandas as pd
-
-from sdv.demo import load_demo
-from sdv.tabular.ctgan import TVAE
-
 import pytest
 
 
-from sdv.constraints import UniqueCombinations
-from sdv.demo import load_demo, load_tabular_demo
+from sdv.demo import load_demo
 from sdv.tabular.ctgan import CTGAN
 from sdv.tabular.ctgan import TVAE
 from sdv.tabular.copulas import GaussianCopula
@@ -17,16 +11,17 @@ from sdv.tabular.copulagan import CopulaGAN
 MODELS = [
     CTGAN(epochs=1),
     TVAE(epochs=1),
-    #GaussianCopula(),
+    GaussianCopula(),
     CopulaGAN(epochs=1),
 ]
+
 
 @pytest.mark.parametrize("model", MODELS)
 def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
     data = pd.DataFrame({
-        "column1": list(range(100))*2,
-        "column2": list(range(100))*2,
-        "column3": list(range(100))*2
+        "column1": list(range(100)) * 2,
+        "column2": list(range(100)) * 2,
+        "column3": list(range(100)) * 2
     })
 
     model.fit(data)
