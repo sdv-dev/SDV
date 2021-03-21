@@ -1,12 +1,11 @@
-import pandas as pd
-import pytest
 from unittest.mock import Mock
 
+import pandas as pd
+import pytest
 
-from sdv.tabular.ctgan import CTGAN
-from sdv.tabular.ctgan import TVAE
-from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.copulagan import CopulaGAN
+from sdv.tabular.copulas import GaussianCopula
+from sdv.tabular.ctgan import CTGAN, TVAE
 
 MODELS = [
     CTGAN(epochs=1),
