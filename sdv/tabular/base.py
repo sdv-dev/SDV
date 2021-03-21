@@ -230,12 +230,13 @@ class BaseTabularModel:
             return sampled, num_rows
 
     def _sample_batch(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-                      conditions=None, transformed_conditions=None, float_rtol=0.01,
-                      graceful_reject_sampling=True):
+                      conditions=None, transformed_conditions=None, float_rtol=0.01):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
-        all of them are valid and match the requested conditions.
+        all of them are valid and match the requested conditions. If `max_retries`
+        is exceeded, it will return as many rows as it has sampled, which may be less
+        than the target number of rows.
 
         Input conditions is taken both in the raw input format, which will be used
         for filtering during the reject-sampling loop, and already transformed
@@ -268,11 +269,6 @@ class BaseTabularModel:
                 The dictionary of conditioning values transformed to the model format.
             float_rtol (float):
                 Maximum tolerance when considering a float match.
-            graceful_reject_sampling (bool):
-                If `False` raises a `ValueError` if not enough valid rows could be sampled
-                within `max_retries` trials. If `True` prints a warning and returns
-                as many rows as it was able to sample within `max_retries`.
-                Defaults to True.
 
         Returns:
             pandas.DataFrame:
@@ -285,11 +281,7 @@ class BaseTabularModel:
         total_sampled = num_rows
         while num_valid < num_rows:
             if counter >= max_retries:
-                if graceful_reject_sampling:
-                    warn(f'Only {num_valid} rows could be sampled within {max_retries} trials.')
-                    break
-
-                raise ValueError(f'Could not get enough valid rows within {max_retries} trials.')
+                break
 
             remaining = num_rows - num_valid
             valid_probability = (num_valid + 1) / (total_sampled + 1)
@@ -343,7 +335,7 @@ class BaseTabularModel:
         return conditions.copy()
 
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-               conditions=None, float_rtol=0.01, graceful_reject_sampling=True):
+               conditions=None, float_rtol=0.01, graceful_reject_sampling=False):
         """Sample rows from this table.
 
         Args:
@@ -373,8 +365,9 @@ class BaseTabularModel:
             graceful_reject_sampling (bool):
                 If `False` raises a `ValueError` if not enough valid rows could be sampled
                 within `max_retries` trials. If `True` prints a warning and returns
-                as many rows as it was able to sample within `max_retries`.
-                Defaults to True.
+                as many rows as it was able to sample within `max_retries`. If no rows could
+                be generated, raises a `ValueError`.
+                Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -416,17 +409,22 @@ class BaseTabularModel:
                 max_rows_multiplier,
                 condition,
                 transformed_condition,
-                float_rtol,
-                graceful_reject_sampling
+                float_rtol
             )
+
+            if len(sampled_rows) < len(dataframe):
+                # Didn't get enough rows.
+                if len(sampled_rows) == 0 or not graceful_reject_sampling:
+                    raise ValueError(f'Could not get enough valid '
+                                     f'rows within {max_retries} trials.')
+                else:
+                    warn(f'Only {len(sampled_rows)} rows could '
+                         f'be sampled within {max_retries} trials.')
 
             if len(sampled_rows) > 0:
                 sampled_rows['__condition_idx__'] = \
                     dataframe['__condition_idx__'].values[:len(sampled_rows)]
                 all_sampled_rows.append(sampled_rows)
-
-        if len(all_sampled_rows) == 0:
-            return pd.DataFrame()
 
         all_sampled_rows = pd.concat(all_sampled_rows)
         all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
