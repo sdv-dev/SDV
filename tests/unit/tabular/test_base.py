@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 from unittest.mock import Mock
 
 
@@ -34,7 +33,6 @@ def test_conditional_sampling_graceful_reject_sampling(model):
         "column2": [37, 37],
         "column3": [93, 93],
     })
-
 
     model.fit(data)
     output = model.sample(5, conditions=conditions, graceful_reject_sampling=True)
