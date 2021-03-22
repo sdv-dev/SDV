@@ -5,8 +5,7 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata.dataset import (
-    Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes)
+from sdv.metadata.dataset import Metadata, _load_csv, _parse_dtypes, _read_csv_dtypes
 
 
 def test__read_csv_dtypes():
