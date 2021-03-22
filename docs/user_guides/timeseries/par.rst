@@ -36,7 +36,7 @@ NASDAQ 100 companies during the year 2019.
     :okwarning:
 
     from sdv.demo import load_timeseries_demo
-    
+
     data = load_timeseries_demo()
     data.head()
 
@@ -50,7 +50,7 @@ including:
 -  The MarketCap of the company
 -  The Sector and the Industry in which the company operates.
 
-This data format is a very common an well known format for timeseries
+This data format is a very common and well known format for timeseries
 data which includes 4 types of columns:
 
 Entity Columns
@@ -72,7 +72,7 @@ of the company within our data is the ``Symbol`` column.
 
 .. note::
 
-   In some case, the datsets do not contain any ``entity_columns``
+   In some cases, the datsets do not contain any ``entity_columns``
    because the rows are not associated with any external entity. In
    these cases, the ``entity_columns`` specification can be omitted and
    the complete dataset will be interpreted as a single timeseries
@@ -109,7 +109,7 @@ Sequence Index
 
 By definition, the timeseries datasets have inter-row dependencies for
 which the order of the rows matter. In most cases, this order will be
-indicted by a ``sequence_index`` column that will contain sortable
+indicated by a ``sequence_index`` column that will contain sortable
 values such as integers, floats or datetimes. In some other cases there
 may be no ``sequence_index``, which means that the rows are assumed to
 be already given in the right order.
@@ -127,10 +127,10 @@ Data Columns
 
 Finally, the rest of the columns of the dataset are what we call the
 ``data_columns``, and they are the columns that our ``PAR`` model will
-learn to generated synthetically conditioned on the values of the
+learn to generate synthetically conditioned on the values of the
 ``context_columns``.
 
-Let now see how to use the ``PAR`` class to learn this timeseries
+Let's now see how to use the ``PAR`` class to learn this timeseries
 dataset and generate new synthetic timeseries that replicate its
 properties.
 
@@ -146,7 +146,7 @@ For this, you will need to:
     :okwarning:
 
     from sdv.timeseries import PAR
-    
+
     model = PAR(
         entity_columns=entity_columns,
         context_columns=context_columns,
@@ -166,7 +166,7 @@ Generate synthetic data from the model
 
 Once the modeling has finished you are ready to generate new synthetic
 data by calling the ``sample`` method from your model passing the number
-of the sequences that we want to generated.
+of the sequences that we want to generate.
 
 Let’s start by generating a single sequence.
 
@@ -234,13 +234,13 @@ directory in which you are running SDV.
    This is because the serialized model contains **no information about
    the original data**, other than the parameters it needs to generate
    synthetic versions of it. This means that you can safely share this
-   ``my_model.pkl`` file without the risc of disclosing any of your real
+   ``my_model.pkl`` file without the risk of disclosing any of your real
    data!
 
 Load the model and generate new data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The file you just generated can be send over to the system where the
+The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
 using the ``PAR.load`` method, and then you are ready to sample new data
 from the loaded instance:
@@ -260,14 +260,14 @@ from the loaded instance:
 Conditional Sampling
 ~~~~~~~~~~~~~~~~~~~~
 
-On the previous examples we had the model generate random values for use
+In the previous examples we had the model generate random values for use
 to populate the ``context_columns`` and the ``entity_columns``. In order
 to do this, the model learned the context and entity values using a
-``GaussianCopula``, which later on used to sample new realistic values
+``GaussianCopula``, which later on was used to sample new realistic values
 for them. This is fine for cases in which we do not have any constraints
 regarding the type of data that we generate, but in some cases we might
 want to control the values of the contextual columns to force the model
-into generating data of certain type.
+into generating data of a certain type.
 
 In order to achieve this, we will first have to create a
 ``pandas.DataFrame`` with the expected values.
@@ -279,7 +279,7 @@ and Health Care sectors.
     :okwarning:
 
     import pandas as pd
-    
+
     context = pd.DataFrame([
         {
             'Symbol': 'AAAA',
@@ -327,7 +327,7 @@ How to customize the generated IDs?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the previous examples we saw how the ``Symbol`` values were generated
-as random strings that do not look like that ones typically seen for
+as random strings that do not look like those typically seen for
 Tickers, which usually are strings made of between 2 and 4 uppercase
 letters.
 
@@ -407,7 +407,7 @@ data.
     no_context = data[['Symbol', 'Date', 'Open', 'Close', 'Volume']].copy()
     no_context.head()
 
-In this cases, we can simply skip the context columns when creating the
+In this case, we can simply skip the context columns when creating the
 model, and PAR will be able to learn the timeseries without imposing any
 conditions to them.
 

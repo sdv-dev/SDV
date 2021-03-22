@@ -53,7 +53,7 @@ includes, among other things:
 -  Their id and gender
 -  Their grades and specializations
 -  Their work experience
--  The salary that they where offered
+-  The salary that they were offered
 -  The duration and dates of their placement
 
 You will notice that there is data with the following characteristics:
@@ -64,7 +64,7 @@ You will notice that there is data with the following characteristics:
    where the student was not placed.
 
 Let us use ``CTGAN`` to learn this data and then sample synthetic data
-about new students to see how well de model captures the characteristics
+about new students to see how well the model captures the characteristics
 indicated above. In order to do this you will need to:
 
 -  Import the ``sdv.tabular.CTGAN`` class and create an instance of it.
@@ -161,7 +161,7 @@ directory in which you are running SDV.
 Load the model and generate new data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The file you just generated can be send over to the system where the
+The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
 using the ``CTGAN.load`` method, and then you are ready to sample new
 data from the loaded instance:
@@ -181,7 +181,7 @@ data from the loaded instance:
 Specifying the Primary Key of the table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One of the first things that you may have noticed when looking that demo
+One of the first things that you may have noticed when looking at the demo
 data is that there is a ``student_id`` column which acts as the primary
 key of the table, and which is supposed to have unique values. Indeed,
 if we look at the number of times that each value appears, we see that
@@ -355,7 +355,7 @@ generated data and computational time.
     as well as the number of samples used in each step. Its default
     values are ``300`` and ``500`` respectively, and ``batch_size`` needs
     to always be a value which is multiple of ``10``.
-    
+
     These hyperparameters have a very direct effect in time the training
     process lasts but also on the performance of the data, so for new
     datasets, you might want to start by setting a low value on both of
@@ -461,7 +461,7 @@ If you look closely at the data you may notice that some properties were
 not completely captured by the model. For example, you may have seen
 that sometimes the model produces an ``experience_years`` number greater
 than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
+These types of properties are what we call ``Constraints`` and can also
 be handled using ``SDV``. For further details about them please visit
 the :ref:`single_table_constraints` guide.
 
