@@ -67,7 +67,8 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         data_types = list()
         context_types = list()
-        for field, meta in self._metadata.get_fields().items():
+        for field in self._entity_columns + self._data_columns:
+            meta = self._metadata.get_fields()[field]
             data_type = self._DATA_TYPES.get(meta['type'])
             if data_type:
                 if field == self._sequence_index:
