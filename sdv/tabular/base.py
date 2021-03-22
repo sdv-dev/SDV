@@ -414,9 +414,14 @@ class BaseTabularModel:
 
             if len(sampled_rows) < len(dataframe):
                 # Didn't get enough rows.
-                if len(sampled_rows) == 0 or not graceful_reject_sampling:
-                    raise ValueError(f'Could not get enough valid '
-                                     f'rows within {max_retries} trials.')
+                if len(sampled_rows) == 0:
+                    error = 'No valid rows could be generated with the given conditions.'
+                    raise ValueError(error)
+
+                elif not graceful_reject_sampling:
+                    error = f'Could not get enough valid rows within {max_retries} trials.'
+                    raise ValueError(error)
+
                 else:
                     warn(f'Only {len(sampled_rows)} rows could '
                          f'be sampled within {max_retries} trials.')
