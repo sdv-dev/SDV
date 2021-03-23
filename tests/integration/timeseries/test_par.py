@@ -1,9 +1,9 @@
+import datetime
+
 import pandas as pd
 from deepecho import load_demo
 
 from sdv.timeseries.deepecho import PAR
-
-import datetime
 
 
 def test_par():
@@ -49,6 +49,7 @@ def test_par():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notnull().sum(axis=1) != 0).all()
+
 
 def test_column_after_date():
     """Test that adding columns after the `sequence_index` column works."""
