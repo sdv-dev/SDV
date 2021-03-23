@@ -4,7 +4,7 @@ Relational Metadata
 ===================
 
 In order to work with complex dataset structures you will need to pass
-additional information about you data to SDV using ``Metadata``.
+additional information about your data to SDV using ``Metadata``.
 
 Let's go over an example to see how to use it.
 
@@ -34,13 +34,13 @@ You can observe that this dataset has the following structure:
 
 -  A ``users`` table with:
 
-   -  A ``user_id`` field with acts as the table primary key.
+   -  A ``user_id`` field which acts as the table primary key.
    -  Two categorical fields, ``country`` and ``gender``, and an integer
       column ``age``.
 
 -  A ``sessions`` table with:
 
-   -  A ``session_id`` field with acts as the table primary key.
+   -  A ``session_id`` field which acts as the table primary key.
    -  A ``user_id`` field which is a foreign key to the ``users`` table
       and defines a One-to-Many relationship with it (one ``user`` can
       have many ``sessions``).
@@ -48,7 +48,7 @@ You can observe that this dataset has the following structure:
 
 -  A ``transactions`` table with:
 
-   -  A ``transaction_id`` field with acts as the table primary key.
+   -  A ``transaction_id`` field which acts as the table primary key.
    -  A ``session_id`` field which is a foreign key to the ``sessions``
       table and defines a One-to-Many relationship with it (one ``user``
       can make many ``transactions`` within a single ``session``).
@@ -111,7 +111,7 @@ relationships:
     metadata
 
 
-However, the ``Metadata`` instance will have already analyze all the
+However, the ``Metadata`` instance will have already analyzed all the
 columns in the passed table and identified the different data types and
 subtypes, and will properly indicate that the ``user_id`` column is the
 table primary key.
