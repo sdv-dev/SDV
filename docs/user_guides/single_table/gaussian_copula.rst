@@ -601,6 +601,81 @@ the valid values range.
     own, making this manual search of the marginal distributions necessary
     on very little occasions.
 
+Conditional Sampling
+~~~~~~~~~~~~~~~~~~~~
+
+As the name implies, conditional sampling allows us to sample from a conditional
+distribution using the ``GaussianCopula`` model, which means we can generate only values that
+satisfy certain conditions. These conditional values can be passed to the ``conditions``
+parameter in the ``sample`` method either as a dataframe or a dictionary.
+
+In case a dictionary is passed, the model will generate as many rows as requested,
+all of which will satisfy the specified conditions, such as ``gender = M``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M'
+    }
+    model.sample(5, conditions=conditions)
+
+
+It's also possible to condition on multiple columns, such as
+``gender = M, 'experience_years': 0``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M',
+        'experience_years': 0
+    }
+    model.sample(5, conditions=conditions)
+
+
+The ``conditions`` can also be passed as a dataframe. In that case, the model
+will generate one sample for each row of the dataframe, sorted in the same
+order. Since the model already knows how many samples to generate, passing
+it as a parameter is unnecessary. For example, if we want to generate three
+samples where ``gender = M`` and three samples with ``gender = F``, we can do the
+following:
+
+.. ipython:: python
+    :okwarning:
+
+    import pandas as pd
+
+    conditions = pd.DataFrame({
+        'gender': ['M', 'M', 'M', 'F', 'F', 'F'],
+    })
+    model.sample(conditions=conditions)
+
+
+``GaussianCopula`` also supports conditioning on continuous values, as long as the values
+are within the range of seen numbers. For example, if all the values of the
+dataset are within 0 and 1, ``GaussianCopula`` will not be able to set this value to 1000.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'degree_perc': 70.0
+    }
+    model.sample(5, conditions=conditions)
+
+
+.. note::
+
+    Currently, conditional sampling works through a rejection sampling process,
+    where rows are sampled repeatedly until one that satisfies the conditions is
+    found. In case you are running into a ``Could not get enough valid rows within
+    x trials`` or simply wish to optimize the results, there are three parameters
+    that can be fine-tuned: ``max_rows_multiplier``, ``max_retries`` and ``float_rtol``.
+    More information about these parameters can be found in the `API section
+    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.sample.
+    html>`__.
+
 
 How do I specify constraints?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
