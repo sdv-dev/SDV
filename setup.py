@@ -50,7 +50,7 @@ development_requires = [
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
-    'pydata-sphinx-theme',
+    'pydata-sphinx-theme<0.5',
 
     # style check
     'flake8>=3.7.7,<4',
