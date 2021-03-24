@@ -342,10 +342,10 @@ Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our ``CTGAN`` Model in order to customize it to our needs.
 
-How to modify the CTGAN Hyperparameters?
+How to modify the TVAE Hyperparameters?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A part from the common Tabular Model arguments, ``CTGAN`` has a number
+A part from the common Tabular Model arguments, ``TVAE`` has a number
 of additional hyperparameters that control its learning behavior and can
 impact on the performance of the model, both in terms of quality of the
 generated data and computational time.
