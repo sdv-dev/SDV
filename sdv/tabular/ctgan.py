@@ -231,9 +231,9 @@ class TVAE(CTGANModel):
             arguments or learned from the data.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        compress_dim (tuple or list of ints):
+        compress_dims (tuple or list of ints):
             Size of each hidden layer in the encoder. Defaults to (128, 128).
-        decompress_dim (tuple or list of ints):
+        decompress_dims (tuple or list of ints):
            Size of each hidden layer in the decoder. Defaults to (128, 128).
         l2scale (int):
             Regularization term. Defaults to 1e-5.
