@@ -115,9 +115,9 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
             Table name to be evaluated, only used when ``synthetic_data`` is a
             ``pandas.DataFrame`` and ``real_data`` is ``None``.
         aggregate (bool):
-            If ``get_report`` is ``False``, whether to compute the mean of all the scores to
-            return a single float value or return a ``dict`` containing the score that each
-            metric obtained. Defaults to ``True``.
+            If ``get_report`` is ``False``, whether to compute the mean of all the normalized
+            scores to return a single float value or return a ``dict`` containing the score
+            that each metric obtained. Defaults to ``True``.
 
     Return:
         float or sdmetrics.MetricsReport
@@ -137,9 +137,6 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
     scores.dropna(inplace=True)
 
     if aggregate:
-        infinites = (scores.min_value == -np.inf) & (scores.max_value == np.inf)
-        scores.loc[infinites, 'score'] = np.tanh(scores.loc[infinites, 'score'])
-
-        return scores.score.mean()
+        return scores.normalized_score.mean()
 
     return scores
