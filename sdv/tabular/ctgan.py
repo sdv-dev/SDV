@@ -40,13 +40,17 @@ class CTGANModel(BaseTabularModel):
                     categoricals.append(field)
 
             else:
-                dtype = table_data[field].dropna().infer_objects().dtype
+                field_data = table_data[field].dropna()
+                if set(field_data.unique()) == {0.0, 1.0}:
+                    # booleans encoded as float values must be modeled as bool
+                    field_data = field_data.astype(bool)
+
+                dtype = field_data.infer_objects().dtype
                 try:
                     kind = np.dtype(dtype).kind
                 except TypeError:
                     # probably category
                     kind = 'O'
-
                 if kind in ['O', 'b']:
                     categoricals.append(field)
 
