@@ -121,6 +121,8 @@ The *Single Table Metrics* are grouped in multiple families:
   synthetic data and later on evaluate the model performance on the real data. Since these
   metrics need to evaluate the performance of a Machine Learning model on the dataset, they
   work only on datasets that represent a Machine Learning problem.
+* **Privacy Metrics: These metrics fit an adversial attacker model on the synthetic data and
+    then evaluate its accuracy (or probability of making the correct attack) on the real data.
 
 Statistical Metrics
 ~~~~~~~~~~~~~~~~~~~
@@ -173,9 +175,9 @@ metric classes or their names:
 
     In [10]: evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
     Out[10]:
-       metric                                     name     score  min_value  max_value      goal
-    0  CSTest                              Chi-Squared  0.807808        0.0        1.0  MAXIMIZE
-    1  KSTest  Inverted Kolmogorov-Smirnov D statistic  0.637209        0.0        1.0  MAXIMIZE
+       metric                                     name  raw_score  normalized_score  min_value  max_value      goal
+    0  CSTest                              Chi-Squared   0.807808          0.807808        0.0        1.0  MAXIMIZE
+    1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE
 
 
 Likelihood Metrics
@@ -213,6 +215,19 @@ Let us execute these metrics on the loaded data:
     In [14]: GMLogLikelihood.compute(real_data.fillna(0), synthetic_data.fillna(0))
     Out[14]: -35024.711762921426
 
+Our metrics can also be returned as values between 0 and 1 instead of likelihood scores. To do so,
+simply use the `normalize` method, as in the example below:
+
+.. ipython::
+    :verbatim:
+
+    In [15]: raw_score = BNLogLikelihood.compute(real_data.fillna(0), synthetic_data.fillna(0))
+    In [16]: BNLogLikelihood.normalize(raw_score)
+    Out[16]: 4.467234949793966e-07
+  
+.. note:: All of our metrics support the `normalize` method, but since the majority of them
+   already return values between 0 and 1 usually `normalize` simply returns the raw score.
+
 Detection Metrics
 ~~~~~~~~~~~~~~~~~
 
@@ -235,13 +250,13 @@ Let us execute these metrics on the loaded data:
 .. ipython::
     :verbatim:
 
-    In [15]: from sdv.metrics.tabular import LogisticDetection, SVCDetection
+    In [17]: from sdv.metrics.tabular import LogisticDetection, SVCDetection
 
-    In [16]: LogisticDetection.compute(real_data, synthetic_data)
-    Out[16]: 0.0
+    In [18]: LogisticDetection.compute(real_data, synthetic_data)
+    Out[18]: 0.0
 
-    In [17]: SVCDetection.compute(real_data, synthetic_data)
-    Out[17]: 0.0009056395989102128
+    In [19]: SVCDetection.compute(real_data, synthetic_data)
+    Out[19]: 0.0009056395989102128
 
 Machine Learning Efficacy Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -291,10 +306,10 @@ Efficacy Metric attempt to predict it using the rest of the columns.
 .. ipython::
     :verbatim:
 
-    In [18]: from sdv.metrics.tabular import MulticlassDecisionTreeClassifier
+    In [20]: from sdv.metrics.tabular import MulticlassDecisionTreeClassifier
 
-    In [19]: MulticlassDecisionTreeClassifier.compute(real_data, synthetic_data, target='mba_spec')
-    Out[19]: 0.5581012959477294
+    In [21]: MulticlassDecisionTreeClassifier.compute(real_data, synthetic_data, target='mba_spec')
+    Out[21]: 0.5581012959477294
 
 Notice that the value returned by the metric does not only depend on how good our synthetic data
 is, but also on how hard the Machine Learning problem that we are trying to solve is. For reference,
@@ -306,12 +321,12 @@ respectively.
 .. ipython::
     :verbatim:
 
-    In [20]: train = real_data.sample(int(len(real_data) * 0.75))
+    In [22]: train = real_data.sample(int(len(real_data) * 0.75))
 
-    In [21]: test = real_data[~real_data.index.isin(train.index)]
+    In [23]: test = real_data[~real_data.index.isin(train.index)]
 
-    In [22]: MulticlassDecisionTreeClassifier.compute(test, train, target='mba_spec')
-    Out[22]: 0.5703908682116914
+    In [24]: MulticlassDecisionTreeClassifier.compute(test, train, target='mba_spec')
+    Out[24]: 0.5703908682116914
 
 .. note:: Apart from passing the ``target`` variable as an argument, we can also store its
    value inside the ``metadata`` dict and pass it to the metric:
@@ -319,7 +334,74 @@ respectively.
    .. ipython::
        :verbatim:
 
-       In [23]: metadata['target'] = 'mba_spec'
+       In [25]: metadata['target'] = 'mba_spec'
 
-       In [24]: MulticlassDecisionTreeClassifier.compute(real_data, synthetic_data, metadata)
-       Out[24]: 0.5767075571709829
+       In [26]: MulticlassDecisionTreeClassifier.compute(real_data, synthetic_data, metadata)
+       Out[26]: 0.5767075571709829
+
+Privacy Metrics
+~~~~~~~~~~~~~~~
+
+This family of metrics measures the privacy of a synthetic dataset by
+positing the question: given the synthetic data, can an attacker predict
+sensitive attributes in the real dataset? These models accomplish this
+by fitting an adversarial attacker model on the synthetic data to
+predict sensitive attributes from “key” attributes and then evaluating
+its accuracy on the real data.
+
+The metrics on this family are organized according to the data type they
+take as input:
+
+* Categorical metrics:
+
+  * ``sdv.metrics.tabular.CategoricalCAP``
+  * ``sdv.metrics.tabular.CategoricalZeroCAP``
+  * ``sdv.metrics.tabular.CategoricalGeneralizedCAP``
+  * ``sdv.metrics.tabular.CategoricalKNN``
+  * ``sdv.metrics.tabular.CategoricalNB``
+  * ``sdv.metrics.tabular.CategoricalRF``
+  * ``sdv.metrics.tabular.CategoricalEnsemble``
+
+* Numerical metrics:
+
+  * ``sdv.metrics.tabular.NumericalMLP``
+  * ``sdv.metrics.tabular.NumericalLR``
+  * ``sdv.metrics.tabular.NumericalSVR``
+  * ``sdv.metrics.tabular.NumericalRadiusNearestNeighbor``
+
+In addition to the real and synthetic data, these metrics also require
+two additional inputs, ``sensitive_fields`` which is a list of columns
+considered private and ``key_fields`` which are the columns that will be
+used to try to predict the sensitive ones.
+
+Using the demo data set, one possible example is to use:
+
+* ``salary`` as a sensitive column, which is the column we are
+   measuring ahow private it is
+* ``second_perc``, ``mba_perc`` and ``degree_perc`` as the key columns,
+   which will be used by the adversarial attacker to predict the
+   sensitive column
+
+Notice that as all the involved columns are numerical, we need to apply
+a numerical privacy metric. Conversely, if all of the columns are
+categorical, we need to use a categorical privacy metric. Currently, the
+privacy metrics do **not** support mixed data types.
+
+.. note:: These metrics do not accept missing data, so we will replace
+   all the missing values with a 0 before executing them.
+
+.. ipython::
+    :verbatim:
+
+    In [27]: from sdv.metrics.tabular import NumericalLR
+    
+    In [28]: NumericalLR.compute(
+       ....: real_data,
+       ....: synthetic_data, 
+       ....: key_fields=['second_perc', 'mba_perc', 'degree_perc'],
+       ....: sensitive_fields=['salary']
+    )
+    Out[28]: 0.09552544249953869
+
+The output of this metric is between 0 and 1, where the closer the value
+is to 0, the less private it is.
