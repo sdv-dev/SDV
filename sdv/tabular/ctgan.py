@@ -40,13 +40,17 @@ class CTGANModel(BaseTabularModel):
                     categoricals.append(field)
 
             else:
-                dtype = table_data[field].dropna().infer_objects().dtype
+                field_data = table_data[field].dropna()
+                if set(field_data.unique()) == {0.0, 1.0}:
+                    # booleans encoded as float values must be modeled as bool
+                    field_data = field_data.astype(bool)
+
+                dtype = field_data.infer_objects().dtype
                 try:
                     kind = np.dtype(dtype).kind
                 except TypeError:
                     # probably category
                     kind = 'O'
-
                 if kind in ['O', 'b']:
                     categoricals.append(field)
 
@@ -231,9 +235,9 @@ class TVAE(CTGANModel):
             arguments or learned from the data.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        compress_dim (tuple or list of ints):
+        compress_dims (tuple or list of ints):
             Size of each hidden layer in the encoder. Defaults to (128, 128).
-        decompress_dim (tuple or list of ints):
+        decompress_dims (tuple or list of ints):
            Size of each hidden layer in the decoder. Defaults to (128, 128).
         l2scale (int):
             Regularization term. Defaults to 1e-5.

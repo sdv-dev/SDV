@@ -137,6 +137,7 @@ html_theme_options = {
     "twitter_url": "https://twitter.com/sdv_dev",
     "slack_url": "https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw",
     "show_prev_next": True,
+    "google_analytics_id": "UA-180602145-3",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
