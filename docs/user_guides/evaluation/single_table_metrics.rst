@@ -121,8 +121,8 @@ The *Single Table Metrics* are grouped in multiple families:
   synthetic data and later on evaluate the model performance on the real data. Since these
   metrics need to evaluate the performance of a Machine Learning model on the dataset, they
   work only on datasets that represent a Machine Learning problem.
-* **Privacy Metrics: These metrics fit an adversial attacker model on the synthetic data and
-    then evaluate its accuracy (or probability of making the correct attack) on the real data.
+* **Privacy Metrics**: These metrics fit an adversial attacker model on the synthetic data and
+  then evaluate its accuracy (or probability of making the correct attack) on the real data.
 
 Statistical Metrics
 ~~~~~~~~~~~~~~~~~~~
@@ -377,10 +377,10 @@ used to try to predict the sensitive ones.
 Using the demo data set, one possible example is to use:
 
 * ``salary`` as a sensitive column, which is the column we are
-   measuring ahow private it is
+  measuring ahow private it is
 * ``second_perc``, ``mba_perc`` and ``degree_perc`` as the key columns,
-   which will be used by the adversarial attacker to predict the
-   sensitive column
+  which will be used by the adversarial attacker to predict the
+  sensitive column
 
 Notice that as all the involved columns are numerical, we need to apply
 a numerical privacy metric. Conversely, if all of the columns are
@@ -394,13 +394,13 @@ privacy metrics do **not** support mixed data types.
     :verbatim:
 
     In [27]: from sdv.metrics.tabular import NumericalLR
-    
+
     In [28]: NumericalLR.compute(
-       ....: real_data,
-       ....: synthetic_data, 
-       ....: key_fields=['second_perc', 'mba_perc', 'degree_perc'],
-       ....: sensitive_fields=['salary']
-    )
+       ....:     real_data,
+       ....:     synthetic_data,
+       ....:     key_fields=['second_perc', 'mba_perc', 'degree_perc'],
+       ....:     sensitive_fields=['salary']
+       ....: )
     Out[28]: 0.09552544249953869
 
 The output of this metric is between 0 and 1, where the closer the value
