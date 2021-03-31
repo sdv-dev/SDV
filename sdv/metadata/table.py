@@ -551,7 +551,7 @@ class Table:
 
         reversed_data = self._hyper_transformer.reverse_transform(data)
 
-        for constraint in self._constraints:
+        for constraint in reversed(self._constraints):
             reversed_data = constraint.reverse_transform(reversed_data)
 
         for name, field_metadata in self._fields_metadata.items():
