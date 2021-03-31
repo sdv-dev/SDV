@@ -115,5 +115,5 @@ Or, if we want to see the scores separately:
     evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
 
 
-For more details about all the metrix that exist for the different data modalities
+For more details about all the metrics that exist for the different data modalities
 please check the corresponding guides.
