@@ -16,6 +16,7 @@
       ~LogisticParentChildDetection.__init__
       ~LogisticParentChildDetection.compute
       ~LogisticParentChildDetection.get_subclasses
+      ~LogisticParentChildDetection.normalize
    
    
 

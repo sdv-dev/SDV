@@ -17,6 +17,7 @@
       ~BinaryEfficacyMetric.__init__
       ~BinaryEfficacyMetric.compute
       ~BinaryEfficacyMetric.get_subclasses
+      ~BinaryEfficacyMetric.normalize
    
    
 

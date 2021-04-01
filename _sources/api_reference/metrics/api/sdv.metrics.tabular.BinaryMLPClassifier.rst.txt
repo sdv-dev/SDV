@@ -17,6 +17,7 @@
       ~BinaryMLPClassifier.__init__
       ~BinaryMLPClassifier.compute
       ~BinaryMLPClassifier.get_subclasses
+      ~BinaryMLPClassifier.normalize
    
    
 

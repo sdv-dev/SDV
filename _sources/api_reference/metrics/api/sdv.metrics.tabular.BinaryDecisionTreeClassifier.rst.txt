@@ -17,6 +17,7 @@
       ~BinaryDecisionTreeClassifier.__init__
       ~BinaryDecisionTreeClassifier.compute
       ~BinaryDecisionTreeClassifier.get_subclasses
+      ~BinaryDecisionTreeClassifier.normalize
    
    
 

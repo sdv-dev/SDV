@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Single Table Metrics &#8212; SDV 0.8.0 documentation</title>
+    <title>Single Table Metrics &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -240,6 +240,10 @@
             <a href="#machine-learning-efficacy-metrics" class="nav-link">Machine Learning Efficacy Metrics</a>
         </li>
     
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#privacy-metrics" class="nav-link">Privacy Metrics</a>
+        </li>
+    
             </ul>
         </li>
     
@@ -355,6 +359,8 @@ this classifier is.</p></li>
 synthetic data and later on evaluate the model performance on the real data. Since these
 metrics need to evaluate the performance of a Machine Learning model on the dataset, they
 work only on datasets that represent a Machine Learning problem.</p></li>
+<li><p><strong>Privacy Metrics</strong>: These metrics fit an adversial attacker model on the synthetic data and
+then evaluate its accuracy (or probability of making the correct attack) on the real data.</p></li>
 </ul>
 <div class="section" id="statistical-metrics">
 <h3>Statistical Metrics<a class="headerlink" href="#statistical-metrics" title="Permalink to this headline">¶</a></h3>
@@ -398,9 +404,9 @@ metric classes or their names:</p>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
-<span class="go">   metric                                     name     score  min_value  max_value      goal</span>
-<span class="go">0  CSTest                              Chi-Squared  0.807808        0.0        1.0  MAXIMIZE</span>
-<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic  0.637209        0.0        1.0  MAXIMIZE</span>
+<span class="go">   metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
+<span class="go">0  CSTest                              Chi-Squared   0.807808          0.807808        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 </div>
@@ -436,6 +442,18 @@ values with a 0 before executing them.</p>
 <span class="gh">Out[14]: </span><span class="go">-35024.711762921426</span>
 </pre></div>
 </div>
+<p>Our metrics can also be returned as values between 0 and 1 instead of likelihood scores. To do so,
+simply use the <cite>normalize</cite> method, as in the example below:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">raw_score</span> <span class="o">=</span> <span class="n">BNLogLikelihood</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">synthetic_data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="gp">In [16]: </span><span class="n">BNLogLikelihood</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span>
+<span class="gh">Out[15]: </span><span class="go">4.467234949793966e-07</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All of our metrics support the <cite>normalize</cite> method, but since the majority of them
+already return values between 0 and 1 usually <cite>normalize</cite> simply returns the raw score.</p>
+</div>
 </div>
 <div class="section" id="detection-metrics">
 <h3>Detection Metrics<a class="headerlink" href="#detection-metrics" title="Permalink to this headline">¶</a></h3>
@@ -453,13 +471,13 @@ classifier from <code class="docutils literal notranslate"><span class="pre">sci
 <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>.</p></li>
 </ul>
 <p>Let us execute these metrics on the loaded data:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">LogisticDetection</span><span class="p">,</span> <span class="n">SVCDetection</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">LogisticDetection</span><span class="p">,</span> <span class="n">SVCDetection</span>
 
-<span class="gp">In [16]: </span><span class="n">LogisticDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
-<span class="gh">Out[16]: </span><span class="go">0.0</span>
+<span class="gp">In [17]: </span><span class="n">LogisticDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[17]: </span><span class="go">0.0</span>
 
-<span class="gp">In [17]: </span><span class="n">SVCDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
-<span class="gh">Out[17]: </span><span class="go">0.0009056395989102128</span>
+<span class="gp">In [18]: </span><span class="n">SVCDetection</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gh">Out[18]: </span><span class="go">0.0009056395989102128</span>
 </pre></div>
 </div>
 </div>
@@ -511,10 +529,10 @@ classification problems.</p></li>
 </ul>
 <p>Let’s select the <code class="docutils literal notranslate"><span class="pre">mba_spect</span></code> column as the target for our problem and let the Machine Learning
 Efficacy Metric attempt to predict it using the rest of the columns.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">MulticlassDecisionTreeClassifier</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [19]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">MulticlassDecisionTreeClassifier</span>
 
-<span class="gp">In [19]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
-<span class="gh">Out[19]: </span><span class="go">0.5581012959477294</span>
+<span class="gp">In [20]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
+<span class="gh">Out[20]: </span><span class="go">0.5581012959477294</span>
 </pre></div>
 </div>
 <p>Notice that the value returned by the metric does not only depend on how good our synthetic data
@@ -523,25 +541,92 @@ we may want to compare this result with the one obtained when trying to make the
 using real data as input. For this, we will need to split the data into train and test partitions
 and call the metric replacing the real data and synthetic data with the test and training data
 respectively.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">train</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">))</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [21]: </span><span class="n">train</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">))</span>
 
-<span class="gp">In [21]: </span><span class="n">test</span> <span class="o">=</span> <span class="n">real_data</span><span class="p">[</span><span class="o">~</span><span class="n">real_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+<span class="gp">In [22]: </span><span class="n">test</span> <span class="o">=</span> <span class="n">real_data</span><span class="p">[</span><span class="o">~</span><span class="n">real_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
 
-<span class="gp">In [22]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
-<span class="gh">Out[22]: </span><span class="go">0.5703908682116914</span>
+<span class="gp">In [23]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;mba_spec&#39;</span><span class="p">)</span>
+<span class="gh">Out[23]: </span><span class="go">0.5703908682116914</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Apart from passing the <code class="docutils literal notranslate"><span class="pre">target</span></code> variable as an argument, we can also store its
 value inside the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> dict and pass it to the metric:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [23]: </span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mba_spec&#39;</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [24]: </span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mba_spec&#39;</span>
 
-<span class="gp">In [24]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
-<span class="gh">Out[24]: </span><span class="go">0.5767075571709829</span>
+<span class="gp">In [25]: </span><span class="n">MulticlassDecisionTreeClassifier</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+<span class="gh">Out[25]: </span><span class="go">0.5767075571709829</span>
 </pre></div>
 </div>
 </div>
+</div>
+<div class="section" id="privacy-metrics">
+<h3>Privacy Metrics<a class="headerlink" href="#privacy-metrics" title="Permalink to this headline">¶</a></h3>
+<p>This family of metrics measures the privacy of a synthetic dataset by
+positing the question: given the synthetic data, can an attacker predict
+sensitive attributes in the real dataset? These models accomplish this
+by fitting an adversarial attacker model on the synthetic data to
+predict sensitive attributes from “key” attributes and then evaluating
+its accuracy on the real data.</p>
+<p>The metrics on this family are organized according to the data type they
+take as input:</p>
+<ul class="simple">
+<li><p>Categorical metrics:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalCAP</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalZeroCAP</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalGeneralizedCAP</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalKNN</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalNB</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalRF</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.CategoricalEnsemble</span></code></p></li>
+</ul>
+</li>
+<li><p>Numerical metrics:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.NumericalMLP</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.NumericalLR</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.NumericalSVR</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.NumericalRadiusNearestNeighbor</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>In addition to the real and synthetic data, these metrics also require
+two additional inputs, <code class="docutils literal notranslate"><span class="pre">sensitive_fields</span></code> which is a list of columns
+considered private and <code class="docutils literal notranslate"><span class="pre">key_fields</span></code> which are the columns that will be
+used to try to predict the sensitive ones.</p>
+<p>Using the demo data set, one possible example is to use:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">salary</span></code> as a sensitive column, which is the column we are
+measuring ahow private it is</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">second_perc</span></code>, <code class="docutils literal notranslate"><span class="pre">mba_perc</span></code> and <code class="docutils literal notranslate"><span class="pre">degree_perc</span></code> as the key columns,
+which will be used by the adversarial attacker to predict the
+sensitive column</p></li>
+</ul>
+<p>Notice that as all the involved columns are numerical, we need to apply
+a numerical privacy metric. Conversely, if all of the columns are
+categorical, we need to use a categorical privacy metric. Currently, the
+privacy metrics do <strong>not</strong> support mixed data types.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These metrics do not accept missing data, so we will replace
+all the missing values with a 0 before executing them.</p>
+</div>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [26]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">NumericalLR</span>
+
+<span class="gp">In [27]: </span><span class="n">NumericalLR</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">real_data</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">synthetic_data</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">key_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;second_perc&#39;</span><span class="p">,</span> <span class="s1">&#39;mba_perc&#39;</span><span class="p">,</span> <span class="s1">&#39;degree_perc&#39;</span><span class="p">],</span>
+<span class="gp">   ....: </span>    <span class="n">sensitive_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+<span class="gh">Out[27]: </span><span class="go">0.09552544249953869</span>
+</pre></div>
+</div>
+<p>The output of this metric is between 0 and 1, where the closer the value
+is to 0, the less private it is.</p>
 </div>
 </div>
 </div>
@@ -567,6 +652,16 @@ value inside the <code class="docutils literal notranslate"><span class="pre">me
   <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

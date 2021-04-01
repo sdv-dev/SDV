@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.8.0 documentation</title>
+    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -183,7 +183,21 @@
     <span class="n">goal</span> <span class="o">=</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MAXIMIZE</span>
     <span class="n">min_value</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
     <span class="n">max_value</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">SCORER</span> <span class="o">=</span> <span class="n">r2_score</span></div>
+    <span class="n">SCORER</span> <span class="o">=</span> <span class="n">r2_score</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a normalized version of the R^2 score.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw_score (float):</span>
+<span class="sd">                The value of the metric from `compute`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float:</span>
+<span class="sd">                The normalized value of the metric</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LinearRegression"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.LinearRegression.html#sdv.metrics.tabular.LinearRegression">[docs]</a><span class="k">class</span> <span class="nc">LinearRegression</span><span class="p">(</span><span class="n">RegressionEfficacyMetric</span><span class="p">):</span>
@@ -228,6 +242,16 @@
   <script src="../../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

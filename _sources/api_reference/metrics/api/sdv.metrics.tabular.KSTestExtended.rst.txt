@@ -16,6 +16,7 @@
       ~KSTestExtended.__init__
       ~KSTestExtended.compute
       ~KSTestExtended.get_subclasses
+      ~KSTestExtended.normalize
    
    
 

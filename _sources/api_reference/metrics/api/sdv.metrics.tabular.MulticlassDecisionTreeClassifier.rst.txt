@@ -17,6 +17,7 @@
       ~MulticlassDecisionTreeClassifier.__init__
       ~MulticlassDecisionTreeClassifier.compute
       ~MulticlassDecisionTreeClassifier.get_subclasses
+      ~MulticlassDecisionTreeClassifier.normalize
    
    
 

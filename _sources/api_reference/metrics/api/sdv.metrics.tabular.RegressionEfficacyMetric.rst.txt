@@ -17,6 +17,7 @@
       ~RegressionEfficacyMetric.__init__
       ~RegressionEfficacyMetric.compute
       ~RegressionEfficacyMetric.get_subclasses
+      ~RegressionEfficacyMetric.normalize
    
    
 

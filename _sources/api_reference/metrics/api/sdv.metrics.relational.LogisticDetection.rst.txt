@@ -16,6 +16,7 @@
       ~LogisticDetection.__init__
       ~LogisticDetection.compute
       ~LogisticDetection.get_subclasses
+      ~LogisticDetection.normalize
    
    
 

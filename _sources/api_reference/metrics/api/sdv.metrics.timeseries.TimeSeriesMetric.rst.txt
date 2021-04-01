@@ -16,6 +16,7 @@
       ~TimeSeriesMetric.__init__
       ~TimeSeriesMetric.compute
       ~TimeSeriesMetric.get_subclasses
+      ~TimeSeriesMetric.normalize
    
    
 

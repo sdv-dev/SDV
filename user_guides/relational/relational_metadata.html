@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relational Metadata &#8212; SDV 0.8.0 documentation</title>
+    <title>Relational Metadata &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -255,7 +255,7 @@
   <div class="section" id="relational-metadata">
 <span id="id1"></span><h1>Relational Metadata<a class="headerlink" href="#relational-metadata" title="Permalink to this headline">¶</a></h1>
 <p>In order to work with complex dataset structures you will need to pass
-additional information about you data to SDV using <code class="docutils literal notranslate"><span class="pre">Metadata</span></code>.</p>
+additional information about your data to SDV using <code class="docutils literal notranslate"><span class="pre">Metadata</span></code>.</p>
 <p>Let’s go over an example to see how to use it.</p>
 <div class="section" id="load-the-demo-data">
 <h2>Load the demo data<a class="headerlink" href="#load-the-demo-data" title="Permalink to this headline">¶</a></h2>
@@ -309,14 +309,14 @@ as <code class="docutils literal notranslate"><span class="pre">pandas.DataFarme
 <ul class="simple">
 <li><p>A <code class="docutils literal notranslate"><span class="pre">users</span></code> table with:</p>
 <ul>
-<li><p>A <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field with acts as the table primary key.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field which acts as the table primary key.</p></li>
 <li><p>Two categorical fields, <code class="docutils literal notranslate"><span class="pre">country</span></code> and <code class="docutils literal notranslate"><span class="pre">gender</span></code>, and an integer
 column <code class="docutils literal notranslate"><span class="pre">age</span></code>.</p></li>
 </ul>
 </li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table with:</p>
 <ul>
-<li><p>A <code class="docutils literal notranslate"><span class="pre">session_id</span></code> field with acts as the table primary key.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">session_id</span></code> field which acts as the table primary key.</p></li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">user_id</span></code> field which is a foreign key to the <code class="docutils literal notranslate"><span class="pre">users</span></code> table
 and defines a One-to-Many relationship with it (one <code class="docutils literal notranslate"><span class="pre">user</span></code> can
 have many <code class="docutils literal notranslate"><span class="pre">sessions</span></code>).</p></li>
@@ -325,7 +325,7 @@ have many <code class="docutils literal notranslate"><span class="pre">sessions<
 </li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">transactions</span></code> table with:</p>
 <ul>
-<li><p>A <code class="docutils literal notranslate"><span class="pre">transaction_id</span></code> field with acts as the table primary key.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">transaction_id</span></code> field which acts as the table primary key.</p></li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">session_id</span></code> field which is a foreign key to the <code class="docutils literal notranslate"><span class="pre">sessions</span></code>
 table and defines a One-to-Many relationship with it (one <code class="docutils literal notranslate"><span class="pre">user</span></code>
 can make many <code class="docutils literal notranslate"><span class="pre">transactions</span></code> within a single <code class="docutils literal notranslate"><span class="pre">session</span></code>).</p></li>
@@ -387,7 +387,7 @@ relationships:</p>
 <span class="go">  relationships:</span>
 </pre></div>
 </div>
-<p>However, the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> instance will have already analyze all the
+<p>However, the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> instance will have already analyzed all the
 columns in the passed table and identified the different data types and
 subtypes, and will properly indicate that the <code class="docutils literal notranslate"><span class="pre">user_id</span></code> column is the
 table primary key.</p>
@@ -649,6 +649,16 @@ is as simple as passing it to the <code class="docutils literal notranslate"><sp
   <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

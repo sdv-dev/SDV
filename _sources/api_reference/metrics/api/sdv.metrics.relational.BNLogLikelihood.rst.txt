@@ -16,6 +16,7 @@
       ~BNLogLikelihood.__init__
       ~BNLogLikelihood.compute
       ~BNLogLikelihood.get_subclasses
+      ~BNLogLikelihood.normalize
    
    
 

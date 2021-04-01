@@ -16,6 +16,7 @@
       ~LSTMDetection.__init__
       ~LSTMDetection.compute
       ~LSTMDetection.get_subclasses
+      ~LSTMDetection.normalize
    
    
 

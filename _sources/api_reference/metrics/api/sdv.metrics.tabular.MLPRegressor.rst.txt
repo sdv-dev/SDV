@@ -17,6 +17,7 @@
       ~MLPRegressor.__init__
       ~MLPRegressor.compute
       ~MLPRegressor.get_subclasses
+      ~MLPRegressor.normalize
    
    
 

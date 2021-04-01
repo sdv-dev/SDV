@@ -17,6 +17,7 @@
       ~LinearRegression.__init__
       ~LinearRegression.compute
       ~LinearRegression.get_subclasses
+      ~LinearRegression.normalize
    
    
 

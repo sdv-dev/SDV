@@ -16,6 +16,7 @@
       ~LSTMClassifierEfficacy.__init__
       ~LSTMClassifierEfficacy.compute
       ~LSTMClassifierEfficacy.get_subclasses
+      ~LSTMClassifierEfficacy.normalize
    
    
 

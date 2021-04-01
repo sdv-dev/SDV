@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.8.0 documentation</title>
+    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -267,7 +267,22 @@
 <span class="sd">            Union[float, tuple[float]]:</span>
 <span class="sd">                Metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw_score (float):</span>
+<span class="sd">                The value of the metric from `compute`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float:</span>
+<span class="sd">                The normalized value of the metric</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">min_value</span> <span class="o">==</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.CSTest.html#sdv.metrics.relational.CSTest">[docs]</a><span class="k">class</span> <span class="nc">CSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
@@ -309,7 +324,24 @@
 <div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.BNLogLikelihood.html#sdv.metrics.relational.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable BNLogLikelihood.&quot;&quot;&quot;</span>
 
-    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">bayesian_network</span><span class="o">.</span><span class="n">BNLogLikelihood</span></div>
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">bayesian_network</span><span class="o">.</span><span class="n">BNLogLikelihood</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Normalize the log-likelihood value.</span>
+
+<span class="sd">        Note that this is not the mean likelihood but rather the exponentiation</span>
+<span class="sd">        of the mean log-likelihood.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw_score (float):</span>
+<span class="sd">                The value of the metric from `compute`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float:</span>
+<span class="sd">                The normalized value of the metric</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span></div>
 </pre></div>
 
               </div>
@@ -330,6 +362,16 @@
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

@@ -16,6 +16,7 @@
       ~TSFClassifierEfficacy.__init__
       ~TSFClassifierEfficacy.compute
       ~TSFClassifierEfficacy.get_subclasses
+      ~TSFClassifierEfficacy.normalize
    
    
 

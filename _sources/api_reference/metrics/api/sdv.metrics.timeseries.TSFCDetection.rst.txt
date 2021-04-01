@@ -16,6 +16,7 @@
       ~TSFCDetection.__init__
       ~TSFCDetection.compute
       ~TSFCDetection.get_subclasses
+      ~TSFCDetection.normalize
    
    
 

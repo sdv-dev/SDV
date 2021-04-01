@@ -16,6 +16,7 @@
       ~ParentChildDetectionMetric.__init__
       ~ParentChildDetectionMetric.compute
       ~ParentChildDetectionMetric.get_subclasses
+      ~ParentChildDetectionMetric.normalize
    
    
 

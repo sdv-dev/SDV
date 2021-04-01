@@ -16,6 +16,7 @@
       ~MultiSingleTableMetric.__init__
       ~MultiSingleTableMetric.compute
       ~MultiSingleTableMetric.get_subclasses
+      ~MultiSingleTableMetric.normalize
    
    
 

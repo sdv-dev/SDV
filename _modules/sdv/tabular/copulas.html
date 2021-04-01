@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -487,7 +487,8 @@
 <span class="sd">                If a non-parametric distribution has been used.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">univariate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">univariates</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">univariate</span><span class="p">)</span> <span class="ow">is</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">:</span>
+            <span class="n">univariate_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">univariate</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">univariate_type</span> <span class="ow">is</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">:</span>
                 <span class="n">univariate</span> <span class="o">=</span> <span class="n">univariate</span><span class="o">.</span><span class="n">_instance</span>
 
             <span class="k">if</span> <span class="n">univariate</span><span class="o">.</span><span class="n">PARAMETRIC</span> <span class="o">==</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">ParametricType</span><span class="o">.</span><span class="n">NON_PARAMETRIC</span><span class="p">:</span>
@@ -650,6 +651,16 @@
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

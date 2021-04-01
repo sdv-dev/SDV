@@ -16,6 +16,7 @@
       ~GMLogLikelihood.__init__
       ~GMLogLikelihood.compute
       ~GMLogLikelihood.get_subclasses
+      ~GMLogLikelihood.normalize
    
    
 

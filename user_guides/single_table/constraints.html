@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.8.0 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -299,19 +299,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales        Jesse Foster                   Unit 5991 Box 6162\nDPO AA 47534   32               29                     3</span>
-<span class="go">1       Pear         Design       Brenda Castro         0544 Kevin Meadow\nNorth Roberta, AR 79225   44               43                     1</span>
-<span class="go">2    Glasses             AI       Johnny Morris  80150 Wiggins Creek Suite 015\nMichaelstad, MA...   35               33                     2</span>
-<span class="go">3    Glasses  Search Engine     Katie Schneider                            USNV King\nFPO AE 99441   38               37                     1</span>
-<span class="go">4   Cheerper        BigData         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   38               31                     7</span>
-<span class="go">5   Cheerper        Support       Mark Thompson            298 Austin Mount\nPort Amanda, GA 83384   34               29                     5</span>
-<span class="go">6       Pear          Sales          Gary Smith   30462 Perkins Bypass\nLake Nicolehaven, NY 76642   44               39                     5</span>
-<span class="go">7       Pear         Design        Clayton Vega                           USS Morgan\nFPO AE 43425   40               33                     7</span>
-<span class="go">8    Glasses             AI    Mathew Alexander  46588 Rebekah Village Suite 277\nNorth Margare...   42               38                     4</span>
-<span class="go">9    Glasses  Search Engine   Matthew Hernandez                   PSC 6446, Box 3099\nAPO AP 17483   39               35                     4</span>
-<span class="go">10  Cheerper        BigData  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   46               39                     7</span>
-<span class="go">11  Cheerper        Support          Caleb Hill          3390 Davis Meadow\nNicholsshire, NM 51752   32               31                     1</span>
+<span class="go">     company     department             name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales     Steven Burns  019 Jacqueline Loop Apt. 184\nLoriville, NH 51632   37               37                     0</span>
+<span class="go">1       Pear         Design     Karen Pierce                   PSC 6372, Box 2678\nAPO AE 66700   40               37                     3</span>
+<span class="go">2    Glasses             AI   Gregory Watson  26723 Mark Views Apt. 269\nEast Victoriabury, ...   33               24                     9</span>
+<span class="go">3    Glasses  Search Engine  Latoya Gonzalez         22506 Williams Gateway\nRuiztown, NC 62472   40               34                     6</span>
+<span class="go">4   Cheerper        BigData    Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   31               23                     8</span>
+<span class="go">5   Cheerper        Support    Laura Sanders                   Unit 9508 Box 2845\nDPO AA 49575   31               24                     7</span>
+<span class="go">6       Pear          Sales        Sean King  5431 Frank Terrace\nLake Stephanieburgh, AR 91401   31               29                     2</span>
+<span class="go">7       Pear         Design   Elizabeth Hill                   Unit 0708 Box 2322\nDPO AP 38157   43               41                     2</span>
+<span class="go">8    Glasses             AI       Allen Dunn                       USCGC Ferguson\nFPO AP 57582   44               37                     7</span>
+<span class="go">9    Glasses  Search Engine    Willie Holden  971 Nelson Tunnel Suite 112\nWest Julie, ND 25643   35               29                     6</span>
+<span class="go">10  Cheerper        BigData   Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   35               30                     5</span>
+<span class="go">11  Cheerper        Support         Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   47               39                     8</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -473,17 +473,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0  Cheerper        Support          Caleb Hill          3390 Davis Meadow\nNicholsshire, NM 51752   35               32                     3</span>
-<span class="go">1   Glasses  Search Engine   Matthew Hernandez                   PSC 6446, Box 3099\nAPO AP 17483   42               34                     8</span>
-<span class="go">2   Glasses             AI         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   40               37                     3</span>
-<span class="go">3      Pear         Design        Jesse Foster                   Unit 5991 Box 6162\nDPO AA 47534   36               33                     3</span>
-<span class="go">4   Glasses             AI    Mathew Alexander  46588 Rebekah Village Suite 277\nNorth Margare...   39               37                     2</span>
-<span class="go">5   Glasses  Search Engine     Katie Schneider                            USNV King\nFPO AE 99441   34               32                     2</span>
-<span class="go">6  Cheerper        Support  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   40               38                     2</span>
-<span class="go">7      Pear         Design        Clayton Vega                           USS Morgan\nFPO AE 43425   45               38                     7</span>
-<span class="go">8   Glasses             AI  Matthew Glover DDS  7909 Michelle Lodge\nPort Stephanieberg, MI 71649   40               34                     6</span>
-<span class="go">9  Cheerper        BigData         Greg Phelps                   PSC 5071, Box 0961\nAPO AE 63106   43               37                     6</span>
+<span class="go">    company     department            name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">1      Pear         Design   Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   35               26                     9</span>
+<span class="go">2  Cheerper        Support   Laura Sanders                   Unit 9508 Box 2845\nDPO AA 49575   36               35                     1</span>
+<span class="go">3   Glasses  Search Engine  Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   44               39                     5</span>
+<span class="go">4   Glasses  Search Engine        Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   45               28                    17</span>
+<span class="go">5  Cheerper        BigData   Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   32               23                     9</span>
+<span class="go">6  Cheerper        Support  Gregory Watson  26723 Mark Views Apt. 269\nEast Victoriabury, ...   34               25                     9</span>
+<span class="go">7  Cheerper        Support        Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   43               32                    11</span>
+<span class="go">8      Pear         Design  Elizabeth Hill                   Unit 0708 Box 2322\nDPO AP 38157   41               41                     0</span>
+<span class="go">9   Glasses  Search Engine   Willie Holden  971 Nelson Tunnel Suite 112\nWest Julie, ND 25643   33               29                     4</span>
+<span class="go">0  Cheerper        BigData  Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   26               24                     2</span>
 </pre></div>
 </div>
 </div>
@@ -510,6 +510,16 @@ we defined:</p>
   <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

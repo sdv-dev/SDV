@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas.GaussianCopula.sample &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.tabular.copulas.GaussianCopula.sample &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -301,7 +301,7 @@
 <h1>sdv.tabular.copulas.GaussianCopula.sample<a class="headerlink" href="#sdv-tabular-copulas-gaussiancopula-sample" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.tabular.copulas.GaussianCopula.sample">
-<code class="sig-prename descclassname">GaussianCopula.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_retries</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">max_rows_multiplier</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">conditions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">float_rtol</span><span class="o">=</span><span class="default_value">0.01</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.copulas.GaussianCopula.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">GaussianCopula.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_retries</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">max_rows_multiplier</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">conditions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">float_rtol</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">graceful_reject_sampling</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.copulas.GaussianCopula.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample rows from this table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -324,6 +324,11 @@ is sampled conditional on the corresponding row in the input.</p></li>
 <li><p><strong>float_rtol</strong> (<em>float</em>) – Maximum tolerance when considering a float match. This is the maximum
 relative distance at which a float value will be considered a match
 when performing reject-sampling based conditioning. Defaults to 0.01.</p></li>
+<li><p><strong>graceful_reject_sampling</strong> (<em>bool</em>) – If <cite>False</cite> raises a <cite>ValueError</cite> if not enough valid rows could be sampled
+within <cite>max_retries</cite> trials. If <cite>True</cite> prints a warning and returns
+as many rows as it was able to sample within <cite>max_retries</cite>. If no rows could
+be generated, raises a <cite>ValueError</cite>.
+Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -358,6 +363,16 @@ when performing reject-sampling based conditioning. Defaults to 0.01.</p></li>
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

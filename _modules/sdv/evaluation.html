@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.evaluation &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -168,7 +168,6 @@
   <h1>Source code for sdv.evaluation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Tools to evaluate the synthesized data.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">sdmetrics</span>
 
@@ -283,9 +282,9 @@
 <span class="sd">            Table name to be evaluated, only used when ``synthetic_data`` is a</span>
 <span class="sd">            ``pandas.DataFrame`` and ``real_data`` is ``None``.</span>
 <span class="sd">        aggregate (bool):</span>
-<span class="sd">            If ``get_report`` is ``False``, whether to compute the mean of all the scores to</span>
-<span class="sd">            return a single float value or return a ``dict`` containing the score that each</span>
-<span class="sd">            metric obtained. Defaults to ``True``.</span>
+<span class="sd">            If ``get_report`` is ``False``, whether to compute the mean of all the normalized</span>
+<span class="sd">            scores to return a single float value or return a ``dict`` containing the score</span>
+<span class="sd">            that each metric obtained. Defaults to ``True``.</span>
 
 <span class="sd">    Return:</span>
 <span class="sd">        float or sdmetrics.MetricsReport</span>
@@ -305,10 +304,7 @@
     <span class="n">scores</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">aggregate</span><span class="p">:</span>
-        <span class="n">infinites</span> <span class="o">=</span> <span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">min_value</span> <span class="o">==</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">max_value</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-        <span class="n">scores</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">infinites</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">infinites</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="n">scores</span><span class="o">.</span><span class="n">score</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">scores</span><span class="o">.</span><span class="n">normalized_score</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">scores</span></div>
 </pre></div>
@@ -331,6 +327,16 @@
   <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

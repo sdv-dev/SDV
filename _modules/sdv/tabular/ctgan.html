@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.tabular.ctgan &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -168,6 +168,7 @@
   <h1>Source code for sdv.tabular.ctgan</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Wrapper around CTGAN model.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">ctgan</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">TVAESynthesizer</span>
 
 <span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span>
@@ -186,8 +187,6 @@
         <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
     <span class="p">}</span>
 
-    <span class="n">_cuda</span> <span class="o">=</span> <span class="kc">True</span>
-
     <span class="k">def</span> <span class="nf">_build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MODEL_CLASS</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span>
 
@@ -200,21 +199,28 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_model</span><span class="p">()</span>
 
-        <span class="kn">import</span> <span class="nn">torch</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span>
+        <span class="n">categoricals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fields_before_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields_before_transform</span><span class="p">:</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="n">fields_before_transform</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
+                    <span class="n">categoricals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">field_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">field_data</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">==</span> <span class="p">{</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">}:</span>
+                    <span class="c1"># booleans encoded as float values must be modeled as bool</span>
+                    <span class="n">field_data</span> <span class="o">=</span> <span class="n">field_data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
 
-        <span class="n">categoricals</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">field</span>
-            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span>
-        <span class="p">]</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="n">field_data</span><span class="o">.</span><span class="n">infer_objects</span><span class="p">()</span><span class="o">.</span><span class="n">dtype</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">kind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">kind</span>
+                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                    <span class="c1"># probably category</span>
+                    <span class="n">kind</span> <span class="o">=</span> <span class="s1">&#39;O&#39;</span>
+                <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]:</span>
+                    <span class="n">categoricals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
             <span class="n">table_data</span><span class="p">,</span>
@@ -311,6 +317,9 @@
 <span class="sd">            Whether to have print statements for progress results. Defaults to ``False``.</span>
 <span class="sd">        epochs (int):</span>
 <span class="sd">            Number of training epochs. Defaults to 300.</span>
+<span class="sd">        pac (int):</span>
+<span class="sd">            Number of samples to group together when applying the discriminator.</span>
+<span class="sd">            Defaults to 10.</span>
 <span class="sd">        cuda (bool or str):</span>
 <span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
@@ -323,7 +332,7 @@
                  <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
                  <span class="n">generator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span> <span class="n">generator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">discriminator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span>
                  <span class="n">discriminator_decay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">discriminator_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">pac</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -346,10 +355,10 @@
             <span class="s1">&#39;discriminator_steps&#39;</span><span class="p">:</span> <span class="n">discriminator_steps</span><span class="p">,</span>
             <span class="s1">&#39;log_frequency&#39;</span><span class="p">:</span> <span class="n">log_frequency</span><span class="p">,</span>
             <span class="s1">&#39;verbose&#39;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">,</span>
-            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span>
-        <span class="p">}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="o">=</span> <span class="n">cuda</span></div></div>
+            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span><span class="p">,</span>
+            <span class="s1">&#39;pac&#39;</span><span class="p">:</span> <span class="n">pac</span><span class="p">,</span>
+            <span class="s1">&#39;cuda&#39;</span><span class="p">:</span> <span class="n">cuda</span>
+        <span class="p">}</span></div></div>
 
 
 <div class="viewcode-block" id="TVAE"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.TVAE.html#sdv.tabular.ctgan.TVAE">[docs]</a><span class="k">class</span> <span class="nc">TVAE</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>
@@ -394,9 +403,9 @@
 <span class="sd">            arguments or learned from the data.</span>
 <span class="sd">        embedding_dim (int):</span>
 <span class="sd">            Size of the random sample passed to the Generator. Defaults to 128.</span>
-<span class="sd">        compress_dim (tuple or list of ints):</span>
+<span class="sd">        compress_dims (tuple or list of ints):</span>
 <span class="sd">            Size of each hidden layer in the encoder. Defaults to (128, 128).</span>
-<span class="sd">        decompress_dim (tuple or list of ints):</span>
+<span class="sd">        decompress_dims (tuple or list of ints):</span>
 <span class="sd">           Size of each hidden layer in the decoder. Defaults to (128, 128).</span>
 <span class="sd">        l2scale (int):</span>
 <span class="sd">            Regularization term. Defaults to 1e-5.</span>
@@ -404,6 +413,8 @@
 <span class="sd">            Number of data samples to process in each step.</span>
 <span class="sd">        epochs (int):</span>
 <span class="sd">            Number of training epochs. Defaults to 300.</span>
+<span class="sd">        loss_factor (int):</span>
+<span class="sd">            Multiplier for the reconstruction error. Defaults to 2.</span>
 <span class="sd">        cuda (bool or str):</span>
 <span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
@@ -414,7 +425,7 @@
 <div class="viewcode-block" id="TVAE.__init__"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.TVAE.html#sdv.tabular.ctgan.TVAE.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">compress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">decompress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
-                 <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">loss_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -431,10 +442,10 @@
             <span class="s1">&#39;decompress_dims&#39;</span><span class="p">:</span> <span class="n">decompress_dims</span><span class="p">,</span>
             <span class="s1">&#39;l2scale&#39;</span><span class="p">:</span> <span class="n">l2scale</span><span class="p">,</span>
             <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
-            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span>
-        <span class="p">}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cuda</span> <span class="o">=</span> <span class="n">cuda</span></div></div>
+            <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs</span><span class="p">,</span>
+            <span class="s1">&#39;loss_factor&#39;</span><span class="p">:</span> <span class="n">loss_factor</span><span class="p">,</span>
+            <span class="s1">&#39;cuda&#39;</span><span class="p">:</span> <span class="n">cuda</span>
+        <span class="p">}</span></div></div>
 </pre></div>
 
               </div>
@@ -455,6 +466,16 @@
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

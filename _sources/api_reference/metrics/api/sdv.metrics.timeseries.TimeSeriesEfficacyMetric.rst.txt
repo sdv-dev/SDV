@@ -16,6 +16,7 @@
       ~TimeSeriesEfficacyMetric.__init__
       ~TimeSeriesEfficacyMetric.compute
       ~TimeSeriesEfficacyMetric.get_subclasses
+      ~TimeSeriesEfficacyMetric.normalize
    
    
 

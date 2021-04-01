@@ -24,7 +24,7 @@ We will start by loading and exploring one of our demo datasets.
     :okwarning:
 
     from sdv import load_demo
-    
+
     metadata, tables = load_demo(metadata=True)
 
 This will return two objects:
@@ -68,7 +68,7 @@ to:
     :okwarning:
 
     from sdv.relational import HMA1
-    
+
     model = HMA1(metadata)
     model.fit(tables)
 
@@ -142,13 +142,13 @@ directory in which you are running SDV.
    This is because the serialized model contains **no information about
    the original data**, other than the parameters it needs to generate
    synthetic versions of it. This means that you can safely share this
-   ``my_model.pkl`` file without the risc of disclosing any of your real
+   ``my_model.pkl`` file without the risk of disclosing any of your real
    data!
 
 Load the model and generate new data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The file you just generated can be send over to the system where the
+The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
 using the ``HMA1.load`` method, and then you are ready to sample new
 data from the loaded instance:
@@ -198,7 +198,7 @@ In some occasions you will not be interested in generating rows for the
 entire dataset and would rather generate data for only one table and its
 children.
 
-To do this you can simply pass the name of table that you want to
+To do this you can simply pass the name of the table that you want to
 sample.
 
 For example, pass the name ``sessions`` to the ``sample`` method, the

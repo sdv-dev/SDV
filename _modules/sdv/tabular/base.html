@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -170,6 +170,7 @@
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -401,7 +402,9 @@
         <span class="sd">&quot;&quot;&quot;Sample a batch of rows with the given conditions.</span>
 
 <span class="sd">        This will enter a reject-sampling loop in which rows will be sampled until</span>
-<span class="sd">        all of them are valid and match the requested conditions.</span>
+<span class="sd">        all of them are valid and match the requested conditions. If `max_retries`</span>
+<span class="sd">        is exceeded, it will return as many rows as it has sampled, which may be less</span>
+<span class="sd">        than the target number of rows.</span>
 
 <span class="sd">        Input conditions is taken both in the raw input format, which will be used</span>
 <span class="sd">        for filtering during the reject-sampling loop, and already transformed</span>
@@ -445,9 +448,8 @@
         <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">total_sampled</span> <span class="o">=</span> <span class="n">num_rows</span>
         <span class="k">while</span> <span class="n">num_valid</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
-            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s1"> trials&#39;</span><span class="p">)</span>
+                <span class="k">break</span>
 
             <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
             <span class="n">valid_probability</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_valid</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_sampled</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -457,9 +459,12 @@
 
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> valid rows remaining. Resampling </span><span class="si">%s</span><span class="s1"> rows&#39;</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">num_to_sample</span><span class="p">)</span>
             <span class="n">sampled</span><span class="p">,</span> <span class="n">num_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows</span><span class="p">(</span>
-                <span class="n">num_to_sample</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">,</span> <span class="n">sampled</span><span class="p">)</span>
+                <span class="n">num_to_sample</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">,</span> <span class="n">sampled</span>
+            <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">),</span> <span class="n">num_rows</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_make_conditions_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform `conditions` into a dataframe.</span>
@@ -498,7 +503,7 @@
         <span class="k">return</span> <span class="n">conditions</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_rows_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-               <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+               <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">graceful_reject_sampling</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
@@ -525,6 +530,12 @@
 <span class="sd">                Maximum tolerance when considering a float match. This is the maximum</span>
 <span class="sd">                relative distance at which a float value will be considered a match</span>
 <span class="sd">                when performing reject-sampling based conditioning. Defaults to 0.01.</span>
+<span class="sd">            graceful_reject_sampling (bool):</span>
+<span class="sd">                If `False` raises a `ValueError` if not enough valid rows could be sampled</span>
+<span class="sd">                within `max_retries` trials. If `True` prints a warning and returns</span>
+<span class="sd">                as many rows as it was able to sample within `max_retries`. If no rows could</span>
+<span class="sd">                be generated, raises a `ValueError`.</span>
+<span class="sd">                Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
@@ -543,7 +554,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid column name `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">[[</span><span class="n">column</span><span class="p">]])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Conditioning on column `</span><span class="si">{column}</span><span class="s1">` is not possible&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Conditioning on column `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">` is not possible&#39;</span><span class="p">)</span>
 
         <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
         <span class="n">condition_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
@@ -553,23 +564,40 @@
 
         <span class="c1"># sample</span>
         <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">dataframe</span> <span class="ow">in</span> <span class="n">grouped_conditions</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                 <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
             <span class="n">condition</span> <span class="o">=</span> <span class="n">conditions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
             <span class="n">transformed_condition</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
-
             <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_batch</span><span class="p">(</span>
                 <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">),</span>
                 <span class="n">max_retries</span><span class="p">,</span>
                 <span class="n">max_rows_multiplier</span><span class="p">,</span>
                 <span class="n">condition</span><span class="p">,</span>
                 <span class="n">transformed_condition</span><span class="p">,</span>
-                <span class="n">float_rtol</span><span class="p">,</span>
+                <span class="n">float_rtol</span>
             <span class="p">)</span>
-            <span class="n">sampled_rows</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-            <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+                <span class="c1"># Didn&#39;t get enough rows.</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;No valid rows could be generated with the given conditions.&#39;</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">graceful_reject_sampling</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Could not get enough valid rows within </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s1"> trials.&#39;</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span><span class="si">}</span><span class="s1"> rows could &#39;</span>
+                         <span class="sa">f</span><span class="s1">&#39;be sampled within </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s1"> trials.&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">sampled_rows</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)]</span>
+                <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span>
 
         <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_sampled_rows</span><span class="p">)</span>
         <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">)</span>
@@ -680,6 +708,16 @@
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

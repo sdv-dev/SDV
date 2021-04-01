@@ -17,6 +17,7 @@
       ~MulticlassEfficacyMetric.__init__
       ~MulticlassEfficacyMetric.compute
       ~MulticlassEfficacyMetric.get_subclasses
+      ~MulticlassEfficacyMetric.normalize
    
    
 

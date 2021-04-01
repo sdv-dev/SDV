@@ -17,6 +17,7 @@
       ~BinaryAdaBoostClassifier.__init__
       ~BinaryAdaBoostClassifier.compute
       ~BinaryAdaBoostClassifier.get_subclasses
+      ~BinaryAdaBoostClassifier.normalize
    
    
 

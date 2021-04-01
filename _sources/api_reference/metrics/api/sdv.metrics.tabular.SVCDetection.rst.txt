@@ -16,6 +16,7 @@
       ~SVCDetection.__init__
       ~SVCDetection.compute
       ~SVCDetection.get_subclasses
+      ~SVCDetection.normalize
    
    
 

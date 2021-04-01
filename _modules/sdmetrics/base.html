@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.base &#8212; SDV 0.8.0 documentation</title>
+    <title>sdmetrics.base &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -167,6 +167,9 @@
                 
   <h1>Source code for sdmetrics.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;BaseMetric class.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sdmetrics.goal</span> <span class="kn">import</span> <span class="n">Goal</span>
 
 
 <span class="k">class</span> <span class="nc">BaseMetric</span><span class="p">:</span>
@@ -226,6 +229,49 @@
 <span class="sd">                Metric output or outputs.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the normalized value of the metric.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw_score (float):</span>
+<span class="sd">                The value of the metric from `compute`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float:</span>
+<span class="sd">                The normalized value of the metric.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">min_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">min_value</span><span class="p">)</span>
+        <span class="n">max_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">max_value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">max_value</span> <span class="o">&lt;</span> <span class="n">raw_score</span> <span class="ow">or</span> <span class="n">min_value</span> <span class="o">&gt;</span> <span class="n">raw_score</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;`raw_score` must be between `min_value` and `max_value`.&#39;</span><span class="p">)</span>
+
+        <span class="n">is_min_finite</span> <span class="o">=</span> <span class="n">min_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+        <span class="n">is_max_finite</span> <span class="o">=</span> <span class="n">max_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+
+        <span class="n">score</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">is_min_finite</span> <span class="ow">and</span> <span class="n">is_max_finite</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_score</span> <span class="o">-</span> <span class="n">min_value</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_value</span> <span class="o">-</span> <span class="n">min_value</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_min_finite</span> <span class="ow">and</span> <span class="n">is_max_finite</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">raw_score</span> <span class="o">-</span> <span class="n">max_value</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">is_min_finite</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_max_finite</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">min_value</span> <span class="o">-</span> <span class="n">raw_score</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">raw_score</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;This should be unreachable. The score </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s1"> should be&#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;a value between 0 and 1.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">goal</span> <span class="o">==</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">score</span>
+
+        <span class="k">return</span> <span class="n">score</span>
 </pre></div>
 
               </div>
@@ -246,6 +292,16 @@
   <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.8.0 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.9.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -528,7 +528,7 @@
             <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_dtypes.html#sdv.metadata.dataset.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_dtypes.html#sdv.metadata.dataset.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
 
 <span class="sd">        Args:</span>
@@ -546,6 +546,7 @@
 <span class="sd">                If a field has an invalid type or subtype or if the table does not</span>
 <span class="sd">                exist in this metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">errors</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -553,19 +554,19 @@
             <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span>
             <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DTYPES</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">))</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dtype</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s1">&#39;Invalid type and subtype combination for field </span><span class="si">{}</span><span class="s1">: (</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">name</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">)</span>
                 <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ids</span> <span class="ow">and</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">child_table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_keys</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">child_table</span><span class="p">):</span>
+                                <span class="k">break</span>
 
-            <span class="k">if</span> <span class="n">ids</span> <span class="ow">and</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">child_table</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_foreign_keys</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">child_table</span><span class="p">):</span>
-                            <span class="k">break</span>
-
-            <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
-                <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
+                <span class="k">if</span> <span class="n">ids</span> <span class="ow">or</span> <span class="p">(</span><span class="n">field_type</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
+                    <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
 
         <span class="k">return</span> <span class="n">dtypes</span></div>
 
@@ -696,7 +697,7 @@
     <span class="c1"># Metadata Validation #</span>
     <span class="c1"># ################### #</span>
 
-    <span class="k">def</span> <span class="nf">_validate_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_validate_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate table metadata.</span>
 
 <span class="sd">        Validate the type and subtype combination for each field in ``table_meta``.</span>
@@ -723,7 +724,8 @@
 <span class="sd">                If there is any error in the metadata or the data does not</span>
 <span class="sd">                match the metadata description.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">errors</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
 
         <span class="c1"># Primary key field exists and its type is &#39;id&#39;</span>
         <span class="n">primary_key</span> <span class="o">=</span> <span class="n">table_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span>
@@ -731,10 +733,11 @@
             <span class="n">pk_field</span> <span class="o">=</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">primary_key</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pk_field</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Primary key is not an existing field.&#39;</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">pk_field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Primary key is not of type `id`.&#39;</span><span class="p">)</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Invalid primary key: &quot;</span><span class="si">{</span><span class="n">primary_key</span><span class="si">}</span><span class="s1">&quot; not found in table &quot;</span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">pk_field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Primary key &quot;</span><span class="si">{</span><span class="n">primary_key</span><span class="si">}</span><span class="s1">&quot; of table &quot;</span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s1">&quot; not of type &quot;id&quot;&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">table_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
@@ -743,28 +746,36 @@
                     <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                     <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Unexpected column in table `</span><span class="si">{}</span><span class="s1">`: `</span><span class="si">{}</span><span class="s1">`&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
-                    <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
                     <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Invalid values found in column `</span><span class="si">{}</span><span class="s1">` of table `</span><span class="si">{}</span><span class="s1">`: `</span><span class="si">{}</span><span class="s1">`&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">column</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ve</span><span class="p">)</span>
-                    <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
             <span class="c1"># assert all dtypes are in data</span>
             <span class="k">if</span> <span class="n">dtypes</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s1">&#39;Missing columns on table </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">dtypes</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_circular_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_validate_circular_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate that there is no circular relatioship in the metadata.&quot;&quot;&quot;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">errors</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">parents</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">parents</span>
         <span class="k">if</span> <span class="n">children</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Circular relationship found for table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;Circular relationship found for table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">parents</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span>
+                <span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">),</span> <span class="n">errors</span><span class="p">,</span> <span class="n">parents</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.validate"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.validate.html#sdv.metadata.dataset.Metadata.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate this metadata.</span>
@@ -798,17 +809,21 @@
         <span class="k">if</span> <span class="n">tables</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">tables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_tables</span><span class="p">()</span>
 
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span> <span class="ow">in</span> <span class="n">tables_meta</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">tables</span><span class="p">:</span>
                 <span class="n">table</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Table `</span><span class="si">{}</span><span class="s1">` not found in tables&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Table `</span><span class="si">{}</span><span class="s1">` not found in tables&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">table</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">errors</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_circular_relationships</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Invalid Metadata specification:</span><span class="se">\n</span><span class="s1"> - &#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> - &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errors</span><span class="p">))</span></div>
 
     <span class="k">def</span> <span class="nf">_check_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate the existance of the table and existance (or not) of field.&quot;&quot;&quot;</span>
@@ -1152,7 +1167,7 @@
             <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.visualize.html#sdv.metadata.dataset.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.visualize.html#sdv.metadata.dataset.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot metadata usign graphviz.</span>
 
 <span class="sd">        Generate a plot using graphviz.</span>
@@ -1167,7 +1182,7 @@
 <span class="sd">            names (bool):</span>
 <span class="sd">                Whether to add names to the diagram or not. Defaults to ``True``</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">visualization</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">visualization</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">)</span></div></div>
 </pre></div>
 
               </div>
@@ -1188,6 +1203,16 @@
   <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>

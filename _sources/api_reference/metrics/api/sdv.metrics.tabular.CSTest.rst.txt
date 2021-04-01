@@ -16,6 +16,7 @@
       ~CSTest.__init__
       ~CSTest.compute
       ~CSTest.get_subclasses
+      ~CSTest.normalize
    
    
 

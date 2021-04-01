@@ -16,6 +16,7 @@
       ~SVCParentChildDetection.__init__
       ~SVCParentChildDetection.compute
       ~SVCParentChildDetection.get_subclasses
+      ~SVCParentChildDetection.normalize
    
    
 
