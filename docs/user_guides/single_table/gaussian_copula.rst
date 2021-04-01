@@ -54,7 +54,7 @@ includes, among other things:
 -  Their id and gender
 -  Their grades and specializations
 -  Their work experience
--  The salary that they where offered
+-  The salary that they were offered
 -  The duration and dates of their placement
 
 You will notice that there is data with the following characteristics:
@@ -65,7 +65,7 @@ You will notice that there is data with the following characteristics:
    where the student was not placed.
 
 Let us use the ``GaussianCopula`` to learn this data and then sample
-synthetic data about new students to see how well de model captures the
+synthetic data about new students to see how well the model captures the
 characteristics indicated above. In order to do this you will need to:
 
 -  Import the ``sdv.tabular.GaussianCopula`` class and create an
@@ -163,7 +163,7 @@ directory in which you are running SDV.
 Load the model and generate new data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The file you just generated can be send over to the system where the
+The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
 using the ``GaussianCopula.load`` method, and then you are ready to
 sample new data from the loaded instance:
@@ -184,7 +184,7 @@ sample new data from the loaded instance:
 Specifying the Primary Key of the table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One of the first things that you may have noticed when looking that demo
+One of the first things that you may have noticed when looking at the demo
 data is that there is a ``student_id`` column which acts as the primary
 key of the table, and which is supposed to have unique values. Indeed,
 if we look at the number of times that each value appears, we see that
@@ -365,7 +365,7 @@ transform all the non-numerical variables, which the underlying models
 cannot handle, into numerical representations which they can properly
 work with. In the case of the ``GaussianCopula``, the default
 transformation is a One-Hot encoding, which can work very well with
-variables that have a little number of different values, but which is
+variables that have a small number of different values, but which is
 very inefficient in cases where there is a large number of values.
 
 For this reason, the Tabular Models have an additional argument called
@@ -499,7 +499,7 @@ Was the ``GaussianCopula`` able to capture this distribution on its own?
     distributions['experience_years']
 
 
-It seems that the it was not, as it rather thought that the behavior was
+It seems that it was not, as it rather thought that the behavior was
 closer to a Gaussian distribution. And, as a result, we can see how the
 generated values now contain negative values which are invalid for this
 column:
@@ -579,7 +579,7 @@ distribution for the ``experience_years`` column
     model.get_distributions()['experience_years']
 
 
-And, as a result, now we can see how the generated data now have a
+And, as a result, we can see how the generated data now have a
 behavior which is closer to the original data and always stays within
 the valid values range.
 
@@ -595,11 +595,86 @@ the valid values range.
 
 .. note::
 
-    Even though there are situations like the one show above where manually
+    Even though there are situations like the one shown above where manually
     choosing a distribution seems to give better results, in most cases the
     ``GaussianCopula`` will be able to find the optimal distribution on its
     own, making this manual search of the marginal distributions necessary
     on very little occasions.
+
+Conditional Sampling
+~~~~~~~~~~~~~~~~~~~~
+
+As the name implies, conditional sampling allows us to sample from a conditional
+distribution using the ``GaussianCopula`` model, which means we can generate only values that
+satisfy certain conditions. These conditional values can be passed to the ``conditions``
+parameter in the ``sample`` method either as a dataframe or a dictionary.
+
+In case a dictionary is passed, the model will generate as many rows as requested,
+all of which will satisfy the specified conditions, such as ``gender = M``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M'
+    }
+    model.sample(5, conditions=conditions)
+
+
+It's also possible to condition on multiple columns, such as
+``gender = M, 'experience_years': 0``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M',
+        'experience_years': 0
+    }
+    model.sample(5, conditions=conditions)
+
+
+The ``conditions`` can also be passed as a dataframe. In that case, the model
+will generate one sample for each row of the dataframe, sorted in the same
+order. Since the model already knows how many samples to generate, passing
+it as a parameter is unnecessary. For example, if we want to generate three
+samples where ``gender = M`` and three samples with ``gender = F``, we can do the
+following:
+
+.. ipython:: python
+    :okwarning:
+
+    import pandas as pd
+
+    conditions = pd.DataFrame({
+        'gender': ['M', 'M', 'M', 'F', 'F', 'F'],
+    })
+    model.sample(conditions=conditions)
+
+
+``GaussianCopula`` also supports conditioning on continuous values, as long as the values
+are within the range of seen numbers. For example, if all the values of the
+dataset are within 0 and 1, ``GaussianCopula`` will not be able to set this value to 1000.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'degree_perc': 70.0
+    }
+    model.sample(5, conditions=conditions)
+
+
+.. note::
+
+    Currently, conditional sampling works through a rejection sampling process,
+    where rows are sampled repeatedly until one that satisfies the conditions is
+    found. In case you are running into a ``Could not get enough valid rows within
+    x trials`` or simply wish to optimize the results, there are three parameters
+    that can be fine-tuned: ``max_rows_multiplier``, ``max_retries`` and ``float_rtol``.
+    More information about these parameters can be found in the `API section
+    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.sample.
+    html>`__.
 
 
 How do I specify constraints?
@@ -609,7 +684,7 @@ If you look closely at the data you may notice that some properties were
 not completely captured by the model. For example, you may have seen
 that sometimes the model produces an ``experience_years`` number greater
 than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
+These types of properties are what we call ``Constraints`` and can also
 be handled using ``SDV``. For further details about them please visit
 the :ref:`single_table_constraints` guide.
 

@@ -22,9 +22,9 @@ it using the ``GaussianCopula`` model.
 
     from sdv.demo import load_tabular_demo
     from sdv.tabular import GaussianCopula
-    
+
     real_data = load_tabular_demo('student_placements')
-    
+
     model = GaussianCopula()
     model.fit(real_data)
     synthetic_data = model.sample()
@@ -62,12 +62,12 @@ The simplest way to see how similar the two tables are is to import the
     :okwarning:
 
     from sdv.evaluation import evaluate
-    
+
     evaluate(synthetic_data, real_data)
 
 
 The output of this function call will be a number between 0 and 1 that
-will indicate us how similar the two tables are, being 0 the worst and 1
+will indicate how similar the two tables are, being 0 the worst and 1
 the best possible score.
 
 How was the obtained score computed?
@@ -115,5 +115,5 @@ Or, if we want to see the scores separately:
     evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
 
 
-For more details about all the metrix that exist for the different data modalities
+For more details about all the metrics that exist for the different data modalities
 please check the corresponding guides.

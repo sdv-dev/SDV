@@ -1,11 +1,40 @@
 # Release Notes
 
+## 0.9.0 - 2021-03-31
+
+This release brings new privacy metrics to the evaluate framework which help to determine
+if the real data could be obtained or deduced from the synthetic samples.
+Additionally, now there is a normalized score for the metrics, which stays between `0` and `1`.
+
+There are improvements that reduce the usage of memory ram when sampling new data. Also there
+is a new parameter to control the reject sampling crash, `graceful_reject_sampling`, which if
+set to `True` and if it's not possible to generate all the requested rows, it will just issue a
+warning and return whatever it was able to generate.
+
+The `Metadata` object can now be visualized using different combinations of `names` and `details`,
+which can be set to `True` or `False` in order to display only the table names with details or
+without. There is also an improvement on the `validation`, which now will display all the errors
+found at the end of the validation instead of only the first one.
+
+This version also exposes all the hyperparameters of the models `CTGAN` and `TVAE` to allow a more
+advanced usage. There is also a fix for the `TVAE` model on small datasets and it's performance
+with `NaN` values has been improved. There is a fix for when using
+`UniqueCombinationConstraint` with the `transform` strategy.
+
+### Issues resolved
+
+* Memory Usage Gaussian Copula Trained Model consuming high memory when generating synthetic data - Issue [#304](https://github.com/sdv-dev/SDV/issues/304) by @pvk-developer and @AnupamaGangadhar
+* Add option to visualize metadata with only table names - Issue [#347](https://github.com/sdv-dev/SDV/issues/347) by @csala
+* Add sample parameter to control reject sampling crash - Issue [#343](https://github.com/sdv-dev/SDV/issues/343) by @fealho
+* Verbose metadata validation - Issue [#348](https://github.com/sdv-dev/SDV/issues/348) by @csala
+* Missing the introduction of custom specification for hyperparameters in the TVAE model - Issue [#344](https://github.com/sdv-dev/SDV/issues/343) by @imkhoa99 and @pvk-developer
+
 ## 0.8.0 - 2021-02-24
 
 This version adds conditional sampling for tabular models by combining a reject-sampling
 strategy with the native conditional sampling capabilities from the gaussian copulas.
 
-It also introduces several upgrades on the HMA1 algorith that improve data quality and
+It also introduces several upgrades on the HMA1 algorithm that improve data quality and
 robustness in the multi-table scenarios by making changes in how the parameters of the child
 tables are aggregated on the parent tables, including a complete rework of how the correlation
 matrices are modeled and rebuild after sampling.
