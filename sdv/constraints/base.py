@@ -20,6 +20,10 @@ def _get_qualified_name(obj):
 
     return module + '.' + obj_name
 
+def _is_function(obj):
+    """Returns true if the object is a function (not including lambdas)"""
+    return callable(obj) and obj.__name__ != (lambda: None).__name__
+
 
 def get_subclasses(cls):
     """Recursively find subclasses for the current class object."""
@@ -228,9 +232,9 @@ class Constraint(metaclass=ConstraintMeta):
         }
 
         for key, obj in copy.deepcopy(self.__kwargs__).items():
-            if not callable(obj):
-                constraint_dict[key] = obj
-            else:
+            if _is_function(obj):
                 constraint_dict[key] = _get_qualified_name(obj)
+            else:
+                constraint_dict[key] = obj
 
         return constraint_dict

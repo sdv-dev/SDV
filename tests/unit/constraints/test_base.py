@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
-from sdv.constraints.tabular import UniqueCombinations
+from sdv.constraints.tabular import ColumnFormula, UniqueCombinations
 
 
 def test__get_qualified_name_class():
@@ -421,5 +421,34 @@ class TestConstraint():
             'constraint': 'sdv.constraints.tabular.UniqueCombinations',
             'handling_strategy': 'transform',
             'columns': ['a', 'b'],
+        }
+        assert constraint_dict == expected_dict
+    
+    def test_to_dict_column_formula_lambda(self):
+        """Test the ``Constraint.to_dict`` when the constraint is
+        a ColumnFormula type and is passed a lambda.
+
+        If the ``Constraint`` type is ColumnFormula,
+        and the formula argument is a lambda, the dictionary
+        should contain the lambda object as the value.
+
+        Output:
+        - Dict with the right values.
+        """
+        # Run
+        l = lambda x : x + 1
+        instance = ColumnFormula(
+            column='a',
+            formula=l,
+            handling_strategy='transform'
+        )
+        constraint_dict = instance.to_dict()
+
+        # Assert
+        expected_dict = {
+            'constraint': 'sdv.constraints.tabular.ColumnFormula',
+            'handling_strategy': 'transform',
+            'column': 'a',
+            'formula': l,
         }
         assert constraint_dict == expected_dict
