@@ -20,8 +20,9 @@ def _get_qualified_name(obj):
 
     return module + '.' + obj_name
 
+
 def _is_function(obj):
-    """Returns true if the object is a function (not including lambdas)"""
+    """Return true if the object is a function (not including lambdas)."""
     return callable(obj) and obj.__name__ != (lambda: None).__name__
 
 

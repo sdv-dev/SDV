@@ -423,7 +423,7 @@ class TestConstraint():
             'columns': ['a', 'b'],
         }
         assert constraint_dict == expected_dict
-    
+
     def test_to_dict_column_formula_lambda(self):
         """Test the ``Constraint.to_dict`` when the constraint is
         a ColumnFormula type and is passed a lambda.
@@ -436,19 +436,12 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        l = lambda x : x + 1
         instance = ColumnFormula(
             column='a',
-            formula=l,
+            formula=lambda x: x + 1,
             handling_strategy='transform'
         )
         constraint_dict = instance.to_dict()
 
         # Assert
-        expected_dict = {
-            'constraint': 'sdv.constraints.tabular.ColumnFormula',
-            'handling_strategy': 'transform',
-            'column': 'a',
-            'formula': l,
-        }
-        assert constraint_dict == expected_dict
+        assert constraint_dict['formula'](1) == 2
