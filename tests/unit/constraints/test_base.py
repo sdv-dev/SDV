@@ -445,7 +445,7 @@ class TestConstraint():
 
         # Assert
         assert constraint_dict['formula'](1) == 2
-    
+
     def test_to_dict_column_formula_returned_function(self):
         """Test the ``Constraint.to_dict`` when the constraint is
         a ColumnFormula type and is passed a function returned
