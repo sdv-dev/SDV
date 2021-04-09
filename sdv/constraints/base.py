@@ -21,6 +21,15 @@ def _get_qualified_name(obj):
     return module + '.' + obj_name
 
 
+def _module_contains_callable_name(obj):
+    """Return if module contains the name of the callable object."""
+    if hasattr(obj, '__name__'):
+        obj_name = obj.__name__
+    else:
+        obj_name = obj.__class__.__name__
+    return obj_name in importlib.import_module(obj.__module__).__dict__
+
+
 def get_subclasses(cls):
     """Recursively find subclasses for the current class object."""
     subclasses = dict()
@@ -228,9 +237,9 @@ class Constraint(metaclass=ConstraintMeta):
         }
 
         for key, obj in copy.deepcopy(self.__kwargs__).items():
-            if not callable(obj):
-                constraint_dict[key] = obj
-            else:
+            if callable(obj) and _module_contains_callable_name(obj):
                 constraint_dict[key] = _get_qualified_name(obj)
+            else:
+                constraint_dict[key] = obj
 
         return constraint_dict
