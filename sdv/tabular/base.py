@@ -296,6 +296,7 @@ class BaseTabularModel:
 
             counter += 1
 
+        sampled = self._metadata.make_ids_unique(sampled)
         return sampled.head(min(len(sampled), num_rows))
 
     def _make_conditions_df(self, conditions, num_rows):
