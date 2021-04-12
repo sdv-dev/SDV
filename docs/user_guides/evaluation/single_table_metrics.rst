@@ -287,7 +287,7 @@ The metrics on this family are organized by Machine Learning problem type and mo
 
 * Regression Metrics:
 
-  * ``LinearRegressionClassifier``
+  * ``LinearRegression``
   * ``MLPRegressor``
 
 In order to run these metrics we will need to select a column from our dataset which we will
