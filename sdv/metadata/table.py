@@ -596,7 +596,7 @@ class Table:
                 Table where all id fields are unique.
         """
         for name, field_metadata in self._fields_metadata.items():
-            if field_metadata['type'] == 'id':
+            if field_metadata['type'] == 'id' and not data[name].is_unique:
                 data[name] = self._make_ids(field_metadata, len(data))
 
         return data
