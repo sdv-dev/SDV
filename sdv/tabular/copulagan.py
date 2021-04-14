@@ -136,7 +136,7 @@ class CopulaGAN(CTGAN):
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=0, batch_size=500, discriminator_steps=1,
+                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
                  log_frequency=True, verbose=False, epochs=300, cuda=True,
                  field_distributions=None, default_distribution=None):
         super().__init__(
