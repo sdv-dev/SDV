@@ -597,7 +597,9 @@ class Table:
         """
         for name, field_metadata in self._fields_metadata.items():
             if field_metadata['type'] == 'id' and not data[name].is_unique:
-                data[name] = self._make_ids(field_metadata, len(data))
+                ids = self._make_ids(field_metadata, len(data))
+                ids.index = data.index
+                data[name] = ids
 
         return data
 
