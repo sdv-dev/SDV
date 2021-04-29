@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Constraints &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Constraints &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -223,10 +224,10 @@
               
               <div>
                 
-  <div class="section" id="constraints">
+  <section id="constraints">
 <span id="developer-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
 <p>The Constraints are implemented in the sub-package <a class="reference internal" href="../../api_reference/constraints/index.html#sdv-constraints"><span class="std std-ref">sdv.constraints</span></a>.</p>
-<div class="section" id="base-constraint">
+<section id="base-constraint">
 <h2>Base Constraint<a class="headerlink" href="#base-constraint" title="Permalink to this headline">¶</a></h2>
 <p>All the Constraints in SDV inherit from the <code class="docutils literal notranslate"><span class="pre">sdv.constraint.base.Constraint</span></code> class.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> defines the public API for all its subclasses. The public API is implemented
@@ -245,7 +246,7 @@ given data.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">from_dict</span></code>: Build a <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> from its dict representation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">to_dict</span></code>: Return a dict representing the <code class="docutils literal notranslate"><span class="pre">Constraint</span></code>.</p></li>
 </ul>
-<div class="section" id="handling-strategy">
+<section id="handling-strategy">
 <h3>handling_strategy<a class="headerlink" href="#handling-strategy" title="Permalink to this headline">¶</a></h3>
 <p>Additionally, the <code class="docutils literal notranslate"><span class="pre">Constraint.__init__</span></code> method sets up the class based on the value of the
 argument <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> as follows:</p>
@@ -258,9 +259,9 @@ replacing it with an identity function.</p></li>
 <p>Because of this, any subclass has the option to implement both the transformation and reject
 sampling strategies and later on give the user the choice to choose between the two by just
 calling the <code class="docutils literal notranslate"><span class="pre">super().__init__</span></code> method passing the corresponding <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> value.</p>
-</div>
-</div>
-<div class="section" id="implementing-a-custom-constraint">
+</section>
+</section>
+<section id="implementing-a-custom-constraint">
 <h2>Implementing a Custom Constraint<a class="headerlink" href="#implementing-a-custom-constraint" title="Permalink to this headline">¶</a></h2>
 <p>In order to implement a custom constraint, all you need to do is create a subclass of
 <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> and implement your own <code class="docutils literal notranslate"><span class="pre">fit</span></code>, <code class="docutils literal notranslate"><span class="pre">transform</span></code>, <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> and
@@ -373,8 +374,8 @@ can handle it adequately:</p>
         <span class="k">return</span> <span class="n">table_data</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>

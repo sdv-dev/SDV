@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluation Framework &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Evaluation Framework &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -237,13 +238,13 @@
               
               <div>
                 
-  <div class="section" id="evaluation-framework">
+  <section id="evaluation-framework">
 <span id="id1"></span><h1>Evaluation Framework<a class="headerlink" href="#evaluation-framework" title="Permalink to this headline">¶</a></h1>
 <p><strong>SDV</strong> contains a <em>Synthetic Data Evaluation Framework</em> that facilitates
 the task of evaluating the quality of your <em>Synthetic Dataset</em> by
 applying multiple <em>Synthetic Data Metrics</em> on it and reporting results
 in a comprehensive way.</p>
-<div class="section" id="using-the-sdv-evaluation-framework">
+<section id="using-the-sdv-evaluation-framework">
 <h2>Using the SDV Evaluation Framework<a class="headerlink" href="#using-the-sdv-evaluation-framework" title="Permalink to this headline">¶</a></h2>
 <p>To evaluate the quality of synthetic data we essentially need two things:
 <em>real</em> data and <em>synthetic</em> data that pretends to resemble it.</p>
@@ -284,18 +285,18 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0       17313      M    41.068012  56.085381  Commerce    44.883622   Comm&amp;Mgmt            False                 1           50.014502   Mkt&amp;HR  50.329875  24956.891559    True 2020-04-05 2021-04-11     12.0</span>
-<span class="go">1       17459      M    83.551016  65.519349  Commerce    67.995809    Sci&amp;Tech            False                 1           77.288552  Mkt&amp;Fin  66.383096  31318.783931    True 2020-01-25 2020-07-03      NaN</span>
-<span class="go">2       17459      F    71.216682  68.833595  Commerce    85.226367   Comm&amp;Mgmt            False                 0           54.276205  Mkt&amp;Fin  67.559014  25514.777281    True 2020-01-08 2020-02-05      3.0</span>
-<span class="go">3       17298      M    80.828939  76.962830  Commerce    73.777104   Comm&amp;Mgmt            False                 1           75.191165  Mkt&amp;Fin  78.558689  35690.903886    True 2020-01-11 2020-06-09      3.0</span>
-<span class="go">4       17440      F    63.275924  62.635678  Commerce    61.609046   Comm&amp;Mgmt            False                 1           65.422342  Mkt&amp;Fin  71.237561  32701.627256    True 2020-01-06 2020-01-06      3.0</span>
+<span class="go">0       17295      F    47.844569  50.714347  Commerce    64.733765   Comm&amp;Mgmt            False                 0           58.599782   Mkt&amp;HR  54.517890           NaN    True        NaT        NaT      NaN</span>
+<span class="go">1       17385      M    59.742568  62.202806  Commerce    68.484052   Comm&amp;Mgmt            False                 0           61.732074   Mkt&amp;HR  59.282476  25110.646520    True 2020-01-22 2020-10-21     12.0</span>
+<span class="go">2       17415      M    68.878189  77.583448  Commerce    64.735564   Comm&amp;Mgmt            False                 1           81.486051  Mkt&amp;Fin  65.664266  29585.928520    True 2020-01-03 2020-09-01     12.0</span>
+<span class="go">3       17267      F    88.842036  89.413029   Science    86.173570    Sci&amp;Tech            False                 1           83.662597  Mkt&amp;Fin  59.897287  26039.548304    True 2020-01-02 2020-04-21      3.0</span>
+<span class="go">4       17355      M    61.560413  60.694757  Commerce    59.119288   Comm&amp;Mgmt            False                 0           77.408036  Mkt&amp;Fin  56.710694  26216.988756    True 2020-01-21 2020-07-24      NaN</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>For more details about this process, please visit the <a class="reference internal" href="../single_table/gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> guide.</p>
 </div>
-<div class="section" id="computing-an-overall-score">
+<section id="computing-an-overall-score">
 <h3>Computing an overall score<a class="headerlink" href="#computing-an-overall-score" title="Permalink to this headline">¶</a></h3>
 <p>The simplest way to see how similar the two tables are is to import the
 <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and run it passing both the
@@ -303,14 +304,14 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.6093353724148053</span>
+<span class="gh">Out[10]: </span><span class="go">0.6034568629075101</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
 will indicate how similar the two tables are, being 0 the worst and 1
 the best possible score.</p>
-</div>
-<div class="section" id="how-was-the-obtained-score-computed">
+</section>
+<section id="how-was-the-obtained-score-computed">
 <h3>How was the obtained score computed?<a class="headerlink" href="#how-was-the-obtained-score-computed" title="Permalink to this headline">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function applies a collection of pre-configured metric
 functions and returns the average of the scores that the data obtained
@@ -324,18 +325,18 @@ of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
 <span class="go">                    metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
-<span class="go">1        LogisticDetection             LogisticRegression Detection   0.339336      3.393359e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">2             SVCDetection                            SVC Detection   0.406922      4.069220e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">11         GMLogLikelihood           GaussianMixture Log Likelihood -42.161881      4.890215e-19       -inf        inf  MAXIMIZE</span>
-<span class="go">12                  CSTest                              Chi-Squared   0.896715      8.967145e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">13                  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.928488      9.284884e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">14          KSTestExtended  Inverted Kolmogorov-Smirnov D statistic   0.921395      9.213953e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">27  ContinuousKLDivergence   Continuous Kullback–Leibler Divergence   0.581344      5.813441e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">28    DiscreteKLDivergence     Discrete Kullback–Leibler Divergence   0.828046      8.280459e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">1        LogisticDetection             LogisticRegression Detection   0.399599      3.995990e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">2             SVCDetection                            SVC Detection   0.339882      3.398820e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">11         GMLogLikelihood           GaussianMixture Log Likelihood -40.977068      1.599137e-18       -inf        inf  MAXIMIZE</span>
+<span class="go">12                  CSTest                              Chi-Squared   0.873999      8.739987e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">13                  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.927907      9.279070e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">14          KSTestExtended  Inverted Kolmogorov-Smirnov D statistic   0.906047      9.060465e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">27  ContinuousKLDivergence   Continuous Kullback–Leibler Divergence   0.543956      5.439562e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">28    DiscreteKLDivergence     Discrete Kullback–Leibler Divergence   0.823205      8.232053e-01        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="can-i-control-which-metrics-are-applied">
+</section>
+<section id="can-i-control-which-metrics-are-applied">
 <h3>Can I control which metrics are applied?<a class="headerlink" href="#can-i-control-which-metrics-are-applied" title="Permalink to this headline">¶</a></h3>
 <p>By default, the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function will apply all the metrics that
 are included within the SDV Evaluation framework. However, the list of
@@ -344,22 +345,22 @@ names of the metrics that you want to apply.</p>
 <p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and
 <code class="docutils literal notranslate"><span class="pre">KSTest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.9126014582897475</span>
+<span class="gh">Out[12]: </span><span class="go">0.9009528136532905</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">   metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
-<span class="go">0  CSTest                              Chi-Squared   0.896715          0.896715        0.0        1.0  MAXIMIZE</span>
-<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.928488          0.928488        0.0        1.0  MAXIMIZE</span>
+<span class="go">0  CSTest                              Chi-Squared   0.873999          0.873999        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.927907          0.927907        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 <p>For more details about all the metrics that exist for the different data modalities
 please check the corresponding guides.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

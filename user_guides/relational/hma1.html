@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HMA1 Class &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>HMA1 Class &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -262,11 +263,11 @@
               
               <div>
                 
-  <div class="section" id="hma1-class">
+  <section id="hma1-class">
 <h1>HMA1 Class<a class="headerlink" href="#hma1-class" title="Permalink to this headline">¶</a></h1>
 <p>In this guide we will go through a series of steps that will let you
 discover functionalities of the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class.</p>
-<div class="section" id="what-is-hma1">
+<section id="what-is-hma1">
 <h2>What is HMA1?<a class="headerlink" href="#what-is-hma1" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">sdv.relational.HMA1</span></code> class implements what is called a
 <em>Hierarchical Modeling Algorithm</em> which is an algorithm that allows to
@@ -274,8 +275,8 @@ recursively walk through a relational dataset and apply tabular models
 across all the tables in a way that lets the models learn how all the
 fields from all the tables are related.</p>
 <p>Let’s now discover how to use the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class.</p>
-</div>
-<div class="section" id="quick-usage">
+</section>
+<section id="quick-usage">
 <h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
 <p>We will start by loading and exploring one of our demo datasets.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span>
@@ -369,7 +370,7 @@ augmented the parent tables using the copula parameters before
 learning them. By doing this, each copula model was able to learn how
 the child table rows were related to their parent tables.</p>
 </div>
-<div class="section" id="generate-synthetic-data-from-the-model">
+<section id="generate-synthetic-data-from-the-model">
 <h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
 <p>Once the training process has finished you are ready to generate new
 synthetic data by calling the <code class="docutils literal notranslate"><span class="pre">sample_all</span></code> method from your model.</p>
@@ -382,49 +383,45 @@ original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">new_data</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      US    NaN   34</span>
-<span class="go"> 1        1      ES      M   45</span>
-<span class="go"> 2        2      DE    NaN   31</span>
-<span class="go"> 3        3      UK      M   32</span>
-<span class="go"> 4        4      DE      F   58</span>
-<span class="go"> 5        5      DE    NaN   67</span>
-<span class="go"> 6        6      US      M   26</span>
-<span class="go"> 7        7      ES      F   33</span>
-<span class="go"> 8        8      DE    NaN   37</span>
-<span class="go"> 9        9      ES      M   25,</span>
+<span class="go"> 0        0      ES      F   29</span>
+<span class="go"> 1        1      UK      M   21</span>
+<span class="go"> 2        2      US      F   38</span>
+<span class="go"> 3        3      ES      M   34</span>
+<span class="go"> 4        4      ES      F   59</span>
+<span class="go"> 5        5      BG    NaN   50</span>
+<span class="go"> 6        6      UK      M   44</span>
+<span class="go"> 7        7      US    NaN   32</span>
+<span class="go"> 8        8      UK      M   58</span>
+<span class="go"> 9        9      FR      M   46,</span>
 <span class="go"> &#39;sessions&#39;:     session_id  user_id  device       os  minutes</span>
-<span class="go"> 0            0        0  tablet      ios       22</span>
-<span class="go"> 1            1        1  mobile      ios       17</span>
-<span class="go"> 2            2        1  mobile  android       25</span>
-<span class="go"> 3            3        2  mobile  android       39</span>
-<span class="go"> 4            4        2  mobile  android       32</span>
-<span class="go"> 5            5        3  mobile  android       14</span>
-<span class="go"> 6            6        4  tablet      ios       -5</span>
-<span class="go"> 7            7        4  tablet      ios        2</span>
-<span class="go"> 8            8        4  tablet      ios        1</span>
-<span class="go"> 9            9        5  mobile  android       15</span>
-<span class="go"> 10          10        7  mobile      ios       12</span>
-<span class="go"> 11          11        7  tablet      ios       13</span>
-<span class="go"> 12          12        8  mobile  android       30</span>
-<span class="go"> 13          13        9  tablet  android       32,</span>
-<span class="go"> &#39;transactions&#39;:     transaction_id  session_id           timestamp      amount  cancelled</span>
-<span class="go"> 0                0           1 2019-01-09 17:41:58  112.065359       True</span>
-<span class="go"> 1                1           2 2019-01-13 11:47:51   69.813277       True</span>
-<span class="go"> 2                2           2 2019-01-13 15:29:15  102.170691       True</span>
-<span class="go"> 3                3           3 2019-01-09 17:18:52   98.804757       True</span>
-<span class="go"> 4                4           3 2019-01-09 22:32:09  113.353776       True</span>
-<span class="go"> 5                5           4 2019-01-10 04:05:10  157.232510       True</span>
-<span class="go"> 6                6           4 2019-01-09 14:35:04  107.401840       True</span>
-<span class="go"> 7                7           5 2019-01-11 14:44:52   84.731469       True</span>
-<span class="go"> 8                8          10 2019-01-27 05:15:54  123.979715       True</span>
-<span class="go"> 9                9          12 2019-01-15 13:29:10   93.451229       True</span>
-<span class="go"> 10              10          12 2019-01-15 11:04:07  124.972761       True</span>
-<span class="go"> 11              11          13 2019-01-13 15:07:03   98.161851      False</span>
-<span class="go"> 12              12          13 2019-01-14 09:53:31   75.810567      False}</span>
+<span class="go"> 0            0        0  mobile      ios       13</span>
+<span class="go"> 1            1        2  mobile      ios       15</span>
+<span class="go"> 2            2        3  tablet  android       17</span>
+<span class="go"> 3            3        3  tablet  android       22</span>
+<span class="go"> 4            4        4  mobile      ios       17</span>
+<span class="go"> 5            5        4  mobile      ios       20</span>
+<span class="go"> 6            6        5  mobile      ios       40</span>
+<span class="go"> 7            7        5  tablet      ios       40</span>
+<span class="go"> 8            8        5  tablet      ios       30</span>
+<span class="go"> 9            9        6  tablet      ios       21</span>
+<span class="go"> 10          10        6  tablet  android       34</span>
+<span class="go"> 11          11        6  tablet  android       26</span>
+<span class="go"> 12          12        8  mobile  android       44</span>
+<span class="go"> 13          13        9  mobile      ios       20,</span>
+<span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  cancelled</span>
+<span class="go"> 0               0           2 2019-01-10 07:42:14   75.703291       True</span>
+<span class="go"> 1               1           3 2019-01-11 19:47:01  127.192327      False</span>
+<span class="go"> 2               2           4 2019-01-06 15:21:28   72.990792      False</span>
+<span class="go"> 3               3           5 2019-01-15 19:41:06  114.613287      False</span>
+<span class="go"> 4               4           6 2019-01-27 00:33:48  133.261865      False</span>
+<span class="go"> 5               5           7 2019-01-24 14:31:02   83.795455      False</span>
+<span class="go"> 6               6           8 2019-01-24 08:37:48  122.507927      False</span>
+<span class="go"> 7               7          12 2019-01-16 16:01:14   67.485124      False</span>
+<span class="go"> 8               8          12 2019-01-15 14:20:15   95.104088      False}</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="save-and-load-the-model">
+</section>
+<section id="save-and-load-the-model">
 <h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
 <p>In many scenarios it will be convenient to generate synthetic versions
 of your data directly in systems that do not have access to the original
@@ -436,7 +433,7 @@ will need to fit a model in your production environment, save the fitted
 model into a file, send this file to the testing environment and then
 load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
 <p>Let’s see how this process works.</p>
-<div class="section" id="save-and-share-the-model">
+<section id="save-and-share-the-model">
 <h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
 <p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
 method passing the name of the file in which you want to save the model.
@@ -459,8 +456,8 @@ synthetic versions of it. This means that you can safely share this
 <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risk of disclosing any of your real
 data!</p>
 </div>
-</div>
-<div class="section" id="load-the-model-and-generate-new-data">
+</section>
+<section id="load-the-model-and-generate-new-data">
 <h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
 <p>The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
@@ -480,9 +477,9 @@ data from the loaded instance:</p>
 <code class="docutils literal notranslate"><span class="pre">sdv</span></code> installed, otherwise it will not be able to load the model
 and use it.</p>
 </div>
-</div>
-</div>
-<div class="section" id="how-to-control-the-number-of-rows">
+</section>
+</section>
+<section id="how-to-control-the-number-of-rows">
 <h3>How to control the number of rows?<a class="headerlink" href="#how-to-control-the-number-of-rows" title="Permalink to this headline">¶</a></h3>
 <p>In the steps above we did not tell the model at any moment how many rows
 we wanted to sample, so it produced as many rows as there were in the
@@ -492,22 +489,20 @@ original dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[15]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      US    NaN   41</span>
-<span class="go"> 1       11      ES      M   17</span>
-<span class="go"> 2       12      BG      F   15</span>
-<span class="go"> 3       13      ES    NaN   45</span>
-<span class="go"> 4       14      DE      F   56,</span>
+<span class="go"> 0       10      US      F   26</span>
+<span class="go"> 1       11      UK      M   38</span>
+<span class="go"> 2       12      UK      F   32</span>
+<span class="go"> 3       13      US      M   43</span>
+<span class="go"> 4       14      DE      M   56,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0          14       10  mobile  android       19</span>
-<span class="go"> 1          15       12  mobile  android       -3</span>
-<span class="go"> 2          16       12  tablet      ios        0</span>
-<span class="go"> 3          17       14  mobile      ios       24,</span>
+<span class="go"> 0          14       10  tablet      ios        9</span>
+<span class="go"> 1          15       10  mobile      ios       14</span>
+<span class="go"> 2          16       13  mobile  android       20</span>
+<span class="go"> 3          17       14  mobile      ios       12,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  cancelled</span>
-<span class="go"> 0              13          14 2019-01-01 00:53:25  114.639859      False</span>
-<span class="go"> 1              14          14 2019-01-01 00:02:19   94.475942      False</span>
-<span class="go"> 2              15          15 2019-01-08 20:19:47   85.460303      False</span>
-<span class="go"> 3              16          16 2019-01-12 15:25:41  118.474475      False</span>
-<span class="go"> 4              17          17 2019-01-19 15:34:53   48.257480      False}</span>
+<span class="go"> 0               9          16 2018-12-31 23:42:00   63.361091       True</span>
+<span class="go"> 1              10          16 2018-12-31 23:55:48   88.432647      False</span>
+<span class="go"> 2              11          17 2019-01-18 19:32:42  105.549469       True}</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -518,8 +513,8 @@ rows from the child tables is sampled based on the values form the
 parent table, which means that only the root table of the dataset is
 affected by the passed <code class="docutils literal notranslate"><span class="pre">num_rows</span></code> argument.</p>
 </div>
-</div>
-<div class="section" id="can-i-sample-a-subset-of-the-tables">
+</section>
+<section id="can-i-sample-a-subset-of-the-tables">
 <h3>Can I sample a subset of the tables?<a class="headerlink" href="#can-i-sample-a-subset-of-the-tables" title="Permalink to this headline">¶</a></h3>
 <p>In some occasions you will not be interested in generating rows for the
 entire dataset and would rather generate data for only one table and its
@@ -531,19 +526,16 @@ model will only generate data for the <code class="docutils literal notranslate"
 table, <code class="docutils literal notranslate"><span class="pre">transactions</span></code>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;sessions&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">{&#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0          18       15  mobile      ios       26</span>
-<span class="go"> 1          19       17  mobile      ios       19</span>
-<span class="go"> 2          20       17  mobile      ios       34</span>
-<span class="go"> 3          21       17  mobile  android       11</span>
-<span class="go"> 4          22       16  mobile  android        5,</span>
+<span class="go">{&#39;sessions&#39;:    session_id  user_id  device   os  minutes</span>
+<span class="go"> 0          18       19  tablet  ios       13</span>
+<span class="go"> 1          19       15  tablet  ios       -2</span>
+<span class="go"> 2          20       17  mobile  ios       22</span>
+<span class="go"> 3          21       18  tablet  ios       26</span>
+<span class="go"> 4          22       15  mobile  ios       20,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  cancelled</span>
-<span class="go"> 0              18          18 2019-01-14 07:01:24  116.438484       True</span>
-<span class="go"> 1              19          18 2019-01-13 07:55:29  157.615669       True</span>
-<span class="go"> 2              20          20 2019-01-22 04:34:14   78.322562      False</span>
-<span class="go"> 3              21          20 2019-01-21 16:10:44   80.799651      False</span>
-<span class="go"> 4              22          21 2019-01-13 11:37:37  102.676932       True</span>
-<span class="go"> 5              23          22 2018-12-30 06:23:52  107.943514       True}</span>
+<span class="go"> 0              12          20 2019-01-25 02:45:04   94.484350       True</span>
+<span class="go"> 1              13          21 2019-01-21 04:10:32  113.438550      False</span>
+<span class="go"> 2              14          22 2019-01-09 09:46:35  142.370308       True}</span>
 </pre></div>
 </div>
 <p>If you want to further restrict the sampling process to only one table
@@ -554,11 +546,11 @@ producing any rows for the tables <code class="docutils literal notranslate"><sp
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   user_id country gender  age</span>
-<span class="go">0       20      UK    NaN   30</span>
-<span class="go">1       21      US      F   40</span>
-<span class="go">2       22      UK      F   43</span>
-<span class="go">3       23      DE      M   66</span>
-<span class="go">4       24      BG    NaN   43</span>
+<span class="go">0       20      US      M   45</span>
+<span class="go">1       21      UK      M   29</span>
+<span class="go">2       22      US      F   23</span>
+<span class="go">3       23      UK      F   17</span>
+<span class="go">4       24      ES    NaN   27</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -566,9 +558,9 @@ producing any rows for the tables <code class="docutils literal notranslate"><sp
 <p>In this case, since we are only producing a single table, the output
 is given directly as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> instead of a dictionary.</p>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

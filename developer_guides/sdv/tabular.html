@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tabular Models &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Tabular Models &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -231,14 +232,14 @@
               
               <div>
                 
-  <div class="section" id="tabular-models">
+  <section id="tabular-models">
 <span id="developer-tabular-models"></span><h1>Tabular Models<a class="headerlink" href="#tabular-models" title="Permalink to this headline">¶</a></h1>
 <p>SDV has all the necessary tools to model and sample data from individual tables with a collection
 of tabular models, such as <code class="docutils literal notranslate"><span class="pre">Copulas</span></code> and <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code>, while keeping all the complexity associated
 with their usage hidden away and offering a very simple and intuitive interface to the users.</p>
 <p>All this functionalities are available in the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.BaseTabularModel</span></code>, which is inherited
 and used by all the models implemented in the <a class="reference internal" href="../../api_reference/tabular/index.html#sdv-tabular"><span class="std std-ref">sdv.tabular</span></a> sub-package.</p>
-<div class="section" id="tabular-modeling-overview">
+<section id="tabular-modeling-overview">
 <h2>Tabular Modeling Overview<a class="headerlink" href="#tabular-modeling-overview" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">BaseTabularModel</span></code> class offers a very simple API with only two methods, <code class="docutils literal notranslate"><span class="pre">fit</span></code> and
 <code class="docutils literal notranslate"><span class="pre">sample</span></code>, which handle the processes of preparing the data for modeling, calling an underlying
@@ -289,8 +290,8 @@ functionalities:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">save</span></code>: Saves the complete Tabular Model in a file using <code class="docutils literal notranslate"><span class="pre">pickle</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">load</span></code>: Loads a previously saved model from a <code class="docutils literal notranslate"><span class="pre">pickle</span></code> file.</p></li>
 </ul>
-</div>
-<div class="section" id="implementing-a-tabular-model">
+</section>
+<section id="implementing-a-tabular-model">
 <h2>Implementing a Tabular Model<a class="headerlink" href="#implementing-a-tabular-model" title="Permalink to this headline">¶</a></h2>
 <p>In order to implement a new Tabular Model, all you need is to create a class that inherits from
 <code class="docutils literal notranslate"><span class="pre">dsv.tabular.base.BaseTabularModel</span></code> and implement at least these two methods:</p>
@@ -298,7 +299,7 @@ functionalities:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">_fit</span></code>: Gets clean numerical data as input and fits an underlying model.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_sample</span></code>: Samples the indicated number of rows from the fitted model.</p></li>
 </ul>
-<div class="section" id="basetabularmodel-arguments">
+<section id="basetabularmodel-arguments">
 <h3>BaseTabularModel Arguments<a class="headerlink" href="#basetabularmodel-arguments" title="Permalink to this headline">¶</a></h3>
 <p>When creating a subclass we will probably want to capture some arguments to the <code class="docutils literal notranslate"><span class="pre">__init__</span></code>
 method.</p>
@@ -374,8 +375,8 @@ which adds a few arguments to the class but still captures all the other argumen
 </div>
 <p>By doing these, not only can the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> take advantage of all the functionalities from the base
 class, but also the signature and API reference exposes all the accepted arguments appropriately.</p>
-</div>
-<div class="section" id="fit-method">
+</section>
+<section id="fit-method">
 <h3>_fit method<a class="headerlink" href="#fit-method" title="Permalink to this headline">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">_fit</span></code> method only expects one argument called <code class="docutils literal notranslate"><span class="pre">table_data</span></code>, which is a
 <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> that contains numerical data only.</p>
@@ -416,8 +417,8 @@ it expects alongside the data.</p>
 class are being taken from the instance itself, where the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method stored
 them beforehand.</p>
 </div>
-</div>
-<div class="section" id="sample-method">
+</section>
+<section id="sample-method">
 <h3>_sample method<a class="headerlink" href="#sample-method" title="Permalink to this headline">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">_sample</span></code> method only expects one argument called <code class="docutils literal notranslate"><span class="pre">num_rows</span></code>, which is an integer that
 indicates the number of rows that need to be sampled. In most cases, such as the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> example
@@ -436,9 +437,9 @@ shown below, all this method does is call the <code class="docutils literal notr
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

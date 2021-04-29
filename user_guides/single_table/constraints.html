@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handling Constraints &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Handling Constraints &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -266,7 +267,7 @@
               
               <div>
                 
-  <div class="section" id="handling-constraints">
+  <section id="handling-constraints">
 <span id="single-table-constraints"></span><h1>Handling Constraints<a class="headerlink" href="#handling-constraints" title="Permalink to this headline">¶</a></h1>
 <p>A very common scenario that we face when working with tabular data is
 finding columns that have very particular relationships between them
@@ -289,7 +290,7 @@ mechanism to take them into account and guarantee that the sampled data
 always respects them.</p>
 <p>Let us explore a few <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> examples and learn how to handle
 them:</p>
-<div class="section" id="load-a-tabular-demo">
+<section id="load-a-tabular-demo">
 <h2>Load a Tabular Demo<a class="headerlink" href="#load-a-tabular-demo" title="Permalink to this headline">¶</a></h2>
 <p>We will start by loading a small table that contains data with some
 constraints:</p>
@@ -299,19 +300,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department             name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales     Steven Burns  019 Jacqueline Loop Apt. 184\nLoriville, NH 51632   37               37                     0</span>
-<span class="go">1       Pear         Design     Karen Pierce                   PSC 6372, Box 2678\nAPO AE 66700   40               37                     3</span>
-<span class="go">2    Glasses             AI   Gregory Watson  26723 Mark Views Apt. 269\nEast Victoriabury, ...   33               24                     9</span>
-<span class="go">3    Glasses  Search Engine  Latoya Gonzalez         22506 Williams Gateway\nRuiztown, NC 62472   40               34                     6</span>
-<span class="go">4   Cheerper        BigData    Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   31               23                     8</span>
-<span class="go">5   Cheerper        Support    Laura Sanders                   Unit 9508 Box 2845\nDPO AA 49575   31               24                     7</span>
-<span class="go">6       Pear          Sales        Sean King  5431 Frank Terrace\nLake Stephanieburgh, AR 91401   31               29                     2</span>
-<span class="go">7       Pear         Design   Elizabeth Hill                   Unit 0708 Box 2322\nDPO AP 38157   43               41                     2</span>
-<span class="go">8    Glasses             AI       Allen Dunn                       USCGC Ferguson\nFPO AP 57582   44               37                     7</span>
-<span class="go">9    Glasses  Search Engine    Willie Holden  971 Nelson Tunnel Suite 112\nWest Julie, ND 25643   35               29                     6</span>
-<span class="go">10  Cheerper        BigData   Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   35               30                     5</span>
-<span class="go">11  Cheerper        Support         Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   47               39                     8</span>
+<span class="go">     company     department              name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales     Pamela Rhodes    911 Webster Curve Suite 667\nOscarton, WA 88746   44               39                     5</span>
+<span class="go">1       Pear         Design      Emily Duarte         7166 Stevens Vista\nPhillipsport, IN 27743   30               26                     4</span>
+<span class="go">2    Glasses             AI       Chris Smith  6660 Philip Locks Apt. 286\nNorth Thomas, ME 2...   39               32                     7</span>
+<span class="go">3    Glasses  Search Engine     Lindsay Wells  93641 Nancy Views Apt. 393\nSouth Steven, SD 5...   30               24                     6</span>
+<span class="go">4   Cheerper        BigData  Steven Hernandez  9567 Rivera Road Suite 732\nSouth James, KY 45557   40               33                     7</span>
+<span class="go">5   Cheerper        Support         Amy Parks  14564 Bonnie Canyon Apt. 323\nSouth Debra, WA ...   47               46                     1</span>
+<span class="go">6       Pear          Sales    Mary Maldonado           1343 Brewer Plaza\nNew Jessica, DC 53742   35               26                     9</span>
+<span class="go">7       Pear         Design   Gregory Wells V  9596 Robert Orchard Apt. 472\nMartinchester, M...   44               41                     3</span>
+<span class="go">8    Glasses             AI        Juan Hayes  6061 Collins Knolls Suite 981\nDanastad, DC 74055   47               42                     5</span>
+<span class="go">9    Glasses  Search Engine   Catherine Watts       903 Brooks Crossroad\nPort Melissa, CA 14036   49               49                     0</span>
+<span class="go">10  Cheerper        BigData    Carrie Salazar        5512 Steele Orchard\nNorth Carrie, CO 57018   41               36                     5</span>
+<span class="go">11  Cheerper        Support     Mary Robinson  662 Williams Trace Suite 273\nWest Christopher...   47               38                     9</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -333,11 +334,11 @@ years passed since they joined the company, which means that the
 <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> will always be equal to the <code class="docutils literal notranslate"><span class="pre">age</span></code> minus
 the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code>.</p></li>
 </ol>
-</div>
-<div class="section" id="how-does-sdv-handle-constraints">
+</section>
+<section id="how-does-sdv-handle-constraints">
 <h2>How does SDV Handle Constraints?<a class="headerlink" href="#how-does-sdv-handle-constraints" title="Permalink to this headline">¶</a></h2>
 <p><strong>SDV</strong> handles constraints using two different strategies:</p>
-<div class="section" id="transform-strategy">
+<section id="transform-strategy">
 <h3>Transform Strategy<a class="headerlink" href="#transform-strategy" title="Permalink to this headline">¶</a></h3>
 <p>When using this strategy, <strong>SDV</strong> applies a transformation to the data
 before learning it in a way that allows the model to better capture the
@@ -353,8 +354,8 @@ lower column to it.</p></li>
 <p>The <strong>Transform</strong> strategy is very efficient and does not affect the
 speed of the modeling and sampling process, but in some cases might
 affect the quality of the learning process or simply not be possible.</p>
-</div>
-<div class="section" id="reject-sampling-strategy">
+</section>
+<section id="reject-sampling-strategy">
 <h3>Reject Sampling Strategy<a class="headerlink" href="#reject-sampling-strategy" title="Permalink to this headline">¶</a></h3>
 <p>In the cases where applying a <strong>Transform</strong> strategy is not possible or
 may affect the quality of the learning process, <strong>SDV</strong> can apply a
@@ -362,13 +363,13 @@ may affect the quality of the learning process, <strong>SDV</strong> can apply a
 <p>When using this strategy, <strong>SDV</strong> validates the sampled rows, discards
 the ones that do not adjust to the constraint, and re-samples them. This
 process is repeated until enough rows have been sampled.</p>
-</div>
-</div>
-<div class="section" id="defining-constraints">
+</section>
+</section>
+<section id="defining-constraints">
 <h2>Defining Constraints<a class="headerlink" href="#defining-constraints" title="Permalink to this headline">¶</a></h2>
 <p>Let us go back to the demo data that we loaded before and define
 <strong>Constraints</strong> that indicate <strong>SDV</strong> how to work with this data.</p>
-<div class="section" id="uniquecombinations-constraint">
+<section id="uniquecombinations-constraint">
 <h3>UniqueCombinations Constraint<a class="headerlink" href="#uniquecombinations-constraint" title="Permalink to this headline">¶</a></h3>
 <p>The first constraint that we will explore is the <code class="docutils literal notranslate"><span class="pre">UniqueCombinations</span></code>
 constraint.</p>
@@ -390,8 +391,8 @@ order to use this constraint we will need to import it from the
 <span class="gp">   ...: </span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="greaterthan-constraint">
+</section>
+<section id="greaterthan-constraint">
 <h3>GreaterThan Constraint<a class="headerlink" href="#greaterthan-constraint" title="Permalink to this headline">¶</a></h3>
 <p>The second constraint that we need for our data is the <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code>
 constraint. This constraint guarantees that one column is always greater
@@ -412,8 +413,8 @@ passing:</p>
 <span class="gp">   ...: </span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="customformula-constraint">
+</section>
+<section id="customformula-constraint">
 <h3>CustomFormula Constraint<a class="headerlink" href="#customformula-constraint" title="Permalink to this headline">¶</a></h3>
 <p>In some cases, one column will need to be computed based on the other
 columns using a custom formula. This is, for example, what happens with
@@ -443,9 +444,9 @@ constraint by passing it:</p>
 <span class="gp">   ....: </span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="using-the-constraints">
+</section>
+</section>
+<section id="using-the-constraints">
 <h2>Using the Constraints<a class="headerlink" href="#using-the-constraints" title="Permalink to this headline">¶</a></h2>
 <p>Now that we have defined the constraints needed to properly describe our
 dataset, we can pass them to the Tabular Model of our choice. For
@@ -473,21 +474,21 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department            name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">1      Pear         Design   Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   35               26                     9</span>
-<span class="go">2  Cheerper        Support   Laura Sanders                   Unit 9508 Box 2845\nDPO AA 49575   36               35                     1</span>
-<span class="go">3   Glasses  Search Engine  Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   44               39                     5</span>
-<span class="go">4   Glasses  Search Engine        Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   45               28                    17</span>
-<span class="go">5  Cheerper        BigData   Andrea Booker           8544 Hansen Roads\nRandallport, IN 54577   32               23                     9</span>
-<span class="go">6  Cheerper        Support  Gregory Watson  26723 Mark Views Apt. 269\nEast Victoriabury, ...   34               25                     9</span>
-<span class="go">7  Cheerper        Support        Jay Shah       6237 Chen Village\nNew Jefferyfurt, UT 10627   43               32                    11</span>
-<span class="go">8      Pear         Design  Elizabeth Hill                   Unit 0708 Box 2322\nDPO AP 38157   41               41                     0</span>
-<span class="go">9   Glasses  Search Engine   Willie Holden  971 Nelson Tunnel Suite 112\nWest Julie, ND 25643   33               29                     4</span>
-<span class="go">0  Cheerper        BigData  Elizabeth Rose  42735 Sharon Stravenue\nNorth Rebeccamouth, NV...   26               24                     2</span>
+<span class="go">    company     department              name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0      Pear          Sales     Pamela Rhodes    911 Webster Curve Suite 667\nOscarton, WA 88746   47               40                     7</span>
+<span class="go">1   Glasses             AI     Mary Robinson  662 Williams Trace Suite 273\nWest Christopher...   39               31                     8</span>
+<span class="go">2      Pear          Sales    Carrie Salazar        5512 Steele Orchard\nNorth Carrie, CO 57018   40               40                     0</span>
+<span class="go">3   Glasses  Search Engine     Pamela Rhodes    911 Webster Curve Suite 667\nOscarton, WA 88746   43               41                     2</span>
+<span class="go">4      Pear         Design   Catherine Watts       903 Brooks Crossroad\nPort Melissa, CA 14036   32               28                     4</span>
+<span class="go">5      Pear          Sales    Mary Maldonado           1343 Brewer Plaza\nNew Jessica, DC 53742   37               30                     7</span>
+<span class="go">6  Cheerper        BigData    Carrie Salazar        5512 Steele Orchard\nNorth Carrie, CO 57018   40               28                    12</span>
+<span class="go">7   Glasses             AI  Steven Hernandez  9567 Rivera Road Suite 732\nSouth James, KY 45557   40               33                     7</span>
+<span class="go">8   Glasses             AI        Juan Hayes  6061 Collins Knolls Suite 981\nDanastad, DC 74055   50               43                     7</span>
+<span class="go">9   Glasses  Search Engine    Carrie Salazar        5512 Steele Orchard\nNorth Carrie, CO 57018   41               39                     2</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>

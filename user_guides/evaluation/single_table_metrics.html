@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Single Table Metrics &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Single Table Metrics &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -260,7 +261,7 @@
               
               <div>
                 
-  <div class="section" id="single-table-metrics">
+  <section id="single-table-metrics">
 <span id="id1"></span><h1>Single Table Metrics<a class="headerlink" href="#single-table-metrics" title="Permalink to this headline">¶</a></h1>
 <p>In this section we will show you which metrics exist for single table datasets and
 how to use them.</p>
@@ -342,7 +343,7 @@ by the <code class="docutils literal notranslate"><span class="pre">CTGAN</span>
 </div>
 <p>These three elements, or their corresponding equivalents, are all you will need to
 run most of the <em>Single Table Metrics</em> on your own <em>Synthetic Dataset</em>.</p>
-<div class="section" id="single-table-metric-families">
+<section id="single-table-metric-families">
 <h2>Single Table Metric Families<a class="headerlink" href="#single-table-metric-families" title="Permalink to this headline">¶</a></h2>
 <p>The <em>Single Table Metrics</em> are grouped in multiple families:</p>
 <ul class="simple">
@@ -362,7 +363,7 @@ work only on datasets that represent a Machine Learning problem.</p></li>
 <li><p><strong>Privacy Metrics</strong>: These metrics fit an adversial attacker model on the synthetic data and
 then evaluate its accuracy (or probability of making the correct attack) on the real data.</p></li>
 </ul>
-<div class="section" id="statistical-metrics">
+<section id="statistical-metrics">
 <h3>Statistical Metrics<a class="headerlink" href="#statistical-metrics" title="Permalink to this headline">¶</a></h3>
 <p>The metrics of this family compare the tables by running different types of statistical tests
 on them.</p>
@@ -409,8 +410,8 @@ metric classes or their names:</p>
 <span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="likelihood-metrics">
+</section>
+<section id="likelihood-metrics">
 <h3>Likelihood Metrics<a class="headerlink" href="#likelihood-metrics" title="Permalink to this headline">¶</a></h3>
 <p>The metrics of this family compare the tables by fitting the real data to a probabilistic
 model and afterwards compute the likelihood of the synthetic data belonging to the learned
@@ -454,8 +455,8 @@ simply use the <cite>normalize</cite> method, as in the example below:</p>
 <p>All of our metrics support the <cite>normalize</cite> method, but since the majority of them
 already return values between 0 and 1 usually <cite>normalize</cite> simply returns the raw score.</p>
 </div>
-</div>
-<div class="section" id="detection-metrics">
+</section>
+<section id="detection-metrics">
 <h3>Detection Metrics<a class="headerlink" href="#detection-metrics" title="Permalink to this headline">¶</a></h3>
 <p>The metrics of this family evaluate how hard it is to distinguish the synthetic data from the
 real data by using a Machine Learning model. To do this, the metrics will shuffle the real
@@ -480,8 +481,8 @@ classifier from <code class="docutils literal notranslate"><span class="pre">sci
 <span class="gh">Out[18]: </span><span class="go">0.0009056395989102128</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="machine-learning-efficacy-metrics">
+</section>
+<section id="machine-learning-efficacy-metrics">
 <h3>Machine Learning Efficacy Metrics<a class="headerlink" href="#machine-learning-efficacy-metrics" title="Permalink to this headline">¶</a></h3>
 <p>This family of metrics will evaluate whether it is possible to replace the real data with
 synthetic data in order to solve a Machine Learning Problem by learning a Machine Learning
@@ -512,7 +513,7 @@ proportional to how hard that Machine Problem is.</p>
 </li>
 <li><p>Regression Metrics:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">LinearRegressionClassifier</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">MLPRegressor</span></code></p></li>
 </ul>
 </li>
@@ -560,8 +561,8 @@ value inside the <code class="docutils literal notranslate"><span class="pre">me
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="privacy-metrics">
+</section>
+<section id="privacy-metrics">
 <h3>Privacy Metrics<a class="headerlink" href="#privacy-metrics" title="Permalink to this headline">¶</a></h3>
 <p>This family of metrics measures the privacy of a synthetic dataset by
 positing the question: given the synthetic data, can an attacker predict
@@ -627,9 +628,9 @@ all the missing values with a 0 before executing them.</p>
 </div>
 <p>The output of this metric is between 0 and 1, where the closer the value
 is to 0, the less private it is.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

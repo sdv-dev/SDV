@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PAR Model &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>PAR Model &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -289,11 +290,11 @@
               
               <div>
                 
-  <div class="section" id="par-model">
+  <section id="par-model">
 <span id="par"></span><h1>PAR Model<a class="headerlink" href="#par-model" title="Permalink to this headline">¶</a></h1>
 <p>In this guide we will go through a series of steps that will let you
 discover functionalities of the <code class="docutils literal notranslate"><span class="pre">PAR</span></code> model for timeseries data.</p>
-<div class="section" id="what-is-par">
+<section id="what-is-par">
 <h2>What is PAR?<a class="headerlink" href="#what-is-par" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">PAR</span></code> class is an implementation of a Probabilistic AutoRegressive
 model that allows learning <strong>multi-type, multivariate timeseries data</strong>
@@ -309,8 +310,8 @@ your data and give us feedback on a <a class="reference external" href="https://
 issue</a> or our <a class="reference external" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw">Slack
 workspace</a></p>
 </div>
-</div>
-<div class="section" id="quick-usage">
+</section>
+<section id="quick-usage">
 <h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
 <p>We will start by loading one of our demo datasets, the
 <code class="docutils literal notranslate"><span class="pre">nasdaq100_2019</span></code>, which contains daily stock marked data from the
@@ -341,7 +342,7 @@ including:</p>
 </ul>
 <p>This data format is a very common and well known format for timeseries
 data which includes 4 types of columns:</p>
-<div class="section" id="entity-columns">
+<section id="entity-columns">
 <h3>Entity Columns<a class="headerlink" href="#entity-columns" title="Permalink to this headline">¶</a></h3>
 <p>These are columns that indicate how the rows are associated with
 external, abstract, <code class="docutils literal notranslate"><span class="pre">entities</span></code>. The group of rows associated with each
@@ -361,8 +362,8 @@ these cases, the <code class="docutils literal notranslate"><span class="pre">en
 the complete dataset will be interpreted as a single timeseries
 sequence.</p>
 </div>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h3>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h3>
 <p>The timeseries datasets may have one or more <code class="docutils literal notranslate"><span class="pre">context_columns</span></code>.
 <code class="docutils literal notranslate"><span class="pre">context_columns</span></code> are variables that provide information about the
@@ -383,8 +384,8 @@ each timeseries sequence has a single entity associated, the values
 of the <code class="docutils literal notranslate"><span class="pre">context_columns</span></code> are expected to remain constant alongside
 each combination of <code class="docutils literal notranslate"><span class="pre">entity_columns</span></code> values.</p>
 </div>
-</div>
-<div class="section" id="sequence-index">
+</section>
+<section id="sequence-index">
 <h3>Sequence Index<a class="headerlink" href="#sequence-index" title="Permalink to this headline">¶</a></h3>
 <p>By definition, the timeseries datasets have inter-row dependencies for
 which the order of the rows matter. In most cases, this order will be
@@ -397,8 +398,8 @@ each sequence is the <code class="docutils literal notranslate"><span class="pre
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="n">sequence_index</span> <span class="o">=</span> <span class="s1">&#39;Date&#39;</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="data-columns">
+</section>
+<section id="data-columns">
 <h3>Data Columns<a class="headerlink" href="#data-columns" title="Permalink to this headline">¶</a></h3>
 <p>Finally, the rest of the columns of the dataset are what we call the
 <code class="docutils literal notranslate"><span class="pre">data_columns</span></code>, and they are the columns that our <code class="docutils literal notranslate"><span class="pre">PAR</span></code> model will
@@ -434,8 +435,8 @@ the different fields using the appropriate <a class="reference external" href="h
 Transforms</a> to ensure that the data
 has a format that the underlying models can handle.</p>
 </div>
-</div>
-<div class="section" id="generate-synthetic-data-from-the-model">
+</section>
+<section id="generate-synthetic-data-from-the-model">
 <h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
 <p>Once the modeling has finished you are ready to generate new synthetic
 data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model passing the number
@@ -448,12 +449,12 @@ of the sequences that we want to generate.</p>
 on, but filled with new synthetic data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume  MarketCap       Sector                        Industry</span>
-<span class="go">0      a 2019-01-02  183.437196  158.655458   845910        NaN  Health Care  Catalog/Specialty Distribution</span>
-<span class="go">1      a 2019-01-05  182.233390  147.538080  6569659        NaN  Health Care  Catalog/Specialty Distribution</span>
-<span class="go">2      a 2019-01-03  183.437196  143.780245  5053340        NaN  Health Care  Catalog/Specialty Distribution</span>
-<span class="go">3      a 2019-01-05  138.444818  143.162391 -4951660        NaN  Health Care  Catalog/Specialty Distribution</span>
-<span class="go">4      a 2019-01-06  132.997615  137.782438  2207190        NaN  Health Care  Catalog/Specialty Distribution</span>
+<span class="go">  Symbol       Date        Open       Close    Volume     MarketCap             Sector               Industry</span>
+<span class="go">0      a 2019-01-05   94.442074  183.531971   6569659  1.251169e+11  Consumer Services  Electronic Components</span>
+<span class="go">1      a 2019-01-01  125.733548  176.721471 -10150696  1.251169e+11  Consumer Services  Electronic Components</span>
+<span class="go">2      a 2019-01-02  153.168055  150.168479   5535513  1.251169e+11  Consumer Services  Electronic Components</span>
+<span class="go">3      a 2019-01-03  153.946618  154.441064   5065404  1.251169e+11  Consumer Services  Electronic Components</span>
+<span class="go">4      a 2019-01-05  153.430242  152.888573   2024755  1.251169e+11  Consumer Services  Electronic Components</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -466,8 +467,8 @@ tell it how these symbols need to be generated by providing a regular
 expression that it can use. We will see how to do this in a later
 section.</p>
 </div>
-</div>
-<div class="section" id="save-and-load-the-model">
+</section>
+<section id="save-and-load-the-model">
 <h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
 <p>In many scenarios it will be convenient to generate synthetic versions
 of your data directly in systems that do not have access to the original
@@ -479,7 +480,7 @@ will need to fit a model in your production environment, save the fitted
 model into a file, send this file to the testing environment and then
 load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
 <p>Let’s see how this process works.</p>
-<div class="section" id="save-and-share-the-model">
+<section id="save-and-share-the-model">
 <h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
 <p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
 method passing the name of the file in which you want to save the model.
@@ -502,8 +503,8 @@ synthetic versions of it. This means that you can safely share this
 <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risk of disclosing any of your real
 data!</p>
 </div>
-</div>
-<div class="section" id="load-the-model-and-generate-new-data">
+</section>
+<section id="load-the-model-and-generate-new-data">
 <h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
 <p>The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
@@ -513,12 +514,12 @@ from the loaded instance:</p>
 
 <span class="gp">In [14]: </span><span class="n">loaded</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume     MarketCap      Sector Industry</span>
-<span class="go">0      a 2019-01-02  115.159166  197.701073  6793773  1.182361e+10  Technology      NaN</span>
-<span class="go">1      a 2018-12-31  210.173369  168.452995  6569659  1.182361e+10  Technology      NaN</span>
-<span class="go">2      a 2019-01-02  167.010958  161.801845  -571415  1.182361e+10  Technology      NaN</span>
-<span class="go">3      a 2019-01-02  163.048489  183.781782     9424  1.182361e+10  Technology      NaN</span>
-<span class="go">4      a 2019-01-03  184.256508  164.743618 -6204815  1.182361e+10  Technology      NaN</span>
+<span class="go">  Symbol       Date        Open       Close   Volume  MarketCap       Sector                                 Industry</span>
+<span class="go">0      a 2018-12-24   49.333784  221.317833  6569659        NaN  Health Care  Computer Software: Prepackaged Software</span>
+<span class="go">1      a 2018-12-30  234.422994   60.509274  9039787        NaN  Health Care  Computer Software: Prepackaged Software</span>
+<span class="go">2      a 2019-01-02  151.750606  125.757589  7965303        NaN  Health Care  Computer Software: Prepackaged Software</span>
+<span class="go">3      a 2019-01-04  183.437196  137.574550  5827281        NaN  Health Care  Computer Software: Prepackaged Software</span>
+<span class="go">4      a 2019-01-05  174.254228  174.584084   269246        NaN  Health Care  Computer Software: Prepackaged Software</span>
 </pre></div>
 </div>
 <div class="admonition warning">
@@ -527,9 +528,9 @@ from the loaded instance:</p>
 <code class="docutils literal notranslate"><span class="pre">sdv</span></code> installed, otherwise it will not be able to load the model
 and use it.</p>
 </div>
-</div>
-</div>
-<div class="section" id="conditional-sampling">
+</section>
+</section>
+<section id="conditional-sampling">
 <h3>Conditional Sampling<a class="headerlink" href="#conditional-sampling" title="Permalink to this headline">¶</a></h3>
 <p>In the previous examples we had the model generate random values for use
 to populate the <code class="docutils literal notranslate"><span class="pre">context_columns</span></code> and the <code class="docutils literal notranslate"><span class="pre">entity_columns</span></code>. In order
@@ -576,32 +577,32 @@ and Health Care sectors.</p>
 <p>And we can now see the data generated for the two companies:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [19]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">Symbol</span> <span class="o">==</span> <span class="s1">&#39;AAAA&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[19]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume     MarketCap      Sector               Industry</span>
-<span class="go">0   AAAA 2019-01-02  181.067523  154.268244   238736  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">1   AAAA 2019-01-01  165.728145  204.735731  4007554  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">2   AAAA 2019-01-02  204.672034  196.158516  4615360  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">3   AAAA 2019-01-05  161.644462  155.278485 -9484691  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">4   AAAA 2019-01-07  180.022668  151.953212  2671523  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">  Symbol       Date        Open       Close    Volume     MarketCap      Sector               Industry</span>
+<span class="go">0   AAAA 2019-01-01  183.437196  183.531971  -2747408  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">1   AAAA 2019-01-03  161.406532  138.836824  10794929  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">2   AAAA 2019-01-02  183.437196  166.669385   4357505  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">3   AAAA 2019-01-04  172.459194  156.480822   4062154  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">4   AAAA 2019-01-07  165.678142  154.236028   1060432  1.234500e+11  Technology  Electronic Components</span>
 </pre></div>
 </div>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">Symbol</span> <span class="o">==</span> <span class="s1">&#39;BBBB&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[20]: </span><span class="go"></span>
 <span class="go">    Symbol       Date        Open       Close    Volume     MarketCap       Sector                  Industry</span>
-<span class="go">204   BBBB 2019-01-05  243.054502  132.833689  -2917167  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">205   BBBB 2018-12-30  183.437196  225.413110  11171294  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">206   BBBB 2019-01-03  152.091419  177.435875   7077924  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">207   BBBB 2019-01-05   51.774711   77.821138    801159  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">208   BBBB 2019-01-06   61.800318   75.966783   -768055  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">252   BBBB 2018-12-23  183.437196  183.531971   6569659  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">253   BBBB 2019-01-02  194.316119  190.280802   7261015  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">254   BBBB 2019-01-03  184.132957  187.888132  13295596  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">255   BBBB 2019-01-06  174.347468  181.981029   1984489  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">256   BBBB 2019-01-06  171.489815  167.673479    339342  4.567800e+10  Health Care  Medical/Nursing Services</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="advanced-usage">
+</section>
+</section>
+<section id="advanced-usage">
 <h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
 <p>Now that we have discovered the basics, let’s go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our <code class="docutils literal notranslate"><span class="pre">PAR</span></code> Model in order to customize it to our needs.</p>
-<div class="section" id="how-to-customize-the-generated-ids">
+<section id="how-to-customize-the-generated-ids">
 <h3>How to customize the generated IDs?<a class="headerlink" href="#how-to-customize-the-generated-ids" title="Permalink to this headline">¶</a></h3>
 <p>In the previous examples we saw how the <code class="docutils literal notranslate"><span class="pre">Symbol</span></code> values were generated
 as random strings that do not look like those typically seen for
@@ -637,12 +638,12 @@ needs to be generated using the regular expression <code class="docutils literal
 indicated.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [24]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume  MarketCap                 Sector                Industry</span>
-<span class="go">0     AA 2019-01-12  183.437196  110.135789  6569659        NaN  Consumer Non-Durables  Other Specialty Stores</span>
-<span class="go">1     AA 2019-01-04  170.956816  140.961541  6569659        NaN  Consumer Non-Durables  Other Specialty Stores</span>
-<span class="go">2     AA 2019-01-04  134.091848   87.033099  4861813        NaN  Consumer Non-Durables  Other Specialty Stores</span>
-<span class="go">3     AA 2019-01-04   93.091204   97.741943  2591786        NaN  Consumer Non-Durables  Other Specialty Stores</span>
-<span class="go">4     AA 2019-01-05  183.437196  183.531971  3045548        NaN  Consumer Non-Durables  Other Specialty Stores</span>
+<span class="go">  Symbol       Date        Open       Close   Volume     MarketCap      Sector                            Industry</span>
+<span class="go">0     AA 2019-01-02   62.109066   92.035214 -7455267  1.977939e+10  Technology  Department/Specialty Retail Stores</span>
+<span class="go">1     AA 2018-12-31  246.891384  139.933499   817794  1.977939e+10  Technology  Department/Specialty Retail Stores</span>
+<span class="go">2     AA 2019-01-02  175.871672  119.905390  3868027  1.977939e+10  Technology  Department/Specialty Retail Stores</span>
+<span class="go">3     AA 2019-01-04  164.194095  150.644820  1396365  1.977939e+10  Technology  Department/Specialty Retail Stores</span>
+<span class="go">4     AA 2019-01-06  181.834933  165.796755  2023940  1.977939e+10  Technology  Department/Specialty Retail Stores</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -651,8 +652,8 @@ indicated.</p>
 <code class="docutils literal notranslate"><span class="pre">Symbol</span></code> field and the PAR model was able to handle the other
 fields appropriately without needing any indication from us.</p>
 </div>
-</div>
-<div class="section" id="can-i-control-the-length-of-the-sequences">
+</section>
+<section id="can-i-control-the-length-of-the-sequences">
 <h3>Can I control the length of the sequences?<a class="headerlink" href="#can-i-control-the-length-of-the-sequences" title="Permalink to this headline">¶</a></h3>
 <p>When learning the data, the PAR model also learned the distribution of
 the lengths of the sequences, so each generated sequence may have a
@@ -660,11 +661,11 @@ different length:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [25]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Symbol&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 <span class="gh">Out[25]: </span><span class="go"></span>
 <span class="go">Symbol</span>
-<span class="go">AA    252</span>
-<span class="go">AB    201</span>
+<span class="go">AA    210</span>
+<span class="go">AB    252</span>
 <span class="go">AC    252</span>
-<span class="go">AD    241</span>
-<span class="go">AE    216</span>
+<span class="go">AD    252</span>
+<span class="go">AE    197</span>
 <span class="go">dtype: int64</span>
 </pre></div>
 </div>
@@ -681,8 +682,8 @@ pass the <code class="docutils literal notranslate"><span class="pre">sequence_l
 <span class="go">dtype: int64</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="can-i-use-timeseries-without-context">
+</section>
+<section id="can-i-use-timeseries-without-context">
 <h3>Can I use timeseries without context?<a class="headerlink" href="#can-i-use-timeseries-without-context" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes the timeseries datasets do not provide any additional
 properties from the entities associated with each sequence, other than
@@ -715,12 +716,12 @@ conditions to them.</p>
 
 <span class="gp">In [31]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[31]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume</span>
-<span class="go">0     AA 2019-01-04  447.775643   12.935487  6569659</span>
-<span class="go">1     AA 2019-01-03  289.213742  161.084039  6569659</span>
-<span class="go">2     AA 2019-01-03  243.720601  183.531971  6466494</span>
-<span class="go">3     AA 2019-01-05  194.829285  221.391240 -4941879</span>
-<span class="go">4     AA 2019-01-06  245.197842  223.473559 -1379794</span>
+<span class="go">  Symbol       Date        Open       Close    Volume</span>
+<span class="go">0     AA 2019-01-03   91.918626  300.752424   6569659</span>
+<span class="go">1     AA 2019-01-02   49.558931  147.929203  11622828</span>
+<span class="go">2     AA 2019-01-05  130.200096   66.083277   8071724</span>
+<span class="go">3     AA 2019-01-04  124.486872   92.456354   7000012</span>
+<span class="go">4     AA 2019-01-06   95.006406  105.098741  11851610</span>
 </pre></div>
 </div>
 <p>In this case, of course, we are not able to sample new sequences
@@ -734,16 +735,16 @@ that we want on the generated data by passing them in a
 
 <span class="gp">In [33]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">symbols</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[33]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume</span>
-<span class="go">0   TSLA 2019-01-08  390.485217  183.531971  7459565</span>
-<span class="go">1   TSLA 2019-01-01  311.843236  183.531971  6569659</span>
-<span class="go">2   TSLA 2019-01-02  238.698882  270.852204  7959720</span>
-<span class="go">3   TSLA 2019-01-05  214.155077  286.309712  7680272</span>
-<span class="go">4   TSLA 2019-01-05  261.981029  260.436427  8316181</span>
+<span class="go">  Symbol       Date        Open       Close    Volume</span>
+<span class="go">0   TSLA 2019-01-02  338.295718  306.243289   6569659</span>
+<span class="go">1   TSLA 2019-01-01  235.120536  246.698608   8476882</span>
+<span class="go">2   TSLA 2019-01-02  336.622440  139.785973   6569659</span>
+<span class="go">3   TSLA 2019-01-04  332.293959  296.029497  13673707</span>
+<span class="go">4   TSLA 2019-01-07  355.130024  183.531971   9235482</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="what-happens-if-there-are-no-entity-columns-either">
+</section>
+<section id="what-happens-if-there-are-no-entity-columns-either">
 <h3>What happens if there are no <code class="docutils literal notranslate"><span class="pre">entity_columns</span></code> either?<a class="headerlink" href="#what-happens-if-there-are-no-entity-columns-either" title="Permalink to this headline">¶</a></h3>
 <p>In some cases the timeseries datasets are made of a single timeseries
 sequence with no identifiers of external entities. For example, suppose
@@ -774,24 +775,24 @@ creating our PAR instance:</p>
 <span class="gp">In [39]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
 <span class="gh">Out[39]: </span><span class="go"></span>
 <span class="go">          Date       Open      Close    Volume</span>
-<span class="go">0   2018-12-31  54.552286  62.620939  45715575</span>
-<span class="go">1   2019-01-02  68.200316  59.952347  48744554</span>
-<span class="go">2   2019-01-02  65.437065  72.162937  45715575</span>
-<span class="go">3   2019-01-03  70.708689  68.595683  43205740</span>
-<span class="go">4   2019-01-04  71.827905  71.604575  41554169</span>
+<span class="go">0   2018-12-31  54.552286  60.317994  32140292</span>
+<span class="go">1   2019-01-02  57.504942  55.387858  50465866</span>
+<span class="go">2   2019-01-05  56.592311  57.626335  47240536</span>
+<span class="go">3   2019-01-06  56.787128  59.605684  68115977</span>
+<span class="go">4   2019-01-06  57.915063  60.218360  31122888</span>
 <span class="go">..         ...        ...        ...       ...</span>
-<span class="go">247 2019-12-17  51.395419  52.453404  47074951</span>
-<span class="go">248 2019-12-18  50.153266  52.825429  22679813</span>
-<span class="go">249 2019-12-20  53.577791  50.353602  29071275</span>
-<span class="go">250 2019-12-22  53.063236  52.140536  15897367</span>
-<span class="go">251 2019-12-24  52.640547  52.324255  44646392</span>
+<span class="go">247 2019-12-16  54.755474  55.172722  71117241</span>
+<span class="go">248 2019-12-18  55.517224  53.226165  34910015</span>
+<span class="go">249 2019-12-19  54.068943  58.117849  25678550</span>
+<span class="go">250 2019-12-21  58.366249  54.906697  56018466</span>
+<span class="go">251 2019-12-22  57.709387  55.750731  84005131</span>
 
 <span class="go">[252 rows x 4 columns]</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

@@ -21,6 +21,7 @@
       ~Table.get_dtypes
       ~Table.get_fields
       ~Table.get_model_kwargs
+      ~Table.make_ids_unique
       ~Table.reverse_transform
       ~Table.set_model_kwargs
       ~Table.set_primary_key

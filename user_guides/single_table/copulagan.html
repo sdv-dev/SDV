@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CopulaGAN Model &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>CopulaGAN Model &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -311,7 +312,7 @@
               
               <div>
                 
-  <div class="section" id="copulagan-model">
+  <section id="copulagan-model">
 <span id="copulagan"></span><h1>CopulaGAN Model<a class="headerlink" href="#copulagan-model" title="Permalink to this headline">¶</a></h1>
 <p>In this guide we will go through a series of steps that will let you
 discover functionalities of the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> model, including how to:</p>
@@ -324,7 +325,7 @@ discover functionalities of the <code class="docutils literal notranslate"><span
 <li><p>Specify the column distributions to improve the output quality.</p></li>
 <li><p>Specify hyperparameters to improve the output quality.</p></li>
 </ul>
-<div class="section" id="what-is-copulagan">
+<section id="what-is-copulagan">
 <h2>What is CopulaGAN?<a class="headerlink" href="#what-is-copulagan" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">sdv.tabular.CopulaGAN</span></code> model is a variation of the <a class="reference internal" href="ctgan.html#ctgan"><span class="std std-ref">CTGAN Model</span></a>
 which takes advantage of the CDF based transformation that the GaussianCopulas
@@ -332,8 +333,8 @@ apply to make the underlying CTGAN model task of learning the data easier.</p>
 <p>Let’s now discover how to learn a dataset and later on generate
 synthetic data with the same format and statistical properties by using
 the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> class from SDV.</p>
-</div>
-<div class="section" id="quick-usage">
+</section>
+<section id="quick-usage">
 <h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
 <p>We will start by loading one of our demo datasets, the
 <code class="docutils literal notranslate"><span class="pre">student_placements</span></code>, which contains information about MBA students
@@ -397,7 +398,7 @@ different fields using the appropriate <a class="reference external" href="http:
 Transforms</a> to ensure that the data
 has a format that the underlying CTGANSynthesizer class can handle.</p>
 </div>
-<div class="section" id="generate-synthetic-data-from-the-model">
+<section id="generate-synthetic-data-from-the-model">
 <h3>Generate synthetic data from the model<a class="headerlink" href="#generate-synthetic-data-from-the-model" title="Permalink to this headline">¶</a></h3>
 <p>Once the modeling has finished you are ready to generate new synthetic
 data by calling the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method from your model passing the number
@@ -410,11 +411,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0       17343      M    57.675716  67.052617      Arts    75.331502   Comm&amp;Mgmt            False                 0           54.631293  Mkt&amp;Fin  71.562876  27208.435796    True 2020-01-15 2020-06-17      3.0</span>
-<span class="go">1       17477      F    45.677374  42.234641      Arts    63.132638   Comm&amp;Mgmt            False                 0           70.753065  Mkt&amp;Fin  67.442271  18380.314323    True        NaT 2020-09-28      NaN</span>
-<span class="go">2       17265      F    73.766502  65.216742   Science    74.964961   Comm&amp;Mgmt             True                 0           53.731417   Mkt&amp;HR  64.151859  29320.612490   False 2020-03-13 2020-09-06      3.0</span>
-<span class="go">3       17461      F    67.086296  51.806403  Commerce    87.203741   Comm&amp;Mgmt             True                 0           64.555617   Mkt&amp;HR  64.658355  24349.805374    True 2020-03-22 2020-07-04      3.0</span>
-<span class="go">4       17392      M    89.059970  60.128504   Science    74.592259   Comm&amp;Mgmt            False                 0           53.585064   Mkt&amp;HR  56.903326  26930.163403   False 2020-01-20        NaT     12.0</span>
+<span class="go">0       17478      F    51.819720  58.449664   Science    65.300251      Others            False                 0           52.087233  Mkt&amp;Fin  68.067869  28016.952263    True 2020-04-06 2020-10-03      3.0</span>
+<span class="go">1       17451      F    41.694784  82.524112  Commerce    80.115688   Comm&amp;Mgmt            False                 0           54.936136   Mkt&amp;HR  79.161766           NaN    True        NaT 2020-09-12      NaN</span>
+<span class="go">2       17449      M    52.738179  58.953661   Science    70.023595   Comm&amp;Mgmt            False                 0           89.128123  Mkt&amp;Fin  63.255317  28648.623541    True 2020-03-09 2020-08-18     12.0</span>
+<span class="go">3       17363      M    47.367907  39.486685  Commerce    74.391772   Comm&amp;Mgmt            False                 0           68.624984   Mkt&amp;HR  62.800161  23218.885816    True 2020-04-08 2020-08-19      3.0</span>
+<span class="go">4       17452      M    42.898693  50.464992  Commerce    63.236537    Sci&amp;Tech            False                 0           50.864200  Mkt&amp;Fin  72.105420  28090.139459    True 2020-01-26 2020-10-25      NaN</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -424,8 +425,8 @@ on, but filled with new data which resembles the original one.</p>
 <code class="docutils literal notranslate"><span class="pre">model.sample(10000)</span></code>. Note that the original table only had ~200
 rows.</p>
 </div>
-</div>
-<div class="section" id="save-and-load-the-model">
+</section>
+<section id="save-and-load-the-model">
 <h3>Save and Load the model<a class="headerlink" href="#save-and-load-the-model" title="Permalink to this headline">¶</a></h3>
 <p>In many scenarios it will be convenient to generate synthetic versions
 of your data directly in systems that do not have access to the original
@@ -437,7 +438,7 @@ will need to fit a model in your production environment, save the fitted
 model into a file, send this file to the testing environment and then
 load it there to be able to <code class="docutils literal notranslate"><span class="pre">sample</span></code> from it.</p>
 <p>Let’s see how this process works.</p>
-<div class="section" id="save-and-share-the-model">
+<section id="save-and-share-the-model">
 <h4>Save and share the model<a class="headerlink" href="#save-and-share-the-model" title="Permalink to this headline">¶</a></h4>
 <p>Once you have fitted the model, all you need to do is call its <code class="docutils literal notranslate"><span class="pre">save</span></code>
 method passing the name of the file in which you want to save the model.
@@ -460,8 +461,8 @@ synthetic versions of it. This means that you can safely share this
 <code class="docutils literal notranslate"><span class="pre">my_model.pkl</span></code> file without the risc of disclosing any of your real
 data!</p>
 </div>
-</div>
-<div class="section" id="load-the-model-and-generate-new-data">
+</section>
+<section id="load-the-model-and-generate-new-data">
 <h4>Load the model and generate new data<a class="headerlink" href="#load-the-model-and-generate-new-data" title="Permalink to this headline">¶</a></h4>
 <p>The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
@@ -478,9 +479,9 @@ data from the loaded instance:</p>
 <code class="docutils literal notranslate"><span class="pre">sdv</span></code> and <code class="docutils literal notranslate"><span class="pre">ctgan</span></code> installed, otherwise it will not be able to load
 the model and use it.</p>
 </div>
-</div>
-</div>
-<div class="section" id="specifying-the-primary-key-of-the-table">
+</section>
+</section>
+<section id="specifying-the-primary-key-of-the-table">
 <h3>Specifying the Primary Key of the table<a class="headerlink" href="#specifying-the-primary-key-of-the-table" title="Permalink to this headline">¶</a></h3>
 <p>One of the first things that you may have noticed when looking at the demo
 data is that there is a <code class="docutils literal notranslate"><span class="pre">student_id</span></code> column which acts as the primary
@@ -496,14 +497,17 @@ that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">39        17478      M    42.999117  61.146830  Commerce    79.106691   Comm&amp;Mgmt            False                 4           66.817192  Mkt&amp;Fin  64.745617  17997.757626   False        NaT 2020-08-24      NaN</span>
-<span class="go">53        17478      F    69.863648  58.435742   Science    73.083194    Sci&amp;Tech            False                 1           59.696847  Mkt&amp;Fin  68.451614  27376.159521    True 2020-08-05 2021-03-14      NaN</span>
-<span class="go">56        17478      F    66.290662  81.304770      Arts    83.028636    Sci&amp;Tech            False                 1           51.126993  Mkt&amp;Fin  63.472818  19532.753808   False        NaT 2020-09-22      6.0</span>
-<span class="go">64        17478      M    43.634751  70.764316  Commerce    82.027700   Comm&amp;Mgmt             True                 2           51.628523   Mkt&amp;HR  64.704598  28575.246367    True 2020-01-18        NaT      NaN</span>
-<span class="go">151       17478      M    53.434521  28.853579  Commerce    64.886096   Comm&amp;Mgmt             True                 0           50.729228  Mkt&amp;Fin  74.157459  26521.406728   False        NaT        NaT      3.0</span>
-<span class="go">169       17478      F    48.090778  65.048094   Science    68.511165   Comm&amp;Mgmt            False                 1           53.098110  Mkt&amp;Fin  57.132024           NaN   False 2020-01-05 2020-09-23     12.0</span>
-<span class="go">182       17478      F    55.620425  32.735862  Commerce    70.662312   Comm&amp;Mgmt            False                 1           64.273674   Mkt&amp;HR  62.161264  26804.949476   False 2020-03-14 2020-06-10      NaN</span>
-<span class="go">194       17478      M    89.400000  30.748189  Commerce    84.278267   Comm&amp;Mgmt            False                 1           54.146131   Mkt&amp;HR  79.546356           NaN    True 2020-04-03 2020-07-28      6.0</span>
+<span class="go">1         17478      F    41.332424  63.835379   Science    86.752196   Comm&amp;Mgmt            False                 1           65.238531  Mkt&amp;Fin  53.149333  27067.931078    True 2020-01-20 2020-12-12     12.0</span>
+<span class="go">5         17478      M    52.684867  65.062561  Commerce    59.106514   Comm&amp;Mgmt             True                 0           93.697202  Mkt&amp;Fin  59.394942  28312.721542    True 2020-04-11 2020-04-17      6.0</span>
+<span class="go">18        17478      M    63.492758  55.949572   Science    71.793249   Comm&amp;Mgmt            False                 1           52.128206   Mkt&amp;HR  68.909758  30273.848704    True 2020-02-02 2020-10-26      6.0</span>
+<span class="go">36        17478      F    41.504136  37.970349   Science    83.048170    Sci&amp;Tech             True                 1           69.957770  Mkt&amp;Fin  65.538509  24829.543775    True 2020-01-24 2021-03-08     12.0</span>
+<span class="go">39        17478      M    41.119112  67.973462   Science    92.833913    Sci&amp;Tech            False                 1           61.076756   Mkt&amp;HR  52.985050  25689.266242    True 2020-03-21 2020-07-24     12.0</span>
+<span class="go">78        17478      M    59.408573  66.327928   Science    83.246435   Comm&amp;Mgmt            False                 1           51.161575   Mkt&amp;HR  63.023580  27815.924449    True 2020-01-18 2020-08-08      NaN</span>
+<span class="go">84        17478      M    41.298423  77.260330   Science    75.218648   Comm&amp;Mgmt            False                 1           53.477953  Mkt&amp;Fin  62.511425           NaN    True 2020-01-09 2020-04-29      NaN</span>
+<span class="go">105       17478      M    47.338498  56.802208   Science    82.664623    Sci&amp;Tech            False                 0           67.074267  Mkt&amp;Fin  70.503771  21300.914279    True        NaT        NaT      NaN</span>
+<span class="go">162       17478      M    55.723909  68.183291  Commerce    78.893579   Comm&amp;Mgmt            False                 1           54.476285  Mkt&amp;Fin  81.628645  27548.200043    True        NaT 2021-04-27      NaN</span>
+<span class="go">168       17478      M    60.560707  62.596667  Commerce    82.469674      Others            False                 1           52.074295   Mkt&amp;HR  59.241963  22170.477283   False 2020-02-08 2020-09-10      3.0</span>
+<span class="go">171       17478      M    62.128225  64.466431   Science    83.276923    Sci&amp;Tech             True                 1           50.932868   Mkt&amp;HR  58.111193  19382.101122    True 2020-03-24 2020-10-22      3.0</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -523,11 +527,11 @@ indicating the name of the column that is the index of the table.</p>
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0      M    78.148814  66.139058   Science    61.435598   Comm&amp;Mgmt            False                 0           54.860183  Mkt&amp;Fin  62.917992  20231.965709    True 2020-04-28 2020-08-04     12.0</span>
-<span class="go">1           1      M    89.358878  64.437661  Commerce    76.154126   Comm&amp;Mgmt             True                 1           83.879527  Mkt&amp;Fin  74.483029  27731.856224   False        NaT 2020-04-27      3.0</span>
-<span class="go">2           2      F    71.541120  43.413513  Commerce    62.419453   Comm&amp;Mgmt            False                 0           93.163297  Mkt&amp;Fin  63.038829  30785.551143    True 2020-02-22 2020-04-06      3.0</span>
-<span class="go">3           3      F    70.017385  68.449887   Science    81.995885   Comm&amp;Mgmt            False                 1           63.660266   Mkt&amp;HR  75.350619  21465.277145    True 2020-01-07        NaT     12.0</span>
-<span class="go">4           4      M    78.132191  70.935037  Commerce    86.443417   Comm&amp;Mgmt            False                 0           94.083981  Mkt&amp;Fin  80.809315  31765.145261    True        NaT 2020-11-19      3.0</span>
+<span class="go">0           0      M    53.274159  99.569100      Arts    47.620864      Others            False                 0           94.864013   Mkt&amp;HR  67.243921  26782.891479    True        NaT 2020-04-05      6.0</span>
+<span class="go">1           1      F    53.389825  86.710753   Science    54.072717    Sci&amp;Tech             True                 0           97.157888  Mkt&amp;Fin  65.664915  30702.143175    True        NaT        NaT      6.0</span>
+<span class="go">2           2      M    72.783994  70.713708  Commerce    70.665440    Sci&amp;Tech             True                 0           79.384776   Mkt&amp;HR  72.640659           NaN   False 2020-01-05        NaT     12.0</span>
+<span class="go">3           3      M    41.107351  81.604989   Science    58.674831    Sci&amp;Tech            False                 0           63.850926   Mkt&amp;HR  69.284190           NaN    True        NaT 2020-04-26      3.0</span>
+<span class="go">4           4      M    45.476560  65.435654  Commerce    52.903383   Comm&amp;Mgmt            False                 0           80.607984  Mkt&amp;Fin  61.766343  26785.258488    True 2020-05-17 2020-10-05      3.0</span>
 </pre></div>
 </div>
 <p>As a result, the model will learn that this column must be unique and
@@ -536,8 +540,8 @@ generate a unique sequence of values for the column:</p>
 <span class="gh">Out[18]: </span><span class="go">1</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="anonymizing-personally-identifiable-information-pii">
+</section>
+<section id="anonymizing-personally-identifiable-information-pii">
 <h3>Anonymizing Personally Identifiable Information (PII)<a class="headerlink" href="#anonymizing-personally-identifiable-information-pii" title="Permalink to this headline">¶</a></h3>
 <p>There will be many cases where the data will contain Personally
 Identifiable Information which we cannot disclose. In these cases, we
@@ -581,12 +585,12 @@ students:</p>
 
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
-<span class="go">   student_id                                            address gender  second_perc   high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0    6994 White Falls\nLake Cynthiaborough, CT 15835      F    88.299259   65.067945   Science    59.582102    Sci&amp;Tech            False                 1           52.561624  Mkt&amp;Fin  69.336242  28008.887338    True 2020-09-12 2020-06-28      NaN</span>
-<span class="go">1           1  29166 Tammy Crest Apt. 839\nSouth Lindaside, F...      F    82.424339   82.751783      Arts    67.876132   Comm&amp;Mgmt            False                 1           66.760665  Mkt&amp;Fin  57.032038  25533.175475    True        NaT 2020-06-20      6.0</span>
-<span class="go">2           2  8585 Jennifer Road Apt. 853\nNorth Paulside, T...      M    80.768921   72.051864  Commerce    62.181795   Comm&amp;Mgmt            False                 0           73.995943  Mkt&amp;Fin  65.785328  51545.407394    True        NaT 2020-07-19      3.0</span>
-<span class="go">3           3   0917 Shawn Grove Suite 337\nWhiteville, KS 92476      M    73.083471  110.089528  Commerce    62.232031    Sci&amp;Tech            False                 1           52.501414  Mkt&amp;Fin  65.539283           NaN    True 2020-02-24 2020-12-15      NaN</span>
-<span class="go">4           4       29282 Kelley Orchard\nMartinezview, CT 78137      M    88.011639  106.433397   Science    69.887740   Comm&amp;Mgmt            False                 0           57.791789   Mkt&amp;HR  53.004735  45542.795803    True        NaT        NaT      NaN</span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0            8497 Steven Estate\nCindyberg, WV 01019      M    62.236461  63.165710   Science    49.041412   Comm&amp;Mgmt            False                 0           69.319427   Mkt&amp;HR  62.381588  26893.905710    True        NaT 2020-05-05     12.0</span>
+<span class="go">1           1          90070 Gregory Center\nLynchport, MA 04844      M    83.432148  64.281304  Commerce    85.356350   Comm&amp;Mgmt            False                 0           84.130172   Mkt&amp;HR  75.706999           NaN   False 2020-01-22        NaT      6.0</span>
+<span class="go">2           2  231 Rachel Trail Apt. 886\nEast Jennifer, CO 2...      F    68.078206  81.571301  Commerce    65.194728    Sci&amp;Tech            False                 0           93.923451  Mkt&amp;Fin  86.364803           NaN    True        NaT        NaT      NaN</span>
+<span class="go">3           3  786 Shane Bridge Suite 165\nNorth Douglas, GA ...      M    51.902756  66.235299   Science    67.526795   Comm&amp;Mgmt            False                 1           96.315283   Mkt&amp;HR  69.421212           NaN   False 2020-01-27 2020-07-11      6.0</span>
+<span class="go">4           4  8763 Mitchell Circle Apt. 899\nPort Jacqueline...      M    89.063239  63.949154   Science    70.300850    Sci&amp;Tech            False                 0           92.837800   Mkt&amp;HR  57.985735  30342.375284   False 2020-02-28 2020-07-30      3.0</span>
 </pre></div>
 </div>
 <p>More specifically, we can see how all the addresses that have been generated
@@ -640,12 +644,12 @@ that we learned.</p>
 
 <span class="gp">In [29]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[29]: </span><span class="go"></span>
-<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date end_date duration</span>
-<span class="go">0           0        61244 Bryan Fort\nPort Derekmouth, IN 37997      F    48.598021  53.000171   Science    80.691675    Sci&amp;Tech            False                 0           97.191270  Mkt&amp;Fin  72.761389           NaN   False 2020-01-04      NaT      6.0</span>
-<span class="go">1           1         43155 Perry Island\nEast Melissa, VT 44821      F    72.866875  87.156717  Commerce    77.068867   Comm&amp;Mgmt            False                 1           83.429756  Mkt&amp;Fin  64.143684           NaN   False        NaT      NaT      3.0</span>
-<span class="go">2           2  46668 David Mission Suite 507\nOlsonborough, W...      M    73.393634  62.651596   Science    93.250913   Comm&amp;Mgmt            False                 1           78.143185  Mkt&amp;Fin  69.721572  28495.619069    True        NaT      NaT      3.0</span>
-<span class="go">3           3  29159 Mccarthy Village Apt. 880\nNorth Jennife...      F    44.975299  98.821769  Commerce    75.560103   Comm&amp;Mgmt            False                 0           97.999915   Mkt&amp;HR  65.658346           NaN   False 2020-01-13      NaT      3.0</span>
-<span class="go">4           4  166 Nielsen Divide Apt. 524\nFigueroashire, KY...      F    71.084187  95.284468  Commerce    87.164345   Comm&amp;Mgmt            False                 0           84.849699  Mkt&amp;Fin  71.587327           NaN   False 2020-01-04      NaT     12.0</span>
+<span class="go">   student_id                                            address gender  second_perc   high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0       52418 Daniel Flat\nLake Brendaside, NY 63054      F    66.861505  120.604776  Commerce    55.115586    Sci&amp;Tech            False                 0           74.362279   Mkt&amp;HR  62.237408  55872.366753    True 2020-01-06        NaT      NaN</span>
+<span class="go">1           1      79208 Joann Circles\nNorth Benjamin, SD 38575      F    56.784928   83.597918   Science    44.909942    Sci&amp;Tech            False                 0           97.930905  Mkt&amp;Fin  68.560920  29678.606005   False 2020-03-23 2020-07-05      NaN</span>
+<span class="go">2           2  1513 Brandon Stravenue Apt. 059\nLake Amberpor...      M    86.511503  104.184350      Arts    58.552288    Sci&amp;Tech            False                 0           74.722735   Mkt&amp;HR  65.059103  30575.657536    True        NaT        NaT      NaN</span>
+<span class="go">3           3    9995 Grant Burgs Apt. 081\nRobertfurt, NY 97892      M    53.464332   61.176173  Commerce    68.571909   Comm&amp;Mgmt            False                 0           73.591426   Mkt&amp;HR  62.750563           NaN   False        NaT 2020-09-10      3.0</span>
+<span class="go">4           4     8097 Woods Spur Apt. 995\nCherylside, MA 66901      F    54.930086   42.508637  Commerce    41.753524   Comm&amp;Mgmt            False                 0           80.538828  Mkt&amp;Fin  60.340835  24330.318338    True 2020-06-10 2020-08-07     12.0</span>
 </pre></div>
 </div>
 <p>Which means that none of the original addresses can be found in the sampled
@@ -654,14 +658,14 @@ data:</p>
 <span class="gh">Out[30]: </span><span class="go">0</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="advanced-usage">
+</section>
+</section>
+<section id="advanced-usage">
 <h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
 <p>Now that we have discovered the basics, let’s go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> Model in order to customize it to our needs.</p>
-<div class="section" id="exploring-the-probability-distributions">
+<section id="exploring-the-probability-distributions">
 <h3>Exploring the Probability Distributions<a class="headerlink" href="#exploring-the-probability-distributions" title="Permalink to this headline">¶</a></h3>
 <p>During the previous steps, every time we fitted the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code>
 it performed the following operations:</p>
@@ -762,11 +766,9 @@ generated values now contain negative values which are invalid for this
 column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [38]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[38]: </span><span class="go"></span>
-<span class="go">0    130</span>
-<span class="go">1     51</span>
-<span class="go">3     11</span>
-<span class="go">2      5</span>
-<span class="go">4      3</span>
+<span class="go">0    160</span>
+<span class="go">1     38</span>
+<span class="go">3      2</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [39]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -776,8 +778,8 @@ column:</p>
 <p>Let’s see how we can improve this situation by passing the
 <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> the exact distribution that we want it to use for
 this column.</p>
-</div>
-<div class="section" id="setting-distributions-for-indvidual-variables">
+</section>
+<section id="setting-distributions-for-indvidual-variables">
 <h3>Setting distributions for indvidual variables<a class="headerlink" href="#setting-distributions-for-indvidual-variables" title="Permalink to this headline">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> class offers the possibility to indicate which
 distribution to use for each one of the columns in the table, in order
@@ -838,12 +840,11 @@ the valid values range.</p>
 
 <span class="gp">In [44]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[44]: </span><span class="go"></span>
-<span class="go">0    126</span>
-<span class="go">2     23</span>
-<span class="go">1     23</span>
-<span class="go">3     22</span>
-<span class="go">4     17</span>
-<span class="go">5      4</span>
+<span class="go">0    180</span>
+<span class="go">1     24</span>
+<span class="go">3      5</span>
+<span class="go">2      5</span>
+<span class="go">4      1</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [45]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -858,8 +859,8 @@ choosing a distribution seems to give better results, in most cases the
 own, making this manual search of the marginal distributions necessary
 on very little occasions.</p>
 </div>
-</div>
-<div class="section" id="how-to-modify-the-copulagan-hyperparameters">
+</section>
+<section id="how-to-modify-the-copulagan-hyperparameters">
 <h3>How to modify the CopulaGAN Hyperparameters?<a class="headerlink" href="#how-to-modify-the-copulagan-hyperparameters" title="Permalink to this headline">¶</a></h3>
 <p>A part from the arguments explained above, <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> has a number
 of additional hyperparameters that control its learning behavior and can
@@ -918,7 +919,7 @@ generated data using the <code class="docutils literal notranslate"><span class=
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [46]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [47]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[47]: </span><span class="go">0.4293634499496008</span>
+<span class="gh">Out[47]: </span><span class="go">0.4196372000723393</span>
 </pre></div>
 </div>
 <p>Afterwards, we create a new instance of the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> model with the
@@ -941,14 +942,14 @@ hyperparameter values that we want to use</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [50]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
 <span class="gp">In [51]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[51]: </span><span class="go">0.44570271728859173</span>
+<span class="gh">Out[51]: </span><span class="go">0.4810823878512686</span>
 </pre></div>
 </div>
 <p>As we can see, in this case these modifications changed the obtained
 results slightly, but they did neither introduce dramatic changes in the
 performance.</p>
-</div>
-<div class="section" id="conditional-sampling">
+</section>
+<section id="conditional-sampling">
 <h3>Conditional Sampling<a class="headerlink" href="#conditional-sampling" title="Permalink to this headline">¶</a></h3>
 <p>As the name implies, conditional sampling allows us to sample from a conditional
 distribution using the <code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> model, which means we can generate only values that
@@ -963,12 +964,12 @@ all of which will satisfy the specified conditions, such as <code class="docutil
 
 <span class="gp">In [53]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[53]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0      M    62.824691  89.994451  Commerce    79.616881    Sci&amp;Tech             True                 1           80.313493  Mkt&amp;Fin  62.488066  33928.559018   False 2020-03-02        NaT      3.0</span>
-<span class="go">1           2      M    51.421063  94.999539  Commerce    63.707466   Comm&amp;Mgmt             True                 1           76.051231   Mkt&amp;HR  59.646386  24479.723607    True        NaT 2020-09-21      NaN</span>
-<span class="go">2           4      M    73.327214  67.459283  Commerce    64.802464   Comm&amp;Mgmt            False                 0           87.144877  Mkt&amp;Fin  57.198298           NaN    True 2020-04-05 2020-07-06      NaN</span>
-<span class="go">3           0      M    62.473799  66.504021   Science    54.757391   Comm&amp;Mgmt             True                 0           81.076903  Mkt&amp;Fin  58.118415  23146.773791   False 2020-09-14 2020-10-06      3.0</span>
-<span class="go">4           2      M    84.812985  63.508492   Science    79.304501   Comm&amp;Mgmt            False                 0           75.208023  Mkt&amp;Fin  51.563275  30131.412004    True        NaT 2020-12-06      3.0</span>
+<span class="go">   student_id gender  second_perc   high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
+<span class="go">0           0      M    53.724743   64.556483  Commerce    64.962392   Comm&amp;Mgmt            False                 0           51.300029   Mkt&amp;HR  73.616033  27677.207573    True 2020-05-16        NaT      6.0</span>
+<span class="go">1           1      M    88.364491  103.476792   Science    78.880893   Comm&amp;Mgmt            False                 1           77.131437   Mkt&amp;HR  72.982204           NaN   False 2020-01-02 2020-07-30      6.0</span>
+<span class="go">2           2      M    65.577324   73.223917   Science    55.603193    Sci&amp;Tech            False                 0           52.246477  Mkt&amp;Fin  67.797634  29817.076211    True 2020-05-11 2020-02-27      3.0</span>
+<span class="go">3           3      M    88.395100   69.014357  Commerce    74.360806    Sci&amp;Tech            False                 0           50.755689   Mkt&amp;HR  60.950929  30128.267554    True        NaT 2020-07-06      NaN</span>
+<span class="go">4           4      M    67.329717   85.158093   Science    98.014072   Comm&amp;Mgmt            False                 0           57.086105   Mkt&amp;HR  89.173788  31497.603172    True 2020-01-07 2020-08-18      6.0</span>
 </pre></div>
 </div>
 <p>It’s also possible to condition on multiple columns, such as
@@ -982,11 +983,11 @@ all of which will satisfy the specified conditions, such as <code class="docutil
 <span class="gp">In [55]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[55]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc   high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           1      M    67.080566   76.559468   Science    81.830111    Sci&amp;Tech            False                 0           94.280770  Mkt&amp;Fin  58.870468  25109.025716    True        NaT        NaT      3.0</span>
-<span class="go">1           2      M    79.033351  110.711037   Science    68.900305   Comm&amp;Mgmt            False                 0           89.802652   Mkt&amp;HR  70.056052  24073.464084    True 2020-01-30 2020-08-13      3.0</span>
-<span class="go">2           4      M    42.711550   64.964331   Science    74.785012    Sci&amp;Tech             True                 0           60.703893  Mkt&amp;Fin  58.350176  24626.037112    True 2020-01-18 2020-02-09      NaN</span>
-<span class="go">3           1      M    41.139236   62.862007  Commerce    47.060809    Sci&amp;Tech            False                 0           84.811220   Mkt&amp;HR  53.093891           NaN    True 2020-02-26 2020-08-19      6.0</span>
-<span class="go">4           1      M    78.033437   78.561666   Science    78.033286    Sci&amp;Tech             True                 0           55.852691  Mkt&amp;Fin  73.215443  28218.308047    True        NaT 2020-06-18     12.0</span>
+<span class="go">0           0      M    74.938208   65.611461  Commerce    77.558924    Sci&amp;Tech            False                 0           57.068510   Mkt&amp;HR  70.796876  29855.734921    True 2020-01-26 2020-07-22      6.0</span>
+<span class="go">1           1      M    83.062700   64.849650   Science    75.238694   Comm&amp;Mgmt            False                 0           53.849701  Mkt&amp;Fin  63.402585           NaN    True        NaT 2020-09-10      6.0</span>
+<span class="go">2           2      M    53.691668   58.129459   Science    78.411857   Comm&amp;Mgmt            False                 0           58.592398  Mkt&amp;Fin  63.891403  29173.027120    True 2020-07-08 2020-04-12      3.0</span>
+<span class="go">3           3      M    74.157971   76.029600  Commerce    72.306235    Sci&amp;Tech            False                 0           54.355404  Mkt&amp;Fin  58.749535           NaN    True 2020-05-14 2020-06-10     12.0</span>
+<span class="go">4           4      M    89.163664  103.020165   Science    88.179979    Sci&amp;Tech            False                 0           69.829792   Mkt&amp;HR  64.312159  31285.541911    True 2020-01-14 2020-06-16      3.0</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">conditions</span></code> can also be passed as a dataframe. In that case, the model
@@ -1005,12 +1006,12 @@ following:</p>
 <span class="gp">In [58]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[58]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           0      M    87.433534  62.038618   Science    72.119368   Comm&amp;Mgmt            False                 0           56.510793   Mkt&amp;HR  72.399082  21962.974001    True        NaT        NaT     12.0</span>
-<span class="go">1           2      M    87.772965  68.389526   Science    64.863942   Comm&amp;Mgmt            False                 1           98.000000   Mkt&amp;HR  55.841082  28432.974984    True 2020-01-06 2020-06-02      3.0</span>
-<span class="go">2           0      M    45.575536  55.042077  Commerce    80.583900   Comm&amp;Mgmt             True                 0           83.856533   Mkt&amp;HR  67.077801  47637.934860    True 2020-03-25        NaT      6.0</span>
-<span class="go">3           1      F    42.227821  58.204189  Commerce    75.330320   Comm&amp;Mgmt            False                 0           75.372946  Mkt&amp;Fin  64.055297           NaN    True 2020-02-23 2020-07-22      3.0</span>
-<span class="go">4           0      F    73.056691  89.878789  Commerce    81.565637   Comm&amp;Mgmt            False                 1           65.926540   Mkt&amp;HR  53.553933  20715.466898    True        NaT        NaT      3.0</span>
-<span class="go">5           1      F    56.742777  52.504886  Commerce    61.510134   Comm&amp;Mgmt            False                 1           93.652418   Mkt&amp;HR  69.574096  28118.452860    True 2020-11-23 2020-07-31      3.0</span>
+<span class="go">0           0      M    69.325120  63.943404   Science    83.157470    Sci&amp;Tech            False                 0           51.225108  Mkt&amp;Fin  71.944977  28891.778116    True 2020-01-09 2020-08-09      NaN</span>
+<span class="go">1           1      M    84.509376  96.192210  Commerce    90.648797      Others            False                 0           63.516141  Mkt&amp;Fin  55.388767           NaN    True 2020-01-03 2020-09-20      3.0</span>
+<span class="go">2           2      M    67.524143  59.544075      Arts    82.424538    Sci&amp;Tech            False                 0           50.674601   Mkt&amp;HR  58.888022           NaN    True 2020-01-07 2020-08-17      3.0</span>
+<span class="go">3           3      F    88.335635  96.618088   Science    90.214418   Comm&amp;Mgmt            False                 1           97.571037   Mkt&amp;HR  66.100558  21718.192387    True        NaT 2020-08-20      NaN</span>
+<span class="go">4           4      F    68.024583  77.658620   Science    81.814024   Comm&amp;Mgmt            False                 0           54.219446   Mkt&amp;HR  73.888878           NaN    True        NaT 2020-04-17      NaN</span>
+<span class="go">5           5      F    49.427905  62.728328   Science    89.930724   Comm&amp;Mgmt            False                 0           73.476095  Mkt&amp;Fin  73.911511           NaN   False        NaT 2020-07-09      6.0</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">CopulaGAN</span></code> also supports conditioning on continuous values, as long as the values
@@ -1024,11 +1025,11 @@ dataset are within 0 and 1, <code class="docutils literal notranslate"><span cla
 <span class="gp">In [60]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[60]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc        salary  placed start_date   end_date duration</span>
-<span class="go">0           8      F    78.024897  91.492040   Science         70.0   Comm&amp;Mgmt             True                 0           67.199453   Mkt&amp;HR  50.694556  74445.440718    True        NaT 2020-06-10      NaN</span>
-<span class="go">1          17      M    57.464505  37.361945  Commerce         70.0    Sci&amp;Tech             True                 0           72.781478  Mkt&amp;Fin  67.654225  23886.987968    True 2020-01-10 2020-07-04      NaN</span>
-<span class="go">2          23      M    57.807262  73.206394  Commerce         70.0   Comm&amp;Mgmt            False                 0           97.675316  Mkt&amp;Fin  59.201454           NaN    True 2020-01-20 2021-02-02      3.0</span>
-<span class="go">3           4      M    77.997035  43.882148  Commerce         70.0   Comm&amp;Mgmt            False                 2           97.923731  Mkt&amp;Fin  66.747637  26339.359603    True 2020-01-22 2020-06-04      3.0</span>
-<span class="go">4           6      F    69.974488  64.250549  Commerce         70.0    Sci&amp;Tech            False                 0           74.059313  Mkt&amp;Fin  49.244701           NaN    True 2020-07-03        NaT      3.0</span>
+<span class="go">0          32      M    59.856665  69.625455  Commerce         70.0   Comm&amp;Mgmt            False                 0           59.651712   Mkt&amp;HR  73.537116  31728.066179    True 2020-01-10 2020-07-10      3.0</span>
+<span class="go">1          49      M    49.503531  51.533072   Science         70.0   Comm&amp;Mgmt            False                 0           50.551974  Mkt&amp;Fin  72.328354           NaN    True 2020-03-21 2020-05-20     12.0</span>
+<span class="go">2          26      M    69.510931  63.492888   Science         70.0    Sci&amp;Tech            False                 0           73.767668  Mkt&amp;Fin  56.052792  28880.656905    True 2020-06-09 2020-12-24      3.0</span>
+<span class="go">3          14      F    89.315173  60.312035   Science         70.0   Comm&amp;Mgmt            False                 0           60.655769   Mkt&amp;HR  67.947759  25647.747942   False 2020-01-28 2020-08-02     12.0</span>
+<span class="go">4          31      M    89.274303  69.400685   Science         70.0    Sci&amp;Tech            False                 0           55.866468   Mkt&amp;HR  54.548019  41458.009921    True 2020-01-04 2020-08-28      3.0</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -1040,8 +1041,8 @@ found. In case you are running into a <code class="docutils literal notranslate"
 that can be fine-tuned: <code class="docutils literal notranslate"><span class="pre">max_rows_multiplier</span></code>, <code class="docutils literal notranslate"><span class="pre">max_retries</span></code> and <code class="docutils literal notranslate"><span class="pre">float_rtol</span></code>.
 More information about these parameters can be found in the <a class="reference external" href="https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.sample.html">API section</a>.</p>
 </div>
-</div>
-<div class="section" id="how-do-i-specify-constraints">
+</section>
+<section id="how-do-i-specify-constraints">
 <h3>How do I specify constraints?<a class="headerlink" href="#how-do-i-specify-constraints" title="Permalink to this headline">¶</a></h3>
 <p>If you look closely at the data you may notice that some properties were
 not completely captured by the model. For example, you may have seen
@@ -1050,8 +1051,8 @@ than <code class="docutils literal notranslate"><span class="pre">0</span></code
 These types of properties are what we call <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> and can also
 be handled using <code class="docutils literal notranslate"><span class="pre">SDV</span></code>. For further details about them please visit
 the <a class="reference internal" href="constraints.html#single-table-constraints"><span class="std std-ref">Handling Constraints</span></a> guide.</p>
-</div>
-<div class="section" id="can-i-evaluate-the-synthetic-data">
+</section>
+<section id="can-i-evaluate-the-synthetic-data">
 <h3>Can I evaluate the Synthetic Data?<a class="headerlink" href="#can-i-evaluate-the-synthetic-data" title="Permalink to this headline">¶</a></h3>
 <p>A very common question when someone starts using <strong>SDV</strong> to generate
 synthetic data is: <em>“How good is the data that I just generated?”</em></p>
@@ -1059,9 +1060,9 @@ synthetic data is: <em>“How good is the data that I just generated?”</em></p
 and tools that allow you to compare the <em>real</em> that you provided and the
 <em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
 <p>You can read more about this in the <a class="reference internal" href="../evaluation/index.html#evaluation"><span class="std std-ref">Synthetic Data Evaluation</span></a> guide.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
               </div>

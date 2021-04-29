@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.9.0 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -751,6 +751,25 @@
             <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">data</span></div>
+
+    <span class="k">def</span> <span class="nf">make_ids_unique</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Repopulate any id fields in provided data to guarantee uniqueness.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Table where all id fields are unique.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span><span class="p">:</span>
+                <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_ids</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+                <span class="n">ids</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ids</span>
+
+        <span class="k">return</span> <span class="n">data</span>
 
     <span class="c1"># ###################### #</span>
     <span class="c1"># Metadata Serialization #</span>

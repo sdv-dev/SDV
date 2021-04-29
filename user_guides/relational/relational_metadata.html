@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relational Metadata &#8212; SDV 0.9.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Relational Metadata &#8212; SDV 0.9.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -252,12 +253,12 @@
               
               <div>
                 
-  <div class="section" id="relational-metadata">
+  <section id="relational-metadata">
 <span id="id1"></span><h1>Relational Metadata<a class="headerlink" href="#relational-metadata" title="Permalink to this headline">¶</a></h1>
 <p>In order to work with complex dataset structures you will need to pass
 additional information about your data to SDV using <code class="docutils literal notranslate"><span class="pre">Metadata</span></code>.</p>
 <p>Let’s go over an example to see how to use it.</p>
-<div class="section" id="load-the-demo-data">
+<section id="load-the-demo-data">
 <h2>Load the demo data<a class="headerlink" href="#load-the-demo-data" title="Permalink to this headline">¶</a></h2>
 <p>In order to follow this tutorial you will need to load one of the demo
 datasets included in SDV by calling the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code> function.</p>
@@ -337,8 +338,8 @@ can make many <code class="docutils literal notranslate"><span class="pre">trans
 </ul>
 <p>Let us now see how to build a <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object that represents this
 dataset.</p>
-</div>
-<div class="section" id="the-metadata-class">
+</section>
+<section id="the-metadata-class">
 <h2>The Metadata class<a class="headerlink" href="#the-metadata-class" title="Permalink to this headline">¶</a></h2>
 <p>In SDV, the structure of a dataset is represented using the class
 <code class="docutils literal notranslate"><span class="pre">sdv.Metadata</span></code>, which contains all the information that SDV needs in
@@ -358,8 +359,8 @@ to import the class and create an empty instance:</p>
 <span class="go">  relationships:</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="add-a-table">
+</section>
+<section id="add-a-table">
 <h2>Add a Table<a class="headerlink" href="#add-a-table" title="Permalink to this headline">¶</a></h2>
 <p>Once you have your <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> instance ready you can start adding
 tables.</p>
@@ -408,8 +409,8 @@ calling the <code class="docutils literal notranslate"><span class="pre">get_tab
 <span class="go"> &#39;primary_key&#39;: &#39;user_id&#39;}</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="add-a-child-table">
+</section>
+<section id="add-a-child-table">
 <h2>Add a Child Table<a class="headerlink" href="#add-a-child-table" title="Permalink to this headline">¶</a></h2>
 <p>Now that you have one parent table, you will add its child table
 <code class="docutils literal notranslate"><span class="pre">sessions</span></code>, which is related to the <code class="docutils literal notranslate"><span class="pre">users</span></code> table in a parent-child
@@ -444,7 +445,7 @@ the <code class="docutils literal notranslate"><span class="pre">user_id</span><
 <span class="go">    sessions.user_id -&gt; users.user_id</span>
 </pre></div>
 </div>
-<div class="section" id="add-a-table-specifying-field-properties">
+<section id="add-a-table-specifying-field-properties">
 <h3>Add a table specifying field properties<a class="headerlink" href="#add-a-table-specifying-field-properties" title="Permalink to this headline">¶</a></h3>
 <p>There are situations where the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> analysis is not able to
 figure out some data types or subtypes, or to deduce some properties of
@@ -514,9 +515,9 @@ is related to the previous <code class="docutils literal notranslate"><span clas
 </pre></div>
 </div>
 <img alt="../../_images/metadata_2.png" src="../../_images/metadata_2.png" />
-</div>
-</div>
-<div class="section" id="metadata-json-format">
+</section>
+</section>
+<section id="metadata-json-format">
 <h2>Metadata JSON format<a class="headerlink" href="#metadata-json-format" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> objects can also be saved as a JSON file and later on
 loaded from them.</p>
@@ -625,8 +626,8 @@ is as simple as passing it to the <code class="docutils literal notranslate"><sp
 <span class="go">    transactions.session_id -&gt; sessions.session_id</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>
