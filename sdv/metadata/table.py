@@ -584,6 +584,25 @@ class Table:
 
         return data
 
+    def make_ids_unique(self, data):
+        """Repopulate any id fields in provided data to guarantee uniqueness.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Table where all id fields are unique.
+        """
+        for name, field_metadata in self._fields_metadata.items():
+            if field_metadata['type'] == 'id' and not data[name].is_unique:
+                ids = self._make_ids(field_metadata, len(data))
+                ids.index = data.index.copy()
+                data[name] = ids
+
+        return data
+
     # ###################### #
     # Metadata Serialization #
     # ###################### #

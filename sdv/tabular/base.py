@@ -435,6 +435,7 @@ class BaseTabularModel:
         all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
         all_sampled_rows.index.name = conditions.index.name
         all_sampled_rows = all_sampled_rows.sort_index()
+        all_sampled_rows = self._metadata.make_ids_unique(all_sampled_rows)
 
         return all_sampled_rows
 
