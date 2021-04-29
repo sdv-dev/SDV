@@ -57,3 +57,23 @@ class TestTable:
 
         assert new_data['item 1'].equals(data['item 1'])
         assert new_data['item 0'].equals(data['item 0'])
+
+    def test_make_ids_unique_field_index_out_of_order(self):
+        """Test that updated id column is unique even if index is out of order."""
+        metadata_dict = {
+            'fields': {
+                'item 0': {'type': 'id', 'subtype': 'integer'},
+                'item 1': {'type': 'boolean'}
+            },
+            'primary_key': 'item 0'
+        }
+        metadata = Table.from_dict(metadata_dict)
+        data = pd.DataFrame({
+            'item 0': [0, 1, 1, 2, 3, 5, 5, 6],
+            'item 1': [True, True, False, False, True, False, False, True]
+        }, index=[0, 1, 1, 2, 3, 5, 5, 6])
+
+        new_data = metadata.make_ids_unique(data)
+
+        assert new_data['item 1'].equals(data['item 1'])
+        assert new_data['item 0'].is_unique
