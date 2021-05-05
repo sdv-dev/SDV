@@ -2,7 +2,9 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations)
 
@@ -278,6 +280,31 @@ class TestUniqueCombinations():
             'b#c': ['d#g', 'e#h', 'f#i']
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_transform_not_all_columns_provided(self):
+        """Test the ``UniqueCombinations.transform`` method.
+
+        If some of the columns needed for the transform are missing, it will raise
+        a ``MissingConstraintColumnError``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Raises ``MissingConstraintColumnError``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': ['d', 'e', 'f'],
+            'c': ['g', 'h', 'i']
+        })
+        columns = ['b', 'c']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run/Assert
+        with pytest.raises(MissingConstraintColumnError):
+            instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
     def reverse_transform(self):
         """Test the ``UniqueCombinations.reverse_transform`` method.
@@ -587,6 +614,24 @@ class TestGreaterThan():
             'c': [1, 2],
         })
         pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_transform_not_all_columns_provided(self):
+        """Test the ``GreaterThan.transform`` method.
+
+        If some of the columns needed for the transform are missing, it will raise
+        a ``MissingConstraintColumnError``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Raises ``MissingConstraintColumnError``.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run/Assert
+        with pytest.raises(MissingConstraintColumnError):
+            instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
     def test_reverse_transform_int(self):
         """Test the ``GreaterThan.reverse_transform`` method for dtype int.

@@ -7,6 +7,8 @@ import logging
 
 import pandas as pd
 
+from sdv.constraints.errors import MissingConstraintColumnError
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -96,6 +98,8 @@ class Constraint(metaclass=ConstraintMeta):
             ``reject_sampling`` or ``all``.
     """
 
+    _constraint_columns = ()
+
     def _identity(self, table_data):
         return table_data
 
@@ -117,8 +121,18 @@ class Constraint(metaclass=ConstraintMeta):
         """
         del table_data
 
+    def _transform(self, table_data):
+        return table_data
+
     def transform(self, table_data):
-        """Identity method for completion. To be optionally overwritten by subclasses.
+        """Perform necessary transformations needed by constraint.
+
+        Subclasses can optionally overwrite this method. If the transformation
+        requires certain columns to be present in ``table_data``, then the subclass
+        should overwrite the ``_transform`` method instead. This method raises a
+        ``MissingConstraintColumnError`` if the ``table_data`` is missing any columns
+        needed to do the transformation. If columns are present, this method will call
+        the ``_transform`` method.
 
         Args:
             table_data (pandas.DataFrame):
@@ -128,7 +142,8 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        return table_data
+        self._validate_constraint_columns(table_data)
+        return self._transform(table_data)
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
@@ -196,6 +211,19 @@ class Constraint(metaclass=ConstraintMeta):
                          self.__class__.__name__, sum(~valid), len(valid))
 
         return table_data[valid]
+
+    def _validate_constraint_columns(self, table_data):
+        """Validate the columns in ``table_data``.
+
+        If any columns in ``_constraint_columns`` are not present in ``table_data``,
+        this method will raise a ``MissingConstraintColumnError``.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        if not all(col in table_data.columns for col in self._constraint_columns):
+            raise MissingConstraintColumnError()
 
     @classmethod
     def from_dict(cls, constraint_dict):

@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import ColumnFormula, UniqueCombinations
 
 
@@ -236,10 +237,8 @@ class TestConstraint():
     def test_transform(self):
         """Test the ``Constraint.transform`` method. It is an identity method for completion,
         to be optionally overwritten by subclasses.
-
         The ``Constraint.transform`` method is expected to:
         - Return the input data unmodified.
-
         Input:
         - Anything
         Output:
@@ -251,6 +250,45 @@ class TestConstraint():
 
         # Assert
         assert output == 'input'
+
+    def test_transform_calls__transform(self):
+        """Test the ``Constraint.transform`` method. It calls ``_transform``
+        if ``_validate_columns`` returns True.
+
+        The ``Constraint.transform`` method is expected to:
+        - Return value returned by ``_transform``.
+
+        Input:
+        - Anything
+        Output:
+        - Result of ``_transform(input)``
+        """
+        # Setup
+        constraint_mock = Mock()
+        constraint_mock._transform.return_value = 'the_transformed_data'
+        constraint_mock._validate_columns.return_value = True
+
+        # Run
+        output = Constraint.transform(constraint_mock, 'input')
+
+        # Assert
+        assert output == 'the_transformed_data'
+
+    def test_transform_invalid_table_data(self):
+        """Test the ``Constraint.transform`` method. If ``table_data``
+        is invalid, it should raise an ``MissingConstraintColumnError``.
+
+        The ``Constraint.transform`` method is expected to:
+        - Raise ``MissingConstraintColumnError``.
+        """
+        # Run
+        instance = Constraint(handling_strategy='transform')
+        instance._transform = lambda x: x
+        instance._constraint_columns = ('a')
+
+        # Assert
+        with pytest.raises(MissingConstraintColumnError):
+            instance.transform(pd.DataFrame())
 
     def test_fit_transform(self):
         """Test the ``Constraint.fit_transform`` method.
