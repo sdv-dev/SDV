@@ -124,6 +124,19 @@ class Constraint(metaclass=ConstraintMeta):
     def _transform(self, table_data):
         return table_data
 
+    def _validate_constraint_columns(self, table_data):
+        """Validate the columns in ``table_data``.
+
+        If any columns in ``_constraint_columns`` are not present in ``table_data``,
+        this method will raise a ``MissingConstraintColumnError``.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        if any(col not in table_data.columns for col in self._constraint_columns):
+            raise MissingConstraintColumnError()
+
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
 
@@ -211,19 +224,6 @@ class Constraint(metaclass=ConstraintMeta):
                          self.__class__.__name__, sum(~valid), len(valid))
 
         return table_data[valid]
-
-    def _validate_constraint_columns(self, table_data):
-        """Validate the columns in ``table_data``.
-
-        If any columns in ``_constraint_columns`` are not present in ``table_data``,
-        this method will raise a ``MissingConstraintColumnError``.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-        """
-        if not all(col in table_data.columns for col in self._constraint_columns):
-            raise MissingConstraintColumnError()
 
     @classmethod
     def from_dict(cls, constraint_dict):
