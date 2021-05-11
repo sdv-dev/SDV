@@ -98,7 +98,7 @@ class Constraint(metaclass=ConstraintMeta):
             ``reject_sampling`` or ``all``.
     """
 
-    _constraint_columns = ()
+    constraint_columns = ()
 
     def _identity(self, table_data):
         return table_data
@@ -127,14 +127,14 @@ class Constraint(metaclass=ConstraintMeta):
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
-        If any columns in ``_constraint_columns`` are not present in ``table_data``,
+        If any columns in ``constraint_columns`` are not present in ``table_data``,
         this method will raise a ``MissingConstraintColumnError``.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
-        if any(col not in table_data.columns for col in self._constraint_columns):
+        if any(col not in table_data.columns for col in self.constraint_columns):
             raise MissingConstraintColumnError()
 
     def transform(self, table_data):

@@ -385,24 +385,22 @@ class BaseTabularModel:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Invalid column name `{column}`')
 
-            if len(self._metadata.transform(conditions[[column]]).columns) == 0:
-                raise ValueError(f'Conditioning on column `{column}` is not possible')
-
         transformed_conditions = self._metadata.transform(conditions)
-        condition_columns = list(transformed_conditions.columns)
-        transformed_conditions.index.name = '__condition_idx__'
-        transformed_conditions.reset_index(inplace=True)
-        grouped_conditions = transformed_conditions.groupby(condition_columns)
+        condition_columns = list(conditions.columns)
+        conditions.index.name = '__condition_idx__'
+        conditions.reset_index(inplace=True)
+        grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
         all_sampled_rows = list()
 
-        for index, dataframe in grouped_conditions:
-            if not isinstance(index, tuple):
-                index = [index]
+        for group, dataframe in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
 
-            condition = conditions.loc[dataframe['__condition_idx__'].iloc[0]]
-            transformed_condition = dict(zip(condition_columns, index))
+            condition_index = dataframe['__condition_idx__'].iloc[0]
+            transformed_condition = transformed_conditions.loc[condition_index]
+            condition = dict(zip(condition_columns, group))
             sampled_rows = self._sample_batch(
                 len(dataframe),
                 max_retries,
