@@ -76,6 +76,7 @@ class UniqueCombinations(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
+        self._constraint_columns = tuple(columns)
         super().__init__(handling_strategy)
 
     def _valid_separator(self, table_data):
@@ -143,7 +144,7 @@ class UniqueCombinations(Constraint):
         )
         return merged[self._joint_column] == 'both'
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on removing all the ``self._columns`` from
@@ -214,6 +215,7 @@ class GreaterThan(Constraint):
         self._low = low
         self._high = high
         self._strict = strict
+        self._constraint_columns = (low, high)
         super().__init__(handling_strategy)
 
     def fit(self, table_data):
@@ -241,7 +243,7 @@ class GreaterThan(Constraint):
 
         return table_data[self._high] >= table_data[self._low]
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on replacing the ``high`` value with difference
