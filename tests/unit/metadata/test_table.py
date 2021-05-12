@@ -104,8 +104,8 @@ class TestTable:
     def test__transform_constraints(self):
         """Test that method correctly transforms data based on constraints
 
-        The `_transform_constraints` method is expected to loop through constraints
-        and call each constraint's `transform` method on the data.
+        The ``_transform_constraints`` method is expected to loop through constraints
+        and call each constraint's ``transform`` method on the data.
 
         Input:
         - Table data
@@ -139,8 +139,8 @@ class TestTable:
     def test__transform_constraints_raises_error(self):
         """Test that method raises error when specified.
 
-        The `_transform_constraints` method is expected to raise a `MissingConstraintColumnError`
-        if the constraint transform raises one and `on_missing_column` is set to error.
+        The ``_transform_constraints`` method is expected to raise ``MissingConstraintColumnError``
+        if the constraint transform raises one and ``on_missing_column`` is set to error.
 
         Input:
         - Table data
@@ -164,8 +164,8 @@ class TestTable:
     def test__transform_constraints_drops_columns(self):
         """Test that method drops columns when specified.
 
-        The `_transform_constraints` method is expected to drop columns associated with
-        a constraint its transform raises a MissingConstraintColumnError and `on_missing_column`
+        The ``_transform_constraints`` method is expected to drop columns associated with
+        a constraint its transform raises a MissingConstraintColumnError and ``on_missing_column``
         is set to drop.
 
         Input:

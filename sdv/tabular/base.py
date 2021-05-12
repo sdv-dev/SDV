@@ -399,7 +399,10 @@ class BaseTabularModel:
                 group = [group]
 
             condition_index = dataframe['__condition_idx__'].iloc[0]
-            transformed_condition = transformed_conditions.loc[condition_index].to_dict()
+            if transformed_conditions.empty:
+                transformed_condition = None
+            else:
+                transformed_condition = transformed_conditions.loc[condition_index].to_dict()
             condition = dict(zip(condition_columns, group))
             sampled_rows = self._sample_batch(
                 len(dataframe),
