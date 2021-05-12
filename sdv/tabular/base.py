@@ -385,7 +385,7 @@ class BaseTabularModel:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Invalid column name `{column}`')
 
-        transformed_conditions = self._metadata.transform(conditions)
+        transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         condition_columns = list(conditions.columns)
         conditions.index.name = '__condition_idx__'
         conditions.reset_index(inplace=True)
@@ -399,7 +399,7 @@ class BaseTabularModel:
                 group = [group]
 
             condition_index = dataframe['__condition_idx__'].iloc[0]
-            transformed_condition = transformed_conditions.loc[condition_index]
+            transformed_condition = transformed_conditions.loc[condition_index].to_dict()
             condition = dict(zip(condition_columns, group))
             sampled_rows = self._sample_batch(
                 len(dataframe),

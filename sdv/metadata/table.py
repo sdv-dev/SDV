@@ -503,8 +503,9 @@ class Table:
                 if on_missing_column == 'error':
                     raise MissingConstraintColumnError()
                 elif on_missing_column == 'drop':
-                    constraint_columns_in_data = data.columns.all(constraint.constraint_columns)
-                    data = data.drop(constraint_columns_in_data, axis=1)
+                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
+                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
+                    data = data.drop(columns_to_drop, axis=1)
         return data
 
     def transform(self, data, on_missing_column='error'):
