@@ -104,7 +104,7 @@ class UniqueCombinations(Constraint):
 
         return True
 
-    def fit(self, table_data):
+    def _fit(self, table_data):
         """Fit this Constraint to the data.
 
         The fit process consists on:
@@ -218,7 +218,7 @@ class GreaterThan(Constraint):
         self.constraint_columns = (low, high)
         super().__init__(handling_strategy)
 
-    def fit(self, table_data):
+    def _fit(self, table_data):
         """Learn the dtype of the high column.
 
         Args:

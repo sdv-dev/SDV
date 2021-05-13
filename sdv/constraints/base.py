@@ -8,6 +8,7 @@ import logging
 import pandas as pd
 
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.tabular import GaussianCopula
 
 LOGGER = logging.getLogger(__name__)
 
@@ -96,14 +97,20 @@ class Constraint(metaclass=ConstraintMeta):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``.
+        disable_columns_model (bool):
+            If True, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column.
     """
 
     constraint_columns = ()
+    _columns_model = None
 
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self, handling_strategy):
+    def __init__(self, handling_strategy, disable_columns_model=False):
+        self.disable_columns_model = disable_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
@@ -112,14 +119,27 @@ class Constraint(metaclass=ConstraintMeta):
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
 
+    def _fit(self, table_data):
+        del table_data
+
     def fit(self, table_data):
-        """No-op method written for completion. To be optionally overwritten by subclasses.
+        """Fit ``Constraint`` class to data.
+
+        If ``disable_columns_model`` is False, then this method will fit
+        a ``GaussianCopula`` model to the relevant columns in ``table_data``.
+        Subclasses can overwrite this method, or overwrite the ``_fit`` method
+        if they will not be needing the model to handle conditional sampling.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
-        del table_data
+        if not self.disable_columns_model:
+            data_to_model = table_data[list(self.constraint_columns)]
+            self._columns_model = GaussianCopula()
+            self._columns_model.fit(data_to_model)
+
+        return self._fit(table_data)
 
     def _transform(self, table_data):
         return table_data
@@ -127,15 +147,34 @@ class Constraint(metaclass=ConstraintMeta):
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
-        If any columns in ``constraint_columns`` are not present in ``table_data``,
-        this method will raise a ``MissingConstraintColumnError``.
+        If ``disable_columns_model`` is True and any columns in ``constraint_columns``
+        are not present in ``table_data``, this method will raise a
+        ``MissingConstraintColumnError``. Otherwise it will return the ``table_data``
+        unchanged. If ``disable_columns_model`` is False, then this method will sample
+        any missing ``constraint_columns`` from its model conditioned on the
+        ``constraint_columns`` that ``table_data`` does contain. If ``table_data``
+        doesn't contain any of the ``constraint_columns`` then a
+        ``MissingConstraintColumnError`` will be raised.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
-        if any(col not in table_data.columns for col in self.constraint_columns):
+        if self.disable_columns_model:
+            if any(col not in table_data.columns for col in self.constraint_columns):
+                raise MissingConstraintColumnError()
+            return table_data
+
+        missing_columns = [col not in table_data.columns for col in self.constraint_columns]
+
+        if len(missing_columns) == 0:
+            return table_data
+        if all(col in missing_columns for col in self.constraint_columns):
             raise MissingConstraintColumnError()
+
+        condition_columns = [col in table_data.columns for col in self.constraint_columns]
+        conditions = table_data[condition_columns]
+        return self._columns_model.sample(conditions=conditions)
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
@@ -155,7 +194,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._validate_constraint_columns(table_data)
+        table_data = self._validate_constraint_columns(table_data)
         return self._transform(table_data)
 
     def fit_transform(self, table_data):
