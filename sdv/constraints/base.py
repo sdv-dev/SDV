@@ -8,7 +8,6 @@ import logging
 import pandas as pd
 
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.tabular import GaussianCopula
 
 LOGGER = logging.getLogger(__name__)
 
@@ -134,6 +133,8 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
+        from sdv.tabular import GaussianCopula
+
         if not self.disable_columns_model:
             data_to_model = table_data[list(self.constraint_columns)]
             self._columns_model = GaussianCopula()
@@ -165,14 +166,14 @@ class Constraint(metaclass=ConstraintMeta):
                 raise MissingConstraintColumnError()
             return table_data
 
-        missing_columns = [col not in table_data.columns for col in self.constraint_columns]
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
 
         if len(missing_columns) == 0:
             return table_data
         if all(col in missing_columns for col in self.constraint_columns):
             raise MissingConstraintColumnError()
 
-        condition_columns = [col in table_data.columns for col in self.constraint_columns]
+        condition_columns = [col for col in self.constraint_columns if col in table_data.columns]
         conditions = table_data[condition_columns]
         return self._columns_model.sample(conditions=conditions)
 
