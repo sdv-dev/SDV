@@ -403,6 +403,7 @@ class BaseTabularModel:
                 transformed_condition = None
             else:
                 transformed_condition = transformed_conditions.loc[condition_index].to_dict()
+
             condition = dict(zip(condition_columns, group))
             sampled_rows = self._sample_batch(
                 len(dataframe),

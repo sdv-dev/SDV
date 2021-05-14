@@ -82,7 +82,16 @@ class TestTable:
         assert new_data['item 0'].is_unique
 
     def test_transform_calls__transform_constraints(self):
-        """Test that the `transform` method calls `_transform_constraints` with right parameters"""
+        """Test that the `transform` method calls `_transform_constraints` with right parameters
+        
+        The ``transform`` method is expected to call the ``_transform_constraints`` method
+        with the data and correct value for ``on_missing_column``.
+
+        Input:
+        - Table data
+        Side Effects:
+        - Calls _transform_constraints
+        """
         # Setup
         data = pd.DataFrame({
             'item 0': [0, 1, 2],
