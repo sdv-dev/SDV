@@ -85,7 +85,7 @@ def test_sample_empty_transformed_conditions():
     output = model.sample(5, conditions=conditions, graceful_reject_sampling=True)
 
     # Assert
-    func_name, args, kwargs = model._metadata.transform.mock_calls[0]
+    _, args, kwargs = model._metadata.transform.mock_calls[0]
     assert args[0].equals(conditions_df)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
@@ -139,7 +139,7 @@ def test_sample_batches_transform_conditions_correctly():
     output = model.sample(5, conditions=conditions, graceful_reject_sampling=True)
 
     # Assert
-    func_name, args, kwargs = model._metadata.transform.mock_calls[0]
+    _, args, kwargs = model._metadata.transform.mock_calls[0]
     assert args[0].equals(conditions_df)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()

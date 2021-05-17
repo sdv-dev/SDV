@@ -83,7 +83,7 @@ class TestTable:
 
     def test_transform_calls__transform_constraints(self):
         """Test that the `transform` method calls `_transform_constraints` with right parameters
-        
+
         The ``transform`` method is expected to call the ``_transform_constraints`` method
         with the data and correct value for ``on_missing_column``.
 
@@ -108,7 +108,15 @@ class TestTable:
         Table.transform(table_mock, data, 'error')
 
         # Assert
-        table_mock._transform_constraints.assert_called_once_with(data, 'error')
+        expectedData = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        mock_calls = table_mock._transform_constraints.mock_calls
+        args = mock_calls[0][1]
+        assert len(mock_calls) == 1
+        assert args[0].equals(expectedData)
+        assert args[1] == 'error'
 
     def test__transform_constraints(self):
         """Test that method correctly transforms data based on constraints
@@ -192,10 +200,12 @@ class TestTable:
         constraint_mock.constraint_columns = ['item 0']
         table_mock = Mock()
         table_mock._constraints = [constraint_mock]
-        expected_result = data.drop(['item 0'], axis=1)
 
         # Run
         result = Table._transform_constraints(table_mock, data, 'drop')
 
         # Assert
+        expected_result = pd.DataFrame({
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
         assert result.equals(expected_result)

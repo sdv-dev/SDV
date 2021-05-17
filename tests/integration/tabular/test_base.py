@@ -1,7 +1,8 @@
-from unittest.mock import Mock
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import UniqueCombinations
 from sdv.tabular.copulagan import CopulaGAN
@@ -91,12 +92,22 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
     with pytest.raises(ValueError):
         model.sample(conditions=conditions)
 
-def test_conditional_sampling_properly_handles_constraints():
+
+@patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+       spec_set=GaussianMultivariate)
+def test_conditional_sampling_properly_handles_constraints(gm_mock):
     """Test that the ``sample`` method handles constraints with conditions.
 
     The ``sample`` method is expected to properly apply constraint
     transformations by dropping columns that cannot be conditonally sampled
-    on due to them being part of a constraint.
+    on, due to them being part of a constraint.
+
+    Setup:
+    - The model is being passed a ``UniqueCombination`` constraint and then
+    asked to sample with two conditions, one of which the constraint depends on.
+    The constraint is expected to skip its transformations since only some of
+    the columns are provided by the conditions and the model will use reject
+    sampling to meet the constraint instead.
 
     Input:
     - Conditions
@@ -113,22 +124,24 @@ def test_conditional_sampling_properly_handles_constraints():
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
         'age': [27, 28, 26, 21, 30]
     })
-    model = GaussianCopula(constraints=[constraint])
-    conditions = {'age': 30, 'state': 'CA'}
-    reverse_transformed_data = pd.DataFrame({
-        'city': ['LA', 'SF', 'SF', 'LA', 'LA'],
-        'state': ['CA', 'CA', 'CA', 'CA', 'CA'],
+    model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
+    sampled_data = [pd.DataFrame({
+        'city#state': [0, 1, 2, 0, 0],
         'age': [30, 30, 30, 30, 30]
-    })
-    expected_transformed_conditions = {'age': 30}
+    }), pd.DataFrame({
+        'city#state': [1],
+        'age': [30]
+    })]
+    gm_mock.return_value.sample.side_effect = sampled_data
     model.fit(data)
-    model._model.sample = Mock()
-    model._model.sample.return_value = pd.DataFrame()
-    model._metadata.reverse_transform = Mock()
-    model._metadata.reverse_transform.return_value = reverse_transformed_data
 
     # Run
-    sampled_data = model.sample(5, conditions=conditions)
+    conditions = {'age': 30, 'state': 'CA'}
+    model.sample(5, conditions=conditions)
 
     # Assert
-    model._model.sample.assert_called_once_with(5, conditions=expected_transformed_conditions)
+    expected_transformed_conditions = {'age': 30}
+    sample_calls = model._model.sample.mock_calls
+    assert len(sample_calls) == 2
+    model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
+    model._model.sample.assert_any_call(1, conditions=expected_transformed_conditions)
