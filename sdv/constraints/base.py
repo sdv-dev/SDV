@@ -6,6 +6,8 @@ import inspect
 import logging
 
 import pandas as pd
+from copulas.multivariate.gaussian import GaussianMultivariate
+from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
 
@@ -103,6 +105,7 @@ class Constraint(metaclass=ConstraintMeta):
     """
 
     constraint_columns = ()
+    _hyper_transformer = None
     _columns_model = None
 
     def _identity(self, table_data):
@@ -133,12 +136,15 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        from sdv.tabular import GaussianCopula
 
         if not self.disable_columns_model:
             data_to_model = table_data[list(self.constraint_columns)]
-            self._columns_model = GaussianCopula()
-            self._columns_model.fit(data_to_model)
+            self._hyper_transformer = HyperTransformer(dtype_transformers={
+                'O': 'one_hot_encoding',
+            })
+            transformed_data = self._hyper_transformer.fit_transform(data_to_model)
+            self._columns_model = GaussianMultivariate()
+            self._columns_model.fit(transformed_data)
 
         return self._fit(table_data)
 
@@ -174,8 +180,12 @@ class Constraint(metaclass=ConstraintMeta):
             raise MissingConstraintColumnError()
 
         condition_columns = [col for col in self.constraint_columns if col in table_data.columns]
-        conditions = table_data[condition_columns]
-        return self._columns_model.sample(conditions=conditions)
+        conditions = self._hyper_transformer.transform(table_data[condition_columns])
+        sampled_data = conditions.apply(lambda d: self._columns_model.sample(
+            conditions=d.to_dict()).iloc[0], axis=1)
+        sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
+        sampled_data[condition_columns] = conditions
+        return sampled_data
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
