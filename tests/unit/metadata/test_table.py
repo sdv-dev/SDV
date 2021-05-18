@@ -108,14 +108,14 @@ class TestTable:
         Table.transform(table_mock, data, 'error')
 
         # Assert
-        expectedData = pd.DataFrame({
+        expected_data = pd.DataFrame({
             'item 0': [0, 1, 2],
             'item 1': [True, True, False]
         }, index=[0, 1, 2])
         mock_calls = table_mock._transform_constraints.mock_calls
         args = mock_calls[0][1]
         assert len(mock_calls) == 1
-        assert args[0].equals(expectedData)
+        assert args[0].equals(expected_data)
         assert args[1] == 'error'
 
     def test__transform_constraints(self):

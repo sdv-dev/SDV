@@ -125,23 +125,29 @@ def test_conditional_sampling_properly_handles_constraints(gm_mock):
         'age': [27, 28, 26, 21, 30]
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
-    sampled_data = [pd.DataFrame({
+    sampled_numeric_data = [pd.DataFrame({
         'city#state': [0, 1, 2, 0, 0],
         'age': [30, 30, 30, 30, 30]
     }), pd.DataFrame({
         'city#state': [1],
         'age': [30]
     })]
-    gm_mock.return_value.sample.side_effect = sampled_data
+    gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
 
     # Run
     conditions = {'age': 30, 'state': 'CA'}
-    model.sample(5, conditions=conditions)
+    sampled_data = model.sample(5, conditions=conditions)
 
     # Assert
     expected_transformed_conditions = {'age': 30}
+    expected_data = pd.DataFrame({
+        'city': ['LA', 'SF', 'LA', 'LA', 'SF'],
+        'state': ['CA', 'CA', 'CA', 'CA', 'CA'],
+        'age': [30, 30, 30, 30, 30]
+    })
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) == 2
     model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
     model._model.sample.assert_any_call(1, conditions=expected_transformed_conditions)
+    assert sampled_data.equals(expected_data)
