@@ -117,7 +117,8 @@ def test_conditional_sampling_properly_handles_constraints(gm_mock):
     # Setup
     constraint = UniqueCombinations(
         columns=['city', 'state'],
-        handling_strategy='transform'
+        handling_strategy='transform',
+        disable_columns_model=True
     )
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],

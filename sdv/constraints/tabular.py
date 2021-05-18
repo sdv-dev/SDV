@@ -74,10 +74,11 @@ class UniqueCombinations(Constraint):
     _separator = None
     _joint_column = None
 
-    def __init__(self, columns, handling_strategy='transform'):
+    def __init__(self, columns, handling_strategy='transform', disable_columns_model=False):
         self._columns = columns
         self.constraint_columns = tuple(columns)
-        super().__init__(handling_strategy)
+        super().__init__(handling_strategy=handling_strategy,
+                         disable_columns_model=disable_columns_model)
 
     def _valid_separator(self, table_data):
         """Return True if separator is valid for this data.
@@ -211,12 +212,14 @@ class GreaterThan(Constraint):
             or ``reject_sampling``. Defaults to ``transform``.
     """
 
-    def __init__(self, low, high, strict=False, handling_strategy='transform'):
+    def __init__(self, low, high, strict=False, handling_strategy='transform',
+                 disable_columns_model=False):
         self._low = low
         self._high = high
         self._strict = strict
         self.constraint_columns = (low, high)
-        super().__init__(handling_strategy)
+        super().__init__(handling_strategy=handling_strategy,
+                         disable_columns_model=disable_columns_model)
 
     def _fit(self, table_data):
         """Learn the dtype of the high column.

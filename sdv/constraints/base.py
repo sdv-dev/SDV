@@ -184,7 +184,6 @@ class Constraint(metaclass=ConstraintMeta):
         sampled_data = conditions.apply(lambda d: self._columns_model.sample(
             conditions=d.to_dict()).iloc[0], axis=1)
         sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
-        sampled_data[condition_columns] = conditions
         return sampled_data
 
     def transform(self, table_data):
