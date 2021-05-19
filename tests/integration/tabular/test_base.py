@@ -100,8 +100,8 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
 
     The ``sample`` method is expected to properly apply constraint
     transformations by dropping columns that cannot be conditonally sampled
-    on due to them being part of a constraint if ``disable_columns_model``
-    is True.
+    on due to them being part of a constraint if ``fit_columns_model``
+    is False.
 
     Setup:
     - The model is being passed a ``UniqueCombination`` constraint and then
@@ -119,7 +119,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     constraint = UniqueCombinations(
         columns=['city', 'state'],
         handling_strategy='transform',
-        disable_columns_model=True
+        fit_columns_model=False
     )
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
@@ -152,7 +152,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     assert len(sample_calls) == 2
     model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
     model._model.sample.assert_any_call(1, conditions=expected_transformed_conditions)
-    assert sampled_data.equals(expected_data)
+    pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
@@ -162,7 +162,7 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
 
     The ``sample`` method is expected to properly apply constraint
     transformations by sampling the missing columns for the constraint
-    if ``disable_columns_model`` is False.
+    if ``fit_columns_model`` is True.
 
     Setup:
     - The model is being passed a ``UniqueCombination`` constraint and then
@@ -212,6 +212,6 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     assert sample_calls[1][2]['conditions']['age'] == 30
     assert 'city#state' in sample_calls[0][2]['conditions']
     assert 'city#state' in sample_calls[1][2]['conditions']
-    assert sampled_data['age'].equals(expected_ages)
-    assert sampled_data['state'].equals(expected_states)
+    pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
+    pd.testing.assert_series_equal(sampled_data['state'], expected_states)
     assert all(c in ('SF', 'LA') for c in sampled_data['city'])

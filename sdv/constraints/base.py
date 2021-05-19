@@ -98,8 +98,8 @@ class Constraint(metaclass=ConstraintMeta):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``.
-        disable_columns_model (bool):
-            If True, reject sampling will be used to handle conditional sampling.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
             Otherwise, a model will be trained and used to sample other columns
             based on the conditioned column.
     """
@@ -111,8 +111,8 @@ class Constraint(metaclass=ConstraintMeta):
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self, handling_strategy, disable_columns_model=False):
-        self.disable_columns_model = disable_columns_model
+    def __init__(self, handling_strategy, fit_columns_model=True):
+        self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
@@ -127,7 +127,7 @@ class Constraint(metaclass=ConstraintMeta):
     def fit(self, table_data):
         """Fit ``Constraint`` class to data.
 
-        If ``disable_columns_model`` is False, then this method will fit
+        If ``fit_columns_model`` is True, then this method will fit
         a ``GaussianCopula`` model to the relevant columns in ``table_data``.
         Subclasses can overwrite this method, or overwrite the ``_fit`` method
         if they will not be needing the model to handle conditional sampling.
@@ -136,7 +136,7 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        if not self.disable_columns_model:
+        if self.fit_columns_model and len(self.constraint_columns) > 1:
             data_to_model = table_data[list(self.constraint_columns)]
             self._hyper_transformer = HyperTransformer(dtype_transformers={
                 'O': 'one_hot_encoding',
@@ -153,10 +153,10 @@ class Constraint(metaclass=ConstraintMeta):
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
-        If ``disable_columns_model`` is True and any columns in ``constraint_columns``
+        If ``fit_columns_model`` is False and any columns in ``constraint_columns``
         are not present in ``table_data``, this method will raise a
         ``MissingConstraintColumnError``. Otherwise it will return the ``table_data``
-        unchanged. If ``disable_columns_model`` is False, then this method will sample
+        unchanged. If ``fit_columns_model`` is True, then this method will sample
         any missing ``constraint_columns`` from its model conditioned on the
         ``constraint_columns`` that ``table_data`` does contain. If ``table_data``
         doesn't contain any of the ``constraint_columns`` then a
@@ -166,7 +166,7 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        if self.disable_columns_model:
+        if not self.fit_columns_model:
             if any(col not in table_data.columns for col in self.constraint_columns):
                 raise MissingConstraintColumnError()
             return table_data

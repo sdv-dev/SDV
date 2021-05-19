@@ -231,7 +231,7 @@ class TestConstraint():
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
         })
-        instance = Constraint(handling_strategy='transform', disable_columns_model=True)
+        instance = Constraint(handling_strategy='transform', fit_columns_model=False)
         instance._fit = Mock()
 
         # Run
@@ -246,8 +246,8 @@ class TestConstraint():
     def test_fit_trains_column_model(self, ht_mock, gm_mock):
         """Test the ``Constraint.fit`` method trains the column model.
 
-        When ``disable_columns_model`` is False, the ``Constraint.fit``
-        method is expected to:
+        When ``fit_columns_model`` is True and there are multiple ``constraint_columns``,
+        the ``Constraint.fit`` method is expected to:
         - Call ``_fit`` method.
         - Create ``_hyper_transformer``.
         - Create ``_column_model`` and train it.
@@ -257,10 +257,11 @@ class TestConstraint():
         """
         # Setup
         table_data = pd.DataFrame({
-            'a': [1, 2, 3]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
         })
         instance = Constraint(handling_strategy='transform')
-        instance.constraint_columns = ('a',)
+        instance.constraint_columns = ('a', 'b')
 
         # Run
         instance.fit(table_data)
@@ -270,7 +271,7 @@ class TestConstraint():
         calls = ht_mock.return_value.fit_transform.mock_calls
         args = calls[0][1]
         assert len(calls) == 1
-        assert args[0].equals(table_data)
+        pd.testing.assert_frame_equal(args[0], table_data)
 
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
@@ -305,7 +306,7 @@ class TestConstraint():
         """
         # Setup
         constraint_mock = Mock()
-        constraint_mock.disable_columns_model = True
+        constraint_mock.fit_columns_model = False
         constraint_mock._transform.return_value = 'the_transformed_data'
         constraint_mock._validate_columns.return_value = pd.DataFrame()
 
@@ -318,14 +319,14 @@ class TestConstraint():
     def test_transform_invalid_table_data_model_disabled(self):
         """Test the ``Constraint.transform`` method with invalid data.
 
-        If ``table_data`` is invalid and ``disable_columns_model`` is True,
+        If ``table_data`` is invalid and ``fit_columns_model`` is False,
         it should raise a ``MissingConstraintColumnError``.
 
         The ``Constraint.transform`` method is expected to:
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform', disable_columns_model=True)
+        instance = Constraint(handling_strategy='transform', fit_columns_model=False)
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -337,7 +338,7 @@ class TestConstraint():
         """Test the ``Constraint.transform`` method with missing columns.
 
         If ``table_data`` is missing all of the ``constraint_columns`` and
-        ``disable_columns_model`` is False, it should raise a
+        ``fit_columns_model`` is True, it should raise a
         ``MissingConstraintColumnError``.
 
         The ``Constraint.transform`` method is expected to:
@@ -394,7 +395,7 @@ class TestConstraint():
         instance._columns_model.sample.assert_any_call(conditions={'b': 1})
         instance._columns_model.sample.assert_any_call(conditions={'b': 3})
         instance._hyper_transformer.reverse_transform.assert_called_once()
-        assert transformed_data.equals(expected_result)
+        pd.testing.assert_frame_equal(transformed_data, expected_result)
 
     def test_fit_transform(self):
         """Test the ``Constraint.fit_transform`` method.
