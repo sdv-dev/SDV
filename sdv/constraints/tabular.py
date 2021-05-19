@@ -40,6 +40,7 @@ class CustomConstraint(Constraint):
     """
 
     def __init__(self, transform=None, reverse_transform=None, is_valid=None):
+        self.disable_columns_model = True
         if transform is not None:
             self.transform = import_object(transform)
 
@@ -325,7 +326,7 @@ class ColumnFormula(Constraint):
     def __init__(self, column, formula, handling_strategy='transform'):
         self._column = column
         self._formula = import_object(formula)
-        super().__init__(handling_strategy)
+        super().__init__(handling_strategy, disable_columns_model=True)
 
     def is_valid(self, table_data):
         """Say whether the data fulfills the formula.

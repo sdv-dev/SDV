@@ -15,13 +15,15 @@ def test_constraints(tmpdir):
 
     unique_company_department_constraint = UniqueCombinations(
         columns=['company', 'department'],
-        handling_strategy='transform'
+        handling_strategy='transform',
+        disable_columns_model=True
     )
 
     age_gt_age_when_joined_constraint = GreaterThan(
         low='age_when_joined',
         high='age',
-        handling_strategy='reject_sampling'
+        handling_strategy='reject_sampling',
+        disable_columns_model=True
     )
 
     years_in_the_company_constraint = ColumnFormula(
