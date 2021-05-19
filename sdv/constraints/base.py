@@ -179,11 +179,13 @@ class Constraint(metaclass=ConstraintMeta):
         if all(col in missing_columns for col in self.constraint_columns):
             raise MissingConstraintColumnError()
 
-        condition_columns = [col for col in self.constraint_columns if col in table_data.columns]
+        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
+        unrelated_columns = [c for c in table_data.columns if c not in self.constraint_columns]
         conditions = self._hyper_transformer.transform(table_data[condition_columns])
         sampled_data = conditions.apply(lambda d: self._columns_model.sample(
             conditions=d.to_dict()).iloc[0], axis=1)
         sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
+        sampled_data[unrelated_columns] = table_data[unrelated_columns]
         return sampled_data
 
     def transform(self, table_data):
