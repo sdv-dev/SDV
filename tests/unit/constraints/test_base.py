@@ -284,7 +284,7 @@ class TestConstraint():
         # Run
         instance = Constraint(handling_strategy='transform')
         instance._transform = lambda x: x
-        instance._constraint_columns = ('a')
+        instance.constraint_columns = ('a',)
 
         # Assert
         with pytest.raises(MissingConstraintColumnError):

@@ -76,7 +76,7 @@ class UniqueCombinations(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
-        self._constraint_columns = tuple(columns)
+        self.constraint_columns = tuple(columns)
         super().__init__(handling_strategy)
 
     def _valid_separator(self, table_data):
@@ -215,7 +215,7 @@ class GreaterThan(Constraint):
         self._low = low
         self._high = high
         self._strict = strict
-        self._constraint_columns = (low, high)
+        self.constraint_columns = (low, high)
         super().__init__(handling_strategy)
 
     def fit(self, table_data):

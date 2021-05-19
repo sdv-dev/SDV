@@ -10,6 +10,7 @@ import rdt
 from faker import Faker
 
 from sdv.constraints.base import Constraint
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -494,12 +495,34 @@ class Table:
         self._fit_hyper_transformer(constrained, extra_columns)
         self.fitted = True
 
-    def transform(self, data):
+    def _transform_constraints(self, data, on_missing_column='error'):
+        for constraint in self._constraints:
+            try:
+                data = constraint.transform(data)
+            except MissingConstraintColumnError:
+                if on_missing_column == 'error':
+                    raise MissingConstraintColumnError()
+
+                elif on_missing_column == 'drop':
+                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
+                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
+                    data = data.drop(columns_to_drop, axis=1)
+
+                else:
+                    raise ValueError('on_missing_column must be \'drop\' or \'error\'')
+
+        return data
+
+    def transform(self, data, on_missing_column='error'):
         """Transform the given data.
 
         Args:
             data (pandas.DataFrame):
                 Table data.
+            on_missing_column (str):
+                If the value is error, then a `MissingConstraintColumnError` is raised.
+                If the value is drop, then the columns involved in the constraint that
+                are present in data will be dropped.
 
         Returns:
             pandas.DataFrame:
@@ -513,8 +536,7 @@ class Table:
         data = self._anonymize(data[fields])
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
-        for constraint in self._constraints:
-            data = constraint.transform(data)
+        data = self._transform_constraints(data, on_missing_column)
 
         LOGGER.debug('Transforming table %s', self.name)
         return self._hyper_transformer.transform(data)
