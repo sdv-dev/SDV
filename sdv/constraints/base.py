@@ -136,7 +136,6 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-
         if not self.disable_columns_model:
             data_to_model = table_data[list(self.constraint_columns)]
             self._hyper_transformer = HyperTransformer(dtype_transformers={
