@@ -316,11 +316,11 @@ class TestConstraint():
         # Assert
         assert output == 'the_transformed_data'
 
-    def test_transform_invalid_table_data_model_disabled(self):
+    def test_transform_model_disabled_any_columns_missing(self):
         """Test the ``Constraint.transform`` method with invalid data.
 
-        If ``table_data`` is invalid and ``fit_columns_model`` is False,
-        it should raise a ``MissingConstraintColumnError``.
+        If ``table_data`` is missing any columns and ``fit_columns_model``
+        is False, it should raise a ``MissingConstraintColumnError``.
 
         The ``Constraint.transform`` method is expected to:
         - Raise ``MissingConstraintColumnError``.
@@ -371,15 +371,18 @@ class TestConstraint():
         instance.constraint_columns = ('a', 'b')
         instance._hyper_transformer = Mock()
         instance._columns_model = Mock()
-        transformed_conditions = pd.DataFrame([
+        conditions = pd.DataFrame([
             [5, 1, 2], [6, 3, 4]
         ], columns=['a', 'b', 'c'])
-        condition_column = pd.DataFrame([[1], [3]], columns=['b'])
+        transformed_conditions = [
+            pd.DataFrame([[1]], columns=['b']),
+            pd.DataFrame([[3]], columns=['b'])
+        ]
         instance._columns_model.sample.return_value = pd.DataFrame([
             [1, 2, 3]
         ], columns=['b', 'c', 'a'])
-        instance._hyper_transformer.transform.return_value = condition_column
-        instance._hyper_transformer.reverse_transform.return_value = transformed_conditions
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform.return_value = conditions
 
         # Run
         data = pd.DataFrame([[1, 2], [3, 4]], columns=['b', 'c'])
@@ -392,8 +395,8 @@ class TestConstraint():
         ], columns=['a', 'b', 'c'])
         model_calls = instance._columns_model.sample.mock_calls
         assert len(model_calls) == 2
-        instance._columns_model.sample.assert_any_call(conditions={'b': 1})
-        instance._columns_model.sample.assert_any_call(conditions={'b': 3})
+        instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 1})
+        instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 3})
         instance._hyper_transformer.reverse_transform.assert_called_once()
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 

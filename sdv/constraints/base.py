@@ -150,6 +150,24 @@ class Constraint(metaclass=ConstraintMeta):
     def _transform(self, table_data):
         return table_data
 
+    def _sample_constraint_columns(self, table_data):
+        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
+        grouped_conditions = table_data[condition_columns].groupby(condition_columns)
+        sampled_rows = list()
+        for group, df in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
+
+            transformed_condition = self._hyper_transformer.transform(df).loc[0].to_dict()
+            sampled_row = self._columns_model.sample(
+                num_rows=df.shape[0],
+                conditions=transformed_condition
+            )
+            sampled_rows.append(sampled_row)
+        sampled_data = pd.concat(sampled_rows)
+        sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
+        return sampled_data
+
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
@@ -166,26 +184,19 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        if not self.fit_columns_model:
-            if any(col not in table_data.columns for col in self.constraint_columns):
-                raise MissingConstraintColumnError()
-            return table_data
-
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            all_columns_missing = all(c in missing_columns for c in self.constraint_columns)
+            if self._columns_model is None or all_columns_missing:
+                raise MissingConstraintColumnError()
 
-        if len(missing_columns) == 0:
-            return table_data
-        if all(col in missing_columns for col in self.constraint_columns):
-            raise MissingConstraintColumnError()
+            else:
+                sampled_data = self._sample_constraint_columns(table_data)
+                other_columns = [c for c in table_data.columns if c not in self.constraint_columns]
+                sampled_data[other_columns] = table_data[other_columns]
+                return sampled_data
 
-        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        unrelated_columns = [c for c in table_data.columns if c not in self.constraint_columns]
-        conditions = self._hyper_transformer.transform(table_data[condition_columns])
-        sampled_data = conditions.apply(lambda d: self._columns_model.sample(
-            conditions=d.to_dict()).iloc[0], axis=1)
-        sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
-        sampled_data[unrelated_columns] = table_data[unrelated_columns]
-        return sampled_data
+        return table_data
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
