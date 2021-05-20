@@ -164,6 +164,7 @@ class Constraint(metaclass=ConstraintMeta):
                 conditions=transformed_condition
             )
             sampled_rows.append(sampled_row)
+
         sampled_data = pd.concat(sampled_rows)
         sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
         return sampled_data
@@ -186,7 +187,7 @@ class Constraint(metaclass=ConstraintMeta):
         """
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
-            all_columns_missing = all(c in missing_columns for c in self.constraint_columns)
+            all_columns_missing = len(missing_columns) == len(self.constraint_columns)
             if self._columns_model is None or all_columns_missing:
                 raise MissingConstraintColumnError()
 
