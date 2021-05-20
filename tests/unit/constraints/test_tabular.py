@@ -284,8 +284,8 @@ class TestUniqueCombinations():
     def test_transform_not_all_columns_provided(self):
         """Test the ``UniqueCombinations.transform`` method.
 
-        If some of the columns needed for the transform are missing, it will raise
-        a ``MissingConstraintColumnError``.
+        If some of the columns needed for the transform are missing, and
+        ``fit_columns_model`` is False, it will raise a ``MissingConstraintColumnError``.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -299,7 +299,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = UniqueCombinations(columns=columns, fit_columns_model=False)
         instance.fit(table_data)
 
         # Run/Assert
@@ -627,7 +627,7 @@ class TestGreaterThan():
         - Raises ``MissingConstraintColumnError``.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
+        instance = GreaterThan(low='a', high='b', strict=True, fit_columns_model=False)
 
         # Run/Assert
         with pytest.raises(MissingConstraintColumnError):
