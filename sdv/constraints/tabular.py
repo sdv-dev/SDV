@@ -40,6 +40,7 @@ class CustomConstraint(Constraint):
     """
 
     def __init__(self, transform=None, reverse_transform=None, is_valid=None):
+        self.fit_columns_model = False
         if transform is not None:
             self.transform = import_object(transform)
 
@@ -74,9 +75,11 @@ class UniqueCombinations(Constraint):
     _separator = None
     _joint_column = None
 
-    def __init__(self, columns, handling_strategy='transform'):
+    def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
         self._columns = columns
-        super().__init__(handling_strategy)
+        self.constraint_columns = tuple(columns)
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
 
     def _valid_separator(self, table_data):
         """Return True if separator is valid for this data.
@@ -103,7 +106,7 @@ class UniqueCombinations(Constraint):
 
         return True
 
-    def fit(self, table_data):
+    def _fit(self, table_data):
         """Fit this Constraint to the data.
 
         The fit process consists on:
@@ -143,7 +146,7 @@ class UniqueCombinations(Constraint):
         )
         return merged[self._joint_column] == 'both'
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on removing all the ``self._columns`` from
@@ -210,13 +213,16 @@ class GreaterThan(Constraint):
             or ``reject_sampling``. Defaults to ``transform``.
     """
 
-    def __init__(self, low, high, strict=False, handling_strategy='transform'):
+    def __init__(self, low, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True):
         self._low = low
         self._high = high
         self._strict = strict
-        super().__init__(handling_strategy)
+        self.constraint_columns = (low, high)
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
 
-    def fit(self, table_data):
+    def _fit(self, table_data):
         """Learn the dtype of the high column.
 
         Args:
@@ -241,7 +247,7 @@ class GreaterThan(Constraint):
 
         return table_data[self._high] >= table_data[self._low]
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on replacing the ``high`` value with difference
@@ -320,7 +326,7 @@ class ColumnFormula(Constraint):
     def __init__(self, column, formula, handling_strategy='transform'):
         self._column = column
         self._formula = import_object(formula)
-        super().__init__(handling_strategy)
+        super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
         """Say whether the data fulfills the formula.

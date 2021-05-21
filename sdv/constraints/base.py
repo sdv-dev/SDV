@@ -6,6 +6,10 @@ import inspect
 import logging
 
 import pandas as pd
+from copulas.multivariate.gaussian import GaussianMultivariate
+from rdt import HyperTransformer
+
+from sdv.constraints.errors import MissingConstraintColumnError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,12 +98,21 @@ class Constraint(metaclass=ConstraintMeta):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column.
     """
+
+    constraint_columns = ()
+    _hyper_transformer = None
+    _columns_model = None
 
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self, handling_strategy):
+    def __init__(self, handling_strategy, fit_columns_model=True):
+        self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
@@ -108,17 +121,93 @@ class Constraint(metaclass=ConstraintMeta):
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
 
+    def _fit(self, table_data):
+        del table_data
+
     def fit(self, table_data):
-        """No-op method written for completion. To be optionally overwritten by subclasses.
+        """Fit ``Constraint`` class to data.
+
+        If ``fit_columns_model`` is True, then this method will fit
+        a ``GaussianCopula`` model to the relevant columns in ``table_data``.
+        Subclasses can overwrite this method, or overwrite the ``_fit`` method
+        if they will not be needing the model to handle conditional sampling.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
-        del table_data
+        if self.fit_columns_model and len(self.constraint_columns) > 1:
+            data_to_model = table_data[list(self.constraint_columns)]
+            self._hyper_transformer = HyperTransformer(dtype_transformers={
+                'O': 'one_hot_encoding',
+            })
+            transformed_data = self._hyper_transformer.fit_transform(data_to_model)
+            self._columns_model = GaussianMultivariate()
+            self._columns_model.fit(transformed_data)
+
+        return self._fit(table_data)
+
+    def _transform(self, table_data):
+        return table_data
+
+    def _sample_constraint_columns(self, table_data):
+        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
+        grouped_conditions = table_data[condition_columns].groupby(condition_columns)
+        sampled_rows = list()
+        for group, df in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
+
+            transformed_condition = self._hyper_transformer.transform(df).loc[0].to_dict()
+            sampled_row = self._columns_model.sample(
+                num_rows=df.shape[0],
+                conditions=transformed_condition
+            )
+            sampled_rows.append(sampled_row)
+
+        sampled_data = pd.concat(sampled_rows)
+        sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
+        return sampled_data
+
+    def _validate_constraint_columns(self, table_data):
+        """Validate the columns in ``table_data``.
+
+        If ``fit_columns_model`` is False and any columns in ``constraint_columns``
+        are not present in ``table_data``, this method will raise a
+        ``MissingConstraintColumnError``. Otherwise it will return the ``table_data``
+        unchanged. If ``fit_columns_model`` is True, then this method will sample
+        any missing ``constraint_columns`` from its model conditioned on the
+        ``constraint_columns`` that ``table_data`` does contain. If ``table_data``
+        doesn't contain any of the ``constraint_columns`` then a
+        ``MissingConstraintColumnError`` will be raised.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            all_columns_missing = len(missing_columns) == len(self.constraint_columns)
+            if self._columns_model is None or all_columns_missing:
+                raise MissingConstraintColumnError()
+
+            else:
+                sampled_data = self._sample_constraint_columns(table_data)
+                other_columns = [c for c in table_data.columns if c not in self.constraint_columns]
+                sampled_data[other_columns] = table_data[other_columns]
+                return sampled_data
+
+        return table_data
 
     def transform(self, table_data):
-        """Identity method for completion. To be optionally overwritten by subclasses.
+        """Perform necessary transformations needed by constraint.
+
+        Subclasses can optionally overwrite this method. If the transformation
+        requires certain columns to be present in ``table_data``, then the subclass
+        should overwrite the ``_transform`` method instead. This method raises a
+        ``MissingConstraintColumnError`` if the ``table_data`` is missing any columns
+        needed to do the transformation. If columns are present, this method will call
+        the ``_transform`` method.
 
         Args:
             table_data (pandas.DataFrame):
@@ -128,7 +217,8 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        return table_data
+        table_data = self._validate_constraint_columns(table_data)
+        return self._transform(table_data)
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
