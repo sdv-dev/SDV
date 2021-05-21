@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.10.0 - 2021-05-21
+
+This release improves the constraint functionality by allowing constraints and conditions
+at the same time. Additional changes were made to update tutorials.
+
+### Issues resolved
+
+* Not able to use constraints and conditions in the same time - Issue [#379](https://github.com/sdv-dev/SDV/issues/379)
+by @amontanez24
+* Update benchmarking user guide for reading private datasets - Issue [#427](https://github.com/sdv-dev/SDV/issues/427)
+by @katxiao
+
 ## 0.9.1 - 2021-04-29
 
 This release broadens the constraint functionality by allowing for the `ColumnFormula`
