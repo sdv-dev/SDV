@@ -334,6 +334,37 @@ class BaseTabularModel:
 
         return conditions.copy()
 
+    def _conditionally_sample_rows(self, dataframe, max_retries, max_rows_multiplier,
+                                  condition, transformed_condition, float_rtol,
+                                  graceful_reject_sampling):
+        sampled_rows = self._sample_batch(
+            len(dataframe),
+            max_retries,
+            max_rows_multiplier,
+            condition,
+            transformed_condition,
+            float_rtol
+        )
+
+        if len(sampled_rows) < len(dataframe):
+            # Didn't get enough rows.
+            if len(sampled_rows) == 0:
+                error = 'No valid rows could be generated with the given conditions.'
+                raise ValueError(error)
+
+            elif not graceful_reject_sampling:
+                error = f'Could not get enough valid rows within {max_retries} trials.'
+                raise ValueError(error)
+
+            else:
+                warn(f'Only {len(sampled_rows)} rows could '
+                    f'be sampled within {max_retries} trials.')
+
+        if len(sampled_rows) > 0:
+            sampled_rows['__condition_idx__'] = \
+                dataframe['__condition_idx__'].values[:len(sampled_rows)]
+        return sampled_rows
+
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
                conditions=None, float_rtol=0.01, graceful_reject_sampling=False):
         """Sample rows from this table.
@@ -387,6 +418,7 @@ class BaseTabularModel:
 
         transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         condition_columns = list(conditions.columns)
+        transformed_condition_columns = list(transformed_conditions.columns)
         conditions.index.name = '__condition_idx__'
         conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
@@ -398,40 +430,34 @@ class BaseTabularModel:
             if not isinstance(group, tuple):
                 group = [group]
 
-            condition_index = dataframe['__condition_idx__'].iloc[0]
-            if transformed_conditions.empty:
-                transformed_condition = None
-            else:
-                transformed_condition = transformed_conditions.loc[condition_index].to_dict()
-
+            condition_indices = dataframe['__condition_idx__']
             condition = dict(zip(condition_columns, group))
-            sampled_rows = self._sample_batch(
-                len(dataframe),
-                max_retries,
-                max_rows_multiplier,
-                condition,
-                transformed_condition,
-                float_rtol
-            )
-
-            if len(sampled_rows) < len(dataframe):
-                # Didn't get enough rows.
-                if len(sampled_rows) == 0:
-                    error = 'No valid rows could be generated with the given conditions.'
-                    raise ValueError(error)
-
-                elif not graceful_reject_sampling:
-                    error = f'Could not get enough valid rows within {max_retries} trials.'
-                    raise ValueError(error)
-
-                else:
-                    warn(f'Only {len(sampled_rows)} rows could '
-                         f'be sampled within {max_retries} trials.')
-
-            if len(sampled_rows) > 0:
-                sampled_rows['__condition_idx__'] = \
-                    dataframe['__condition_idx__'].values[:len(sampled_rows)]
+            if transformed_conditions.empty:
+                sampled_rows = self._conditionally_sample_rows(
+                    dataframe,
+                    max_retries,
+                    max_rows_multiplier,
+                    condition,
+                    None,
+                    float_rtol,
+                    graceful_reject_sampling
+                )
                 all_sampled_rows.append(sampled_rows)
+            else:
+                transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
+                transformed_groups = transformed_conditions_in_group.groupby(transformed_condition_columns)
+                for transformed_group, transformed_dataframe in transformed_groups:
+                    transformed_condition = dict(zip(transformed_condition_columns, transformed_group))
+                    sampled_rows = self._conditionally_sample_rows(
+                        transformed_dataframe,
+                        max_retries,
+                        max_rows_multiplier,
+                        condition,
+                        transformed_condition,
+                        float_rtol,
+                        graceful_reject_sampling
+                    )
+                    all_sampled_rows.append(sampled_rows)
 
         all_sampled_rows = pd.concat(all_sampled_rows)
         all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
