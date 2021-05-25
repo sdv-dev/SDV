@@ -335,8 +335,8 @@ class BaseTabularModel:
         return conditions.copy()
 
     def _conditionally_sample_rows(self, dataframe, max_retries, max_rows_multiplier,
-                                  condition, transformed_condition, float_rtol,
-                                  graceful_reject_sampling):
+                                   condition, transformed_condition, float_rtol,
+                                   graceful_reject_sampling):
         sampled_rows = self._sample_batch(
             len(dataframe),
             max_retries,
@@ -358,7 +358,7 @@ class BaseTabularModel:
 
             else:
                 warn(f'Only {len(sampled_rows)} rows could '
-                    f'be sampled within {max_retries} trials.')
+                     f'be sampled within {max_retries} trials.')
 
         if len(sampled_rows) > 0:
             sampled_rows['__condition_idx__'] = \
@@ -418,7 +418,7 @@ class BaseTabularModel:
 
         transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         condition_columns = list(conditions.columns)
-        transformed_condition_columns = list(transformed_conditions.columns)
+        transformed_columns = list(transformed_conditions.columns)
         conditions.index.name = '__condition_idx__'
         conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
@@ -445,9 +445,9 @@ class BaseTabularModel:
                 all_sampled_rows.append(sampled_rows)
             else:
                 transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
-                transformed_groups = transformed_conditions_in_group.groupby(transformed_condition_columns)
+                transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
                 for transformed_group, transformed_dataframe in transformed_groups:
-                    transformed_condition = dict(zip(transformed_condition_columns, transformed_group))
+                    transformed_condition = dict(zip(transformed_columns, transformed_group))
                     sampled_rows = self._conditionally_sample_rows(
                         transformed_dataframe,
                         max_retries,
