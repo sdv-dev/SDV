@@ -97,8 +97,8 @@ def test_sample_batches_transform_conditions_correctly():
     """Test that transformed conditions are batched correctly.
 
     The ``Sample`` method is expected to:
-    - Return sampled data and call ``_sample_batch`` for every grouped condition
-    value with the correct transformed condition.
+    - Return sampled data and call ``_sample_batch`` for every unique transformed
+    condition group.
 
     Input:
     - Number of rows to sample
@@ -122,12 +122,22 @@ def test_sample_batches_transform_conditions_correctly():
         [0, 25], [1, 25], [2, 25], [3, 30], [4, 30]
     ], columns=['__condition_idx__', 'column1'])
     model._sample_batch = Mock()
-    expected_output = pd.DataFrame({
-        'column1': [28, 28],
-        'column2': [37, 37],
-        'column3': [93, 93],
-    })
-    model._sample_batch.return_value = expected_output
+    expected_outputs = [
+        pd.DataFrame({
+            'column1': [25, 25, 25],
+            'column2': [37, 37, 37],
+            'column3': [93, 93, 93],
+        }), pd.DataFrame({
+            'column1': [30],
+            'column2': [37],
+            'column3': [93],
+        }), pd.DataFrame({
+            'column1': [30],
+            'column2': [37],
+            'column3': [93],
+        })
+    ]
+    model._sample_batch.side_effect = expected_outputs
     model.fit(data)
     model._metadata = Mock()
     model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
@@ -136,17 +146,19 @@ def test_sample_batches_transform_conditions_correctly():
     ], columns=['transformed_column'])
 
     # Run
-    output = model.sample(5, conditions=conditions, graceful_reject_sampling=True)
+    model.sample(5, conditions=conditions, graceful_reject_sampling=True)
 
     # Assert
     _, args, kwargs = model._metadata.transform.mock_calls[0]
-    assert args[0].equals(conditions_df)
+    pd.testing.assert_frame_equal(args[0], conditions_df)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
         3, 100, 10, {'column1': 25}, {'transformed_column': 50}, 0.01
     )
     model._sample_batch.assert_any_call(
-        2, 100, 10, {'column1': 30}, {'transformed_column': 60}, 0.01
+        1, 100, 10, {'column1': 30}, {'transformed_column': 60}, 0.01
     )
-    assert output.equals(expected_output)
+    model._sample_batch.assert_any_call(
+        1, 100, 10, {'column1': 30}, {'transformed_column': 70}, 0.01
+    )

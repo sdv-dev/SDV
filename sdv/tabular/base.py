@@ -421,6 +421,8 @@ class BaseTabularModel:
         transformed_columns = list(transformed_conditions.columns)
         conditions.index.name = '__condition_idx__'
         conditions.reset_index(inplace=True)
+        transformed_conditions.index.name = '__condition_idx__'
+        transformed_conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
@@ -447,6 +449,8 @@ class BaseTabularModel:
                 transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
                 transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
                 for transformed_group, transformed_dataframe in transformed_groups:
+                    if not isinstance(transformed_group, tuple):
+                        transformed_group = [transformed_group]
                     transformed_condition = dict(zip(transformed_columns, transformed_group))
                     sampled_rows = self._conditionally_sample_rows(
                         transformed_dataframe,
