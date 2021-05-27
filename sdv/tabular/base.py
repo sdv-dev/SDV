@@ -2,6 +2,7 @@
 
 import logging
 import pickle
+import uuid
 from warnings import warn
 
 import numpy as np
@@ -10,6 +11,7 @@ import pandas as pd
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
+COND_IDX = str(uuid.uuid4())
 
 
 class NonParametricError(Exception):
@@ -337,16 +339,18 @@ class BaseTabularModel:
     def _conditionally_sample_rows(self, dataframe, max_retries, max_rows_multiplier,
                                    condition, transformed_condition, float_rtol,
                                    graceful_reject_sampling):
+        num_rows = len(dataframe)
         sampled_rows = self._sample_batch(
-            len(dataframe),
+            num_rows,
             max_retries,
             max_rows_multiplier,
             condition,
             transformed_condition,
             float_rtol
         )
+        num_sampled_rows = len(sampled_rows)
 
-        if len(sampled_rows) < len(dataframe):
+        if num_sampled_rows < num_rows:
             # Didn't get enough rows.
             if len(sampled_rows) == 0:
                 error = 'No valid rows could be generated with the given conditions.'
@@ -361,8 +365,8 @@ class BaseTabularModel:
                      f'be sampled within {max_retries} trials.')
 
         if len(sampled_rows) > 0:
-            sampled_rows['__condition_idx__'] = \
-                dataframe['__condition_idx__'].values[:len(sampled_rows)]
+            sampled_rows[COND_IDX] = \
+                dataframe[COND_IDX].values[:len(sampled_rows)]
         return sampled_rows
 
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
@@ -419,9 +423,9 @@ class BaseTabularModel:
         transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         condition_columns = list(conditions.columns)
         transformed_columns = list(transformed_conditions.columns)
-        conditions.index.name = '__condition_idx__'
+        conditions.index.name = COND_IDX
         conditions.reset_index(inplace=True)
-        transformed_conditions.index.name = '__condition_idx__'
+        transformed_conditions.index.name = COND_IDX
         transformed_conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
 
@@ -432,7 +436,7 @@ class BaseTabularModel:
             if not isinstance(group, tuple):
                 group = [group]
 
-            condition_indices = dataframe['__condition_idx__']
+            condition_indices = dataframe[COND_IDX]
             condition = dict(zip(condition_columns, group))
             if transformed_conditions.empty:
                 sampled_rows = self._conditionally_sample_rows(
@@ -451,6 +455,7 @@ class BaseTabularModel:
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
                         transformed_group = [transformed_group]
+
                     transformed_condition = dict(zip(transformed_columns, transformed_group))
                     sampled_rows = self._conditionally_sample_rows(
                         transformed_dataframe,
@@ -464,7 +469,7 @@ class BaseTabularModel:
                     all_sampled_rows.append(sampled_rows)
 
         all_sampled_rows = pd.concat(all_sampled_rows)
-        all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
+        all_sampled_rows = all_sampled_rows.set_index(COND_IDX)
         all_sampled_rows.index.name = conditions.index.name
         all_sampled_rows = all_sampled_rows.sort_index()
         all_sampled_rows = self._metadata.make_ids_unique(all_sampled_rows)
