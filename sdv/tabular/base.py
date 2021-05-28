@@ -365,8 +365,8 @@ class BaseTabularModel:
                      f'be sampled within {max_retries} trials.')
 
         if len(sampled_rows) > 0:
-            sampled_rows[COND_IDX] = \
-                dataframe[COND_IDX].values[:len(sampled_rows)]
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+
         return sampled_rows
 
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
