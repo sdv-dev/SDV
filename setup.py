@@ -52,6 +52,9 @@ development_requires = [
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme<0.5',
 
+    # Jinja2>=3 makes the sphinx theme fail
+    'Jinja2>=2,<3',
+
     # style check
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
