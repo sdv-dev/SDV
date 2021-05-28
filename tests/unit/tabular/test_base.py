@@ -66,31 +66,37 @@ def test_sample_empty_transformed_conditions():
     conditions = {
         'column1': 25
     }
-    conditions_df = pd.DataFrame([
-        [0, 25], [1, 25], [2, 25], [3, 25], [4, 25]
-    ], columns=['__condition_idx__', 'column1'])
+    conditions_series = pd.Series([25, 25, 25, 25, 25], name='column1')
     model._sample_batch = Mock()
-    expected_output = pd.DataFrame({
+    sampled = pd.DataFrame({
         'column1': [28, 28],
         'column2': [37, 37],
         'column3': [93, 93],
     })
-    model._sample_batch.return_value = expected_output
+    model._sample_batch.return_value = sampled
     model.fit(data)
     model._metadata = Mock()
     model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
     model._metadata.transform.return_value = pd.DataFrame()
+    model._metadata.make_ids_unique.side_effect = lambda x: x
 
     # Run
     output = model.sample(5, conditions=conditions, graceful_reject_sampling=True)
 
     # Assert
+    expected_output = pd.DataFrame({
+        'column1': [28, 28],
+        'column2': [37, 37],
+        'column3': [93, 93],
+    })
     _, args, kwargs = model._metadata.transform.mock_calls[0]
-    assert args[0].equals(conditions_df)
+    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_called_with(5, 100, 10, conditions, None, 0.01)
-    assert output.equals(expected_output)
+    print(output)
+    print(expected_output)
+    pd.testing.assert_frame_equal(output, expected_output)
 
 
 def test_sample_batches_transform_conditions_correctly():
@@ -118,9 +124,7 @@ def test_sample_batches_transform_conditions_correctly():
     conditions = {
         'column1': [25, 25, 25, 30, 30]
     }
-    conditions_df = pd.DataFrame([
-        [0, 25], [1, 25], [2, 25], [3, 30], [4, 30]
-    ], columns=['__condition_idx__', 'column1'])
+    conditions_series = pd.Series([25, 25, 25, 30, 30], name='column1')
     model._sample_batch = Mock()
     expected_outputs = [
         pd.DataFrame({
@@ -150,7 +154,7 @@ def test_sample_batches_transform_conditions_correctly():
 
     # Assert
     _, args, kwargs = model._metadata.transform.mock_calls[0]
-    pd.testing.assert_frame_equal(args[0], conditions_df)
+    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
