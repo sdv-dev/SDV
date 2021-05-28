@@ -94,8 +94,6 @@ def test_sample_empty_transformed_conditions():
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_called_with(5, 100, 10, conditions, None, 0.01)
-    print(output)
-    print(expected_output)
     pd.testing.assert_frame_equal(output, expected_output)
 
 
