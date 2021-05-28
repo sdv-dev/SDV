@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.CustomConstraint &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.constraints.CustomConstraint &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -426,7 +426,7 @@ pass custom functions for each one of them.</p>
 <td><p>Get only the rows that are valid.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.CustomConstraint.fit.html#sdv.constraints.CustomConstraint.fit" title="sdv.constraints.CustomConstraint.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(table_data)</p></td>
-<td><p>No-op method written for completion.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.CustomConstraint.fit_transform.html#sdv.constraints.CustomConstraint.fit_transform" title="sdv.constraints.CustomConstraint.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -444,7 +444,19 @@ pass custom functions for each one of them.</p>
 <td><p>Return a dict representation of this Constraint.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.CustomConstraint.transform.html#sdv.constraints.CustomConstraint.transform" title="sdv.constraints.CustomConstraint.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_data)</p></td>
-<td><p>Identity method for completion.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>

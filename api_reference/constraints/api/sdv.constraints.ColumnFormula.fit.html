@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.ColumnFormula.fit &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.constraints.ColumnFormula.fit &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -393,7 +393,11 @@
 <dl class="py method">
 <dt id="sdv.constraints.ColumnFormula.fit">
 <code class="sig-prename descclassname">ColumnFormula.</code><code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.ColumnFormula.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>No-op method written for completion. To be optionally overwritten by subclasses.</p>
+<dd><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">fit_columns_model</span></code> is True, then this method will fit
+a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model to the relevant columns in <code class="docutils literal notranslate"><span class="pre">table_data</span></code>.
+Subclasses can overwrite this method, or overwrite the <code class="docutils literal notranslate"><span class="pre">_fit</span></code> method
+if they will not be needing the model to handle conditional sampling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>table_data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>

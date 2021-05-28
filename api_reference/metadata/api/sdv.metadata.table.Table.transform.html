@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.metadata.table.Table.transform &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.metadata.table.Table.transform &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -304,11 +304,16 @@
 <h1>sdv.metadata.table.Table.transform<a class="headerlink" href="#sdv-metadata-table-table-transform" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.metadata.table.Table.transform">
-<code class="sig-prename descclassname">Table.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/metadata/table.html#Table.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.table.Table.transform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">Table.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">on_missing_column</span><span class="o">=</span><span class="default_value">'error'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/metadata/table.html#Table.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.table.Table.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform the given data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Table data.</p></li>
+<li><p><strong>on_missing_column</strong> (<em>str</em>) – If the value is error, then a <cite>MissingConstraintColumnError</cite> is raised.
+If the value is drop, then the columns involved in the constraint that
+are present in data will be dropped.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Transformed data.</p>

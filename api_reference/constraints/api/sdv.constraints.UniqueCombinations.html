@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.UniqueCombinations &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.constraints.UniqueCombinations &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -392,7 +392,7 @@
 <h1>sdv.constraints.UniqueCombinations<a class="headerlink" href="#sdv-constraints-uniquecombinations" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.UniqueCombinations">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">UniqueCombinations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#UniqueCombinations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.UniqueCombinations" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">UniqueCombinations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#UniqueCombinations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.UniqueCombinations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ensure that the combinations across multiple colums stay unique.</p>
 <p>One simple example of this constraint can be found in a table that
 contains the columns <cite>country</cite> and <cite>city</cite>, where each country can
@@ -413,7 +413,7 @@ seen during training.</p>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.UniqueCombinations.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.UniqueCombinations.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.UniqueCombinations.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -424,14 +424,14 @@ seen during training.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.UniqueCombinations.__init__" title="sdv.constraints.UniqueCombinations.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(columns[, handling_strategy])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.UniqueCombinations.__init__" title="sdv.constraints.UniqueCombinations.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(columns[, handling_strategy, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.UniqueCombinations.filter_valid.html#sdv.constraints.UniqueCombinations.filter_valid" title="sdv.constraints.UniqueCombinations.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(table_data)</p></td>
 <td><p>Get only the rows that are valid.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.UniqueCombinations.fit.html#sdv.constraints.UniqueCombinations.fit" title="sdv.constraints.UniqueCombinations.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(table_data)</p></td>
-<td><p>Fit this Constraint to the data.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.UniqueCombinations.fit_transform.html#sdv.constraints.UniqueCombinations.fit_transform" title="sdv.constraints.UniqueCombinations.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -449,7 +449,19 @@ seen during training.</p>
 <td><p>Return a dict representation of this Constraint.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.UniqueCombinations.transform.html#sdv.constraints.UniqueCombinations.transform" title="sdv.constraints.UniqueCombinations.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>

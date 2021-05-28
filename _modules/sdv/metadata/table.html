@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,6 +178,7 @@
 <span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
 
 <span class="kn">from</span> <span class="nn">sdv.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
+<span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="n">MissingConstraintColumnError</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.errors</span> <span class="kn">import</span> <span class="n">MetadataError</span><span class="p">,</span> <span class="n">MetadataNotFittedError</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.utils</span> <span class="kn">import</span> <span class="n">strings_from_regex</span>
 
@@ -662,12 +663,34 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit_hyper_transformer</span><span class="p">(</span><span class="n">constrained</span><span class="p">,</span> <span class="n">extra_columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.transform.html#sdv.metadata.table.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">MissingConstraintColumnError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">on_missing_column</span> <span class="o">==</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">MissingConstraintColumnError</span><span class="p">()</span>
+
+                <span class="k">elif</span> <span class="n">on_missing_column</span> <span class="o">==</span> <span class="s1">&#39;drop&#39;</span><span class="p">:</span>
+                    <span class="n">indices_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
+                    <span class="n">columns_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices_to_drop</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns_to_drop</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;on_missing_column must be </span><span class="se">\&#39;</span><span class="s1">drop</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">error</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+<div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.transform.html#sdv.metadata.table.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the given data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
 <span class="sd">                Table data.</span>
+<span class="sd">            on_missing_column (str):</span>
+<span class="sd">                If the value is error, then a `MissingConstraintColumnError` is raised.</span>
+<span class="sd">                If the value is drop, then the columns involved in the constraint that</span>
+<span class="sd">                are present in data will be dropped.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
@@ -681,8 +704,7 @@
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming constraints for table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>

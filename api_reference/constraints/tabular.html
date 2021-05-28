@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Tabular Constraints &#8212; SDV 0.9.1 documentation</title>
+    <title>Tabular Constraints &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -421,10 +421,10 @@
 <td><p>Custom Constraint Class.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.fit.html#sdv.constraints.CustomConstraint.fit" title="sdv.constraints.CustomConstraint.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint.fit</span></code></a>(table_data)</p></td>
-<td><p>No-op method written for completion.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.transform.html#sdv.constraints.CustomConstraint.transform" title="sdv.constraints.CustomConstraint.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint.transform</span></code></a>(table_data)</p></td>
-<td><p>Identity method for completion.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.fit_transform.html#sdv.constraints.CustomConstraint.fit_transform" title="sdv.constraints.CustomConstraint.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint.fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -455,14 +455,14 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.UniqueCombinations.html#sdv.constraints.UniqueCombinations" title="sdv.constraints.UniqueCombinations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UniqueCombinations</span></code></a>(columns[, handling_strategy])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.UniqueCombinations.html#sdv.constraints.UniqueCombinations" title="sdv.constraints.UniqueCombinations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UniqueCombinations</span></code></a>(columns[, …])</p></td>
 <td><p>Ensure that the combinations across multiple colums stay unique.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.UniqueCombinations.fit.html#sdv.constraints.UniqueCombinations.fit" title="sdv.constraints.UniqueCombinations.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UniqueCombinations.fit</span></code></a>(table_data)</p></td>
-<td><p>Fit this Constraint to the data.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.UniqueCombinations.transform.html#sdv.constraints.UniqueCombinations.transform" title="sdv.constraints.UniqueCombinations.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UniqueCombinations.transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.UniqueCombinations.fit_transform.html#sdv.constraints.UniqueCombinations.fit_transform" title="sdv.constraints.UniqueCombinations.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UniqueCombinations.fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -497,10 +497,10 @@
 <td><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">high</span></code> column is always greater than the <code class="docutils literal notranslate"><span class="pre">low</span></code> one.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.GreaterThan.fit.html#sdv.constraints.GreaterThan.fit" title="sdv.constraints.GreaterThan.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterThan.fit</span></code></a>(table_data)</p></td>
-<td><p>Learn the dtype of the high column.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.GreaterThan.transform.html#sdv.constraints.GreaterThan.transform" title="sdv.constraints.GreaterThan.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterThan.transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.GreaterThan.fit_transform.html#sdv.constraints.GreaterThan.fit_transform" title="sdv.constraints.GreaterThan.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GreaterThan.fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -535,7 +535,7 @@
 <td><p>Compute a column based on applying a formula on the others.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.ColumnFormula.fit.html#sdv.constraints.ColumnFormula.fit" title="sdv.constraints.ColumnFormula.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnFormula.fit</span></code></a>(table_data)</p></td>
-<td><p>No-op method written for completion.</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.ColumnFormula.transform.html#sdv.constraints.ColumnFormula.transform" title="sdv.constraints.ColumnFormula.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnFormula.transform</span></code></a>(table_data)</p></td>
 <td><p>Transform the table data.</p></td>

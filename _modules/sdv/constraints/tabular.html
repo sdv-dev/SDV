@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -208,6 +208,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_columns_model</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
 
@@ -242,9 +243,11 @@
     <span class="n">_separator</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_joint_column</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="n">columns</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
+                         <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_valid_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return True if separator is valid for this data.</span>
@@ -271,7 +274,7 @@
 
         <span class="k">return</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="UniqueCombinations.fit"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.fit.html#sdv.constraints.UniqueCombinations.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit this Constraint to the data.</span>
 
 <span class="sd">        The fit process consists on:</span>
@@ -290,7 +293,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <div class="viewcode-block" id="UniqueCombinations.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.is_valid.html#sdv.constraints.UniqueCombinations.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
@@ -311,7 +314,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">merged</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;both&#39;</span></div>
 
-<div class="viewcode-block" id="UniqueCombinations.transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.transform.html#sdv.constraints.UniqueCombinations.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consist on removing all the ``self._columns`` from</span>
@@ -331,7 +334,7 @@
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">lists_series</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">table_data</span></div>
+        <span class="k">return</span> <span class="n">table_data</span>
 
 <div class="viewcode-block" id="UniqueCombinations.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.reverse_transform.html#sdv.constraints.UniqueCombinations.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
@@ -378,20 +381,23 @@
 <span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span>
+                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span> <span class="o">=</span> <span class="n">strict</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
+                         <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
 
-<div class="viewcode-block" id="GreaterThan.fit"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.fit.html#sdv.constraints.GreaterThan.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Learn the dtype of the high column.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
 <span class="sd">                The Table data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
 
 <div class="viewcode-block" id="GreaterThan.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.is_valid.html#sdv.constraints.GreaterThan.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether ``high`` is greater than ``low`` in each row.</span>
@@ -409,7 +415,7 @@
 
         <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="GreaterThan.transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.transform.html#sdv.constraints.GreaterThan.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consist on replacing the ``high`` value with difference</span>
@@ -435,7 +441,7 @@
 
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">diff</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">table_data</span></div>
+        <span class="k">return</span> <span class="n">table_data</span>
 
 <div class="viewcode-block" id="GreaterThan.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.reverse_transform.html#sdv.constraints.GreaterThan.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
@@ -488,7 +494,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_column</span> <span class="o">=</span> <span class="n">column</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ColumnFormula.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ColumnFormula.is_valid.html#sdv.constraints.ColumnFormula.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether the data fulfills the formula.</span>

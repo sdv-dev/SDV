@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -553,24 +553,26 @@
             <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid column name `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">[[</span><span class="n">column</span><span class="p">]])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Conditioning on column `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">` is not possible&#39;</span><span class="p">)</span>
-
-        <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
-        <span class="n">condition_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;__condition_idx__&#39;</span>
-        <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">grouped_conditions</span> <span class="o">=</span> <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span>
+        <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;drop&#39;</span><span class="p">)</span>
+        <span class="n">condition_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;__condition_idx__&#39;</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">grouped_conditions</span> <span class="o">=</span> <span class="n">conditions</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span>
 
         <span class="c1"># sample</span>
         <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">dataframe</span> <span class="ow">in</span> <span class="n">grouped_conditions</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-                <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">dataframe</span> <span class="ow">in</span> <span class="n">grouped_conditions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="p">]</span>
 
-            <span class="n">condition</span> <span class="o">=</span> <span class="n">conditions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-            <span class="n">transformed_condition</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
+            <span class="n">condition_index</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;__condition_idx__&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="n">transformed_condition</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">transformed_condition</span> <span class="o">=</span> <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">condition_index</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+            <span class="n">condition</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">,</span> <span class="n">group</span><span class="p">))</span>
             <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_batch</span><span class="p">(</span>
                 <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">),</span>
                 <span class="n">max_retries</span><span class="p">,</span>

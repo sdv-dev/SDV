@@ -27,4 +27,10 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~UniqueCombinations.constraint_columns
+   
    

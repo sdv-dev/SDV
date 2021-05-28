@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.UniqueCombinations.transform &#8212; SDV 0.9.1 documentation</title>
+    <title>sdv.constraints.UniqueCombinations.transform &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -392,18 +392,20 @@
 <h1>sdv.constraints.UniqueCombinations.transform<a class="headerlink" href="#sdv-constraints-uniquecombinations-transform" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.constraints.UniqueCombinations.transform">
-<code class="sig-prename descclassname">UniqueCombinations.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#UniqueCombinations.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.UniqueCombinations.transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transform the table data.</p>
-<p>The transformation consist on removing all the <code class="docutils literal notranslate"><span class="pre">self._columns</span></code> from
-the dataframe, concatenating them using the found separator, and
-setting them back to the data as a single name with the previously
-computed name.</p>
+<code class="sig-prename descclassname">UniqueCombinations.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.UniqueCombinations.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform necessary transformations needed by constraint.</p>
+<p>Subclasses can optionally overwrite this method. If the transformation
+requires certain columns to be present in <code class="docutils literal notranslate"><span class="pre">table_data</span></code>, then the subclass
+should overwrite the <code class="docutils literal notranslate"><span class="pre">_transform</span></code> method instead. This method raises a
+<code class="docutils literal notranslate"><span class="pre">MissingConstraintColumnError</span></code> if the <code class="docutils literal notranslate"><span class="pre">table_data</span></code> is missing any columns
+needed to do the transformation. If columns are present, this method will call
+the <code class="docutils literal notranslate"><span class="pre">_transform</span></code> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>table_data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Transformed data.</p>
+<dd class="field-even"><p>Input data unmodified.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>

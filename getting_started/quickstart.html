@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Quickstart &#8212; SDV 0.9.1 documentation</title>
+    <title>Quickstart &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -328,36 +328,33 @@ following the original distribution of your dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">sampled</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      US    NaN   46</span>
-<span class="go"> 1        1      ES      M   40</span>
-<span class="go"> 2        2      UK      F   16</span>
-<span class="go"> 3        3      DE      F   58</span>
-<span class="go"> 4        4      ES      F   26</span>
-<span class="go"> 5        5      FR      M   55</span>
-<span class="go"> 6        6      UK      F   37</span>
-<span class="go"> 7        7      FR    NaN   57</span>
-<span class="go"> 8        8      UK      F   60</span>
-<span class="go"> 9        9      UK      M   16,</span>
-<span class="go"> &#39;sessions&#39;:     session_id  user_id  device       os  minutes</span>
-<span class="go"> 0            0        1  mobile  android       18</span>
-<span class="go"> 1            1        2  tablet      ios       20</span>
-<span class="go"> 2            2        3  mobile  android       11</span>
-<span class="go"> 3            3        3  mobile      ios       25</span>
-<span class="go"> 4            4        4  mobile  android        9</span>
-<span class="go"> 5            5        5  mobile      ios       20</span>
-<span class="go"> 6            6        6  mobile  android       -2</span>
-<span class="go"> 7            7        6  mobile      ios        0</span>
-<span class="go"> 8            8        7  mobile  android       18</span>
-<span class="go"> 9            9        8  mobile      ios       17</span>
-<span class="go"> 10          10        8  tablet      ios       12</span>
-<span class="go"> 11          11        9  mobile      ios       21,</span>
+<span class="go"> 0        0      ES      M   32</span>
+<span class="go"> 1        1      DE      M   54</span>
+<span class="go"> 2        2      BG      F   52</span>
+<span class="go"> 3        3      UK    NaN   28</span>
+<span class="go"> 4        4      US      M   28</span>
+<span class="go"> 5        5      UK      F   14</span>
+<span class="go"> 6        6      ES      F   50</span>
+<span class="go"> 7        7      ES    NaN   39</span>
+<span class="go"> 8        8      UK      M   30</span>
+<span class="go"> 9        9      US    NaN   47,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
+<span class="go"> 0           0        0  mobile      ios        6</span>
+<span class="go"> 1           1        1  mobile      ios       22</span>
+<span class="go"> 2           2        2  mobile      ios       11</span>
+<span class="go"> 3           3        2  mobile      ios       12</span>
+<span class="go"> 4           4        5  mobile      ios       32</span>
+<span class="go"> 5           5        6  mobile  android       19</span>
+<span class="go"> 6           6        6  mobile      ios       25</span>
+<span class="go"> 7           7        6  mobile  android       15,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  cancelled</span>
-<span class="go"> 0               0           0 2019-01-15 06:06:14  100.807812       True</span>
-<span class="go"> 1               1           3 2019-01-08 21:35:06  126.501001      False</span>
-<span class="go"> 2               2           5 2019-01-22 21:10:42  129.427707       True</span>
-<span class="go"> 3               3           8 2019-01-09 20:11:25   86.044894       True</span>
-<span class="go"> 4               4           9 2019-01-27 08:56:21  127.882432       True</span>
-<span class="go"> 5               5          11 2019-01-13 21:45:43  100.055419      False}</span>
+<span class="go"> 0               0           0 2019-01-15 02:30:23   84.597624      False</span>
+<span class="go"> 1               1           0 2019-01-15 20:53:01   80.707217      False</span>
+<span class="go"> 2               2           1 2019-01-10 05:08:57  114.192253      False</span>
+<span class="go"> 3               3           3 2019-01-19 09:39:32  106.346015       True</span>
+<span class="go"> 4               4           4 2019-01-12 00:09:07   79.474934       True</span>
+<span class="go"> 5               5           4 2019-01-11 22:06:37   91.564434      False</span>
+<span class="go"> 6               6           7 2019-01-02 12:40:13   74.304122       True}</span>
 </pre></div>
 </div>
 </section>
@@ -385,20 +382,19 @@ need to load it from its <code class="docutils literal notranslate"><span class=
 <span class="gp">In [14]: </span><span class="n">sampled</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      UK      M   50</span>
-<span class="go"> 1       11      ES      F   42</span>
-<span class="go"> 2       12      FR      F   53</span>
-<span class="go"> 3       13      ES      M   29</span>
-<span class="go"> 4       14      US      F   46,</span>
-<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os  minutes</span>
-<span class="go"> 0          12       10  mobile  ios        2</span>
-<span class="go"> 1          13       11  mobile  ios       27</span>
-<span class="go"> 2          14       12  tablet  ios       13</span>
-<span class="go"> 3          15       13  mobile  ios       21,</span>
+<span class="go"> 0       10      US    NaN   33</span>
+<span class="go"> 1       11      FR    NaN   33</span>
+<span class="go"> 2       12      US      F   44</span>
+<span class="go"> 3       13      UK      F   29</span>
+<span class="go"> 4       14      BG      M   53,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
+<span class="go"> 0           8       12  mobile  android        8</span>
+<span class="go"> 1           9       12  tablet  android        3</span>
+<span class="go"> 2          10       14  mobile      ios       18</span>
+<span class="go"> 3          11       14  mobile  android       31,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp      amount  cancelled</span>
-<span class="go"> 0               6          13 2019-01-17 21:31:35  113.114200      False</span>
-<span class="go"> 1               7          14 2019-01-12 08:04:07  107.210258      False</span>
-<span class="go"> 2               8          15 2019-01-16 18:33:55   41.787184      False}</span>
+<span class="go"> 0               7          10 2019-01-08 21:01:10   66.996429       True</span>
+<span class="go"> 1               8          11 2019-01-16 18:48:47  114.758459      False}</span>
 </pre></div>
 </div>
 </section>

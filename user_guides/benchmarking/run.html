@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Running SDGym &#8212; SDV 0.9.1 documentation</title>
+    <title>Running SDGym &#8212; SDV 0.10.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -247,6 +247,10 @@
         </li>
     
         <li class="nav-item toc-entry toc-h3">
+            <a href="#running-on-private-datasets" class="nav-link">Running on Private Datasets</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
             <a href="#iterations" class="nav-link">Iterations</a>
         </li>
     
@@ -337,6 +341,10 @@ all the datasets are done.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">output_path</span> <span class="pre">(str)</span></code>:: If an <code class="docutils literal notranslate"><span class="pre">output_path</span></code> is given, the generated
 leaderboard will be stored in the indicated path as a CSV file. The
 given path must be a complete path including the <code class="docutils literal notranslate"><span class="pre">.csv</span></code> filename.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">aws_key</span> <span class="pre">(str)</span></code>:: If an <code class="docutils literal notranslate"><span class="pre">aws_key</span></code> is provided, the given access
+key id will be used to read from the specified bucket.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">aws_secret</span> <span class="pre">(str)</span></code>:: If an <code class="docutils literal notranslate"><span class="pre">aws_secret</span></code> is provided, the given
+secret access key will be used to read from the specified bucket.</p></li>
 </ul>
 <section id="synthesizers">
 <h3>Synthesizers<a class="headerlink" href="#synthesizers" title="Permalink to this headline">¶</a></h3>
@@ -408,6 +416,22 @@ their names as strings:</p>
 </pre></div>
 </div>
 </section>
+<section id="running-on-private-datasets">
+<h3>Running on Private Datasets<a class="headerlink" href="#running-on-private-datasets" title="Permalink to this headline">¶</a></h3>
+<p>If we want to run sdgym on datasets in a private S3 bucket for which we do not have
+<a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html">system-wide credentials configured</a>,
+we can pass in the s3 bucket name, along with the aws access key ID and the aws secret
+access key. For example:</p>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">16</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="n">my_synthesizer_function</span><span class="p">,</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="n">bucket</span><span class="o">=</span><span class="s1">&#39;my-bucket&#39;</span><span class="p">,</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="n">aws_key</span><span class="o">=</span><span class="s1">&#39;my-key&#39;</span><span class="p">,</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="n">aws_secret</span><span class="o">=</span><span class="s1">&#39;my-secret&#39;</span>
+    <span class="o">...</span><span class="p">:</span> <span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="iterations">
 <h3>Iterations<a class="headerlink" href="#iterations" title="Permalink to this headline">¶</a></h3>
 <p>By default, the SDGym benchmark evaluates each synthesizer on each
@@ -417,7 +441,7 @@ obtained scores.</p>
 <p>The number of evaluations performed on each synthesizer and dataset
 combination can be altered by passing a different value to the
 <code class="docutils literal notranslate"><span class="pre">iterations</span></code> argument:</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">16</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">my_synthesizer_function</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">17</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">my_synthesizer_function</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
