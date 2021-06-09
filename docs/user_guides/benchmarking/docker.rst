@@ -1,4 +1,4 @@
-.. *benchmarking*\ docker:
+.. _benchmarking_docker:
 
 Running on Docker
 =================
@@ -10,29 +10,34 @@ you don't have permission to install libraries.
 Basic Usage
 -----------
 
-To get started with SDGym on Docker, you should do the following:
+To get started with SDGym on Docker, you should do the two following steps.
 
-1. Pull the `latest SDGym
-   image <https://hub.docker.com/r/sdvproject/sdgym>`__ from DockerHub
-   by running:
+Pull SDGym
+^^^^^^^^^^
+
+Pull the latest SDGym image <https://hub.docker.com/r/sdvproject/sdgym>`__
+from DockerHub by running:
 
 .. code:: bash
 
-    docker pull sdvproject/sdgym <tag>
+    docker pull sdvproject/sdgym:<tag>
 
 where ``<tag>`` is a qualifier for the desired version. You can use:
+
  * ``stable`` to get the latest release
- * ``latest`` (equivalent to not giving any tag at all) to get the
- latest development version from the master branch
+ * ``latest`` (equivalent to not giving any tag at all) to get the latest development version from the master branch
  * ``<any other tag>`` to get the corresponding version
 
-2. Run SDGym using the following command:
+Run SDGym
+^^^^^^^^^
+Run SDGym using the following command:
 
 .. code:: bash
 
     docker run -ti sdvproject/sdgym -- sdgym COMMAND OPTIONS
 
 where ``COMMAND`` and ``OPTIONS`` are the standard command line options.
+
 For example, you could try:
 
 .. code:: bash
