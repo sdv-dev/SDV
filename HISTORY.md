@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.10.1 - 2021-06-10
+
+This release changes the way we sample conditions to not only group by the conditions passed by the user, but also by the transformed conditions that result from them.
+
+### Issues resolved
+
+* Conditionally sampling on variable in constraint should have variety for other variables - Issue [#440](https://github.com/sdv-dev/SDV/issues/440) by @amontanez24
+
 ## 0.10.0 - 2021-05-21
 
 This release improves the constraint functionality by allowing constraints and conditions
