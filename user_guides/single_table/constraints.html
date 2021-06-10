@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Handling Constraints &#8212; SDV 0.10.0 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.10.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -300,19 +300,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department               name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales        Darren Bell      7459 Johnathan Island\nCrawfordfurt, CT 80749   31               22                     9</span>
-<span class="go">1       Pear         Design     Hannah Estrada  301 George Throughway\nEast Yeseniashire, MT 0...   46               45                     1</span>
-<span class="go">2    Glasses             AI   Crystal Reynolds     767 Stephanie View\nEast Melanietown, IL 50571   39               32                     7</span>
-<span class="go">3    Glasses  Search Engine    Shannon Stewart  25668 Richard Glen Suite 115\nPort Jenniferber...   35               35                     0</span>
-<span class="go">4   Cheerper        BigData   Michael Williams                   PSC 9607, Box 9725\nAPO AP 81535   46               37                     9</span>
-<span class="go">5   Cheerper        Support     Jennifer Cooke     9031 Mejia Circles\nEast Tiffanytown, AK 60840   30               28                     2</span>
-<span class="go">6       Pear          Sales       Tammy Patton        1847 Cameron Pine\nSouth Tonybury, TX 42693   43               38                     5</span>
-<span class="go">7       Pear         Design         Lisa Lewis  8583 Oliver Mill Suite 391\nPort Kellyfurt, NY...   44               41                     3</span>
-<span class="go">8    Glasses             AI     Sarah Gonzales         73692 Leonard Meadows\nEast Mary, AR 03802   43               37                     6</span>
-<span class="go">9    Glasses  Search Engine  Angela Acosta DDS           1317 Brandon Pines\nDeannaview, WI 21299   43               40                     3</span>
-<span class="go">10  Cheerper        BigData    Gary Brewer PhD            3725 James Glen\nShannonmouth, ME 05913   36               27                     9</span>
-<span class="go">11  Cheerper        Support        Tyler Berry                   Unit 1439 Box 7888\nDPO AA 12125   40               39                     1</span>
+<span class="go">     company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0       Pear          Sales        Amanda Young  37536 Powers Ridge\nWest Timothychester, AL 84847   43               43                     0</span>
+<span class="go">1       Pear         Design  Terrence Glass Jr.  719 Davidson Springs Suite 105\nWest Shawnstad...   47               39                     8</span>
+<span class="go">2    Glasses             AI      Anthony Thomas            040 Booth Shoal\nKathleenfort, SC 41133   32               30                     2</span>
+<span class="go">3    Glasses  Search Engine       Jamie Johnson  2583 Jessica Path Apt. 226\nWest Austinstad, D...   31               29                     2</span>
+<span class="go">4   Cheerper        BigData        Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   41               40                     1</span>
+<span class="go">5   Cheerper        Support         Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   30               30                     0</span>
+<span class="go">6       Pear          Sales       Amy Nicholson                   PSC 3733, Box 5857\nAPO AP 52539   41               41                     0</span>
+<span class="go">7       Pear         Design        Glenn Greene               8824 Davis Land\nBrianstad, NV 57601   48               45                     3</span>
+<span class="go">8    Glasses             AI     Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   44               35                     9</span>
+<span class="go">9    Glasses  Search Engine    Stephen Williams          79505 Taylor Keys\nWest Heather, OR 86897   44               38                     6</span>
+<span class="go">10  Cheerper        BigData        Gabriel King           650 Franco Parks\nNew Cristina, ND 07073   41               41                     0</span>
+<span class="go">11  Cheerper        Support          Anne Burns          43393 Clifford Manors\nLaraberg, FL 57019   48               39                     9</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -474,17 +474,17 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department              name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">1   Glasses             AI    Hannah Estrada  301 George Throughway\nEast Yeseniashire, MT 0...   46               45                     1</span>
-<span class="go">2   Glasses  Search Engine   Shannon Stewart  25668 Richard Glen Suite 115\nPort Jenniferber...   45               42                     3</span>
-<span class="go">3  Cheerper        BigData  Michael Williams                   PSC 9607, Box 9725\nAPO AP 81535   45               35                    10</span>
-<span class="go">4      Pear          Sales        Lisa Lewis  8583 Oliver Mill Suite 391\nPort Kellyfurt, NY...   39               29                    10</span>
-<span class="go">5      Pear          Sales       Darren Bell      7459 Johnathan Island\nCrawfordfurt, CT 80749   32               23                     9</span>
-<span class="go">6      Pear          Sales       Darren Bell      7459 Johnathan Island\nCrawfordfurt, CT 80749   45               29                    16</span>
-<span class="go">7  Cheerper        Support       Tyler Berry                   Unit 1439 Box 7888\nDPO AA 12125   43               39                     4</span>
-<span class="go">8      Pear          Sales        Lisa Lewis  8583 Oliver Mill Suite 391\nPort Kellyfurt, NY...   35               27                     8</span>
-<span class="go">9  Cheerper        BigData  Michael Williams                   PSC 9607, Box 9725\nAPO AP 81535   46               36                    10</span>
-<span class="go">0  Cheerper        BigData   Gary Brewer PhD            3725 James Glen\nShannonmouth, ME 05913   43               32                    11</span>
+<span class="go">    company     department             name                                            address  age  age_when_joined  years_in_the_company</span>
+<span class="go">0   Glasses  Search Engine     Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   45               40                     5</span>
+<span class="go">1   Glasses  Search Engine    Jamie Johnson  2583 Jessica Path Apt. 226\nWest Austinstad, D...   36               27                     9</span>
+<span class="go">2   Glasses             AI  Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   36               31                     5</span>
+<span class="go">3  Cheerper        BigData     Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   41               39                     2</span>
+<span class="go">4      Pear         Design     Glenn Greene               8824 Davis Land\nBrianstad, NV 57601   46               39                     7</span>
+<span class="go">5  Cheerper        BigData  Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   42               37                     5</span>
+<span class="go">7  Cheerper        Support      Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   42               39                     3</span>
+<span class="go">8   Glasses  Search Engine      Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   39               38                     1</span>
+<span class="go">9      Pear         Design     Amanda Young  37536 Powers Ridge\nWest Timothychester, AL 84847   47               45                     2</span>
+<span class="go">0      Pear         Design       Anne Burns          43393 Clifford Manors\nLaraberg, FL 57019   53               41                    12</span>
 </pre></div>
 </div>
 </section>

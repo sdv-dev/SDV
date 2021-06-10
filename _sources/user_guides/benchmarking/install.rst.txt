@@ -100,3 +100,8 @@ In order to be able to use them, please do:
 
    export PRIVBAYES_BIN=$(pwd)/privBayes.bin
 
+Run with Docker
+------------------
+
+We support using Docker to run **SDGym**. For more information
+on how to do so, check :ref:`benchmarking_docker`.

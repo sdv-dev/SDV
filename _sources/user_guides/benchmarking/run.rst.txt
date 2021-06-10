@@ -172,7 +172,7 @@ For example, if we want to evaluate our synthesizer function on only the
    In [15]: scores = sdgym.run(my_synthesizer_function, datasets=datasets)
 
 Running on Private Datasets
-~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If we want to run sdgym on datasets in a private S3 bucket for which we do not have
 `system-wide credentials configured <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html>`__,

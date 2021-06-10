@@ -14,6 +14,7 @@ good the generated data is.
     :titlesonly:
 
     install
+    docker
     synthesizers
     datasets
     run
