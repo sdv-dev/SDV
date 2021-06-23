@@ -6,7 +6,7 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations)
+    ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations, OneHotEncoding)
 
 
 def dummy_transform():
@@ -873,5 +873,27 @@ class TestColumnFormula():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+class TestOneHotEncoding():
+
+    def test_reverse_transform(self):
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b'])
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.8],
+            'b': [0.8, 0.1, 0.9],
+            'c': [1, 2, 3]
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0.0, 1.0, 0.0],
+            'b': [1.0, 0.0, 1.0],
+            'c': [1, 2, 3]
         })
         pd.testing.assert_frame_equal(expected_out, out)
