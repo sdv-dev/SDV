@@ -1,10 +1,12 @@
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import UniqueCombinations
+from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
@@ -214,3 +216,102 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
     pd.testing.assert_series_equal(sampled_data['state'], expected_states)
     assert all(c in ('SF', 'LA') for c in sampled_data['city'])
+
+
+@patch('sdv.constraints.base.GaussianMultivariate',
+       spec_set=GaussianMultivariate)
+@patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+       spec_set=GaussianMultivariate)
+def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_mock,
+                                                                            column_model_mock):
+    """Test that the ``sample`` method handles constraints with conditions.
+
+    The ``sample`` method is expected to properly apply constraint
+    transformations by sampling the missing columns for the constraint
+    if ``fit_columns_model`` is True. All values sampled by the column
+    model should be valid because reject sampling is used on any that aren't.
+
+    Setup:
+    - The model is being passed a ``GreaterThan`` constraint and then
+    asked to sample with one condition. One of the constraint columns is
+    the conditioned column. The ``GaussianMultivariate`` class is mocked
+    so that the constraint's ``_column_model`` returns some invalid rows
+    in order to test that the reject sampling is used.
+
+    Input:
+    - Conditions
+    Side Effects:
+    - Correct columns to condition on are passed to underlying sample method
+    """
+    # Setup
+    constraint = GreaterThan(
+        low='age_joined',
+        high='age',
+        handling_strategy='transform',
+        fit_columns_model=True
+    )
+    data = pd.DataFrame({
+        'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
+        'age': [27.0, 28.0, 26.0, 21.0, 30.0]
+    })
+    model = GaussianCopula(constraints=[constraint])
+    sampled_conditions = [
+        pd.DataFrame({
+            'age_joined': [26.0, 18.0, 31.0],
+            'age': [30.0, 30.0, 30.0]
+        }),
+        pd.DataFrame({
+            'age_joined': [28.0, 33.0],
+            'age': [30.0, 30.0]
+        }),
+        pd.DataFrame({
+            'age_joined': [27.0, 24.0],
+            'age': [30.0, 30.0]
+        })
+    ]
+    sampled_numeric_data = [
+        pd.DataFrame({
+            'age_joined': [26.0],
+            'age': [np.log(5.0)]
+        }),
+        pd.DataFrame({
+            'age_joined': [18.0],
+            'age': [np.log(13.0)]
+        }),
+        pd.DataFrame({
+            'age_joined': [28.0],
+            'age': [np.log(3.0)]
+        }),
+        pd.DataFrame({
+            'age_joined': [27.0],
+            'age': [np.log(4.0)]
+        }),
+        pd.DataFrame({
+            'age_joined': [24.0],
+            'age': [np.log(7.0)]
+        })
+    ]
+
+    column_model_mock.return_value.sample.side_effect = sampled_conditions
+    gm_mock.return_value.sample.side_effect = sampled_numeric_data
+    model.fit(data)
+
+    # Run
+    conditions = {'age': 30.0}
+    sampled_data = model.sample(5, conditions=conditions)
+
+    # Assert
+    expected_result = pd.DataFrame({
+        'age_joined': [26.0, 18.0, 28.0, 27.0, 24.0],
+        'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+    })
+    assert len(model._model.sample.mock_calls) == 5
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 18.0, 'age': np.log(13.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 24.0, 'age': np.log(7.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 26.0, 'age': np.log(5.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 27.0, 'age': np.log(4.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 28.0, 'age': np.log(3.0)})
+    pd.testing.assert_frame_equal(
+        sampled_data.sort_values(by='age_joined').reset_index(drop=True),
+        expected_result.sort_values(by='age_joined').reset_index(drop=True)
+    )
