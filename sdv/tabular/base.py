@@ -211,6 +211,7 @@ class BaseTabularModel:
                     sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
                     sampled = self._sample(num_rows)
+            breakpoint()
 
             sampled = self._metadata.reverse_transform(sampled)
 
@@ -428,6 +429,7 @@ class BaseTabularModel:
         transformed_conditions.index.name = COND_IDX
         transformed_conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
+        breakpoint()
 
         # sample
         all_sampled_rows = list()

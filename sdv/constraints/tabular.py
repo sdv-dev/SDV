@@ -211,14 +211,21 @@ class GreaterThan(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        drop (str):
+            Which column to drop during transformation. Can be ``'high'``,
+            ``'low'`` or ``None``.
     """
 
+    self_diff_column = None
+
     def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True):
+                 fit_columns_model=True, drop=None):
         self._low = low
         self._high = high
         self._strict = strict
         self.constraint_columns = (low, high)
+        self._diff_column = f'#{self._low}#{self._high}'
+        self._drop = drop
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -230,6 +237,9 @@ class GreaterThan(Constraint):
                 The Table data.
         """
         self._dtype = table_data[self._high].dtype
+        self._diff_column = f'#{self._low}#{self._high}'
+        while self._diff_column in table_data.columns:
+            self._diff_column += '#'
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -271,7 +281,11 @@ class GreaterThan(Constraint):
         if pd.api.types.is_datetime64_ns_dtype(low_column):
             diff = pd.to_numeric(diff)
 
-        table_data[self._high] = np.log(diff + 1)
+        table_data[self._diff_column] = np.log(diff + 1)
+        if self._drop == 'high':
+            table_data = table_data.drop(self._high, axis=1)
+        elif self._drop == 'low':
+            table_data = table_data.drop(self._low, axis=1)
 
         return table_data
 
@@ -294,13 +308,32 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = (np.exp(table_data[self._high]).round() - 1).clip(0)
-        low_column = table_data[self._low]
+        diff = (np.exp(table_data[self._diff_column]).round() - 1).clip(0)
 
-        if pd.api.types.is_datetime64_ns_dtype(low_column):
-            diff = pd.to_timedelta(diff)
+        if self._drop == 'high':
+            low_column = table_data[self._low]
+            if pd.api.types.is_datetime64_ns_dtype(low_column):
+                diff = pd.to_timedelta(diff)
 
-        table_data[self._high] = (low_column + diff).astype(self._dtype)
+            table_data[self._high] = (low_column + diff).astype(self._dtype)
+
+        elif self._drop == 'low':
+            high_column = table_data[self._high]
+            if pd.api.types.is_datetime64_ns_dtype(high_column):
+                diff = pd.to_timedelta(diff)
+
+            table_data[self._low] = (high_column - diff).astype(self._dtype)
+
+        else:
+            low_column = table_data[self._low]
+            if pd.api.types.is_datetime64_ns_dtype(low_column):
+                diff = pd.to_timedelta(diff)
+
+            invalid = ~self.is_valid(table_data)
+            new_high_values = low_column.loc[invalid] + diff.loc[invalid]
+            table_data.loc[invalid][self._high] = new_high_values.astype(self._dtype)
+
+        table_data = table_data.drop(self._diff_column, axis=1)
 
         return table_data
 
