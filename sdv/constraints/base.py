@@ -181,7 +181,7 @@ class Constraint(metaclass=ConstraintMeta):
             conditions=conditions
         )
         sampled = self._hyper_transformer.reverse_transform(sampled)
-        valid_rows = self.filter_valid(sampled)
+        valid_rows = sampled[self.is_valid(sampled)]
         counter = 0
         total_sampled = num_rows
 
@@ -192,9 +192,11 @@ class Constraint(metaclass=ConstraintMeta):
                     error = 'Could not get enough valid rows within 100 trials.'
                     raise ValueError(error)
                 else:
+                    multiplier = num_rows // num_valid
                     num_rows_missing = num_rows % num_valid
-                    rows_to_copy = valid_rows.iloc[0:num_rows_missing, :]
-                    valid_rows = pd.concat([valid_rows, rows_to_copy], ignore_index=True)
+                    remainder_rows = valid_rows.iloc[0:num_rows_missing, :]
+                    valid_rows = pd.concat([valid_rows] * multiplier + [remainder_rows],
+                                           ignore_index=True)
                     break
 
             remaining = num_rows - num_valid
@@ -207,7 +209,7 @@ class Constraint(metaclass=ConstraintMeta):
                 conditions=conditions
             )
             new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
-            new_valid_rows = self.filter_valid(new_sampled)
+            new_valid_rows = new_sampled[self.is_valid(new_sampled)]
             valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
             counter += 1
 
@@ -228,7 +230,7 @@ class Constraint(metaclass=ConstraintMeta):
             )
             all_sampled_rows.append(sampled_rows)
 
-        sampled_data = pd.concat(sampled_rows)
+        sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
         return sampled_data
 
     def _validate_constraint_columns(self, table_data):
