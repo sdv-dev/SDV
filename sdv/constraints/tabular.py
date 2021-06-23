@@ -382,13 +382,14 @@ class ColumnFormula(Constraint):
 
 
 class OneHotEncoding(Constraint):
+    """Write it."""
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
         assert isinstance(columns, list)
         assert all(isinstance(column, str) for column in columns)
-        assert (handling_strategy == 'transform',
-                'Other handling strategies are invalid for this constraint.')
+        assert handling_strategy == 'transform', ('Other handling strategies'
+               ' are invalid for this constraint.')
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
