@@ -380,14 +380,15 @@ class ColumnFormula(Constraint):
 
         return table_data
 
+
 class OneHotEncoding(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
         assert isinstance(columns, list)
         assert all(isinstance(column, str) for column in columns)
-        assert (handling_strategy == 'transform', 
-                'Other handling strategies are invalid for this constraint.')                                        
+        assert (handling_strategy == 'transform',
+                'Other handling strategies are invalid for this constraint.')
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -419,7 +420,7 @@ class OneHotEncoding(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        
+
         one_hot_data = table_data[self._columns]
         transformed_data = np.zeros_like(one_hot_data.values)
         transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1

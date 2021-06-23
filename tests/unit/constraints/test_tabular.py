@@ -6,7 +6,7 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations, OneHotEncoding)
+    ColumnFormula, CustomConstraint, GreaterThan, OneHotEncoding, UniqueCombinations)
 
 
 def dummy_transform():
@@ -875,6 +875,7 @@ class TestColumnFormula():
             'c': [5, 7, 9]
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
 
 class TestOneHotEncoding():
 
