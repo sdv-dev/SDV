@@ -552,7 +552,7 @@ class TestGreaterThan():
             '#a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
-    
+
     def test_transform_int_drop_high(self):
         """Test the ``GreaterThan.transform`` method passing a high column of type int.
 
