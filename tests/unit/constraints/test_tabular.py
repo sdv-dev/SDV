@@ -517,19 +517,21 @@ class TestGreaterThan():
         expected_out = pd.Series([True, True, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_transform_int(self):
+    def test_transform_int_drop_none(self):
         """Test the ``GreaterThan.transform`` method passing a high column of type int.
 
         The ``GreaterThan.transform`` method is expected to compute the distance
-        between the high and low columns and replace the high column with the
+        between the high and low columns and create a diff column with the
         logarithm of the distance + 1.
 
+        Setup:
+        - ``_drop`` is set to ``None``, so all original columns will be in output.
         Input:
         - Table with two columns two constrained columns at a constant distance of
           exactly 3 and one additional dummy column.
         Output:
-        - Same table with the high column transformed into the logarithms
-          of the distances + 1, which is np.log(4).
+        - Same table with a diff column of the logarithms of the distances + 1,
+        which is np.log(4).
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
@@ -545,24 +547,97 @@ class TestGreaterThan():
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [np.log(4)] * 3,
+            'b': [4, 5, 6],
             'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+    
+    def test_transform_int_drop_high(self):
+        """Test the ``GreaterThan.transform`` method passing a high column of type int.
+
+        The ``GreaterThan.transform`` method is expected to compute the distance
+        between the high and low columns and create a diff column with the
+        logarithm of the distance + 1. It should also drop the high column.
+
+        Setup:
+        - ``_drop`` is set to ``high``.
+        Input:
+        - Table with two columns two constrained columns at a constant distance of
+          exactly 3 and one additional dummy column.
+        Output:
+        - Same table with a diff column of the logarithms of the distances + 1,
+        which is np.log(4) and the high column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_transform_float(self):
+    def test_transform_int_drop_low(self):
+        """Test the ``GreaterThan.transform`` method passing a high column of type int.
+
+        The ``GreaterThan.transform`` method is expected to compute the distance
+        between the high and low columns and create a diff column with the
+        logarithm of the distance + 1. It should also drop the low column.
+
+        Setup:
+        - ``_drop`` is set to ``low``.
+        Input:
+        - Table with two columns two constrained columns at a constant distance of
+          exactly 3 and one additional dummy column.
+        Output:
+        - Same table with a diff column of the logarithms of the distances + 1,
+        which is np.log(4) and the low column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_transform_float_drop_none(self):
         """Test the ``GreaterThan.transform`` method passing a high column of type float.
 
         The ``GreaterThan.transform`` method is expected to compute the distance
-        between the high and low columns and replace the high column with the
+        between the high and low columns and create a diff column with the
         logarithm of the distance + 1.
 
+        Setup:
+        - ``_drop`` is set to ``None``, so all original columns will be in output.
         Input:
         - Table with two constrained columns at a constant distance of
           exactly 3 and one additional dummy column.
         Output:
-        - Same table with the high column transformed into the logarithms
-          of the distances + 1, which is np.log(4).
+        - Same table with a diff column of the logarithms of the distances + 1,
+        which is np.log(4).
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
@@ -578,22 +653,25 @@ class TestGreaterThan():
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [np.log(4)] * 3,
+            'b': [4., 5., 6.],
             'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_transform_datetime(self):
+    def test_transform_datetime_drop_none(self):
         """Test the ``GreaterThan.transform`` method passing a high column of type datetime.
 
         If the columns are of type datetime, ``transform`` is expected
         to convert the timedelta distance into numeric before applying
         the +1 and logarithm.
 
+        Setup:
+        - ``_drop`` is set to ``None``, so all original columns will be in output.
         Input:
         - Table with values at a distance of exactly 1 second.
         Output:
-        - Same table with the high column transformed into the logarithms
+        - Same table with a diff column of the logarithms
           of the dinstance in nanoseconds + 1, which is np.log(1_000_000_001).
         """
         # Setup
@@ -610,8 +688,9 @@ class TestGreaterThan():
         # Assert
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
+            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -633,7 +712,7 @@ class TestGreaterThan():
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
-    def test_reverse_transform_int(self):
+    def test_reverse_transform_int_drop_high(self):
         """Test the ``GreaterThan.reverse_transform`` method for dtype int.
 
         The ``GreaterThan.reverse_transform`` method is expected to:
@@ -641,11 +720,206 @@ class TestGreaterThan():
             - subtract 1
             - add the low column
             - convert the output to integers
+            - add back the dropped column
 
+        Setup:
+        - ``_drop`` is set to ``high``.
         Input:
-        - Table with a high column that contains the constant np.log(4).
+        - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as int.
+        - Same table with the high column replaced by the low one + 3, as int
+        and the diff column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
+        instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+            'b': [4, 5, 6],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_float_drop_high(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype float.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the low column
+            - convert the output to float values
+            - add back the dropped column
+
+        Setup:
+        - ``_drop`` is set to ``high``.
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as float values
+        and the diff column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
+        instance._dtype = np.dtype('float')
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1.1, 2.2, 3.3],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1.1, 2.2, 3.3],
+            'c': [7, 8, 9],
+            'b': [4.1, 5.2, 6.3],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime_drop_high(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - convert the distance to a timedelta
+            - add the low column
+            - convert the output to datetimes
+
+        Setup:
+        - ``_drop`` is set to ``high``.
+        Input:
+        - Table with a diff column that contains the constant np.log(1_000_000_001).
+        Output:
+        - Same table with the high column replaced by the low one + one second
+        and the diff column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
+        instance._dtype = np.dtype('<M8[ns]')
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'c': [1, 2],
+            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'c': [1, 2],
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01'])
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_int_drop_low(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - subtract from the high column
+            - convert the output to integers
+            - add back the dropped column
+
+        Setup:
+        - ``_drop`` is set to ``low``.
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the low column replaced by the low one + 3, as int
+        and the diff column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
+        instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
+
+        # Run
+        transformed = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a': [1, 2, 3],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime_drop_low(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - convert the distance to a timedelta
+            - subtract from the high column
+            - convert the output to datetimes
+
+        Setup:
+        - ``_drop`` is set to ``low``.
+        Input:
+        - Table with a diff column that contains the constant np.log(1_000_000_001).
+        Output:
+        - Same table with the low column replaced by the low one + one second
+        and the diff column dropped.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
+        instance._dtype = np.dtype('<M8[ns]')
+
+        # Run
+        transformed = pd.DataFrame({
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2],
+            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2],
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00'])
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_int_drop_none(self):
+        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
+
+        The ``GreaterThan.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the low column when the row is invalid
+            - convert the output to integers
+
+        Setup:
+        - ``_drop`` is set to ``None``.
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        The table should have one invalid row where the low column is
+        higher than the high column.
+        Output:
+        - Same table with the low column replaced by the low one + 3 for all
+        invalid rows, as int and the diff column dropped.
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
@@ -654,8 +928,9 @@ class TestGreaterThan():
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [np.log(4)] * 3,
-            'c': [7, 8, 9]
+            'b': [4, 1, 6],
+            'c': [7, 8, 9],
+            '#a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -667,54 +942,25 @@ class TestGreaterThan():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform_float(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype float.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the low column
-            - convert the output to float values
-
-        Input:
-        - Table with a high column that contains the constant np.log(4).
-        Output:
-        - Same table with the high column replaced by the low one + 3, as float values.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._dtype = np.dtype('float')
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1.1, 2.2, 3.3],
-            'b': [np.log(4)] * 3,
-            'c': [7, 8, 9]
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1.1, 2.2, 3.3],
-            'b': [4.1, 5.2, 6.3],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_datetime(self):
+    def test_reverse_transform_datetime_drop_none(self):
         """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
 
         The ``GreaterThan.reverse_transform`` method is expected to:
             - apply an exponential to the input
             - subtract 1
             - convert the distance to a timedelta
-            - add the low column
+            - add the low column when the row is invalid
             - convert the output to datetimes
 
+        Setup:
+        - ``_drop`` is set to ``None``.
         Input:
-        - Table with a high column that contains the constant np.log(1_000_000_001).
+        - Table with a diff column that contains the constant np.log(1_000_000_001).
+        The table should have one invalid row where the low column is
+        higher than the high column.
         Output:
-        - Same table with the high column replaced by the low one + one second.
+        - Same table with the low column replaced by the low one + one second
+        for all invalid rows, and the diff column dropped.
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
@@ -723,8 +969,9 @@ class TestGreaterThan():
         # Run
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': [np.log(1_000_000_001), np.log(1_000_000_001)],
-            'c': [1, 2]
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
+            'c': [1, 2],
+            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 

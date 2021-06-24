@@ -331,7 +331,7 @@ class GreaterThan(Constraint):
 
             invalid = ~self.is_valid(table_data)
             new_high_values = low_column.loc[invalid] + diff.loc[invalid]
-            table_data.loc[invalid][self._high] = new_high_values.astype(self._dtype)
+            table_data[self._high].loc[invalid] = new_high_values.astype(self._dtype)
 
         table_data = table_data.drop(self._diff_column, axis=1)
 
