@@ -918,7 +918,7 @@ class TestOneHotEncoding():
         - Table data (pandas.DataFrame)
         Output:
         - Series of ``True`` and ``False`` values (pandas.Series)
-        """        
+        """
         # Setup
         instance = OneHotEncoding(columns=['a', 'b', 'c'])
 
