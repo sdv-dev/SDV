@@ -17,6 +17,7 @@ Currently implemented constraints are:
       on the other columns of the table.
 """
 
+import decimal
 import uuid
 
 import numpy as np
@@ -401,3 +402,74 @@ class ColumnFormula(Constraint):
         table_data[self._column] = self._formula(table_data)
 
         return table_data
+
+
+class Rounding(Constraint):
+    """Round a column based on the specified number of digits.
+
+    Args:
+        column (list[str]):
+            Name of the column(s) to round.
+        digits (int or dict[str->int]):
+            How much to round each column. If an `int` is provided, all columns
+            will be rounded to that number of digits. If a `dict` mapping column
+            to digit is provided, each column will be represented to the specified
+            digit.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        tolerance (int):
+            How many differences in decimal places we will tolerant when
+            reject sampling.
+    """
+
+    def __init__(self, columns, digits, handling_strategy='transform', tolerance=1):
+        self._columns = columns
+        self._digits = digits
+
+        self._tolerance = tolerance
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
+
+    def is_valid(self, table_data):
+        """Determine if the data satisfies the rounding constranit.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        table_data = table_data.copy()
+        d_places = table_data[self._columns].applymap(
+            lambda d: abs(decimal.Decimal(str(d)).as_tuple().exponent))
+
+        cols = [self._columns] if isinstance(self._digits, int) else [col for col in self._columns]
+        for col in cols:
+            digits = self._digits if isinstance(self._digits, int) else self._digits[col]
+            low = max(digits - self._tolerance, 0)
+            high = digits + self._tolerance
+            table_data[col] = table_data[(d_places[col] >= low) & (d_places[col] <= high)][col]
+
+        return table_data.notna().all(1)
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        Round the columns to the desired digits.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        if isinstance(self._digits, dict):
+            digit_map = self._digits
+        else:
+            digit_map = {col: self._digits for col in self._columns}
+
+        return table_data.round(digit_map)
