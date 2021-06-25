@@ -392,7 +392,7 @@ class OneHotEncoding(Constraint):
 
     Args:
         columns (list[str]):
-            Names of the columns that will be treated as one hot.
+            Names of the columns containing one hot rows.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling`` (not recommended). Defaults to ``transform``.

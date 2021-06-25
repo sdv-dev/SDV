@@ -880,6 +880,16 @@ class TestColumnFormula():
 class TestOneHotEncoding():
 
     def test_reverse_transform(self):
+        """Test the ``OneHotEncoding.reverse_transform`` method.
+
+        It is expected to, for each of the appropriate rows, set the column
+        with the largest value to one and set all other columns to zero.
+
+        Input:
+        - Table data with any numbers (pandas.DataFrame)
+        Output:
+        - Table data where the appropriate rows are one hot (pandas.DataFrame)
+        """
         # Setup
         instance = OneHotEncoding(columns=['a', 'b'])
 
@@ -900,6 +910,15 @@ class TestOneHotEncoding():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_is_valid(self):
+        """Test the ``OneHotEncoding.is_valid`` method.
+
+        ``True`` when for the rows where the data is one hot, ``False`` otherwise.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Series of ``True`` and ``False`` values (pandas.Series)
+        """        
         # Setup
         instance = OneHotEncoding(columns=['a', 'b', 'c'])
 
