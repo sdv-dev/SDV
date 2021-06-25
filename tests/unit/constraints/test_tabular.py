@@ -8,7 +8,7 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations)
+    ColumnFormula, CustomConstraint, GreaterThan, Rounding, UniqueCombinations)
 
 
 def dummy_transform():
@@ -1272,5 +1272,207 @@ class TestColumnFormula():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+
+class TestRounding():
+
+    def test___init__(self):
+        """Test the ``Rounding.__init__`` method.
+
+        It is expected to create a new Constraint instance
+        and set the rounding args.
+
+        Input:
+        - columns = ['b', 'c']
+        - digits = 2
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 2
+
+        # Run
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Assert
+        assert instance._columns == columns
+        assert instance._digits == digits
+
+    def test_is_valid_valid(self):
+        """Test the ``Rounding.is_valid`` method for a valid data.
+
+        If the data is within threshold of the desired rounding, the result
+        is a series of ``True`` values.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 3
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12, 5.51, 6.901],
+            'c': [5.313, 7.12, 9.120]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_valid_dict(self):
+        """Test the ``Rounding.is_valid`` method for a valid data.
+
+        If the data is within threshold of the desired rounding, the result
+        is a series of ``True`` values.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = {'b': 2, 'c': 4}
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12, 5.5, 6.901],
+            'c': [5.313, 7.1245, 9.12034]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_non_valid(self):
+        """Test the ``Rounding.is_valid`` method for a non-valid data.
+
+        If the data is not within threshold of the desired rounding, the
+        result is a series of ``False`` values.
+
+        Input:
+        - Table data not with the desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``False`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 3
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12123, 5.5, 6.901],
+            'c': [5.3, 7.12989, 9.0]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_non_valid_dict(self):
+        """Test the ``Rounding.is_valid`` method for a non-valid data.
+
+        If the data is not within threshold of the desired rounding, the
+        result is a series of ``False`` values.
+
+        Input:
+        - Table data not with the desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``False`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = {'b': 2, 'c': 4}
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12123, 5.5, 6.901],
+            'c': [5.3, 7.1298943, 9.0]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_reverse_transform(self):
+        """Test the ``Rounding.reverse_transform`` method.
+
+        Expect that the columns are rounded to the specified integer digit.
+
+        Input:
+        - Table data with the column with incorrect values (pandas.DataFrame)
+        Output:
+        - Table data with the computed column (pandas.DataFrame)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 3
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12345, 5.1, 6.0],
+            'c': [1.1, 1.23423, 9.13459]
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.123, 5.100, 6.000],
+            'c': [1.100, 1.234, 9.135]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_dict_input(self):
+        """Test the ``Rounding.reverse_transform`` method with a dict input.
+
+        Expect that the columns are rounded to the digits specified in the input map.
+
+        Input:
+        - Table data with the column with incorrect values (pandas.DataFrame)
+        Output:
+        - Table data with the computed column (pandas.DataFrame)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = {'b': 2, 'c': 4}
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12345, 5.1, 6.0],
+            'c': [1.1, 1.23423, 9.13459]
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4.12, 5.10, 6.00],
+            'c': [1.1000, 1.2342, 9.1346]
         })
         pd.testing.assert_frame_equal(expected_out, out)
