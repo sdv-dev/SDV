@@ -17,6 +17,8 @@ Currently implemented constraints are:
       on the other columns of the table.
 """
 
+import uuid
+
 import numpy as np
 import pandas as pd
 
@@ -74,6 +76,8 @@ class UniqueCombinations(Constraint):
 
     _separator = None
     _joint_column = None
+    _combination_map = None
+    _unique_value_map = None
 
     def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
         self._columns = columns
@@ -98,7 +102,8 @@ class UniqueCombinations(Constraint):
                 Whether the separator is valid for this data or not.
         """
         for column in self._columns:
-            if table_data[column].str.contains(self._separator).any():
+            if table_data.dtypes[column] == object and \
+                    table_data[column].str.contains(self._separator).any():
                 return False
 
             if self._separator.join(self._columns) in table_data:
@@ -111,7 +116,7 @@ class UniqueCombinations(Constraint):
 
         The fit process consists on:
 
-            - Finding a separtor that works for the
+            - Finding a separator that works for the
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.
@@ -163,8 +168,25 @@ class UniqueCombinations(Constraint):
                 Transformed data.
         """
         lists_series = pd.Series(table_data[self._columns].values.tolist())
+
+        non_string_cols = [dt for x, dt in table_data.dtypes[
+            self._columns].items() if dt != object]
+        if len(non_string_cols) > 0:
+            u_lists_series = []
+            self._combination_map = {}
+            self._unique_value_map = {}
+
+            for ls in lists_series:
+                u = str(uuid.uuid4())
+                self._combination_map[tuple(ls)] = u
+                self._unique_value_map[u] = ls
+                u_lists_series.append(u)
+
+            lists_series = pd.Series(u_lists_series)
+
         table_data = table_data.drop(self._columns, axis=1)
-        table_data[self._joint_column] = lists_series.str.join(self._separator)
+        table_data[self._joint_column] = lists_series.str.join(
+            self._separator) if self._combination_map is None else lists_series
 
         return table_data
 
@@ -185,7 +207,17 @@ class UniqueCombinations(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        columns = table_data.pop(self._joint_column).str.split(self._separator)
+
+        if self._combination_map is None:
+            columns = table_data.pop(self._joint_column).str.split(self._separator)
+        else:
+            uuids = table_data.pop(self._joint_column)
+            combinations = []
+            for u in uuids:
+                combinations.append(self._unique_value_map[u])
+
+            columns = pd.Series(combinations, name=self._joint_column)
+
         for index, column in enumerate(self._columns):
             table_data[column] = columns.str[index]
 
