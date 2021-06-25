@@ -93,7 +93,7 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-        is_valid = instance._valid_separator(table_data)
+        is_valid = instance._valid_separator(table_data, instance._separator, columns)
 
         # Assert
         assert is_valid
@@ -119,7 +119,7 @@ class TestUniqueCombinations():
             'b': ['d', '#', 'f'],
             'c': ['g', 'h', 'i']
         })
-        is_valid = instance._valid_separator(table_data)
+        is_valid = instance._valid_separator(table_data, instance._separator, columns)
 
         # Assert
         assert not is_valid
@@ -148,7 +148,7 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-        is_valid = instance._valid_separator(table_data)
+        is_valid = instance._valid_separator(table_data, instance._separator, columns)
 
         # Assert
         assert not is_valid
