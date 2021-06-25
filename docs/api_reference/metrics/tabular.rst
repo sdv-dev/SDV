@@ -126,69 +126,39 @@ Single Table Privacy Metrics
     CategoricalPrivacyMetric.get_subclasses
     NumericalPrivacyMetric
     NumericalPrivacyMetric.get_subclasses
-    PrivacyAttackerModel
-    PrivacyAttackerModel.get_subclasses
-    CAPAttacker
-    CAPAttacker.get_subclasses
     CategoricalCAP
     CategoricalCAP.get_subclasses
     CategoricalCAP.compute
-    ZeroCAPAttacker
-    ZeroCAPAttacker.get_subclasses
     CategoricalZeroCAP
     CategoricalZeroCAP.get_subclasses
     CategoricalZeroCAP.compute
-    GeneralizedCAPAttacker
-    GeneralizedCAPAttacker.get_subclasses
     CategoricalGeneralizedCAP
     CategoricalGeneralizedCAP.get_subclasses
     CategoricalGeneralizedCAP.compute
-    CategoricalSklearnAttacker
-    CategoricalSklearnAttacker.get_subclasses
-    CategoricalKNNAttacker
-    CategoricalKNNAttacker.get_subclasses
     CategoricalKNN
     CategoricalKNN.get_subclasses
     CategoricalKNN.compute
-    CategoricalNBAttacker
-    CategoricalNBAttacker.get_subclasses
     CategoricalNB
     CategoricalNB.get_subclasses
     CategoricalNB.compute
-    CategoricalRFAttacker
-    CategoricalRFAttacker.get_subclasses
     CategoricalRF
     CategoricalRF.get_subclasses
     CategoricalRF.compute
-    CategoricalSVMAttacker
-    CategoricalSVMAttacker.get_subclasses
     CategoricalSVM
     CategoricalSVM.get_subclasses
     CategoricalSVM.compute
-    NumericalSklearnAttacker
-    NumericalSklearnAttacker.get_subclasses
-    MLPAttacker
-    MLPAttacker.get_subclasses
     NumericalMLP
     NumericalMLP.get_subclasses
     NumericalMLP.compute
-    LRAttacker
-    LRAttacker.get_subclasses
     NumericalLR
     NumericalLR.get_subclasses
     NumericalLR.compute
-    SVRAttacker
-    SVRAttacker.get_subclasses
     NumericalSVR
     NumericalSVR.get_subclasses
     NumericalSVR.compute
-    CategoricalEnsembleAttacker
-    CategoricalEnsembleAttacker.get_subclasses
     CategoricalEnsemble
     CategoricalEnsemble.get_subclasses
     CategoricalEnsemble.compute
-    NumericalRadiusNearestNeighborAttacker
-    NumericalRadiusNearestNeighborAttacker.get_subclasses
     NumericalRadiusNearestNeighbor
     NumericalRadiusNearestNeighbor.get_subclasses
     NumericalRadiusNearestNeighbor.compute
