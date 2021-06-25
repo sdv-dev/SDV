@@ -145,7 +145,7 @@ class UniqueCombinations(Constraint):
 
         non_string_cols = [dt for x, dt in table_data.dtypes[
             self._columns].items() if dt != object]
-        if len(non_string_cols) > 0:
+        if non_string_cols:
             u_lists_series = []
             self._combination_map = {}
             self._unique_value_map = {}
@@ -182,7 +182,7 @@ class UniqueCombinations(Constraint):
         """
         table_data = table_data.copy()
 
-        if self._combination_map is None:
+        if self._unique_value_map is None:
             columns = table_data.pop(self._joint_column).str.split(self._separator)
         else:
             uuids = table_data.pop(self._joint_column)

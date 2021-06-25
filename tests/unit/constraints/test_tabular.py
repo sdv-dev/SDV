@@ -250,6 +250,73 @@ class TestUniqueCombinations():
         expected_out = pd.Series([False, False, False], name='b#c')
         pd.testing.assert_series_equal(expected_out, out)
 
+    def test_is_valid_non_string_true(self):
+        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+
+        If the input data satisfies the constraint, result is a series of ``True`` values.
+
+        Input:
+        - Table data (pandas.DataFrame), satisfying the constraint.
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        Side effects:
+        - Since the ``is_valid`` method needs ``self._combinations``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        expected_out = pd.Series([True, True, True], name='b#c#d')
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_non_string_false(self):
+        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+
+        If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
+
+        Input:
+        - Table data (pandas.DataFrame), which does not satisfy the constraint.
+        Output:
+        - Series of ``False`` values (pandas.Series)
+        Side effects:
+        - Since the ``is_valid`` method needs ``self._combinations``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        incorrect_table = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [6, 7, 8],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        out = instance.is_valid(incorrect_table)
+
+        # Assert
+        expected_out = pd.Series([False, False, False], name='b#c#d')
+        pd.testing.assert_series_equal(expected_out, out)
+
     def test_transform(self):
         """Test the ``UniqueCombinations.transform`` method.
 
@@ -277,6 +344,8 @@ class TestUniqueCombinations():
         out = instance.transform(table_data)
 
         # Assert
+        assert instance._combination_map is None
+        assert instance._unique_value_map is None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b#c': ['d#g', 'e#h', 'f#i']
@@ -300,9 +369,10 @@ class TestUniqueCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
         })
-        columns = ['b', 'c']
+        columns = ['b', 'c', 'd']
         instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
 
@@ -310,10 +380,12 @@ class TestUniqueCombinations():
         out = instance.transform(table_data)
 
         # Assert
+        assert instance._combination_map is not None
+        assert instance._unique_value_map is not None
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
         try:
-            [uuid.UUID(u) for c, u in out['b#c'].items()]
+            [uuid.UUID(u) for c, u in out['b#c#d'].items()]
         except ValueError:
             assert False
 
@@ -373,6 +445,8 @@ class TestUniqueCombinations():
         out = instance.reverse_transform(transformed_data)
 
         # Assert
+        assert instance._combination_map is None
+        assert instance._unique_value_map is None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
@@ -397,9 +471,10 @@ class TestUniqueCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
         })
-        columns = ['b', 'c']
+        columns = ['b', 'c', 'd']
         instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
 
@@ -408,10 +483,13 @@ class TestUniqueCombinations():
         out = instance.reverse_transform(transformed_data)
 
         # Assert
+        assert instance._combination_map is not None
+        assert instance._unique_value_map is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
