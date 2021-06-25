@@ -15,7 +15,7 @@ Currently implemented constraints are:
       the value in another column.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
-    * OneHotEncoding: Ensure the specified columns are one hot encoded.
+    * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
 """
 
 import numpy as np

@@ -259,6 +259,3 @@ we defined:
     :okwarning:
 
     sampled
-
-
-
