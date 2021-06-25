@@ -175,23 +175,62 @@ class Constraint(metaclass=ConstraintMeta):
     def _transform(self, table_data):
         return table_data
 
+    def _reject_sample(self, num_rows, conditions):
+        sampled = self._columns_model.sample(
+            num_rows=num_rows,
+            conditions=conditions
+        )
+        sampled = self._hyper_transformer.reverse_transform(sampled)
+        valid_rows = sampled[self.is_valid(sampled)]
+        counter = 0
+        total_sampled = num_rows
+
+        while len(valid_rows) < num_rows:
+            num_valid = len(valid_rows)
+            if counter >= 100:
+                if len(valid_rows) == 0:
+                    error = 'Could not get enough valid rows within 100 trials.'
+                    raise ValueError(error)
+                else:
+                    multiplier = num_rows // num_valid
+                    num_rows_missing = num_rows % num_valid
+                    remainder_rows = valid_rows.iloc[0:num_rows_missing, :]
+                    valid_rows = pd.concat([valid_rows] * multiplier + [remainder_rows],
+                                           ignore_index=True)
+                    break
+
+            remaining = num_rows - num_valid
+            valid_probability = (num_valid + 1) / (total_sampled + 1)
+            max_rows = num_rows * 10
+            num_to_sample = min(int(remaining / valid_probability), max_rows)
+            total_sampled += num_to_sample
+            new_sampled = self._columns_model.sample(
+                num_rows=num_to_sample,
+                conditions=conditions
+            )
+            new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
+            new_valid_rows = new_sampled[self.is_valid(new_sampled)]
+            valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
+            counter += 1
+
+        return valid_rows.iloc[0:num_rows, :]
+
     def _sample_constraint_columns(self, table_data):
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
-        sampled_rows = list()
+        all_sampled_rows = list()
         for group, df in grouped_conditions:
             if not isinstance(group, tuple):
                 group = [group]
 
             transformed_condition = self._hyper_transformer.transform(df).loc[0].to_dict()
-            sampled_row = self._columns_model.sample(
+            sampled_rows = self._reject_sample(
                 num_rows=df.shape[0],
                 conditions=transformed_condition
             )
-            sampled_rows.append(sampled_row)
+            all_sampled_rows.append(sampled_rows)
 
-        sampled_data = pd.concat(sampled_rows)
-        sampled_data = self._hyper_transformer.reverse_transform(sampled_data)
+        sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
         return sampled_data
 
     def _validate_constraint_columns(self, table_data):
