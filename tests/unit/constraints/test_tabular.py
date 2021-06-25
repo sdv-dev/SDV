@@ -898,3 +898,20 @@ class TestOneHotEncoding():
             'c': [1, 2, 3]
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_is_valid(self):
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1.0, 1.0, 0.0, 1.0],
+            'b': [0.0, 1.0, 0.0, 0.5],
+            'c': [0.0, 2.0, 0.0, 0.0],
+            'd': [1, 2, 3, 4]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)

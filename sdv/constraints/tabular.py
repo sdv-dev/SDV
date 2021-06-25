@@ -15,6 +15,7 @@ Currently implemented constraints are:
       the value in another column.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
+    * OneHotEncoding: Ensure the specified columns are one hot encoded.
 """
 
 import numpy as np
@@ -382,14 +383,23 @@ class ColumnFormula(Constraint):
 
 
 class OneHotEncoding(Constraint):
-    """Write it."""
+    """Ensure the appropriate columns are one hot encoded.
+
+    This constraint allows the user to specify a list of columns where each row
+    is a one hot vector. During the reverse transform, the output of the model
+    is transformed so that the column with the largest value is set to 1 while
+    all other columns are set to 0.
+
+    Args:
+        columns (list[str]):
+            Names of the columns that will be treated as one hot.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling`` (not recommended). Defaults to ``transform``.
+    """
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
-        assert isinstance(columns, list)
-        assert all(isinstance(column, str) for column in columns)
-        assert handling_strategy == 'transform', ('Other handling strategies'
-               ' are invalid for this constraint.')
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -405,7 +415,11 @@ class OneHotEncoding(Constraint):
         """
         one_hot_data = table_data[self._columns]
 
-        return one_hot_data.sum(axis=1).values == 1.0
+        sum_one = one_hot_data.sum(axis=1) == 1.0
+        max_one = one_hot_data.max(axis=1) == 1.0
+        min_zero = one_hot_data.min(axis=1) == 0.0
+
+        return sum_one & max_one & min_zero
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
