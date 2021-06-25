@@ -687,6 +687,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
+        instance._diff_column = "a#b"
 
         # Run
         table_data = pd.DataFrame({
@@ -701,7 +702,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -723,6 +724,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
+        instance._diff_column = "a#b"
 
         # Run
         table_data = pd.DataFrame({
@@ -736,7 +738,7 @@ class TestGreaterThan():
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -758,6 +760,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
+        instance._diff_column = "a#b"
 
         # Run
         table_data = pd.DataFrame({
@@ -771,7 +774,7 @@ class TestGreaterThan():
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -793,6 +796,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
+        instance._diff_column = "a#b"
 
         # Run
         table_data = pd.DataFrame({
@@ -807,7 +811,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4., 5., 6.],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -828,6 +832,8 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
+        instance._diff_column = "a#b"
+        instance._is_datetime = True
 
         # Run
         table_data = pd.DataFrame({
@@ -842,7 +848,7 @@ class TestGreaterThan():
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -885,12 +891,13 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
+        instance._diff_column = "a#b"
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -923,12 +930,13 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = np.dtype('float')
+        instance._diff_column = "a#b"
 
         # Run
         transformed = pd.DataFrame({
             'a': [1.1, 2.2, 3.3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -961,12 +969,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column = "a#b"
+        instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
@@ -999,12 +1009,13 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
+        instance._diff_column = "a#b"
 
         # Run
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1037,12 +1048,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
         instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column = "a#b"
+        instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1076,13 +1089,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
+        instance._diff_column = "a#b"
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 1, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1117,13 +1131,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
         instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column = "a#b"
+        instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
