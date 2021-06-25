@@ -548,21 +548,20 @@ class Rounding(Constraint):
             Name of the column(s) to round.
         digits (int or dict[str->int]):
             How much to round each column. If an `int` is provided, all columns
-            will be rounded to that number of digits. If a `dict` mapping column
-            to digit is provided, each column will be represented to the specified
-            digit.
+            will be rounded to that number of digits. If a `dict` that maps column
+            to digits is provided, each column will be represented to the specified
+            number of digits.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
         tolerance (int):
-            How many differences in decimal places we will tolerant when
+            How many differences in decimal places we will tolerante when
             reject sampling.
     """
 
     def __init__(self, columns, digits, handling_strategy='transform', tolerance=1):
         self._columns = columns
         self._digits = digits
-
         self._tolerance = tolerance
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
@@ -579,7 +578,7 @@ class Rounding(Constraint):
         """
         table_data = table_data.copy()
         d_places = table_data[self._columns].applymap(
-            lambda d: abs(decimal.Decimal(str(d)).as_tuple().exponent))
+            lambda d: -1 * decimal.Decimal(str(d)).as_tuple().exponent)
 
         cols = [self._columns] if isinstance(self._digits, int) else [col for col in self._columns]
         for col in cols:
