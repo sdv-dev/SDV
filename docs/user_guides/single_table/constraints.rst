@@ -150,7 +150,7 @@ passing:
         handling_strategy='reject_sampling'
     )
 
-CustomFormula Constraint
+ColumnFormula Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases, one column will need to be computed based on the other
