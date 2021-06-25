@@ -248,7 +248,8 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_m
         low='age_joined',
         high='age',
         handling_strategy='transform',
-        fit_columns_model=True
+        fit_columns_model=True,
+        drop='high'
     )
     data = pd.DataFrame({
         'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
@@ -272,23 +273,23 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_m
     sampled_numeric_data = [
         pd.DataFrame({
             'age_joined': [26.0],
-            'age': [np.log(5.0)]
+            'age_joined#age': [np.log(5.0)]
         }),
         pd.DataFrame({
             'age_joined': [18.0],
-            'age': [np.log(13.0)]
+            'age_joined#age': [np.log(13.0)]
         }),
         pd.DataFrame({
             'age_joined': [28.0],
-            'age': [np.log(3.0)]
+            'age_joined#age': [np.log(3.0)]
         }),
         pd.DataFrame({
             'age_joined': [27.0],
-            'age': [np.log(4.0)]
+            'age_joined#age': [np.log(4.0)]
         }),
         pd.DataFrame({
             'age_joined': [24.0],
-            'age': [np.log(7.0)]
+            'age_joined#age': [np.log(7.0)]
         })
     ]
 
@@ -306,11 +307,16 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_m
         'age': [30.0, 30.0, 30.0, 30.0, 30.0]
     })
     assert len(model._model.sample.mock_calls) == 5
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 18.0, 'age': np.log(13.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 24.0, 'age': np.log(7.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 26.0, 'age': np.log(5.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 27.0, 'age': np.log(4.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 28.0, 'age': np.log(3.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 18.0,
+                                                       'age_joined#age': np.log(13.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 24.0,
+                                                       'age_joined#age': np.log(7.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 26.0,
+                                                       'age_joined#age': np.log(5.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 27.0,
+                                                       'age_joined#age': np.log(4.0)})
+    model._model.sample.assert_any_call(1, conditions={'age_joined': 28.0,
+                                                       'age_joined#age': np.log(3.0)})
     pd.testing.assert_frame_equal(
         sampled_data.sort_values(by='age_joined').reset_index(drop=True),
         expected_result.sort_values(by='age_joined').reset_index(drop=True)
