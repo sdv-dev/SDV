@@ -344,13 +344,14 @@ class TestUniqueCombinations():
         out = instance.transform(table_data)
 
         # Assert
-        assert instance._combination_map is None
-        assert instance._unique_value_map is None
-        expected_out = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
-            'b#c': ['d#g', 'e#h', 'f#i']
-        })
-        pd.testing.assert_frame_equal(expected_out, out)
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
+        pd.testing.assert_series_equal(expected_out_a, out['a'])
+        try:
+            [uuid.UUID(u) for c, u in out['b#c'].items()]
+        except ValueError:
+            assert False
 
     def test_transform_non_string(self):
         """Test the ``UniqueCombinations.transform`` method with non strings.
@@ -380,8 +381,8 @@ class TestUniqueCombinations():
         out = instance.transform(table_data)
 
         # Assert
-        assert instance._combination_map is not None
-        assert instance._unique_value_map is not None
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
         try:
@@ -433,20 +434,17 @@ class TestUniqueCombinations():
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-        transformed_data = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
-            'b#c': ['d#g', 'e#h', 'f#i']
-        })
         columns = ['b', 'c']
         instance = UniqueCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
+        transformed_data = instance.transform(table_data)
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        assert instance._combination_map is None
-        assert instance._unique_value_map is None
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
@@ -483,8 +481,8 @@ class TestUniqueCombinations():
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        assert instance._combination_map is not None
-        assert instance._unique_value_map is not None
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
