@@ -238,17 +238,26 @@ class GreaterThan(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        self._dtype = table_data[self._high].dtype
-        separator = '#'
-        while not self._valid_separator(table_data, separator, self.constraint_columns):
-            separator += '#'
-
-        self._diff_column = separator.join(self.constraint_columns)
-
         if self._high_is_scalar is None:
             self._high_is_scalar = self._high not in table_data.columns
         if self._low_is_scalar is None:
             self._low_is_scalar = self._low not in table_data.columns
+
+        if self._low_is_scalar:
+            self.constraint_columns = tuple(self._high)
+            self._dtype = table_data[self._high].dtype
+
+        if self._high_is_scalar:
+            self.constraint_columns = tuple(self._low)
+            self._dtype = table_data[self._low].dtype
+
+        if not self._low_is_scalar and not self._high_is_scalar:
+            self._dtype = table_data[self._high].dtype
+
+        separator = '#'
+        self._diff_column = separator + separator.join(self.constraint_columns)
+        while self._diff_column in table_data.columns:
+            self._diff_column += separator
 
         low = self._low if self._low_is_scalar else table_data[self._low]
         self._is_datetime = (pd.api.types.is_datetime64_ns_dtype(low)
