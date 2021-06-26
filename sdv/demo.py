@@ -325,6 +325,11 @@ def _load_tabular_dummy():
     faker = Faker()
     names = [faker.name() for _ in range(12)]
     adresses = [faker.address() for _ in range(12)]
+    start_date = datetime(1980, 1, 1)
+    start_dates = [
+        start_date + timedelta(days=np.random.randint(0, 14600))
+        for _ in range(12)
+    ]
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
@@ -333,7 +338,8 @@ def _load_tabular_dummy():
         'address': adresses,
         'age': age,
         'age_when_joined': age_when_joined,
-        'years_in_the_company': age - age_when_joined
+        'years_in_the_company': age - age_when_joined,
+        'start_date': start_dates
     })
 
 
@@ -388,7 +394,8 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 'address': {'type': 'categorical'},
                 'age': {'type': 'numerical', 'subtype': 'integer'},
                 'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
-                'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'}
+                'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'},
+                'start_date': {'type': 'datetime'}
             },
             'constraints': [
                 {

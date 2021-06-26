@@ -184,9 +184,11 @@ class UniqueCombinations(Constraint):
 class GreaterThan(Constraint):
     """Ensure that the ``high`` column is always greater than the ``low`` one.
 
-    The transformation strategy works by replacing the ``high`` value with the
-    difference between it and the ``low`` value and then computing back the ``high``
-    value by adding it the ``low`` value when reversing the transformation.
+    The transformation strategy works by creating a column with the
+    difference between the ``high`` and ``low`` values and then computing back the
+    necessary columns using the difference and whichever other value is available.
+    For example, if the ``high`` column is dropped, then the ``low`` column/value
+    will be added to the diff to reconstruct the ``high`` column.
 
     Args:
         low (str or int):
@@ -244,11 +246,11 @@ class GreaterThan(Constraint):
             self._low_is_scalar = self._low not in table_data.columns
 
         if self._low_is_scalar:
-            self.constraint_columns = tuple(self._high)
+            self.constraint_columns = (self._high,)
             self._dtype = table_data[self._high].dtype
 
         if self._high_is_scalar:
-            self.constraint_columns = tuple(self._low)
+            self.constraint_columns = (self._low,)
             self._dtype = table_data[self._low].dtype
 
         if not self._low_is_scalar and not self._high_is_scalar:
