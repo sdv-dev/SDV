@@ -1853,7 +1853,7 @@ class TestRounding():
 
         # Assert
         assert instance._columns == columns
-        assert instance._digits == digits
+        assert instance._digits == {column: digits for column in columns}
 
     def test_is_valid_valid(self):
         """Test the ``Rounding.is_valid`` method for a valid data.
@@ -1876,6 +1876,35 @@ class TestRounding():
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4.12, 5.51, 6.901],
+            'c': [5.313, 7.12, 9.120]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_negative_digit_valid(self):
+        """Test the ``Rounding.is_valid`` method for a valid data.
+
+        If the data is within threshold of the desired rounding, the result
+        is a series of ``True`` values.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b']
+        digits = -2
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [410, 550, 6900],
             'c': [5.313, 7.12, 9.120]
         })
         out = instance.is_valid(table_data)
@@ -1935,6 +1964,35 @@ class TestRounding():
             'a': [1, 2, 3],
             'b': [4.12123, 5.5, 6.901],
             'c': [5.3, 7.12989, 9.0]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_negative_digit_non_valid(self):
+        """Test the ``Rounding.is_valid`` method for a not valid data.
+
+        If the data is within threshold of the desired rounding, the result
+        is a series of ``True`` values.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b']
+        digits = -2
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [411, -551, 690000],
+            'c': [5.313, 7.12, 9.120]
         })
         out = instance.is_valid(table_data)
 
