@@ -401,6 +401,68 @@ class GreaterThan(Constraint):
         return table_data
 
 
+class Positive(GreaterThan):
+    """Ensure that the ``high`` column is always positive.
+
+    The transformation strategy works by creating a column with the
+    difference between ``high`` and 0 value and then computing back the ``high``
+    value by adding the difference to 0 when reversing the transformation.
+
+    Args:
+        high (str or int):
+            Either the name of the column that contains the high value,
+            or a scalar that is the high value.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        drop (str):
+            Which column to drop during transformation. Can be ``'high'``
+            or ``None``.
+    """
+
+    def __init__(self, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None):
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model,
+                         high=high, low=0, high_is_scalar=False,
+                         low_is_scalar=True, drop=drop, strict=strict)
+
+
+class Negative(GreaterThan):
+    """Ensure that the ``low`` column is always negative.
+
+    The transformation strategy works by creating a column with the
+    difference between ``low`` and 0 and then computing back the ``low``
+    value by subtracting the difference from 0 when reversing the transformation.
+
+    Args:
+        high (str or int):
+            Either the name of the column that contains the high value,
+            or a scalar that is the high value.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        drop (str):
+            Which column to drop during transformation. Can be ``'low'``
+            or ``None``.
+    """
+
+    def __init__(self, low, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None):
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model,
+                         high=0, low=low, high_is_scalar=True,
+                         low_is_scalar=False, drop=drop, strict=strict)
+
+
 class ColumnFormula(Constraint):
     """Compute a column based on applying a formula on the others.
 
