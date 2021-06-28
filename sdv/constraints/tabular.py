@@ -408,7 +408,7 @@ class Rounding(Constraint):
     """Round a column based on the specified number of digits.
 
     Args:
-        column (list[str]):
+        columns (str or list[str]):
             Name of the column(s) to round.
         digits (int or dict[str->int]):
             How much to round each column. If an `int` is provided, all columns
@@ -424,13 +424,32 @@ class Rounding(Constraint):
     """
 
     def __init__(self, columns, digits, handling_strategy='transform', tolerance=1):
-        self._columns = columns
-        self._digits = digits
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
+        if isinstance(digits, dict):
+            if set(digits.keys()) != set(columns):
+                raise ValueError('The key values of `digits` do not match the `columns` input')
+
+            self._digits = digits
+        else:
+            self._digits = {column: digits for column in columns}
+
         self._tolerance = tolerance
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
+    @staticmethod
+    def _get_decimal_places(number):
+        if number % 1 == 0:
+            # No decimals, so find number of trailing zeros.
+            return -1 * (len(str(number)) - len(str(number).rstrip('0')))
+
+        return -1 * decimal.Decimal(str(number)).as_tuple().exponent
+
     def is_valid(self, table_data):
-        """Determine if the data satisfies the rounding constranit.
+        """Determine if the data satisfies the rounding constraint.
 
         Args:
             table_data (pandas.DataFrame):
@@ -441,15 +460,14 @@ class Rounding(Constraint):
                 Whether each row is valid.
         """
         table_data = table_data.copy()
-        d_places = table_data[self._columns].applymap(
-            lambda d: -1 * decimal.Decimal(str(d)).as_tuple().exponent)
+        d_places = table_data[self._columns].applymap(self._get_decimal_places)
 
-        cols = [self._columns] if isinstance(self._digits, int) else [col for col in self._columns]
-        for col in cols:
-            digits = self._digits if isinstance(self._digits, int) else self._digits[col]
-            low = max(digits - self._tolerance, 0)
+        for column in self._columns:
+            digits = self._digits[column]
+            low = digits - self._tolerance
             high = digits + self._tolerance
-            table_data[col] = table_data[(d_places[col] >= low) & (d_places[col] <= high)][col]
+            table_data[column] = \
+                table_data[(d_places[column] >= low) & (d_places[column] <= high)][column]
 
         return table_data.notna().all(1)
 
@@ -466,9 +484,4 @@ class Rounding(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        if isinstance(self._digits, dict):
-            digit_map = self._digits
-        else:
-            digit_map = {col: self._digits for col in self._columns}
-
-        return table_data.round(digit_map)
+        return table_data.round(self._digits)
