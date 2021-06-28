@@ -400,6 +400,7 @@ class OneHotEncoding(Constraint):
 
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
+        self.constraint_columns = tuple(columns)
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):

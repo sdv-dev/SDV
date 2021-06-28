@@ -61,6 +61,10 @@ If we observe the data closely we will find a few **constraints**:
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
+4. The ``joined_in_first_semester`` and ``joined_in_second_semester`` columns
+   are related in such a way that one of them will always be one and the other
+   zero, since the employee must have joined the company in one of the two
+   semesters. 
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -191,23 +195,8 @@ Another constraint available is the ``OneHotEncoding`` constraint.
 This constraint allows the user to specify a list of columns where each row 
 is a one hot vector. Then, the constraint will make sure that the output
 of the model is transformed so that the column with the largest value is
-set to 1 while all other columns are set to 0. 
-
-Since none of the columns of the demo dataset satisfy the requirements for this
-constraint, we will use the following dataset as an example:
-
-.. ipython:: python
-    :okwarning:
-
-    import pandas as pd
-
-    one_hot_data = pd.DataFrame({
-        'a': [1.0, 0.0, 1.0],
-        'b': [0.0, 0.0, 0.0],
-        'c': [0.0, 1.0, 0.0]
-    })
-
-To apply the constraint to this dataset we need to create an instance passing:
+set to 1 while all other columns are set to 0. To apply the constraint we
+need to create an instance passing:
 
 - A list of the names of the columns of interest
 - The strategy we want to use (``transform`` is recommended)
@@ -217,8 +206,8 @@ To apply the constraint to this dataset we need to create an instance passing:
 
     from sdv.constraints import OneHotEncoding
 
-    one_hot_data = OneHotEncoding(
-        columns=['a', 'b', 'c'],
+    one_hot_constraint = OneHotEncoding(
+        columns=['joined_in_first_semester', 'joined_in_second_semester'],
         handling_strategy='transform'
     )
 
@@ -227,7 +216,7 @@ Using the Constraints
 
 Now that we have defined the constraints needed to properly describe our
 dataset, we can pass them to the Tabular Model of our choice. For
-example, let us create a ``GaussianCopula`` model passing it some of the
+example, let us create a ``GaussianCopula`` model passing it the
 constraints that we just defined as a ``list``:
 
 .. ipython:: python
@@ -238,7 +227,8 @@ constraints that we just defined as a ``list``:
     constraints = [
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
-        years_in_the_company_constraint
+        years_in_the_company_constraint,
+        one_hot_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)

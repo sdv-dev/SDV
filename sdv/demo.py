@@ -333,7 +333,9 @@ def _load_tabular_dummy():
         'address': adresses,
         'age': age,
         'age_when_joined': age_when_joined,
-        'years_in_the_company': age - age_when_joined
+        'years_in_the_company': age - age_when_joined,
+        'joined_in_first_semester': [1.0, 0.0, 1.0, 1.0, 0.0, 0.0] * 2,
+        'joined_in_second_semester': [0.0, 1.0, 0.0, 0.0, 1.0, 1.0] * 2
     })
 
 
