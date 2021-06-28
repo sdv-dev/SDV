@@ -53,6 +53,38 @@ GreaterThan
    GreaterThan.from_dict
    GreaterThan.to_dict
 
+Positive
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Positive
+   Positive.fit
+   Positive.transform
+   Positive.fit_transform
+   Positive.reverse_transform
+   Positive.is_valid
+   Positive.filter_valid
+   Positive.from_dict
+   Positive.to_dict
+
+Negative
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Negative
+   Negative.fit
+   Negative.transform
+   Negative.fit_transform
+   Negative.reverse_transform
+   Negative.is_valid
+   Negative.filter_valid
+   Negative.from_dict
+   Negative.to_dict
+
 ColumnFormula
 ~~~~~~~~~~~~~~~~
 

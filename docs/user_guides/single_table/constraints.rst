@@ -167,6 +167,29 @@ this functionality, we can pass:
         handling_strategy='reject_sampling'
     )
 
+
+Positive and Negative Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+or ``Negative`` constraints. These constraints enforce that a specified
+column is always positive or negative. We can create an instance passing:
+
+- the name of the ``low`` column for ``Negative`` or the name of the ``high``
+column for ``Positive``
+-  the handling strategy that we want to use
+- a boolean specifying whether to make the data strictly above or below 0, or
+include 0 as a possible value
+
+.. ipython:: python
+    :okwarning:
+
+    positive_prior_exp_constraint = Positive(
+        high='prior_years_experience',
+        strict=False,
+        handling_strategy='reject_sampling'
+    )
+
 ColumnFormula Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -218,7 +241,8 @@ constraints that we just defined as a ``list``:
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
-        salary_gt_30000_constraint
+        salary_gt_30000_constraint,
+        positive_prior_exp_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
