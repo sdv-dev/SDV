@@ -1,5 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
+import uuid
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -248,6 +250,73 @@ class TestUniqueCombinations():
         expected_out = pd.Series([False, False, False], name='b#c')
         pd.testing.assert_series_equal(expected_out, out)
 
+    def test_is_valid_non_string_true(self):
+        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+
+        If the input data satisfies the constraint, result is a series of ``True`` values.
+
+        Input:
+        - Table data (pandas.DataFrame), satisfying the constraint.
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        Side effects:
+        - Since the ``is_valid`` method needs ``self._combinations``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        expected_out = pd.Series([True, True, True], name='b#c#d')
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_non_string_false(self):
+        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+
+        If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
+
+        Input:
+        - Table data (pandas.DataFrame), which does not satisfy the constraint.
+        Output:
+        - Series of ``False`` values (pandas.Series)
+        Side effects:
+        - Since the ``is_valid`` method needs ``self._combinations``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        incorrect_table = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [6, 7, 8],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        out = instance.is_valid(incorrect_table)
+
+        # Assert
+        expected_out = pd.Series([False, False, False], name='b#c#d')
+        pd.testing.assert_series_equal(expected_out, out)
+
     def test_transform(self):
         """Test the ``UniqueCombinations.transform`` method.
 
@@ -275,11 +344,51 @@ class TestUniqueCombinations():
         out = instance.transform(table_data)
 
         # Assert
-        expected_out = pd.DataFrame({
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
+        pd.testing.assert_series_equal(expected_out_a, out['a'])
+        try:
+            [uuid.UUID(u) for c, u in out['b#c'].items()]
+        except ValueError:
+            assert False
+
+    def test_transform_non_string(self):
+        """Test the ``UniqueCombinations.transform`` method with non strings.
+
+        It is expected to return a Table data with the columns concatenated by the separator.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data transformed, with the columns as UUIDs.
+        Side effects:
+        - Since the ``transform`` method needs ``self._joint_column``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
-            'b#c': ['d#g', 'e#h', 'f#i']
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
         })
-        pd.testing.assert_frame_equal(expected_out, out)
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        out = instance.transform(table_data)
+
+        # Assert
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
+        pd.testing.assert_series_equal(expected_out_a, out['a'])
+        try:
+            [uuid.UUID(u) for c, u in out['b#c#d'].items()]
+        except ValueError:
+            assert False
 
     def test_transform_not_all_columns_provided(self):
         """Test the ``UniqueCombinations.transform`` method.
@@ -306,7 +415,7 @@ class TestUniqueCombinations():
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
-    def reverse_transform(self):
+    def test_reverse_transform(self):
         """Test the ``UniqueCombinations.reverse_transform`` method.
 
         It is expected to return the original data separating the concatenated columns.
@@ -320,22 +429,65 @@ class TestUniqueCombinations():
         must be called as well.
         """
         # Setup
-        transformed_data = pd.DataFrame({
+        table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
-            'b#c': ['d#g', 'e#h', 'f#i']
+            'b': ['d', 'e', 'f'],
+            'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
         instance = UniqueCombinations(columns=columns)
-        instance.fit(transformed_data)
+        instance.fit(table_data)
 
         # Run
+        transformed_data = instance.transform(table_data)
         out = instance.reverse_transform(transformed_data)
 
         # Assert
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_non_string(self):
+        """Test the ``UniqueCombinations.reverse_transform`` method with a non string column.
+
+        It is expected to return the original data separating the concatenated columns.
+
+        Input:
+        - Table data transformed (pandas.DataFrame)
+        Output:
+        - Original table data, with the concatenated columns separated (pandas.DataFrame)
+        Side effects:
+        - Since the ``transform`` method needs ``self._joint_column``, method ``fit``
+        must be called as well.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
+        })
+        columns = ['b', 'c', 'd']
+        instance = UniqueCombinations(columns=columns)
+        instance.fit(table_data)
+
+        # Run
+        transformed_data = instance.transform(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': [1, 2, 3],
+            'c': ['g', 'h', 'i'],
+            'd': [2.4, 1.23, 5.6]
         })
         pd.testing.assert_frame_equal(expected_out, out)
 

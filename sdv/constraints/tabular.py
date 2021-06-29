@@ -17,6 +17,8 @@ Currently implemented constraints are:
       on the other columns of the table.
 """
 
+import uuid
+
 import numpy as np
 import pandas as pd
 
@@ -74,6 +76,8 @@ class UniqueCombinations(Constraint):
 
     _separator = None
     _joint_column = None
+    _combinations_to_uuids = None
+    _uuids_to_combinations = None
 
     def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
         self._columns = columns
@@ -86,21 +90,29 @@ class UniqueCombinations(Constraint):
 
         The fit process consists on:
 
-            - Finding a separtor that works for the
+            - Finding a separator that works for the
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.
+            - Generating a mapping of the unique combinations
+              to a unique identifier.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
         self._separator = '#'
-        while not self._valid_separator(table_data, self._separator, self._columns):
+        while self._separator.join(self._columns) in table_data:
             self._separator += '#'
 
         self._joint_column = self._separator.join(self._columns)
         self._combinations = table_data[self._columns].drop_duplicates().copy()
+        self._combinations_to_uuids = {}
+        self._uuids_to_combinations = {}
+        for combination in self._combinations.itertuples(index=False, name=None):
+            uuid_str = str(uuid.uuid4())
+            self._combinations_to_uuids[combination] = uuid_str
+            self._uuids_to_combinations[uuid_str] = combination
 
     def is_valid(self, table_data):
         """Say whether the column values are within the original combinations.
@@ -125,9 +137,9 @@ class UniqueCombinations(Constraint):
         """Transform the table data.
 
         The transformation consist on removing all the ``self._columns`` from
-        the dataframe, concatenating them using the found separator, and
-        setting them back to the data as a single name with the previously
-        computed name.
+        the dataframe, and replacing them with a unique identifier that maps to
+        that unique combination of column values under the previously computed
+        combined column name.
 
         Args:
             table_data (pandas.DataFrame):
@@ -137,18 +149,18 @@ class UniqueCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        lists_series = pd.Series(table_data[self._columns].values.tolist())
-        table_data = table_data.drop(self._columns, axis=1)
-        table_data[self._joint_column] = lists_series.str.join(self._separator)
-
-        return table_data
+        table_data = table_data.copy()
+        combinations = table_data[self._columns].itertuples(index=False, name=None)
+        uuids = map(self._combinations_to_uuids.get, combinations)
+        table_data[self._joint_column] = list(uuids)
+        return table_data.drop(self._columns, axis=1)
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The transformation is reversed by popping the joint column from
-        the table, splitting it by the previously found separator and
-        then setting all the columns back to the table with the original
+        the table, mapping it back to the original combination of column values,
+        and then setting all the columns back to the table with the original
         names.
 
         Args:
@@ -160,7 +172,8 @@ class UniqueCombinations(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        columns = table_data.pop(self._joint_column).str.split(self._separator)
+        columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
+
         for index, column in enumerate(self._columns):
             table_data[column] = columns.str[index]
 
