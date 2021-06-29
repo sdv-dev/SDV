@@ -121,31 +121,6 @@ class Constraint(metaclass=ConstraintMeta):
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
 
-    def _valid_separator(self, table_data, separator, columns):
-        """Return True if separator is valid for this data.
-
-        If the separator is contained within any of the columns
-        or the column name obtained after joining the column
-        names using the separator already exists, the separator
-        is not valid.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            bool:
-                Whether the separator is valid for this data or not.
-        """
-        for column in columns:
-            if table_data[column].astype(str).str.contains(separator).any():
-                return False
-
-        if separator.join(columns) in table_data:
-            return False
-
-        return True
-
     def _fit(self, table_data):
         del table_data
 
