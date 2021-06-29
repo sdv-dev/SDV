@@ -646,6 +646,168 @@ class TestGreaterThan():
         # Asserts
         assert instance._high_is_scalar is False
 
+    def test_fit__high_is_scalar__low_is_scalar_raises_error(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should raise an error if
+        `_low_is_scalar` and `_high_is_scalar` are true.
+
+        Input:
+        - Table with one column.
+        Side Effect:
+        - ``TypeError`` is raised.
+        """
+        # Setup
+        instance = GreaterThan(low=1, high=2)
+
+        # Run / Asserts
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        with pytest.raises(TypeError):
+            instance.fit(table_data)
+
+    def test_fit__column_to_reconstruct_drop_high(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_column_to_reconstruct``
+        to ``instance._high`` if ``instance_drop`` is `high`.
+
+        Input:
+        - Table with two columns.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._high``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', drop='high')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._column_to_reconstruct == 'b'
+
+    def test_fit__column_to_reconstruct_drop_low(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_column_to_reconstruct``
+        to ``instance._low`` if ``instance_drop`` is `low`.
+
+        Input:
+        - Table with two columns.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._low``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', drop='low')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._column_to_reconstruct == 'a'
+
+    def test_fit__column_to_reconstruct_default(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_column_to_reconstruct``
+        to `high` by default.
+
+        Input:
+        - Table with two columns.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._high``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._column_to_reconstruct == 'b'
+
+    def test_fit__column_to_reconstruct_high_is_scalar(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_column_to_reconstruct``
+        to `low` if ``instance._high_is_scalar`` is ``True``.
+
+        Input:
+        - Table with two columns.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._low``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._column_to_reconstruct == 'a'
+
+    def test_fit__diff_column_one_column(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_diff_column``
+        to the one column in ``instance.constraint_columns`` plus a
+        token if there is only one column in that set.
+
+        Input:
+        - Table with one column.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._low``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high=3, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._diff_column == 'a#'
+
+    def test_fit__diff_column_multiple_columns(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_diff_column``
+        to the two columns in ``instance.constraint_columns`` separated
+        by a token if there both columns are in that set.
+
+        Input:
+        - Table with two column.
+        Side Effect:
+        - ``_column_to_reconstruct`` is ``instance._low``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._diff_column == 'a#b'
+
     def test_fit_int(self):
         """Test the ``GreaterThan.fit`` method.
 
@@ -909,7 +1071,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
 
         # Run
         table_data = pd.DataFrame({
@@ -924,7 +1086,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -946,7 +1108,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
 
         # Run
         table_data = pd.DataFrame({
@@ -960,7 +1122,7 @@ class TestGreaterThan():
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -982,7 +1144,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
 
         # Run
         table_data = pd.DataFrame({
@@ -996,7 +1158,7 @@ class TestGreaterThan():
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1018,7 +1180,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
 
         # Run
         table_data = pd.DataFrame({
@@ -1033,7 +1195,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4., 5., 6.],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1054,7 +1216,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance._is_datetime = True
 
         # Run
@@ -1070,7 +1232,7 @@ class TestGreaterThan():
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1109,7 +1271,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low='a', high=5, strict=True, high_is_scalar=True)
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance.constraint_columns = ['a']
 
         # Run
@@ -1125,7 +1287,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(5), np.log(4), np.log(3)],
+            'a#b': [np.log(5), np.log(4), np.log(3)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1146,7 +1308,7 @@ class TestGreaterThan():
         """
         # Setup
         instance = GreaterThan(low=2, high='b', strict=True, low_is_scalar=True)
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance.constraint_columns = ['b']
 
         # Run
@@ -1162,7 +1324,7 @@ class TestGreaterThan():
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(3), np.log(4), np.log(5)],
+            'a#b': [np.log(3), np.log(4), np.log(5)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1187,13 +1349,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1226,13 +1389,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = np.dtype('float')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': [1.1, 2.2, 3.3],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1265,14 +1429,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='high')
         instance._dtype = np.dtype('<M8[ns]')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance._is_datetime = True
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1305,13 +1470,14 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'a'
 
         # Run
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1344,14 +1510,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True, drop='low')
         instance._dtype = np.dtype('<M8[ns]')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance._is_datetime = True
+        instance._column_to_reconstruct = 'a'
 
         # Run
         transformed = pd.DataFrame({
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1385,14 +1552,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 1, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1427,15 +1595,16 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high='b', strict=True)
         instance._dtype = np.dtype('<M8[ns]')
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
         instance._is_datetime = True
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
             'c': [1, 2],
-            '#a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1470,14 +1639,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low=3, high='b', strict=True, low_is_scalar=True)
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'b'
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 1, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
@@ -1512,14 +1682,15 @@ class TestGreaterThan():
         # Setup
         instance = GreaterThan(low='a', high=3, strict=True, high_is_scalar=True)
         instance._dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._diff_column = '#a#b'
+        instance._diff_column = 'a#b'
+        instance._column_to_reconstruct = 'a'
 
         # Run
         transformed = pd.DataFrame({
             'a': [1, 2, 4],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            '#a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
