@@ -17,7 +17,6 @@ Currently implemented constraints are:
       on the other columns of the table.
 """
 
-import decimal
 import uuid
 
 import numpy as np
@@ -410,43 +409,32 @@ class Rounding(Constraint):
     Args:
         columns (str or list[str]):
             Name of the column(s) to round.
-        digits (int or dict[str->int]):
-            How much to round each column. If an `int` is provided, all columns
-            will be rounded to that number of digits. If a `dict` that maps column
-            to digits is provided, each column will be represented to the specified
+        digits (int):
+            How much to round each column. All columns will be rounded to this
             number of digits.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
         tolerance (int):
-            How many differences in decimal places we will tolerante when
-            reject sampling.
+            When reject sampling, the sample data must be within this distance
+            of the desired rounded values.
     """
 
-    def __init__(self, columns, digits, handling_strategy='transform', tolerance=1):
+    def __init__(self, columns, digits, handling_strategy='transform', tolerance=None):
+        if digits > 15:
+            raise ValueError('The value of digits cannot exceed 15')
+
+        if tolerance is not None and tolerance >= 10**(-1 * digits):
+            raise ValueError('Tolerance must be less than the rounding level')
+
         if isinstance(columns, str):
             self._columns = [columns]
         else:
             self._columns = columns
 
-        if isinstance(digits, dict):
-            if set(digits.keys()) != set(columns):
-                raise ValueError('The key values of `digits` do not match the `columns` input')
-
-            self._digits = digits
-        else:
-            self._digits = {column: digits for column in columns}
-
-        self._tolerance = tolerance
+        self._digits = digits
+        self._tolerance = tolerance if tolerance else 10**(-1 * (digits + 1))
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
-
-    @staticmethod
-    def _get_decimal_places(number):
-        if number % 1 == 0:
-            # No decimals, so find number of trailing zeros.
-            return -1 * (len(str(number)) - len(str(number).rstrip('0')))
-
-        return -1 * decimal.Decimal(str(number)).as_tuple().exponent
 
     def is_valid(self, table_data):
         """Determine if the data satisfies the rounding constraint.
@@ -459,17 +447,10 @@ class Rounding(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        table_data = table_data.copy()
-        d_places = table_data[self._columns].applymap(self._get_decimal_places)
+        rounded = table_data.round({column: self._digits for column in self._columns})
+        valid = (table_data - rounded).abs() <= self._tolerance
 
-        for column in self._columns:
-            digits = self._digits[column]
-            low = digits - self._tolerance
-            high = digits + self._tolerance
-            table_data[column] = \
-                table_data[(d_places[column] >= low) & (d_places[column] <= high)][column]
-
-        return table_data.notna().all(1)
+        return valid.all(1)
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -484,4 +465,4 @@ class Rounding(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        return table_data.round(self._digits)
+        return table_data.round({column: self._digits for column in self._columns})
