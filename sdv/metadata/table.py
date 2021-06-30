@@ -84,6 +84,12 @@ class Table:
             The columns in the dataframe which are constant within each
             group/entity. These columns will be provided at sampling time
             (i.e. the samples will be conditioned on the context variables).
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     _hyper_transformer = None
@@ -176,10 +182,18 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
+    def _update_dtype_transformers(self, rounding, min_value, max_value):
+        if rounding != 'auto' or min_value != 'auto' or max_value != 'auto':
+            self._dtype_transformers['i'] = rdt.transformers.NumericalTransformer(
+                dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
+            self._dtype_transformers['f'] = rdt.transformers.NumericalTransformer(
+                dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
+
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
-                 entity_columns=None, context_columns=None):
+                 entity_columns=None, context_columns=None, rounding=None, min_value=None,
+                 max_value=None):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -195,6 +209,7 @@ class Table:
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
+        self._update_dtype_transformers(rounding, min_value, max_value)
 
     def __repr__(self):
         return 'Table(name={}, field_names={})'.format(self.name, self._field_names)

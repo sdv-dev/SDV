@@ -61,6 +61,12 @@ class BaseTabularModel:
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     _DTYPE_TRANSFORMERS = None
@@ -68,7 +74,8 @@ class BaseTabularModel:
     _metadata = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
-                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None):
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
+                 rounding=None, min_value=None, max_value=None):
         if table_metadata is None:
             self._metadata = Table(
                 field_names=field_names,
@@ -78,6 +85,9 @@ class BaseTabularModel:
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
+                rounding=rounding,
+                min_value=min_value,
+                max_value=max_value
             )
             self._metadata_fitted = False
         else:
