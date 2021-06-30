@@ -182,12 +182,16 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def _update_dtype_transformers(self, rounding, min_value, max_value):
+    def _update_transformer_templates(self, rounding, min_value, max_value):
         if rounding != 'auto' or min_value != 'auto' or max_value != 'auto':
-            self._dtype_transformers['i'] = rdt.transformers.NumericalTransformer(
+            custom_int = rdt.transformers.NumericalTransformer(
                 dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
-            self._dtype_transformers['f'] = rdt.transformers.NumericalTransformer(
+            custom_float = rdt.transformers.NumericalTransformer(
                 dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
+            self._TRANSFORMER_TEMPLATES.update({
+                'integer': custom_int,
+                'float': custom_float
+            })
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
@@ -207,9 +211,9 @@ class Table:
         self._context_columns = context_columns or []
         self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
+        self._update_transformer_templates(rounding, min_value, max_value)
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
-        self._update_dtype_transformers(rounding, min_value, max_value)
 
     def __repr__(self):
         return 'Table(name={}, field_names={})'.format(self.name, self._field_names)

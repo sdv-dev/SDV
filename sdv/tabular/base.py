@@ -75,7 +75,7 @@ class BaseTabularModel:
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 rounding=None, min_value=None, max_value=None):
+                 rounding='auto', min_value='auto', max_value='auto'):
         if table_metadata is None:
             self._metadata = Table(
                 field_names=field_names,
