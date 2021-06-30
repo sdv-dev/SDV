@@ -104,6 +104,12 @@ class GaussianCopula(BaseTabularModel):
                 * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
                   ``fuzzy`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     _field_distributions = None
@@ -182,7 +188,8 @@ class GaussianCopula(BaseTabularModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  field_distributions=None, default_distribution=None,
-                 categorical_transformer=None):
+                 categorical_transformer=None, rounding='auto', min_value='auto',
+                 max_value='auto'):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
@@ -221,6 +228,9 @@ class GaussianCopula(BaseTabularModel):
             primary_key=primary_key,
             constraints=constraints,
             table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._metadata.set_model_kwargs(self.__class__.__name__, {

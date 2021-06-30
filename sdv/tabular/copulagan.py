@@ -128,6 +128,12 @@ class CopulaGAN(CTGAN):
         default_distribution (copulas.univariate.Univariate or str):
             Distribution to use on the fields for which no specific distribution has been given.
             Defaults to ``parametric``.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     DEFAULT_DISTRIBUTION = 'parametric'
@@ -138,7 +144,8 @@ class CopulaGAN(CTGAN):
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
                  log_frequency=True, verbose=False, epochs=300, cuda=True,
-                 field_distributions=None, default_distribution=None):
+                 field_distributions=None, default_distribution=None, rounding='auto',
+                 min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -159,7 +166,10 @@ class CopulaGAN(CTGAN):
             log_frequency=log_frequency,
             verbose=verbose,
             epochs=epochs,
-            cuda=cuda
+            cuda=cuda,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION

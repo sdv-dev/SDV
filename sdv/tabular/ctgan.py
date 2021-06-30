@@ -155,6 +155,12 @@ class CTGAN(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     _MODEL_CLASS = CTGANSynthesizer
@@ -164,7 +170,8 @@ class CTGAN(CTGANModel):
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
+                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True,
+                 rounding='auto', min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -172,7 +179,10 @@ class CTGAN(CTGANModel):
             field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._model_kwargs = {
@@ -250,6 +260,12 @@ class TVAE(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use.
     """
 
     _MODEL_CLASS = TVAESynthesizer
@@ -257,7 +273,8 @@ class TVAE(CTGANModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
+                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True,
+                 rounding='auto', min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -265,7 +282,10 @@ class TVAE(CTGANModel):
             field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._model_kwargs = {
