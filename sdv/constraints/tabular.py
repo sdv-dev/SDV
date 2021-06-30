@@ -15,10 +15,13 @@ Currently implemented constraints are:
       the value in another column.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
+    * Between: Ensure that the value in one column is always between the values
+      of two other columns/scalars.
 """
 
 import numpy as np
 import pandas as pd
+from scipy.special import expit
 
 from sdv.constraints.base import Constraint, import_object
 
@@ -386,5 +389,157 @@ class ColumnFormula(Constraint):
         """
         table_data = table_data.copy()
         table_data[self._column] = self._formula(table_data)
+
+        return table_data
+
+class Between(Constraint):
+    """Ensure that the ``constraint_column`` is always between ``high`` and ``low``.
+
+    The transformation strategy works by replacing the ``constraint_column`` with a
+    scaled version and then applying a logit function. The reverse transform
+    applies a sigmoid to the data and then scales it back to the original space.
+
+    Args:
+        constraint_column (str):
+            Name of the column to which the constraint will be applied.
+        low (float or str):
+            If float, lower bound on the values of the ``constraint_column``.
+            If string, name of the column which will be the lower bound. 
+        high (float or str):
+            If float, upper bound on the values of the ``constraint_column``.
+            If string, name of the column which will be the upper bound. 
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+    """
+
+    def __init__(self, column, low, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True):
+        self.constraint_column = column        
+        self._low = low
+        self._high = high
+        self._strict = strict
+        self._transformed_column = f'#{self.constraint_column}#{self._low}#{self._high}'
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
+
+    def _get_low(self, table_data):
+        """Returns the appropriate lower bound.
+        
+        If the ``low`` value was passed as a string, returns the column named ``low``.
+        If it is a float, returns the value itself.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        
+        Returns:
+            pandas.DataFrame or float:
+                The lower bound.
+        """
+        if isinstance(self._low, str):
+            return table_data[self._low]
+
+        return self._low
+
+    def _get_high(self, table_data):
+        """Returns the appropriate upper bound.
+        
+        If the ``high`` value was passed as a string, returns the column named ``high``.
+        If it is a float, returns the value itself.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        
+        Returns:
+            pandas.DataFrame or float:
+                The upper bound.
+        """
+        if isinstance(self._high, str):
+            return table_data[self._high]
+
+        return self._high
+
+    def is_valid(self, table_data):
+        """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        if self._strict:
+            satisfy_low_bound = self._get_low(table_data) < table_data[self.constraint_column]
+            satisfy_high_bound = table_data[self.constraint_column] < self._get_high(table_data)
+            return satisfy_low_bound & satisfy_high_bound
+
+        satisfy_low_bound = self._get_low(table_data) <= table_data[self.constraint_column]
+        satisfy_high_bound = table_data[self.constraint_column] <= self._get_high(table_data)
+        return satisfy_low_bound & satisfy_high_bound
+    
+
+    def transform(self, table_data):
+        """Transform the table data.
+
+        The transformation consists of scaling the ``constraint_column``
+        (``(column-low)/(high-low) * cnt + small_cnt``) and then applying
+        a logit function to the scaled version of the column.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+
+        low = self._get_low(table_data)
+        high = self._get_high(table_data)
+        data = (table_data[self.constraint_column] - low)/(high - low)
+        data = data * 0.95 + 0.025
+        data = np.log(data/(1.0 - data))
+        table_data[self._transformed_column] = data
+        
+        table_data = table_data.drop(self.constraint_column, axis=1)
+
+        return table_data
+    
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        The reverse transform consists of applying a sigmoid to the transformed
+        ``constraint_column`` and then scaling it back to the original space
+        ( ``(column - cnt) * (high - low) / cnt + low`` ).
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+
+        low = self._get_low(table_data)
+        high = self._get_high(table_data)
+        data = table_data[self._transformed_column]
+        data = 1 / (1 + np.exp(-data))
+        data = (data - 0.025) / 0.95
+        data = data * (high - low) + low
+        table_data[self.constraint_column] = data
+
+        table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
