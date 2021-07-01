@@ -1,10 +1,10 @@
 """Tests for the sdv.constraints.tabular module."""
 
+from random import uniform
+
 import numpy as np
-from numpy.core.defchararray import translate
 import pandas as pd
 import pytest
-from random import randrange
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
@@ -1128,8 +1128,9 @@ class TestColumnFormula():
 
 def transform(data, low, high):
     """Transform to be used for the TestBetween class."""
-    data = (data - low)/(high - low) * 0.95 + 0.025
-    return np.log(data/(1.0 - data))
+    data = (data - low) / (high - low) * 0.95 + 0.025
+    return np.log(data / (1.0 - data))
+
 
 class TestBetween():
 
@@ -1194,7 +1195,6 @@ class TestBetween():
             '#a#0.0#b': transform(table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
-
 
     def test_transform_column_scalar(self):
         """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as scalar.
@@ -1383,7 +1383,7 @@ class TestBetween():
         low = 'b'
         high = 'c'
         instance = Between(column=column, low=low, high=high)
-    
+
         table_data = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
@@ -1401,10 +1401,10 @@ class TestBetween():
         # Assert
         expected_out = table_data
         pd.testing.assert_frame_equal(expected_out, out)
-    
+
     def test_reverse_transform_always_valid(self):
         """Test ``Between.reverse_transform`` always returns values between ``low`` and ``high``.
-        
+
         It is expected to recover the original table which was transformed, but with different
         column order. It does so by applying a sigmoid to the transformed column and then
         scaling it back to the original space. It also replaces the transformed column with
@@ -1422,13 +1422,13 @@ class TestBetween():
 
         # Run
         table_data = pd.DataFrame({
-            '#a#-10#100': [randrange(-1000, 1000) for i in range(10)]
+            '#a#-10#100': [uniform(-1000, 1000) for i in range(1000)]
         })
         out = instance.reverse_transform(table_data)
 
         # Assert
         assert out['a'].between(low, high).all()
-    
+
     def test_is_valid_strict_true(self):
         """Test the ``Between.is_valid`` method with strict True.
 
@@ -1446,7 +1446,6 @@ class TestBetween():
         low = 0.0
         high = 1.0
         instance = Between(column=column, low=low, high=high, strict=True)
-
 
         # Run
         table_data = pd.DataFrame({
@@ -1487,7 +1486,7 @@ class TestBetween():
         print(expected_out)
         print(out)
         pd.testing.assert_series_equal(expected_out, out, check_names=False)
-    
+
     def test_is_valid_scalar_column(self):
         """Test the ``Between.is_valid`` method with ``low`` as scalar and ``high`` as a column.
 
@@ -1516,7 +1515,7 @@ class TestBetween():
         # Assert
         expected_out = pd.Series([True, True, False])
         pd.testing.assert_series_equal(expected_out, out)
-    
+
     def test_is_valid_column_scalar(self):
         """Test the ``Between.is_valid`` method with ``low`` as a column and ``high`` as scalar.
 
@@ -1546,7 +1545,7 @@ class TestBetween():
         # Assert
         expected_out = pd.Series([True, False, False])
         pd.testing.assert_series_equal(expected_out, out)
-    
+
     def test_is_valid_column_column(self):
         """Test the ``Between.is_valid`` method with ``low`` and ``high`` as columns.
 

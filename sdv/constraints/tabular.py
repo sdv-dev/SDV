@@ -19,10 +19,8 @@ Currently implemented constraints are:
       of two other columns/scalars.
 """
 
-from matplotlib.pyplot import table
 import numpy as np
 import pandas as pd
-from scipy.special import expit
 
 from sdv.constraints.base import Constraint, import_object
 
@@ -393,6 +391,7 @@ class ColumnFormula(Constraint):
 
         return table_data
 
+
 class Between(Constraint):
     """Ensure that the ``constraint_column`` is always between ``high`` and ``low``.
 
@@ -405,10 +404,10 @@ class Between(Constraint):
             Name of the column to which the constraint will be applied.
         low (float or str):
             If float, lower bound on the values of the ``constraint_column``.
-            If string, name of the column which will be the lower bound. 
+            If string, name of the column which will be the lower bound.
         high (float or str):
             If float, upper bound on the values of the ``constraint_column``.
-            If string, name of the column which will be the upper bound. 
+            If string, name of the column which will be the upper bound.
         strict (bool):
             Whether the comparison of the values should be strict ``>=`` or
             not ``>`` when comparing them. Currently, this is only respected
@@ -420,7 +419,7 @@ class Between(Constraint):
 
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
                  fit_columns_model=True):
-        self.constraint_column = column        
+        self.constraint_column = column
         self._low = low
         self._high = high
         self._strict = strict
@@ -430,14 +429,14 @@ class Between(Constraint):
 
     def _get_low(self, table_data):
         """Returns the appropriate lower bound.
-        
+
         If the ``low`` value was passed as a string, returns the column named ``low``.
         If it is a float, returns the value itself.
 
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
-        
+
         Returns:
             pandas.DataFrame or float:
                 The lower bound.
@@ -449,14 +448,14 @@ class Between(Constraint):
 
     def _get_high(self, table_data):
         """Returns the appropriate upper bound.
-        
+
         If the ``high`` value was passed as a string, returns the column named ``high``.
         If it is a float, returns the value itself.
 
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
-        
+
         Returns:
             pandas.DataFrame or float:
                 The upper bound.
@@ -485,7 +484,6 @@ class Between(Constraint):
         satisfy_low_bound = self._get_low(table_data) <= table_data[self.constraint_column]
         satisfy_high_bound = table_data[self.constraint_column] <= self._get_high(table_data)
         return satisfy_low_bound & satisfy_high_bound
-    
 
     def transform(self, table_data):
         """Transform the table data.
@@ -506,15 +504,14 @@ class Between(Constraint):
         low = self._get_low(table_data)
         high = self._get_high(table_data)
 
-        data = (table_data[self.constraint_column] - low)/(high - low)
+        data = (table_data[self.constraint_column] - low) / (high - low)
         data = data * 0.95 + 0.025
-        data = np.log(data/(1.0 - data))
+        data = np.log(data / (1.0 - data))
 
         table_data[self._transformed_column] = data
         table_data = table_data.drop(self.constraint_column, axis=1)
 
         return table_data
-    
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
