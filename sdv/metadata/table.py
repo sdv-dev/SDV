@@ -188,7 +188,7 @@ class Table:
                 dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
             custom_float = rdt.transformers.NumericalTransformer(
                 dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
-            self._TRANSFORMER_TEMPLATES.update({
+            self._transformer_templates.update({
                 'integer': custom_int,
                 'float': custom_float
             })
@@ -211,6 +211,7 @@ class Table:
         self._context_columns = context_columns or []
         self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
+        self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
@@ -348,7 +349,7 @@ class Table:
                 field_metadata['transformer'] = transformer_template
 
             if isinstance(transformer_template, str):
-                transformer_template = self._TRANSFORMER_TEMPLATES[transformer_template]
+                transformer_template = self._transformer_templates[transformer_template]
 
             if isinstance(transformer_template, type):
                 transformer = transformer_template()
