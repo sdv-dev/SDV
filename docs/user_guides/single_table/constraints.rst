@@ -161,11 +161,9 @@ this functionality, we can pass:
 .. ipython:: python
     :okwarning:
 
-    from datetime import datetime
-
-    start_date_gt_1980_constraint = GreaterThan(
-        low=datetime(1980, 1, 1),
-        high='start_date',
+    salary_gt_30000_constraint = GreaterThan(
+        low=30000,
+        high='salary',
         handling_strategy='reject_sampling'
     )
 
@@ -220,7 +218,7 @@ constraints that we just defined as a ``list``:
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
-        start_date_gt_1980_constraint
+        salary_gt_30000_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)

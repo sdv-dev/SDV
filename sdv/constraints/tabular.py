@@ -239,6 +239,7 @@ class GreaterThan(Constraint):
             return self._low
         elif self._low in table_data.columns:
             return table_data[self._low]
+
         return None
 
     def _get_high_value(self, table_data):
@@ -246,6 +247,7 @@ class GreaterThan(Constraint):
             return self._high
         elif self._high in table_data.columns:
             return table_data[self._high]
+
         return None
 
     def _get_column_to_reconstruct(self):
@@ -266,10 +268,12 @@ class GreaterThan(Constraint):
             name = self.constraint_columns[0] + token
             while name in table_data.columns:
                 name += '#'
+
             return name
 
         while token.join(self.constraint_columns) in table_data.columns:
             token += '#'
+
         return token.join(self.constraint_columns)
 
     def _fit(self, table_data):
