@@ -1307,8 +1307,8 @@ class TestBetween():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [0.1, 0.5, 0.9],
             'b': [4, 5, 6],
+            'a': [0.1, 0.5, 0.9]
         })
 
         transformed = pd.DataFrame({
@@ -1341,8 +1341,8 @@ class TestBetween():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [0.1, 0.5, 0.9],
             'b': [0.5, 1, 6],
+            'a': [0.1, 0.5, 0.9]
         })
 
         transformed = pd.DataFrame({
@@ -1375,8 +1375,8 @@ class TestBetween():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [0.1, 0.5, 0.9],
             'b': [0, -1, 0.5],
+            'a': [0.1, 0.5, 0.9]
         })
 
         transformed = pd.DataFrame({
@@ -1409,9 +1409,9 @@ class TestBetween():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [0.1, 0.5, 0.9],
             'b': [0, -1, 0.5],
-            'c': [0.5, 1, 6]
+            'c': [0.5, 1, 6],
+            'a': [0.1, 0.5, 0.9]
         })
 
         transformed = pd.DataFrame({
