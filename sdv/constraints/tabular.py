@@ -401,7 +401,24 @@ class OneHotEncoding(Constraint):
     def __init__(self, columns, handling_strategy='transform'):
         self._columns = columns
         self.constraint_columns = tuple(columns)
-        super().__init__(handling_strategy, fit_columns_model=False)
+        super().__init__(handling_strategy, fit_columns_model=True)
+    
+    def _sample_constraint_columns(self, table_data):
+        # TODO
+        # for each row:
+        #    examine self._columns:
+        #    if values have non 0/1 values, raise ValueError
+        #    if exactly ALL columns is 0, raise ValueError
+        #    if more than 1 column is 1, raise ValueError
+        #    if exactly 1 column is 1, set all others to 0
+        #    if exactly 0 columns is 1, randomly sample from unset columns
+        #        - random sample comes from super()._sample_constraint_columns(table_data)?
+        print("_sample_constraint_columns", table_data)
+        table_data = table_data.copy()
+        for column in self._columns:
+            if column not in table_data:
+                table_data[column] = 0
+        return table_data
 
     def is_valid(self, table_data):
         """Check whether the data satisfies the one-hot constraint.

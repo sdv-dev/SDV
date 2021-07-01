@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.tabular import CopulaGAN
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     ColumnFormula, CustomConstraint, GreaterThan, OneHotEncoding, UniqueCombinations)
@@ -934,3 +935,108 @@ class TestOneHotEncoding():
         # Assert
         expected_out = pd.Series([True, False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
+
+    def test_one_one(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+        out = model.sample(10, conditions={'a': 1})
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1]*10,
+            'b': [0]*10,
+            'c': [0]*10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_non_binary(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+
+        # Assert
+        with pytest.raises(ValueError):
+            model.sample(10, conditions={'a': 0.5})
+
+    def test_all_zeros(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+
+        # Assert
+        with pytest.raises(ValueError):
+            model.sample(10, conditions={'a': 0, 'b': 0, 'c': 0})
+
+    def test_two_ones(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+
+        # Assert
+        with pytest.raises(ValueError):
+            model.sample(10, conditions={'a': 1, 'b': 1, 'c': 0})
+
+    def test_valid(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+        out = model.sample(10, conditions={'a': 0, 'b': 1, 'c': 0})
+        
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0]*10,
+            'b': [1]*10,
+            'c': [0]*10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+    
+    def test_one_zero(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+        out = model.sample(10, conditions={'c': 0})
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0]*10,
+            'b': [1]*10,
+            'c': [0]*10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
