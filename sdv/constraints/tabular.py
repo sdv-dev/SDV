@@ -569,6 +569,7 @@ class Rounding(Constraint):
             self._columns = columns
 
         self._digits = digits
+        self._round_config = {column: self._digits for column in self._columns}
         self._tolerance = tolerance if tolerance else 10**(-1 * (digits + 1))
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
@@ -583,8 +584,9 @@ class Rounding(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        rounded = table_data.round({column: self._digits for column in self._columns})
-        valid = (table_data - rounded).abs() <= self._tolerance
+        columns = table_data[self._columns]
+        rounded = columns.round(self._digits)
+        valid = (columns - rounded).abs() <= self._tolerance
 
         return valid.all(1)
 
@@ -601,4 +603,4 @@ class Rounding(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        return table_data.round({column: self._digits for column in self._columns})
+        return table_data.round(self._round_config)
