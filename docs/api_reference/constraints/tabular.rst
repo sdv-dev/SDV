@@ -68,3 +68,19 @@ ColumnFormula
    ColumnFormula.filter_valid
    ColumnFormula.from_dict
    ColumnFormula.to_dict
+
+Between
+~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Between
+   Between.fit
+   Between.transform
+   Between.fit_transform
+   Between.reverse_transform
+   Between.is_valid
+   Between.filter_valid
+   Between.from_dict
+   Between.to_dict
