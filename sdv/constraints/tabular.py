@@ -428,7 +428,7 @@ class Between(Constraint):
                          fit_columns_model=fit_columns_model)
 
     def _get_low(self, table_data):
-        """Returns the appropriate lower bound.
+        """Return the appropriate lower bound.
 
         If the ``low`` value was passed as a string, returns the column named ``low``.
         If it is a float, returns the value itself.
@@ -447,7 +447,7 @@ class Between(Constraint):
         return self._low
 
     def _get_high(self, table_data):
-        """Returns the appropriate upper bound.
+        """Return the appropriate upper bound.
 
         If the ``high`` value was passed as a string, returns the column named ``high``.
         If it is a float, returns the value itself.
