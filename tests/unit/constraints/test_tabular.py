@@ -1413,7 +1413,7 @@ class TestBetween():
         Input:
         - Transformed table data (pandas.DataFrame)
         Output:
-        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        - Original table data, without necessarily keeping the column order (pandas.DataFrame)
         """
         column = 'a'
         low = -10
@@ -1435,11 +1435,11 @@ class TestBetween():
         If strict is True, equal values should count as invalid.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a valid row, a strictly invalid row and an
+          invalid row. (pandas.DataFrame)
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - True should be returned for the valid row and False
+          for the other two. (pandas.Series)
         """
         # Setup
         column = 'a'
@@ -1464,11 +1464,11 @@ class TestBetween():
         If strict is False, equal values should count as valid.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a valid row, a strictly invalid row and an
+          invalid row. (pandas.DataFrame)
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - True should be returned for the first two rows, and False
+          for the last one (pandas.Series)
         """
         # Setup
         column = 'a'
@@ -1489,16 +1489,16 @@ class TestBetween():
         pd.testing.assert_series_equal(expected_out, out, check_names=False)
     
     def test_is_valid_scalar_column(self):
-        """Test the ``Between.is_valid`` method with strict True.
+        """Test the ``Between.is_valid`` method with ``low`` as scalar and ``high`` as a column.
 
-        If strict is True, equal values should count as invalid.
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table data where the last value is greater than ``high``. (pandas.DataFrame)
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - True should be returned for the two first rows, False
+          for the last one. (pandas.Series)
         """
         # Setup
         column = 'a'
@@ -1518,16 +1518,17 @@ class TestBetween():
         pd.testing.assert_series_equal(expected_out, out)
     
     def test_is_valid_column_scalar(self):
-        """Test the ``Between.is_valid`` method with strict True.
+        """Test the ``Between.is_valid`` method with ``low`` as a column and ``high`` as scalar.
 
-        If strict is True, equal values should count as invalid.
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table data where the second value is smaller than ``low`` and
+          last value is greater than ``high``. (pandas.DataFrame)
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - True should be returned for the first row, False
+          for the last two. (pandas.Series)
         """
         # Setup
         column = 'a'
@@ -1547,16 +1548,16 @@ class TestBetween():
         pd.testing.assert_series_equal(expected_out, out)
     
     def test_is_valid_column_column(self):
-        """Test the ``Between.is_valid`` method with strict True.
+        """Test the ``Between.is_valid`` method with ``low`` and ``high`` as columns.
 
-        If strict is True, equal values should count as invalid.
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table data where the last value is greater than ``high``. (pandas.DataFrame)
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - True should be returned for the two first rows, False
+          for the last one. (pandas.Series)
         """
         # Setup
         column = 'a'
@@ -1576,6 +1577,3 @@ class TestBetween():
         expected_out = pd.Series([True, True, False])
 
         pd.testing.assert_series_equal(expected_out, out)
-
-
-# Add drop back
