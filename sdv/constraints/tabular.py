@@ -19,6 +19,7 @@ Currently implemented constraints are:
       of two other columns/scalars.
 """
 
+from matplotlib.pyplot import table
 import numpy as np
 import pandas as pd
 from scipy.special import expit
@@ -502,14 +503,14 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-
         low = self._get_low(table_data)
         high = self._get_high(table_data)
+
         data = (table_data[self.constraint_column] - low)/(high - low)
         data = data * 0.95 + 0.025
         data = np.log(data/(1.0 - data))
+
         table_data[self._transformed_column] = data
-        
         table_data = table_data.drop(self.constraint_column, axis=1)
 
         return table_data
@@ -531,15 +532,16 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-
         low = self._get_low(table_data)
         high = self._get_high(table_data)
         data = table_data[self._transformed_column]
+
         data = 1 / (1 + np.exp(-data))
         data = (data - 0.025) / 0.95
         data = data * (high - low) + low
-        table_data[self.constraint_column] = data
+        data = data.clip(low, high)
 
+        table_data[self.constraint_column] = data
         table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data

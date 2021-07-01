@@ -4,7 +4,7 @@ import numpy as np
 from numpy.core.defchararray import translate
 import pandas as pd
 import pytest
-from random import random
+from random import randrange
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
@@ -1126,22 +1126,23 @@ class TestColumnFormula():
         pd.testing.assert_frame_equal(expected_out, out)
 
 
-class TestBetween():
+def transform(data, low, high):
+    """Transform to be used for the TestBetween class."""
+    data = (data - low)/(high - low) * 0.95 + 0.025
+    return np.log(data/(1.0 - data))
 
-    def transform(self, data, low, high):
-        data = (data - low)/(high - low) * 0.95 + 0.025
-        return np.log(data/(1.0 - data))
+class TestBetween():
 
     def test_transform_scalar_scalar(self):
         """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
+        It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
 
         Input:
         - Table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1159,20 +1160,20 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
-            '#a#0.0#1.0': self.transform(table_data[column], low, high)
+            '#a#0.0#1.0': transform(table_data[column], low, high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_transform_scalar_column(self):
-        """Test the ``Between.transform`` method by passing ``low`` as scalar and ``high`` as column.
+        """Test the ``Between.transform`` method with ``low`` as scalar and ``high`` as a column.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
+        It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
 
         Input:
         - Table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1190,21 +1191,21 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [0.5, 1, 6],
-            '#a#0.0#b': self.transform(table_data[column], low, table_data[high])
+            '#a#0.0#b': transform(table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
 
     def test_transform_column_scalar(self):
-        """Test the ``Between.transform`` method by passing ``low`` as column and ``high`` as scalar.
+        """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as scalar.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
+        It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
 
         Input:
         - Table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1222,20 +1223,20 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [0, -1, 0.5],
-            '#a#b#1.0': self.transform(table_data[column], table_data[low], high)
+            '#a#b#1.0': transform(table_data[column], table_data[low], high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_transform_column_column(self):
         """Test the ``Between.transform`` method by passing ``low`` and ``high`` as columns.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
+        It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
 
         Input:
         - Table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1255,49 +1256,22 @@ class TestBetween():
         expected_out = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
-            '#a#b#c': self.transform(table_data[column], table_data[low], table_data[high])
+            '#a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-
-    def test_transform(self):
-        data = pd.DataFrame({
-            'a': [1.0,1.0,1.0],
-            'b': [1.0, 2.0, 3.0],
-        })
-
-        constraint = Between('b', 0.0, 4.0)
-        constraint.fit(data)
-
-        out = constraint.reverse_transform(constraint.transform(data))
-        pd.testing.assert_frame_equal(data, out)
-
-
-    def test_transform_2(self):
-        data = pd.DataFrame({
-            'low': [1.0,4.0,0.0],
-            'high': [3.0, 6.0, 4.0],
-            'med': [2.0, 5.0, 1.0],
-        })
-
-        constraint = Between('med', 'low', 'high')
-        constraint.fit(data)
-
-        out = constraint.reverse_transform(constraint.transform(data))
-        pd.testing.assert_frame_equal(data, out)
-
-    #TODO: test that strict is passed correctly?
-
     def test_reverse_transform_scalar_scalar(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as scalars.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
-        scale and apply a logit function to that column.
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Transformed table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1305,17 +1279,16 @@ class TestBetween():
         high = 1.0
         instance = Between(column=column, low=low, high=high)
 
-        # Run
         table_data = pd.DataFrame({
             'b': [4, 5, 6],
             'a': [0.1, 0.5, 0.9]
         })
 
+        # Run
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
-            '#a#0.0#1.0': self.transform(table_data[column], low, high)
+            '#a#0.0#1.0': transform(table_data[column], low, high)
         })
-
         out = instance.reverse_transform(transformed)
 
         # Assert
@@ -1323,15 +1296,17 @@ class TestBetween():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_scalar_column(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
+        """Test ``Between.reverse_transform`` with ``low`` as scalar and ``high`` as a column.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
-        scale and apply a logit function to that column.
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Transformed table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1339,17 +1314,16 @@ class TestBetween():
         high = 'b'
         instance = Between(column=column, low=low, high=high)
 
-        # Run
         table_data = pd.DataFrame({
             'b': [0.5, 1, 6],
             'a': [0.1, 0.5, 0.9]
         })
 
+        # Run
         transformed = pd.DataFrame({
             'b': [0.5, 1, 6],
-            '#a#0.0#b': self.transform(table_data[column], low, table_data[high])
+            '#a#0.0#b': transform(table_data[column], low, table_data[high])
         })
-
         out = instance.reverse_transform(transformed)
 
         # Assert
@@ -1357,15 +1331,17 @@ class TestBetween():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_column_scalar(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
+        """Test ``Between.reverse_transform`` with ``low`` as a column and ``high`` as scalar.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
-        scale and apply a logit function to that column.
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Transformed table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
         """
         # Setup
         column = 'a'
@@ -1373,17 +1349,16 @@ class TestBetween():
         high = 1.0
         instance = Between(column=column, low=low, high=high)
 
-        # Run
         table_data = pd.DataFrame({
             'b': [0, -1, 0.5],
             'a': [0.1, 0.5, 0.9]
         })
 
+        # Run
         transformed = pd.DataFrame({
             'b': [0, -1, 0.5],
-            '#a#b#1.0': self.transform(table_data[column], table_data[low], high)
+            '#a#b#1.0': transform(table_data[column], table_data[low], high)
         })
-
         out = instance.reverse_transform(transformed)
 
         # Assert
@@ -1391,57 +1366,68 @@ class TestBetween():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_column_column(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as columns.
 
-        It is expected to create a new column similar to the ``constraint_column``, and then
-        scale and apply a logit function to that column.
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Transformed table data (pandas.DataFrame)
         Output:
-        - Table data with an extra column (pandas.DataFrame)
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
         """
         # Setup
         column = 'a'
         low = 'b'
         high = 'c'
         instance = Between(column=column, low=low, high=high)
-
-        # Run
+    
         table_data = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
             'a': [0.1, 0.5, 0.9]
         })
 
+        # Run
         transformed = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
-            '#a#b#c': self.transform(table_data[column], table_data[low], table_data[high])
+            '#a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
-
         out = instance.reverse_transform(transformed)
 
         # Assert
         expected_out = table_data
         pd.testing.assert_frame_equal(expected_out, out)
     
-    def test_reverse_transform_valid(self):
-        """Test that regardless of the values, it always returns in the range."""
-        # Setup
+    def test_reverse_transform_always_valid(self):
+        """Test ``Between.reverse_transform`` always returns values between ``low`` and ``high``.
+        
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
         column = 'a'
-        low = 0.0
-        high = 1.0
+        low = -10
+        high = 100
         instance = Between(column=column, low=low, high=high)
 
         # Run
-        transformed = pd.DataFrame({
-            '#a#0.0#1.0': [random() for i in range(1000)]
+        table_data = pd.DataFrame({
+            '#a#-10#100': [randrange(-1000, 1000) for i in range(10)]
         })
-        out = instance.reverse_transform(transformed)
+        out = instance.reverse_transform(table_data)
 
         # Assert
-        assert out['a'].between(0.0, 1.0).all()
+        assert out['a'].between(low, high).all()
     
     def test_is_valid_strict_true(self):
         """Test the ``Between.is_valid`` method with strict True.
@@ -1592,5 +1578,4 @@ class TestBetween():
         pd.testing.assert_series_equal(expected_out, out)
 
 
-# Do we care about the order of the columns?
 # Add drop back
