@@ -85,11 +85,20 @@ class Table:
             group/entity. These columns will be provided at sampling time
             (i.e. the samples will be conditioned on the context variables).
         rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``.
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
         min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use.
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
         max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use.
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _hyper_transformer = None
@@ -183,7 +192,10 @@ class Table:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
     def _update_transformer_templates(self, rounding, min_value, max_value):
-        if rounding != 'auto' or min_value != 'auto' or max_value != 'auto':
+        default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
+        if (rounding != default_numerical_transformer.rounding
+                or min_value != default_numerical_transformer.min_value
+                or max_value != default_numerical_transformer.max_value):
             custom_int = rdt.transformers.NumericalTransformer(
                 dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
             custom_float = rdt.transformers.NumericalTransformer(
