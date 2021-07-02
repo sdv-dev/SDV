@@ -936,17 +936,30 @@ class TestOneHotEncoding():
         expected_out = pd.Series([True, False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_one_one(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_one_one(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains a one for all rows, expected to assign
+        all other columns to zeros.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where the first column contains one's and others columns zero's (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 1}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
-        out = model.sample(10, conditions={'a': 1})
+        out = model.sample(10, conditions=condition)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -956,62 +969,110 @@ class TestOneHotEncoding():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_non_binary(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_two_ones(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains two ones.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 1, 'b': 1, 'c': 0}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
 
         # Assert
         with pytest.raises(ValueError):
-            model.sample(10, conditions={'a': 0.5})
+            model.sample(10, conditions=condition)
 
-    def test_all_zeros(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_non_binary(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains a non binary value.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 0.5}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
 
         # Assert
         with pytest.raises(ValueError):
-            model.sample(10, conditions={'a': 0, 'b': 0, 'c': 0})
+            model.sample(10, conditions=condition)
 
-    def test_two_ones(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_all_zeros(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains only zeros.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 0, 'b': 0, 'c': 0}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
 
         # Assert
         with pytest.raises(ValueError):
-            model.sample(10, conditions={'a': 1, 'b': 1, 'c': 0})
+            model.sample(10, conditions=condition)
 
-    def test_valid(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_valid_condition(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to generate a table where every column satisfies the ``condition``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table satifying the ``condition`` (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 0, 'b': 1, 'c': 0}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
-        out = model.sample(10, conditions={'a': 0, 'b': 1, 'c': 0})
+        out = model.sample(10, conditions=condition)
         
         # Assert
         expected_out = pd.DataFrame({
@@ -1021,17 +1082,32 @@ class TestOneHotEncoding():
         })
         pd.testing.assert_frame_equal(expected_out, out)
     
-    def test_one_zero(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_one_zero(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains only one zero, expected to randomly sample
+        from unset columns any valid possibility. Since the ``b`` column in ``data`` 
+        contains all the ones, it's expected to return a table where only ``b`` has ones.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where ``b`` is all one`s and other columns are all zero`s (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'c': 0}
+
+        # Run
         data = pd.DataFrame({
             'a': [0, 0]*5,
             'b': [1, 1]*5,
             'c': [0, 0]*5
         })
 
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
-        out = model.sample(10, conditions={'c': 0})
+        out = model.sample(10, conditions=condition)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -1041,39 +1117,94 @@ class TestOneHotEncoding():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_one_zero_alt(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test__sample_constraint_columns_one_zero_alt(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains only one zero, expected to randomly sample
+        from unset columns any valid possibility.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where ``c`` is all zero`s and ``b`` xor ``a`` is always one (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'c': 0}
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0]*5,
             'b': [0, 1]*5,
             'c': [0, 0]*5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
-        out = model.sample(10, conditions={'c': 0})
+        out = model.sample(10, conditions=condition)
 
         # Assert
         assert (out['c'] == 0.0).all()
         assert ((out['b'] == 1.0) ^ (out['a'] == 1.0)).all()
     
-    def test(self):
-        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+    def test_sample_constraint_columns_list_of_conditions(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to generate a table satisfying the ``condition``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table satisfying the ``condition`` (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
         condition = ({
             'a': [0, 1] * 5,
             'c': [0, 0] * 5
         })
+
+        # Run
         data = pd.DataFrame({
             'a': [1, 0] * 5,
             'b': [0, 1] * 5,
             'c': [0, 0] * 5
         })
-
-        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
         out = model.sample(conditions=condition)
-        pd.DataFrame({'a': [0, 1] * 5})
-        pd.DataFrame({'b': [1, 0] * 5})
-        pd.testing.assert_series_equal(out['a'], pd.Series([0, 1] * 5, name='a'))
-        pd.testing.assert_series_equal(out['b'], pd.Series([1, 0] * 5, name='b'))
-        assert(out['c'] == 0.0).all()
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'a': [0, 1] * 5,
+            'b': [1, 0] * 5,
+            'c': [0, 0] * 5
+        })
+        pd.testing.assert_frame_equal(out, expected_output)
+
+    def test_sample_constraint_columns_negative_values(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since condition is not a one hot vector.
+        This tests that even if the sum of a row is one it still crashes.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = {'a': 1, 'b': -1, 'c': 1}
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1] * 10,
+            'b': [-1] * 10,
+            'c': [1] * 10
+        })
+        model = CopulaGAN(constraints=[instance], epochs=1)
+        model.fit(data)
+
+        # Assert
+        with pytest.raises(ValueError):
+            model.sample(10, conditions=condition)

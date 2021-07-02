@@ -404,29 +404,17 @@ class OneHotEncoding(Constraint):
         super().__init__(handling_strategy, fit_columns_model=True)
     
     def _sample_constraint_columns(self, table_data):
-        # TODO
-        # for each row:
-        #    examine self._columns:
-        #    if values have non 0/1 values, raise ValueError
-        #    if exactly ALL columns is 0, raise ValueError
-        #    if more than 1 column is 1, raise ValueError
-        #    if exactly 1 column is 1, set all others to 0
-        #    if exactly 0 columns is 1, randomly sample from unset columns
-        #        - random sample comes from super()._sample_constraint_columns(table_data)?
-        
         table_data = table_data.copy()
 
         condition_columns = [col for col in self._columns if col in table_data.columns]
         is_one = table_data[condition_columns].values == 1.0
         is_zero = table_data[condition_columns].values == 0.0
         if not (is_one | is_zero).all():
-            raise ValueError("Expected condition values 0/1.")
+            raise ValueError("Condition values must be ones or zeros.")
         
         if (table_data[condition_columns].sum(axis=1) > 1.0).any():
-            raise ValueError
+            raise ValueError("Each row of a condition can only contain one number one.")
 
-        # TODO: go row by row
-        # TODO: handle negative numbers
         if (table_data[condition_columns].sum(axis=1) == 0.0).any():
             proposed_table_data = super()._sample_constraint_columns(table_data)
             for column in self._columns:
@@ -436,6 +424,7 @@ class OneHotEncoding(Constraint):
                     table_data[column] = float("-inf")
                     
             table_data = self.reverse_transform(table_data)
+            
             return table_data
 
         for column in self._columns:
