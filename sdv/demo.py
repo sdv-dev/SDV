@@ -326,6 +326,7 @@ def _load_tabular_dummy():
     names = [faker.name() for _ in range(12)]
     adresses = [faker.address() for _ in range(12)]
     salary = np.random.randint(30000, 160000, 12)
+    years_exp = np.random.randint(1, 6, 12)
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
@@ -335,7 +336,8 @@ def _load_tabular_dummy():
         'age': age,
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,
-        'salary': salary
+        'salary': salary,
+        'prior_years_experience': years_exp
     })
 
 
@@ -391,7 +393,8 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 'age': {'type': 'numerical', 'subtype': 'integer'},
                 'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
                 'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'},
-                'salary': {'type': 'numerical', 'subtype': 'integer'}
+                'salary': {'type': 'numerical', 'subtype': 'integer'},
+                'prior_years_experience': {'type': 'numerical', 'subtype': 'integer'}
             },
             'constraints': [
                 {
@@ -407,6 +410,10 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                     'constraint': 'GreaterThan',
                     'low': 30000,
                     'high': 'salary'
+                },
+                {
+                    'constraint': 'Positive',
+                    'high': 'prior_years_experience'
                 }
             ],
             'model_kwargs': {}

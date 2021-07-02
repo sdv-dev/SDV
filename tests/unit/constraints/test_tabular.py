@@ -8,7 +8,7 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, GreaterThan, UniqueCombinations)
+    ColumnFormula, CustomConstraint, GreaterThan, Negative, Positive, UniqueCombinations)
 
 
 def dummy_transform():
@@ -1620,6 +1620,76 @@ class TestGreaterThan():
             'c': [7, 8, 9],
         })
         pd.testing.assert_frame_equal(out, expected_out)
+
+
+class TestPositive():
+
+    def test__init__(self):
+        """
+        Test the ``Positive.__init__`` method.
+
+        The method is expected to set the ``_low`` instance variable
+        to 0, the ``_low_is_scalar`` variable to ``True`` and the
+        ``_high_is_scalar`` variable to ``False``. The rest of the
+        parameters should be passed.
+
+        Input:
+        - strict = True
+        - high = 'a'
+        - drop = None
+        Side effects:
+        - instance._low == 0
+        - instance._high == 'a'
+        - instance._strict == True
+        - instance._high_is_scalar = False
+        - instance._low_is_scalar = True
+        - instance._drop = None
+        """
+        # Run
+        instance = Positive(high='a', strict=True, drop=None)
+
+        # Asserts
+        assert instance._low == 0
+        assert instance._high == 'a'
+        assert instance._strict is True
+        assert instance._high_is_scalar is False
+        assert instance._low_is_scalar is True
+        assert instance._drop is None
+
+
+class TestNegative():
+
+    def test__init__(self):
+        """
+        Test the ``Negative.__init__`` method.
+
+        The method is expected to set the ``_high`` instance variable
+        to 0, the ``_high_is_scalar`` variable to ``True`` and the
+        ``_low_is_scalar`` variable to ``False``. The rest of the
+        parameters should be passed.
+
+        Input:
+        - strict = True
+        - low = 'a'
+        - drop = None
+        Side effects:
+        - instance._low == 'a'
+        - instance._high == 0
+        - instance._strict == True
+        - instance._high_is_scalar = True
+        - instance._low_is_scalar = False
+        - instance._drop = None
+        """
+        # Run
+        instance = Negative(low='a', strict=True, drop=None)
+
+        # Asserts
+        assert instance._low == 'a'
+        assert instance._high == 0
+        assert instance._strict is True
+        assert instance._high_is_scalar is True
+        assert instance._low_is_scalar is False
+        assert instance._drop is None
 
 
 def new_column(data):
