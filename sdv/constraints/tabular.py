@@ -402,7 +402,7 @@ class OneHotEncoding(Constraint):
         self._columns = columns
         self.constraint_columns = tuple(columns)
         super().__init__(handling_strategy, fit_columns_model=True)
-    
+
     def _sample_constraint_columns(self, table_data):
         table_data = table_data.copy()
 
@@ -411,7 +411,7 @@ class OneHotEncoding(Constraint):
         is_zero = table_data[condition_columns].values == 0.0
         if not (is_one | is_zero).all():
             raise ValueError('Condition values must be ones or zeros.')
-        
+
         if (table_data[condition_columns].sum(axis=1) > 1.0).any():
             raise ValueError('Each row of a condition can only contain one number one.')
 
@@ -422,7 +422,7 @@ class OneHotEncoding(Constraint):
                     table_data[column] = proposed_table_data[column].values
                 else:
                     table_data[column] = float('-inf')
-                    
+
             table_data = self.reverse_transform(table_data)
 
             return table_data
@@ -430,7 +430,7 @@ class OneHotEncoding(Constraint):
         for column in self._columns:
             if column not in table_data:
                 table_data[column] = 0
-        
+
         return table_data
 
     def is_valid(self, table_data):

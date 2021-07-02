@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.tabular import CopulaGAN
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     ColumnFormula, CustomConstraint, GreaterThan, OneHotEncoding, UniqueCombinations)
+from sdv.tabular import CopulaGAN
 
 
 def dummy_transform():
@@ -953,9 +953,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
@@ -963,9 +963,9 @@ class TestOneHotEncoding():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a': [1]*10,
-            'b': [0]*10,
-            'c': [0]*10
+            'a': [1] * 10,
+            'b': [0] * 10,
+            'c': [0] * 10
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -985,9 +985,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
@@ -1012,9 +1012,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
@@ -1039,9 +1039,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
@@ -1066,27 +1066,27 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
         out = model.sample(10, conditions=condition)
-        
+
         # Assert
         expected_out = pd.DataFrame({
-            'a': [0]*10,
-            'b': [1]*10,
-            'c': [0]*10
+            'a': [0] * 10,
+            'b': [1] * 10,
+            'c': [0] * 10
         })
         pd.testing.assert_frame_equal(expected_out, out)
-    
+
     def test__sample_constraint_columns_one_zero(self):
         """Test the ``OneHotEncoding._sample_constraint_columns`` method.
 
         Since the condition column contains only one zero, expected to randomly sample
-        from unset columns any valid possibility. Since the ``b`` column in ``data`` 
+        from unset columns any valid possibility. Since the ``b`` column in ``data``
         contains all the ones, it's expected to return a table where only ``b`` has ones.
 
         Input:
@@ -1100,9 +1100,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [0, 0]*5,
-            'b': [1, 1]*5,
-            'c': [0, 0]*5
+            'a': [0, 0] * 5,
+            'b': [1, 1] * 5,
+            'c': [0, 0] * 5
         })
 
         model = CopulaGAN(constraints=[instance], epochs=1)
@@ -1111,9 +1111,9 @@ class TestOneHotEncoding():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a': [0]*10,
-            'b': [1]*10,
-            'c': [0]*10
+            'a': [0] * 10,
+            'b': [1] * 10,
+            'c': [0] * 10
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -1134,9 +1134,9 @@ class TestOneHotEncoding():
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
-            'c': [0, 0]*5
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
         })
         model = CopulaGAN(constraints=[instance], epochs=1)
         model.fit(data)
@@ -1145,7 +1145,7 @@ class TestOneHotEncoding():
         # Assert
         assert (out['c'] == 0.0).all()
         assert ((out['b'] == 1.0) ^ (out['a'] == 1.0)).all()
-    
+
     def test_sample_constraint_columns_list_of_conditions(self):
         """Test the ``OneHotEncoding._sample_constraint_columns`` method.
 
