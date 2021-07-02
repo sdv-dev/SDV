@@ -431,7 +431,7 @@ class OneHotEncoding(Constraint):
             proposed_table_data = super()._sample_constraint_columns(table_data)
             for column in self._columns:
                 if column not in table_data.columns:
-                    table_data[column] = proposed_table_data[column]
+                    table_data[column] = proposed_table_data[column].values
                 else:
                     table_data[column] = float("-inf")
                     

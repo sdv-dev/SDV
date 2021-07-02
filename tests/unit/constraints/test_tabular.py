@@ -1054,10 +1054,26 @@ class TestOneHotEncoding():
         out = model.sample(10, conditions={'c': 0})
 
         # Assert
-        expected_out = pd.DataFrame({
-            'a': [0]*10,
-            'b': [1]*10,
-            'c': [0]*10
-        })
         assert (out['c'] == 0.0).all()
         assert ((out['b'] == 1.0) ^ (out['a'] == 1.0)).all()
+    
+    def test(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        condition = ({
+            'a': [0, 1] * 5,
+            'c': [0, 0] * 5
+        })
+        data = pd.DataFrame({
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+        out = model.sample(conditions=condition)
+        pd.DataFrame({'a': [0, 1] * 5})
+        pd.DataFrame({'b': [1, 0] * 5})
+        pd.testing.assert_series_equal(out['a'], pd.Series([0, 1] * 5, name='a'))
+        pd.testing.assert_series_equal(out['b'], pd.Series([1, 0] * 5, name='b'))
+        assert(out['c'] == 0.0).all()
