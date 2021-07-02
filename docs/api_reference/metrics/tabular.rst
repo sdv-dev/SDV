@@ -115,3 +115,50 @@ Single Table Efficacy Metrics
     MLPRegressor
     MLPRegressor.get_subclasses
     MLPRegressor.compute
+
+Single Table Privacy Metrics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+    CategoricalPrivacyMetric
+    CategoricalPrivacyMetric.get_subclasses
+    NumericalPrivacyMetric
+    NumericalPrivacyMetric.get_subclasses
+    CategoricalCAP
+    CategoricalCAP.get_subclasses
+    CategoricalCAP.compute
+    CategoricalZeroCAP
+    CategoricalZeroCAP.get_subclasses
+    CategoricalZeroCAP.compute
+    CategoricalGeneralizedCAP
+    CategoricalGeneralizedCAP.get_subclasses
+    CategoricalGeneralizedCAP.compute
+    CategoricalKNN
+    CategoricalKNN.get_subclasses
+    CategoricalKNN.compute
+    CategoricalNB
+    CategoricalNB.get_subclasses
+    CategoricalNB.compute
+    CategoricalRF
+    CategoricalRF.get_subclasses
+    CategoricalRF.compute
+    CategoricalSVM
+    CategoricalSVM.get_subclasses
+    CategoricalSVM.compute
+    NumericalMLP
+    NumericalMLP.get_subclasses
+    NumericalMLP.compute
+    NumericalLR
+    NumericalLR.get_subclasses
+    NumericalLR.compute
+    NumericalSVR
+    NumericalSVR.get_subclasses
+    NumericalSVR.compute
+    CategoricalEnsemble
+    CategoricalEnsemble.get_subclasses
+    CategoricalEnsemble.compute
+    NumericalRadiusNearestNeighbor
+    NumericalRadiusNearestNeighbor.get_subclasses
+    NumericalRadiusNearestNeighbor.compute

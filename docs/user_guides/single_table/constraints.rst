@@ -154,7 +154,24 @@ passing:
         handling_strategy='reject_sampling'
     )
 
-CustomFormula Constraint
+The ``GreaterThan`` constraint can also be used to guarantee a column is greater
+than a scalar value or specific datetime value instead of another column. To use
+this functionality, we can pass:
+
+-  the scalar value for ``low``
+-  the scalar value for ``high``
+-  a boolean indicating ``low`` or ``high`` is a scalar
+
+.. ipython:: python
+    :okwarning:
+
+    salary_gt_30000_constraint = GreaterThan(
+        low=30000,
+        high='salary',
+        handling_strategy='reject_sampling'
+    )
+
+ColumnFormula Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases, one column will need to be computed based on the other
@@ -228,7 +245,8 @@ constraints that we just defined as a ``list``:
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
-        one_hot_constraint
+        one_hot_constraint,
+        salary_gt_30000_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
