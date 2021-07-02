@@ -61,6 +61,8 @@ If we observe the data closely we will find a few **constraints**:
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
+4. We have a ``salary`` column that should always be rounded to 2
+   decimal points.
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -224,6 +226,30 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
+Rounding Constraint
+~~~~~~~~~~~~~~~~~~~
+
+In order for data to be realistic, we also might want to round data
+to a certain number of digits. To do this, we can use the Rounding
+Constraint. We will pass this constraint:
+
+-  the name of the column(s) that should be rounded.
+-  the number of digits each column should be rounded to.
+-  the handling strategy that we want to use
+-  (optional) if reject sampling, we can customize the threshold of
+   the sampled values.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import Rounding
+
+    salary_rounding_constraint = Rounding(
+        columns='salary',
+        digits=2,
+        handling_strategy='transform'
+    )
+
 Using the Constraints
 ---------------------
 
@@ -242,7 +268,8 @@ constraints that we just defined as a ``list``:
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
         salary_gt_30000_constraint,
-        positive_prior_exp_constraint
+        positive_prior_exp_constraint,
+        salary_rounding_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
