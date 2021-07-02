@@ -410,10 +410,10 @@ class OneHotEncoding(Constraint):
         is_one = table_data[condition_columns].values == 1.0
         is_zero = table_data[condition_columns].values == 0.0
         if not (is_one | is_zero).all():
-            raise ValueError("Condition values must be ones or zeros.")
+            raise ValueError('Condition values must be ones or zeros.')
         
         if (table_data[condition_columns].sum(axis=1) > 1.0).any():
-            raise ValueError("Each row of a condition can only contain one number one.")
+            raise ValueError('Each row of a condition can only contain one number one.')
 
         if (table_data[condition_columns].sum(axis=1) == 0.0).any():
             proposed_table_data = super()._sample_constraint_columns(table_data)
@@ -421,10 +421,10 @@ class OneHotEncoding(Constraint):
                 if column not in table_data.columns:
                     table_data[column] = proposed_table_data[column].values
                 else:
-                    table_data[column] = float("-inf")
+                    table_data[column] = float('-inf')
                     
             table_data = self.reverse_transform(table_data)
-            
+
             return table_data
 
         for column in self._columns:
@@ -473,28 +473,3 @@ class OneHotEncoding(Constraint):
         table_data[self._columns] = transformed_data
 
         return table_data
-
-
-
-"""
-        for index in table_data.index:
-            # if exactly ALL columns are 0, raise ValueError
-            if all([True for column in self._columns if table_data[column][index] == 0.0]):
-                raise ValueError
-
-            # if more than 1 column is 1, raise ValueError
-
-
-            for column in self._columns:
-                # if values have non 0/1 values, raise ValueError
-                if table_data[column][index] != 0.0 and table_data[column][index] != 1.0:
-                    raise ValueError
-            
-
-        for index in table_data.index:
-            for column in self._columns:
-                if table_data[column][index] != 0.0 and table_data[column][index] != 1.0:
-                    raise ValueError
-                    
-
-"""
