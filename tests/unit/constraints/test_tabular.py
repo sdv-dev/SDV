@@ -1024,14 +1024,14 @@ class TestOneHotEncoding():
     def test_one_zero(self):
         ohe = OneHotEncoding(columns=['a', 'b', 'c'])
         data = pd.DataFrame({
-            'a': [1, 0]*5,
-            'b': [0, 1]*5,
+            'a': [0, 0]*5,
+            'b': [1, 1]*5,
             'c': [0, 0]*5
         })
-        out = model.sample(10, conditions={'c': 0})
 
         model = CopulaGAN(constraints=[ohe], epochs=1)
         model.fit(data)
+        out = model.sample(10, conditions={'c': 0})
 
         # Assert
         expected_out = pd.DataFrame({
@@ -1040,3 +1040,24 @@ class TestOneHotEncoding():
             'c': [0]*10
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_one_zero_alt(self):
+        ohe = OneHotEncoding(columns=['a', 'b', 'c'])
+        data = pd.DataFrame({
+            'a': [1, 0]*5,
+            'b': [0, 1]*5,
+            'c': [0, 0]*5
+        })
+
+        model = CopulaGAN(constraints=[ohe], epochs=1)
+        model.fit(data)
+        out = model.sample(10, conditions={'c': 0})
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0]*10,
+            'b': [1]*10,
+            'c': [0]*10
+        })
+        assert (out['c'] == 0.0).all()
+        assert ((out['b'] == 1.0) ^ (out['a'] == 1.0)).all()
