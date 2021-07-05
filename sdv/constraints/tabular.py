@@ -502,9 +502,8 @@ class OneHotEncoding(Constraint):
     def _sample_constraint_columns(self, table_data):
         """Special handling for constraint columns when conditioning.
 
-        When handling a set of one-hot columns, the user may provide a subset of
-        the columns to condition on. There needs to be some special logic to
-        handle this:
+        When handling a set of one-hot columns, a subset of columns may be provided
+        to condition on. To handle this, this function does the following:
 
         1. If the user specifies that a particular column must be 1,
            then all other columns must be 0.
@@ -514,6 +513,17 @@ class OneHotEncoding(Constraint):
            and enforce the one-hot constraint.
 
         3. If the user specifies something invalid, we need to raise an error.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data containing the conditions.
+
+        Returns:
+            pandas.DataFrame:
+                Table data with the constraint columns filled in.
+        
+        Raise:
+            `ValueError` if the conditions are invalid.
         """
         table_data = table_data.copy()
 
@@ -527,7 +537,16 @@ class OneHotEncoding(Constraint):
         has_one = table_data[condition_columns].sum(axis=1) == 1.0
         if (~has_one).sum() > 0:
             sub_table_data = table_data.loc[~has_one, condition_columns]
-            proposed_table_data = super()._sample_constraint_columns(sub_table_data)
+
+            if len(condition_columns) == len(self._columns) - 1:
+                proposed_table_data = sub_table_data.copy()
+                for column in self._columns:
+                    if column not in condition_columns:
+                        proposed_table_data[column] = 1.0
+                        
+            else:
+                proposed_table_data = super()._sample_constraint_columns(sub_table_data)
+            
             for column in self._columns:
                 if column not in condition_columns:
                     sub_table_data[column] = proposed_table_data[column].values
