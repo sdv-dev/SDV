@@ -521,7 +521,7 @@ class OneHotEncoding(Constraint):
         Returns:
             pandas.DataFrame:
                 Table data with the constraint columns filled in.
-        
+
         Raise:
             `ValueError` if the conditions are invalid.
         """
@@ -543,10 +543,10 @@ class OneHotEncoding(Constraint):
                 for column in self._columns:
                     if column not in condition_columns:
                         proposed_table_data[column] = 1.0
-                        
+
             else:
                 proposed_table_data = super()._sample_constraint_columns(sub_table_data)
-            
+
             for column in self._columns:
                 if column not in condition_columns:
                     sub_table_data[column] = proposed_table_data[column].values
