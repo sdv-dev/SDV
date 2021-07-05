@@ -500,7 +500,7 @@ class OneHotEncoding(Constraint):
         super().__init__(handling_strategy, fit_columns_model=True)
 
     def _sample_constraint_columns(self, table_data):
-        """Special handling for constraint columns when conditioning.
+        """Handle constraint columns when conditioning.
 
         When handling a set of one-hot columns, a subset of columns may be provided
         to condition on. To handle this, this function does the following:
