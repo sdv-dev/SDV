@@ -500,32 +500,46 @@ class OneHotEncoding(Constraint):
         super().__init__(handling_strategy, fit_columns_model=True)
 
     def _sample_constraint_columns(self, table_data):
+        """Special handling for constraint columns when conditioning.
+
+        When handling a set of one-hot columns, the user may provide a subset of
+        the columns to condition on. There needs to be some special logic to
+        handle this:
+
+        1. If the user specifies that a particular column must be 1,
+           then all other columns must be 0.
+
+        2. If the user specifies that one or more columns must be 0, then
+           we need to sample the other columns and select the highest value
+           and enforce the one-hot constraint.
+
+        3. If the user specifies something invalid, we need to raise an error.
+        """
         table_data = table_data.copy()
 
         condition_columns = [col for col in self._columns if col in table_data.columns]
-        is_one = table_data[condition_columns].values == 1.0
-        is_zero = table_data[condition_columns].values == 0.0
-        if not (is_one | is_zero).all():
+        if not table_data[condition_columns].isin([0.0, 1.0]).all(axis=1).all():
             raise ValueError('Condition values must be ones or zeros.')
 
         if (table_data[condition_columns].sum(axis=1) > 1.0).any():
             raise ValueError('Each row of a condition can only contain one number one.')
 
-        if (table_data[condition_columns].sum(axis=1) == 0.0).any():
-            proposed_table_data = super()._sample_constraint_columns(table_data)
+        has_one = table_data[condition_columns].sum(axis=1) == 1.0
+        if (~has_one).sum() > 0:
+            sub_table_data = table_data.loc[~has_one, condition_columns]
+            proposed_table_data = super()._sample_constraint_columns(sub_table_data)
             for column in self._columns:
-                if column not in table_data.columns:
-                    table_data[column] = proposed_table_data[column].values
+                if column not in condition_columns:
+                    sub_table_data[column] = proposed_table_data[column].values
                 else:
-                    table_data[column] = float('-inf')
+                    sub_table_data[column] = float('-inf')
 
-            table_data = self.reverse_transform(table_data)
+            table_data.loc[~has_one, self._columns] = self.reverse_transform(sub_table_data)
 
-            return table_data
-
-        for column in self._columns:
-            if column not in table_data:
-                table_data[column] = 0
+        if has_one.sum() > 0:
+            for column in self._columns:
+                if column not in condition_columns:
+                    table_data.loc[has_one, column] = 0
 
         return table_data
 

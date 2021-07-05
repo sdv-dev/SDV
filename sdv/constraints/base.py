@@ -156,7 +156,7 @@ class Constraint(metaclass=ConstraintMeta):
             conditions=conditions
         )
         sampled = self._hyper_transformer.reverse_transform(sampled)
-        valid_rows = sampled[self.is_valid(sampled)]
+        valid_rows = self.filter_valid(sampled)
         counter = 0
         total_sampled = num_rows
 
@@ -184,7 +184,7 @@ class Constraint(metaclass=ConstraintMeta):
                 conditions=conditions
             )
             new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
-            new_valid_rows = new_sampled[self.is_valid(new_sampled)]
+            new_valid_rows = self.filter_valid(new_sampled)
             valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
             counter += 1
 
@@ -200,7 +200,6 @@ class Constraint(metaclass=ConstraintMeta):
 
             transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
-
                 num_rows=df.shape[0],
                 conditions=transformed_condition
             )

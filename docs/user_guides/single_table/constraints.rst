@@ -61,10 +61,9 @@ If we observe the data closely we will find a few **constraints**:
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
-4. The ``joined_in_first_semester`` and ``joined_in_second_semester`` columns
-   are related in such a way that one of them will always be one and the other
-   zero, since the employee must have joined the company in one of the two
-   semesters. 
+4. The ``full_time``, ``part_time`` and ``contractor`` columns
+   are related in such a way that one of them will always be one and the others
+   zero, since the employee must be part of one of the three categories.
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -224,7 +223,7 @@ need to create an instance passing:
     from sdv.constraints import OneHotEncoding
 
     one_hot_constraint = OneHotEncoding(
-        columns=['joined_in_first_semester', 'joined_in_second_semester'],
+        columns=['full_time', 'part_time', 'contractor'],
         handling_strategy='transform'
     )
 
