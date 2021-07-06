@@ -1,13 +1,40 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+from rdt.transformers.numerical import NumericalTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.metadata import Table
 
 
 class TestTable:
+
+    @patch('sdv.metadata.table.rdt.transformers.NumericalTransformer',
+           spec_set=NumericalTransformer)
+    def test__init__(self, transformer_mock):
+        """
+        Test that ``__init__`` method passes parameters.
+
+        The ``__init__`` method should pass the custom parameters
+        to the ``NumericalTransformer``.
+
+        Input:
+        - rounding set to an int
+        - max_value set to an int
+        - min_value set to an int
+        Side Effects:
+        - ``NumericalTransformer`` should receive the correct parameters
+        """
+        # Run
+        Table(rounding=-1, max_value=100, min_value=-50)
+
+        # Asserts
+        assert len(transformer_mock.mock_calls) == 2
+        transformer_mock.assert_any_call(
+            dtype=int, rounding=-1, max_value=100, min_value=-50)
+        transformer_mock.assert_any_call(
+            dtype=float, rounding=-1, max_value=100, min_value=-50)
 
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
