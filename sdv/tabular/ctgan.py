@@ -156,11 +156,20 @@ class CTGAN(CTGANModel):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
         rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``.
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
         min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use.
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
         max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use.
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _MODEL_CLASS = CTGANSynthesizer
@@ -261,11 +270,20 @@ class TVAE(CTGANModel):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
         rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``.
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
         min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use.
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
         max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use.
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _MODEL_CLASS = TVAESynthesizer
