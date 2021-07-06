@@ -2128,6 +2128,7 @@ class TestOneHotEncoding():
             'c': [1.0] * 10
         })
         instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
 
         # Run
         condition = pd.DataFrame({
