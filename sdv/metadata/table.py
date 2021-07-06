@@ -407,15 +407,23 @@ class Table:
         """
         meta_dtypes = self.get_dtypes(ids=False)
         dtypes = {}
+        numerical_extras = []
         for column in data.columns:
             if column in meta_dtypes:
                 dtypes[column] = meta_dtypes[column]
             elif column in extra_columns:
-                dtypes[column] = data[column].dtype.kind
+                dtype_kind = data[column].dtype.kind
+                if dtype_kind in ('i', 'f'):
+                    numerical_extras.append(column)
+                else:
+                    dtypes[column] = dtype_kind
 
         transformers_dict = self._get_transformers(dtypes)
+        for column in numerical_extras:
+            transformers_dict[column] = rdt.transformers.NumericalTransformer()
+
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
-        self._hyper_transformer.fit(data[list(dtypes.keys())])
+        self._hyper_transformer.fit(data[list(transformers_dict.keys())])
 
     @staticmethod
     def _get_key_subtype(field_meta):
