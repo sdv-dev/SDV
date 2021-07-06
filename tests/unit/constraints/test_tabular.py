@@ -1,7 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
-from random import uniform
 import uuid
+from random import uniform
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, Positive,
-    Rounding, UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, Positive, Rounding,
+    UniqueCombinations)
 
 
 def dummy_transform():
@@ -1838,8 +1838,10 @@ class TestRounding():
 
     def test___init__(self):
         """Test the ``Rounding.__init__`` method.
+
         It is expected to create a new Constraint instance
         and set the rounding args.
+
         Input:
         - columns = ['b', 'c']
         - digits = 2
@@ -1857,7 +1859,9 @@ class TestRounding():
 
     def test___init__invalid_digits(self):
         """Test the ``Rounding.__init__`` method with an invalid argument.
+
         Pass in an invalid ``digits`` argument, and expect a ValueError.
+
         Input:
         - columns = ['b', 'c']
         - digits = 20
@@ -1872,7 +1876,9 @@ class TestRounding():
 
     def test___init__invalid_tolerance(self):
         """Test the ``Rounding.__init__`` method with an invalid argument.
+
         Pass in an invalid ``tolerance`` argument, and expect a ValueError.
+
         Input:
         - columns = ['b', 'c']
         - digits = 2
@@ -1889,6 +1895,7 @@ class TestRounding():
 
     def test_is_valid_positive_digits(self):
         """Test the ``Rounding.is_valid`` method for a positive digits argument.
+
         Input:
         - Table data with desired decimal places (pandas.DataFrame)
         Output:
@@ -1916,6 +1923,7 @@ class TestRounding():
 
     def test_is_valid_negative_digits(self):
         """Test the ``Rounding.is_valid`` method for a negative digits argument.
+
         Input:
         - Table data with desired decimal places (pandas.DataFrame)
         Output:
@@ -1942,6 +1950,7 @@ class TestRounding():
 
     def test_is_valid_zero_digits(self):
         """Test the ``Rounding.is_valid`` method for a zero digits argument.
+
         Input:
         - Table data not with the desired decimal places (pandas.DataFrame)
         Output:
@@ -1969,7 +1978,9 @@ class TestRounding():
 
     def test_reverse_transform_positive_digits(self):
         """Test the ``Rounding.reverse_transform`` method with positive digits.
+
         Expect that the columns are rounded to the specified integer digit.
+
         Input:
         - Table data with the column with incorrect values (pandas.DataFrame)
         Output:
@@ -2000,7 +2011,9 @@ class TestRounding():
 
     def test_reverse_transform_negative_digits(self):
         """Test the ``Rounding.reverse_transform`` method with negative digits.
+
         Expect that the columns are rounded to the specified integer digit.
+
         Input:
         - Table data with the column with incorrect values (pandas.DataFrame)
         Output:
@@ -2031,7 +2044,9 @@ class TestRounding():
 
     def test_reverse_transform_zero_digits(self):
         """Test the ``Rounding.reverse_transform`` method with zero digits.
+
         Expect that the columns are rounded to the specified integer digit.
+
         Input:
         - Table data with the column with incorrect values (pandas.DataFrame)
         Output:
