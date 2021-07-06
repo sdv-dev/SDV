@@ -545,21 +545,10 @@ class OneHotEncoding(Constraint):
                         proposed_table_data[column] = 1.0
 
             else:
-                grouped_conditions = sub_table_data[condition_columns].groupby(condition_columns)
-                all_sampled_rows = list()
-                for group, df in grouped_conditions:
-                    if not isinstance(group, tuple):
-                        group = [group]
-
-                    transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
-                    sampled_rows = self._columns_model.sample(
-                        num_rows=df.shape[0],
-                        conditions=transformed_condition
-                    )
-                    sampled_rows = self._hyper_transformer.reverse_transform(sampled_rows)
-                    all_sampled_rows.append(sampled_rows)
-
-                proposed_table_data = pd.concat(all_sampled_rows, ignore_index=True)
+                proposed_table_data = self._columns_model.sample(
+                    num_rows=sub_table_data[condition_columns].shape[0],
+                    conditions=sub_table_data[condition_columns].iloc[0].to_dict()
+                )
 
             for column in self._columns:
                 if column not in condition_columns:
