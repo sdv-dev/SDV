@@ -19,6 +19,7 @@ Currently implemented constraints are:
       of two other columns/scalars.
 """
 
+import operator
 import uuid
 from datetime import datetime
 
@@ -564,55 +565,89 @@ class Between(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        high_is_scalar(bool or None):
+            Whether or not the value for high is a scalar or a column name.
+            If ``None``, this will be determined during the ``fit`` method
+            by checking if the value provided is a column name.
+        low_is_scalar(bool or None):
+            Whether or not the value for low is a scalar or a column name.
+            If ``None``, this will be determined during the ``fit`` method
+            by checking if the value provided is a column name.
     """
 
+    _transformed_column = None
+
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True):
+                 fit_columns_model=True, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
         self._low = low
         self._high = high
         self._strict = strict
-        self._transformed_column = f'#{self.constraint_column}#{self._low}#{self._high}'
+        self._high_is_scalar = high_is_scalar
+        self._low_is_scalar = low_is_scalar
+        self._lt = operator.lt if strict else operator.le
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
-    def _get_low(self, table_data):
+    def _get_low_value(self, table_data):
         """Return the appropriate lower bound.
 
-        If the ``low`` value was passed as a string, returns the column named ``low``.
-        If it is a float, returns the value itself.
+        Returns the lower bound either as a column or a scalar, depending on the
+        value of ``self._low_is_scalar``. If the lower bound column doesn't exist, returns
+        ``None`` instead.
 
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
 
         Returns:
-            pandas.DataFrame or float:
-                The lower bound.
+            pandas.DataFrame, float or None:
+                Either the lower bound or None if the column doesn't exist.
         """
-        if isinstance(self._low, str):
+        if self._low_is_scalar:
+            return self._low
+        elif self._low in table_data.columns:
             return table_data[self._low]
 
-        return self._low
+        return None
 
-    def _get_high(self, table_data):
+    def _get_high_value(self, table_data):
         """Return the appropriate upper bound.
 
-        If the ``high`` value was passed as a string, returns the column named ``high``.
-        If it is a float, returns the value itself.
+        Returns the upper bound either as a column or a scalar, depending on the
+        value of ``self._high_is_scalar``. If the upper bound column doesn't exist, returns
+        ``None`` instead.
 
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
 
         Returns:
-            pandas.DataFrame or float:
-                The upper bound.
+            pandas.DataFrame, float or None:
+                Either the upper bound or None if the column doesn't exist.
         """
-        if isinstance(self._high, str):
+        if self._high_is_scalar:
+            return self._high
+        elif self._high in table_data.columns:
             return table_data[self._high]
 
-        return self._high
+        return None
+
+    def _get_diff_column_name(self, table_data):
+        token = '#'
+        components = list(map(str, [self.constraint_column, self._low, self._high]))
+        while token.join(components) in table_data.columns:
+            token += '#'
+
+        return token.join(components)
+
+    def _fit(self, table_data):
+        if self._high_is_scalar is None:
+            self._high_is_scalar = self._high not in table_data.columns
+        if self._low_is_scalar is None:
+            self._low_is_scalar = self._low not in table_data.columns
+
+        self._transformed_column = self._get_diff_column_name(table_data)
 
     def is_valid(self, table_data):
         """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
@@ -625,13 +660,13 @@ class Between(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        if self._strict:
-            satisfy_low_bound = self._get_low(table_data) < table_data[self.constraint_column]
-            satisfy_high_bound = table_data[self.constraint_column] < self._get_high(table_data)
-            return satisfy_low_bound & satisfy_high_bound
+        satisfy_low_bound = self._lt(
+            self._get_low_value(table_data), table_data[self.constraint_column]
+        )
+        satisfy_high_bound = self._lt(
+            table_data[self.constraint_column], self._get_high_value(table_data)
+        )
 
-        satisfy_low_bound = self._get_low(table_data) <= table_data[self.constraint_column]
-        satisfy_high_bound = table_data[self.constraint_column] <= self._get_high(table_data)
         return satisfy_low_bound & satisfy_high_bound
 
     def transform(self, table_data):
@@ -650,8 +685,8 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        low = self._get_low(table_data)
-        high = self._get_high(table_data)
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
 
         data = (table_data[self.constraint_column] - low) / (high - low)
         data = data * 0.95 + 0.025
@@ -678,8 +713,8 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        low = self._get_low(table_data)
-        high = self._get_high(table_data)
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
         data = table_data[self._transformed_column]
 
         data = 1 / (1 + np.exp(-data))

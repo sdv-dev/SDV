@@ -1,7 +1,6 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import uuid
-from random import uniform
 
 import numpy as np
 import pandas as pd
@@ -864,10 +863,10 @@ class TestGreaterThan():
         # Asserts
         assert instance._dtype.kind == 'f'
 
-    def test_is_valid_strict_true(self):
+    def test_is_valid_strict_false(self):
         """Test the ``GreaterThan.is_valid`` method with strict False.
 
-        If strict is False, equal values should count as valid
+        If strict is False, equal values should count as valid.
 
         Input:
         - Table with a strictly valid row, a strictly invalid row and
@@ -891,7 +890,7 @@ class TestGreaterThan():
         expected_out = pd.Series([True, True, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_is_valid_strict_false(self):
+    def test_is_valid_strict_true(self):
         """Test the ``GreaterThan.is_valid`` method with strict True.
 
         If strict is True, equal values should count as invalid.
@@ -2099,19 +2098,21 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 1.0
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 0.5, 0.9],
             'b': [4, 5, 6],
         })
+        instance.fit(table_data)
         out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
-            '#a#0.0#1.0': transform(table_data[column], low, high)
+            'a#0.0#1.0': transform(table_data[column], low, high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2130,19 +2131,20 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 'b'
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 0.5, 0.9],
             'b': [0.5, 1, 6],
         })
+        instance.fit(table_data)
         out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'b': [0.5, 1, 6],
-            '#a#0.0#b': transform(table_data[column], low, table_data[high])
+            'a#0.0#b': transform(table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2161,19 +2163,20 @@ class TestBetween():
         column = 'a'
         low = 'b'
         high = 1.0
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 0.5, 0.9],
             'b': [0, -1, 0.5],
         })
+        instance.fit(table_data)
         out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'b': [0, -1, 0.5],
-            '#a#b#1.0': transform(table_data[column], table_data[low], high)
+            'a#b#1.0': transform(table_data[column], table_data[low], high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2200,13 +2203,14 @@ class TestBetween():
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6]
         })
+        instance.fit(table_data)
         out = instance.transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
-            '#a#b#c': transform(table_data[column], table_data[low], table_data[high])
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2227,7 +2231,8 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 1.0
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
 
         table_data = pd.DataFrame({
             'b': [4, 5, 6],
@@ -2235,9 +2240,10 @@ class TestBetween():
         })
 
         # Run
+        instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
-            '#a#0.0#1.0': transform(table_data[column], low, high)
+            'a#0.0#1.0': transform(table_data[column], low, high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -2262,7 +2268,7 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 'b'
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
 
         table_data = pd.DataFrame({
             'b': [0.5, 1, 6],
@@ -2270,9 +2276,10 @@ class TestBetween():
         })
 
         # Run
+        instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [0.5, 1, 6],
-            '#a#0.0#b': transform(table_data[column], low, table_data[high])
+            'a#0.0#b': transform(table_data[column], low, table_data[high])
         })
         out = instance.reverse_transform(transformed)
 
@@ -2297,7 +2304,7 @@ class TestBetween():
         column = 'a'
         low = 'b'
         high = 1.0
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
 
         table_data = pd.DataFrame({
             'b': [0, -1, 0.5],
@@ -2305,9 +2312,10 @@ class TestBetween():
         })
 
         # Run
+        instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [0, -1, 0.5],
-            '#a#b#1.0': transform(table_data[column], table_data[low], high)
+            'a#b#1.0': transform(table_data[column], table_data[low], high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -2341,43 +2349,17 @@ class TestBetween():
         })
 
         # Run
+        instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
-            '#a#b#c': transform(table_data[column], table_data[low], table_data[high])
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
         out = instance.reverse_transform(transformed)
 
         # Assert
         expected_out = table_data
         pd.testing.assert_frame_equal(expected_out, out)
-
-    def test_reverse_transform_always_valid(self):
-        """Test ``Between.reverse_transform`` always returns values between ``low`` and ``high``.
-
-        It is expected to recover the original table which was transformed, but with different
-        column order. It does so by applying a sigmoid to the transformed column and then
-        scaling it back to the original space. It also replaces the transformed column with
-        an equal column but with the original name.
-
-        Input:
-        - Transformed table data (pandas.DataFrame)
-        Output:
-        - Original table data, without necessarily keeping the column order (pandas.DataFrame)
-        """
-        column = 'a'
-        low = -10
-        high = 100
-        instance = Between(column=column, low=low, high=high)
-
-        # Run
-        table_data = pd.DataFrame({
-            '#a#-10#100': [uniform(-1000, 1000) for i in range(1000)]
-        })
-        out = instance.reverse_transform(table_data)
-
-        # Assert
-        assert out['a'].between(low, high).all()
 
     def test_is_valid_strict_true(self):
         """Test the ``Between.is_valid`` method with strict True.
@@ -2395,12 +2377,14 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 1.0
-        instance = Between(column=column, low=low, high=high, strict=True)
+        instance = Between(column=column, low=low, high=high, strict=True, high_is_scalar=True,
+                           low_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 1, 3],
         })
+        instance.fit(table_data)
         out = instance.is_valid(table_data)
 
         # Assert
@@ -2423,18 +2407,18 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 1.0
-        instance = Between(column=column, low=low, high=high, strict=False)
+        instance = Between(column=column, low=low, high=high, strict=False, high_is_scalar=True,
+                           low_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 1, 3],
         })
+        instance.fit(table_data)
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = pd.Series([True, True, False])
-        print(expected_out)
-        print(out)
         pd.testing.assert_series_equal(expected_out, out, check_names=False)
 
     def test_is_valid_scalar_column(self):
@@ -2453,13 +2437,14 @@ class TestBetween():
         column = 'a'
         low = 0.0
         high = 'b'
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 0.5, 0.9],
             'b': [0.5, 1, 0.6],
         })
+        instance.fit(table_data)
         out = instance.is_valid(table_data)
 
         # Assert
@@ -2483,13 +2468,14 @@ class TestBetween():
         column = 'a'
         low = 'b'
         high = 1.0
-        instance = Between(column=column, low=low, high=high)
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
 
         # Run
         table_data = pd.DataFrame({
             'a': [0.1, 0.5, 1.9],
             'b': [-0.5, 1, 0.6],
         })
+        instance.fit(table_data)
         out = instance.is_valid(table_data)
 
         # Assert
@@ -2520,6 +2506,7 @@ class TestBetween():
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 0.6]
         })
+        instance.fit(table_data)
         out = instance.is_valid(table_data)
 
         # Assert
