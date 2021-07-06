@@ -12,10 +12,10 @@ from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
 
 MODELS = [
-    CTGAN(epochs=1),
-    TVAE(epochs=1),
-    GaussianCopula(),
-    CopulaGAN(epochs=1),
+    pytest.param(CTGAN(epochs=1), id='CTGAN'),
+    pytest.param(TVAE(epochs=1), id='TVAE'),
+    pytest.param(GaussianCopula(), id='GaussianCopula'),
+    pytest.param(CopulaGAN(epochs=1), id='CopulaGAN'),
 ]
 
 
