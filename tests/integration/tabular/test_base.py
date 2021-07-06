@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -220,10 +219,7 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
 
 @patch('sdv.constraints.base.GaussianMultivariate',
        spec_set=GaussianMultivariate)
-@patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
-       spec_set=GaussianMultivariate)
-def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_mock,
-                                                                            column_model_mock):
+def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(column_model_mock):
     """Test that the ``sample`` method handles constraints with conditions.
 
     The ``sample`` method is expected to properly apply constraint
@@ -253,48 +249,26 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_m
     )
     data = pd.DataFrame({
         'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
-        'age': [27.0, 28.0, 26.0, 21.0, 30.0]
+        'age': [27.0, 28.0, 26.0, 21.0, 30.0],
+        'experience_years': [6.0, 7.0, 11.0, 3.0, 7.0],
     })
     model = GaussianCopula(constraints=[constraint])
     sampled_conditions = [
         pd.DataFrame({
-            'age_joined': [26.0, 18.0, 31.0],
+            'age_joined': [26.0, 18.0, 31.0, 29.0, 32.0],
+            'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+        }),
+        pd.DataFrame({
+            'age_joined': [28.0, 33.0, 31.0],
             'age': [30.0, 30.0, 30.0]
         }),
         pd.DataFrame({
-            'age_joined': [28.0, 33.0],
-            'age': [30.0, 30.0]
-        }),
-        pd.DataFrame({
-            'age_joined': [27.0, 24.0],
-            'age': [30.0, 30.0]
-        })
-    ]
-    sampled_numeric_data = [
-        pd.DataFrame({
-            'age_joined': [26.0],
-            'age_joined#age': [np.log(5.0)]
-        }),
-        pd.DataFrame({
-            'age_joined': [18.0],
-            'age_joined#age': [np.log(13.0)]
-        }),
-        pd.DataFrame({
-            'age_joined': [28.0],
-            'age_joined#age': [np.log(3.0)]
-        }),
-        pd.DataFrame({
             'age_joined': [27.0],
-            'age_joined#age': [np.log(4.0)]
-        }),
-        pd.DataFrame({
-            'age_joined': [24.0],
-            'age_joined#age': [np.log(7.0)]
+            'age': [30.0]
         })
     ]
 
     column_model_mock.return_value.sample.side_effect = sampled_conditions
-    gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
 
     # Run
@@ -302,22 +276,13 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(gm_m
     sampled_data = model.sample(5, conditions=conditions)
 
     # Assert
+    assert len(column_model_mock.return_value.sample.mock_calls) == 3
+
     expected_result = pd.DataFrame({
-        'age_joined': [26.0, 18.0, 28.0, 27.0, 24.0],
+        'age_joined': [26.0, 18.0, 29.0, 28.0, 27.0],
         'age': [30.0, 30.0, 30.0, 30.0, 30.0]
     })
-    assert len(model._model.sample.mock_calls) == 5
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 18.0,
-                                                       'age_joined#age': np.log(13.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 24.0,
-                                                       'age_joined#age': np.log(7.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 26.0,
-                                                       'age_joined#age': np.log(5.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 27.0,
-                                                       'age_joined#age': np.log(4.0)})
-    model._model.sample.assert_any_call(1, conditions={'age_joined': 28.0,
-                                                       'age_joined#age': np.log(3.0)})
     pd.testing.assert_frame_equal(
-        sampled_data.sort_values(by='age_joined').reset_index(drop=True),
-        expected_result.sort_values(by='age_joined').reset_index(drop=True)
+        sampled_data[['age_joined', 'age']],
+        expected_result[['age_joined', 'age']],
     )
