@@ -61,7 +61,9 @@ If we observe the data closely we will find a few **constraints**:
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
-4. We also know that the ``age`` column is bounded, since realistically
+4. We have a ``salary`` column that should always be rounded to 2
+   decimal points.
+5. We also know that the ``age`` column is bounded, since realistically
    an employee can only be so old (or so young).
 
 How does SDV Handle Constraints?
@@ -152,6 +154,46 @@ passing:
         handling_strategy='reject_sampling'
     )
 
+The ``GreaterThan`` constraint can also be used to guarantee a column is greater
+than a scalar value or specific datetime value instead of another column. To use
+this functionality, we can pass:
+
+-  the scalar value for ``low``
+-  the scalar value for ``high``
+-  a boolean indicating ``low`` or ``high`` is a scalar
+
+.. ipython:: python
+    :okwarning:
+
+    salary_gt_30000_constraint = GreaterThan(
+        low=30000,
+        high='salary',
+        handling_strategy='reject_sampling'
+    )
+
+
+Positive and Negative Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+or ``Negative`` constraints. These constraints enforce that a specified
+column is always positive or negative. We can create an instance passing:
+
+- the name of the ``low`` column for ``Negative`` or the name of the ``high``
+column for ``Positive``
+-  the handling strategy that we want to use
+- a boolean specifying whether to make the data strictly above or below 0, or
+include 0 as a possible value
+
+.. ipython:: python
+    :okwarning:
+
+    positive_prior_exp_constraint = Positive(
+        high='prior_years_experience',
+        strict=False,
+        handling_strategy='reject_sampling'
+    )
+
 ColumnFormula Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -186,6 +228,30 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
+Rounding Constraint
+~~~~~~~~~~~~~~~~~~~
+
+In order for data to be realistic, we also might want to round data
+to a certain number of digits. To do this, we can use the Rounding
+Constraint. We will pass this constraint:
+
+-  the name of the column(s) that should be rounded.
+-  the number of digits each column should be rounded to.
+-  the handling strategy that we want to use
+-  (optional) if reject sampling, we can customize the threshold of
+   the sampled values.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import Rounding
+
+    salary_rounding_constraint = Rounding(
+        columns='salary',
+        digits=2,
+        handling_strategy='transform'
+    )
+
 Between Constraint
 ~~~~~~~~~~~~~~~~~~
 
@@ -202,7 +268,7 @@ In order to use it, we need to create an instance passing:
 
 .. ipython:: python
     :okwarning:
-
+    
     from sdv.constraints import Between
 
     reasonable_age_constraint = Between(
@@ -229,6 +295,9 @@ constraints that we just defined as a ``list``:
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
+        salary_gt_30000_constraint,
+        positive_prior_exp_constraint,
+        salary_rounding_constraint,
         reasonable_age_constraint
     ]
 

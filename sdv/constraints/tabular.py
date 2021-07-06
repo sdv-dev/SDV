@@ -19,6 +19,9 @@ Currently implemented constraints are:
       of two other columns/scalars.
 """
 
+import uuid
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -76,6 +79,8 @@ class UniqueCombinations(Constraint):
 
     _separator = None
     _joint_column = None
+    _combinations_to_uuids = None
+    _uuids_to_combinations = None
 
     def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
         self._columns = columns
@@ -88,21 +93,29 @@ class UniqueCombinations(Constraint):
 
         The fit process consists on:
 
-            - Finding a separtor that works for the
+            - Finding a separator that works for the
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.
+            - Generating a mapping of the unique combinations
+              to a unique identifier.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
         self._separator = '#'
-        while not self._valid_separator(table_data, self._separator, self._columns):
+        while self._separator.join(self._columns) in table_data:
             self._separator += '#'
 
         self._joint_column = self._separator.join(self._columns)
         self._combinations = table_data[self._columns].drop_duplicates().copy()
+        self._combinations_to_uuids = {}
+        self._uuids_to_combinations = {}
+        for combination in self._combinations.itertuples(index=False, name=None):
+            uuid_str = str(uuid.uuid4())
+            self._combinations_to_uuids[combination] = uuid_str
+            self._uuids_to_combinations[uuid_str] = combination
 
     def is_valid(self, table_data):
         """Say whether the column values are within the original combinations.
@@ -127,9 +140,9 @@ class UniqueCombinations(Constraint):
         """Transform the table data.
 
         The transformation consist on removing all the ``self._columns`` from
-        the dataframe, concatenating them using the found separator, and
-        setting them back to the data as a single name with the previously
-        computed name.
+        the dataframe, and replacing them with a unique identifier that maps to
+        that unique combination of column values under the previously computed
+        combined column name.
 
         Args:
             table_data (pandas.DataFrame):
@@ -139,18 +152,18 @@ class UniqueCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        lists_series = pd.Series(table_data[self._columns].values.tolist())
-        table_data = table_data.drop(self._columns, axis=1)
-        table_data[self._joint_column] = lists_series.str.join(self._separator)
-
-        return table_data
+        table_data = table_data.copy()
+        combinations = table_data[self._columns].itertuples(index=False, name=None)
+        uuids = map(self._combinations_to_uuids.get, combinations)
+        table_data[self._joint_column] = list(uuids)
+        return table_data.drop(self._columns, axis=1)
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The transformation is reversed by popping the joint column from
-        the table, splitting it by the previously found separator and
-        then setting all the columns back to the table with the original
+        the table, mapping it back to the original combination of column values,
+        and then setting all the columns back to the table with the original
         names.
 
         Args:
@@ -162,7 +175,8 @@ class UniqueCombinations(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        columns = table_data.pop(self._joint_column).str.split(self._separator)
+        columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
+
         for index, column in enumerate(self._columns):
             table_data[column] = columns.str[index]
 
@@ -172,15 +186,19 @@ class UniqueCombinations(Constraint):
 class GreaterThan(Constraint):
     """Ensure that the ``high`` column is always greater than the ``low`` one.
 
-    The transformation strategy works by replacing the ``high`` value with the
-    difference between it and the ``low`` value and then computing back the ``high``
-    value by adding it the ``low`` value when reversing the transformation.
+    The transformation strategy works by creating a column with the
+    difference between the ``high`` and ``low`` values and then computing back the
+    necessary columns using the difference and whichever other value is available.
+    For example, if the ``high`` column is dropped, then the ``low`` column/value
+    will be added to the diff to reconstruct the ``high`` column.
 
     Args:
-        low (str):
-            Name of the column that contains the low value.
-        high (str):
-            Name of the column that contains the high value.
+        low (str or int):
+            Either the name of the column that contains the low value,
+            or a scalar that is the low value.
+        high (str or int):
+            Either the name of the column that contains the high value,
+            or a scalar that is the high value.
         strict (bool):
             Whether the comparison of the values should be strict ``>=`` or
             not ``>`` when comparing them. Currently, this is only respected
@@ -191,20 +209,74 @@ class GreaterThan(Constraint):
         drop (str):
             Which column to drop during transformation. Can be ``'high'``,
             ``'low'`` or ``None``.
+        high_is_scalar(bool or None):
+            Whether or not the value for high is a scalar or a column name.
+            If ``None``, this will be determined during the ``fit`` method
+            by checking if the value provided is a column name.
+        low_is_scalar(bool or None):
+            Whether or not the value for low is a scalar or a column name.
+            If ``None``, this will be determined during the ``fit`` method
+            by checking if the value provided is a column name.
     """
 
-    self_diff_column = None
+    _diff_column = None
+    _is_datetime = None
+    _column_to_reconstruct = None
 
     def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None):
+                 fit_columns_model=True, drop=None, high_is_scalar=None,
+                 low_is_scalar=None):
         self._low = low
         self._high = high
         self._strict = strict
         self.constraint_columns = (low, high)
-        self._diff_column = f'#{self._low}#{self._high}'
         self._drop = drop
+        self._high_is_scalar = high_is_scalar
+        self._low_is_scalar = low_is_scalar
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
+
+    def _get_low_value(self, table_data):
+        if self._low_is_scalar:
+            return self._low
+        elif self._low in table_data.columns:
+            return table_data[self._low]
+
+        return None
+
+    def _get_high_value(self, table_data):
+        if self._high_is_scalar:
+            return self._high
+        elif self._high in table_data.columns:
+            return table_data[self._high]
+
+        return None
+
+    def _get_column_to_reconstruct(self):
+        if self._drop == 'high':
+            column = self._high
+        elif self._drop == 'low':
+            column = self._low
+        elif self._high_is_scalar:
+            column = self._low
+        else:
+            column = self._high
+
+        return column
+
+    def _get_diff_column_name(self, table_data):
+        token = '#'
+        if len(self.constraint_columns) == 1:
+            name = self.constraint_columns[0] + token
+            while name in table_data.columns:
+                name += '#'
+
+            return name
+
+        while token.join(self.constraint_columns) in table_data.columns:
+            token += '#'
+
+        return token.join(self.constraint_columns)
 
     def _fit(self, table_data):
         """Learn the dtype of the high column.
@@ -213,13 +285,28 @@ class GreaterThan(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        self._dtype = table_data[self._high].dtype
-        self._diff_column = f'#{self._low}#{self._high}'
-        separator = '#'
-        while not self._valid_separator(table_data, separator, self.constraint_columns):
-            separator += '#'
+        if self._high_is_scalar is None:
+            self._high_is_scalar = self._high not in table_data.columns
+        if self._low_is_scalar is None:
+            self._low_is_scalar = self._low not in table_data.columns
 
-        self._diff_column = separator.join(self.constraint_columns)
+        if self._high_is_scalar and self._low_is_scalar:
+            raise TypeError('`low` and `high` cannot be both scalars at the same time')
+        elif self._low_is_scalar:
+            self.constraint_columns = (self._high,)
+            self._dtype = table_data[self._high].dtype
+        elif self._high_is_scalar:
+            self.constraint_columns = (self._low,)
+            self._dtype = table_data[self._low].dtype
+        else:
+            self._dtype = table_data[self._high].dtype
+
+        self._column_to_reconstruct = self._get_column_to_reconstruct()
+        self._diff_column = self._get_diff_column_name(table_data)
+        low = self._get_low_value(table_data)
+        self._is_datetime = (pd.api.types.is_datetime64_ns_dtype(low)
+                             or isinstance(low, pd.Timestamp)
+                             or isinstance(low, datetime))
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -232,10 +319,12 @@ class GreaterThan(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
         if self._strict:
-            return table_data[self._high] > table_data[self._low]
+            return high > low
 
-        return table_data[self._high] >= table_data[self._low]
+        return high >= low
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -255,10 +344,9 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        low_column = table_data[self._low]
-        diff = table_data[self._high] - low_column
+        diff = self._get_high_value(table_data) - self._get_low_value(table_data)
 
-        if pd.api.types.is_datetime64_ns_dtype(low_column):
+        if self._is_datetime:
             diff = pd.to_numeric(diff)
 
         table_data[self._diff_column] = np.log(diff + 1)
@@ -268,11 +356,6 @@ class GreaterThan(Constraint):
             table_data = table_data.drop(self._low, axis=1)
 
         return table_data
-
-    def _diff_is_datetime(self, table_data):
-        if self._drop == 'low':
-            return pd.api.types.is_datetime64_ns_dtype(table_data[self._high])
-        return pd.api.types.is_datetime64_ns_dtype(table_data[self._low])
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -294,26 +377,92 @@ class GreaterThan(Constraint):
         """
         table_data = table_data.copy()
         diff = (np.exp(table_data[self._diff_column]).round() - 1).clip(0)
-        if self._diff_is_datetime(table_data):
+        if self._is_datetime:
             diff = pd.to_timedelta(diff)
 
+        high = self._get_high_value(table_data)
+        low = self._get_low_value(table_data)
+
         if self._drop == 'high':
-            low_column = table_data[self._low]
-            table_data[self._high] = (low_column + diff).astype(self._dtype)
-
+            table_data[self._high] = (low + diff).astype(self._dtype)
         elif self._drop == 'low':
-            high_column = table_data[self._high]
-            table_data[self._low] = (high_column - diff).astype(self._dtype)
-
+            table_data[self._low] = (high - diff).astype(self._dtype)
         else:
-            low_column = table_data[self._low]
             invalid = ~self.is_valid(table_data)
-            new_high_values = low_column.loc[invalid] + diff.loc[invalid]
-            table_data[self._high].loc[invalid] = new_high_values.astype(self._dtype)
+            if not self._high_is_scalar and not self._low_is_scalar:
+                new_values = low.loc[invalid] + diff.loc[invalid]
+            elif self._high_is_scalar:
+                new_values = high - diff.loc[invalid]
+            else:
+                new_values = low + diff.loc[invalid]
+
+            table_data[self._column_to_reconstruct].loc[invalid] = new_values.astype(self._dtype)
 
         table_data = table_data.drop(self._diff_column, axis=1)
 
         return table_data
+
+
+class Positive(GreaterThan):
+    """Ensure that the ``high`` column is always positive.
+
+    The transformation strategy works by creating a column with the
+    difference between ``high`` and 0 value and then computing back the ``high``
+    value by adding the difference to 0 when reversing the transformation.
+
+    Args:
+        high (str or int):
+            Either the name of the column that contains the high value,
+            or a scalar that is the high value.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        drop (str):
+            Which column to drop during transformation. Can be ``'high'``
+            or ``None``.
+    """
+
+    def __init__(self, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None):
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model,
+                         high=high, low=0, high_is_scalar=False,
+                         low_is_scalar=True, drop=drop, strict=strict)
+
+
+class Negative(GreaterThan):
+    """Ensure that the ``low`` column is always negative.
+
+    The transformation strategy works by creating a column with the
+    difference between ``low`` and 0 and then computing back the ``low``
+    value by subtracting the difference from 0 when reversing the transformation.
+
+    Args:
+        high (str or int):
+            Either the name of the column that contains the high value,
+            or a scalar that is the high value.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        drop (str):
+            Which column to drop during transformation. Can be ``'low'``
+            or ``None``.
+    """
+
+    def __init__(self, low, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None):
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model,
+                         high=0, low=low, high_is_scalar=True,
+                         low_is_scalar=False, drop=drop, strict=strict)
 
 
 class ColumnFormula(Constraint):
@@ -542,3 +691,70 @@ class Between(Constraint):
         table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
+
+
+class Rounding(Constraint):
+    """Round a column based on the specified number of digits.
+
+    Args:
+        columns (str or list[str]):
+            Name of the column(s) to round.
+        digits (int):
+            How much to round each column. All columns will be rounded to this
+            number of digits.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        tolerance (int):
+            When reject sampling, the sample data must be within this distance
+            of the desired rounded values.
+    """
+
+    def __init__(self, columns, digits, handling_strategy='transform', tolerance=None):
+        if digits > 15:
+            raise ValueError('The value of digits cannot exceed 15')
+
+        if tolerance is not None and tolerance >= 10**(-1 * digits):
+            raise ValueError('Tolerance must be less than the rounding level')
+
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
+        self._digits = digits
+        self._round_config = {column: self._digits for column in self._columns}
+        self._tolerance = tolerance if tolerance else 10**(-1 * (digits + 1))
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
+
+    def is_valid(self, table_data):
+        """Determine if the data satisfies the rounding constraint.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        columns = table_data[self._columns]
+        rounded = columns.round(self._digits)
+        valid = (columns - rounded).abs() <= self._tolerance
+
+        return valid.all(1)
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        Round the columns to the desired digits.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return table_data.round(self._round_config)
