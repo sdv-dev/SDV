@@ -545,9 +545,6 @@ class OneHotEncoding(Constraint):
                         proposed_table_data[column] = 1.0
 
             else:
-                condition_columns = [
-                    c for c in self.constraint_columns if c in sub_table_data.columns
-                ]
                 grouped_conditions = sub_table_data[condition_columns].groupby(condition_columns)
                 all_sampled_rows = list()
                 for group, df in grouped_conditions:
