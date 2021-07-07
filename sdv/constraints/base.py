@@ -198,7 +198,7 @@ class Constraint(metaclass=ConstraintMeta):
             if not isinstance(group, tuple):
                 group = [group]
 
-            transformed_condition = self._hyper_transformer.transform(df).loc[0].to_dict()
+            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
                 num_rows=df.shape[0],
                 conditions=transformed_condition

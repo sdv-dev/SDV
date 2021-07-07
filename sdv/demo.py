@@ -337,7 +337,10 @@ def _load_tabular_dummy():
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,
         'salary': salary,
-        'prior_years_experience': years_exp
+        'prior_years_experience': years_exp,
+        'full_time': [1.0, 0.0, 1.0, 1.0, 0.0, 0.0] * 2,
+        'part_time': [0.0, 0.0, 0.0, 0.0, 1.0, 1.0] * 2,
+        'contractor': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0] * 2
     })
 
 

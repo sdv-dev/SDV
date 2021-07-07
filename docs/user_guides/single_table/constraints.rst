@@ -63,8 +63,11 @@ If we observe the data closely we will find a few **constraints**:
    the ``age_when_joined``.
 4. We have a ``salary`` column that should always be rounded to 2
    decimal points.
-5. We also know that the ``age`` column is bounded, since realistically
-   an employee can only be so old (or so young).
+5. The ``age`` column is bounded, since realistically an employee can only be
+   so old (or so young).
+6. The ``full_time``, ``part_time`` and ``contractor`` columns
+   are related in such a way that one of them will always be one and the others
+   zero, since the employee must be part of one of the three categories.
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -278,6 +281,27 @@ In order to use it, we need to create an instance passing:
         handling_strategy='transform'
     )
 
+OneHotEncoding Constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another constraint available is the ``OneHotEncoding`` constraint.
+This constraint allows the user to specify a list of columns where each row 
+is a one hot vector. Then, the constraint will make sure that the output
+of the model is transformed so that the column with the largest value is
+set to 1 while all other columns are set to 0. To apply the constraint we
+need to create an instance passing:
+
+- A list of the names of the columns of interest
+- The strategy we want to use (``transform`` is recommended)
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import OneHotEncoding
+
+    one_hot_constraint = OneHotEncoding(
+        columns=['full_time', 'part_time', 'contractor'],
+
 Using the Constraints
 ---------------------
 
@@ -298,7 +322,9 @@ constraints that we just defined as a ``list``:
         salary_gt_30000_constraint,
         positive_prior_exp_constraint,
         salary_rounding_constraint,
-        reasonable_age_constraint
+        reasonable_age_constraint,
+        one_hot_constraint,
+        salary_gt_30000_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)

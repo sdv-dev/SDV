@@ -17,6 +17,7 @@ Currently implemented constraints are:
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
+    * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
 """
 
 import operator
@@ -793,3 +794,130 @@ class Rounding(Constraint):
                 Transformed data.
         """
         return table_data.round(self._round_config)
+
+
+class OneHotEncoding(Constraint):
+    """Ensure the appropriate columns are one hot encoded.
+
+    This constraint allows the user to specify a list of columns where each row
+    is a one hot vector. During the reverse transform, the output of the model
+    is transformed so that the column with the largest value is set to 1 while
+    all other columns are set to 0.
+
+    Args:
+        columns (list[str]):
+            Names of the columns containing one hot rows.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling`` (not recommended). Defaults to ``transform``.
+    """
+
+    def __init__(self, columns, handling_strategy='transform'):
+        self._columns = columns
+        self.constraint_columns = tuple(columns)
+        super().__init__(handling_strategy, fit_columns_model=True)
+
+    def _sample_constraint_columns(self, table_data):
+        """Handle constraint columns when conditioning.
+
+        When handling a set of one-hot columns, a subset of columns may be provided
+        to condition on. To handle this, this function does the following:
+
+        1. If the user specifies that a particular column must be 1,
+           then all other columns must be 0.
+        2. If the user specifies that one or more columns must be 0, then
+           we need to sample the other columns and select the highest value
+           and enforce the one-hot constraint.
+        3. If the user specifies something invalid, we need to raise an error.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data containing the conditions.
+
+        Returns:
+            pandas.DataFrame:
+                Table data with the constraint columns filled in.
+
+        Raise:
+            ``ValueError`` if the conditions are invalid.
+        """
+        table_data = table_data.copy()
+
+        condition_columns = [col for col in self._columns if col in table_data.columns]
+        if not table_data[condition_columns].isin([0.0, 1.0]).all(axis=1).all():
+            raise ValueError('Condition values must be ones or zeros.')
+
+        if (table_data[condition_columns].sum(axis=1) > 1.0).any():
+            raise ValueError('Each row of a condition can only contain one number one.')
+
+        has_one = table_data[condition_columns].sum(axis=1) == 1.0
+        if (~has_one).sum() > 0:
+            sub_table_data = table_data.loc[~has_one, condition_columns]
+
+            if len(condition_columns) == len(self._columns) - 1:
+                proposed_table_data = sub_table_data.copy()
+                for column in self._columns:
+                    if column not in condition_columns:
+                        proposed_table_data[column] = 1.0
+
+            else:
+                proposed_table_data = self._columns_model.sample(
+                    num_rows=sub_table_data[condition_columns].shape[0],
+                    conditions=sub_table_data[condition_columns].iloc[0].to_dict()
+                )
+
+            for column in self._columns:
+                if column not in condition_columns:
+                    sub_table_data[column] = proposed_table_data[column].values
+                else:
+                    sub_table_data[column] = float('-inf')
+
+            table_data.loc[~has_one, self._columns] = self.reverse_transform(sub_table_data)
+
+        if has_one.sum() > 0:
+            for column in self._columns:
+                if column not in condition_columns:
+                    table_data.loc[has_one, column] = 0
+
+        return table_data
+
+    def is_valid(self, table_data):
+        """Check whether the data satisfies the one-hot constraint.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        one_hot_data = table_data[self._columns]
+
+        sum_one = one_hot_data.sum(axis=1) == 1.0
+        max_one = one_hot_data.max(axis=1) == 1.0
+        min_zero = one_hot_data.min(axis=1) == 0.0
+
+        return sum_one & max_one & min_zero
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        Set the column with the largest value to one, set all other columns to zero.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+
+        one_hot_data = table_data[self._columns]
+        transformed_data = np.zeros_like(one_hot_data.values)
+        transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1
+        table_data[self._columns] = transformed_data
+
+        return table_data

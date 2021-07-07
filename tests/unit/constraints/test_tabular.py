@@ -8,8 +8,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, Positive, Rounding,
-    UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
+    Rounding, UniqueCombinations)
 
 
 def dummy_transform():
@@ -2513,3 +2513,418 @@ class TestBetween():
         expected_out = pd.Series([True, True, False])
 
         pd.testing.assert_series_equal(expected_out, out)
+
+
+class TestOneHotEncoding():
+
+    def test_reverse_transform(self):
+        """Test the ``OneHotEncoding.reverse_transform`` method.
+
+        It is expected to, for each of the appropriate rows, set the column
+        with the largest value to one and set all other columns to zero.
+
+        Input:
+        - Table data with any numbers (pandas.DataFrame)
+        Output:
+        - Table data where the appropriate rows are one hot (pandas.DataFrame)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b'])
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.8],
+            'b': [0.8, 0.1, 0.9],
+            'c': [1, 2, 3]
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0.0, 1.0, 0.0],
+            'b': [1.0, 0.0, 1.0],
+            'c': [1, 2, 3]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_is_valid(self):
+        """Test the ``OneHotEncoding.is_valid`` method.
+
+        ``True`` when for the rows where the data is one hot, ``False`` otherwise.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Series of ``True`` and ``False`` values (pandas.Series)
+        """
+        # Setup
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1.0, 1.0, 0.0, 1.0],
+            'b': [0.0, 1.0, 0.0, 0.5],
+            'c': [0.0, 2.0, 0.0, 0.0],
+            'd': [1, 2, 3, 4]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test__sample_constraint_columns_proper(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to return a table with the appropriate complementary column ``b``,
+        since column ``a`` is entirely defined by the ``condition`` table.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where ``a`` is the same as in ``condition``
+          and ``b`` is complementary`` (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+        })
+        instance = OneHotEncoding(columns=['a', 'b'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [1.0, 0.0, 0.0] * 5,
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1.0, 0.0, 0.0] * 5,
+            'b': [0.0, 1.0, 1.0] * 5,
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__sample_constraint_columns_one_one(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains a one for all rows, expected to assign
+        all other columns to zeros.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where the first column contains one's and others columns zero's (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [1.0] * 10
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1.0] * 10,
+            'b': [0.0] * 10,
+            'c': [0.0] * 10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__sample_constraint_columns_two_ones(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains two ones
+        in a single row.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [1.0] * 10,
+            'b': [1.0] * 10,
+            'c': [0.0] * 10
+        })
+
+        # Assert
+        with pytest.raises(ValueError):
+            instance._sample_constraint_columns(condition)
+
+    def test__sample_constraint_columns_non_binary(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains a non binary value.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [0.5] * 10
+        })
+
+        # Assert
+        with pytest.raises(ValueError):
+            instance._sample_constraint_columns(condition)
+
+    def test__sample_constraint_columns_all_zeros(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since the condition contains only zeros.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 0] * 5,
+            'b': [0, 1] * 5,
+            'c': [0, 0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [0.0] * 10,
+            'b': [0.0] * 10,
+            'c': [0.0] * 10
+        })
+
+        # Assert
+        with pytest.raises(ValueError):
+            instance._sample_constraint_columns(condition)
+
+    def test__sample_constraint_columns_valid_condition(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to generate a table where every column satisfies the ``condition``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table satifying the ``condition`` (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [0.0] * 10,
+            'b': [1.0] * 10,
+            'c': [0.0] * 10
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [0.0] * 10,
+            'b': [1.0] * 10,
+            'c': [0.0] * 10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__sample_constraint_columns_one_zero(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains only one zero, expected to randomly sample
+        from unset columns any valid possibility. Since the ``b`` column in ``data``
+        contains all the ones, it's expected to return a table where only ``b`` has ones.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where ``b`` is all one`s and other columns are all zero`s (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0.0, 0.0] * 5,
+            'b': [1.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'c': [0.0] * 10
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [0.0] * 10,
+            'a': [0.0] * 10,
+            'b': [1.0] * 10
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__sample_constraint_columns_one_zero_alt(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Since the condition column contains only one zero, expected to randomly sample
+        from unset columns any valid possibility.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table where ``c`` is all zero`s and ``b`` xor ``a`` is always one (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'c': [0.0] * 10
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        assert (out['c'] == 0.0).all()
+        assert ((out['b'] == 1.0) ^ (out['a'] == 1.0)).all()
+
+    def test_sample_constraint_columns_list_of_conditions(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to generate a table satisfying the ``condition``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table satisfying the ``condition`` (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'a': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5,
+            'b': [1.0, 0.0] * 5
+        })
+        pd.testing.assert_frame_equal(out, expected_output)
+
+    def test_sample_constraint_columns_negative_values(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to raise a ``ValueError``, since condition is not a one hot vector.
+        This tests that even if the sum of a row is one it still crashes.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Raise:
+        - ``ValueError``
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0] * 10,
+            'b': [-1.0] * 10,
+            'c': [1.0] * 10
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [1.0] * 10,
+            'b': [-1.0] * 10,
+            'c': [1.0] * 10
+        })
+
+        # Assert
+        with pytest.raises(ValueError):
+            instance._sample_constraint_columns(condition)
+
+    def test_sample_constraint_columns_all_zeros_but_one(self):
+        """Test the ``OneHotEncoding._sample_constraint_columns`` method.
+
+        Expected to generate a table where column ``a`` is filled with ones,
+        and ``b`` and ``c`` filled with zeros.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table satisfying the ``condition`` (pandas.DataFrame)
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.0, 0.0] * 5,
+            'b': [0.0, 1.0] * 5,
+            'c': [0.0, 0.0] * 5
+        })
+        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance.fit(data)
+
+        # Run
+        condition = pd.DataFrame({
+            'a': [0.0] * 10,
+            'c': [0.0] * 10
+        })
+        out = instance._sample_constraint_columns(condition)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'a': [0.0] * 10,
+            'c': [0.0] * 10,
+            'b': [1.0] * 10
+        })
+        pd.testing.assert_frame_equal(out, expected_output)

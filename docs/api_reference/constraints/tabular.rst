@@ -132,3 +132,19 @@ Rounding
    Rounding.filter_valid
    Rounding.from_dict
    Rounding.to_dict
+
+OneHotEncoding
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   OneHotEncoding
+   OneHotEncoding.fit
+   OneHotEncoding.transform
+   OneHotEncoding.fit_transform
+   OneHotEncoding.reverse_transform
+   OneHotEncoding.is_valid
+   OneHotEncoding.filter_valid
+   OneHotEncoding.from_dict
+   OneHotEncoding.to_dict
