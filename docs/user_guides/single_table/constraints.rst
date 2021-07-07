@@ -63,6 +63,8 @@ If we observe the data closely we will find a few **constraints**:
    the ``age_when_joined``.
 4. We have a ``salary`` column that should always be rounded to 2
    decimal points.
+5. We also know that the ``age`` column is bounded, since realistically
+   an employee can only be so old (or so young).
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -250,6 +252,32 @@ Constraint. We will pass this constraint:
         handling_strategy='transform'
     )
 
+Between Constraint
+~~~~~~~~~~~~~~~~~~
+
+Another possibility is the ``Between`` constraint. It guarantees
+that one column is always in between two other columns/values. For example,
+the ``age`` column in our demo data is realistically bounded to the ages of
+15 and 90 since acual employees won't be too young or too old.
+
+In order to use it, we need to create an instance passing:
+
+-  the name of the ``low`` column or a scalar value to be used as the lower bound
+-  the name of the ``high`` column or a scalar value to be used as the upper bound
+-  the handling strategy that we want to use
+
+.. ipython:: python
+    :okwarning:
+    
+    from sdv.constraints import Between
+
+    reasonable_age_constraint = Between(
+        column='age'
+        low=15,
+        high=90,
+        handling_strategy='transform'
+    )
+
 Using the Constraints
 ---------------------
 
@@ -269,7 +297,8 @@ constraints that we just defined as a ``list``:
         years_in_the_company_constraint,
         salary_gt_30000_constraint,
         positive_prior_exp_constraint,
-        salary_rounding_constraint
+        salary_rounding_constraint,
+        reasonable_age_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
