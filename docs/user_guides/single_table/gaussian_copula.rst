@@ -481,7 +481,9 @@ in our table. We can explore the distributions which the
     :okwarning:
 
     model = GaussianCopula(
-        primary_key='student_id'
+        primary_key='student_id',
+        min_value=None,
+        max_value=None
     )
     model.fit(data)
     distributions = model.get_distributions()
@@ -596,7 +598,9 @@ Let's see what happens if we make the ``GaussianCopula`` use the
         primary_key='student_id',
         field_distributions={
             'experience_years': 'gamma'
-        }
+        },
+        min_value=None,
+        max_value=None
     )
     model.fit(data)
 
