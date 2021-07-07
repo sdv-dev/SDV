@@ -8,7 +8,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, GreaterThan, OneHotEncoding, UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
+    Rounding, UniqueCombinations)
 
 
 def dummy_transform():
@@ -862,43 +863,16 @@ class TestGreaterThan():
         # Asserts
         assert instance._dtype.kind == 'f'
 
-    def test_is_valid_strict_true(self):
+    def test_is_valid_strict_false(self):
         """Test the ``GreaterThan.is_valid`` method with strict False.
 
-        If strict is False, equal values should count as valid
+        If strict is False, equal values should count as valid.
 
         Input:
         - Table with a strictly valid row, a strictly invalid row and
           a row that has the same value for both high and low.
         Output:
         - False should be returned for the strictly invalid row and True
-          for the other two.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([True, False, False])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_strict_false(self):
-        """Test the ``GreaterThan.is_valid`` method with strict True.
-
-        If strict is True, equal values should count as invalid.
-
-        Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
-        Output:
-        - True should be returned for the strictly valid row and False
           for the other two.
         """
         # Setup
@@ -914,6 +888,33 @@ class TestGreaterThan():
 
         # Assert
         expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_strict_true(self):
+        """Test the ``GreaterThan.is_valid`` method with strict True.
+
+        If strict is True, equal values should count as invalid.
+
+        Input:
+        - Table with a strictly valid row, a strictly invalid row and
+          a row that has the same value for both high and low.
+        Output:
+        - True should be returned for the strictly valid row and False
+          for the other two.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 2, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_low_is_scalar_high_is_column(self):
@@ -1622,6 +1623,76 @@ class TestGreaterThan():
         pd.testing.assert_frame_equal(out, expected_out)
 
 
+class TestPositive():
+
+    def test__init__(self):
+        """
+        Test the ``Positive.__init__`` method.
+
+        The method is expected to set the ``_low`` instance variable
+        to 0, the ``_low_is_scalar`` variable to ``True`` and the
+        ``_high_is_scalar`` variable to ``False``. The rest of the
+        parameters should be passed.
+
+        Input:
+        - strict = True
+        - high = 'a'
+        - drop = None
+        Side effects:
+        - instance._low == 0
+        - instance._high == 'a'
+        - instance._strict == True
+        - instance._high_is_scalar = False
+        - instance._low_is_scalar = True
+        - instance._drop = None
+        """
+        # Run
+        instance = Positive(high='a', strict=True, drop=None)
+
+        # Asserts
+        assert instance._low == 0
+        assert instance._high == 'a'
+        assert instance._strict is True
+        assert instance._high_is_scalar is False
+        assert instance._low_is_scalar is True
+        assert instance._drop is None
+
+
+class TestNegative():
+
+    def test__init__(self):
+        """
+        Test the ``Negative.__init__`` method.
+
+        The method is expected to set the ``_high`` instance variable
+        to 0, the ``_high_is_scalar`` variable to ``True`` and the
+        ``_low_is_scalar`` variable to ``False``. The rest of the
+        parameters should be passed.
+
+        Input:
+        - strict = True
+        - low = 'a'
+        - drop = None
+        Side effects:
+        - instance._low == 'a'
+        - instance._high == 0
+        - instance._strict == True
+        - instance._high_is_scalar = True
+        - instance._low_is_scalar = False
+        - instance._drop = None
+        """
+        # Run
+        instance = Negative(low='a', strict=True, drop=None)
+
+        # Asserts
+        assert instance._low == 'a'
+        assert instance._high == 0
+        assert instance._strict is True
+        assert instance._high_is_scalar is True
+        assert instance._low_is_scalar is False
+        assert instance._drop is None
+
+
 def new_column(data):
     """Formula to be used for the ``TestColumnFormula`` class."""
     return data['a'] + data['b']
@@ -1760,6 +1831,688 @@ class TestColumnFormula():
             'c': [5, 7, 9]
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
+
+class TestRounding():
+
+    def test___init__(self):
+        """Test the ``Rounding.__init__`` method.
+
+        It is expected to create a new Constraint instance
+        and set the rounding args.
+
+        Input:
+        - columns = ['b', 'c']
+        - digits = 2
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 2
+
+        # Run
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Assert
+        assert instance._columns == columns
+        assert instance._digits == digits
+
+    def test___init__invalid_digits(self):
+        """Test the ``Rounding.__init__`` method with an invalid argument.
+
+        Pass in an invalid ``digits`` argument, and expect a ValueError.
+
+        Input:
+        - columns = ['b', 'c']
+        - digits = 20
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 20
+
+        # Run
+        with pytest.raises(ValueError):
+            Rounding(columns=columns, digits=digits)
+
+    def test___init__invalid_tolerance(self):
+        """Test the ``Rounding.__init__`` method with an invalid argument.
+
+        Pass in an invalid ``tolerance`` argument, and expect a ValueError.
+
+        Input:
+        - columns = ['b', 'c']
+        - digits = 2
+        - tolerance = 0.1
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 2
+        tolerance = 0.1
+
+        # Run
+        with pytest.raises(ValueError):
+            Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+    def test_is_valid_positive_digits(self):
+        """Test the ``Rounding.is_valid`` method for a positive digits argument.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 2
+        tolerance = 1e-3
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [4.12, 5.51, None, 6.941, 1.129],
+            'c': [5.315, 7.12, 1.12, 9.131, 12.329],
+            'd': ['a', 'b', 'd', 'e', None],
+            'e': [123.31598, -1.12001, 1.12453, 8.12129, 1.32923]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([False, True, False, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_negative_digits(self):
+        """Test the ``Rounding.is_valid`` method for a negative digits argument.
+
+        Input:
+        - Table data with desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b']
+        digits = -2
+        tolerance = 1
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [401, 500, 6921, 799, None],
+            'c': [5.3134, 7.1212, 9.1209, 101.1234, None],
+            'd': ['a', 'b', 'd', 'e', 'f']
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_zero_digits(self):
+        """Test the ``Rounding.is_valid`` method for a zero digits argument.
+
+        Input:
+        - Table data not with the desired decimal places (pandas.DataFrame)
+        Output:
+        - Series of ``False`` values (pandas.Series)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 0
+        tolerance = 1e-4
+        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, None, 3, 4],
+            'b': [4, 5.5, 1.2, 6.0001, 5.99999],
+            'c': [5, 7.12, 1.31, 9.00001, 4.9999],
+            'd': ['a', 'b', None, 'd', 'e'],
+            'e': [2.1254, 17.12123, 124.12, 123.0112, -9.129434]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_reverse_transform_positive_digits(self):
+        """Test the ``Rounding.reverse_transform`` method with positive digits.
+
+        Expect that the columns are rounded to the specified integer digit.
+
+        Input:
+        - Table data with the column with incorrect values (pandas.DataFrame)
+        Output:
+        - Table data with the computed column (pandas.DataFrame)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 3
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3, None, 4],
+            'b': [4.12345, None, 5.100, 6.0001, 1.7999],
+            'c': [1.1, 1.234, 9.13459, 4.3248, 6.1312],
+            'd': ['a', 'b', 'd', 'e', None]
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3, None, 4],
+            'b': [4.123, None, 5.100, 6.000, 1.800],
+            'c': [1.100, 1.234, 9.135, 4.325, 6.131],
+            'd': ['a', 'b', 'd', 'e', None]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_negative_digits(self):
+        """Test the ``Rounding.reverse_transform`` method with negative digits.
+
+        Expect that the columns are rounded to the specified integer digit.
+
+        Input:
+        - Table data with the column with incorrect values (pandas.DataFrame)
+        Output:
+        - Table data with the computed column (pandas.DataFrame)
+        """
+        # Setup
+        columns = ['b']
+        digits = -3
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [41234.5, None, 5000, 6001, 5928],
+            'c': [1.1, 1.23423, 9.13459, 12.12125, 18.12152],
+            'd': ['a', 'b', 'd', 'e', 'f']
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [41000.0, None, 5000.0, 6000.0, 6000.0],
+            'c': [1.1, 1.23423, 9.13459, 12.12125, 18.12152],
+            'd': ['a', 'b', 'd', 'e', 'f']
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_zero_digits(self):
+        """Test the ``Rounding.reverse_transform`` method with zero digits.
+
+        Expect that the columns are rounded to the specified integer digit.
+
+        Input:
+        - Table data with the column with incorrect values (pandas.DataFrame)
+        Output:
+        - Table data with the computed column (pandas.DataFrame)
+        """
+        # Setup
+        columns = ['b', 'c']
+        digits = 0
+        instance = Rounding(columns=columns, digits=digits)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [4.12345, None, 5.0, 6.01, 7.9],
+            'c': [1.1, 1.0, 9.13459, None, 8.89],
+            'd': ['a', 'b', 'd', 'e', 'f']
+        })
+        out = instance.reverse_transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3, 4, 5],
+            'b': [4.0, None, 5.0, 6.0, 8.0],
+            'c': [1.0, 1.0, 9.0, None, 9.0],
+            'd': ['a', 'b', 'd', 'e', 'f']
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+
+def transform(data, low, high):
+    """Transform to be used for the TestBetween class."""
+    data = (data - low) / (high - low) * 0.95 + 0.025
+    return np.log(data / (1.0 - data))
+
+
+class TestBetween():
+
+    def test_transform_scalar_scalar(self):
+        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [4, 5, 6],
+        })
+        instance.fit(table_data)
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a#0.0#1.0': transform(table_data[column], low, high)
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_transform_scalar_column(self):
+        """Test the ``Between.transform`` method with ``low`` as scalar and ``high`` as a column.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 'b'
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [0.5, 1, 6],
+        })
+        instance.fit(table_data)
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [0.5, 1, 6],
+            'a#0.0#b': transform(table_data[column], low, table_data[high])
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_transform_column_scalar(self):
+        """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as scalar.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [0, -1, 0.5],
+        })
+        instance.fit(table_data)
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'a#b#1.0': transform(table_data[column], table_data[low], high)
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_transform_column_column(self):
+        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as columns.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 'c'
+        instance = Between(column=column, low=low, high=high)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [0, -1, 0.5],
+            'c': [0.5, 1, 6]
+        })
+        instance.fit(table_data)
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'c': [0.5, 1, 6],
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_scalar_scalar(self):
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as scalars.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a': [0.1, 0.5, 0.9]
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a#0.0#1.0': transform(table_data[column], low, high)
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_scalar_column(self):
+        """Test ``Between.reverse_transform`` with ``low`` as scalar and ``high`` as a column.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 'b'
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [0.5, 1, 6],
+            'a': [0.1, 0.5, 0.9]
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [0.5, 1, 6],
+            'a#0.0#b': transform(table_data[column], low, table_data[high])
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_column_scalar(self):
+        """Test ``Between.reverse_transform`` with ``low`` as a column and ``high`` as scalar.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'a': [0.1, 0.5, 0.9]
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'a#b#1.0': transform(table_data[column], table_data[low], high)
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_column_column(self):
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as columns.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 'c'
+        instance = Between(column=column, low=low, high=high)
+
+        table_data = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'c': [0.5, 1, 6],
+            'a': [0.1, 0.5, 0.9]
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [0, -1, 0.5],
+            'c': [0.5, 1, 6],
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_is_valid_strict_true(self):
+        """Test the ``Between.is_valid`` method with strict True.
+
+        If strict is True, equal values should count as invalid.
+
+        Input:
+        - Table with a valid row, a strictly invalid row and an
+          invalid row. (pandas.DataFrame)
+        Output:
+        - True should be returned for the valid row and False
+          for the other two. (pandas.Series)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, strict=True, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 1, 3],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False])
+        pd.testing.assert_series_equal(expected_out, out, check_names=False)
+
+    def test_is_valid_strict_false(self):
+        """Test the ``Between.is_valid`` method with strict False.
+
+        If strict is False, equal values should count as valid.
+
+        Input:
+        - Table with a valid row, a strictly invalid row and an
+          invalid row. (pandas.DataFrame)
+        Output:
+        - True should be returned for the first two rows, and False
+          for the last one (pandas.Series)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, strict=False, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 1, 3],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out, check_names=False)
+
+    def test_is_valid_scalar_column(self):
+        """Test the ``Between.is_valid`` method with ``low`` as scalar and ``high`` as a column.
+
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
+
+        Input:
+        - Table data where the last value is greater than ``high``. (pandas.DataFrame)
+        Output:
+        - True should be returned for the two first rows, False
+          for the last one. (pandas.Series)
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = 'b'
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [0.5, 1, 0.6],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_scalar(self):
+        """Test the ``Between.is_valid`` method with ``low`` as a column and ``high`` as scalar.
+
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
+
+        Input:
+        - Table data where the second value is smaller than ``low`` and
+          last value is greater than ``high``. (pandas.DataFrame)
+        Output:
+        - True should be returned for the first row, False
+          for the last two. (pandas.Series)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 1.9],
+            'b': [-0.5, 1, 0.6],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_column(self):
+        """Test the ``Between.is_valid`` method with ``low`` and ``high`` as columns.
+
+        Is expected to return whether the constraint ``column`` is between the
+        ``low`` and ``high`` values.
+
+        Input:
+        - Table data where the last value is greater than ``high``. (pandas.DataFrame)
+        Output:
+        - True should be returned for the two first rows, False
+          for the last one. (pandas.Series)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 'c'
+        instance = Between(column=column, low=low, high=high)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [0, -1, 0.5],
+            'c': [0.5, 1, 0.6]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+
+        pd.testing.assert_series_equal(expected_out, out)
 
 
 class TestOneHotEncoding():

@@ -84,6 +84,21 @@ class Table:
             The columns in the dataframe which are constant within each
             group/entity. These columns will be provided at sampling time
             (i.e. the samples will be conditioned on the context variables).
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _hyper_transformer = None
@@ -176,10 +191,25 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
+    def _update_transformer_templates(self, rounding, min_value, max_value):
+        default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
+        if (rounding != default_numerical_transformer.rounding
+                or min_value != default_numerical_transformer.min_value
+                or max_value != default_numerical_transformer.max_value):
+            custom_int = rdt.transformers.NumericalTransformer(
+                dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
+            custom_float = rdt.transformers.NumericalTransformer(
+                dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
+            self._transformer_templates.update({
+                'integer': custom_int,
+                'float': custom_float
+            })
+
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
-                 entity_columns=None, context_columns=None):
+                 entity_columns=None, context_columns=None, rounding=None, min_value=None,
+                 max_value=None):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -193,6 +223,8 @@ class Table:
         self._context_columns = context_columns or []
         self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
+        self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
+        self._update_transformer_templates(rounding, min_value, max_value)
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
 
@@ -329,7 +361,7 @@ class Table:
                 field_metadata['transformer'] = transformer_template
 
             if isinstance(transformer_template, str):
-                transformer_template = self._TRANSFORMER_TEMPLATES[transformer_template]
+                transformer_template = self._transformer_templates[transformer_template]
 
             if isinstance(transformer_template, type):
                 transformer = transformer_template()
@@ -375,15 +407,23 @@ class Table:
         """
         meta_dtypes = self.get_dtypes(ids=False)
         dtypes = {}
+        numerical_extras = []
         for column in data.columns:
             if column in meta_dtypes:
                 dtypes[column] = meta_dtypes[column]
             elif column in extra_columns:
-                dtypes[column] = data[column].dtype.kind
+                dtype_kind = data[column].dtype.kind
+                if dtype_kind in ('i', 'f'):
+                    numerical_extras.append(column)
+                else:
+                    dtypes[column] = dtype_kind
 
         transformers_dict = self._get_transformers(dtypes)
+        for column in numerical_extras:
+            transformers_dict[column] = rdt.transformers.NumericalTransformer()
+
         self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
-        self._hyper_transformer.fit(data[list(dtypes.keys())])
+        self._hyper_transformer.fit(data[list(transformers_dict.keys())])
 
     @staticmethod
     def _get_key_subtype(field_meta):

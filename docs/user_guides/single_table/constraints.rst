@@ -61,7 +61,11 @@ If we observe the data closely we will find a few **constraints**:
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
-4. The ``full_time``, ``part_time`` and ``contractor`` columns
+4. We have a ``salary`` column that should always be rounded to 2
+   decimal points.
+5. The ``age`` column is bounded, since realistically an employee can only be
+   so old (or so young).
+6. The ``full_time``, ``part_time`` and ``contractor`` columns
    are related in such a way that one of them will always be one and the others
    zero, since the employee must be part of one of the three categories.
 
@@ -170,6 +174,29 @@ this functionality, we can pass:
         handling_strategy='reject_sampling'
     )
 
+
+Positive and Negative Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+or ``Negative`` constraints. These constraints enforce that a specified
+column is always positive or negative. We can create an instance passing:
+
+- the name of the ``low`` column for ``Negative`` or the name of the ``high``
+column for ``Positive``
+-  the handling strategy that we want to use
+- a boolean specifying whether to make the data strictly above or below 0, or
+include 0 as a possible value
+
+.. ipython:: python
+    :okwarning:
+
+    positive_prior_exp_constraint = Positive(
+        high='prior_years_experience',
+        strict=False,
+        handling_strategy='reject_sampling'
+    )
+
 ColumnFormula Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -204,6 +231,56 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
+Rounding Constraint
+~~~~~~~~~~~~~~~~~~~
+
+In order for data to be realistic, we also might want to round data
+to a certain number of digits. To do this, we can use the Rounding
+Constraint. We will pass this constraint:
+
+-  the name of the column(s) that should be rounded.
+-  the number of digits each column should be rounded to.
+-  the handling strategy that we want to use
+-  (optional) if reject sampling, we can customize the threshold of
+   the sampled values.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import Rounding
+
+    salary_rounding_constraint = Rounding(
+        columns='salary',
+        digits=2,
+        handling_strategy='transform'
+    )
+
+Between Constraint
+~~~~~~~~~~~~~~~~~~
+
+Another possibility is the ``Between`` constraint. It guarantees
+that one column is always in between two other columns/values. For example,
+the ``age`` column in our demo data is realistically bounded to the ages of
+15 and 90 since acual employees won't be too young or too old.
+
+In order to use it, we need to create an instance passing:
+
+-  the name of the ``low`` column or a scalar value to be used as the lower bound
+-  the name of the ``high`` column or a scalar value to be used as the upper bound
+-  the handling strategy that we want to use
+
+.. ipython:: python
+    :okwarning:
+    
+    from sdv.constraints import Between
+
+    reasonable_age_constraint = Between(
+        column='age'
+        low=15,
+        high=90,
+        handling_strategy='transform'
+    )
+
 OneHotEncoding Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -224,8 +301,6 @@ need to create an instance passing:
 
     one_hot_constraint = OneHotEncoding(
         columns=['full_time', 'part_time', 'contractor'],
-        handling_strategy='transform'
-    )
 
 Using the Constraints
 ---------------------
@@ -244,6 +319,10 @@ constraints that we just defined as a ``list``:
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
+        salary_gt_30000_constraint,
+        positive_prior_exp_constraint,
+        salary_rounding_constraint,
+        reasonable_age_constraint,
         one_hot_constraint,
         salary_gt_30000_constraint
     ]
