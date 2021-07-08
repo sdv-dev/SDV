@@ -343,19 +343,26 @@ Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our ``CopulaGAN`` Model in order to customize it to our needs.
 
-Setting Bounds for Numerical Columns
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting Bounds and Specifying Rounding for Numerical Columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, the model will learn the upper and lower bounds of the
 input data, and use that for sampling. This means that all sampled data
 will be between the maximum and minimum values found in the original
 dataset for each numeric column. This option can be overwritten using the
 ``min_value`` and ``max_value`` model arguments. These values can either
-be set to a numeric value, set to ``'auto'`` which is the default behavior,
+be set to a numeric value, set to ``'auto'`` which is the default setting,
 or set to ``None`` which will mean the column is boundless.
 
+The model will also learn the number of decimal places to round to by default.
+This option can be overwritten using the ``rounding`` parameter. The value can
+be an int specifying how many decimal places to round to, ``'auto'`` which is
+the default setting, or ``None`` which means the data will not be rounded.
+
 Since we may want to sample values outside of the ranges in the original data,
-let's pass these arguments as `None` to the model.
+let's pass the ``min_value`` and ``max_value`` arguments as `None` to the model.
+To keep the number of decimals consistent across columns, we can set ``rounding``
+to be 2.
 
 .. ipython:: python
     :okwarning:
@@ -363,7 +370,8 @@ let's pass these arguments as `None` to the model.
     model = CopulaGAN(
         primary_key='student_id',
         min_value=None,
-        max_value=None
+        max_value=None,
+        rounding=2
     )
     model.fit(data)
 
