@@ -275,7 +275,7 @@ In order to use it, we need to create an instance passing:
     from sdv.constraints import Between
 
     reasonable_age_constraint = Between(
-        column='age'
+        column='age',
         low=15,
         high=90,
         handling_strategy='transform'
@@ -300,7 +300,8 @@ need to create an instance passing:
     from sdv.constraints import OneHotEncoding
 
     one_hot_constraint = OneHotEncoding(
-        columns=['full_time', 'part_time', 'contractor'],
+        columns=['full_time', 'part_time', 'contractor']
+    )
 
 Using the Constraints
 ---------------------
@@ -323,8 +324,7 @@ constraints that we just defined as a ``list``:
         positive_prior_exp_constraint,
         salary_rounding_constraint,
         reasonable_age_constraint,
-        one_hot_constraint,
-        salary_gt_30000_constraint
+        one_hot_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
