@@ -182,14 +182,14 @@ Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
 or ``Negative`` constraints. These constraints enforce that a specified
 column is always positive or negative. We can create an instance passing:
 
-- the name of the ``low`` column for ``Negative`` or the name of the ``high``
-column for ``Positive``
--  the handling strategy that we want to use
-- a boolean specifying whether to make the data strictly above or below 0, or
-include 0 as a possible value
+- the name of the ``low`` column for ``Negative`` or the name of the ``high`` column for ``Positive``
+- the handling strategy that we want to use
+- a boolean specifying whether to make the data strictly above or below 0, or include 0 as a possible value
 
 .. ipython:: python
     :okwarning:
+
+    from sdv.constraints import Positive
 
     positive_prior_exp_constraint = Positive(
         high='prior_years_experience',
