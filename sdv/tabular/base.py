@@ -61,6 +61,21 @@ class BaseTabularModel:
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _DTYPE_TRANSFORMERS = None
@@ -68,7 +83,8 @@ class BaseTabularModel:
     _metadata = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
-                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None):
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
+                 rounding='auto', min_value='auto', max_value='auto'):
         if table_metadata is None:
             self._metadata = Table(
                 field_names=field_names,
@@ -78,6 +94,9 @@ class BaseTabularModel:
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
+                rounding=rounding,
+                min_value=min_value,
+                max_value=max_value
             )
             self._metadata_fitted = False
         else:

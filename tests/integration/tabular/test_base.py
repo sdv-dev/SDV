@@ -5,15 +5,16 @@ import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import UniqueCombinations
+from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
 
 MODELS = [
-    CTGAN(epochs=1),
-    TVAE(epochs=1),
-    GaussianCopula(),
-    CopulaGAN(epochs=1),
+    pytest.param(CTGAN(epochs=1), id='CTGAN'),
+    pytest.param(TVAE(epochs=1), id='TVAE'),
+    pytest.param(GaussianCopula(), id='GaussianCopula'),
+    pytest.param(CopulaGAN(epochs=1), id='CopulaGAN'),
 ]
 
 
@@ -214,3 +215,74 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
     pd.testing.assert_series_equal(sampled_data['state'], expected_states)
     assert all(c in ('SF', 'LA') for c in sampled_data['city'])
+
+
+@patch('sdv.constraints.base.GaussianMultivariate',
+       spec_set=GaussianMultivariate)
+def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(column_model_mock):
+    """Test that the ``sample`` method handles constraints with conditions.
+
+    The ``sample`` method is expected to properly apply constraint
+    transformations by sampling the missing columns for the constraint
+    if ``fit_columns_model`` is True. All values sampled by the column
+    model should be valid because reject sampling is used on any that aren't.
+
+    Setup:
+    - The model is being passed a ``GreaterThan`` constraint and then
+    asked to sample with one condition. One of the constraint columns is
+    the conditioned column. The ``GaussianMultivariate`` class is mocked
+    so that the constraint's ``_column_model`` returns some invalid rows
+    in order to test that the reject sampling is used.
+
+    Input:
+    - Conditions
+    Side Effects:
+    - Correct columns to condition on are passed to underlying sample method
+    """
+    # Setup
+    constraint = GreaterThan(
+        low='age_joined',
+        high='age',
+        handling_strategy='transform',
+        fit_columns_model=True,
+        drop='high'
+    )
+    data = pd.DataFrame({
+        'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
+        'age': [27.0, 28.0, 26.0, 21.0, 30.0],
+        'experience_years': [6.0, 7.0, 11.0, 3.0, 7.0],
+    })
+    model = GaussianCopula(constraints=[constraint])
+    sampled_conditions = [
+        pd.DataFrame({
+            'age_joined': [26.0, 18.0, 31.0, 29.0, 32.0],
+            'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+        }),
+        pd.DataFrame({
+            'age_joined': [28.0, 33.0, 31.0],
+            'age': [30.0, 30.0, 30.0]
+        }),
+        pd.DataFrame({
+            'age_joined': [27.0],
+            'age': [30.0]
+        })
+    ]
+
+    column_model_mock.return_value.sample.side_effect = sampled_conditions
+    model.fit(data)
+
+    # Run
+    conditions = {'age': 30.0}
+    sampled_data = model.sample(5, conditions=conditions)
+
+    # Assert
+    assert len(column_model_mock.return_value.sample.mock_calls) == 3
+
+    expected_result = pd.DataFrame({
+        'age_joined': [26.0, 18.0, 29.0, 28.0, 27.0],
+        'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+    })
+    pd.testing.assert_frame_equal(
+        sampled_data[['age_joined', 'age']],
+        expected_result[['age_joined', 'age']],
+    )
