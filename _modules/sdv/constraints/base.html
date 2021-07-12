@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.10.1 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.11.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -304,6 +304,8 @@
 <span class="sd">            table_data (pandas.DataFrame):</span>
 <span class="sd">                Table data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_columns_model</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">data_to_model</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="o">=</span><span class="p">{</span>
@@ -311,30 +313,67 @@
             <span class="p">})</span>
             <span class="n">transformed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_to_model</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">transformed_data</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">transformed_data</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">table_data</span>
 
+    <span class="k">def</span> <span class="nf">_reject_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="p">):</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="n">num_rows</span><span class="o">=</span><span class="n">num_rows</span><span class="p">,</span>
+            <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span>
+        <span class="p">)</span>
+        <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+        <span class="n">valid_rows</span> <span class="o">=</span> <span class="n">sampled</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)]</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_sampled</span> <span class="o">=</span> <span class="n">num_rows</span>
+
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_rows</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_rows</span><span class="p">:</span>
+            <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_rows</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;Could not get enough valid rows within 100 trials.&#39;</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">//</span> <span class="n">num_valid</span>
+                    <span class="n">num_rows_missing</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">%</span> <span class="n">num_valid</span>
+                    <span class="n">remainder_rows</span> <span class="o">=</span> <span class="n">valid_rows</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">num_rows_missing</span><span class="p">,</span> <span class="p">:]</span>
+                    <span class="n">valid_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">valid_rows</span><span class="p">]</span> <span class="o">*</span> <span class="n">multiplier</span> <span class="o">+</span> <span class="p">[</span><span class="n">remainder_rows</span><span class="p">],</span>
+                                           <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">-</span> <span class="n">num_valid</span>
+            <span class="n">valid_probability</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_valid</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_sampled</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">max_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="o">*</span> <span class="mi">10</span>
+            <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">remaining</span> <span class="o">/</span> <span class="n">valid_probability</span><span class="p">),</span> <span class="n">max_rows</span><span class="p">)</span>
+            <span class="n">total_sampled</span> <span class="o">+=</span> <span class="n">num_to_sample</span>
+            <span class="n">new_sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="n">num_rows</span><span class="o">=</span><span class="n">num_to_sample</span><span class="p">,</span>
+                <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span>
+            <span class="p">)</span>
+            <span class="n">new_sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">new_sampled</span><span class="p">)</span>
+            <span class="n">new_valid_rows</span> <span class="o">=</span> <span class="n">new_sampled</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">new_sampled</span><span class="p">)]</span>
+            <span class="n">valid_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">valid_rows</span><span class="p">,</span> <span class="n">new_valid_rows</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">valid_rows</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">num_rows</span><span class="p">,</span> <span class="p">:]</span>
+
     <span class="k">def</span> <span class="nf">_sample_constraint_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="n">condition_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="n">grouped_conditions</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span>
-        <span class="n">sampled_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">all_sampled_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">grouped_conditions</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                 <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="p">]</span>
 
-            <span class="n">transformed_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="n">sampled_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="n">transformed_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reject_sample</span><span class="p">(</span>
                 <span class="n">num_rows</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                 <span class="n">conditions</span><span class="o">=</span><span class="n">transformed_condition</span>
             <span class="p">)</span>
-            <span class="n">sampled_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled_row</span><span class="p">)</span>
+            <span class="n">all_sampled_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span>
 
-        <span class="n">sampled_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">)</span>
-        <span class="n">sampled_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled_data</span><span class="p">)</span>
+        <span class="n">sampled_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_sampled_rows</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sampled_data</span>
 
     <span class="k">def</span> <span class="nf">_validate_constraint_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>

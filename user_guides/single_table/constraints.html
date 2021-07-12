@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Handling Constraints &#8212; SDV 0.10.1 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.11.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -244,7 +244,23 @@
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#customformula-constraint" class="nav-link">CustomFormula Constraint</a>
+            <a href="#positive-and-negative-constraints" class="nav-link">Positive and Negative Constraints</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#columnformula-constraint" class="nav-link">ColumnFormula Constraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#rounding-constraint" class="nav-link">Rounding Constraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#between-constraint" class="nav-link">Between Constraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#onehotencoding-constraint" class="nav-link">OneHotEncoding Constraint</a>
         </li>
     
             </ul>
@@ -300,19 +316,19 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department                name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0       Pear          Sales        Amanda Young  37536 Powers Ridge\nWest Timothychester, AL 84847   43               43                     0</span>
-<span class="go">1       Pear         Design  Terrence Glass Jr.  719 Davidson Springs Suite 105\nWest Shawnstad...   47               39                     8</span>
-<span class="go">2    Glasses             AI      Anthony Thomas            040 Booth Shoal\nKathleenfort, SC 41133   32               30                     2</span>
-<span class="go">3    Glasses  Search Engine       Jamie Johnson  2583 Jessica Path Apt. 226\nWest Austinstad, D...   31               29                     2</span>
-<span class="go">4   Cheerper        BigData        Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   41               40                     1</span>
-<span class="go">5   Cheerper        Support         Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   30               30                     0</span>
-<span class="go">6       Pear          Sales       Amy Nicholson                   PSC 3733, Box 5857\nAPO AP 52539   41               41                     0</span>
-<span class="go">7       Pear         Design        Glenn Greene               8824 Davis Land\nBrianstad, NV 57601   48               45                     3</span>
-<span class="go">8    Glasses             AI     Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   44               35                     9</span>
-<span class="go">9    Glasses  Search Engine    Stephen Williams          79505 Taylor Keys\nWest Heather, OR 86897   44               38                     6</span>
-<span class="go">10  Cheerper        BigData        Gabriel King           650 Franco Parks\nNew Cristina, ND 07073   41               41                     0</span>
-<span class="go">11  Cheerper        Support          Anne Burns          43393 Clifford Manors\nLaraberg, FL 57019   48               39                     9</span>
+<span class="go">     company     department               name                                            address  age  age_when_joined  years_in_the_company     salary  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0       Pear          Sales     Steven Johnson  7446 Tucker Curve Suite 744\nSchroederhaven, P...   43               39                     4  123436.70                       5        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design         Anne Silva              578 Theresa Ports\nHallfort, WY 83696   49               46                     3   98742.62                       3        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI     Kristin Abbott   6806 Gray Points Suite 676\nBurnsburgh, ID 89781   32               31                     1   95529.82                       3        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine    Anthony Whitney                           USNS Moore\nFPO AA 35984   34               33                     1   82145.76                       1        1.0        0.0         0.0</span>
+<span class="go">4   Cheerper        BigData        Robert Khan  6862 Melissa Summit Apt. 924\nEast Shannon, VA...   43               43                     0   80639.14                       2        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support       Lisa Goodwin      463 Johnny Oval Apt. 395\nKleinport, CT 17343   33               30                     3   91551.63                       4        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales      Kayla Schmidt           64657 Bates Centers\nJennafurt, WV 39790   37               32                     5   37053.75                       2        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design       Sheryl Olsen  7699 Brown Locks Suite 544\nNew Amberhaven, MD...   37               37                     0   58907.92                       5        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI  Terrance Chandler         4764 Carter Key\nSouth Tylertown, AZ 47783   39               31                     8  111241.43                       2        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine        Carol Lewis   574 Vazquez Forges Apt. 983\nKarentown, CA 72630   46               37                     9  150011.53                       4        1.0        0.0         0.0</span>
+<span class="go">10  Cheerper        BigData     Collin Spencer           64647 Gardner Isle\nRoberttown, CA 88125   48               48                     0   78614.61                       2        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support      Rachel Jacobs        04039 Matthew Junction\nDannyfurt, WY 89955   37               31                     6   64169.98                       1        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -333,6 +349,13 @@ the <code class="docutils literal notranslate"><span class="pre">age_when_joined
 years passed since they joined the company, which means that the
 <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> will always be equal to the <code class="docutils literal notranslate"><span class="pre">age</span></code> minus
 the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code>.</p></li>
+<li><p>We have a <code class="docutils literal notranslate"><span class="pre">salary</span></code> column that should always be rounded to 2
+decimal points.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">age</span></code> column is bounded, since realistically an employee can only be
+so old (or so young).</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">full_time</span></code>, <code class="docutils literal notranslate"><span class="pre">part_time</span></code> and <code class="docutils literal notranslate"><span class="pre">contractor</span></code> columns
+are related in such a way that one of them will always be one and the others
+zero, since the employee must be part of one of the three categories.</p></li>
 </ol>
 </section>
 <section id="how-does-sdv-handle-constraints">
@@ -413,18 +436,55 @@ passing:</p>
 <span class="gp">   ...: </span>
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code> constraint can also be used to guarantee a column is greater
+than a scalar value or specific datetime value instead of another column. To use
+this functionality, we can pass:</p>
+<ul class="simple">
+<li><p>the scalar value for <code class="docutils literal notranslate"><span class="pre">low</span></code></p></li>
+<li><p>the scalar value for <code class="docutils literal notranslate"><span class="pre">high</span></code></p></li>
+<li><p>a boolean indicating <code class="docutils literal notranslate"><span class="pre">low</span></code> or <code class="docutils literal notranslate"><span class="pre">high</span></code> is a scalar</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">salary_gt_30000_constraint</span> <span class="o">=</span> <span class="n">GreaterThan</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">low</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span>
+<span class="gp">   ...: </span>    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
+<span class="gp">   ...: </span><span class="p">)</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
 </section>
-<section id="customformula-constraint">
-<h3>CustomFormula Constraint<a class="headerlink" href="#customformula-constraint" title="Permalink to this headline">¶</a></h3>
+<section id="positive-and-negative-constraints">
+<h3>Positive and Negative Constraints<a class="headerlink" href="#positive-and-negative-constraints" title="Permalink to this headline">¶</a></h3>
+<p>Similar to the <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code> constraint, we can use the <code class="docutils literal notranslate"><span class="pre">Positive</span></code>
+or <code class="docutils literal notranslate"><span class="pre">Negative</span></code> constraints. These constraints enforce that a specified
+column is always positive or negative. We can create an instance passing:</p>
+<ul class="simple">
+<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column for <code class="docutils literal notranslate"><span class="pre">Negative</span></code> or the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column for <code class="docutils literal notranslate"><span class="pre">Positive</span></code></p></li>
+<li><p>the handling strategy that we want to use</p></li>
+<li><p>a boolean specifying whether to make the data strictly above or below 0, or include 0 as a possible value</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Positive</span>
+
+<span class="gp">In [10]: </span><span class="n">positive_prior_exp_constraint</span> <span class="o">=</span> <span class="n">Positive</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;prior_years_experience&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+</section>
+<section id="columnformula-constraint">
+<h3>ColumnFormula Constraint<a class="headerlink" href="#columnformula-constraint" title="Permalink to this headline">¶</a></h3>
 <p>In some cases, one column will need to be computed based on the other
 columns using a custom formula. This is, for example, what happens with
 the <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> column in our demo data, which will always
 need to be computed based on the <code class="docutils literal notranslate"><span class="pre">age</span></code> and <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> columns
 by subtracting them. In these cases, we need to define a custom function
 that defines how to compute the value of the column:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="k">def</span> <span class="nf">years_in_the_company</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">]</span>
-<span class="gp">   ...: </span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="k">def</span> <span class="nf">years_in_the_company</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">]</span>
+<span class="gp">   ....: </span>
 </pre></div>
 </div>
 <p>Once we have defined this function, we can use the <code class="docutils literal notranslate"><span class="pre">ColumnFormula</span></code>
@@ -434,12 +494,80 @@ constraint by passing it:</p>
 <li><p>the function that generates the column values</p></li>
 <li><p>the handling strategy that we want to use</p></li>
 </ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">ColumnFormula</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">ColumnFormula</span>
 
-<span class="gp">In [10]: </span><span class="n">years_in_the_company_constraint</span> <span class="o">=</span> <span class="n">ColumnFormula</span><span class="p">(</span>
+<span class="gp">In [13]: </span><span class="n">years_in_the_company_constraint</span> <span class="o">=</span> <span class="n">ColumnFormula</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;years_in_the_company&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">formula</span><span class="o">=</span><span class="n">years_in_the_company</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+</section>
+<section id="rounding-constraint">
+<h3>Rounding Constraint<a class="headerlink" href="#rounding-constraint" title="Permalink to this headline">¶</a></h3>
+<p>In order for data to be realistic, we also might want to round data
+to a certain number of digits. To do this, we can use the Rounding
+Constraint. We will pass this constraint:</p>
+<ul class="simple">
+<li><p>the name of the column(s) that should be rounded.</p></li>
+<li><p>the number of digits each column should be rounded to.</p></li>
+<li><p>the handling strategy that we want to use</p></li>
+<li><p>(optional) if reject sampling, we can customize the threshold of
+the sampled values.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Rounding</span>
+
+<span class="gp">In [15]: </span><span class="n">salary_rounding_constraint</span> <span class="o">=</span> <span class="n">Rounding</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+</section>
+<section id="between-constraint">
+<h3>Between Constraint<a class="headerlink" href="#between-constraint" title="Permalink to this headline">¶</a></h3>
+<p>Another possibility is the <code class="docutils literal notranslate"><span class="pre">Between</span></code> constraint. It guarantees
+that one column is always in between two other columns/values. For example,
+the <code class="docutils literal notranslate"><span class="pre">age</span></code> column in our demo data is realistically bounded to the ages of
+15 and 90 since acual employees won’t be too young or too old.</p>
+<p>In order to use it, we need to create an instance passing:</p>
+<ul class="simple">
+<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column or a scalar value to be used as the lower bound</p></li>
+<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column or a scalar value to be used as the upper bound</p></li>
+<li><p>the handling strategy that we want to use</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Between</span>
+
+<span class="gp">In [17]: </span><span class="n">reasonable_age_constraint</span> <span class="o">=</span> <span class="n">Between</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">low</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">high</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+</section>
+<section id="onehotencoding-constraint">
+<h3>OneHotEncoding Constraint<a class="headerlink" href="#onehotencoding-constraint" title="Permalink to this headline">¶</a></h3>
+<p>Another constraint available is the <code class="docutils literal notranslate"><span class="pre">OneHotEncoding</span></code> constraint.
+This constraint allows the user to specify a list of columns where each row
+is a one hot vector. Then, the constraint will make sure that the output
+of the model is transformed so that the column with the largest value is
+set to 1 while all other columns are set to 0. To apply the constraint we
+need to create an instance passing:</p>
+<ul class="simple">
+<li><p>A list of the names of the columns of interest</p></li>
+<li><p>The strategy we want to use (<code class="docutils literal notranslate"><span class="pre">transform</span></code> is recommended)</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">OneHotEncoding</span>
+
+<span class="gp">In [19]: </span><span class="n">one_hot_constraint</span> <span class="o">=</span> <span class="n">OneHotEncoding</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;full_time&#39;</span><span class="p">,</span> <span class="s1">&#39;part_time&#39;</span><span class="p">,</span> <span class="s1">&#39;contractor&#39;</span><span class="p">]</span>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 </pre></div>
@@ -452,39 +580,44 @@ constraint by passing it:</p>
 dataset, we can pass them to the Tabular Model of our choice. For
 example, let us create a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model passing it the
 constraints that we just defined as a <code class="docutils literal notranslate"><span class="pre">list</span></code>:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
-<span class="gp">In [12]: </span><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">In [21]: </span><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
 <span class="gp">   ....: </span>    <span class="n">unique_company_department_constraint</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">age_gt_age_when_joined_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">years_in_the_company_constraint</span>
+<span class="gp">   ....: </span>    <span class="n">years_in_the_company_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">salary_gt_30000_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">positive_prior_exp_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">salary_rounding_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">reasonable_age_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">one_hot_constraint</span>
 <span class="gp">   ....: </span><span class="p">]</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [13]: </span><span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
+<span class="gp">In [22]: </span><span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>After creating the model, we can just fit and sample as usual:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [23]: </span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
 
-<span class="gp">In [15]: </span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">In [24]: </span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And observe that the sampled rows really adjust to the constraints that
 we defined:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">sampled</span>
-<span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">    company     department             name                                            address  age  age_when_joined  years_in_the_company</span>
-<span class="go">0   Glasses  Search Engine     Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   45               40                     5</span>
-<span class="go">1   Glasses  Search Engine    Jamie Johnson  2583 Jessica Path Apt. 226\nWest Austinstad, D...   36               27                     9</span>
-<span class="go">2   Glasses             AI  Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   36               31                     5</span>
-<span class="go">3  Cheerper        BigData     Justin Brown  048 Heath Coves Apt. 045\nWest Yolandafurt, WV...   41               39                     2</span>
-<span class="go">4      Pear         Design     Glenn Greene               8824 Davis Land\nBrianstad, NV 57601   46               39                     7</span>
-<span class="go">5  Cheerper        BigData  Phillip Beltran  690 Rojas Plain Apt. 222\nPort Patriciaside, K...   42               37                     5</span>
-<span class="go">7  Cheerper        Support      Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   42               39                     3</span>
-<span class="go">8   Glasses  Search Engine      Martin Lowe            7308 Lopez Locks\nBowersville, CO 62798   39               38                     1</span>
-<span class="go">9      Pear         Design     Amanda Young  37536 Powers Ridge\nWest Timothychester, AL 84847   47               45                     2</span>
-<span class="go">0      Pear         Design       Anne Burns          43393 Clifford Manors\nLaraberg, FL 57019   53               41                    12</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [25]: </span><span class="n">sampled</span>
+<span class="gh">Out[25]: </span><span class="go"></span>
+<span class="go">    company     department             name                                            address  age  age_when_joined  years_in_the_company     salary  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0   Glasses  Search Engine  Anthony Whitney                           USNS Moore\nFPO AA 35984   40               30                    10   89320.70                       4        1.0        0.0         0.0</span>
+<span class="go">1      Pear         Design   Steven Johnson  7446 Tucker Curve Suite 744\nSchroederhaven, P...   48               48                     0  131553.07                       5        1.0        0.0         0.0</span>
+<span class="go">2   Glasses  Search Engine    Kayla Schmidt           64657 Bates Centers\nJennafurt, WV 39790   47               30                    17   77875.21                       1        1.0        0.0         0.0</span>
+<span class="go">3      Pear          Sales   Steven Johnson  7446 Tucker Curve Suite 744\nSchroederhaven, P...   40               31                     9  130039.57                       5        1.0        0.0         0.0</span>
+<span class="go">5   Glasses             AI   Kristin Abbott   6806 Gray Points Suite 676\nBurnsburgh, ID 89781   34               30                     4  135147.71                       5        1.0        0.0         0.0</span>
+<span class="go">6  Cheerper        Support     Lisa Goodwin      463 Johnny Oval Apt. 395\nKleinport, CT 17343   37               30                     7   93342.38                       2        1.0        0.0         0.0</span>
+<span class="go">7  Cheerper        BigData      Robert Khan  6862 Melissa Summit Apt. 924\nEast Shannon, VA...   45               37                     8   57775.80                       1        0.0        1.0         0.0</span>
+<span class="go">8   Glasses  Search Engine      Carol Lewis   574 Vazquez Forges Apt. 983\nKarentown, CA 72630   33               30                     3  124090.94                       3        1.0        0.0         0.0</span>
+<span class="go">9   Glasses  Search Engine   Steven Johnson  7446 Tucker Curve Suite 744\nSchroederhaven, P...   37               36                     1  150011.53                       3        1.0        0.0         0.0</span>
+<span class="go">0  Cheerper        BigData   Collin Spencer           64647 Gardner Isle\nRoberttown, CA 88125   48               48                     0   42181.28                       1        1.0        0.0         0.0</span>
 </pre></div>
 </div>
 </section>

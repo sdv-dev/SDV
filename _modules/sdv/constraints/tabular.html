@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.10.1 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.11.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -183,7 +183,14 @@
 <span class="sd">      the value in another column.</span>
 <span class="sd">    * ColumnFormula: Compute the value of a column based on applying a formula</span>
 <span class="sd">      on the other columns of the table.</span>
+<span class="sd">    * Between: Ensure that the value in one column is always between the values</span>
+<span class="sd">      of two other columns/scalars.</span>
+<span class="sd">    * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -242,6 +249,8 @@
 
     <span class="n">_separator</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_joint_column</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_combinations_to_uuids</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_uuids_to_combinations</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="n">columns</span>
@@ -249,51 +258,34 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
                          <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_valid_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return True if separator is valid for this data.</span>
-
-<span class="sd">        If the separator is contained within any of the columns</span>
-<span class="sd">        or the column name obtained after joining the column</span>
-<span class="sd">        names using the separator already exists, the separator</span>
-<span class="sd">        is not valid.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            table_data (pandas.DataFrame):</span>
-<span class="sd">                Table data.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            bool:</span>
-<span class="sd">                Whether the separator is valid for this data or not.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="k">return</span> <span class="kc">False</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="k">return</span> <span class="kc">True</span>
-
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit this Constraint to the data.</span>
 
 <span class="sd">        The fit process consists on:</span>
 
-<span class="sd">            - Finding a separtor that works for the</span>
+<span class="sd">            - Finding a separator that works for the</span>
 <span class="sd">              current data by iteratively adding `#` to it.</span>
 <span class="sd">            - Generating the joint column name by concatenating</span>
 <span class="sd">              the names of ``self._columns`` with the separator.</span>
+<span class="sd">            - Generating a mapping of the unique combinations</span>
+<span class="sd">              to a unique identifier.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
 <span class="sd">                Table data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">=</span> <span class="s1">&#39;#&#39;</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_valid_separator</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_combinations_to_uuids</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uuids_to_combinations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">combination</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combinations</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">uuid_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_combinations_to_uuids</span><span class="p">[</span><span class="n">combination</span><span class="p">]</span> <span class="o">=</span> <span class="n">uuid_str</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uuids_to_combinations</span><span class="p">[</span><span class="n">uuid_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">combination</span>
 
 <div class="viewcode-block" id="UniqueCombinations.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.is_valid.html#sdv.constraints.UniqueCombinations.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
@@ -318,9 +310,9 @@
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consist on removing all the ``self._columns`` from</span>
-<span class="sd">        the dataframe, concatenating them using the found separator, and</span>
-<span class="sd">        setting them back to the data as a single name with the previously</span>
-<span class="sd">        computed name.</span>
+<span class="sd">        the dataframe, and replacing them with a unique identifier that maps to</span>
+<span class="sd">        that unique combination of column values under the previously computed</span>
+<span class="sd">        combined column name.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -330,18 +322,18 @@
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Transformed data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">lists_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">lists_series</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">table_data</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">combinations</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">uuids</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_combinations_to_uuids</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="n">combinations</span><span class="p">)</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">uuids</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <div class="viewcode-block" id="UniqueCombinations.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.UniqueCombinations.reverse_transform.html#sdv.constraints.UniqueCombinations.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The transformation is reversed by popping the joint column from</span>
-<span class="sd">        the table, splitting it by the previously found separator and</span>
-<span class="sd">        then setting all the columns back to the table with the original</span>
+<span class="sd">        the table, mapping it back to the original combination of column values,</span>
+<span class="sd">        and then setting all the columns back to the table with the original</span>
 <span class="sd">        names.</span>
 
 <span class="sd">        Args:</span>
@@ -353,7 +345,8 @@
 <span class="sd">                Transformed data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_uuids_to_combinations</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">):</span>
             <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
@@ -363,15 +356,19 @@
 <div class="viewcode-block" id="GreaterThan"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.html#sdv.constraints.GreaterThan">[docs]</a><span class="k">class</span> <span class="nc">GreaterThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Ensure that the ``high`` column is always greater than the ``low`` one.</span>
 
-<span class="sd">    The transformation strategy works by replacing the ``high`` value with the</span>
-<span class="sd">    difference between it and the ``low`` value and then computing back the ``high``</span>
-<span class="sd">    value by adding it the ``low`` value when reversing the transformation.</span>
+<span class="sd">    The transformation strategy works by creating a column with the</span>
+<span class="sd">    difference between the ``high`` and ``low`` values and then computing back the</span>
+<span class="sd">    necessary columns using the difference and whichever other value is available.</span>
+<span class="sd">    For example, if the ``high`` column is dropped, then the ``low`` column/value</span>
+<span class="sd">    will be added to the diff to reconstruct the ``high`` column.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        low (str):</span>
-<span class="sd">            Name of the column that contains the low value.</span>
-<span class="sd">        high (str):</span>
-<span class="sd">            Name of the column that contains the high value.</span>
+<span class="sd">        low (str or int):</span>
+<span class="sd">            Either the name of the column that contains the low value,</span>
+<span class="sd">            or a scalar that is the low value.</span>
+<span class="sd">        high (str or int):</span>
+<span class="sd">            Either the name of the column that contains the high value,</span>
+<span class="sd">            or a scalar that is the high value.</span>
 <span class="sd">        strict (bool):</span>
 <span class="sd">            Whether the comparison of the values should be strict ``&gt;=`` or</span>
 <span class="sd">            not ``&gt;`` when comparing them. Currently, this is only respected</span>
@@ -379,16 +376,77 @@
 <span class="sd">        handling_strategy (str):</span>
 <span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
 <span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
+<span class="sd">        drop (str):</span>
+<span class="sd">            Which column to drop during transformation. Can be ``&#39;high&#39;``,</span>
+<span class="sd">            ``&#39;low&#39;`` or ``None``.</span>
+<span class="sd">        high_is_scalar(bool or None):</span>
+<span class="sd">            Whether or not the value for high is a scalar or a column name.</span>
+<span class="sd">            If ``None``, this will be determined during the ``fit`` method</span>
+<span class="sd">            by checking if the value provided is a column name.</span>
+<span class="sd">        low_is_scalar(bool or None):</span>
+<span class="sd">            Whether or not the value for low is a scalar or a column name.</span>
+<span class="sd">            If ``None``, this will be determined during the ``fit`` method</span>
+<span class="sd">            by checking if the value provided is a column name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_diff_column</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_is_datetime</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_column_to_reconstruct</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span>
-                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">high_is_scalar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">low_is_scalar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span> <span class="o">=</span> <span class="n">strict</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">=</span> <span class="n">drop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="o">=</span> <span class="n">high_is_scalar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="o">=</span> <span class="n">low_is_scalar</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
                          <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_low_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_high_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_column_to_reconstruct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;high&#39;</span><span class="p">:</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span><span class="p">:</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span>
+
+        <span class="k">return</span> <span class="n">column</span>
+
+    <span class="k">def</span> <span class="nf">_get_diff_column_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="s1">&#39;#&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">token</span>
+            <span class="k">while</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
+
+            <span class="k">return</span> <span class="n">name</span>
+
+        <span class="k">while</span> <span class="n">token</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
+
+        <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Learn the dtype of the high column.</span>
@@ -397,7 +455,28 @@
 <span class="sd">            table_data (pandas.DataFrame):</span>
 <span class="sd">                The Table data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;`low` and `high` cannot be both scalars at the same time&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">,)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">,)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_column_to_reconstruct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_column_to_reconstruct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diff_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_diff_column_name</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_datetime</span> <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_datetime64_ns_dtype</span><span class="p">(</span><span class="n">low</span><span class="p">)</span>
+                             <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">)</span>
+                             <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">datetime</span><span class="p">))</span>
 
 <div class="viewcode-block" id="GreaterThan.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.GreaterThan.is_valid.html#sdv.constraints.GreaterThan.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say whether ``high`` is greater than ``low`` in each row.</span>
@@ -410,10 +489,12 @@
 <span class="sd">            pandas.Series:</span>
 <span class="sd">                Whether each row is valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">high</span> <span class="o">&gt;</span> <span class="n">low</span>
 
-        <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">high</span> <span class="o">&gt;=</span> <span class="n">low</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
@@ -433,13 +514,16 @@
 <span class="sd">                Transformed data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">low_column</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">-</span> <span class="n">low_column</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_datetime64_ns_dtype</span><span class="p">(</span><span class="n">low_column</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_datetime</span><span class="p">:</span>
             <span class="n">diff</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
 
-        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">diff</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_diff_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">diff</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;high&#39;</span><span class="p">:</span>
+            <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span>
+            <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">table_data</span>
 
@@ -462,15 +546,93 @@
 <span class="sd">                Transformed data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">low_column</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_datetime64_ns_dtype</span><span class="p">(</span><span class="n">low_column</span><span class="p">):</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_diff_column</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_datetime</span><span class="p">:</span>
             <span class="n">diff</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
 
-        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">low_column</span> <span class="o">+</span> <span class="n">diff</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;high&#39;</span><span class="p">:</span>
+            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span> <span class="o">+</span> <span class="n">diff</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop</span> <span class="o">==</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span>
+            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">high</span> <span class="o">-</span> <span class="n">diff</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">invalid</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span><span class="p">:</span>
+                <span class="n">new_values</span> <span class="o">=</span> <span class="n">low</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span> <span class="o">+</span> <span class="n">diff</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span><span class="p">:</span>
+                <span class="n">new_values</span> <span class="o">=</span> <span class="n">high</span> <span class="o">-</span> <span class="n">diff</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_values</span> <span class="o">=</span> <span class="n">low</span> <span class="o">+</span> <span class="n">diff</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span>
+
+            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_to_reconstruct</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span>
+
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_diff_column</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">table_data</span></div></div>
+
+
+<div class="viewcode-block" id="Positive"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Positive.html#sdv.constraints.Positive">[docs]</a><span class="k">class</span> <span class="nc">Positive</span><span class="p">(</span><span class="n">GreaterThan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the ``high`` column is always positive.</span>
+
+<span class="sd">    The transformation strategy works by creating a column with the</span>
+<span class="sd">    difference between ``high`` and 0 value and then computing back the ``high``</span>
+<span class="sd">    value by adding the difference to 0 when reversing the transformation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        high (str or int):</span>
+<span class="sd">            Either the name of the column that contains the high value,</span>
+<span class="sd">            or a scalar that is the high value.</span>
+<span class="sd">        strict (bool):</span>
+<span class="sd">            Whether the comparison of the values should be strict ``&gt;=`` or</span>
+<span class="sd">            not ``&gt;`` when comparing them. Currently, this is only respected</span>
+<span class="sd">            if ``reject_sampling`` or ``all`` handling strategies are used.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
+<span class="sd">        drop (str):</span>
+<span class="sd">            Which column to drop during transformation. Can be ``&#39;high&#39;``</span>
+<span class="sd">            or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span>
+                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
+                         <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">,</span>
+                         <span class="n">high</span><span class="o">=</span><span class="n">high</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high_is_scalar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">low_is_scalar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Negative"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Negative.html#sdv.constraints.Negative">[docs]</a><span class="k">class</span> <span class="nc">Negative</span><span class="p">(</span><span class="n">GreaterThan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the ``low`` column is always negative.</span>
+
+<span class="sd">    The transformation strategy works by creating a column with the</span>
+<span class="sd">    difference between ``low`` and 0 and then computing back the ``low``</span>
+<span class="sd">    value by subtracting the difference from 0 when reversing the transformation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        high (str or int):</span>
+<span class="sd">            Either the name of the column that contains the high value,</span>
+<span class="sd">            or a scalar that is the high value.</span>
+<span class="sd">        strict (bool):</span>
+<span class="sd">            Whether the comparison of the values should be strict ``&gt;=`` or</span>
+<span class="sd">            not ``&gt;`` when comparing them. Currently, this is only respected</span>
+<span class="sd">            if ``reject_sampling`` or ``all`` handling strategies are used.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
+<span class="sd">        drop (str):</span>
+<span class="sd">            Which column to drop during transformation. Can be ``&#39;low&#39;``</span>
+<span class="sd">            or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span>
+                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
+                         <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">,</span>
+                         <span class="n">high</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="n">low</span><span class="p">,</span> <span class="n">high_is_scalar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                         <span class="n">low_is_scalar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ColumnFormula"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ColumnFormula.html#sdv.constraints.ColumnFormula">[docs]</a><span class="k">class</span> <span class="nc">ColumnFormula</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
@@ -545,6 +707,386 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div></div>
+
+
+<div class="viewcode-block" id="Between"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Between.html#sdv.constraints.Between">[docs]</a><span class="k">class</span> <span class="nc">Between</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the ``constraint_column`` is always between ``high`` and ``low``.</span>
+
+<span class="sd">    The transformation strategy works by replacing the ``constraint_column`` with a</span>
+<span class="sd">    scaled version and then applying a logit function. The reverse transform</span>
+<span class="sd">    applies a sigmoid to the data and then scales it back to the original space.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        constraint_column (str):</span>
+<span class="sd">            Name of the column to which the constraint will be applied.</span>
+<span class="sd">        low (float or str):</span>
+<span class="sd">            If float, lower bound on the values of the ``constraint_column``.</span>
+<span class="sd">            If string, name of the column which will be the lower bound.</span>
+<span class="sd">        high (float or str):</span>
+<span class="sd">            If float, upper bound on the values of the ``constraint_column``.</span>
+<span class="sd">            If string, name of the column which will be the upper bound.</span>
+<span class="sd">        strict (bool):</span>
+<span class="sd">            Whether the comparison of the values should be strict ``&gt;=`` or</span>
+<span class="sd">            not ``&gt;`` when comparing them. Currently, this is only respected</span>
+<span class="sd">            if ``reject_sampling`` or ``all`` handling strategies are used.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
+<span class="sd">        high_is_scalar(bool or None):</span>
+<span class="sd">            Whether or not the value for high is a scalar or a column name.</span>
+<span class="sd">            If ``None``, this will be determined during the ``fit`` method</span>
+<span class="sd">            by checking if the value provided is a column name.</span>
+<span class="sd">        low_is_scalar(bool or None):</span>
+<span class="sd">            Whether or not the value for low is a scalar or a column name.</span>
+<span class="sd">            If ``None``, this will be determined during the ``fit`` method</span>
+<span class="sd">            by checking if the value provided is a column name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_transformed_column</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span>
+                 <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">high_is_scalar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">low_is_scalar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span> <span class="o">=</span> <span class="n">column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span> <span class="o">=</span> <span class="n">strict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="o">=</span> <span class="n">high_is_scalar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="o">=</span> <span class="n">low_is_scalar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">lt</span> <span class="k">if</span> <span class="n">strict</span> <span class="k">else</span> <span class="n">operator</span><span class="o">.</span><span class="n">le</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
+                         <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_low_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the appropriate lower bound.</span>
+
+<span class="sd">        Returns the lower bound either as a column or a scalar, depending on the</span>
+<span class="sd">        value of ``self._low_is_scalar``. If the lower bound column doesn&#39;t exist, returns</span>
+<span class="sd">        ``None`` instead.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                The Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame, float or None:</span>
+<span class="sd">                Either the lower bound or None if the column doesn&#39;t exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_high_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the appropriate upper bound.</span>
+
+<span class="sd">        Returns the upper bound either as a column or a scalar, depending on the</span>
+<span class="sd">        value of ``self._high_is_scalar``. If the upper bound column doesn&#39;t exist, returns</span>
+<span class="sd">        ``None`` instead.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                The Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame, float or None:</span>
+<span class="sd">                Either the upper bound or None if the column doesn&#39;t exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_diff_column_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="s1">&#39;#&#39;</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span><span class="p">]))</span>
+        <span class="k">while</span> <span class="n">token</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">components</span><span class="p">)</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">+=</span> <span class="s1">&#39;#&#39;</span>
+
+        <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transformed_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_diff_column_name</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Between.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Between.is_valid.html#sdv.constraints.Between.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">satisfy_low_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">),</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">satisfy_high_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span>
+            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">satisfy_low_bound</span> <span class="o">&amp;</span> <span class="n">satisfy_high_bound</span></div>
+
+<div class="viewcode-block" id="Between.transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Between.transform.html#sdv.constraints.Between.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+
+<span class="sd">        The transformation consists of scaling the ``constraint_column``</span>
+<span class="sd">        (``(column-low)/(high-low) * cnt + small_cnt``) and then applying</span>
+<span class="sd">        a logit function to the scaled version of the column.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">high</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">*</span> <span class="mf">0.95</span> <span class="o">+</span> <span class="mf">0.025</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">data</span><span class="p">))</span>
+
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformed_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div>
+
+<div class="viewcode-block" id="Between.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Between.reverse_transform.html#sdv.constraints.Between.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        The reverse transform consists of applying a sigmoid to the transformed</span>
+<span class="sd">        ``constraint_column`` and then scaling it back to the original space</span>
+<span class="sd">        ( ``(column - cnt) * (high - low) / cnt + low`` ).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformed_column</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">data</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="mf">0.025</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.95</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">*</span> <span class="p">(</span><span class="n">high</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span> <span class="o">+</span> <span class="n">low</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span>
+
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformed_column</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_data</span></div></div>
+
+
+<div class="viewcode-block" id="Rounding"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Rounding.html#sdv.constraints.Rounding">[docs]</a><span class="k">class</span> <span class="nc">Rounding</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Round a column based on the specified number of digits.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        columns (str or list[str]):</span>
+<span class="sd">            Name of the column(s) to round.</span>
+<span class="sd">        digits (int):</span>
+<span class="sd">            How much to round each column. All columns will be rounded to this</span>
+<span class="sd">            number of digits.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling``. Defaults to ``transform``.</span>
+<span class="sd">        tolerance (int):</span>
+<span class="sd">            When reject sampling, the sample data must be within this distance</span>
+<span class="sd">            of the desired rounded values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">digits</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">digits</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The value of digits cannot exceed 15&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tolerance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tolerance</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">digits</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Tolerance must be less than the rounding level&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="n">columns</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_digits</span> <span class="o">=</span> <span class="n">digits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_round_config</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_digits</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span> <span class="o">=</span> <span class="n">tolerance</span> <span class="k">if</span> <span class="n">tolerance</span> <span class="k">else</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">digits</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Rounding.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Rounding.is_valid.html#sdv.constraints.Rounding.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine if the data satisfies the rounding constraint.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span>
+        <span class="n">rounded</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_digits</span><span class="p">)</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span><span class="n">columns</span> <span class="o">-</span> <span class="n">rounded</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span>
+
+        <span class="k">return</span> <span class="n">valid</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Rounding.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Rounding.reverse_transform.html#sdv.constraints.Rounding.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        Round the columns to the desired digits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_round_config</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="OneHotEncoding"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.OneHotEncoding.html#sdv.constraints.OneHotEncoding">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoding</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure the appropriate columns are one hot encoded.</span>
+
+<span class="sd">    This constraint allows the user to specify a list of columns where each row</span>
+<span class="sd">    is a one hot vector. During the reverse transform, the output of the model</span>
+<span class="sd">    is transformed so that the column with the largest value is set to 1 while</span>
+<span class="sd">    all other columns are set to 0.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        columns (list[str]):</span>
+<span class="sd">            Names of the columns containing one hot rows.</span>
+<span class="sd">        handling_strategy (str):</span>
+<span class="sd">            How this Constraint should be handled, which can be ``transform``</span>
+<span class="sd">            or ``reject_sampling`` (not recommended). Defaults to ``transform``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sample_constraint_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Handle constraint columns when conditioning.</span>
+
+<span class="sd">        When handling a set of one-hot columns, a subset of columns may be provided</span>
+<span class="sd">        to condition on. To handle this, this function does the following:</span>
+
+<span class="sd">        1. If the user specifies that a particular column must be 1,</span>
+<span class="sd">           then all other columns must be 0.</span>
+<span class="sd">        2. If the user specifies that one or more columns must be 0, then</span>
+<span class="sd">           we need to sample the other columns and select the highest value</span>
+<span class="sd">           and enforce the one-hot constraint.</span>
+<span class="sd">        3. If the user specifies something invalid, we need to raise an error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data containing the conditions.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Table data with the constraint columns filled in.</span>
+
+<span class="sd">        Raise:</span>
+<span class="sd">            ``ValueError`` if the conditions are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">condition_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Condition values must be ones or zeros.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Each row of a condition can only contain one number one.&#39;</span><span class="p">)</span>
+
+        <span class="n">has_one</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">has_one</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sub_table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_one</span><span class="p">,</span> <span class="n">condition_columns</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">proposed_table_data</span> <span class="o">=</span> <span class="n">sub_table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">condition_columns</span><span class="p">:</span>
+                        <span class="n">proposed_table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">proposed_table_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                    <span class="n">num_rows</span><span class="o">=</span><span class="n">sub_table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">conditions</span><span class="o">=</span><span class="n">sub_table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">condition_columns</span><span class="p">:</span>
+                    <span class="n">sub_table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">proposed_table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sub_table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">)</span>
+
+            <span class="n">table_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_one</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sub_table_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_one</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">condition_columns</span><span class="p">:</span>
+                    <span class="n">table_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">has_one</span><span class="p">,</span> <span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">table_data</span>
+
+<div class="viewcode-block" id="OneHotEncoding.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.OneHotEncoding.is_valid.html#sdv.constraints.OneHotEncoding.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check whether the data satisfies the one-hot constraint.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.Series:</span>
+<span class="sd">                Whether each row is valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one_hot_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span>
+
+        <span class="n">sum_one</span> <span class="o">=</span> <span class="n">one_hot_data</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+        <span class="n">max_one</span> <span class="o">=</span> <span class="n">one_hot_data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+        <span class="n">min_zero</span> <span class="o">=</span> <span class="n">one_hot_data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="n">sum_one</span> <span class="o">&amp;</span> <span class="n">max_one</span> <span class="o">&amp;</span> <span class="n">min_zero</span></div>
+
+<div class="viewcode-block" id="OneHotEncoding.reverse_transform"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.OneHotEncoding.reverse_transform.html#sdv.constraints.OneHotEncoding.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+
+<span class="sd">        Set the column with the largest value to one, set all other columns to zero.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_data (pandas.DataFrame):</span>
+<span class="sd">                Table data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame:</span>
+<span class="sd">                Transformed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">one_hot_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span>
+        <span class="n">transformed_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">one_hot_data</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">transformed_data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">one_hot_data</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">one_hot_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">]</span> <span class="o">=</span> <span class="n">transformed_data</span>
 
         <span class="k">return</span> <span class="n">table_data</span></div></div>
 </pre></div>

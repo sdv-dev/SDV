@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.demo &#8212; SDV 0.10.1 documentation</title>
+    <title>sdv.demo &#8212; SDV 0.11.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -493,6 +493,8 @@
     <span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
     <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span>
     <span class="n">adresses</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">address</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span>
+    <span class="n">salary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">30000</span><span class="p">,</span> <span class="mi">160000</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">years_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;company&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Pear&#39;</span><span class="p">,</span> <span class="s1">&#39;Pear&#39;</span><span class="p">,</span> <span class="s1">&#39;Glasses&#39;</span><span class="p">,</span> <span class="s1">&#39;Glasses&#39;</span><span class="p">,</span> <span class="s1">&#39;Cheerper&#39;</span><span class="p">,</span> <span class="s1">&#39;Cheerper&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
@@ -501,7 +503,12 @@
         <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="n">adresses</span><span class="p">,</span>
         <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="n">age</span><span class="p">,</span>
         <span class="s1">&#39;age_when_joined&#39;</span><span class="p">:</span> <span class="n">age_when_joined</span><span class="p">,</span>
-        <span class="s1">&#39;years_in_the_company&#39;</span><span class="p">:</span> <span class="n">age</span> <span class="o">-</span> <span class="n">age_when_joined</span>
+        <span class="s1">&#39;years_in_the_company&#39;</span><span class="p">:</span> <span class="n">age</span> <span class="o">-</span> <span class="n">age_when_joined</span><span class="p">,</span>
+        <span class="s1">&#39;salary&#39;</span><span class="p">:</span> <span class="n">salary</span><span class="p">,</span>
+        <span class="s1">&#39;prior_years_experience&#39;</span><span class="p">:</span> <span class="n">years_exp</span><span class="p">,</span>
+        <span class="s1">&#39;full_time&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;part_time&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;contractor&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
     <span class="p">})</span>
 
 
@@ -556,7 +563,9 @@
                 <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">},</span>
                 <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">},</span>
                 <span class="s1">&#39;age_when_joined&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">},</span>
-                <span class="s1">&#39;years_in_the_company&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">}</span>
+                <span class="s1">&#39;years_in_the_company&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">},</span>
+                <span class="s1">&#39;salary&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span><span class="p">},</span>
+                <span class="s1">&#39;prior_years_experience&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">}</span>
             <span class="p">},</span>
             <span class="s1">&#39;constraints&#39;</span><span class="p">:</span> <span class="p">[</span>
                 <span class="p">{</span>
@@ -567,6 +576,20 @@
                     <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;GreaterThan&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;low&#39;</span><span class="p">:</span> <span class="s1">&#39;age_when_joined&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="s1">&#39;age&#39;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;GreaterThan&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;low&#39;</span><span class="p">:</span> <span class="mi">30000</span><span class="p">,</span>
+                    <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="s1">&#39;salary&#39;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;Positive&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="s1">&#39;prior_years_experience&#39;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;Rounding&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;columns&#39;</span><span class="p">:</span> <span class="s1">&#39;salary&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;digits&#39;</span><span class="p">:</span> <span class="mi">2</span>
                 <span class="p">}</span>
             <span class="p">],</span>
             <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="p">{}</span>

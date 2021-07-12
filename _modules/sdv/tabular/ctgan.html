@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan &#8212; SDV 0.10.1 documentation</title>
+    <title>sdv.tabular.ctgan &#8212; SDV 0.11.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -323,6 +323,21 @@
 <span class="sd">        cuda (bool or str):</span>
 <span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
+<span class="sd">        rounding (int, str or None):</span>
+<span class="sd">            Define rounding scheme for ``NumericalTransformer``. If set to an int, values</span>
+<span class="sd">            will be rounded to that number of decimal places. If ``None``, values will not</span>
+<span class="sd">            be rounded. If set to ``&#39;auto&#39;``, the transformer will round to the maximum number</span>
+<span class="sd">            of decimal places detected in the fitted data. Defaults to ``&#39;auto&#39;``.</span>
+<span class="sd">        min_value (int, str or None):</span>
+<span class="sd">            Specify the minimum value the ``NumericalTransformer`` should use. If an integer</span>
+<span class="sd">            is given, sampled data will be greater than or equal to it. If the string ``&#39;auto&#39;``</span>
+<span class="sd">            is given, the minimum will be the minimum value seen in the fitted data. If ``None``</span>
+<span class="sd">            is given, there won&#39;t be a minimum. Defaults to ``&#39;auto&#39;``.</span>
+<span class="sd">        max_value (int, str or None):</span>
+<span class="sd">            Specify the maximum value the ``NumericalTransformer`` should use. If an integer</span>
+<span class="sd">            is given, sampled data will be less than or equal to it. If the string ``&#39;auto&#39;``</span>
+<span class="sd">            is given, the maximum will be the maximum value seen in the fitted data. If ``None``</span>
+<span class="sd">            is given, there won&#39;t be a maximum. Defaults to ``&#39;auto&#39;``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">CTGANSynthesizer</span>
@@ -332,7 +347,8 @@
                  <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">generator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">discriminator_dim</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
                  <span class="n">generator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span> <span class="n">generator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">discriminator_lr</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span>
                  <span class="n">discriminator_decay</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">discriminator_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">pac</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">log_frequency</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">pac</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">rounding</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -340,7 +356,10 @@
             <span class="n">field_transformers</span><span class="o">=</span><span class="n">field_transformers</span><span class="p">,</span>
             <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
+            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span><span class="p">,</span>
+            <span class="n">rounding</span><span class="o">=</span><span class="n">rounding</span><span class="p">,</span>
+            <span class="n">max_value</span><span class="o">=</span><span class="n">max_value</span><span class="p">,</span>
+            <span class="n">min_value</span><span class="o">=</span><span class="n">min_value</span>
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="p">{</span>
@@ -418,6 +437,21 @@
 <span class="sd">        cuda (bool or str):</span>
 <span class="sd">            If ``True``, use CUDA. If a ``str``, use the indicated device.</span>
 <span class="sd">            If ``False``, do not use cuda at all.</span>
+<span class="sd">        rounding (int, str or None):</span>
+<span class="sd">            Define rounding scheme for ``NumericalTransformer``. If set to an int, values</span>
+<span class="sd">            will be rounded to that number of decimal places. If ``None``, values will not</span>
+<span class="sd">            be rounded. If set to ``&#39;auto&#39;``, the transformer will round to the maximum number</span>
+<span class="sd">            of decimal places detected in the fitted data. Defaults to ``&#39;auto&#39;``.</span>
+<span class="sd">        min_value (int, str or None):</span>
+<span class="sd">            Specify the minimum value the ``NumericalTransformer`` should use. If an integer</span>
+<span class="sd">            is given, sampled data will be greater than or equal to it. If the string ``&#39;auto&#39;``</span>
+<span class="sd">            is given, the minimum will be the minimum value seen in the fitted data. If ``None``</span>
+<span class="sd">            is given, there won&#39;t be a minimum. Defaults to ``&#39;auto&#39;``.</span>
+<span class="sd">        max_value (int, str or None):</span>
+<span class="sd">            Specify the maximum value the ``NumericalTransformer`` should use. If an integer</span>
+<span class="sd">            is given, sampled data will be less than or equal to it. If the string ``&#39;auto&#39;``</span>
+<span class="sd">            is given, the maximum will be the maximum value seen in the fitted data. If ``None``</span>
+<span class="sd">            is given, there won&#39;t be a maximum. Defaults to ``&#39;auto&#39;``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">TVAESynthesizer</span>
@@ -425,7 +459,8 @@
 <div class="viewcode-block" id="TVAE.__init__"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.TVAE.html#sdv.tabular.ctgan.TVAE.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">compress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">decompress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
-                 <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">loss_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                 <span class="n">l2scale</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">loss_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">rounding</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
             <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
@@ -433,7 +468,10 @@
             <span class="n">field_transformers</span><span class="o">=</span><span class="n">field_transformers</span><span class="p">,</span>
             <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span>
+            <span class="n">table_metadata</span><span class="o">=</span><span class="n">table_metadata</span><span class="p">,</span>
+            <span class="n">rounding</span><span class="o">=</span><span class="n">rounding</span><span class="p">,</span>
+            <span class="n">max_value</span><span class="o">=</span><span class="n">max_value</span><span class="p">,</span>
+            <span class="n">min_value</span><span class="o">=</span><span class="n">min_value</span>
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="p">{</span>
