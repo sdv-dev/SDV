@@ -1,5 +1,35 @@
 # Release Notes
 
+## 0.11.0 - 2021-07-12
+
+This release primarily addresses bugs and feature requests related to using constraints for the single-table models.
+Users can now enforce scalar comparison with the existing `GreaterThan` constraint and apply 5 new constraints: `OneHotEncoding`, `Positive`, `Negative`, `Between` and `Rounding`.
+Additionally, the SDV will now auto-apply constraints for rounding numerical values, and for keeping the data within the observed bounds.
+All related user guides are updated with the new functionality.
+
+### New Features
+
+* Add OneHotEncoding Constraint - Issue [#303](https://github.com/sdv-dev/SDV/issues/303) by @fealho
+* GreaterThan Constraint should apply to scalars - Issue [#410](https://github.com/sdv-dev/SDV/issues/410) by @amontanez24
+* Improve GreaterThan constraint - Issue [#368](https://github.com/sdv-dev/SDV/issues/368) by @amontanez24
+* Add Non-negative and Positive constraints across multiple columns- Issue [#409](https://github.com/sdv-dev/SDV/issues/409) by @amontanez24
+* Add Between values constraint - Issue [#367](https://github.com/sdv-dev/SDV/issues/367) by @fealho
+* Ensure values fall within the specified range - Issue [#423](https://github.com/sdv-dev/SDV/issues/423) by @amontanez24
+* Add Rounding constraint - Issue [#482](https://github.com/sdv-dev/SDV/issues/482) by @katxiao
+* Add rounding and min/max arguments that are passed down to the NumericalTransformer - Issue [#491](https://github.com/sdv-dev/SDV/issues/491) by @amontanez24
+
+### Bugs Fixed
+
+* GreaterThan constraint between Date columns rasises TypeError - Issue [#421](https://github.com/sdv-dev/SDV/issues/421) by @amontanez24
+* GreaterThan constraint's transform strategy fails on columns that are not float - Issue [#448](https://github.com/sdv-dev/SDV/issues/448) by @amontanez24
+* AttributeError on UniqueCombinations constraint with non-strings - Issue [#196](https://github.com/sdv-dev/SDV/issues/196) by @katxiao
+* Use reject sampling to sample missing columns for constraints - Issue [#435](https://github.com/sdv-dev/SDV/issues/435) by @amontanez24
+
+### Documentation Changes
+
+* Ensure privacy metrics are available in the API docs - Issue [#458](https://github.com/sdv-dev/SDV/issues/458) by @fealho
+* Ensure forumla constraint is called ColumnFormula everywhere in the docs - Issue [#449](https://github.com/sdv-dev/SDV/issues/449) by @fealho
+
 ## 0.10.1 - 2021-06-10
 
 This release changes the way we sample conditions to not only group by the conditions passed by the user, but also by the transformed conditions that result from them.
