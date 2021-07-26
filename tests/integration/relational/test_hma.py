@@ -105,7 +105,6 @@ def test_hma1_single_child_row_single_parent_row():
     are equal to 1. This is because those values will be equal to ``0``  and alter the
     ``std`` by a lot.
 
-
     Setup:
         - Create a dataset that has 1 child row per single parent row.
         - Create the ``sdv.Metadata`` for that dataset.
