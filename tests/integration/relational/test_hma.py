@@ -124,29 +124,20 @@ def test_hma1_single_child_row_single_parent_row():
         'value': range(5)
     })
 
-    parent_b = pd.DataFrame({
-        'parent_id': range(5),
-        'value': range(5)
-    })
-
     child = pd.DataFrame({
         'parent_a': range(5),
-        'parent_b': range(5),
-        'value': range(5)
+        'value_a': range(5),
     })
 
     tables = {
         'parent_a': parent_a,
-        'parent_b': parent_b,
         'child': child
     }
 
     metadata = Metadata()
     metadata.add_table('parent_a', parent_a, primary_key='parent_id')
-    metadata.add_table('parent_b', parent_b, primary_key='parent_id')
     metadata.add_table('child', child)
     metadata.add_relationship('parent_a', 'child', 'parent_a')
-    metadata.add_relationship('parent_b', 'child', 'parent_b')
 
     model = HMA1(metadata)
 
@@ -155,7 +146,9 @@ def test_hma1_single_child_row_single_parent_row():
     sampled = model.sample(num_rows=10)
 
     # Assert
-    assert len(sampled) == 3
+    assert len(sampled) == 2
     assert len(sampled['parent_a']) == 10
-    assert len(sampled['parent_b']) == 10
     assert len(sampled['child']) == 10
+
+    assert len(sampled['parent_a']['parent_id'].unique()) == 10
+    assert len(sampled['child']['parent_a'].unique()) == 10
