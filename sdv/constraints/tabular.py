@@ -642,6 +642,28 @@ class Between(Constraint):
 
         return token.join(components)
 
+    def _get_is_datetime(self, table_data):
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+        column = table_data[self.constraint_column]
+
+        is_low_datetime = (pd.api.types.is_datetime64_any_dtype(low)
+                           or isinstance(low, pd.Timestamp)
+                           or isinstance(low, datetime))
+        is_high_datetime = (pd.api.types.is_datetime64_any_dtype(high)
+                            or isinstance(high, pd.Timestamp)
+                            or isinstance(high, datetime))
+        is_column_datetime = (pd.api.types.is_datetime64_any_dtype(high)
+                              or isinstance(high, pd.Timestamp)
+                              or isinstance(high, datetime))
+
+        is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
+
+        if not is_datetime and any([is_low_datetime, is_high_datetime, is_column_datetime]):
+            raise ValueError('The constraint column and bounds must all be datetime.')
+
+        return is_datetime
+
     def _fit(self, table_data):
         if self._high_is_scalar is None:
             self._high_is_scalar = self._high not in table_data.columns
@@ -649,6 +671,7 @@ class Between(Constraint):
             self._low_is_scalar = self._low not in table_data.columns
 
         self._transformed_column = self._get_diff_column_name(table_data)
+        self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
         """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
@@ -723,7 +746,11 @@ class Between(Constraint):
         data = data * (high - low) + low
         data = data.clip(low, high)
 
-        table_data[self.constraint_column] = data
+        if self._is_datetime:
+            table_data[self.constraint_column] = pd.to_datetime(data)
+        else:
+            table_data[self.constraint_column] = data
+
         table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
