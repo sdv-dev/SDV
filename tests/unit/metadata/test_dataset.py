@@ -35,7 +35,7 @@ def test__read_csv_dtypes():
     result = _read_csv_dtypes(table_meta)
 
     # Asserts
-    assert result == {'a_field': str, 'd_field': str}
+    assert result == {'d_field': str}
 
 
 def test__parse_dtypes():
