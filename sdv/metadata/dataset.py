@@ -21,9 +21,7 @@ def _read_csv_dtypes(table_meta):
     dtypes = dict()
     for name, field in table_meta['fields'].items():
         field_type = field['type']
-        if field_type == 'categorical':
-            dtypes[name] = str
-        elif field_type == 'id' and field.get('subtype', 'integer') == 'string':
+        if field_type == 'id' and field.get('subtype', 'integer') == 'string':
             dtypes[name] = str
 
     return dtypes
