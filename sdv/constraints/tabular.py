@@ -522,6 +522,7 @@ class ColumnFormula(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
+
         if self._drop_column:
             del table_data[self._column]
 

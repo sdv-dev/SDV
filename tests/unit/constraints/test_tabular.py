@@ -1832,6 +1832,34 @@ class TestColumnFormula():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
+    def test_transform_missing_column(self):
+        """Test the ``ColumnFormula.transform`` method when the constraint column is missing.
+
+        When ``transform`` is called with data that does not contain the constraint column,
+        expect to return the data as-is.
+        })
+        - Table data (pandas.DataFrame)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
     def test_reverse_transform(self):
         """Test the ``ColumnFormula.reverse_transform`` method.
 
