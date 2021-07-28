@@ -405,15 +405,15 @@ class GreaterThan(Constraint):
         return table_data
 
 
-class Positive(GreaterThan):
-    """Ensure that the ``high`` column is always positive.
+class Positive(Constraint):
+    """Ensure that the given column is always positive.
 
     The transformation strategy works by creating a column with the
     difference between ``high`` and 0 value and then computing back the ``high``
     value by adding the difference to 0 when reversing the transformation.
 
     Args:
-        high (str or int):
+        columns (str or list[str]):
             Either the name of the column that contains the high value,
             or a scalar that is the high value.
         strict (bool):
@@ -428,15 +428,70 @@ class Positive(GreaterThan):
             or ``None``.
     """
 
-    def __init__(self, high, strict=False, handling_strategy='transform',
+    def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=None):
+
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
+        self._constraints = [
+            GreaterThan(handling_strategy=handling_strategy,
+                        fit_columns_model=fit_columns_model,
+                        high=column, low=0, high_is_scalar=False,
+                        low_is_scalar=True, drop=drop, strict=strict)
+            for column in self._columns
+        ]
+
         super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model,
-                         high=high, low=0, high_is_scalar=False,
-                         low_is_scalar=True, drop=drop, strict=strict)
+                         fit_columns_model=fit_columns_model)
 
 
-class Negative(GreaterThan):
+    def _fit(self, table_data):
+        """Learn the dtype for all columns.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        for constraint in self._constraints:
+            constraint.fit(table_data)
+
+    def _transform(self, table_data):
+        """Transform Table data.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: constraint.transform(table_data)
+            for column, constraint in zip(self._columns, self._constraints)
+        })            
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: constraint.reverse_transform(table_data)
+            for column, constraint in zip(self._columns, self._constraints)
+        })
+
+
+class Negative(Constraint):
     """Ensure that the ``low`` column is always negative.
 
     The transformation strategy works by creating a column with the
@@ -444,7 +499,7 @@ class Negative(GreaterThan):
     value by subtracting the difference from 0 when reversing the transformation.
 
     Args:
-        high (str or int):
+        columns (str or list[str]):
             Either the name of the column that contains the high value,
             or a scalar that is the high value.
         strict (bool):
@@ -459,12 +514,67 @@ class Negative(GreaterThan):
             or ``None``.
     """
 
-    def __init__(self, low, strict=False, handling_strategy='transform',
+    def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=None):
+
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
+        self._constraints = [
+            GreaterThan(handling_strategy=handling_strategy,
+                        fit_columns_model=fit_columns_model,
+                        high=0, low=column, high_is_scalar=True,
+                        low_is_scalar=False, drop=drop, strict=strict)
+            for column in self._columns
+        ]
+
         super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model,
-                         high=0, low=low, high_is_scalar=True,
-                         low_is_scalar=False, drop=drop, strict=strict)
+                         fit_columns_model=fit_columns_model)
+
+
+    def _fit(self, table_data):
+        """Learn the dtype for all columns.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        for constraint in self._constraints:
+            constraint.fit(table_data)
+
+    def _transform(self, table_data):
+        """Transform Table data.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: constraint.transform(table_data)
+            for column, constraint in zip(self._columns, self._constraints)
+        })            
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: constraint.reverse_transform(table_data)
+            for column, constraint in zip(self._columns, self._constraints)
+        })
 
 
 class ColumnFormula(Constraint):

@@ -1647,15 +1647,16 @@ class TestPositive():
         - instance._drop = None
         """
         # Run
-        instance = Positive(high='a', strict=True, drop=None)
+        positive = Positive(columns='a', strict=True, drop=None)
 
         # Asserts
-        assert instance._low == 0
-        assert instance._high == 'a'
-        assert instance._strict is True
-        assert instance._high_is_scalar is False
-        assert instance._low_is_scalar is True
-        assert instance._drop is None
+        for instance in positive._constraints:
+            assert instance._low == 0
+            assert instance._high == 'a'
+            assert instance._strict is True
+            assert instance._high_is_scalar is False
+            assert instance._low_is_scalar is True
+            assert instance._drop is None
 
 
 class TestNegative():
@@ -1682,15 +1683,16 @@ class TestNegative():
         - instance._drop = None
         """
         # Run
-        instance = Negative(low='a', strict=True, drop=None)
+        negative = Negative(columns='a', strict=True, drop=None)
 
         # Asserts
-        assert instance._low == 'a'
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._high_is_scalar is True
-        assert instance._low_is_scalar is False
-        assert instance._drop is None
+        for instance in negative._constraints:
+            assert instance._low == 'a'
+            assert instance._high == 0
+            assert instance._strict is True
+            assert instance._high_is_scalar is True
+            assert instance._low_is_scalar is False
+            assert instance._drop is None
 
 
 def new_column(data):
