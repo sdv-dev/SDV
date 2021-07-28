@@ -1802,6 +1802,36 @@ class TestColumnFormula():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
+    def test_transform_without_dropping_column(self):
+        """Test the ``ColumnFormula.transform`` method without dropping the column.
+
+        If `drop_column` is false, expect to not drop the constraint column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with the indicated column (pandas.DataFrame)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column, drop_column=False)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [5, 7, 9]
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
     def test_reverse_transform(self):
         """Test the ``ColumnFormula.reverse_transform`` method.
 

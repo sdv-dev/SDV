@@ -483,11 +483,14 @@ class ColumnFormula(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        drop_column(str):
+            Whether or not to drop the constraint column.
     """
 
-    def __init__(self, column, formula, handling_strategy='transform'):
+    def __init__(self, column, formula, handling_strategy='transform', drop_column=True):
         self._column = column
         self._formula = import_object(formula)
+        self._drop_column = drop_column
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -519,7 +522,8 @@ class ColumnFormula(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        del table_data[self._column]
+        if self._drop_column:
+            del table_data[self._column]
 
         return table_data
 
