@@ -470,6 +470,31 @@ class TestGreaterThan():
         assert instance._low_is_scalar is False
         assert instance._drop == 'high'
 
+    def test_fit_only_one_datetime_arg(self):
+        """Test the ``Between.fit`` method by passing in only one arg as datetime.
+
+        If only one of the high / low args is a datetime type, expect a ValueError.
+
+        Input:
+        - low is an int column
+        - high is a datetime
+        Output:
+        - n/a
+        Side Effects:
+        - ValueError
+
+        """
+        # Setup
+        instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'))
+
+        # Run and assert
+        table_data = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [4, 5, 6]
+        })
+        with pytest.raises(ValueError):
+            instance.fit(table_data)
+
     def test_fit__low_is_scalar_is_none_determined_as_scalar(self):
         """Test the ``GreaterThan.fit`` method.
 
@@ -2083,8 +2108,8 @@ def transform(data, low, high):
 
 class TestBetween():
 
-    def test_fit_datetime_args(self):
-        """Test the ``Between.fit`` method by passing in an invalid bound parameter.
+    def test_fit_only_one_datetime_arg(self):
+        """Test the ``Between.fit`` method by passing in only one arg as datetime.
 
         If only one of the bound parameters is a datetime type, expect a ValueError.
 

@@ -280,6 +280,24 @@ class GreaterThan(Constraint):
 
         return token.join(self.constraint_columns)
 
+    def _get_is_datetime(self, table_data):
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+
+        is_low_datetime = (pd.api.types.is_datetime64_any_dtype(low)
+                           or isinstance(low, pd.Timestamp)
+                           or isinstance(low, datetime))
+        is_high_datetime = (pd.api.types.is_datetime64_any_dtype(high)
+                            or isinstance(high, pd.Timestamp)
+                            or isinstance(high, datetime))
+
+        is_datetime = is_low_datetime and is_high_datetime
+
+        if not is_datetime and any([is_low_datetime, is_high_datetime]):
+            raise ValueError('Both high and low must be datetime.')
+
+        return is_datetime
+
     def _fit(self, table_data):
         """Learn the dtype of the high column.
 
@@ -305,10 +323,7 @@ class GreaterThan(Constraint):
 
         self._column_to_reconstruct = self._get_column_to_reconstruct()
         self._diff_column = self._get_diff_column_name(table_data)
-        low = self._get_low_value(table_data)
-        self._is_datetime = (pd.api.types.is_datetime64_ns_dtype(low)
-                             or isinstance(low, pd.Timestamp)
-                             or isinstance(low, datetime))
+        self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -653,9 +668,9 @@ class Between(Constraint):
         is_high_datetime = (pd.api.types.is_datetime64_any_dtype(high)
                             or isinstance(high, pd.Timestamp)
                             or isinstance(high, datetime))
-        is_column_datetime = (pd.api.types.is_datetime64_any_dtype(high)
-                              or isinstance(high, pd.Timestamp)
-                              or isinstance(high, datetime))
+        is_column_datetime = (pd.api.types.is_datetime64_any_dtype(column)
+                              or isinstance(column, pd.Timestamp)
+                              or isinstance(column, datetime))
 
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
