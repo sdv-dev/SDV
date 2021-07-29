@@ -1773,8 +1773,8 @@ class TestColumnFormula():
         expected_out = pd.Series([False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_transform(self):
-        """Test the ``ColumnFormula.transform`` method.
+    def test__transform(self):
+        """Test the ``ColumnFormula._transform`` method.
 
         It is expected to drop the indicated column from the table.
 
@@ -1793,7 +1793,7 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -1802,8 +1802,8 @@ class TestColumnFormula():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_without_dropping_column(self):
-        """Test the ``ColumnFormula.transform`` method without dropping the column.
+    def test__transform_without_dropping_column(self):
+        """Test the ``ColumnFormula._transform`` method without dropping the column.
 
         If `drop_column` is false, expect to not drop the constraint column.
 
@@ -1822,7 +1822,7 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -1832,13 +1832,16 @@ class TestColumnFormula():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_missing_column(self):
-        """Test the ``ColumnFormula.transform`` method when the constraint column is missing.
+    def test__transform_missing_column(self):
+        """Test the ``ColumnFormula._transform`` method when the constraint column is missing.
 
-        When ``transform`` is called with data that does not contain the constraint column,
+        When ``_transform`` is called with data that does not contain the constraint column,
         expect to return the data as-is.
-        })
+
+        Input:
         - Table data (pandas.DataFrame)
+        Output:
+        - Table data, unchanged (pandas.DataFrame)
         """
         # Setup
         column = 'c'
@@ -1850,7 +1853,7 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'd': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({

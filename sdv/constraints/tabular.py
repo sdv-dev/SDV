@@ -483,12 +483,13 @@ class ColumnFormula(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        drop_column(str):
+        drop_column (bool):
             Whether or not to drop the constraint column.
     """
 
     def __init__(self, column, formula, handling_strategy='transform', drop_column=True):
         self._column = column
+        self.constraint_columns = (column,)
         self._formula = import_object(formula)
         self._drop_column = drop_column
         super().__init__(handling_strategy, fit_columns_model=False)
@@ -507,7 +508,7 @@ class ColumnFormula(Constraint):
         computed = self._formula(table_data)
         return table_data[self._column] == computed
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on simply dropping the indicated column from the
@@ -523,7 +524,7 @@ class ColumnFormula(Constraint):
         """
         table_data = table_data.copy()
 
-        if self._drop_column:
+        if self._drop_column and self._column in table_data:
             del table_data[self._column]
 
         return table_data
