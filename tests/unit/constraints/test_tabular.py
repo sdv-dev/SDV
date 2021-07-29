@@ -2169,8 +2169,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_scalar_column(self):
-        """Test the ``Between.transform`` method with ``low`` as scalar and ``high`` as a column.
+    def test__transform_scalar_column(self):
+        """Test the ``Between._transform`` method with ``low`` as scalar and ``high`` as a column.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2192,7 +2192,7 @@ class TestBetween():
             'b': [0.5, 1, 6],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2201,8 +2201,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_scalar(self):
-        """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as scalar.
+    def test__transform_column_scalar(self):
+        """Test the ``Between._transform`` method with ``low`` as a column and ``high`` as scalar.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2224,7 +2224,7 @@ class TestBetween():
             'b': [0, -1, 0.5],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2233,8 +2233,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_column(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as columns.
+    def test__transform_column_column(self):
+        """Test the ``Between._transform`` method by passing ``low`` and ``high`` as columns.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2257,7 +2257,7 @@ class TestBetween():
             'c': [0.5, 1, 6]
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2267,8 +2267,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_datetime_datetime(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as datetimes.
+    def test__transform_datetime_datetime(self):
+        """Test the ``Between._transform`` method by passing ``low`` and ``high`` as datetimes.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2296,7 +2296,7 @@ class TestBetween():
             'b': [4, 5, 6],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2305,8 +2305,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_datetime_column(self):
-        """Test the ``Between.transform`` method with ``low`` as datetime and ``high`` as a column.
+    def test__transform_datetime_column(self):
+        """Test the ``Between._transform`` method with ``low`` as datetime and ``high`` as a column.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2336,7 +2336,7 @@ class TestBetween():
             ],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2349,8 +2349,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_datetime(self):
-        """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as datetime.
+    def test__transform_column_datetime(self):
+        """Test the ``Between._transform`` method with ``low`` as a column and ``high`` as datetime.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2380,7 +2380,7 @@ class TestBetween():
             ],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2393,8 +2393,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_column_datetime(self):
-        """Test the ``Between.transform`` method with ``low`` and ``high`` as datetime columns.
+    def test__transform_column_column_datetime(self):
+        """Test the ``Between._transform`` method with ``low`` and ``high`` as datetime columns.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2429,7 +2429,7 @@ class TestBetween():
             ]
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({

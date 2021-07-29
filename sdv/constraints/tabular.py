@@ -22,12 +22,12 @@ Currently implemented constraints are:
 
 import operator
 import uuid
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.utils import is_datetime_type
 
 
 class CustomConstraint(Constraint):
@@ -284,13 +284,8 @@ class GreaterThan(Constraint):
         low = self._get_low_value(table_data)
         high = self._get_high_value(table_data)
 
-        is_low_datetime = (pd.api.types.is_datetime64_any_dtype(low)
-                           or isinstance(low, pd.Timestamp)
-                           or isinstance(low, datetime))
-        is_high_datetime = (pd.api.types.is_datetime64_any_dtype(high)
-                            or isinstance(high, pd.Timestamp)
-                            or isinstance(high, datetime))
-
+        is_low_datetime = is_datetime_type(low)
+        is_high_datetime = is_datetime_type(high)
         is_datetime = is_low_datetime and is_high_datetime
 
         if not is_datetime and any([is_low_datetime, is_high_datetime]):
@@ -596,6 +591,7 @@ class Between(Constraint):
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
                  fit_columns_model=True, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
+        self.constraint_columns = tuple(column)
         self._low = low
         self._high = high
         self._strict = strict
@@ -662,16 +658,9 @@ class Between(Constraint):
         high = self._get_high_value(table_data)
         column = table_data[self.constraint_column]
 
-        is_low_datetime = (pd.api.types.is_datetime64_any_dtype(low)
-                           or isinstance(low, pd.Timestamp)
-                           or isinstance(low, datetime))
-        is_high_datetime = (pd.api.types.is_datetime64_any_dtype(high)
-                            or isinstance(high, pd.Timestamp)
-                            or isinstance(high, datetime))
-        is_column_datetime = (pd.api.types.is_datetime64_any_dtype(column)
-                              or isinstance(column, pd.Timestamp)
-                              or isinstance(column, datetime))
-
+        is_low_datetime = is_datetime_type(low)
+        is_high_datetime = is_datetime_type(high)
+        is_column_datetime = is_datetime_type(column)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
         if not is_datetime and any([is_low_datetime, is_high_datetime, is_column_datetime]):
@@ -708,7 +697,7 @@ class Between(Constraint):
 
         return satisfy_low_bound & satisfy_high_bound
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consists of scaling the ``constraint_column``
