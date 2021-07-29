@@ -13,6 +13,10 @@ Currently implemented constraints are:
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
+    * GreaterThanZero: Ensure that the values in given columns are always greater than
+      or equal to zero.
+    * Positive: Ensure that the values in given columns are always positive.
+    * Negative: Ensure that the values in given columns are always negative.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
@@ -430,6 +434,7 @@ class GreaterThanZero(Constraint):
     """
 
     _diff_columns = None
+    _dtype = None
 
     def __init__(self, columns, negative=False, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=False):
@@ -441,6 +446,8 @@ class GreaterThanZero(Constraint):
             self._columns = [columns]
         else:
             self._columns = columns
+
+        self.constraint_columns = self._columns
 
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
@@ -465,6 +472,7 @@ class GreaterThanZero(Constraint):
                 The Table data.
         """
         self._diff_columns = self._get_diff_column_names(table_data)
+        self._dtype = [table_data[column].dtype for column in self._columns]
 
     def is_valid(self, table_data):
         """Say whether the value is greater than zero in each row.
@@ -543,10 +551,14 @@ class GreaterThanZero(Constraint):
             table_data[self._columns] = diff
         else:
             invalid = ~self.is_valid(table_data)
-            new_values = diff.loc[invalid]
-            table_data[self._columns].loc[invalid] = new_values
+            new_values = diff.loc[invalid].to_numpy()
+            table_data.at[invalid, self._columns] = new_values
 
         table_data = table_data.drop(self._diff_columns, axis=1)
+
+        # cast to original dtype
+        for i, column in enumerate(self._columns):
+            table_data[column] = table_data[column].astype(self._dtype[i])
 
         return table_data
 

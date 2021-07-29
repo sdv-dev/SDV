@@ -1672,13 +1672,15 @@ class TestGreaterThanZero():
         """Test the ``GreaterThanZero._fit`` method.
 
         The ``_fit`` method captures the names of the
-        columns to be used to construct in ``_transform``.
+        columns to be used to construct in ``_transform``,
+        as well as the dtype of each column.
 
         Input:
         - Table with given data.
         """
         # Setup
         instance = GreaterThanZero(columns=['a', 'b'])
+        dtype = pd.Series([1]).dtype
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b': [4, 5, 6]
@@ -1686,8 +1688,10 @@ class TestGreaterThanZero():
         instance._fit(table_data)
 
         # Assert
-        expected = ['a#', 'b#']
-        assert instance._diff_columns == expected
+        expected_diff_columns = ['a#', 'b#']
+        expected_dtype = [dtype, dtype]
+        assert instance._diff_columns == expected_diff_columns
+        assert instance._dtype == expected_dtype
 
     def test_is_valid_single_column(self):
         """Test the ``GreaterThanZero.is_valid`` method.
@@ -1793,6 +1797,319 @@ class TestGreaterThanZero():
         # Assert
         expected = pd.Series([True, True, True])
         pd.testing.assert_series_equal(out, expected)
+
+    def test_transform_missing_columns(self):
+        """Test the ``GreaterThanZero.transform`` method.
+
+        If some of the columns needed for the transform are missing, it will raise
+        a ``MissingConstraintColumnError``.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Raises ``MissingConstraintColumnError``.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b'])
+
+        # Run/Assert
+        with pytest.raises(MissingConstraintColumnError):
+            instance.transform(pd.DataFrame({'a': [1, 2, 3]}))
+
+    def test_transform_single_column(self):
+        """Test the ``GreaterThanZero.transform`` method.
+
+        The ``GreaterThan.transform`` method is expected to compute the logarithm
+        of a single column + 1.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with an additional column of the logarithms + 1.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a')
+        instance._diff_columns = 'a#'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_transform_multi_column(self):
+        """Test the ``GreaterThanZero.transform`` method.
+
+        The ``GreaterThan.transform`` method is expected to compute the logarithm
+        of given columns + 1.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with additional columns of the logarithms + 1.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b'])
+        instance._diff_columns = ['a#', 'b#']
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+            'b#': [np.log(5), np.log(6), np.log(7)],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_transform_negative(self):
+        """Test the ``GreaterThanZero.transform`` method.
+
+        If ``negative`` is set to ``True``, we take the negative
+        of the specified column to be in the positive range.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with an additional column of the logarithms + 1.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', negative=True)
+        instance._diff_columns = ['a#']
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [-1, -2, -3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [-1, -2, -3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_transform_drop(self):
+        """Test the ``GreaterThanZero.transform`` method.
+
+        The ``GreaterThanZero.transform`` method is expected to compute the
+        logarithm of given columns + 1, then drop the original columns.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Table with columns of the logarithms + 1.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', drop=True)
+        instance._diff_columns = ['a#']
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        out = instance.transform(table_data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_reverse_transform_identity(self):
+        """Test the ``GreaterThanZero.reverse_transform`` method.
+
+        The ``GreaterThanZero.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - replace invalid rows with ones computed from the input.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with ``diff_columns`` dropped.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a')
+        instance._dtype = [pd.Series([1]).dtype]
+        instance._diff_columns = ['a#']
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_reverse_transform_invalid(self):
+        """Test the ``GreaterThanZero.reverse_transform`` method.
+
+        The ``GreaterThanZero.reverse_transform`` method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - replace invalid rows with ones computed from the input.
+
+        Input:
+        - Table with given data with invalid rows.
+        Output:
+        - Same table with the first row in column 'a' replaced.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a')
+        instance._dtype = [pd.Series([1]).dtype]
+        instance._diff_columns = ['a#']
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [-1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(0), np.log(3), np.log(4)]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [0, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_reverse_transform_multi_column(self):
+        """Test the ``GreaterThanZero.reverse_transform`` method.
+
+        Apply ``reverse_tranform`` on multiple tables.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with dropped `diff_columns``.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b'])
+        dtype = pd.Series([1]).dtype
+        instance._dtype = [dtype, dtype]
+        instance._diff_columns = ['a#', 'b#']
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+            'b#': [np.log(5), np.log(6), np.log(7)],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_reverse_transform_negative(self):
+        """Test the ``GreaterThanZero.reverse_transform`` method.
+
+        Apply ``reverse_tranform`` on negative settings.
+
+        Input:
+        - Table with given data.
+        Output:
+        - Same table with replaced invalid rows.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', negative=True)
+        instance._dtype = [pd.Series([1]).dtype]
+        instance._diff_columns = ['a#']
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, -2, -3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [-1, -2, -3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test_reverse_transform_rejected_values(self):
+        """Test the ``GreaterThanZero.reverse_transform`` method.
+
+        Apply ``reverse_transform`` with drop setting.
+
+        Input:
+        - Table with dropped column.
+        Output:
+        - Same table with all values constructed from logarithm.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', drop=True)
+        instance._dtype = [pd.Series([1]).dtype]
+        instance._diff_columns = ['a#']
+
+        # Run
+        transformed = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a#': [np.log(2), np.log(3), np.log(4)]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.DataFrame({
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
+            'a': [1, 2, 3],
+        })
+        pd.testing.assert_frame_equal(out, expected)
 
 
 class TestPositive():
