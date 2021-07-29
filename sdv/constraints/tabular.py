@@ -13,8 +13,8 @@ Currently implemented constraints are:
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
-    * GreaterThanZero: Ensure that the values in given columns are always greater than
-      or equal to zero.
+    * ScalarInequality: Ensure that the values in given columns are always
+      greater/less than a given scalar.
     * Positive: Ensure that the values in given columns are always positive.
     * Negative: Ensure that the values in given columns are always negative.
     * ColumnFormula: Compute the value of a column based on applying a formula
@@ -409,22 +409,23 @@ class GreaterThan(Constraint):
         return table_data
 
 
-class GreaterThanZero(Constraint):
-    """Ensure that given columns is always greater than zero.
+class ScalarInequality(Constraint):
+    """Ensure that given columns is greater/less than a given scalar.
 
     The transformation strategy works by creating columns with the
-    difference between given columns and zero then computing back the
+    difference between given columns and scalar then computing back the
     necessary columns using the difference and whichever other value is available.
 
     Args:
         columns (str or list[str]):
-            The name of the column(s) that are constrained to be greater than zero.
-        negative (bool):
-            Whether the comparison is done on original columns ``False`` or the negative
-            value of the column ``True``.
+            The name of the column(s) that are constrained to be greater/less than scaler.
+        scalar (int):
+            The scalar value to compare against. Defaults to ``0``.
+        greater (bool):
+            Whether the inequality is greater than ``True`` or less than ``False``.
         strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
+            Whether the comparison of the values should be strict ``</>`` or
+            not ``<=/>=`` when comparing them. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
@@ -436,9 +437,18 @@ class GreaterThanZero(Constraint):
     _diff_columns = None
     _dtype = None
 
-    def __init__(self, columns, negative=False, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=False):
-        self._negative = negative
+    def _get_operand(self):
+        return {
+            (True, True): np.greater,
+            (True, False): np.greater_equal,
+            (False, True): np.less,
+            (False, False): np.less_equal
+        }.get((self._greater, self._strict))
+
+    def __init__(self, columns, scalar=0, greater=True, strict=False,
+                 handling_strategy='transform', fit_columns_model=True, drop=False):
+        self._scalar = scalar
+        self._greater = greater
         self._strict = strict
         self._drop = drop
 
@@ -448,6 +458,7 @@ class GreaterThanZero(Constraint):
             self._columns = columns
 
         self.constraint_columns = self._columns
+        self.operand = self._get_operand()
 
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
@@ -467,6 +478,9 @@ class GreaterThanZero(Constraint):
     def _fit(self, table_data):
         """Construct the difference column names.
 
+        Construct the column names and memorize the
+        dtype of each column.
+
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
@@ -475,7 +489,7 @@ class GreaterThanZero(Constraint):
         self._dtype = [table_data[column].dtype for column in self._columns]
 
     def is_valid(self, table_data):
-        """Say whether the value is greater than zero in each row.
+        """Say whether the value is greater/less than scalar in each row.
 
         Args:
             table_data (pandas.DataFrame):
@@ -485,22 +499,14 @@ class GreaterThanZero(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        zero = 0
         data = table_data[self._columns]
-
-        if self._negative:
-            data = -data
-
-        if self._strict:
-            return (data > zero).all(axis=1)
-
-        return (data >= zero).all(axis=1)
+        return self.operand(data, self._scalar).all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on replacing column values with difference
-        between it and zero.
+        between it and the scalar.
 
         Afterwards, a logarithm is applied to the difference + 1 to be able to ensure
         that the value stays positive when reverted afterwards using an exponential.
@@ -515,8 +521,10 @@ class GreaterThanZero(Constraint):
         """
         table_data = table_data.copy()
         diff = table_data[self._columns]
-        if self._negative:
-            diff = -diff
+        if self._greater:
+            diff = diff - self._scalar
+        else:
+            diff = self._scalar - diff
 
         table_data[self._diff_columns] = np.log(diff + 1)
         if self._drop:
@@ -544,8 +552,10 @@ class GreaterThanZero(Constraint):
         table_data = table_data.copy()
 
         diff = (np.exp(table_data[self._diff_columns]).round() - 1).clip(0)
-        if self._negative:
-            diff = -diff
+        if self._greater:
+            diff = self._scalar + diff
+        else:
+            diff = self._scalar - diff
 
         if self._drop:
             table_data[self._columns] = diff
@@ -563,7 +573,7 @@ class GreaterThanZero(Constraint):
         return table_data
 
 
-class Positive(GreaterThanZero):
+class Positive(ScalarInequality):
     """Ensure that the given column is always positive.
 
     The transformation strategy works by creating columns with the
@@ -591,7 +601,7 @@ class Positive(GreaterThanZero):
                          columns=columns, drop=drop, strict=strict)
 
 
-class Negative(GreaterThanZero):
+class Negative(ScalarInequality):
     """Ensure that the given columns are always negative.
 
     The transformation strategy works by creating columns with the
@@ -616,7 +626,7 @@ class Negative(GreaterThanZero):
                  fit_columns_model=True, drop=None):
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
-                         columns=columns, negative=True,
+                         columns=columns, greater=False,
                          drop=drop, strict=strict)
 
 

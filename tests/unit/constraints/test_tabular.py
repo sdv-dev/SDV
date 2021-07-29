@@ -8,8 +8,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, GreaterThanZero, Negative,
-    OneHotEncoding, Positive, Rounding, UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
+    Rounding, ScalarInequality, UniqueCombinations)
 
 
 def dummy_transform():
@@ -1623,10 +1623,10 @@ class TestGreaterThan():
         pd.testing.assert_frame_equal(out, expected_out)
 
 
-class TestGreaterThanZero():
+class TestScalarInequality():
 
     def test___init___(self):
-        """Test the ``GreaterThanZero.__init__`` method.
+        """Test the ``ScalarInequality.__init__`` method.
 
         The passed arguments should be stored as attributes.
 
@@ -1634,21 +1634,47 @@ class TestGreaterThanZero():
         - columns = 'a'
         Side effects:
         - instance._columns == ['a']
+        - instance._scalar == 0
         - instance._strict == False
         - instance._drop == False
-        - instance._negative == False
+        - instance._greater == True
         """
         # Run
-        instance = GreaterThanZero(columns='a')
+        instance = ScalarInequality(columns='a')
 
         # Asserts
         assert instance._columns == ['a']
+        assert instance._scalar == 0
         assert instance._strict is False
         assert instance._drop is False
-        assert instance._negative is False
+        assert instance._greater is True
+
+    def test___init___scalar(self):
+        """Test the ``ScalarInequality.__init__`` method.
+
+        The passed arguments should be stored as attributes.
+
+        Input:
+        - columns = 'a'
+        Side effects:
+        - instance._columns == ['a']
+        - instance._scalar == 3
+        - instance._strict == False
+        - instance._drop == False
+        - instance._greater == True
+        """
+        # Run
+        instance = ScalarInequality(columns='a', scalar=3)
+
+        # Asserts
+        assert instance._columns == ['a']
+        assert instance._scalar == 3
+        assert instance._strict is False
+        assert instance._drop is False
+        assert instance._greater is True
 
     def test__get_diff_column_names(self):
-        """Test the ``GreaterThanZero._get_diff_column_names`` method.
+        """Test the ``ScalarInequality._get_diff_column_names`` method.
 
         The returned names should be equal to the given columns plus
         tokenized with '#'.
@@ -1657,7 +1683,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b#'])
+        instance = ScalarInequality(columns=['a', 'b#'])
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b#': [4, 5, 6]
@@ -1669,7 +1695,7 @@ class TestGreaterThanZero():
         assert out == expected
 
     def test__fit(self):
-        """Test the ``GreaterThanZero._fit`` method.
+        """Test the ``ScalarInequality._fit`` method.
 
         The ``_fit`` method captures the names of the
         columns to be used to construct in ``_transform``,
@@ -1679,22 +1705,23 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b'])
-        dtype = pd.Series([1]).dtype
+        instance = ScalarInequality(columns=['a', 'b'])
+        dtype_int = pd.Series([1]).dtype
+        dtype_float = pd.Series([1.0]).dtype
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
-            'b': [4, 5, 6]
+            'b': [4., 5., 6.]
         })
         instance._fit(table_data)
 
         # Assert
         expected_diff_columns = ['a#', 'b#']
-        expected_dtype = [dtype, dtype]
+        expected_dtype = [dtype_int, dtype_float]
         assert instance._diff_columns == expected_diff_columns
         assert instance._dtype == expected_dtype
 
     def test_is_valid_single_column(self):
-        """Test the ``GreaterThanZero.is_valid`` method.
+        """Test the ``ScalarInequality.is_valid`` method.
 
         The test assess whether each row is above zero
         for a single column.
@@ -1703,7 +1730,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns='a')
+        instance = ScalarInequality(columns='a')
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b': [4, 5, 6]
@@ -1715,7 +1742,7 @@ class TestGreaterThanZero():
         pd.testing.assert_series_equal(out, expected)
 
     def test_is_valid_multi_column(self):
-        """Test the ``GreaterThanZero.is_valid`` method.
+        """Test the ``ScalarInequality.is_valid`` method.
 
         The test assess whether each row is above zero
         for a multiple column, the result is combined
@@ -1725,7 +1752,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b'])
+        instance = ScalarInequality(columns=['a', 'b'])
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b': [4, -5, 6]
@@ -1736,8 +1763,8 @@ class TestGreaterThanZero():
         expected = pd.Series([True, False, True])
         pd.testing.assert_series_equal(out, expected)
 
-    def test_is_valid_negative(self):
-        """Test the ``GreaterThanZero.is_valid`` method.
+    def test_is_valid_less_than(self):
+        """Test the ``ScalarInequality.is_valid`` method.
 
         The test assess whether each row is below zero.
 
@@ -1745,7 +1772,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', negative=True)
+        instance = ScalarInequality(columns='a', greater=False)
         table_data = pd.DataFrame({
             'a': [1, 2, -4],
             'b': [4, 5, 6]
@@ -1757,7 +1784,7 @@ class TestGreaterThanZero():
         pd.testing.assert_series_equal(out, expected)
 
     def test_is_valid_strict_true(self):
-        """Test the ``GreaterThanZero.is_valid`` method.
+        """Test the ``ScalarInequality.is_valid`` method.
 
         The test assess whether each row is strictly above
         zero by setting ``strict`` to ``True``.
@@ -1766,7 +1793,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', strict=True)
+        instance = ScalarInequality(columns='a', strict=True)
         table_data = pd.DataFrame({
             'a': [1, 2, 0],
             'b': [4, 5, 6]
@@ -1778,7 +1805,7 @@ class TestGreaterThanZero():
         pd.testing.assert_series_equal(out, expected)
 
     def test_is_valid_strict_false(self):
-        """Test the ``GreaterThanZero.is_valid`` method.
+        """Test the ``ScalarInequality.is_valid`` method.
 
         The test assess whether each row is above or equal
         to zero by setting ``strict`` to ``False``.
@@ -1787,7 +1814,7 @@ class TestGreaterThanZero():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', strict=False)
+        instance = ScalarInequality(columns='a', strict=False)
         table_data = pd.DataFrame({
             'a': [1, 2, 0],
             'b': [4, 5, 6]
@@ -1798,8 +1825,29 @@ class TestGreaterThanZero():
         expected = pd.Series([True, True, True])
         pd.testing.assert_series_equal(out, expected)
 
+    def test_is_valid_scalar(self):
+        """Test the ``ScalarInequality.is_valid`` method.
+
+        The test assess whether each row is above or equal
+        to a given scalar.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = ScalarInequality(columns='a', scalar=2)
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([False, True, True])
+        pd.testing.assert_series_equal(out, expected)
+
     def test_transform_missing_columns(self):
-        """Test the ``GreaterThanZero.transform`` method.
+        """Test the ``ScalarInequality.transform`` method.
 
         If some of the columns needed for the transform are missing, it will raise
         a ``MissingConstraintColumnError``.
@@ -1810,14 +1858,14 @@ class TestGreaterThanZero():
         - Raises ``MissingConstraintColumnError``.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b'])
+        instance = ScalarInequality(columns=['a', 'b'])
 
         # Run/Assert
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame({'a': [1, 2, 3]}))
 
     def test_transform_single_column(self):
-        """Test the ``GreaterThanZero.transform`` method.
+        """Test the ``ScalarInequality.transform`` method.
 
         The ``GreaterThan.transform`` method is expected to compute the logarithm
         of a single column + 1.
@@ -1828,7 +1876,7 @@ class TestGreaterThanZero():
         - Same table with an additional column of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThanZero(columns='a')
+        instance = ScalarInequality(columns='a')
         instance._diff_columns = 'a#'
 
         # Run
@@ -1849,7 +1897,7 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_transform_multi_column(self):
-        """Test the ``GreaterThanZero.transform`` method.
+        """Test the ``ScalarInequality.transform`` method.
 
         The ``GreaterThan.transform`` method is expected to compute the logarithm
         of given columns + 1.
@@ -1860,7 +1908,7 @@ class TestGreaterThanZero():
         - Same table with additional columns of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b'])
+        instance = ScalarInequality(columns=['a', 'b'])
         instance._diff_columns = ['a#', 'b#']
 
         # Run
@@ -1881,8 +1929,8 @@ class TestGreaterThanZero():
         })
         pd.testing.assert_frame_equal(out, expected)
 
-    def test_transform_negative(self):
-        """Test the ``GreaterThanZero.transform`` method.
+    def test_transform_less_than(self):
+        """Test the ``ScalarInequality.transform`` method.
 
         If ``negative`` is set to ``True``, we take the negative
         of the specified column to be in the positive range.
@@ -1893,7 +1941,7 @@ class TestGreaterThanZero():
         - Same table with an additional column of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', negative=True)
+        instance = ScalarInequality(columns='a', greater=False)
         instance._diff_columns = ['a#']
 
         # Run
@@ -1914,9 +1962,9 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_transform_drop(self):
-        """Test the ``GreaterThanZero.transform`` method.
+        """Test the ``ScalarInequality.transform`` method.
 
-        The ``GreaterThanZero.transform`` method is expected to compute the
+        The ``ScalarInequality.transform`` method is expected to compute the
         logarithm of given columns + 1, then drop the original columns.
 
         Input:
@@ -1925,7 +1973,7 @@ class TestGreaterThanZero():
         - Table with columns of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', drop=True)
+        instance = ScalarInequality(columns='a', drop=True)
         instance._diff_columns = ['a#']
 
         # Run
@@ -1945,9 +1993,9 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_reverse_transform_identity(self):
-        """Test the ``GreaterThanZero.reverse_transform`` method.
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
-        The ``GreaterThanZero.reverse_transform`` method is expected to:
+        The ``ScalarInequality.reverse_transform`` method is expected to:
             - apply an exponential to the input
             - subtract 1
             - replace invalid rows with ones computed from the input.
@@ -1958,7 +2006,7 @@ class TestGreaterThanZero():
         - Same table with ``diff_columns`` dropped.
         """
         # Setup
-        instance = GreaterThanZero(columns='a')
+        instance = ScalarInequality(columns='a')
         instance._dtype = [pd.Series([1]).dtype]
         instance._diff_columns = ['a#']
 
@@ -1980,9 +2028,9 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_reverse_transform_invalid(self):
-        """Test the ``GreaterThanZero.reverse_transform`` method.
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
-        The ``GreaterThanZero.reverse_transform`` method is expected to:
+        The ``ScalarInequality.reverse_transform`` method is expected to:
             - apply an exponential to the input
             - subtract 1
             - replace invalid rows with ones computed from the input.
@@ -1993,7 +2041,7 @@ class TestGreaterThanZero():
         - Same table with the first row in column 'a' replaced.
         """
         # Setup
-        instance = GreaterThanZero(columns='a')
+        instance = ScalarInequality(columns='a')
         instance._dtype = [pd.Series([1]).dtype]
         instance._diff_columns = ['a#']
 
@@ -2015,7 +2063,7 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_reverse_transform_multi_column(self):
-        """Test the ``GreaterThanZero.reverse_transform`` method.
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
         Apply ``reverse_tranform`` on multiple tables.
 
@@ -2025,7 +2073,7 @@ class TestGreaterThanZero():
         - Same table with dropped `diff_columns``.
         """
         # Setup
-        instance = GreaterThanZero(columns=['a', 'b'])
+        instance = ScalarInequality(columns=['a', 'b'])
         dtype = pd.Series([1]).dtype
         instance._dtype = [dtype, dtype]
         instance._diff_columns = ['a#', 'b#']
@@ -2048,8 +2096,8 @@ class TestGreaterThanZero():
         })
         pd.testing.assert_frame_equal(out, expected)
 
-    def test_reverse_transform_negative(self):
-        """Test the ``GreaterThanZero.reverse_transform`` method.
+    def test_reverse_transform_less_than(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
         Apply ``reverse_tranform`` on negative settings.
 
@@ -2059,7 +2107,7 @@ class TestGreaterThanZero():
         - Same table with replaced invalid rows.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', negative=True)
+        instance = ScalarInequality(columns='a', greater=False)
         instance._dtype = [pd.Series([1]).dtype]
         instance._diff_columns = ['a#']
 
@@ -2081,7 +2129,7 @@ class TestGreaterThanZero():
         pd.testing.assert_frame_equal(out, expected)
 
     def test_reverse_transform_rejected_values(self):
-        """Test the ``GreaterThanZero.reverse_transform`` method.
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
         Apply ``reverse_transform`` with drop setting.
 
@@ -2091,7 +2139,7 @@ class TestGreaterThanZero():
         - Same table with all values constructed from logarithm.
         """
         # Setup
-        instance = GreaterThanZero(columns='a', drop=True)
+        instance = ScalarInequality(columns='a', drop=True)
         instance._dtype = [pd.Series([1]).dtype]
         instance._diff_columns = ['a#']
 
@@ -2119,7 +2167,7 @@ class TestPositive():
         Test the ``Positive.__init__`` method.
 
         The method is expected to set the ``_columns`` instance variable
-        to ``['a']``, and ``_negative`` to be set to ``False``. The rest
+        to ``['a']``, and ``_greater`` to be set to ``True``. The rest
         of the parameters should be passed.
 
         Input:
@@ -2130,7 +2178,7 @@ class TestPositive():
         - instance._columns == ['a']
         - instance._strict == True
         - instance._drop == False
-        - instance._negative == False
+        - instance._greater == True
         """
         # Run
         instance = Positive(columns='a', strict=True, drop=False)
@@ -2139,7 +2187,7 @@ class TestPositive():
         assert instance._columns == ['a']
         assert instance._strict is True
         assert instance._drop is False
-        assert instance._negative is False
+        assert instance._greater is True
 
 
 class TestNegative():
@@ -2149,7 +2197,7 @@ class TestNegative():
         Test the ``Negative.__init__`` method.
 
         The method is expected to set the ``_columns`` instance variable
-        to ``['a']``, and ``_negative`` to be set to ``True``. The rest
+        to ``['a']``, and ``_greater`` to be set to ``False``. The rest
         of the parameters should be passed.
 
         Input:
@@ -2160,7 +2208,7 @@ class TestNegative():
         - instance._columns == ['a']
         - instance._strict == True
         - instance._drop == False
-        - instance._negative == True
+        - instance._greater == False
         """
         # Run
         instance = Negative(columns='a', strict=True, drop=False)
@@ -2169,7 +2217,7 @@ class TestNegative():
         assert instance._columns == ['a']
         assert instance._strict is True
         assert instance._drop is False
-        assert instance._negative is True
+        assert instance._greater is False
 
 
 def new_column(data):
