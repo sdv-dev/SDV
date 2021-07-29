@@ -405,176 +405,207 @@ class GreaterThan(Constraint):
         return table_data
 
 
-class Positive(Constraint):
+class GreaterThanZero(Constraint):
+    """Ensure that given columns is always greater than zero.
+
+    The transformation strategy works by creating columns with the
+    difference between given columns and zero then computing back the
+    necessary columns using the difference and whichever other value is available.
+
+    Args:
+        columns (str or list[str]):
+            The name of the column(s) that are constrained to be greater than zero.
+        negative (bool):
+            Whether the comparison is done on original columns ``False`` or the negative
+            value of the column ``True``.
+        strict (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them. Currently, this is only respected
+            if ``reject_sampling`` or ``all`` handling strategies are used.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+        drop (bool):
+            Drop column(s) during transformation.
+    """
+
+    _diff_columns = None
+
+    def __init__(self, columns, negative=False, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=False):
+        self._negative = negative
+        self._strict = strict
+        self._drop = drop
+
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
+
+    def _get_diff_column_names(self, table_data):
+        token = '#'
+        diff_columns = []
+        for column in self._columns:
+            name = column + token
+            while name in table_data.columns:
+                name += '#'
+
+            diff_columns.append(name)
+
+        return diff_columns
+
+    def _fit(self, table_data):
+        """Construct the difference column names.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        self._diff_columns = self._get_diff_column_names(table_data)
+
+    def is_valid(self, table_data):
+        """Say whether the value is greater than zero in each row.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        zero = 0
+        data = table_data[self._columns]
+
+        if self._negative:
+            data = -data
+
+        if self._strict:
+            return (data > zero).all(axis=1)
+
+        return (data >= zero).all(axis=1)
+
+    def _transform(self, table_data):
+        """Transform the table data.
+
+        The transformation consist on replacing column values with difference
+        between it and zero.
+
+        Afterwards, a logarithm is applied to the difference + 1 to be able to ensure
+        that the value stays positive when reverted afterwards using an exponential.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+        diff = table_data[self._columns]
+        if self._negative:
+            diff = -diff
+
+        table_data[self._diff_columns] = np.log(diff + 1)
+        if self._drop:
+            table_data = table_data.drop(self._columns, axis=1)
+
+        return table_data
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        The transformation is reversed by computing an exponential of the given
+        value, subtracting 1 and finally clipping the value to ensure the value
+        is positive, then we transform it to either the positive range or negative.
+
+        Finally, the obtained value is used to recover any dropped columns
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+
+        diff = (np.exp(table_data[self._diff_columns]).round() - 1).clip(0)
+        if self._negative:
+            diff = -diff
+
+        if self._drop:
+            table_data[self._columns] = diff
+        else:
+            invalid = ~self.is_valid(table_data)
+            new_values = diff.loc[invalid]
+            table_data[self._columns].loc[invalid] = new_values
+
+        table_data = table_data.drop(self._diff_columns, axis=1)
+
+        return table_data
+
+
+class Positive(GreaterThanZero):
     """Ensure that the given column is always positive.
 
-    The transformation strategy works by creating a column with the
-    difference between ``high`` and 0 value and then computing back the ``high``
-    value by adding the difference to 0 when reversing the transformation.
+    The transformation strategy works by creating columns with the
+    difference between given columns and zero then computing back the
+    necessary columns using the difference.
 
     Args:
         columns (str or list[str]):
-            Either the name of the column that contains the high value,
-            or a scalar that is the high value.
+            The name of the column(s) that are constrained to be positive.
         strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
+            Whether the comparison of the values should be strict; disclude
+            zero ``>`` or include it ``>=``.. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        drop (str):
-            Which column to drop during transformation. Can be ``'high'``
-            or ``None``.
+        drop (bool):
+            Whether to drop columns during transformation.
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=None):
-
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
-
-        self._constraints = [
-            GreaterThan(handling_strategy=handling_strategy,
-                        fit_columns_model=fit_columns_model,
-                        high=column, low=0, high_is_scalar=False,
-                        low_is_scalar=True, drop=drop, strict=strict)
-            for column in self._columns
-        ]
-
         super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
+                         fit_columns_model=fit_columns_model,
+                         columns=columns, drop=drop, strict=strict)
 
 
-    def _fit(self, table_data):
-        """Learn the dtype for all columns.
+class Negative(GreaterThanZero):
+    """Ensure that the given columns are always negative.
 
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-        """
-        for constraint in self._constraints:
-            constraint.fit(table_data)
-
-    def _transform(self, table_data):
-        """Transform Table data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        return pd.DataFrame({
-            column: constraint.transform(table_data)
-            for column, constraint in zip(self._columns, self._constraints)
-        })            
-
-    def reverse_transform(self, table_data):
-        """Reverse transform the table data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        return pd.DataFrame({
-            column: constraint.reverse_transform(table_data)
-            for column, constraint in zip(self._columns, self._constraints)
-        })
-
-
-class Negative(Constraint):
-    """Ensure that the ``low`` column is always negative.
-
-    The transformation strategy works by creating a column with the
-    difference between ``low`` and 0 and then computing back the ``low``
-    value by subtracting the difference from 0 when reversing the transformation.
+    The transformation strategy works by creating columns with the
+    difference between zero and given columns then computing back the
+    necessary columns using the difference.
 
     Args:
         columns (str or list[str]):
-            Either the name of the column that contains the high value,
-            or a scalar that is the high value.
+            The name of the column(s) that are constrained to be negative.
         strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
+            Whether the comparison of the values should be strict, disclude
+            zero ``<`` or include it ``<=``. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        drop (str):
-            Which column to drop during transformation. Can be ``'low'``
-            or ``None``.
+        drop (bool):
+            Whether to drop columns during transformation.
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=None):
-
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
-
-        self._constraints = [
-            GreaterThan(handling_strategy=handling_strategy,
-                        fit_columns_model=fit_columns_model,
-                        high=0, low=column, high_is_scalar=True,
-                        low_is_scalar=False, drop=drop, strict=strict)
-            for column in self._columns
-        ]
-
         super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
-
-
-    def _fit(self, table_data):
-        """Learn the dtype for all columns.
-
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-        """
-        for constraint in self._constraints:
-            constraint.fit(table_data)
-
-    def _transform(self, table_data):
-        """Transform Table data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        return pd.DataFrame({
-            column: constraint.transform(table_data)
-            for column, constraint in zip(self._columns, self._constraints)
-        })            
-
-    def reverse_transform(self, table_data):
-        """Reverse transform the table data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        return pd.DataFrame({
-            column: constraint.reverse_transform(table_data)
-            for column, constraint in zip(self._columns, self._constraints)
-        })
+                         fit_columns_model=fit_columns_model,
+                         columns=columns, negative=True,
+                         drop=drop, strict=strict)
 
 
 class ColumnFormula(Constraint):

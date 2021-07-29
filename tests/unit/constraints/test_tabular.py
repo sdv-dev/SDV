@@ -8,8 +8,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, GreaterThan, GreaterThanZero, Negative,
+    OneHotEncoding, Positive, Rounding, UniqueCombinations)
 
 
 def dummy_transform():
@@ -1623,40 +1623,206 @@ class TestGreaterThan():
         pd.testing.assert_frame_equal(out, expected_out)
 
 
+class TestGreaterThanZero():
+
+    def test___init___(self):
+        """Test the ``GreaterThanZero.__init__`` method.
+
+        The passed arguments should be stored as attributes.
+
+        Input:
+        - columns = 'a'
+        Side effects:
+        - instance._columns == ['a']
+        - instance._strict == False
+        - instance._drop == False
+        - instance._negative == False
+        """
+        # Run
+        instance = GreaterThanZero(columns='a')
+
+        # Asserts
+        assert instance._columns == ['a']
+        assert instance._strict is False
+        assert instance._drop is False
+        assert instance._negative is False
+
+    def test__get_diff_column_names(self):
+        """Test the ``GreaterThanZero._get_diff_column_names`` method.
+
+        The returned names should be equal to the given columns plus
+        tokenized with '#'.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b#'])
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b#': [4, 5, 6]
+        })
+        out = instance._get_diff_column_names(table_data)
+
+        # Assert
+        expected = ['a#', 'b##']
+        assert out == expected
+
+    def test__fit(self):
+        """Test the ``GreaterThanZero._fit`` method.
+
+        The ``_fit`` method captures the names of the
+        columns to be used to construct in ``_transform``.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b'])
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        instance._fit(table_data)
+
+        # Assert
+        expected = ['a#', 'b#']
+        assert instance._diff_columns == expected
+
+    def test_is_valid_single_column(self):
+        """Test the ``GreaterThanZero.is_valid`` method.
+
+        The test assess whether each row is above zero
+        for a single column.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a')
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_is_valid_multi_column(self):
+        """Test the ``GreaterThanZero.is_valid`` method.
+
+        The test assess whether each row is above zero
+        for a multiple column, the result is combined
+        for all columns.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns=['a', 'b'])
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, -5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([True, False, True])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_is_valid_negative(self):
+        """Test the ``GreaterThanZero.is_valid`` method.
+
+        The test assess whether each row is below zero.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', negative=True)
+        table_data = pd.DataFrame({
+            'a': [1, 2, -4],
+            'b': [4, 5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([False, False, True])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_is_valid_strict_true(self):
+        """Test the ``GreaterThanZero.is_valid`` method.
+
+        The test assess whether each row is strictly above
+        zero by setting ``strict`` to ``True``.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', strict=True)
+        table_data = pd.DataFrame({
+            'a': [1, 2, 0],
+            'b': [4, 5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_is_valid_strict_false(self):
+        """Test the ``GreaterThanZero.is_valid`` method.
+
+        The test assess whether each row is above or equal
+        to zero by setting ``strict`` to ``False``.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThanZero(columns='a', strict=False)
+        table_data = pd.DataFrame({
+            'a': [1, 2, 0],
+            'b': [4, 5, 6]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(out, expected)
+
+
 class TestPositive():
 
     def test__init__(self):
         """
         Test the ``Positive.__init__`` method.
 
-        The method is expected to set the ``_low`` instance variable
-        to 0, the ``_low_is_scalar`` variable to ``True`` and the
-        ``_high_is_scalar`` variable to ``False``. The rest of the
-        parameters should be passed.
+        The method is expected to set the ``_columns`` instance variable
+        to ``['a']``, and ``_negative`` to be set to ``False``. The rest
+        of the parameters should be passed.
 
         Input:
         - strict = True
-        - high = 'a'
-        - drop = None
+        - columns = 'a'
+        - drop = False
         Side effects:
-        - instance._low == 0
-        - instance._high == 'a'
+        - instance._columns == ['a']
         - instance._strict == True
-        - instance._high_is_scalar = False
-        - instance._low_is_scalar = True
-        - instance._drop = None
+        - instance._drop == False
+        - instance._negative == False
         """
         # Run
-        positive = Positive(columns='a', strict=True, drop=None)
+        instance = Positive(columns='a', strict=True, drop=False)
 
         # Asserts
-        for instance in positive._constraints:
-            assert instance._low == 0
-            assert instance._high == 'a'
-            assert instance._strict is True
-            assert instance._high_is_scalar is False
-            assert instance._low_is_scalar is True
-            assert instance._drop is None
+        assert instance._columns == ['a']
+        assert instance._strict is True
+        assert instance._drop is False
+        assert instance._negative is False
 
 
 class TestNegative():
@@ -1665,34 +1831,28 @@ class TestNegative():
         """
         Test the ``Negative.__init__`` method.
 
-        The method is expected to set the ``_high`` instance variable
-        to 0, the ``_high_is_scalar`` variable to ``True`` and the
-        ``_low_is_scalar`` variable to ``False``. The rest of the
-        parameters should be passed.
+        The method is expected to set the ``_columns`` instance variable
+        to ``['a']``, and ``_negative`` to be set to ``True``. The rest
+        of the parameters should be passed.
 
         Input:
         - strict = True
-        - low = 'a'
-        - drop = None
+        - columns = 'a'
+        - drop = False
         Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
+        - instance._columns == ['a']
         - instance._strict == True
-        - instance._high_is_scalar = True
-        - instance._low_is_scalar = False
-        - instance._drop = None
+        - instance._drop == False
+        - instance._negative == True
         """
         # Run
-        negative = Negative(columns='a', strict=True, drop=None)
+        instance = Negative(columns='a', strict=True, drop=False)
 
         # Asserts
-        for instance in negative._constraints:
-            assert instance._low == 'a'
-            assert instance._high == 0
-            assert instance._strict is True
-            assert instance._high_is_scalar is True
-            assert instance._low_is_scalar is False
-            assert instance._drop is None
+        assert instance._columns == ['a']
+        assert instance._strict is True
+        assert instance._drop is False
+        assert instance._negative is True
 
 
 def new_column(data):
