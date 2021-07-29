@@ -174,25 +174,48 @@ this functionality, we can pass:
         handling_strategy='reject_sampling'
     )
 
+ScalarInequality Constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to the GreaterThan constraint, we can we need to constraint our 
+data to be particularly larger than (or smaller than) a constant value. 
+This constraint guarantees that the given column(s) are always greater 
+(or less than) than a given scalar value. In order to use it, we need 
+to create an instance passing:
+
+-  the name of the column(s) under this constraint
+-  the ``scalar`` value of which we hold the inequality
+-  whether we are user the greater than inequality of less than
+-  the handling strategy that we want to use
+
+.. ipython:: python
+    :okwarning:
+
+    salary_gt_30000_constraint = ScalarInequality(
+        columns='salary',
+        scalar=30000,
+        greater=True,
+        handling_strategy='reject_sampling'
+    )
+
 
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+Similar to the ``ScalarInequality`` constraint, we can use the ``Positive``
 or ``Negative`` constraints. These constraints enforce that a specified
 column is always positive or negative. We can create an instance passing:
 
-- the name of the ``low`` column for ``Negative`` or the name of the ``high`` column for ``Positive``
+- the name of the column(s) for ``Negative`` or ``Positive`` constraints
 - the handling strategy that we want to use
-- a boolean specifying whether to make the data strictly above or below 0, or include 0 as a possible value
 
 .. ipython:: python
     :okwarning:
 
     from sdv.constraints import Positive
 
-    positive_prior_exp_constraint = Positive(
-        high='prior_years_experience',
+    positive_prior_exp_and_age_constraint = Positive(
+        columns=['prior_years_experience', 'age'],
         strict=False,
         handling_strategy='reject_sampling'
     )
@@ -321,7 +344,7 @@ constraints that we just defined as a ``list``:
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
         salary_gt_30000_constraint,
-        positive_prior_exp_constraint,
+        positive_prior_exp_and_age_constraint,
         salary_rounding_constraint,
         reasonable_age_constraint,
         one_hot_constraint
