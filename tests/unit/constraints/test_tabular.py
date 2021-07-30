@@ -482,7 +482,6 @@ class TestGreaterThan():
         - n/a
         Side Effects:
         - ValueError
-
         """
         # Setup
         instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'))
@@ -2120,7 +2119,6 @@ class TestBetween():
         - n/a
         Side Effects:
         - ValueError
-
         """
         # Setup
         column = 'a'

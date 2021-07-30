@@ -591,7 +591,7 @@ class Between(Constraint):
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
                  fit_columns_model=True, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
-        self.constraint_columns = tuple(column)
+        self.constraint_columns = (column,)
         self._low = low
         self._high = high
         self._strict = strict
