@@ -46,16 +46,65 @@ class CustomConstraint(Constraint):
             Function to replace the ``is_valid`` method.
     """
 
-    def __init__(self, transform=None, reverse_transform=None, is_valid=None):
+    def __init__(self, columns, transform=None, reverse_transform=None, is_valid=None):
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
         self.fit_columns_model = False
         if transform is not None:
-            self.transform = import_object(transform)
+            self._transform = import_object(transform)
 
         if reverse_transform is not None:
-            self.reverse_transform = import_object(reverse_transform)
+            self._reverse_transform = import_object(reverse_transform)
 
         if is_valid is not None:
-            self.is_valid = import_object(is_valid)
+            self._is_valid = import_object(is_valid)
+
+    def transform(self, table_data):
+        """Transform Table data.
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: self._transform(table_data, column)
+            for column in self._columns
+        })
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        return pd.DataFrame({
+            column: self._reverse_transform(table_data, column)
+            for column in reversed(self._columns)
+        })
+
+    def is_valid(self, table_data):
+        """Say whether values are valid.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        return np.logical_and.reduce([
+            self._is_valid(table_data, column)
+            for column in self._columns
+        ])
 
 
 class UniqueCombinations(Constraint):
