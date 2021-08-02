@@ -1703,15 +1703,16 @@ class TestColumnFormula():
     def test___init__(self):
         """Test the ``ColumnFormula.__init__`` method.
 
-        It is expected to create a new Constraint instance
-        and import the formula to use for the computation.
+        It is expected to create a new Constraint instance,
+        import the formula to use for the computation, and
+        set the specified constraint column.
 
         Input:
-        - column = 'c'
+        - column = 'col'
         - formula = new_column
         """
         # Setup
-        column = 'c'
+        column = 'col'
 
         # Run
         instance = ColumnFormula(column=column, formula=new_column)
@@ -1719,7 +1720,7 @@ class TestColumnFormula():
         # Assert
         assert instance._column == column
         assert instance._formula == new_column
-        assert instance.constraint_columns == ('c', )
+        assert instance.constraint_columns == ('col', )
 
     def test_is_valid_valid(self):
         """Test the ``ColumnFormula.is_valid`` method for a valid data.
