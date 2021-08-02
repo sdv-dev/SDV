@@ -1727,15 +1727,16 @@ class TestColumnFormula():
     def test___init__(self):
         """Test the ``ColumnFormula.__init__`` method.
 
-        It is expected to create a new Constraint instance
-        and import the formula to use for the computation.
+        It is expected to create a new Constraint instance,
+        import the formula to use for the computation, and
+        set the specified constraint column.
 
         Input:
-        - column = 'c'
+        - column = 'col'
         - formula = new_column
         """
         # Setup
-        column = 'c'
+        column = 'col'
 
         # Run
         instance = ColumnFormula(column=column, formula=new_column)
@@ -1743,6 +1744,7 @@ class TestColumnFormula():
         # Assert
         assert instance._column == column
         assert instance._formula == new_column
+        assert instance.constraint_columns == ('col', )
 
     def test_is_valid_valid(self):
         """Test the ``ColumnFormula.is_valid`` method for a valid data.
@@ -1797,8 +1799,8 @@ class TestColumnFormula():
         expected_out = pd.Series([False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_transform(self):
-        """Test the ``ColumnFormula.transform`` method.
+    def test__transform(self):
+        """Test the ``ColumnFormula._transform`` method.
 
         It is expected to drop the indicated column from the table.
 
@@ -1817,7 +1819,7 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -1826,8 +1828,8 @@ class TestColumnFormula():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_without_dropping_column(self):
-        """Test the ``ColumnFormula.transform`` method without dropping the column.
+    def test__transform_without_dropping_column(self):
+        """Test the ``ColumnFormula._transform`` method without dropping the column.
 
         If `drop_column` is false, expect to not drop the constraint column.
 
@@ -1846,13 +1848,44 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_missing_column(self):
+        """Test the ``ColumnFormula._transform`` method when the constraint column is missing.
+
+        When ``_transform`` is called with data that does not contain the constraint column,
+        expect to return the data as-is.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data, unchanged (pandas.DataFrame)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
