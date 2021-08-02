@@ -971,7 +971,7 @@ class Unique(Constraint):
     """
 
     def __init__(self, columns):
-        self.columns = [columns] if isinstance(columns, str) else columns 
+        self.columns = [columns] if isinstance(columns, str) else columns
         self.handling_strategy = 'reject_sampling'
 
     def is_valid(self, table_data):
@@ -990,6 +990,6 @@ class Unique(Constraint):
         """
         data = table_data.reset_index()
         groups = data.groupby(self.columns)
-        valid = pd.Series([False]*data.shape[0])
+        valid = pd.Series([False] * data.shape[0])
         valid.iloc[groups.first()['index'].values] = True
         return valid

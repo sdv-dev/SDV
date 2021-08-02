@@ -9,7 +9,7 @@ import pytest
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, UniqueCombinations)
+    Rounding, Unique, UniqueCombinations)
 
 
 def dummy_transform():
@@ -3387,3 +3387,100 @@ class TestOneHotEncoding():
             'b': [1.0] * 10
         })
         pd.testing.assert_frame_equal(out, expected_output)
+
+
+class TestUnique():
+
+    def test___init__(self):
+        """Test the ``Unique.__init__`` method.
+
+        The ``columns`` should be set to those provided and the
+        ``handling_strategy`` should be set to ``'reject_sampling'``.
+
+        Input:
+        - column names to keep unique.
+        Output:
+        - Instance with ``columns`` set and ``handling_strategy``
+        set to ``'reject_sampling'``.
+        """
+        # Run
+        instance = Unique(columns=['a', 'b'])
+
+        # Assert
+        assert instance.columns == ['a', 'b']
+        assert instance.handling_strategy == 'reject_sampling'
+
+    def test___init__one_column(self):
+        """Test the ``Unique.__init__`` method.
+
+        The ``columns`` should be set to a list even if a string is
+        provided and the ``handling_strategy`` should be set to
+        ``'reject_sampling'``.
+
+        Input:
+        - string that is the name of a column.
+        Output:
+        - Instance with ``columns`` set and ``handling_strategy``
+        set to ``'reject_sampling'``.
+        """
+        # Run
+        instance = Unique(columns='a')
+
+        # Assert
+        assert instance.columns == ['a']
+        assert instance.handling_strategy == 'reject_sampling'
+
+    def test_is_valid(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b', 'c'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 2, 2, 3, 4],
+            'b': [5, 5, 6, 6, 7, 8],
+            'c': [9, 9, 10, 10, 12, 13]
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, True, False, True, True])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``self.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple occurences of the same value of the
+        one column in ``instance.columns``.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns='a')
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 1, 2, 3, 2],
+            'b': [1, 2, 3, 4, 5, 6],
+            'c': [False, False, True, False, False, True]
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, False, True, True, False])
+        pd.testing.assert_series_equal(valid, expected)
