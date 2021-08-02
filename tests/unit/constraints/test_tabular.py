@@ -1719,6 +1719,7 @@ class TestColumnFormula():
         # Assert
         assert instance._column == column
         assert instance._formula == new_column
+        assert instance.constraint_columns == ('c', )
 
     def test_is_valid_valid(self):
         """Test the ``ColumnFormula.is_valid`` method for a valid data.
