@@ -44,13 +44,13 @@ def test__init__passes_correct_parameters(metadata_mock):
              anonymize_fields=None, constraints=None, dtype_transformers={'O': 'one_hot_encoding'},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50)
     ]
     metadata_mock.assert_has_calls(expected_calls, any_order=True)

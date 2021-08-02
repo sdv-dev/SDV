@@ -16,7 +16,7 @@ class CTGANModel(BaseTabularModel):
     _model_kwargs = None
 
     _DTYPE_TRANSFORMERS = {
-        'O': 'label_encoding'
+        'O': None
     }
 
     def _build_model(self):
