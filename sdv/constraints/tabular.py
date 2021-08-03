@@ -55,12 +55,15 @@ class CustomConstraint(Constraint):
         self.fit_columns_model = False
         if transform is not None:
             self._transform = import_object(transform)
+            self.transform = self.apply_transform
 
         if reverse_transform is not None:
             self._reverse_transform = import_object(reverse_transform)
+            self.reverse_transform = self.apply_reverse_transform
 
         if is_valid is not None:
             self._is_valid = import_object(is_valid)
+            self.is_valid = self.apply_is_valid
 
     def _apply(self, function, reverse=False):
         table_data = table_data.copy()
@@ -81,7 +84,7 @@ class CustomConstraint(Constraint):
 
         return table_data
 
-    def transform(self, table_data):
+    def apply_transform(self, table_data):
         """Transform Table data.
 
         Args:
@@ -92,13 +95,10 @@ class CustomConstraint(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        if self._transform is None:
-            return None
-
         return self._apply(self._transform)
 
 
-    def reverse_transform(self, table_data):
+    def apply_reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         Args:
@@ -109,13 +109,10 @@ class CustomConstraint(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        if self._reverse_transform is None:
-            return None
-
         return self._apply(self._reverse_transform, reverse=True)
 
 
-    def is_valid(self, table_data):
+    def apply_is_valid(self, table_data):
         """Say whether values are valid.
 
         Args:
@@ -126,9 +123,6 @@ class CustomConstraint(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        if self._is_valid is None:
-            return None
-
         if self._columns:
             try:
                 valid = [self._is_valid(table_data, column) for column in self._columns]
