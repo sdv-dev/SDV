@@ -197,10 +197,10 @@ class GreaterThan(Constraint):
     will be added to the diff to reconstruct the ``high`` column.
 
     Args:
-        low (str or list[str] or int):
+        low (str or list[str]):
             Either the name of the column(s) that contains the low value,
             or a scalar that is the low value.
-        high (str or list[str] or int):
+        high (str or list[str]):
             Either the name of the column(s) that contains the high value,
             or a scalar that is the high value.
         strict (bool):
