@@ -3,6 +3,7 @@ import rdt
 from copulas.univariate import BetaUnivariate
 
 from sdv.demo import load_demo
+from sdv.metadata import Metadata
 from sdv.relational import HMA1
 from sdv.tabular import GaussianCopula
 
@@ -95,3 +96,59 @@ def test_ids_only_child():
     for name, table in tables.items():
         assert table.shape == sampled[name].shape
         assert table.columns.tolist() == sampled[name].columns.tolist()
+
+
+def test_hma1_single_child_row_single_parent_row():
+    """Test that ``HMA1`` supports a single child row per single parent row.
+
+    ``HMA1`` doesn't learn the distribution of the values for a child row when those
+    are equal to 1. This is because those values will be equal to ``0``  and alter the
+    ``std`` by a lot.
+
+    Setup:
+        - Create a dataset that has 1 child row per single parent row.
+        - Create the ``sdv.Metadata`` for that dataset.
+        - Create an instance of ``HMA1``.
+
+    Input:
+        - ``dataset``
+        - ``sdv.Metadata``
+
+    Output:
+        - ``dict`` with synthetic data.
+    """
+
+    # Setup
+    parent_a = pd.DataFrame({
+        'parent_id': range(5),
+        'value': range(5)
+    })
+
+    child = pd.DataFrame({
+        'parent_a': range(5),
+        'value_a': range(5),
+    })
+
+    tables = {
+        'parent_a': parent_a,
+        'child': child
+    }
+
+    metadata = Metadata()
+    metadata.add_table('parent_a', parent_a, primary_key='parent_id')
+    metadata.add_table('child', child)
+    metadata.add_relationship('parent_a', 'child', 'parent_a')
+
+    model = HMA1(metadata)
+
+    # Run
+    model.fit(tables)
+    sampled = model.sample(num_rows=10)
+
+    # Assert
+    assert len(sampled) == 2
+    assert len(sampled['parent_a']) == 10
+    assert len(sampled['child']) == 10
+
+    assert len(sampled['parent_a']['parent_id'].unique()) == 10
+    assert len(sampled['child']['parent_a'].unique()) == 10

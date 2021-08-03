@@ -470,26 +470,50 @@ class TestGreaterThan():
         assert instance._low_is_scalar is False
         assert instance._drop == 'high'
 
-    # def test__get_diff_column_names(self):
-    #     """Test the ``GreaterThan._get_diff_column_names`` method.
+    def test__get_diff_column_name(self):
+        """Test the ``GreaterThan._get_diff_column_name`` method.
 
-    #     The returned names should be equal to the given columns plus
-    #     tokenized with '#'.
+        The returned names should be equal to the given columns plus
+        tokenized with '#'.
 
-    #     Input:
-    #     - Table with given data.
-    #     """
-    #     # Setup
-    #     instance = GreaterThan(low=0, high=['a', 'b#'])
-    #     table_data = pd.DataFrame({
-    #         'a': [1, 2, 4],
-    #         'b#': [4, 5, 6]
-    #     })
-    #     out = instance._get_diff_column_names(table_data)
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThan(low=0, high=['a', 'b#'])
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b#': [4, 5, 6]
+        })
+        out = instance._get_diff_column_name(table_data)
 
-    #     # Assert
-    #     expected = ['a#', 'b##']
-    #     assert out == expected
+        # Assert
+        expected = ['a#', 'b##']
+        assert out == expected
+
+    def test_fit_only_one_datetime_arg(self):
+        """Test the ``Between.fit`` method by passing in only one arg as datetime.
+
+        If only one of the high / low args is a datetime type, expect a ValueError.
+
+        Input:
+        - low is an int column
+        - high is a datetime
+        Output:
+        - n/a
+        Side Effects:
+        - ValueError
+        """
+        # Setup
+        instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'))
+
+        # Run and assert
+        table_data = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [4, 5, 6]
+        })
+        with pytest.raises(ValueError):
+            instance.fit(table_data)
 
     def test_fit__low_is_scalar_is_none_determined_as_scalar(self):
         """Test the ``GreaterThan.fit`` method.
@@ -2085,15 +2109,16 @@ class TestColumnFormula():
     def test___init__(self):
         """Test the ``ColumnFormula.__init__`` method.
 
-        It is expected to create a new Constraint instance
-        and import the formula to use for the computation.
+        It is expected to create a new Constraint instance,
+        import the formula to use for the computation, and
+        set the specified constraint column.
 
         Input:
-        - column = 'c'
+        - column = 'col'
         - formula = new_column
         """
         # Setup
-        column = 'c'
+        column = 'col'
 
         # Run
         instance = ColumnFormula(column=column, formula=new_column)
@@ -2101,6 +2126,7 @@ class TestColumnFormula():
         # Assert
         assert instance._column == column
         assert instance._formula == new_column
+        assert instance.constraint_columns == ('col', )
 
     def test_is_valid_valid(self):
         """Test the ``ColumnFormula.is_valid`` method for a valid data.
@@ -2155,8 +2181,8 @@ class TestColumnFormula():
         expected_out = pd.Series([False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
-    def test_transform(self):
-        """Test the ``ColumnFormula.transform`` method.
+    def test__transform(self):
+        """Test the ``ColumnFormula._transform`` method.
 
         It is expected to drop the indicated column from the table.
 
@@ -2175,12 +2201,73 @@ class TestColumnFormula():
             'b': [4, 5, 6],
             'c': [5, 7, 9]
         })
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_without_dropping_column(self):
+        """Test the ``ColumnFormula._transform`` method without dropping the column.
+
+        If `drop_column` is false, expect to not drop the constraint column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with the indicated column (pandas.DataFrame)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column, drop_column=False)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [5, 7, 9]
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [5, 7, 9]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_missing_column(self):
+        """Test the ``ColumnFormula._transform`` method when the constraint column is missing.
+
+        When ``_transform`` is called with data that does not contain the constraint column,
+        expect to return the data as-is.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data, unchanged (pandas.DataFrame)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'd': [5, 7, 9]
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2465,6 +2552,33 @@ def transform(data, low, high):
 
 class TestBetween():
 
+    def test_fit_only_one_datetime_arg(self):
+        """Test the ``Between.fit`` method by passing in only one arg as datetime.
+
+        If only one of the bound parameters is a datetime type, expect a ValueError.
+
+        Input:
+        - low is an int scalar
+        - high is a datetime
+        Output:
+        - n/a
+        Side Effects:
+        - ValueError
+        """
+        # Setup
+        column = 'a'
+        low = 0.0
+        high = pd.to_datetime('2021-01-01')
+        instance = Between(column=column, low=low, high=high)
+
+        # Run and assert
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9],
+            'b': [4, 5, 6],
+        })
+        with pytest.raises(ValueError):
+            instance.fit(table_data)
+
     def test_transform_scalar_scalar(self):
         """Test the ``Between.transform`` method by passing ``low`` and ``high`` as scalars.
 
@@ -2498,8 +2612,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_scalar_column(self):
-        """Test the ``Between.transform`` method with ``low`` as scalar and ``high`` as a column.
+    def test__transform_scalar_column(self):
+        """Test the ``Between._transform`` method with ``low`` as scalar and ``high`` as a column.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2521,7 +2635,7 @@ class TestBetween():
             'b': [0.5, 1, 6],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2530,8 +2644,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_scalar(self):
-        """Test the ``Between.transform`` method with ``low`` as a column and ``high`` as scalar.
+    def test__transform_column_scalar(self):
+        """Test the ``Between._transform`` method with ``low`` as a column and ``high`` as scalar.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2553,7 +2667,7 @@ class TestBetween():
             'b': [0, -1, 0.5],
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
@@ -2562,8 +2676,8 @@ class TestBetween():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_transform_column_column(self):
-        """Test the ``Between.transform`` method by passing ``low`` and ``high`` as columns.
+    def test__transform_column_column(self):
+        """Test the ``Between._transform`` method by passing ``low`` and ``high`` as columns.
 
         It is expected to create a new column similar to the constraint ``column``, and then
         scale and apply a logit function to that column.
@@ -2586,12 +2700,192 @@ class TestBetween():
             'c': [0.5, 1, 6]
         })
         instance.fit(table_data)
-        out = instance.transform(table_data)
+        out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_datetime_datetime(self):
+        """Test the ``Between._transform`` method by passing ``low`` and ``high`` as datetimes.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        - High and Low as datetimes
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = pd.to_datetime('1900-01-01')
+        high = pd.to_datetime('2021-01-01')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'b': [4, 5, 6],
+        })
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_datetime_column(self):
+        """Test the ``Between._transform`` method with ``low`` as datetime and ``high`` as a column.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = pd.to_datetime('1900-01-01')
+        high = 'b'
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'b': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+        })
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_column_datetime(self):
+        """Test the ``Between._transform`` method with ``low`` as a column and ``high`` as datetime.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = pd.to_datetime('2021-01-01')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+        })
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_column_column_datetime(self):
+        """Test the ``Between._transform`` method with ``low`` and ``high`` as datetime columns.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data with an extra column containing the transformed ``column`` (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 'c'
+        instance = Between(column=column, low=low, high=high)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ]
+        })
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
             'a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
@@ -2735,6 +3029,204 @@ class TestBetween():
         transformed = pd.DataFrame({
             'b': [0, -1, 0.5],
             'c': [0.5, 1, 6],
+            'a#b#c': transform(table_data[column], table_data[low], table_data[high])
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_datetime_datetime(self):
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as datetime.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        - High and low as datetimes
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = pd.to_datetime('1900-01-01')
+        high = pd.to_datetime('2021-01-01')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True,
+                           low_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_series_equal(expected_out['b'], out['b'])
+        pd.testing.assert_series_equal(expected_out['a'], out['a'].astype('datetime64[ms]'))
+
+    def test_reverse_transform_datetime_column(self):
+        """Test ``Between.reverse_transform`` with ``low`` as datetime and ``high`` as a column.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = pd.to_datetime('1900-01-01')
+        high = 'b'
+        instance = Between(column=column, low=low, high=high, low_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-02'),
+                pd.to_datetime('2020-08-03'),
+            ]
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_column_datetime(self):
+        """Test ``Between.reverse_transform`` with ``low`` as a column and ``high`` as datetime.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = pd.to_datetime('2021-01-01')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        table_data = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-03'),
+                pd.to_datetime('2020-08-04'),
+            ],
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = table_data
+        pd.testing.assert_series_equal(expected_out['b'], out['b'])
+        pd.testing.assert_series_equal(expected_out['a'], out['a'].astype('datetime64[ms]'))
+
+    def test_reverse_transform_column_column_datetime(self):
+        """Test ``Between.reverse_transform`` with ``low`` and ``high`` as datetime columns.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Input:
+        - Transformed table data (pandas.DataFrame)
+        Output:
+        - Original table data, without necessarily keepying the column order (pandas.DataFrame)
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 'c'
+        instance = Between(column=column, low=low, high=high)
+
+        table_data = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
+        })
+
+        # Run
+        instance.fit(table_data)
+        transformed = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
             'a#b#c': transform(table_data[column], table_data[low], table_data[high])
         })
         out = instance.reverse_transform(transformed)

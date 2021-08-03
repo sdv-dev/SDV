@@ -24,12 +24,12 @@ Currently implemented constraints are:
 
 import operator
 import uuid
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.utils import is_datetime_type
 
 
 class CustomConstraint(Constraint):
@@ -291,6 +291,19 @@ class GreaterThan(Constraint):
 
         return names
 
+    def _get_is_datetime(self, table_data):
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+
+        is_low_datetime = is_datetime_type(low)
+        is_high_datetime = is_datetime_type(high)
+        is_datetime = is_low_datetime and is_high_datetime
+
+        if not is_datetime and any([is_low_datetime, is_high_datetime]):
+            raise ValueError('Both high and low must be datetime.')
+
+        return is_datetime
+
     def _fit(self, table_data):
         """Learn the dtype of the high column.
 
@@ -317,10 +330,7 @@ class GreaterThan(Constraint):
         self._column_to_reconstruct = self._get_column_to_reconstruct()
         self._dtype = [table_data[column].dtype for column in self._column_to_reconstruct]
         self._diff_column = self._get_diff_column_name(table_data)
-        low = self._get_low_value(table_data)
-        self._is_datetime = (pd.api.types.is_datetime64_ns_dtype(low)
-                             or isinstance(low, pd.Timestamp)
-                             or isinstance(low, datetime))
+        self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -495,11 +505,15 @@ class ColumnFormula(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        drop_column (bool):
+            Whether or not to drop the constraint column.
     """
 
-    def __init__(self, column, formula, handling_strategy='transform'):
+    def __init__(self, column, formula, handling_strategy='transform', drop_column=True):
         self._column = column
+        self.constraint_columns = (column,)
         self._formula = import_object(formula)
+        self._drop_column = drop_column
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -516,7 +530,7 @@ class ColumnFormula(Constraint):
         computed = self._formula(table_data)
         return table_data[self._column] == computed
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consist on simply dropping the indicated column from the
@@ -531,7 +545,9 @@ class ColumnFormula(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        del table_data[self._column]
+
+        if self._drop_column and self._column in table_data:
+            del table_data[self._column]
 
         return table_data
 
@@ -593,6 +609,7 @@ class Between(Constraint):
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
                  fit_columns_model=True, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
+        self.constraint_columns = (column,)
         self._low = low
         self._high = high
         self._strict = strict
@@ -654,6 +671,21 @@ class Between(Constraint):
 
         return token.join(components)
 
+    def _get_is_datetime(self, table_data):
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+        column = table_data[self.constraint_column]
+
+        is_low_datetime = is_datetime_type(low)
+        is_high_datetime = is_datetime_type(high)
+        is_column_datetime = is_datetime_type(column)
+        is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
+
+        if not is_datetime and any([is_low_datetime, is_high_datetime, is_column_datetime]):
+            raise ValueError('The constraint column and bounds must all be datetime.')
+
+        return is_datetime
+
     def _fit(self, table_data):
         if self._high_is_scalar is None:
             self._high_is_scalar = self._high not in table_data.columns
@@ -661,6 +693,7 @@ class Between(Constraint):
             self._low_is_scalar = self._low not in table_data.columns
 
         self._transformed_column = self._get_diff_column_name(table_data)
+        self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
         """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
@@ -682,7 +715,7 @@ class Between(Constraint):
 
         return satisfy_low_bound & satisfy_high_bound
 
-    def transform(self, table_data):
+    def _transform(self, table_data):
         """Transform the table data.
 
         The transformation consists of scaling the ``constraint_column``
@@ -735,7 +768,11 @@ class Between(Constraint):
         data = data * (high - low) + low
         data = data.clip(low, high)
 
-        table_data[self.constraint_column] = data
+        if self._is_datetime:
+            table_data[self.constraint_column] = pd.to_datetime(data)
+        else:
+            table_data[self.constraint_column] = data
+
         table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
