@@ -198,9 +198,9 @@ is more than one year.
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similar to the ``ScalarInequality`` constraint, we can use the ``Positive``
-or ``Negative`` constraints. These constraints enforce that a specified
-column is always positive or negative. We can create an instance passing:
+Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+or ``Negative`` constraints. These constraints enforce that specified
+column(s) are always positive or negative. We can create an instance passing:
 
 - the name of the column(s) for ``Negative`` or ``Positive`` constraints
 - the handling strategy that we want to use
