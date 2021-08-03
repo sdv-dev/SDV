@@ -457,7 +457,7 @@ class BaseTabularModel:
 
             condition_indices = dataframe[COND_IDX]
             condition = dict(zip(condition_columns, group))
-            if transformed_conditions.empty:
+            if len(transformed_columns) == 0:
                 sampled_rows = self._conditionally_sample_rows(
                     dataframe,
                     max_retries,
