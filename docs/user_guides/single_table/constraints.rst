@@ -249,8 +249,7 @@ constraint by passing it:
     years_in_the_company_constraint = ColumnFormula(
         column='years_in_the_company',
         formula=years_in_the_company,
-        handling_strategy='transform',
-        drop_column=False
+        handling_strategy='transform'
     )
 
 Rounding Constraint
@@ -341,9 +340,9 @@ constraints that we just defined as a ``list``:
     constraints = [
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
+        experience_years_gt_one_constraint,
         years_in_the_company_constraint,
         salary_gt_30000_constraint,
-        experience_years_gt_one_constraint,
         positive_age_constraint,
         salary_rounding_constraint,
         reasonable_age_constraint,
@@ -368,3 +367,4 @@ we defined:
     :okwarning:
 
     sampled
+
