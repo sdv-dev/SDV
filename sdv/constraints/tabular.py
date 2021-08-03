@@ -46,7 +46,7 @@ class CustomConstraint(Constraint):
             Function to replace the ``is_valid`` method.
     """
 
-    def __init__(self, columns, transform=None, reverse_transform=None, is_valid=None):
+    def __init__(self, columns=None, transform=None, reverse_transform=None, is_valid=None):
         if isinstance(columns, str):
             self._columns = [columns]
         else:
@@ -62,33 +62,58 @@ class CustomConstraint(Constraint):
         if is_valid is not None:
             self._is_valid = import_object(is_valid)
 
+    def _apply(self, function, reverse=False):
+        table_data = table_data.copy()
+        if self._columns:
+            if reverse:
+                columns = reversed(self._columns)
+            else:
+                columns = self._columns
+
+            for column in columns:
+                try:
+                    table_data[column] = function(table_data, column)
+                except TypeError:
+                    table_data[column] = function(table_data[column])
+
+        else:
+            table_data = function(table_data)
+
+        return table_data
+
     def transform(self, table_data):
         """Transform Table data.
+
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
+
         Returns:
             pandas.DataFrame:
                 Transformed data.
         """
-        return pd.DataFrame({
-            column: self._transform(table_data, column)
-            for column in self._columns
-        })
+        if self._transform is None:
+            return None
+
+        return self._apply(self._transform)
+
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
+
         Args:
             table_data (pandas.DataFrame):
                 Table data.
+
         Returns:
             pandas.DataFrame:
                 Transformed data.
         """
-        return pd.DataFrame({
-            column: self._reverse_transform(table_data, column)
-            for column in reversed(self._columns)
-        })
+        if self._reverse_transform is None:
+            return None
+
+        return self._apply(self._reverse_transform, reverse=True)
+
 
     def is_valid(self, table_data):
         """Say whether values are valid.
@@ -101,10 +126,18 @@ class CustomConstraint(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return np.logical_and.reduce([
-            self._is_valid(table_data, column)
-            for column in self._columns
-        ])
+        if self._is_valid is None:
+            return None
+
+        if self._columns:
+            try:
+                valid = [self._is_valid(table_data, column) for column in self._columns]
+            except TypeError:
+                valid = [self._is_valid(table_data[column]) for column in self._columns]
+            
+            return np.logical_and.reduce(valid)
+
+        return self._is_valid(table_data)
 
 
 class UniqueCombinations(Constraint):

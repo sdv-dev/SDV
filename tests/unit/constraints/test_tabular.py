@@ -50,9 +50,9 @@ class TestCustomConstraint():
         )
 
         # Assert
-        assert instance.transform == dummy_transform
-        assert instance.reverse_transform == dummy_reverse_transform
-        assert instance.is_valid == dummy_is_valid
+        assert instance._transform == dummy_transform
+        assert instance._reverse_transform == dummy_reverse_transform
+        assert instance._is_valid == dummy_is_valid
 
 
 class TestUniqueCombinations():
