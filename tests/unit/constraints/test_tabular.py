@@ -480,7 +480,8 @@ class TestGreaterThan():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThan(low=0, high=['a', 'b#'])
+        instance = GreaterThan(low=0, high=['a', 'b#'], low_is_scalar=True)
+        instance.constraint_columns = ('a', 'b#')
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b#': [4, 5, 6]
