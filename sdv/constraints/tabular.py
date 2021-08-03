@@ -224,7 +224,7 @@ class GreaterThan(Constraint):
     """
 
     _column_list = False
-    _diff_column = None
+    _diff_columns = None
     _is_datetime = None
     _column_to_reconstruct = None
 
@@ -241,6 +241,12 @@ class GreaterThan(Constraint):
         self._drop = drop
         self._high_is_scalar = high_is_scalar
         self._low_is_scalar = low_is_scalar
+
+        if strict:
+            self.operator = np.greater
+        else:
+            self.operator = np.greater_equal
+
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -260,7 +266,7 @@ class GreaterThan(Constraint):
 
         return None
 
-    def _get_column_to_reconstruct(self):
+    def _get_columns_to_reconstruct(self):
         if self._drop == 'high':
             column = self._high
         elif self._drop == 'low':
@@ -272,7 +278,7 @@ class GreaterThan(Constraint):
 
         return column
 
-    def _get_diff_column_name(self, table_data):
+    def _get_diff_columns_name(self, table_data):
         token = '#'
         names = []
         for column in self.constraint_columns:
@@ -283,7 +289,6 @@ class GreaterThan(Constraint):
             names.append(name)
 
         if not self._high_is_scalar and not self._low_is_scalar:
-            assert len(self.constraint_columns) == 2
             while token.join(self.constraint_columns) in table_data.columns:
                 token += '#'
 
@@ -327,9 +332,9 @@ class GreaterThan(Constraint):
             if len(self.constraint_columns) > 2:
                 raise ValueError('`low` and `high` cannot be more than one column.')
 
-        self._column_to_reconstruct = self._get_column_to_reconstruct()
-        self._dtype = [table_data[column].dtype for column in self._column_to_reconstruct]
-        self._diff_column = self._get_diff_column_name(table_data)
+        self._columns_to_reconstruct = self._get_columns_to_reconstruct()
+        self._dtype = [table_data[column].dtype for column in self._columns_to_reconstruct]
+        self._diff_columns = self._get_diff_columns_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
@@ -346,10 +351,7 @@ class GreaterThan(Constraint):
         low = self._get_low_value(table_data)
         high = self._get_high_value(table_data)
 
-        if self._strict:
-            return np.greater(high, low).all(axis=1)
-
-        return np.greater_equal(high, low).all(axis=1)
+        return self.operator(high, low).all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -374,7 +376,7 @@ class GreaterThan(Constraint):
         if self._is_datetime:
             diff = diff.astype(np.float64)
 
-        table_data[self._diff_column] = np.log(diff + 1)
+        table_data[self._diff_columns] = np.log(diff + 1)
         if self._drop == 'high':
             table_data = table_data.drop(self._high, axis=1)
         elif self._drop == 'low':
@@ -401,7 +403,7 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = (np.exp(table_data[self._diff_column].values).round() - 1).clip(0)
+        diff = (np.exp(table_data[self._diff_columns].values).round() - 1).clip(0)
         if self._is_datetime:
             diff = diff.astype('timedelta64[ns]')
 
@@ -423,10 +425,10 @@ class GreaterThan(Constraint):
             else:
                 new_values = low + diff[invalid]
 
-            for i, column in enumerate(self._column_to_reconstruct):
+            for i, column in enumerate(self._columns_to_reconstruct):
                 table_data.at[invalid, column] = new_values[:, i].astype(self._dtype[i])
 
-        table_data = table_data.drop(self._diff_column, axis=1)
+        table_data = table_data.drop(self._diff_columns, axis=1)
 
         return table_data
 
@@ -443,7 +445,7 @@ class Positive(GreaterThan):
             The name of the column(s) that are constrained to be positive.
         strict (bool):
             Whether the comparison of the values should be strict; disclude
-            zero ``>`` or include it ``>=``.. Currently, this is only respected
+            zero ``>`` or include it ``>=``. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
