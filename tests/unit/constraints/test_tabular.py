@@ -3400,36 +3400,34 @@ class TestUnique():
         Input:
         - column names to keep unique.
         Output:
-        - Instance with ``columns`` set and ``handling_strategy``
-        set to ``'reject_sampling'``.
+        - Instance with ``columns`` set and ``transform``
+        and ``reverse_transform`` methods set to ``instance._identity``.
         """
         # Run
         instance = Unique(columns=['a', 'b'])
 
         # Assert
         assert instance.columns == ['a', 'b']
-        assert instance.handling_strategy == 'reject_sampling'
         assert instance.fit_columns_model is False
+        assert instance.transform == instance._identity
+        assert instance.reverse_transform == instance._identity
 
     def test___init__one_column(self):
         """Test the ``Unique.__init__`` method.
 
         The ``columns`` should be set to a list even if a string is
-        provided and the ``handling_strategy`` should be set to
-        ``'reject_sampling'``.
+        provided.
 
         Input:
         - string that is the name of a column.
         Output:
-        - Instance with ``columns`` set and ``handling_strategy``
-        set to ``'reject_sampling'``.
+        - Instance with ``columns`` set to list of one element.
         """
         # Run
         instance = Unique(columns='a')
 
         # Assert
         assert instance.columns == ['a']
-        assert instance.handling_strategy == 'reject_sampling'
 
     def test_is_valid(self):
         """Test the ``Unique.is_valid`` method.

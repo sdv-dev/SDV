@@ -82,6 +82,51 @@ def test_conditional_sampling_graceful_reject_sampling(model):
         model.sample(5, conditions=conditions, graceful_reject_sampling=False)
 
 
+def test__sample_rows_previous_rows_appended_correctly():
+    """Test the ``BaseTabularModel._sample_rows`` method.
+
+    If ``_sample_rows`` is passed ``previous_rows``, then it
+    shuld reset the index when appending them to the new
+    sampled rows.
+
+    Input:
+    - num_rows is 5
+    - previous_rows is a DataFrame of 3 existing rows.
+
+    Output:
+    - 5 sampled rows with index set to [0, 1, 2, 3, 4]
+    """
+    # Setup
+    model = GaussianCopula()
+    previous_data = pd.DataFrame({
+        'column1': [1, 2, 3],
+        'column2': [4, 5, 6],
+        'column3': [7, 8, 9]
+    })
+    new_data = pd.DataFrame({
+        'column1': [4, 5],
+        'column2': [7, 8],
+        'column3': [10, 11]
+    })
+    model._metadata = Mock()
+    model._sample = Mock()
+    model._sample.return_value = new_data
+    model._metadata.reverse_transform.return_value = new_data
+    model._metadata.filter_valid = lambda x: x
+
+    # Run
+    sampled, num_valid = model._sample_rows(5, previous_rows=previous_data)
+
+    # Assert
+    expected = pd.DataFrame({
+        'column1': [1, 2, 3, 4, 5],
+        'column2': [4, 5, 6, 7, 8],
+        'column3': [7, 8, 9, 10, 11]
+    })
+    assert num_valid == 5
+    pd.testing.assert_frame_equal(sampled, expected)
+
+
 def test_sample_empty_transformed_conditions():
     """Test that None is passed to ``_sample_batch`` if transformed conditions are empty.
 
