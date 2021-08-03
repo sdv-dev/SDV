@@ -3409,6 +3409,7 @@ class TestUnique():
         # Assert
         assert instance.columns == ['a', 'b']
         assert instance.handling_strategy == 'reject_sampling'
+        assert instance.fit_columns_model is False
 
     def test___init__one_column(self):
         """Test the ``Unique.__init__`` method.

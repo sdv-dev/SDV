@@ -234,7 +234,7 @@ class BaseTabularModel:
             sampled = self._metadata.reverse_transform(sampled)
 
             if previous_rows is not None:
-                sampled = previous_rows.append(sampled)
+                sampled = previous_rows.append(sampled).reset_index(drop=True)
 
             sampled = self._metadata.filter_valid(sampled)
 
