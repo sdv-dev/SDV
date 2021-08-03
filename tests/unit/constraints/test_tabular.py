@@ -75,6 +75,22 @@ class TestUniqueCombinations():
         # Assert
         assert instance._columns == columns
 
+    def test___init__with_one_column(self):
+        """Test the ``UniqueCombinations.__init__`` method with only one constraint column.
+
+        Expect a ``ValueError`` because UniqueCombinations requires at least two
+        constraint columns.
+
+        Side effects:
+        - A ValueError is raised
+        """
+        # Setup
+        columns = ['c']
+
+        # Run and assert
+        with pytest.raises(ValueError):
+            UniqueCombinations(columns=columns)
+
     def test_fit(self):
         """Test the ``UniqueCombinations.fit`` method.
 

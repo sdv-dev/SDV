@@ -73,7 +73,8 @@ class UniqueCombinations(Constraint):
 
     Args:
         columns (list[str]):
-            Names of the columns that need to produce unique combinations.
+            Names of the columns that need to produce unique combinations. Must
+            contain at least two columns.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``. Defaults to ``transform``.
@@ -85,6 +86,9 @@ class UniqueCombinations(Constraint):
     _uuids_to_combinations = None
 
     def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
+        if len(columns) < 2:
+            raise ValueError('UniqueCombinations requires at least two constraint columns.')
+
         self._columns = columns
         self.constraint_columns = tuple(columns)
         super().__init__(handling_strategy=handling_strategy,
