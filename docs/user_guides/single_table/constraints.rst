@@ -174,30 +174,26 @@ this functionality, we can pass:
         handling_strategy='reject_sampling'
     )
 
-ScalarInequality Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Similar to the GreaterThan constraint, we can we need to constraint our 
-data to be particularly larger than (or smaller than) a constant value. 
-This constraint guarantees that the given column(s) are always greater 
-(or less than) than a given scalar value. In order to use it, we need 
-to create an instance passing:
-
--  the name of the column(s) under this constraint
--  the ``scalar`` value of which we hold the inequality
--  whether we are user the greater than inequality of less than
--  the handling strategy that we want to use
+Optionally, when constructing ``GreaterThan`` constraint for scalar
+comparisons, we can specify more than a single column in either 
+the ``high`` or ``low`` arguments. For example, we can create a 
+``GreaterThan`` constraint that ensures that the years of experience
+is more than one year.
 
 .. ipython:: python
     :okwarning:
 
-    salary_gt_30000_constraint = ScalarInequality(
-        columns='salary',
-        scalar=30000,
-        greater=True,
+    experience_years_gt_one_constraint = GreaterThan(
+        low=1,
+        high=['years_in_the_company', 'prior_years_experience'],
         handling_strategy='reject_sampling'
     )
 
+.. note::
+
+    To specify more than one column, either ``high`` or ``low`` must
+    be a scalar value, otherwise the constraint cannot be correctly
+    evaluated.
 
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,8 +210,8 @@ column is always positive or negative. We can create an instance passing:
 
     from sdv.constraints import Positive
 
-    positive_prior_exp_and_age_constraint = Positive(
-        columns=['prior_years_experience', 'age'],
+    positive_age_constraint = Positive(
+        columns='age',
         strict=False,
         handling_strategy='reject_sampling'
     )
@@ -251,7 +247,8 @@ constraint by passing it:
     years_in_the_company_constraint = ColumnFormula(
         column='years_in_the_company',
         formula=years_in_the_company,
-        handling_strategy='transform'
+        handling_strategy='transform',
+        drop_column=False
     )
 
 Rounding Constraint
@@ -344,7 +341,8 @@ constraints that we just defined as a ``list``:
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
         salary_gt_30000_constraint,
-        positive_prior_exp_and_age_constraint,
+        experience_years_gt_one_constraint,
+        positive_age_constraint,
         salary_rounding_constraint,
         reasonable_age_constraint,
         one_hot_constraint
