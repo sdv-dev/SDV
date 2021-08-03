@@ -203,6 +203,8 @@ or ``Negative`` constraints. These constraints enforce that specified
 column(s) are always positive or negative. We can create an instance passing:
 
 - the name of the column(s) for ``Negative`` or ``Positive`` constraints
+- a boolean specifying whether to make the data strictly above or below 0, 
+  or include 0 as a possible value
 - the handling strategy that we want to use
 
 .. ipython:: python
