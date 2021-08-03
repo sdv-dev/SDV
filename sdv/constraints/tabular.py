@@ -97,7 +97,6 @@ class CustomConstraint(Constraint):
         """
         return self._apply(self._transform)
 
-
     def apply_reverse_transform(self, table_data):
         """Reverse transform the table data.
 
@@ -110,7 +109,6 @@ class CustomConstraint(Constraint):
                 Transformed data.
         """
         return self._apply(self._reverse_transform, reverse=True)
-
 
     def apply_is_valid(self, table_data):
         """Say whether values are valid.
@@ -128,7 +126,7 @@ class CustomConstraint(Constraint):
                 valid = [self._is_valid(table_data, column) for column in self._columns]
             except TypeError:
                 valid = [self._is_valid(table_data[column]) for column in self._columns]
-            
+
             return np.logical_and.reduce(valid)
 
         return self._is_valid(table_data)
