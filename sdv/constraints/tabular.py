@@ -971,7 +971,7 @@ class Unique(Constraint):
     """
 
     def __init__(self, columns):
-        self.columns = [columns] if isinstance(columns, str) else columns
+        self.columns = columns if isinstance(columns, list) else [columns]
         super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
 
     def is_valid(self, table_data):

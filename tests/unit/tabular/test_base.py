@@ -86,7 +86,7 @@ def test__sample_rows_previous_rows_appended_correctly():
     """Test the ``BaseTabularModel._sample_rows`` method.
 
     If ``_sample_rows`` is passed ``previous_rows``, then it
-    shuld reset the index when appending them to the new
+    should reset the index when appending them to the new
     sampled rows.
 
     Input:
