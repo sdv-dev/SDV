@@ -68,30 +68,3 @@ def test_constraints_reject_sampling_zero_valid():
     gc = GaussianCopula(constraints=[constraint])
     gc.fit(employees)
     gc.sample(10)
-
-
-def test_constraints_condition_on_constraint_column():
-    """Test the CustomFormula constraint when conditioning on the constraint column.
-
-    Expect conditioning on the constraint column to work with CustomFormula.
-
-    Setup:
-        - Load employee data
-        - Setup CustomFormula on `years_in_the_company` column
-        - Create and fit the model
-        - Sample, conditioning on `years_in_the_company` column
-    Side effects:
-        - Expect no errors
-    """
-    employees = load_tabular_demo()
-
-    years_in_the_company_constraint = ColumnFormula(
-        column='years_in_the_company',
-        formula=years_in_the_company,
-        handling_strategy='transform'
-    )
-
-    constraints = [years_in_the_company_constraint]
-    gc = GaussianCopula(constraints=constraints)
-    gc.fit(employees)
-    gc.sample(10, conditions={'years_in_the_company': 1})
