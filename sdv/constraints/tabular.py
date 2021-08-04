@@ -45,6 +45,7 @@ class CustomConstraint(Constraint):
         is_valid (callable):
             Function to replace the ``is_valid`` method.
     """
+
     def _run(self, function, table_data, reverse=False):
         table_data = table_data.copy()
         if self._columns:
