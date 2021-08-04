@@ -322,17 +322,14 @@ def _load_tabular_dummy():
     """Load a dummy tabular demo dataframe."""
     age = np.random.randint(30, 50, 12)
     age_when_joined = age - np.random.randint(0, 10, 12)
-    faker = Faker()
-    names = [faker.name() for _ in range(12)]
-    adresses = [faker.address() for _ in range(12)]
+    employee_ids = np.random.randint(100000, 999999, 12)
     salary = np.random.uniform(30000, 160000, 12).round(2)
     years_exp = np.random.randint(1, 6, 12)
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
         'department': ['Sales', 'Design', 'AI', 'Search Engine', 'BigData', 'Support'] * 2,
-        'name': names,
-        'address': adresses,
+        'employee_id': employee_ids,
         'age': age,
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,
@@ -391,8 +388,7 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
             'fields': {
                 'company': {'type': 'categorical'},
                 'department': {'type': 'categorical'},
-                'name': {'type': 'categorical'},
-                'address': {'type': 'categorical'},
+                'employee_id': {'type': 'numerical', 'subtype': 'integer'},
                 'age': {'type': 'numerical', 'subtype': 'integer'},
                 'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
                 'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'},
