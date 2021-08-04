@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.table import Table
+from sdv.tabular.base import COND_IDX
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
+from tests.utils import DataFrameMatcher
 
 MODELS = [
     CTGAN(epochs=1),
@@ -16,17 +18,8 @@ MODELS = [
 ]
 
 
-class DataFrameMatcher:
-    def __init__(self, df):
-        self.df = df
-
-    def __eq__(self, other):
-        return self.df.equals(other)
-
-
 class TestBaseTabularModel:
 
-    @patch("sdv.tabular.base.COND_IDX", 'test-cond-idx')
     def test_sample_no_transformed_columns(self):
         """Test the ``BaseTabularModel.sample`` method with no transformed columns.
 
@@ -41,6 +34,7 @@ class TestBaseTabularModel:
               conditions dataframe.
             - Mock the ``_conditionally_sample_rows`` method to return the expected
               sampled rows.
+            - Mock the `make_ids_unique` to return the expected sampled rows.
         Input:
             - number of rows
             - one set of conditions
@@ -59,7 +53,7 @@ class TestBaseTabularModel:
         gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
         gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
-            'test-cond-idx': [0, 1, 2]})
+            COND_IDX: [0, 1, 2]})
         gaussian_copula._metadata.make_ids_unique.return_value = expected
 
         # Run
@@ -67,7 +61,7 @@ class TestBaseTabularModel:
 
         # Asserts
         gaussian_copula._conditionally_sample_rows.assert_called_once_with(
-            DataFrameMatcher(pd.DataFrame({'test-cond-idx': [0, 1, 2], 'a': ['a', 'a', 'a']})),
+            DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
             100,
             10,
             {'a': 'a'},
@@ -75,7 +69,7 @@ class TestBaseTabularModel:
             0.01,
             False,
         )
-        assert out.equals(expected)
+        pd.testing.assert_frame_equal(out, expected)
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
