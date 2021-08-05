@@ -24,6 +24,7 @@ Currently implemented constraints are:
 
 import operator
 import uuid
+from itertools import compress
 
 import numpy as np
 import pandas as pd
@@ -213,34 +214,42 @@ class GreaterThan(Constraint):
         drop (str):
             Which column to drop during transformation. Can be ``'high'``,
             ``'low'`` or ``None``.
-        high_is_scalar(bool or None):
-            Whether or not the value for high is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
-        low_is_scalar(bool or None):
-            Whether or not the value for low is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
+        scalar (str):
+            Which value is a scalar. Can be ``'high'``, ``'low'`` or ``None``.
+            If ``None`` then both ``high`` and ``low`` are column names.
     """
 
-    _column_list = False
     _diff_columns = None
     _is_datetime = None
-    _column_to_reconstruct = None
+    _columns_to_reconstruct = None
 
     def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None, high_is_scalar=None,
-                 low_is_scalar=None):
-        self.constraint_columns = (low, high)
-        low = [low] if isinstance(low, str) else low
-        high = [high] if isinstance(high, str) else high
+                 fit_columns_model=True, drop=None, scalar=None):
+
+        if isinstance(low, list) and isinstance(high, list):
+            raise ValueError('`low` and `high` can only be multiple columns ',
+                             'if the other one is scalar.')
+        if scalar == 'high':
+            low = [low] if isinstance(low, str) else low
+            self.constraint_columns = tuple(low)
+        elif scalar == 'low':
+            high = [high] if isinstance(high, str) else high
+            self.constraint_columns = tuple(high)
+        else:
+            if isinstance(low, list):
+                raise ValueError('`low` cannot be a list when `scalar` is `None`.')
+            elif isinstance(high, list):
+                raise ValueError('`high` cannot be a list when `scalar` is `None`.')
+
+            self.constraint_columns = (low, high)
+            low = [low]
+            high = [high]
 
         self._low = low
         self._high = high
         self._strict = strict
         self._drop = drop
-        self._high_is_scalar = high_is_scalar
-        self._low_is_scalar = low_is_scalar
+        self._scalar = scalar
 
         if strict:
             self.operator = np.greater
@@ -251,7 +260,7 @@ class GreaterThan(Constraint):
                          fit_columns_model=fit_columns_model)
 
     def _get_low_value(self, table_data):
-        if self._low_is_scalar:
+        if self._scalar == 'low':
             return self._low
         elif any([low in table_data.columns for low in self._low]):
             return table_data[self._low].values
@@ -259,7 +268,7 @@ class GreaterThan(Constraint):
         return None
 
     def _get_high_value(self, table_data):
-        if self._high_is_scalar:
+        if self._scalar == 'high':
             return self._high
         elif any([high in table_data.columns for high in self._high]):
             return table_data[self._high].values
@@ -271,7 +280,7 @@ class GreaterThan(Constraint):
             column = self._high
         elif self._drop == 'low':
             column = self._low
-        elif self._high_is_scalar:
+        elif self._scalar == 'high':
             column = self._low
         else:
             column = self._high
@@ -288,7 +297,7 @@ class GreaterThan(Constraint):
 
             names.append(name)
 
-        if not self._high_is_scalar and not self._low_is_scalar:
+        if self._scalar is None:
             while token.join(self.constraint_columns) in table_data.columns:
                 token += '#'
 
@@ -316,21 +325,26 @@ class GreaterThan(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        if self._high_is_scalar is None:
-            self._high_is_scalar = not isinstance(self._high, list)
-        if self._low_is_scalar is None:
-            self._low_is_scalar = not isinstance(self._low, list)
-
-        if self._high_is_scalar and self._low_is_scalar:
-            raise TypeError('`low` and `high` cannot be both scalars at the same time')
-        elif self._low_is_scalar:
-            self.constraint_columns = tuple(self._high)
-        elif self._high_is_scalar:
-            self.constraint_columns = tuple(self._low)
+        if self._scalar == 'high':
+            exists = [column in table_data.columns for column in self._low]
+            if not all(exists):
+                raise KeyError(f'The `low` columns {list(compress(self._low, exists))} '
+                               'were not found in table_data.')
+        elif self._scalar == 'low':
+            exists = [column in table_data.columns for column in self._high]
+            if not all(exists):
+                raise KeyError(f'The `high` columns {list(compress(self._high, exists))} '
+                               'were not found in table_data.')
         else:
-            self.constraint_columns = tuple(self._low + self._high)
-            if len(self.constraint_columns) > 2:
-                raise ValueError('`low` and `high` cannot be more than one column.')
+            for column in self._low:
+                if column not in table_data.columns:
+                    raise KeyError(f'The column {column} specified in `low` was not found in '
+                                   f'table_data. If {column} is a scalar, set `scalar="low"`.')
+
+            for column in self._high:
+                if column not in table_data.columns:
+                    raise KeyError(f'The column {column} specified in `high` was not found in '
+                                   f'table_data. If {column} is a scalar, set `scalar="high"`.')
 
         self._columns_to_reconstruct = self._get_columns_to_reconstruct()
         self._dtype = [table_data[column].dtype for column in self._columns_to_reconstruct]
@@ -418,12 +432,12 @@ class GreaterThan(Constraint):
             table_data[self._low] = new_values.astype(dict(zip(self._low, self._dtype)))
         else:
             invalid = ~self.is_valid(table_data)
-            if not self._high_is_scalar and not self._low_is_scalar:
-                new_values = low[invalid] + diff[invalid]
-            elif self._high_is_scalar:
+            if self._scalar == 'high':
                 new_values = high - diff[invalid]
-            else:
+            elif self._scalar == 'low':
                 new_values = low + diff[invalid]
+            else:
+                new_values = low[invalid] + diff[invalid]
 
             for i, column in enumerate(self._columns_to_reconstruct):
                 table_data.at[invalid, column] = new_values[:, i].astype(self._dtype[i])
@@ -434,7 +448,7 @@ class GreaterThan(Constraint):
 
 
 class Positive(GreaterThan):
-    """Ensure that the given column is always positive.
+    """Ensure that the given column(s) are always positive.
 
     The transformation strategy works by creating columns with the
     difference between given columns and zero then computing back the
@@ -455,11 +469,16 @@ class Positive(GreaterThan):
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None):
+                 fit_columns_model=True, drop=False):
+        if drop:
+            drop = 'high'
+        else:
+            drop = None
+
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
-                         high=columns, low=0, high_is_scalar=False,
-                         low_is_scalar=True, drop=drop, strict=strict)
+                         high=columns, low=0, scalar='low',
+                         drop=drop, strict=strict)
 
 
 class Negative(GreaterThan):
@@ -484,11 +503,16 @@ class Negative(GreaterThan):
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None):
+                 fit_columns_model=True, drop=False):
+        if drop:
+            drop = 'low'
+        else:
+            drop = None
+
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
-                         high=0, low=columns, high_is_scalar=True,
-                         low_is_scalar=False, drop=drop, strict=strict)
+                         high=0, low=columns, scalar='high',
+                         drop=drop, strict=strict)
 
 
 class ColumnFormula(Constraint):

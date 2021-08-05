@@ -414,7 +414,7 @@ class TestUniqueCombinations():
 
 class TestGreaterThan():
 
-    def test___init___strict_false(self):
+    def test___init___(self):
         """Test the ``GreaterThan.__init__`` method.
 
         The passed arguments should be stored as attributes.
@@ -434,43 +434,148 @@ class TestGreaterThan():
         assert instance._low == ['a']
         assert instance._high == ['b']
         assert instance._strict is False
-        assert instance._high_is_scalar is None
-        assert instance._low_is_scalar is None
+        assert instance._scalar is None
         assert instance._drop is None
+        assert instance.constraint_columns == ('a', 'b')
 
-    def test___init___all_parameters_passed(self):
+    def test___init___high_is_scalar(self):
         """Test the ``GreaterThan.__init__`` method.
 
-        The passed arguments should be stored as attributes.
+        The passed arguments should be stored as attributes. Make sure ``scalar``
+        is set to ``'high'``.
+
+        Input:
+        - low = 'a'
+        - high = 0
+        - strict = True
+        - drop = 'high'
+        - scalar = 'high'
+        Side effects:
+        - instance._low == 'a'
+        - instance._high == 0
+        - instance._strict == True
+        - instance._drop = 'high'
+        - instance._scalar == 'high'
+        """
+        # Run
+        instance = GreaterThan(low='a', high=0, strict=True, drop='high', scalar='high')
+
+        # Asserts
+        assert instance._low == ['a']
+        assert instance._high == 0
+        assert instance._strict is True
+        assert instance._scalar == 'high'
+        assert instance._drop == 'high'
+        assert instance.constraint_columns == ('a',)
+
+    def test___init___low_is_scalar(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        The passed arguments should be stored as attributes. Make sure ``scalar``
+        is set to ``'high'``.
+
+        Input:
+        - low = 0
+        - high = 'a'
+        - strict = True
+        - drop = 'low'
+        - scalar = 'low'
+        Side effects:
+        - instance._low == 0
+        - instance._high == 'a'
+        - instance._stric == True
+        - instance._drop = 'low'
+        - instance._scalar == 'low'
+        """
+        # Run
+        instance = GreaterThan(low=0, high='a', strict=True, drop='low', scalar='low')
+
+        # Asserts
+        assert instance._low == 0
+        assert instance._high == ['a']
+        assert instance._strict is True
+        assert instance._scalar == 'low'
+        assert instance._drop == 'low'
+        assert instance.constraint_columns == ('a',)
+
+    def test___init___high_low_both_list_error(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        Make sure to raise an error when both ``high`` and ``low`` are lists.
+
+        Input:
+        - low = ['a']
+        - high = ['b']
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            GreaterThan(low=['a'], high=['b'])
+
+    def test___init___high_is_list_scalar_is_none_error(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        Make sure to raise an error when ``high`` is a list and
+        ``scalar`` is ``None``.
+
+        Input:
+        - low = 'a'
+        - high = ['b']
+        - scalar = None
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            GreaterThan(low='a', high=['b'], scalar=None)
+
+    def test___init___low_is_list_scalar_is_none_error(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        Make sure to raise an error when ``low`` is a list and
+        ``scalar`` is ``None``.
+
+        Input:
+        - low = ['a']
+        - high = 'b'
+        - scalar = None
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            GreaterThan(low=['a'], high='b', scalar=None)
+
+    def test___init___strict_is_false(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        Ensure that ``operator`` is set to ``np.greater_equal``
+        when ``strict`` is set to ``False``.
+
+        Input:
+        - low = 'a'
+        - high = 'b'
+        - strict = False
+        """
+        # Run
+        instance = GreaterThan(low='a', high='b', strict=False)
+
+        # Assert
+        assert instance.operator == np.greater_equal
+
+    def test___init___strict_is_true(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        Ensure that ``operator`` is set to ``np.greater``
+        when ``strict`` is set to ``True``.
 
         Input:
         - low = 'a'
         - high = 'b'
         - strict = True
-        - drop = 'high'
-        - high_is_scalar = True
-        - low_is_scalar = False
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 'b'
-        - instance._stric == True
-        - instance._drop = 'high'
-        - instance._high_is_scalar = True
-        - instance._low_is_scalar = False
         """
         # Run
-        instance = GreaterThan(low='a', high='b', strict=True, drop='high',
-                               high_is_scalar=True, low_is_scalar=False)
+        instance = GreaterThan(low='a', high='b', strict=True)
 
-        # Asserts
-        assert instance._low == ['a']
-        assert instance._high == ['b']
-        assert instance._strict is True
-        assert instance._high_is_scalar is True
-        assert instance._low_is_scalar is False
-        assert instance._drop == 'high'
+        # Assert
+        assert instance.operator == np.greater
 
-    def test__get_diff_columns_name(self):
+    def test__get_diff_columns_name_low_is_scalar(self):
         """Test the ``GreaterThan._get_diff_columns_name`` method.
 
         The returned names should be equal to the given columns plus
@@ -480,8 +585,8 @@ class TestGreaterThan():
         - Table with given data.
         """
         # Setup
-        instance = GreaterThan(low=0, high=['a', 'b#'], low_is_scalar=True)
-        instance.constraint_columns = ('a', 'b#')
+        instance = GreaterThan(low=0, high=['a', 'b#'], scalar='low')
+
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b#': [4, 5, 6]
@@ -490,6 +595,50 @@ class TestGreaterThan():
 
         # Assert
         expected = ['a#', 'b##']
+        assert out == expected
+
+    def test__get_diff_columns_name_high_is_scalar(self):
+        """Test the ``GreaterThan._get_diff_columns_name`` method.
+
+        The returned names should be equal to the given columns plus
+        tokenized with '#'.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThan(low=['a', 'b'], high=0, scalar='high')
+
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        out = instance._get_diff_columns_name(table_data)
+
+        # Assert
+        expected = ['a#', 'b#']
+        assert out == expected
+
+    def test__get_diff_columns_name_scalar_is_none(self):
+        """Test the ``GreaterThan._get_diff_columns_name`` method.
+
+        The returned names should be equal one name of the two columns
+        with a token between them.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        instance = GreaterThan(low='a#', high='b', scalar=None)
+
+        table_data = pd.DataFrame({
+            'a#': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        out = instance._get_diff_columns_name(table_data)
+
+        # Assert
+        expected = ['a##b']
         assert out == expected
 
     def test_fit_only_one_datetime_arg(self):
@@ -506,7 +655,7 @@ class TestGreaterThan():
         - ValueError
         """
         # Setup
-        instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'))
+        instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'), scalar='high')
 
         # Run and assert
         table_data = pd.DataFrame({
@@ -516,119 +665,92 @@ class TestGreaterThan():
         with pytest.raises(ValueError):
             instance.fit(table_data)
 
-    def test_fit__low_is_scalar_is_none_determined_as_scalar(self):
+    def test_fit__low_is_not_found_and_scalar_is_none(self):
         """Test the ``GreaterThan.fit`` method.
 
-        The ``GreaterThan.fit`` method should figure out if low is
-        a scalar if ``_low_is_scalar`` is None.
+        The ``GreaterThan.fit`` method should raise an error if
+        the ``low`` is set to a value not seen in ``table_data``.
 
         Input:
         - Table without ``low`` in columns.
         Side Effect:
-        - ``_low_is_scalar`` should be set to ``True``.
+        - KeyError.
         """
         # Setup
         instance = GreaterThan(low=3, high='b')
 
-        # Run
+        # Run / Assert
         table_data = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [4, 5, 6]
         })
-        instance.fit(table_data)
+        with pytest.raises(KeyError):
+            instance.fit(table_data)
 
-        # Asserts
-        assert instance._low_is_scalar is True
-
-    def test_fit__low_is_scalar_is_none_determined_as_column(self):
+    def test_fit__high_is_not_found_and_scalar_is_none(self):
         """Test the ``GreaterThan.fit`` method.
 
-        The ``GreaterThan.fit`` method should figure out if low is
-        a column name if ``_low_is_scalar`` is None.
-
-        Input:
-        - Table with ``low`` in columns.
-        Side Effect:
-        - ``_low_is_scalar`` should be set to ``False``.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        instance.fit(table_data)
-
-        # Asserts
-        assert instance._low_is_scalar is False
-
-    def test_fit__high_is_scalar_is_none_determined_as_scalar(self):
-        """Test the ``GreaterThan.fit`` method.
-
-        The ``GreaterThan.fit`` method should figure out if high is
-        a scalar if ``_high_is_scalar`` is None.
+        The ``GreaterThan.fit`` method should raise an error if
+        the ``high`` is set to a value not seen in ``table_data``.
 
         Input:
         - Table without ``high`` in columns.
         Side Effect:
-        - ``_high_is_scalar`` should be set to ``True``.
+        - KeyError.
         """
         # Setup
         instance = GreaterThan(low='a', high=3)
 
-        # Run
+        # Run / Assert
         table_data = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [4, 5, 6]
         })
-        instance.fit(table_data)
+        with pytest.raises(KeyError):
+            instance.fit(table_data)
 
-        # Asserts
-        assert instance._high_is_scalar is True
-
-    def test_fit__high_is_scalar_is_none_determined_as_column(self):
-        """Test the ``GreaterThan.fit`` method.
-
-        The ``GreaterThan.fit`` method should figure out if high is
-        a column name if ``_high_is_scalar`` is None.
-
-        Input:
-        - Table with ``high`` in columns.
-        Side Effect:
-        - ``_high_is_scalar`` should be set to ``False``.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        instance.fit(table_data)
-
-        # Asserts
-        assert instance._high_is_scalar is False
-
-    def test_fit__high_is_scalar__low_is_scalar_raises_error(self):
+    def test_fit__low_is_not_found_scalar_is_high(self):
         """Test the ``GreaterThan.fit`` method.
 
         The ``GreaterThan.fit`` method should raise an error if
-        `_low_is_scalar` and `_high_is_scalar` are true.
+        the ``low`` is set to a value not seen in ``table_data``.
 
         Input:
-        - Table with one column.
+        - Table without ``low`` in columns.
         Side Effect:
-        - ``TypeError`` is raised.
+        - KeyError.
         """
         # Setup
-        instance = GreaterThan(low=1, high=2)
+        instance = GreaterThan(low='c', high=3, scalar='high')
 
-        # Run / Asserts
-        table_data = pd.DataFrame({'a': [1, 2, 3]})
-        with pytest.raises(TypeError):
+        # Run / Assert
+        table_data = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [4, 5, 6]
+        })
+        with pytest.raises(KeyError):
+            instance.fit(table_data)
+
+    def test_fit__high_is_not_found_scalar_is_high(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should raise an error if
+        the ``high`` is set to a value not seen in ``table_data``.
+
+        Input:
+        - Table without ``high`` in columns.
+        Side Effect:
+        - KeyError.
+        """
+        # Setup
+        instance = GreaterThan(low=3, high='c', scalar='low')
+
+        # Run / Assert
+        table_data = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [4, 5, 6]
+        })
+        with pytest.raises(KeyError):
             instance.fit(table_data)
 
     def test_fit__columns_to_reconstruct_drop_high(self):
@@ -707,7 +829,7 @@ class TestGreaterThan():
         """Test the ``GreaterThan.fit`` method.
 
         The ``GreaterThan.fit`` method should set ``_columns_to_reconstruct``
-        to `low` if ``instance._high_is_scalar`` is ``True``.
+        to `low` if ``instance._scalar`` is ``'high'``.
 
         Input:
         - Table with two columns.
@@ -715,7 +837,7 @@ class TestGreaterThan():
         - ``_columns_to_reconstruct`` is ``instance._low``
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', high_is_scalar=True)
+        instance = GreaterThan(low='a', high='b', scalar='high')
 
         # Run
         table_data = pd.DataFrame({
@@ -726,6 +848,30 @@ class TestGreaterThan():
 
         # Asserts
         assert instance._columns_to_reconstruct == ['a']
+
+    def test_fit__columns_to_reconstruct_low_is_scalar(self):
+        """Test the ``GreaterThan.fit`` method.
+
+        The ``GreaterThan.fit`` method should set ``_columns_to_reconstruct``
+        to `high` if ``instance._scalar`` is ``'low'``.
+
+        Input:
+        - Table with two columns.
+        Side Effect:
+        - ``_columns_to_reconstruct`` is ``instance._high``
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', scalar='low')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        instance.fit(table_data)
+
+        # Asserts
+        assert instance._columns_to_reconstruct == ['b']
 
     def test_fit__diff_columns_one_column(self):
         """Test the ``GreaterThan.fit`` method.
@@ -740,7 +886,7 @@ class TestGreaterThan():
         - ``_columns_to_reconstruct`` is ``instance._low``
         """
         # Setup
-        instance = GreaterThan(low='a', high=3, high_is_scalar=True)
+        instance = GreaterThan(low='a', high=3, scalar='high')
 
         # Run
         table_data = pd.DataFrame({'a': [1, 2, 3]})
@@ -860,7 +1006,7 @@ class TestGreaterThan():
 
         The ``GreaterThan.fit`` method should learn and store the
         ``dtype`` of the ``low`` column as the ``_dtype`` attribute
-        if ``_high_is_scalar`` is ``True``.
+        if ``_scalar`` is ``'high'``.
 
         Input:
         - Table that contains two constrained columns with the low one
@@ -869,7 +1015,7 @@ class TestGreaterThan():
         - The _dtype attribute gets `float` as the value.
         """
         # Setup
-        instance = GreaterThan(low='a', high=3)
+        instance = GreaterThan(low='a', high=3, scalar='high')
 
         # Run
         table_data = pd.DataFrame({
@@ -887,7 +1033,7 @@ class TestGreaterThan():
 
         The ``GreaterThan.fit`` method should learn and store the
         ``dtype`` of the ``high`` column as the ``_dtype`` attribute
-        if ``_low_is_scalar`` is ``True``.
+        if ``_scalar`` is ``'low'``.
 
         Input:
         - Table that contains two constrained columns with the high one
@@ -896,7 +1042,7 @@ class TestGreaterThan():
         - The _dtype attribute gets `float` as the value.
         """
         # Setup
-        instance = GreaterThan(low=3, high='b')
+        instance = GreaterThan(low=3, high='b', scalar='low')
 
         # Run
         table_data = pd.DataFrame({
@@ -919,7 +1065,7 @@ class TestGreaterThan():
         - Table that contains two constrained columns with different dtype.
         """
         # Setup
-        instance = GreaterThan(low=['a', 'b'], high=0)
+        instance = GreaterThan(low=['a', 'b'], high=0, scalar='high')
         dtype_int = pd.Series([1]).dtype
         dtype_float = np.dtype('float')
         table_data = pd.DataFrame({
@@ -944,7 +1090,7 @@ class TestGreaterThan():
         - Table that contains two constrained columns with different dtype.
         """
         # Setup
-        instance = GreaterThan(low=0, high=['a', 'b'])
+        instance = GreaterThan(low=0, high=['a', 'b'], scalar='low')
         dtype_int = pd.Series([1]).dtype
         dtype_float = np.dtype('float')
         table_data = pd.DataFrame({
@@ -958,27 +1104,6 @@ class TestGreaterThan():
         expected_dtype = [dtype_int, dtype_float]
         assert instance._diff_columns == expected_diff_columns
         assert instance._dtype == expected_dtype
-
-    def test__fit_multi_column_error(self):
-        """Test the ``GreaterThan.fit`` method.
-
-        The ``GreaterThan.fit`` method should raise an error
-        when both ``high`` and ``low`` are a list of columns.
-
-        Setup:
-        - ``GreaterThan`` constraint with ``high`` to be a list of columns.
-        """
-        # Setup
-        instance = GreaterThan(low='c', high=['a', 'b'])
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-
-        # Run / Asserts
-        with pytest.raises(ValueError):
-            instance.fit(table_data)
 
     def test_is_valid_strict_false(self):
         """Test the ``GreaterThan.is_valid`` method with strict False.
@@ -1048,7 +1173,7 @@ class TestGreaterThan():
         column is above low.
         """
         # Setup
-        instance = GreaterThan(low=3, high='b', strict=False, low_is_scalar=True)
+        instance = GreaterThan(low=3, high='b', strict=False, scalar='low')
 
         # Run
         table_data = pd.DataFrame({
@@ -1076,7 +1201,7 @@ class TestGreaterThan():
         column is below high.
         """
         # Setup
-        instance = GreaterThan(low='a', high=2, strict=False, high_is_scalar=True)
+        instance = GreaterThan(low='a', high=2, strict=False, scalar='high')
 
         # Run
         table_data = pd.DataFrame({
@@ -1104,7 +1229,7 @@ class TestGreaterThan():
         column is below high.
         """
         # Setup
-        instance = GreaterThan(low=['a', 'b'], high=2, strict=False, high_is_scalar=True)
+        instance = GreaterThan(low=['a', 'b'], high=2, strict=False, scalar='high')
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 2, 2],
@@ -1130,7 +1255,7 @@ class TestGreaterThan():
         column is above low.
         """
         # Setup
-        instance = GreaterThan(low=2, high=['a', 'b'], strict=False, low_is_scalar=True)
+        instance = GreaterThan(low=2, high=['a', 'b'], strict=False, scalar='low')
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 2, 2],
@@ -1351,7 +1476,7 @@ class TestGreaterThan():
         with the logarithm of the distance + 1.
 
         Setup:
-        - ``_high`` is set to 5 and ``_high_is_scalar`` is ``True``.
+        - ``_high`` is set to 5 and ``_scalar`` is ``'high'``.
         Input:
         - Table with one low column and two dummy columns.
         Output:
@@ -1359,7 +1484,7 @@ class TestGreaterThan():
         which is np.log(4).
         """
         # Setup
-        instance = GreaterThan(low='a', high=5, strict=True, high_is_scalar=True)
+        instance = GreaterThan(low='a', high=5, strict=True, scalar='high')
         instance._diff_columns = ['a#b']
         instance.constraint_columns = ['a']
 
@@ -1388,7 +1513,7 @@ class TestGreaterThan():
         with the logarithm of the distance + 1.
 
         Setup:
-        - ``_high`` is set to 5 and ``_high_is_scalar`` is ``True``.
+        - ``_high`` is set to 5 and ``_scalar`` is ``'low'``.
         Input:
         - Table with one low column and two dummy columns.
         Output:
@@ -1396,7 +1521,7 @@ class TestGreaterThan():
         which is np.log(4).
         """
         # Setup
-        instance = GreaterThan(low=2, high='b', strict=True, low_is_scalar=True)
+        instance = GreaterThan(low=2, high='b', strict=True, scalar='low')
         instance._diff_columns = ['a#b']
         instance.constraint_columns = ['b']
 
@@ -1429,7 +1554,7 @@ class TestGreaterThan():
         - Same table with additional columns of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, high_is_scalar=True)
+        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, scalar='high')
         instance._diff_columns = ['a#', 'b#']
         instance.constraint_columns = ['a', 'b']
 
@@ -1463,7 +1588,7 @@ class TestGreaterThan():
         - Same table with additional columns of the logarithms + 1.
         """
         # Setup
-        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, low_is_scalar=True)
+        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, scalar='low')
         instance._diff_columns = ['a#', 'b#']
         instance.constraint_columns = ['a', 'b']
 
@@ -1784,7 +1909,7 @@ class TestGreaterThan():
 
         Setup:
         - ``_drop`` is set to ``None``.
-        - ``_low`` is set to an int and ``_low_is_scalar`` is ``True``.
+        - ``_low`` is set to an int and ``_scalar`` is ``'low'``.
         Input:
         - Table with a diff column that contains the constant np.log(4).
         The table should have one invalid row where the low value is
@@ -1794,7 +1919,7 @@ class TestGreaterThan():
         invalid rows, as int and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low=3, high='b', strict=True, low_is_scalar=True)
+        instance = GreaterThan(low=3, high='b', strict=True, scalar='low')
         instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
         instance._diff_columns = ['a#b']
         instance._columns_to_reconstruct = ['b']
@@ -1827,7 +1952,7 @@ class TestGreaterThan():
 
         Setup:
         - ``_drop`` is set to ``None``.
-        - ``_high`` is set to an int and ``_high_is_scalar`` is ``True``.
+        - ``_high`` is set to an int and ``_scalar`` is ``'high'``.
         Input:
         - Table with a diff column that contains the constant np.log(4).
         The table should have one invalid row where the low column is
@@ -1837,7 +1962,7 @@ class TestGreaterThan():
         invalid rows, as int and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high=3, strict=True, high_is_scalar=True)
+        instance = GreaterThan(low='a', high=3, strict=True, scalar='high')
         instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
         instance._diff_columns = ['a#b']
         instance._columns_to_reconstruct = ['a']
@@ -1870,7 +1995,7 @@ class TestGreaterThan():
 
         Setup:
         - ``_drop`` is set to ``None``.
-        - ``_high`` is set to an int and ``_high_is_scalar`` is ``True``.
+        - ``_high`` is set to an int and ``_scalar`` is ``'high'``.
         - ``_low`` is set to multiple columns.
         Input:
         - Table with a diff column that contains the constant np.log(4)/np.log(5).
@@ -1881,7 +2006,7 @@ class TestGreaterThan():
         invalid rows, as int and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, high_is_scalar=True)
+        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, scalar='high')
         dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
         instance._dtype = [dtype, dtype]
         instance._diff_columns = ['a#', 'b#']
@@ -1916,7 +2041,7 @@ class TestGreaterThan():
 
         Setup:
         - ``_drop`` is set to ``None``.
-        - ``_low`` is set to an int and ``_low_is_scalar`` is ``True``.
+        - ``_low`` is set to an int and ``_scalar`` is ``'low'``.
         - ``_high`` is set to multiple columns.
         Input:
         - Table with a diff column that contains the constant np.log(4)/np.log(5).
@@ -1927,7 +2052,7 @@ class TestGreaterThan():
         invalid rows, as int and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, low_is_scalar=True)
+        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, scalar='low')
         dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
         instance._dtype = [dtype, dtype]
         instance._diff_columns = ['a#', 'b#']
@@ -1966,7 +2091,7 @@ class TestGreaterThan():
         - Same table with with replaced rows and dropped columns.
         """
         # Setup
-        instance = GreaterThan(low=0, high=['a', 'b'], strict=True, low_is_scalar=True)
+        instance = GreaterThan(low=0, high=['a', 'b'], strict=True, scalar='low')
         dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
         instance._dtype = [dtype, dtype]
         instance._diff_columns = ['a#', 'b#']
@@ -2005,7 +2130,7 @@ class TestGreaterThan():
         - Same table with with replaced rows and dropped columns.
         """
         # Setup
-        instance = GreaterThan(low=['a', 'b'], high=0, strict=True, high_is_scalar=True)
+        instance = GreaterThan(low=['a', 'b'], high=0, strict=True, scalar='high')
         dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
         instance._dtype = [dtype, dtype]
         instance._diff_columns = ['a#', 'b#']
@@ -2037,32 +2162,57 @@ class TestPositive():
         Test the ``Positive.__init__`` method.
 
         The method is expected to set the ``_low`` instance variable
-        to 0, the ``_low_is_scalar`` variable to ``True`` and the
-        ``_high_is_scalar`` variable to ``False``. The rest of the
-        parameters should be passed.
+        to 0, the ``_scalar`` variable to ``'low'``. The rest of the
+        parameters should be passed. Check that ``_drop`` is set to
+        ``None`` when ``drop`` is ``False``.
 
         Input:
         - strict = True
-        - high = 'a'
-        - drop = None
+        - low = 'a'
+        - drop = False
         Side effects:
-        - instance._low == 0
-        - instance._high == 'a'
+        - instance._low == 'a'
+        - instance._high == 0
         - instance._strict == True
-        - instance._high_is_scalar = False
-        - instance._low_is_scalar = True
+        - instance._scalar == 'low'
         - instance._drop = None
         """
         # Run
-        instance = Positive(columns='a', strict=True, drop=None)
+        instance = Positive(columns='a', strict=True, drop=False)
 
         # Asserts
         assert instance._low == 0
         assert instance._high == ['a']
         assert instance._strict is True
-        assert instance._high_is_scalar is False
-        assert instance._low_is_scalar is True
+        assert instance._scalar == 'low'
         assert instance._drop is None
+
+    def test__init__drop_true(self):
+        """
+        Test the ``Positive.__init__`` method with drop is ``True``.
+
+        Check that ``_drop`` is set to 'high' when ``drop`` is ``True``.
+
+        Input:
+        - strict = True
+        - low = 'a'
+        - drop = True
+        Side effects:
+        - instance._low == 'a'
+        - instance._high == 0
+        - instance._strict == True
+        - instance._scalar == 'low'
+        - instance._drop = 'high'
+        """
+        # Run
+        instance = Positive(columns='a', strict=True, drop=True)
+
+        # Asserts
+        assert instance._low == 0
+        assert instance._high == ['a']
+        assert instance._strict is True
+        assert instance._scalar == 'low'
+        assert instance._drop == 'high'
 
 
 class TestNegative():
@@ -2072,32 +2222,57 @@ class TestNegative():
         Test the ``Negative.__init__`` method.
 
         The method is expected to set the ``_high`` instance variable
-        to 0, the ``_high_is_scalar`` variable to ``True`` and the
-        ``_low_is_scalar`` variable to ``False``. The rest of the
-        parameters should be passed.
+        to 0, the ``_scalar`` variable to ``'high'``. The rest of the
+        parameters should be passed. Check that ``_drop`` is set to
+        ``None`` when ``drop`` is ``False``.
 
         Input:
         - strict = True
         - low = 'a'
-        - drop = None
+        - drop = False
         Side effects:
         - instance._low == 'a'
         - instance._high == 0
         - instance._strict == True
-        - instance._high_is_scalar = True
-        - instance._low_is_scalar = False
+        - instance._scalar = 'high'
         - instance._drop = None
         """
         # Run
-        instance = Negative(columns='a', strict=True, drop=None)
+        instance = Negative(columns='a', strict=True, drop=False)
 
         # Asserts
         assert instance._low == ['a']
         assert instance._high == 0
         assert instance._strict is True
-        assert instance._high_is_scalar is True
-        assert instance._low_is_scalar is False
+        assert instance._scalar == 'high'
         assert instance._drop is None
+
+    def test__init__drop_true(self):
+        """
+        Test the ``Negative.__init__`` method with drop is ``True``.
+
+        Check that ``_drop`` is set to 'low' when ``drop`` is ``True``.
+
+        Input:
+        - strict = True
+        - low = 'a'
+        - drop = True
+        Side effects:
+        - instance._low == 'a'
+        - instance._high == 0
+        - instance._strict == True
+        - instance._scalar = 'high'
+        - instance._drop = 'low'
+        """
+        # Run
+        instance = Negative(columns='a', strict=True, drop=True)
+
+        # Asserts
+        assert instance._low == ['a']
+        assert instance._high == 0
+        assert instance._strict is True
+        assert instance._scalar == 'high'
+        assert instance._drop == 'low'
 
 
 def new_column(data):

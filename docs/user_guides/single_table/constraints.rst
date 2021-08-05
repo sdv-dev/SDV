@@ -161,9 +161,8 @@ The ``GreaterThan`` constraint can also be used to guarantee a column is greater
 than a scalar value or specific datetime value instead of another column. To use
 this functionality, we can pass:
 
--  the scalar value for ``low``
--  the scalar value for ``high``
--  a boolean indicating ``low`` or ``high`` is a scalar
+-  the scalar value for ``low`` or the scalar value for ``high``
+-  a flag indicating whether ``low`` or ``high`` is a scalar
 
 .. ipython:: python
     :okwarning:
@@ -171,14 +170,15 @@ this functionality, we can pass:
     salary_gt_30000_constraint = GreaterThan(
         low=30000,
         high='salary',
+        scalar='low',
         handling_strategy='reject_sampling'
     )
 
-Optionally, when constructing ``GreaterThan`` constraint for scalar
-comparisons, we can specify more than a single column in either 
-the ``high`` or ``low`` arguments. For example, we can create a 
-``GreaterThan`` constraint that ensures that the years of experience
-is more than one year.
+Optionally, when constructing ``GreaterThan`` constraint we can specify 
+more than a single column in either the ``high`` or ``low`` arguments. 
+For example, we can create a ``GreaterThan`` constraint that that ensures 
+that both the years in the company and prior years of experience is more 
+than one year.
 
 .. ipython:: python
     :okwarning:
@@ -186,6 +186,7 @@ is more than one year.
     experience_years_gt_one_constraint = GreaterThan(
         low=1,
         high=['years_in_the_company', 'prior_years_experience'],
+        scalar='low',
         handling_strategy='reject_sampling'
     )
 
@@ -199,7 +200,7 @@ Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
-or ``Negative`` constraints. These constraints enforce that specified
+or ``Negative`` constraints. These constraints enforce that the specified
 column(s) are always positive or negative. We can create an instance passing:
 
 - the name of the column(s) for ``Negative`` or ``Positive`` constraints
