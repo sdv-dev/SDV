@@ -148,3 +148,19 @@ OneHotEncoding
    OneHotEncoding.filter_valid
    OneHotEncoding.from_dict
    OneHotEncoding.to_dict
+
+Unique
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Unique
+   Unique.fit
+   Unique.transform
+   Unique.fit_transform
+   Unique.reverse_transform
+   Unique.is_valid
+   Unique.filter_valid
+   Unique.from_dict
+   Unique.to_dict

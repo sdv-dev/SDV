@@ -962,3 +962,40 @@ class OneHotEncoding(Constraint):
         table_data[self._columns] = transformed_data
 
         return table_data
+
+
+class Unique(Constraint):
+    """Ensure that each value for a specified column/group of columns is unique.
+
+    This constraint is provided a list of columns, and guarantees that every
+    unique combination of those columns appears at most once in the sampled
+    data.
+
+    Args:
+        columns (str or list[str]):
+            Name of the column(s) to keep unique.
+    """
+
+    def __init__(self, columns):
+        self.columns = columns if isinstance(columns, list) else [columns]
+        super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
+
+    def is_valid(self, table_data):
+        """Get indices of first instance of unique rows.
+
+        If a row is the first instance of that combination of column
+        values, it is valid. Otherwise it is false.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        valid = pd.Series([False] * table_data.shape[0])
+        data = table_data.reset_index()
+        groups = data.groupby(self.columns)
+        valid.iloc[groups.first()['index'].values] = True
+        return valid
