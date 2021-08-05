@@ -205,6 +205,16 @@ class Table:
                 'float': custom_float
             })
 
+    @staticmethod
+    def _get_constraint_sort_key(constraint):
+        try:
+            if constraint.handling_strategy == 'reject_sampling':
+                return 0
+            else:
+                return 1
+        except AttributeError:
+            return 1
+
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
@@ -222,6 +232,7 @@ class Table:
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
         self._constraints = constraints or []
+        self._constraints.sort(key=self._get_constraint_sort_key)
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)

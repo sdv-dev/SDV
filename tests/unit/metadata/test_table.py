@@ -4,7 +4,9 @@ import pandas as pd
 import pytest
 from rdt.transformers.numerical import NumericalTransformer
 
+from sdv.constraints.base import Constraint
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.tabular import CustomConstraint
 from sdv.metadata import Table
 
 
@@ -13,8 +15,7 @@ class TestTable:
     @patch('sdv.metadata.table.rdt.transformers.NumericalTransformer',
            spec_set=NumericalTransformer)
     def test__init__(self, transformer_mock):
-        """
-        Test that ``__init__`` method passes parameters.
+        """Test that ``__init__`` method passes parameters.
 
         The ``__init__`` method should pass the custom parameters
         to the ``NumericalTransformer``.
@@ -35,6 +36,55 @@ class TestTable:
             dtype=int, rounding=-1, max_value=100, min_value=-50)
         transformer_mock.assert_any_call(
             dtype=float, rounding=-1, max_value=100, min_value=-50)
+
+    def test__init__sorts_constraints(self):
+        """Test that ``__init__`` method sorts constraints.
+
+        The ``__init__`` method should sort constraints by putting
+        constraints with a ``handling_strategy`` of ``reject_sampling``
+        before the ones with ``transform``.
+
+        Input:
+        - list of constraints with some ``transform`` constraints listed
+        before ``reject_sampling`` constraints.
+        Output:
+        - Instance with ``instance.constraints`` sorted properly.
+        """
+        # Setup
+        constraint1 = Constraint(handling_strategy='transform')
+        constraint2 = Constraint(handling_strategy='transform')
+        constraint3 = Constraint(handling_strategy='reject_sampling')
+        constraints = [constraint1, constraint2, constraint3]
+
+        # Run
+        instance = Table(constraints=constraints)
+
+        # Asserts
+        instance._constraints == [constraint3, constraint1, constraint2]
+
+    def test__init__sorts_constraints_no_handling_strategy(self):
+        """Test that ``__init__`` method sorts constraints.
+
+        The ``__init__`` method should sort constraints with no
+        ``handling_strategy`` after those with ``reject_sampling``.
+
+        Input:
+        - list of constraints with some having no ``handling_strategy`` listed
+        before ``reject_sampling`` constraints.
+        Output:
+        - Instance with ``instance.constraints`` sorted properly.
+        """
+        # Setup
+        constraint1 = CustomConstraint()
+        constraint2 = Constraint(handling_strategy='transform')
+        constraint3 = Constraint(handling_strategy='reject_sampling')
+        constraints = [constraint1, constraint2, constraint3]
+
+        # Run
+        instance = Table(constraints=constraints)
+
+        # Asserts
+        instance._constraints == [constraint3, constraint1, constraint2]
 
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
