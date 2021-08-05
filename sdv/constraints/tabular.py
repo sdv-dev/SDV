@@ -223,57 +223,40 @@ class GreaterThan(Constraint):
     _is_datetime = None
     _columns_to_reconstruct = None
 
-    def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None, scalar=None):
+    @staticmethod
+    def _validate_scalar(scalar_column, column_names, scalar):
+        """Validate scalar comparison inputs.
 
-        if isinstance(low, list) and isinstance(high, list):
-            raise ValueError('`low` and `high` can only be multiple columns ',
-                             'if the other one is scalar.')
-        if scalar == 'high':
-            low = [low] if isinstance(low, str) else low
-            self.constraint_columns = tuple(low)
+        - Make sure that the scalar column is not a list and raise the proper error if it is.
+        - If the `column_names` is not a list it would make it a list.
+        - Return both the scalar column and column names with the right format
+        """
+        if isinstance(scalar_column, list):
+            raise TypeError(f'{scalar} cannot be a list when scalar="{scalar}".')
+
+        column_names = [column_names] if not isinstance(column_names, list) else column_names
+        return column_names
+
+    @classmethod
+    def _validate_inputs(cls, low, high, scalar):
+        if scalar is None:
+            low = [low] if not isinstance(low, list) else low
+            high = [high] if not isinstance(high, list) else high
+            if len(low) > 1 and len(high) > 1:
+                raise ValueError('either `high` or `low` must contain only one column.')
+
+            constraint_columns = tuple(low + high)
+
         elif scalar == 'low':
-            high = [high] if isinstance(high, str) else high
-            self.constraint_columns = tuple(high)
+            high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
+            constraint_columns = tuple(high)
+        elif scalar == 'high':
+            low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
+            constraint_columns = tuple(low)
         else:
-            if isinstance(low, list):
-                raise ValueError('`low` cannot be a list when `scalar` is `None`.')
-            elif isinstance(high, list):
-                raise ValueError('`high` cannot be a list when `scalar` is `None`.')
+            raise ValueError(f"scalar {scalar} is unknown. Use either: 'high', 'low', or None.")
 
-            self.constraint_columns = (low, high)
-            low = [low]
-            high = [high]
-
-        self._low = low
-        self._high = high
-        self._strict = strict
-        self._drop = drop
-        self._scalar = scalar
-
-        if strict:
-            self.operator = np.greater
-        else:
-            self.operator = np.greater_equal
-
-        super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
-
-    def _get_low_value(self, table_data):
-        if self._scalar == 'low':
-            return self._low
-        elif any([low in table_data.columns for low in self._low]):
-            return table_data[self._low].values
-
-        return None
-
-    def _get_high_value(self, table_data):
-        if self._scalar == 'high':
-            return self._high
-        elif any([high in table_data.columns for high in self._high]):
-            return table_data[self._high].values
-
-        return None
+        return low, high, constraint_columns
 
     def _get_columns_to_reconstruct(self):
         if self._drop == 'high':
@@ -287,27 +270,53 @@ class GreaterThan(Constraint):
 
         return column
 
+    def __init__(self, low, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None, scalar=None):
+        self._strict = strict
+        self._drop = drop
+        self._scalar = scalar
+        self._low, self._high, self.constraint_columns = self._validate_inputs(low, high, scalar)
+        self._columns_to_reconstruct = self._get_columns_to_reconstruct()
+
+        if strict:
+            self.operator = np.greater
+        else:
+            self.operator = np.greater_equal
+
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
+
+    def _get_value(self, table_data, field):
+        variable = getattr(self, f'_{field}')
+        if self._scalar == field:
+            return variable
+        elif all([column in table_data.columns for column in variable]):
+            return table_data[getattr(self, f'_{field}')].values
+
+        return None
+
     def _get_diff_columns_name(self, table_data):
-        token = '#'
         names = []
-        for column in self.constraint_columns:
-            name = column + token
-            while name in table_data.columns:
-                name += '#'
-
-            names.append(name)
-
+        base = ''
+        column_names = list(self.constraint_columns)
         if self._scalar is None:
-            while token.join(self.constraint_columns) in table_data.columns:
+            base = self._low if len(self._low) == 1 else self._high
+            column_names.remove(base[0])
+            base = str(base[0])
+
+        for column in list(map(str, column_names)):
+            token = '#'
+            name = token.join((column, base))
+            while name in table_data.columns:
                 token += '#'
 
-            names = [token.join(self.constraint_columns)]
+            names.append(name)
 
         return names
 
     def _get_is_datetime(self, table_data):
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = self._get_value(table_data, 'low')
+        high = self._get_value(table_data, 'high')
 
         is_low_datetime = is_datetime_type(low)
         is_high_datetime = is_datetime_type(high)
@@ -318,6 +327,14 @@ class GreaterThan(Constraint):
 
         return is_datetime
 
+    def _check_columns_exist(self, table_data, field):
+        values = getattr(self, f'_{field}')
+        exists = [column not in table_data.columns for column in values]
+        if any(exists):
+            raise KeyError(f'The {field} columns {list(compress(values, exists))} '
+                           f'were not found in table_data. If {field} is a scalar, '
+                           f'set `scalar="{field}"`.')
+
     def _fit(self, table_data):
         """Learn the dtype of the high column.
 
@@ -326,27 +343,13 @@ class GreaterThan(Constraint):
                 The Table data.
         """
         if self._scalar == 'high':
-            exists = [column in table_data.columns for column in self._low]
-            if not all(exists):
-                raise KeyError(f'The `low` columns {list(compress(self._low, exists))} '
-                               'were not found in table_data.')
+            self._check_columns_exist(table_data, 'low')
         elif self._scalar == 'low':
-            exists = [column in table_data.columns for column in self._high]
-            if not all(exists):
-                raise KeyError(f'The `high` columns {list(compress(self._high, exists))} '
-                               'were not found in table_data.')
-        else:
-            for column in self._low:
-                if column not in table_data.columns:
-                    raise KeyError(f'The column {column} specified in `low` was not found in '
-                                   f'table_data. If {column} is a scalar, set `scalar="low"`.')
+            self._check_columns_exist(table_data, 'high')
+        elif self._scalar is None:
+            self._check_columns_exist(table_data, 'low')
+            self._check_columns_exist(table_data, 'high')
 
-            for column in self._high:
-                if column not in table_data.columns:
-                    raise KeyError(f'The column {column} specified in `high` was not found in '
-                                   f'table_data. If {column} is a scalar, set `scalar="high"`.')
-
-        self._columns_to_reconstruct = self._get_columns_to_reconstruct()
         self._dtype = [table_data[column].dtype for column in self._columns_to_reconstruct]
         self._diff_columns = self._get_diff_columns_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
@@ -362,8 +365,8 @@ class GreaterThan(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = self._get_value(table_data, 'low')
+        high = self._get_value(table_data, 'high')
 
         return self.operator(high, low).all(axis=1)
 
@@ -385,7 +388,7 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = self._get_high_value(table_data) - self._get_low_value(table_data)
+        diff = self._get_value(table_data, 'high') - self._get_value(table_data, 'low')
 
         if self._is_datetime:
             diff = diff.astype(np.float64)
@@ -421,8 +424,8 @@ class GreaterThan(Constraint):
         if self._is_datetime:
             diff = diff.astype('timedelta64[ns]')
 
-        high = self._get_high_value(table_data)
-        low = self._get_low_value(table_data)
+        high = self._get_value(table_data, 'high')
+        low = self._get_value(table_data, 'low')
 
         if self._drop == 'high':
             new_values = pd.DataFrame(diff + low, columns=self._high)
