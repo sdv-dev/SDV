@@ -158,8 +158,8 @@ passing:
     )
 
 The ``GreaterThan`` constraint can also be used to guarantee a column is greater
-than a scalar value or specific datetime value instead of another column. To use
-this functionality, we can pass:
+or lower than a scalar value or specific datetime value instead of another column. 
+To use this functionality, we can pass:
 
 -  the scalar value for ``low`` or the scalar value for ``high``
 -  a flag indicating whether ``low`` or ``high`` is a scalar
@@ -173,6 +173,11 @@ this functionality, we can pass:
         scalar='low',
         handling_strategy='reject_sampling'
     )
+
+.. note::
+    If you want to indicate that the column must be *lower than* a scalar value, 
+    all you need to do is invert the arguments, pass the scalar value as the ``high`` 
+    argument, the column name as the ``low`` argument, and set the `scalar` flag to ``"high"``.
 
 Optionally, when constructing ``GreaterThan`` constraint we can specify 
 more than a single column in either the ``high`` or ``low`` arguments. 

@@ -473,11 +473,7 @@ class Positive(GreaterThan):
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=False):
-        if drop:
-            drop = 'high'
-        else:
-            drop = None
-
+        drop = 'high' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
                          high=columns, low=0, scalar='low',
@@ -507,11 +503,7 @@ class Negative(GreaterThan):
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
                  fit_columns_model=True, drop=False):
-        if drop:
-            drop = 'low'
-        else:
-            drop = None
-
+        drop = 'low' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
                          high=0, low=columns, scalar='high',
