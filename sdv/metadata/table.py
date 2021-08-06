@@ -215,6 +215,39 @@ class Table:
         except AttributeError:
             return 1
 
+    def _sort_constraints(self):
+        for idx, constraint in enumerate(self._constraints):
+            if isinstance(constraint, type):
+                constraint = constraint().to_dict()
+            elif isinstance(constraint, Constraint):
+                constraint = constraint.to_dict()
+
+            constraint = Constraint.from_dict(constraint)
+            self._constraints[idx] = constraint
+
+        self._constraints.sort(key=self._get_constraint_sort_key)
+
+    def _validate_constraint_order(self):
+        transform_constraints = list()
+        for constraint in self._constraints:
+            try:
+                if constraint.handling_strategy == 'transform':
+                    transform_constraints.append(constraint)
+            except AttributeError:
+                pass
+
+        for i in range(len(transform_constraints) - 1):
+            cur_constraint = transform_constraints[i]
+            for j in range(i + 1, len(transform_constraints)):
+                next_constraint = transform_constraints[j]
+                try:
+                    if any(c in next_constraint.columns for c in cur_constraint.rebuild_columns):
+                        raise Exception('Multiple constraints will modify the same column which'
+                                        + 'may lead to the constraint being unenforceable. Please'
+                                        + 'use reject_sampling as the handling_strategy instead.')
+                except AttributeError:
+                    pass
+
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
@@ -232,7 +265,8 @@ class Table:
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
         self._constraints = constraints or []
-        self._constraints.sort(key=self._get_constraint_sort_key)
+        self._sort_constraints()
+        self._validate_constraint_order()
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
@@ -386,15 +420,7 @@ class Table:
         return transformers
 
     def _fit_transform_constraints(self, data):
-        for idx, constraint in enumerate(self._constraints):
-            if isinstance(constraint, type):
-                constraint = constraint().to_dict()
-            elif isinstance(constraint, Constraint):
-                constraint = constraint.to_dict()
-
-            constraint = Constraint.from_dict(constraint)
-            self._constraints[idx] = constraint
-
+        for constraint in self._constraints:
             data = constraint.fit_transform(data)
 
         return data
