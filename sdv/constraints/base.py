@@ -4,6 +4,7 @@ import copy
 import importlib
 import inspect
 import logging
+import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -111,7 +112,7 @@ class Constraint(metaclass=ConstraintMeta):
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self, handling_strategy, fit_columns_model=True):
+    def __init__(self, handling_strategy, fit_columns_model=False):
         self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
@@ -226,6 +227,14 @@ class Constraint(metaclass=ConstraintMeta):
         """
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
+            if not self._columns_model:
+                warning_message = (
+                    'The following constraint columns are missing from the table data '
+                    f'- `{missing_columns}`. When `fit_columns_model` is `False` and one or more '
+                    'constraint columns are missing, reject sampling can become slow.'
+                )
+                warnings.warn(warning_message, UserWarning)
+
             all_columns_missing = len(missing_columns) == len(self.constraint_columns)
             if self._columns_model is None or all_columns_missing:
                 raise MissingConstraintColumnError()

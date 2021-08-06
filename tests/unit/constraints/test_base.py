@@ -260,7 +260,7 @@ class TestConstraint():
             'a': [1, 2, 3],
             'b': [4, 5, 6]
         })
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint(handling_strategy='transform', fit_columns_model=True)
         instance.constraint_columns = ('a', 'b')
 
         # Run

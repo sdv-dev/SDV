@@ -180,7 +180,8 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     # Setup
     constraint = UniqueCombinations(
         columns=['city', 'state'],
-        handling_strategy='transform'
+        handling_strategy='transform',
+        fit_columns_model=True,
     )
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
