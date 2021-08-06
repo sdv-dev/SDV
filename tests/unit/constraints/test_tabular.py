@@ -498,7 +498,7 @@ class TestGreaterThan():
         """
         # Setup / Run
         low, high, constraint_columns = GreaterThan._validate_inputs(
-            low='a', high=3, scalar='high')
+            low='a', high=3, scalar='high', drop=None)
 
         # Assert
         low == ['a']
@@ -516,6 +516,7 @@ class TestGreaterThan():
         - low = 3
         - high = 'b'
         - scalar = 'low'
+        - drop = None
         Output:
         - low == 3
         - high == ['b']
@@ -523,7 +524,7 @@ class TestGreaterThan():
         """
         # Setup / Run
         low, high, constraint_columns = GreaterThan._validate_inputs(
-            low=3, high='b', scalar='low')
+            low=3, high='b', scalar='low', drop=None)
 
         # Assert
         low == 3
@@ -541,6 +542,7 @@ class TestGreaterThan():
         - low = 'a'
         - high = 3 # where 3 is a column name
         - scalar = None
+        - drop = None
         Output:
         - low == ['a']
         - high == [3]
@@ -548,7 +550,7 @@ class TestGreaterThan():
         """
         # Setup / Run
         low, high, constraint_columns = GreaterThan._validate_inputs(
-            low='a', high=3, scalar=None)
+            low='a', high=3, scalar=None, drop=None)
 
         # Assert
         low == ['a']
@@ -566,6 +568,7 @@ class TestGreaterThan():
         - low = ['a']
         - high = ['b', 'c']
         - scalar = None
+        - drop = None
         Output:
         - low == ['a']
         - high == ['b', 'c']
@@ -573,7 +576,7 @@ class TestGreaterThan():
         """
         # Setup / Run
         low, high, constraint_columns = GreaterThan._validate_inputs(
-            low=['a'], high=['b', 'c'], scalar=None)
+            low=['a'], high=['b', 'c'], scalar=None, drop=None)
 
         # Assert
         low == ['a']
@@ -591,12 +594,13 @@ class TestGreaterThan():
         - low = ['a', 0]
         - high = ['b', 'c']
         - scalar = None
+        - drop = None
         Side effect:
         - Raise error because both high and low are more than one column
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low=['a', 0], high=['b', 'c'], scalar=None)
+            GreaterThan._validate_inputs(low=['a', 0], high=['b', 'c'], scalar=None, drop=None)
 
     def test__validate_inputs_scalar_unknown(self):
         """Test the ``_validate_inputs`` method.
@@ -609,12 +613,73 @@ class TestGreaterThan():
         - low = 'a'
         - high = 'b'
         - scalar = 'unknown'
+        - drop = None
         Side effect:
         - Raise error because scalar is unknown
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low='a', high='b', scalar='unknown')
+            GreaterThan._validate_inputs(low='a', high='b', scalar='unknown', drop=None)
+
+    def test__validate_inputs_drop_error_low(self):
+        """Test the ``_validate_inputs`` method.
+
+        Make sure the method raises an error if ``drop``==``scalar``
+        when ``scalar`` is not ``None``.
+
+        Input:
+        - low = 2
+        - high = 'b'
+        - scalar = 'low'
+        - drop = 'low'
+        Side effect:
+        - Raise error because scalar is unknown
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            GreaterThan._validate_inputs(low=2, high='b', scalar='low', drop='low')
+
+    def test__validate_inputs_drop_error_high(self):
+        """Test the ``_validate_inputs`` method.
+
+        Make sure the method raises an error if ``drop``==``scalar``
+        when ``scalar`` is not ``None``.
+
+        Input:
+        - low = 'a'
+        - high = 3
+        - scalar = 'high'
+        - drop = 'high'
+        Side effect:
+        - Raise error because scalar is unknown
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            GreaterThan._validate_inputs(low='a', high=3, scalar='high', drop='high')
+
+    def test__validate_inputs_drop_success(self):
+        """Test the ``_validate_inputs`` method.
+
+        Make sure the method raises an error if ``drop``==``scalar``
+        when ``scalar`` is not ``None``.
+
+        Input:
+        - low = 'a'
+        - high = 'b'
+        - scalar = 'high'
+        - drop = 'low'
+        Output:
+        - low = ['a']
+        - high = 0
+        - constraint_columns == ('a')
+        """
+        # Run / Assert
+        low, high, constraint_columns = GreaterThan._validate_inputs(
+            low='a', high=0, scalar='high', drop='low')
+
+        assert low == ['a']
+        assert high == 0
+        assert constraint_columns == ('a',)
 
     def test___init___(self):
         """Test the ``GreaterThan.__init__`` method.
@@ -650,24 +715,24 @@ class TestGreaterThan():
         - low = 'a'
         - high = 0
         - strict = True
-        - drop = 'high'
+        - drop = 'low'
         - scalar = 'high'
         Side effects:
         - instance._low == 'a'
         - instance._high == 0
         - instance._strict == True
-        - instance._drop = 'high'
+        - instance._drop = 'low'
         - instance._scalar == 'high'
         """
         # Run
-        instance = GreaterThan(low='a', high=0, strict=True, drop='high', scalar='high')
+        instance = GreaterThan(low='a', high=0, strict=True, drop='low', scalar='high')
 
         # Asserts
         assert instance._low == ['a']
         assert instance._high == 0
         assert instance._strict is True
         assert instance._scalar == 'high'
-        assert instance._drop == 'high'
+        assert instance._drop == 'low'
         assert instance.constraint_columns == ('a',)
 
     def test___init___low_is_scalar(self):
@@ -680,24 +745,24 @@ class TestGreaterThan():
         - low = 0
         - high = 'a'
         - strict = True
-        - drop = 'low'
+        - drop = 'high'
         - scalar = 'low'
         Side effects:
         - instance._low == 0
         - instance._high == 'a'
         - instance._stric == True
-        - instance._drop = 'low'
+        - instance._drop = 'high'
         - instance._scalar == 'low'
         """
         # Run
-        instance = GreaterThan(low=0, high='a', strict=True, drop='low', scalar='low')
+        instance = GreaterThan(low=0, high='a', strict=True, drop='high', scalar='low')
 
         # Asserts
         assert instance._low == 0
         assert instance._high == ['a']
         assert instance._strict is True
         assert instance._scalar == 'low'
-        assert instance._drop == 'low'
+        assert instance._drop == 'high'
         assert instance.constraint_columns == ('a',)
 
     def test___init___strict_is_false(self):
@@ -1450,9 +1515,9 @@ class TestGreaterThan():
 
         # Assert
         expected_diff_columns = ['a#', 'b#']
-        expected_dtype = [dtype_int, dtype_float]
+        expected_dtype = pd.Series([dtype_int, dtype_float], index=table_data.columns)
         assert instance._diff_columns == expected_diff_columns
-        assert instance._dtype == expected_dtype
+        pd.testing.assert_series_equal(instance._dtype, expected_dtype)
 
     def test__fit_low_is_scalar_multi_column(self):
         """Test the ``GreaterThan._fit`` method.
@@ -1475,9 +1540,9 @@ class TestGreaterThan():
 
         # Assert
         expected_diff_columns = ['a#', 'b#']
-        expected_dtype = [dtype_int, dtype_float]
+        expected_dtype = pd.Series([dtype_int, dtype_float], index=table_data.columns)
         assert instance._diff_columns == expected_diff_columns
-        assert instance._dtype == expected_dtype
+        pd.testing.assert_series_equal(instance._dtype, expected_dtype)
 
     def test_is_valid_strict_false(self):
         """Test the ``GreaterThan.is_valid`` method with strict False.

@@ -24,7 +24,6 @@ Currently implemented constraints are:
 
 import operator
 import uuid
-from itertools import compress
 
 import numpy as np
 import pandas as pd
@@ -224,6 +223,13 @@ class GreaterThan(Constraint):
     _columns_to_reconstruct = None
 
     @staticmethod
+    def _as_list(value):
+        if not isinstance(value, list):
+            return [value]
+
+        return value
+
+    @staticmethod
     def _validate_scalar(scalar_column, column_names, scalar):
         """Validate scalar comparison inputs.
 
@@ -232,29 +238,38 @@ class GreaterThan(Constraint):
         - Return both the scalar column and column names with the right format
         """
         if isinstance(scalar_column, list):
-            raise TypeError(f'{scalar} cannot be a list when scalar="{scalar}".')
+            raise TypeError(f'`{scalar}` cannot be a list when scalar="{scalar}".')
 
-        column_names = [column_names] if not isinstance(column_names, list) else column_names
+        column_names = GreaterThan._as_list(column_names)
+
         return column_names
 
+    @staticmethod
+    def _validate_drop(scalar, drop):
+        if drop == scalar:
+            raise ValueError(f"Invalid `drop` value: f`{drop}`. Cannot drop a scalar.")
+
     @classmethod
-    def _validate_inputs(cls, low, high, scalar):
+    def _validate_inputs(cls, low, high, scalar, drop):
         if scalar is None:
-            low = [low] if not isinstance(low, list) else low
-            high = [high] if not isinstance(high, list) else high
+            low = cls._as_list(low)
+            high = cls._as_list(high)
             if len(low) > 1 and len(high) > 1:
                 raise ValueError('either `high` or `low` must contain only one column.')
 
             constraint_columns = tuple(low + high)
 
         elif scalar == 'low':
+            cls._validate_drop(scalar, drop)
             high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
             constraint_columns = tuple(high)
         elif scalar == 'high':
+            cls._validate_drop(scalar, drop)
             low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
             constraint_columns = tuple(low)
         else:
-            raise ValueError(f"scalar {scalar} is unknown. Use either: 'high', 'low', or None.")
+            raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
+                             "Use either: 'high', 'low', or None.")
 
         return low, high, constraint_columns
 
@@ -275,7 +290,8 @@ class GreaterThan(Constraint):
         self._strict = strict
         self._drop = drop
         self._scalar = scalar
-        self._low, self._high, self.constraint_columns = self._validate_inputs(low, high, scalar)
+        self._low, self._high, self.constraint_columns = self._validate_inputs(
+            low=low, high=high, scalar=scalar, drop=drop)
         self._columns_to_reconstruct = self._get_columns_to_reconstruct()
 
         if strict:
@@ -290,10 +306,8 @@ class GreaterThan(Constraint):
         variable = getattr(self, f'_{field}')
         if self._scalar == field:
             return variable
-        elif all([column in table_data.columns for column in variable]):
-            return table_data[getattr(self, f'_{field}')].values
 
-        return None
+        return table_data[variable].values
 
     def _get_diff_columns_name(self, table_data):
         names = []
@@ -329,10 +343,10 @@ class GreaterThan(Constraint):
 
     def _check_columns_exist(self, table_data, field):
         values = getattr(self, f'_{field}')
-        exists = [column not in table_data.columns for column in values]
-        if any(exists):
-            raise KeyError(f'The {field} columns {list(compress(values, exists))} '
-                           f'were not found in table_data. If {field} is a scalar, '
+        missing = set(values) - set(table_data.columns)
+        if missing:
+            raise KeyError(f'The `{field}` columns {missing} '
+                           f'were not found in table_data. If `{field}` is a scalar, '
                            f'set `scalar="{field}"`.')
 
     def _fit(self, table_data):
@@ -342,15 +356,12 @@ class GreaterThan(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        if self._scalar == 'high':
-            self._check_columns_exist(table_data, 'low')
-        elif self._scalar == 'low':
+        if self._scalar != 'high':
             self._check_columns_exist(table_data, 'high')
-        elif self._scalar is None:
+        if self._scalar != 'low':
             self._check_columns_exist(table_data, 'low')
-            self._check_columns_exist(table_data, 'high')
 
-        self._dtype = [table_data[column].dtype for column in self._columns_to_reconstruct]
+        self._dtype = table_data[self._columns_to_reconstruct].dtypes
         self._diff_columns = self._get_diff_columns_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
@@ -401,6 +412,10 @@ class GreaterThan(Constraint):
 
         return table_data
 
+    def _construct_columns(self, diff, column_values, columns):
+        new_values = pd.DataFrame(diff + column_values, columns=columns)
+        return new_values.astype(dict(zip(columns, self._dtype)))
+
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
 
@@ -424,16 +439,15 @@ class GreaterThan(Constraint):
         if self._is_datetime:
             diff = diff.astype('timedelta64[ns]')
 
-        high = self._get_value(table_data, 'high')
-        low = self._get_value(table_data, 'low')
-
         if self._drop == 'high':
-            new_values = pd.DataFrame(diff + low, columns=self._high)
-            table_data[self._high] = new_values.astype(dict(zip(self._high, self._dtype)))
+            low = self._get_value(table_data, 'low')
+            table_data[self._high] = self._construct_columns(diff, low, self._high)
         elif self._drop == 'low':
-            new_values = pd.DataFrame(high - diff, columns=self._low)
-            table_data[self._low] = new_values.astype(dict(zip(self._low, self._dtype)))
+            high = self._get_value(table_data, 'high')
+            table_data[self._low] = self._construct_columns(-diff, high, self._low)
         else:
+            low = self._get_value(table_data, 'low')
+            high = self._get_value(table_data, 'high')
             invalid = ~self.is_valid(table_data)
             if self._scalar == 'high':
                 new_values = high - diff[invalid]

@@ -195,11 +195,14 @@ than one year.
         handling_strategy='reject_sampling'
     )
 
-.. note::
+.. warning::
 
-    To specify more than one column, either ``high`` or ``low`` must
-    be a scalar value, otherwise the constraint cannot be correctly
-    evaluated.
+    Warning! Passing a list of columns to the `high` or `low` arguments is only possible 
+    when the other one has been passed as a single column name or scalar value! If you need 
+    to compare multiple ``high`` columns against multiple ``low`` columns (or vice versa), 
+    you need to decompose one of the ends, ``high`` or ``low``, into multiple single column
+    names and define one ``GreaterThan`` constraint for each one of them.
+
 
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
