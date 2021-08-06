@@ -21,7 +21,7 @@ Let's look at a demo dataset:
     employees = load_tabular_demo()
     employees
 
-The dataset defined in :ref:`_single_table_constraints`contains basic details about employees.
+The dataset defined in :ref:`_single_table_constraints` contains basic details about employees.
 We will use this dataset to demonstrate how you can create your own constraint. 
 
 
@@ -34,22 +34,22 @@ a particular column, age for example, to be even. We will define ``transform``,
 
 
 In this example, we would like to create a constraint that makes ``age`` even. We can
-create a ``transform_even`` function that makes all the ``age`` values even.
+create a ``transform`` function that makes all the ``age`` values even.
 
 .. ipython:: python
     :okwarning:
 
-    def transform_even(table_data):
+    def transform(table_data):
         table_data['age'] = table_data['age'] * 2
         return table_data
 
-We transform the column ``age`` to be even by multiplicating with 2. When now define
-the ``reverse_transform_even`` as doing the opposite effect.
+We transform the column ``age`` to be even by multiplicating it with 2. We now define
+the ``reverse_transform`` as doing the opposite effect.
 
 .. ipython:: python
     :okwarning:
 
-    def reverse_transform_even(table_data):
+    def reverse_transform(table_data):
         table_data['age'] = table_data['age'] / 2
         return table_data
 
@@ -58,7 +58,7 @@ Lastly, we write the ``is_valid`` function to assess whether the column is even 
 .. ipython:: python
     :okwarning:
 
-    def is_even(table_data):
+    def is_valid(table_data):
         return table_data['age'] % 2 == 0
 
 We put every thing together in ``CustomConstraint`` and then we can create our model and 
@@ -67,10 +67,13 @@ generate synthetic data by passing the constraint we just created.
 .. ipython:: python
     :okwarning:
 
+    from sdv.constraints import CustomConstraint
+    from sdv.tabular import GaussianCopula
+
     constraint = CustomConstraint(
-        transform=transform_even, 
-        reverse_transform=reverse_transform_even, 
-        is_valid=is_even
+        transform=transform, 
+        reverse_transform=reverse_transform, 
+        is_valid=is_valid
     )
 
     gc = GaussianCopula(constraints=[constraint])
@@ -89,70 +92,139 @@ even age value.
 
 
 .. note::
-    If you are using ``reject_sampling`` strategy, it is sufficient to define
-    ``is_valid`` alone. For example, ``CustomConstraint(is_valid=is_even)``.
+    It is sufficient to define ``is_valid`` function alone. In this case, the constraint will
+    use ``reject_sampling`` strategy. For example, ``CustomConstraint(is_valid=is_valid)``.
 
 
-Applying a Constraint to Multiple Columns
------------------------------------------
-
-Column Based
-~~~~~~~~~~~~
+Applying Functions to Multiple Columns
+--------------------------------------
 
 What if I want to apply the even constraint to multiple columns? Say we want ``age``
 and ``age_when_joined`` to be both even. Rather than defining two constraints,
 we provide another style of writing functions such that the function should accept 
 a column data as input.
 
-The ``transform_even`` function takes ``column_data`` and input and returns the transformed
+The ``transform`` function takes ``column_data`` as input and returns the transformed
 column.
 
-.. code-block:: python
+.. ipython:: python
+    :okwarning:
 
-    def transform_even(column_data):
+    def transform(column_data):
         return column_data * 2
 
-Similarly we defined ``reverse_transform_even`` and ``is_even`` in a way that it operates
+Similarly we defined ``reverse_transform`` and ``is_valid`` in a way that it operates
 on the data of a single column.
 
-.. code-block:: python
+.. ipython:: python
+    :okwarning:
 
-    def reverse_transform_even(column_data):
+    def reverse_transform(column_data):
         return column_data / 2
 
 
-    def is_even(column_data):
+    def is_valid(column_data):
         return column_data % 2 == 0
 
 Now that we have our functions, we initialize ``CustomConstraint`` and we 
 specify which column(s) are the desired ones.
 
-.. code-block:: python
+.. ipython:: python
+    :okwarning:
 
     constraint = CustomConstraint(
         columns=['age', 'age_when_joined'],
-        transform=transform_even, 
-        reverse_transform=reverse_transform_even, 
-        is_valid=is_even
+        transform=transform, 
+        reverse_transform=reverse_transform, 
+        is_valid=is_valid
     )
 
+Now we create our model and pass our constraints.
 
-Table Based
-~~~~~~~~~~~
+.. ipython:: python
+    :okwarning:
 
-In some cases, we need to design our methods to be applied to a slice of the data but 
-with access to the entire table. For example, we wish to make sure that ``age`` and 
-``age_when_joined`` are always larger than a "fixed" column ``years_in_the_company``.
+    gc = GaussianCopula(constraints=[constraint])
 
-To support this requirement, we write functions takes as input ``table_data`` and ``column``. 
-In this case, we define our function as
+    gc.fit(employees)
 
-.. code-block:: python
+    sampled = gc.sample(10)
 
-    def is_larger(table_data, column):
-    	return table_data[column] > table_data['years_in_the_company']
+Viewing ``sampled`` we now see two columns that are always even.
 
-    constraint = CustomConstraint(columns=['age', 'age_when_joined'], is_valid=is_larger)
+.. ipython:: python
+    :okwarning:
+
+    sampled
+
+
+Applying Functions to Multiple Columns with Access to Table
+-----------------------------------------------------------
+
+In addition to wanting to construct even columns, we would like ``age`` and
+``age_when_joined`` to be always larger than a "fixed" column ``years_in_the_company``.
+
+To support this requirement, we write functions that take as input:
+
+-  ``table_data`` which contains all the information.
+-  ``column`` which is a an argument to represent the columns of interest.
+
+Now we can construct our functions freely, we write our methods
+with said arguments and be able to access ``'years_in_the_company'``.
+
+We first write our ``transform`` function to:
+
+1. add a value of ``'years_in_the_company'``.
+2. multiply the result with 2 to make sure it is even.
+
+.. ipython:: python
+    :okwarning:
+
+    def transform(table_data, column):
+        added_value = table_data[column] + table_data['years_in_the_company']
+        table_data[column] = added_value * 2
+        return table_data
+
+Now we define our ``reverse_transform`` in the opposite order of operations
+in the ``transform``.
+
+.. ipython:: python
+    :okwarning:
+
+    def reverse_transform(table_data, column):
+        value = table_data[column] / 2
+        table_data[column] = value - table_data['years_in_the_company']
+        return table_data
+
+Lastly, we write our ``is_valid`` function to identify invalid rows.
+
+.. ipython:: python
+    :okwarning:
+
+    def is_valid(table_data, column):
+        is_larger = table_data[column] > table_data['years_in_the_company']
+        is_even = table_data[column] % 2 == 0
+        return is_larger & is_even
+
+We now stich everything together and pass it to the model.
+
+.. ipython:: python
+    :okwarning:
+
+    constraint = CustomConstraint(
+        columns=['age', 'age_when_joined'],
+        transform=transform, 
+        reverse_transform=reverse_transform, 
+        is_valid=is_valid
+    )
+
+    gc = GaussianCopula(constraints=[constraint])
+
+    gc.fit(employees)
+
+    sampled = gc.sample(10)
+
+    sampled
 
 This style gives flexibility to access any column in the table while still operating on 
 a column basis.
