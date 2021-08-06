@@ -8,6 +8,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
@@ -411,7 +412,8 @@ class BaseTabularModel:
                 value, then this method generates `num_rows` samples, all of
                 which are conditioned on the given variables. If this is a DataFrame,
                 then it generates an output DataFrame such that each row in the output
-                is sampled conditional on the corresponding row in the input.
+                is sampled conditional on the corresponding row in the input. If the
+                given conditions are not able to be met, raises a `ValueError`.
             float_rtol (float):
                 Maximum tolerance when considering a float match. This is the maximum
                 relative distance at which a float value will be considered a match
@@ -439,7 +441,11 @@ class BaseTabularModel:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Invalid column name `{column}`')
 
-        transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        try:
+            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        except ConstraintsNotMetError:
+            raise ValueError("The given conditions are not able to be met.")
+
         condition_columns = list(conditions.columns)
         transformed_columns = list(transformed_conditions.columns)
         conditions.index.name = COND_IDX

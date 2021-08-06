@@ -11,6 +11,7 @@ from faker import Faker
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -553,12 +554,32 @@ class Table:
 
         return data
 
+    def _validate_data_on_constraints(self, data):
+        """Make sure the given data is valid for the given constraints.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            bool:
+                Whether or not the table data is valid for the constraints.
+        """
+        is_valid = True
+
+        for constraint in self._constraints:
+            if set(constraint.constraint_columns).issubset(data.columns.values):
+                is_valid = is_valid and constraint.is_valid(data).all()
+
+        return is_valid
+
     def transform(self, data, on_missing_column='error'):
         """Transform the given data.
 
         Args:
             data (pandas.DataFrame):
-                Table data.
+                Table data. If the table data is not valid for the provided constraints,
+                a `ValueError` is raised.
             on_missing_column (str):
                 If the value is error, then a `MissingConstraintColumnError` is raised.
                 If the value is drop, then the columns involved in the constraint that
@@ -574,6 +595,9 @@ class Table:
         fields = [field for field in self.get_dtypes(ids=False) if field in data.columns]
         LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
+
+        if not self._validate_data_on_constraints(data):
+            raise ConstraintsNotMetError('Data is not valid for the given constraints')
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
         data = self._transform_constraints(data, on_missing_column)
