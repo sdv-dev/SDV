@@ -158,12 +158,11 @@ passing:
     )
 
 The ``GreaterThan`` constraint can also be used to guarantee a column is greater
-than a scalar value or specific datetime value instead of another column. To use
-this functionality, we can pass:
+or lower than a scalar value or specific datetime value instead of another column. 
+To use this functionality, we can pass:
 
--  the scalar value for ``low``
--  the scalar value for ``high``
--  a boolean indicating ``low`` or ``high`` is a scalar
+-  the scalar value for ``low`` or the scalar value for ``high``
+-  a flag indicating whether ``low`` or ``high`` is a scalar
 
 .. ipython:: python
     :okwarning:
@@ -171,28 +170,59 @@ this functionality, we can pass:
     salary_gt_30000_constraint = GreaterThan(
         low=30000,
         high='salary',
+        scalar='low',
         handling_strategy='reject_sampling'
     )
+
+.. note::
+    If you want to indicate that the column must be *lower than* a scalar value, 
+    all you need to do is invert the arguments, pass the scalar value as the ``high`` 
+    argument, the column name as the ``low`` argument, and set the `scalar` flag to ``"high"``.
+
+Optionally, when constructing ``GreaterThan`` constraint we can specify 
+more than a single column in either the ``high`` or ``low`` arguments. 
+For example, we can create a ``GreaterThan`` constraint that that ensures 
+that both the years in the company and prior years of experience is more 
+than one year.
+
+.. ipython:: python
+    :okwarning:
+
+    experience_years_gt_one_constraint = GreaterThan(
+        low=1,
+        high=['years_in_the_company', 'prior_years_experience'],
+        scalar='low',
+        handling_strategy='reject_sampling'
+    )
+
+.. warning::
+
+    Warning! Passing a list of columns to the `high` or `low` arguments is only possible 
+    when the other one has been passed as a single column name or scalar value! If you need 
+    to compare multiple ``high`` columns against multiple ``low`` columns (or vice versa), 
+    you need to decompose one of the ends, ``high`` or ``low``, into multiple single column
+    names and define one ``GreaterThan`` constraint for each one of them.
 
 
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
-or ``Negative`` constraints. These constraints enforce that a specified
-column is always positive or negative. We can create an instance passing:
+or ``Negative`` constraints. These constraints enforce that the specified
+column(s) are always positive or negative. We can create an instance passing:
 
-- the name of the ``low`` column for ``Negative`` or the name of the ``high`` column for ``Positive``
+- the name of the column(s) for ``Negative`` or ``Positive`` constraints
+- a boolean specifying whether to make the data strictly above or below 0, 
+  or include 0 as a possible value
 - the handling strategy that we want to use
-- a boolean specifying whether to make the data strictly above or below 0, or include 0 as a possible value
 
 .. ipython:: python
     :okwarning:
 
     from sdv.constraints import Positive
 
-    positive_prior_exp_constraint = Positive(
-        high='prior_years_experience',
+    positive_age_constraint = Positive(
+        columns='age',
         strict=False,
         handling_strategy='reject_sampling'
     )
@@ -319,9 +349,10 @@ constraints that we just defined as a ``list``:
     constraints = [
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
-        years_in_the_company_constraint,
         salary_gt_30000_constraint,
-        positive_prior_exp_constraint,
+        experience_years_gt_one_constraint,
+        positive_age_constraint,
+        years_in_the_company_constraint,
         salary_rounding_constraint,
         reasonable_age_constraint,
         one_hot_constraint
@@ -345,3 +376,4 @@ we defined:
     :okwarning:
 
     sampled
+
