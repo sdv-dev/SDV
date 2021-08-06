@@ -412,8 +412,7 @@ class BaseTabularModel:
                 value, then this method generates `num_rows` samples, all of
                 which are conditioned on the given variables. If this is a DataFrame,
                 then it generates an output DataFrame such that each row in the output
-                is sampled conditional on the corresponding row in the input. If the
-                given conditions are not able to be met, raises a `ValueError`.
+                is sampled conditional on the corresponding row in the input.
             float_rtol (float):
                 Maximum tolerance when considering a float match. This is the maximum
                 relative distance at which a float value will be considered a match
@@ -421,13 +420,22 @@ class BaseTabularModel:
             graceful_reject_sampling (bool):
                 If `False` raises a `ValueError` if not enough valid rows could be sampled
                 within `max_retries` trials. If `True` prints a warning and returns
-                as many rows as it was able to sample within `max_retries`. If no rows could
-                be generated, raises a `ValueError`.
+                as many rows as it was able to sample within `max_retries`.
                 Defaults to False.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
+                      sampled within `max_retries` trials.
+                    * no rows could be generated.
         """
         if conditions is None:
             num_rows = num_rows or self._num_rows
@@ -443,8 +451,9 @@ class BaseTabularModel:
 
         try:
             transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
-        except ConstraintsNotMetError:
-            raise ValueError("The given conditions are not able to be met.")
+        except ConstraintsNotMetError as cnme:
+            cnme.message = 'Passed conditions are not valid for the given constraints'
+            raise
 
         condition_columns = list(conditions.columns)
         transformed_columns = list(transformed_conditions.columns)

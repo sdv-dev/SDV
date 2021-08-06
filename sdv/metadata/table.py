@@ -578,8 +578,7 @@ class Table:
 
         Args:
             data (pandas.DataFrame):
-                Table data. If the table data is not valid for the provided constraints,
-                a `ValueError` is raised.
+                Table data.
             on_missing_column (str):
                 If the value is error, then a `MissingConstraintColumnError` is raised.
                 If the value is drop, then the columns involved in the constraint that
@@ -588,6 +587,10 @@ class Table:
         Returns:
             pandas.DataFrame:
                 Transformed data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
         """
         if not self.fitted:
             raise MetadataNotFittedError()
