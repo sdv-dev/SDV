@@ -322,14 +322,13 @@ def _load_tabular_dummy():
     """Load a dummy tabular demo dataframe."""
     age = np.random.randint(30, 50, 12)
     age_when_joined = age - np.random.randint(0, 10, 12)
-    employee_ids = np.random.randint(100000, 999999, 12)
     salary = np.random.uniform(30000, 160000, 12).round(2)
     years_exp = np.random.randint(1, 6, 12)
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
         'department': ['Sales', 'Design', 'AI', 'Search Engine', 'BigData', 'Support'] * 2,
-        'employee_id': employee_ids,
+        'employee_id': [1, 5, 1, 7, 6, 11, 28, 75, 33, 56, 42, 80],
         'age': age,
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,

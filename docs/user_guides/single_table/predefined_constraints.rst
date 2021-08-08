@@ -313,11 +313,14 @@ As of now, **SDV** only has one multi-row constraint.
 Unique Constraint
 ~~~~~~~~~~~~~~~~~
 
-Sometimes a table may have a column that isn't the primary key, but still needs
+Sometimes a table may have a column that is not the primary key, but still needs
 to be unique throughout the table. In some cases, there may even be a collection
-of columns in which each unique combination of their values can only show up once
+of columns for which each unique combination of their values can only show up once
 in the table. The ``Unique`` constraint enforces that the provided column(s) at
-most have one instance of each possible value in the synthetic data.
+most have one instance of each possible combination of values in the synthetic data.
+
+As an example, let us apply this constraint to the ``employee_id`` and ``company``
+columns, since the ``employee_id`` should be unique for each ``company``.
 
 To use this constraint, we must make an instance and provide:
 
@@ -328,8 +331,8 @@ To use this constraint, we must make an instance and provide:
 
     from sdv.constraints import Unique
 
-    unique_ids_constraint = Unique(
-        columns='employee_id'
+    unique_employee_id_company_constraint = Unique(
+        columns=['employee_id', 'company']
     )
 
 Using the Constraints
@@ -346,7 +349,7 @@ constraints that we just defined as a ``list``:
     from sdv.tabular import GaussianCopula
 
     constraints = [
-        unique_ids_constraint,
+        unique_employee_id_company_constraint,
         unique_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint,
