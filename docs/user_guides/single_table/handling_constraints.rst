@@ -1,4 +1,4 @@
-.. _predefined_single_table_constraints:
+.. _handling_constraints:
 
 Handling Constraints
 ====================
@@ -103,16 +103,42 @@ When using this strategy, **SDV** validates the sampled rows, discards
 the ones that do not adjust to the constraint, and re-samples them. This
 process is repeated until enough rows have been sampled.
 
+
 Predefined Constraints
--------------------------------
+----------------------
 
 Let us go back to the demo data that we loaded before and define
 **Constraints** that indicate **SDV** how to work with this data.
 
+Unique Constraint
+~~~~~~~~~~~~~~~~~
+
+Sometimes a table may have a column that is not the primary key, but still needs
+to be unique throughout the table. In some cases, there may even be a collection
+of columns for which each unique combination of their values can only show up once
+in the table. The ``Unique`` constraint enforces that the provided column(s) at
+most have one instance of each possible combination of values in the synthetic data.
+
+As an example, let us apply this constraint to the ``employee_id`` and ``company``
+columns, since the ``employee_id`` should be unique for each ``company``.
+
+To use this constraint, we must make an instance and provide:
+
+- The name of the column(s) that need to have unique combinations
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import Unique
+
+    unique_employee_id_company_constraint = Unique(
+        columns=['employee_id', 'company']
+    )
+
 UniqueCombinations Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first constraint that we will explore is the ``UniqueCombinations``
+The next constraint that we will explore is the ``UniqueCombinations``
 constraint.
 
 This Constraint class can handle the situation number 1 indicated above,
@@ -331,37 +357,6 @@ need to create an instance passing:
 
     one_hot_constraint = OneHotEncoding(
         columns=['full_time', 'part_time', 'contractor']
-    )
-
-Multi-row Constraints
----------------------
-
-The constraints above all validate their requirements against a single row
-at a time. Some constraints, however, need to validate across multiple rows.
-
-Unique Constraint
-~~~~~~~~~~~~~~~~~
-
-Sometimes a table may have a column that is not the primary key, but still needs
-to be unique throughout the table. In some cases, there may even be a collection
-of columns for which each unique combination of their values can only show up once
-in the table. The ``Unique`` constraint enforces that the provided column(s) at
-most have one instance of each possible combination of values in the synthetic data.
-
-As an example, let us apply this constraint to the ``employee_id`` and ``company``
-columns, since the ``employee_id`` should be unique for each ``company``.
-
-To use this constraint, we must make an instance and provide:
-
-- A list of column names or string representing the one column to keep unique
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Unique
-
-    unique_employee_id_company_constraint = Unique(
-        columns=['employee_id', 'company']
     )
 
 Using the Constraints
