@@ -1,4 +1,4 @@
-.. _single_table_constraints:
+.. _predefined_single_table_constraints:
 
 Handling Constraints
 ====================
@@ -308,7 +308,6 @@ Multi-row Constraints
 
 The constraints above all validate their requirements against a single row
 at a time. Some constraints, however, need to validate across multiple rows.
-As of now, **SDV** only has one multi-row constraint.
 
 Unique Constraint
 ~~~~~~~~~~~~~~~~~
