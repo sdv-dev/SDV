@@ -86,6 +86,62 @@ class TestTable:
         # Asserts
         instance._constraints == [constraint3, constraint1, constraint2]
 
+    @patch('sdv.metadata.table.Table._sort_constraints')
+    def test__init__validates_constraint_order_raises_exception(self, _):
+        """Test the ``__init__`` method validates the constraint order.
+
+        If one constraint has ``rebuild_columns`` that are in a later
+        constraint's ``constraint_columns``, an exception should be raised.
+
+        Setup:
+        - Instance should have ``instance._constraints`` set to
+        list of constraints with some having ``rebuild_columns``
+        that are in a later constraint's ``constraint_columns``.
+        Side Effect:
+        - Exception should be raised.
+        """
+        # Setup
+        constraint1 = CustomConstraint()
+        constraint2 = Constraint(handling_strategy='transform')
+        constraint3 = Constraint(handling_strategy='reject_sampling')
+        constraint4 = Constraint(handling_strategy='transform')
+        constraint2.rebuild_columns = ['a', 'd']
+        constraint4.constraint_columns = ['a', 'b', 'c']
+        constraints = [constraint1, constraint2, constraint3, constraint4]
+
+        # Run
+        with pytest.raises(Exception):
+            Table(constraints=constraints)
+
+    @patch('sdv.metadata.table.Table._sort_constraints')
+    def test__init__validates_constraint_order(self, _):
+        """Test the ``__init__`` method validates the constraint order.
+
+        If no constraint has ``rebuild_columns`` that are in a later
+        constraint's ``constraint_columns``, no exception should be raised.
+
+        Setup:
+        - Instance should have ``instance._constraints`` set to
+        list of constraints with none having ``rebuild_columns``
+        that are in a later constraint's ``constraint_columns``.
+        Side Effect:
+        - Constraints are set.
+        """
+        # Setup
+        constraint1 = CustomConstraint()
+        constraint2 = Constraint(handling_strategy='transform')
+        constraint3 = Constraint(handling_strategy='reject_sampling')
+        constraint4 = Constraint(handling_strategy='transform')
+        constraint2.rebuild_columns = ['e', 'd']
+        constraint4.constraint_columns = ['a', 'b', 'c']
+        constraints = [constraint1, constraint2, constraint3, constraint4]
+
+        # Run
+        instance = Table(constraints=constraints)
+
+        # Assert
+        instance._constraints == constraints
+
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
         metadata = {'subtype': 'string', 'regex': '[a-d]'}

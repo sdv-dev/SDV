@@ -105,6 +105,7 @@ class Constraint(metaclass=ConstraintMeta):
     """
 
     constraint_columns = ()
+    rebuild_columns = ()
     _hyper_transformer = None
     _columns_model = None
 

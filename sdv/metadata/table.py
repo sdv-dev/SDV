@@ -241,7 +241,8 @@ class Table:
             for j in range(i + 1, len(transform_constraints)):
                 next_constraint = transform_constraints[j]
                 try:
-                    if any(c in next_constraint.columns for c in cur_constraint.rebuild_columns):
+                    if any(c in next_constraint.constraint_columns
+                           for c in cur_constraint.rebuild_columns):
                         raise Exception('Multiple constraints will modify the same column which'
                                         + 'may lead to the constraint being unenforceable. Please'
                                         + 'use reject_sampling as the handling_strategy instead.')
