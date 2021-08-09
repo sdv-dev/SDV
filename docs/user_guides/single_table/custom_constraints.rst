@@ -96,7 +96,7 @@ even age value.
 
 .. note::
     It is sufficient to define ``is_valid`` function alone. In this case, the constraint will
-    use ``reject_sampling`` strategy. For example, ``CustomConstraint(is_valid=is_valid)``.
+    use the ``reject_sampling`` strategy. For example, ``CustomConstraint(is_valid=is_valid)``.
 
 
 Can I apply the same function to multiple columns?
