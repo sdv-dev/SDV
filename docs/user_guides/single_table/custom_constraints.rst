@@ -29,43 +29,56 @@ We will use this dataset to demonstrate how you can create your own constraint.
 Using the ``CustomConstraint``
 ------------------------------
 
-Let's consider the following example where we wish to generate synthetic data and we want
-a particular column, age for example, to be even. We will define ``transform``, 
-``reverse_transform``, and ``is_valid`` methods to make our data satisfy our constraints.
-We can achieve our goal by doing a 2 step process: 
+Let's consider the following example where we wish to generate synthetic data and 
+we want a particular column, ``annual_bonus`` for example, to be a multiple of a 
+*base* value, e.g. 150. In other words, the ``annual_bonus`` increments by 150. 
+We will define ``transform``, ``reverse_transform``, and ``is_valid`` methods to 
+make our data satisfy our constraints.
 
-- dividing the input data by 2
-- multiplying the sampled data by 2
+We can achieve our goal by performing transformations in a 2 step process:
 
-We can create a ``transform`` function that makes all the ``age`` values even.
+- divide ``annual_bonus`` by the base unit (150).
+- reversing the effect by multiplying it back with the base unit (150).
+
 
 .. ipython:: python
     :okwarning:
 
     def transform(table_data):
-        table_data['age'] = table_data['age'] / 2
+        base = 150
+        table_data['annual_bonus'] = table_data['annual_bonus'] / base
         return table_data
 
-We transform the column ``age`` to be even by dividing it by 2. We now define
-the ``reverse_transform`` as doing the opposite effect.
+
+After defining ``transform`` we create ``reverse_transform`` that reverses
+the operations made.
 
 .. ipython:: python
     :okwarning:
 
     def reverse_transform(table_data):
-        table_data['age'] = table_data['age'] * 2
+        base = 150
+        table_data['annual_bonus'] *= base
         return table_data
 
-Lastly, we write the ``is_valid`` function to assess whether the column is even or not.
+
+Lastly, we write the ``is_valid`` function to assess whether the column is a 
+multiple of the base or not, we know this through two factors: if the quotient 
+is larger than zero, as well as not containing any decimal values.
 
 .. ipython:: python
     :okwarning:
 
     def is_valid(table_data):
-        return table_data['age'] % 2 == 0
+        base = 150
+        quotient = table_data['annual_bonus'] / base
+        is_dividable = quotient > 0
+        is_int = quotient.apply(float.is_integer)
+        return is_dividable & is_int
 
-We put every thing together in ``CustomConstraint`` and then we can create our model and 
-generate synthetic data by passing the constraint we just created.
+
+We put every thing together in ``CustomConstraint`` and then we can create our
+model and generate synthetic data by passing the constraint we just created.
 
 .. ipython:: python
     :okwarning:
@@ -85,8 +98,8 @@ generate synthetic data by passing the constraint we just created.
 
     sampled = gc.sample(10)
 
-When we view the ``sampled`` data, we should find that all the rows in the sampled data have an
-even age value.
+When we view the ``sampled`` data, we should find that all the rows in the sampled 
+data have an annual bonus that is a multiple of the base value.
 
 .. ipython:: python
     :okwarning:
@@ -102,19 +115,20 @@ even age value.
 Can I apply the same function to multiple columns?
 --------------------------------------------------
 
-Say we want ``age`` and ``age_when_joined`` to be both even. Rather than defining 
-two constraints, or editing the code of our functions for each new column that we 
-want to constraint, we provide another style of writing functions such that the 
-function should accept a column data as input.
+Say we want ``annual_bonus`` and ``salary`` to be both composed of the base unit. 
+Rather than defining two constraints, or editing the code of our functions for each 
+new column that we want to constraint, we provide another style of writing functions 
+such that the function should accept a column data as input.
 
-The ``transform`` function takes ``column_data`` as input and returns the transformed
-column.
+The ``transform`` function takes ``column_data`` as input and returns the transformed column.
+
 
 .. ipython:: python
     :okwarning:
 
     def transform(column_data):
-        return column_data / 2
+        base = 150
+        return column_data / base
 
 Similarly we defined ``reverse_transform`` and ``is_valid`` in a way that it operates
 on the data of a single column.
@@ -123,11 +137,16 @@ on the data of a single column.
     :okwarning:
 
     def reverse_transform(column_data):
-        return column_data * 2
+        base = 150
+        return column_data * base
 
 
     def is_valid(column_data):
-        return column_data % 2 == 0
+        base = 150
+        quotient = column_data / base
+        is_dividable = quotient > 0
+        is_int = quotient.apply(float.is_integer)
+        return is_dividable & is_int
 
 Now that we have our functions, we initialize ``CustomConstraint`` and we 
 specify which column(s) are the desired ones.
@@ -136,7 +155,7 @@ specify which column(s) are the desired ones.
     :okwarning:
 
     constraint = CustomConstraint(
-        columns=['age', 'age_when_joined'],
+        columns=['annual_bonus', 'salary'],
         transform=transform, 
         reverse_transform=reverse_transform, 
         is_valid=is_valid
@@ -153,7 +172,7 @@ Now we create our model and pass our constraints.
 
     sampled = gc.sample(10)
 
-Viewing ``sampled`` we now see two columns that are always even.
+Viewing ``sampled`` we now see two columns that are always a multiple of 150.
 
 .. ipython:: python
     :okwarning:
@@ -164,8 +183,11 @@ Viewing ``sampled`` we now see two columns that are always even.
 Can I access the rest of the table from my column functions?
 ------------------------------------------------------------
 
-In addition to wanting to construct even columns, we would like ``age`` and
-``age_when_joined`` to be always larger than a "fixed" column ``years_in_the_company``.
+In addition to wanting to construct values that are a multiple of a base unit,
+we would like ``annual_bonus`` and ``salary`` to be based of a "fixed" column 
+``years_in_the_company`` such that every record should be receiving an annual 
+bonus or salary that is at least a thousand in value, which we call a minimum 
+value. This minimum value doubles each year.
 
 To support this requirement, we write functions that take as input:
 
@@ -175,17 +197,14 @@ To support this requirement, we write functions that take as input:
 Now we can construct our functions freely, we write our methods
 with said arguments and be able to access ``'years_in_the_company'``.
 
-We first write our ``transform`` function to:
-
-1. add a value of ``'years_in_the_company'``.
-2. multiply the result with 2 to make sure it is even.
+We first write our ``transform`` function:
 
 .. ipython:: python
     :okwarning:
 
     def transform(table_data, column):
-        added_value = table_data[column] + table_data['years_in_the_company']
-        table_data[column] = added_value / 2
+        base = 150
+        table_data[column] = table_data[column] / base
         return table_data
 
 Now we define our ``reverse_transform`` to reverse the operations performed
@@ -195,8 +214,8 @@ in the ``transform``.
     :okwarning:
 
     def reverse_transform(table_data, column):
-        value = table_data[column] - table_data['years_in_the_company']
-        table_data[column] *= 2 
+        base = 150
+        table_data[column] *= base 
         return table_data
 
 Lastly, we write our ``is_valid`` function to identify invalid rows.
@@ -205,9 +224,13 @@ Lastly, we write our ``is_valid`` function to identify invalid rows.
     :okwarning:
 
     def is_valid(table_data, column):
-        is_larger = table_data[column] > table_data['years_in_the_company']
-        is_even = table_data[column] % 2 == 0
-        return is_larger & is_even
+        base = 150
+        minimum = 1000
+        quotient = table_data[column] / base
+        is_dividable = quotient > 0
+        is_int = quotient.apply(float.is_integer)
+        is_larger = table_data[column] > (table_data['years_in_the_company'] * minimum)
+        return is_dividable & is_int & is_larger
 
 We now stich everything together and pass it to the model.
 
