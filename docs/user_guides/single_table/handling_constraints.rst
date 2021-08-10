@@ -47,25 +47,27 @@ simulated employees from several companies.
 
 If we observe the data closely we will find a few **constraints**:
 
-1. Each ``company`` has employees from two or more ``departments``, but
+1. There should be at most one ``employee_id`` for every employee
+   at a ``company``.
+2. Each ``company`` has employees from two or more ``departments``, but
    ``department`` names are different across ``companies``. This implies
    that a ``company`` should only be paired with its own ``departments``
    and never with the ``departments`` of other ``companies``.
-2. We have an ``age`` column that represents the age of the employee at
+3. We have an ``age`` column that represents the age of the employee at
    the date when the data was created and an ``age_when_joined`` that
    represents the age of the employee when they joined the ``company``.
    Since all of them joined the ``company`` before the data was created,
    the ``age_when_joined`` will always be equal or lower than the
    ``age`` column.
-3. We have a ``years_in_the_company`` column that indicates how many
+4. We have a ``years_in_the_company`` column that indicates how many
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
-4. We have a ``salary`` column that should always be rounded to 2
+5. We have a ``salary`` column that should always be rounded to 2
    decimal points.
-5. The ``age`` column is bounded, since realistically an employee can only be
+6. The ``age`` column is bounded, since realistically an employee can only be
    so old (or so young).
-6. The ``full_time``, ``part_time`` and ``contractor`` columns
+7. The ``full_time``, ``part_time`` and ``contractor`` columns
    are related in such a way that one of them will always be one and the others
    zero, since the employee must be part of one of the three categories.
 
@@ -124,7 +126,7 @@ columns, since the ``employee_id`` should be unique for each ``company``.
 
 To use this constraint, we must make an instance and provide:
 
-- The name of the column(s) that need to have unique combinations
+- The name of the column or a list of names of columns that need to have unique values
 
 .. ipython:: python
     :okwarning:
