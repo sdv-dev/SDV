@@ -29,15 +29,16 @@ We will use this dataset to demonstrate how you can create your own constraint.
 Using the ``CustomConstraint``
 ------------------------------
 
-Let's consider the following example where we wish to generate synthetic data and we want
-a particular column, ``salary`` for example, to be a multiple of a *base* value, e.g. 500. 
-In other words, the ``salary`` increments by 500. We will define ``transform`` and 
-``reverse_transform`` methods to make sure our data satisfy our constraints.
+We wish to generate synthetic data from the ``employees`` records. If you look at the data 
+above, you will notice that the ``salary`` column is a multiple of a *base* value, in
+this case the base unit is 500. In other words, the ``salary`` increments by 500. 
+We will define ``transform`` and ``reverse_transform`` methods to make sure our 
+data satisfy our constraint.
 
 We can achieve our goal by performing transformations in a 2 step process:
 
-- Divide ``salary`` by the base unit (500). This transformation makes it easier to model the data
-  since it would now learn regular integer values without any explicit constraint on the data.
+- Divide ``salary`` by the base unit (500). This transformation makes it easier for the model 
+  to learn the data since it would now learn regular integer values without any explicit constraint on the data.
 - Reversing the effect by multiplying ``salary`` back with the base unit. Now that the model has 
   learned regular integer values, we multiply it with the base (500) such that it now conforms to our original data range.
 
@@ -62,8 +63,7 @@ After defining ``transform`` we create ``reverse_transform`` that reverses the o
         return table_data
 
 
-Then, we pack every thing together in ``CustomConstraint`` and we can create our model 
-and generate synthetic data by passing the constraint we just created.
+Then, we pack every thing together in ``CustomConstraint``.
 
 .. ipython:: python
     :okwarning:
@@ -73,25 +73,12 @@ and generate synthetic data by passing the constraint we just created.
         reverse_transform=reverse_transform
     )
 
-    gc = GaussianCopula(constraints=[constraint])
-
-    gc.fit(employees)
-
-    sampled = gc.sample(10)
-
-When we view the ``sampled`` data, we should find that all the rows in the sampled 
-data have a salary that is a multiple of the base value.
-
-.. ipython:: python
-    :okwarning:
-
-    sampled
-
 
 Can I apply the same function to multiple columns?
 --------------------------------------------------
 
-Say we want ``salary`` and ``annual_bonus`` to be both composed of the base unit. Rather than 
+In the example above we fixed the ``salary`` format, but if we continue observing the data 
+we will see that ``annual_bonus`` is also constrained by the same logic. Rather than 
 defining two constraints, or editing the code of our functions for each new column that we want 
 to constraint, we provide another style of writing functions such that the function should accept 
 a column data as input.
@@ -128,24 +115,6 @@ specify which column(s) are the desired ones.
         reverse_transform=reverse_transform
     )
 
-Now we create our model and pass our constraints.
-
-.. ipython:: python
-    :okwarning:
-
-    gc = GaussianCopula(constraints=[constraint])
-
-    gc.fit(employees)
-
-    sampled = gc.sample(10)
-
-Viewing ``sampled`` we now see two columns that are always a multiple of 500.
-
-.. ipython:: python
-    :okwarning:
-
-    sampled
-
 
 Can I access the rest of the table from my column functions?
 ------------------------------------------------------------
@@ -171,7 +140,6 @@ We first write our ``transform`` function as we have done previously:
 
     def transform(table_data, column):
         base = 500
-        display(table_data)
         table_data[column] = table_data[column] / base
         return table_data
 
@@ -190,7 +158,7 @@ contractors and non contractors, the operations are as follows:
         base = 500.
         is_not_contractor = table_data.contractor == 0.
         table_data[column] = table_data[column].round(4)
-        table_data.at[is_not_contractor, column] = table_data[column].loc[is_not_contractor].round()
+        table_data[column].loc[is_not_contractor] = table_data[column].loc[is_not_contractor].round()
         table_data[column] *= base
         return table_data
 
@@ -210,6 +178,14 @@ We now stich everything together and pass it to the model.
     gc.fit(employees)
 
     sampled = gc.sample(10)
+
+
+When we view the ``sampled`` data, we should find that all the rows in the sampled 
+data have a salary that is a multiple of the base value with the exception
+of "contractor" records.
+
+.. ipython:: python
+    :okwarning:
 
     sampled
 
