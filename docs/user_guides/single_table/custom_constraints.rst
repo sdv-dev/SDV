@@ -29,67 +29,48 @@ We will use this dataset to demonstrate how you can create your own constraint.
 Using the ``CustomConstraint``
 ------------------------------
 
-Let's consider the following example where we wish to generate synthetic data and 
-we want a particular column, ``annual_bonus`` for example, to be a multiple of a 
-*base* value, e.g. 150. In other words, the ``annual_bonus`` increments by 150. 
-We will define ``transform``, ``reverse_transform``, and ``is_valid`` methods to 
-make our data satisfy our constraints.
+Let's consider the following example where we wish to generate synthetic data and we want
+a particular column, ``salary`` for example, to be a multiple of a *base* value, e.g. 500. 
+In other words, the ``salary`` increments by 500. We will define ``transform`` and 
+``reverse_transform`` methods to make sure our data satisfy our constraints.
 
 We can achieve our goal by performing transformations in a 2 step process:
 
-- divide ``annual_bonus`` by the base unit (150).
-- reversing the effect by multiplying it back with the base unit (150).
+- Divide ``salary`` by the base unit (500). This transformation makes it easier to model the data
+  since it would now learn regular integer values without any explicit constraint on the data.
+- Reversing the effect by multiplying ``salary`` back with the base unit. Now that the model has 
+  learned regular integer values, we multiply it with the base (500) such that it now conforms to our original data range.
 
 
 .. ipython:: python
     :okwarning:
 
     def transform(table_data):
-        base = 150
-        table_data['annual_bonus'] = table_data['annual_bonus'] / base
+        base = 500
+        table_data['salary'] = table_data['salary'] / base
         return table_data
 
 
-After defining ``transform`` we create ``reverse_transform`` that reverses
-the operations made.
+After defining ``transform`` we create ``reverse_transform`` that reverses the operations made.
 
 .. ipython:: python
     :okwarning:
 
     def reverse_transform(table_data):
-        base = 150
-        table_data['annual_bonus'] *= base
+        base = 500
+        table_data['salary'] = table_data['salary'].round() * base
         return table_data
 
 
-Lastly, we write the ``is_valid`` function to assess whether the column is a 
-multiple of the base or not, we know this through two factors: if the quotient 
-is larger than zero, as well as not containing any decimal values.
+Then, we pack every thing together in ``CustomConstraint`` and we can create our model 
+and generate synthetic data by passing the constraint we just created.
 
 .. ipython:: python
     :okwarning:
-
-    def is_valid(table_data):
-        base = 150
-        quotient = table_data['annual_bonus'] / base
-        is_dividable = quotient > 0
-        is_int = quotient.apply(float.is_integer)
-        return is_dividable & is_int
-
-
-We put every thing together in ``CustomConstraint`` and then we can create our
-model and generate synthetic data by passing the constraint we just created.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import CustomConstraint
-    from sdv.tabular import GaussianCopula
 
     constraint = CustomConstraint(
         transform=transform, 
-        reverse_transform=reverse_transform, 
-        is_valid=is_valid
+        reverse_transform=reverse_transform
     )
 
     gc = GaussianCopula(constraints=[constraint])
@@ -99,7 +80,7 @@ model and generate synthetic data by passing the constraint we just created.
     sampled = gc.sample(10)
 
 When we view the ``sampled`` data, we should find that all the rows in the sampled 
-data have an annual bonus that is a multiple of the base value.
+data have a salary that is a multiple of the base value.
 
 .. ipython:: python
     :okwarning:
@@ -107,18 +88,13 @@ data have an annual bonus that is a multiple of the base value.
     sampled
 
 
-.. note::
-    It is sufficient to define ``is_valid`` function alone. In this case, the constraint will
-    use the ``reject_sampling`` strategy. For example, ``CustomConstraint(is_valid=is_valid)``.
-
-
 Can I apply the same function to multiple columns?
 --------------------------------------------------
 
-Say we want ``annual_bonus`` and ``salary`` to be both composed of the base unit. 
-Rather than defining two constraints, or editing the code of our functions for each 
-new column that we want to constraint, we provide another style of writing functions 
-such that the function should accept a column data as input.
+Say we want ``salary`` and ``annual_bonus`` to be both composed of the base unit. Rather than 
+defining two constraints, or editing the code of our functions for each new column that we want 
+to constraint, we provide another style of writing functions such that the function should accept 
+a column data as input.
 
 The ``transform`` function takes ``column_data`` as input and returns the transformed column.
 
@@ -127,26 +103,18 @@ The ``transform`` function takes ``column_data`` as input and returns the transf
     :okwarning:
 
     def transform(column_data):
-        base = 150
+        base = 500
         return column_data / base
 
-Similarly we defined ``reverse_transform`` and ``is_valid`` in a way that it operates
-on the data of a single column.
+Similarly we defined ``reverse_transform`` in a way that it operates on the data of a 
+single column.
 
 .. ipython:: python
     :okwarning:
 
     def reverse_transform(column_data):
-        base = 150
-        return column_data * base
-
-
-    def is_valid(column_data):
-        base = 150
-        quotient = column_data / base
-        is_dividable = quotient > 0
-        is_int = quotient.apply(float.is_integer)
-        return is_dividable & is_int
+        base = 500
+        return column_data.round() * base
 
 Now that we have our functions, we initialize ``CustomConstraint`` and we 
 specify which column(s) are the desired ones.
@@ -155,10 +123,9 @@ specify which column(s) are the desired ones.
     :okwarning:
 
     constraint = CustomConstraint(
-        columns=['annual_bonus', 'salary'],
+        columns=['salary', 'annual_bonus'],
         transform=transform, 
-        reverse_transform=reverse_transform, 
-        is_valid=is_valid
+        reverse_transform=reverse_transform
     )
 
 Now we create our model and pass our constraints.
@@ -172,7 +139,7 @@ Now we create our model and pass our constraints.
 
     sampled = gc.sample(10)
 
-Viewing ``sampled`` we now see two columns that are always a multiple of 150.
+Viewing ``sampled`` we now see two columns that are always a multiple of 500.
 
 .. ipython:: python
     :okwarning:
@@ -183,54 +150,49 @@ Viewing ``sampled`` we now see two columns that are always a multiple of 150.
 Can I access the rest of the table from my column functions?
 ------------------------------------------------------------
 
-In addition to wanting to construct values that are a multiple of a base unit,
-we would like ``annual_bonus`` and ``salary`` to be based of a "fixed" column 
-``years_in_the_company`` such that every record should be receiving an annual 
-bonus or salary that is at least a thousand in value, which we call a minimum 
-value. This minimum value doubles each year.
+If we look closely at the data, we notice that ``salary`` and ``annual_bonus`` are only a 
+multiple of 500 when the employee is not a "contractor". To take this requirement into 
+consideration, we refer to a "fixed" column ``contractor`` in order to know whether we
+should apply this constraint or not. The access to ``contractor`` column will allow us
+to properly transform and reverse transform the data.
 
-To support this requirement, we write functions that take as input:
+We write our functions to take as input:
 
 -  ``table_data`` which contains all the information.
 -  ``column`` which is a an argument to represent the columns of interest.
 
 Now we can construct our functions freely, we write our methods
-with said arguments and be able to access ``'years_in_the_company'``.
+with said arguments and be able to access ``'contractor'``.
 
-We first write our ``transform`` function:
+We first write our ``transform`` function as we have done previously:
 
 .. ipython:: python
     :okwarning:
 
     def transform(table_data, column):
-        base = 150
+        base = 500
+        display(table_data)
         table_data[column] = table_data[column] / base
         return table_data
 
-Now we define our ``reverse_transform`` to reverse the operations performed
-in the ``transform``.
+When it comes to defining ``reverse_transform``, we need to distinguish between
+contractors and non contractors, the operations are as follows:
+
+1. round values to four decimal points for contractors such that the end result will 
+   be two decimal points after multiplying the result with 500.
+2. round values to zero for employees that are not contractors such that the end
+   result will be a multiple of 500.
 
 .. ipython:: python
     :okwarning:
 
     def reverse_transform(table_data, column):
-        base = 150
-        table_data[column] *= base 
+        base = 500.
+        is_not_contractor = table_data.contractor == 0.
+        table_data[column] = table_data[column].round(4)
+        table_data.at[is_not_contractor, column] = table_data[column].loc[is_not_contractor].round()
+        table_data[column] *= base
         return table_data
-
-Lastly, we write our ``is_valid`` function to identify invalid rows.
-
-.. ipython:: python
-    :okwarning:
-
-    def is_valid(table_data, column):
-        base = 150
-        minimum = 1000
-        quotient = table_data[column] / base
-        is_dividable = quotient > 0
-        is_int = quotient.apply(float.is_integer)
-        is_larger = table_data[column] > (table_data['years_in_the_company'] * minimum)
-        return is_dividable & is_int & is_larger
 
 We now stich everything together and pass it to the model.
 
@@ -238,10 +200,9 @@ We now stich everything together and pass it to the model.
     :okwarning:
 
     constraint = CustomConstraint(
-        columns=['age', 'age_when_joined'],
+        columns=['salary', 'annual_bonus'],
         transform=transform, 
-        reverse_transform=reverse_transform, 
-        is_valid=is_valid
+        reverse_transform=reverse_transform
     )
 
     gc = GaussianCopula(constraints=[constraint])
@@ -254,4 +215,49 @@ We now stich everything together and pass it to the model.
 
 This style gives flexibility to access any column in the table while still operating on 
 a column basis.
+
+
+Can I write a ``CustomConstraint`` based on reject sampling?
+------------------------------------------------------------
+
+In the previous section, we defined our ``CustomConstraint`` using ``transform`` and 
+``reverse_transform`` functions. Sometimes, our constraints are not possible to implement 
+using these methods, that is when we rely on ``reject_sampling`` strategy. In ``reject_sampling`` 
+we need to implement an ``is_valid`` function that identifies which rows do not follow the 
+said constraint, in our case, which rows are not a multiple of the *base* unit.
+
+We can define ``is_valid`` according to the three styles mentioned in the previous section:
+
+1. function with ``table_data`` argument.
+2. function with ``column_data`` argument.
+3. function with ``table_data`` and ``column`` argument.
+
+Here is an example of how you would define ``is_valid`` for each one of the mentioned styles:
+
+.. code-block:: python
+
+    def is_valid(table_data):
+        base = 500
+        return table_data['salary'] % base == 0
+
+    def is_valid(column_data):
+        base = 500
+        return column_data % base == 0
+
+    def is_valid(table_data, column):
+        base = 500
+        is_contractor = table_data.contractor == 1
+        valid = table_data[column] % base == 0
+        contractor_salary = employees['salary'].loc[is_contractor]
+        valid.loc[is_contractor] = contractor_salary == contractor_salary.round(2)
+        return valid
+
+Then we construct ``CustomConstraint`` to take ``is_valid`` on its own.
+
+.. code-block:: python
+
+    constraint = CustomConstraint(
+        columns=['salary', 'annual_bonus'],
+        is_valid=is_valid
+    )
 
