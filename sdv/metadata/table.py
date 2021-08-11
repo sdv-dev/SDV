@@ -562,16 +562,16 @@ class Table:
                 Table data.
 
         Returns:
-            bool:
-                Whether or not the table data is valid for the constraints.
-        """
-        is_valid = True
+            None
 
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
         for constraint in self._constraints:
             if set(constraint.constraint_columns).issubset(data.columns.values):
-                is_valid = is_valid and constraint.is_valid(data).all()
-
-        return is_valid
+                if not constraint.is_valid(data).all():
+                    raise ConstraintsNotMetError('Data is not valid for the given constraints')
 
     def transform(self, data, on_missing_column='error'):
         """Transform the given data.
@@ -599,8 +599,7 @@ class Table:
         LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
 
-        if not self._validate_data_on_constraints(data):
-            raise ConstraintsNotMetError('Data is not valid for the given constraints')
+        self._validate_data_on_constraints(data)
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
         data = self._transform_constraints(data, on_missing_column)

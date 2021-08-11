@@ -5,6 +5,7 @@ import pytest
 from rdt.transformers.numerical import NumericalTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 
 
@@ -246,7 +247,9 @@ class TestTable:
         Input:
         - Table data
         Output:
-        - True
+        - None
+        Side Effects:
+        - No error
         """
         # Setup
         data = pd.DataFrame({
@@ -263,7 +266,7 @@ class TestTable:
         result = Table._validate_data_on_constraints(table_mock, data)
 
         # Assert
-        assert result
+        assert result is None
 
     def test__validate_data_on_constraints_invalid_input(self):
         """Test the ``Table._validate_data_on_constraints`` method.
@@ -274,7 +277,9 @@ class TestTable:
         Input:
         - Table data contains an invalid row
         Output:
-        - False
+        - None
+        Side Effects:
+        - A ConstraintsNotMetError is thrown
         """
         # Setup
         data = pd.DataFrame({
@@ -287,11 +292,9 @@ class TestTable:
         table_mock = Mock()
         table_mock._constraints = [constraint_mock]
 
-        # Run
-        result = Table._validate_data_on_constraints(table_mock, data)
-
-        # Assert
-        assert not result
+        # Run and assert
+        with pytest.raises(ConstraintsNotMetError):
+            Table._validate_data_on_constraints(table_mock, data)
 
     def test__validate_data_on_constraints_missing_cols(self):
         """Test the ``Table._validate_data_on_constraints`` method.
@@ -302,7 +305,9 @@ class TestTable:
         Input:
         - Table data that is missing a constraint column
         Output:
-        - False
+        - None
+        Side Effects:
+        - No error
         """
         # Setup
         data = pd.DataFrame({
@@ -318,4 +323,4 @@ class TestTable:
         result = Table._validate_data_on_constraints(table_mock, data)
 
         # Assert
-        assert result
+        assert result is None
