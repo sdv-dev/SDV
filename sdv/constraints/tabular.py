@@ -13,6 +13,8 @@ Currently implemented constraints are:
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
+    * Positive: Ensure that the values in given columns are always positive.
+    * Negative: Ensure that the values in given columns are always negative.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
@@ -243,11 +245,11 @@ class GreaterThan(Constraint):
     will be added to the diff to reconstruct the ``high`` column.
 
     Args:
-        low (str or int):
-            Either the name of the column that contains the low value,
+        low (str or list[str]):
+            Either the name of the column(s) that contains the low value,
             or a scalar that is the low value.
-        high (str or int):
-            Either the name of the column that contains the high value,
+        high (str or list[str]):
+            Either the name of the column(s) that contains the high value,
             or a scalar that is the high value.
         strict (bool):
             Whether the comparison of the values should be strict ``>=`` or
@@ -259,78 +261,124 @@ class GreaterThan(Constraint):
         drop (str):
             Which column to drop during transformation. Can be ``'high'``,
             ``'low'`` or ``None``.
-        high_is_scalar(bool or None):
-            Whether or not the value for high is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
-        low_is_scalar(bool or None):
-            Whether or not the value for low is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
+        scalar (str):
+            Which value is a scalar. Can be ``'high'``, ``'low'`` or ``None``.
+            If ``None`` then both ``high`` and ``low`` are column names.
     """
 
-    _diff_column = None
+    _diff_columns = None
     _is_datetime = None
-    _column_to_reconstruct = None
+    _columns_to_reconstruct = None
 
-    def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None, high_is_scalar=None,
-                 low_is_scalar=None):
-        self._low = low
-        self._high = high
-        self._strict = strict
-        self.constraint_columns = (low, high)
-        self._drop = drop
-        self._high_is_scalar = high_is_scalar
-        self._low_is_scalar = low_is_scalar
-        super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
+    @staticmethod
+    def _as_list(value):
+        if not isinstance(value, list):
+            return [value]
 
-    def _get_low_value(self, table_data):
-        if self._low_is_scalar:
-            return self._low
-        elif self._low in table_data.columns:
-            return table_data[self._low]
+        return value
 
-        return None
+    @staticmethod
+    def _validate_scalar(scalar_column, column_names, scalar):
+        """Validate scalar comparison inputs.
 
-    def _get_high_value(self, table_data):
-        if self._high_is_scalar:
-            return self._high
-        elif self._high in table_data.columns:
-            return table_data[self._high]
+        - Make sure that the scalar column is not a list and raise the proper error if it is.
+        - If the `column_names` is not a list it would make it a list.
+        - Return both the scalar column and column names with the right format
+        """
+        if isinstance(scalar_column, list):
+            raise TypeError(f'`{scalar}` cannot be a list when scalar="{scalar}".')
 
-        return None
+        column_names = GreaterThan._as_list(column_names)
 
-    def _get_column_to_reconstruct(self):
+        return column_names
+
+    @staticmethod
+    def _validate_drop(scalar, drop):
+        if drop == scalar:
+            raise ValueError(f"Invalid `drop` value: f`{drop}`. Cannot drop a scalar.")
+
+    @classmethod
+    def _validate_inputs(cls, low, high, scalar, drop):
+        if scalar is None:
+            low = cls._as_list(low)
+            high = cls._as_list(high)
+            if len(low) > 1 and len(high) > 1:
+                raise ValueError('either `high` or `low` must contain only one column.')
+
+            constraint_columns = tuple(low + high)
+
+        elif scalar == 'low':
+            cls._validate_drop(scalar, drop)
+            high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
+            constraint_columns = tuple(high)
+        elif scalar == 'high':
+            cls._validate_drop(scalar, drop)
+            low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
+            constraint_columns = tuple(low)
+        else:
+            raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
+                             "Use either: 'high', 'low', or None.")
+
+        return low, high, constraint_columns
+
+    def _get_columns_to_reconstruct(self):
         if self._drop == 'high':
             column = self._high
         elif self._drop == 'low':
             column = self._low
-        elif self._high_is_scalar:
+        elif self._scalar == 'high':
             column = self._low
         else:
             column = self._high
 
         return column
 
-    def _get_diff_column_name(self, table_data):
-        token = '#'
-        if len(self.constraint_columns) == 1:
-            name = self.constraint_columns[0] + token
+    def __init__(self, low, high, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=None, scalar=None):
+        self._strict = strict
+        self._drop = drop
+        self._scalar = scalar
+        self._low, self._high, self.constraint_columns = self._validate_inputs(
+            low=low, high=high, scalar=scalar, drop=drop)
+        self._columns_to_reconstruct = self._get_columns_to_reconstruct()
+
+        if strict:
+            self.operator = np.greater
+        else:
+            self.operator = np.greater_equal
+
+        super().__init__(handling_strategy=handling_strategy,
+                         fit_columns_model=fit_columns_model)
+
+    def _get_value(self, table_data, field):
+        variable = getattr(self, f'_{field}')
+        if self._scalar == field:
+            return variable
+
+        return table_data[variable].values
+
+    def _get_diff_columns_name(self, table_data):
+        names = []
+        base = ''
+        column_names = list(self.constraint_columns)
+        if self._scalar is None:
+            base = self._low if len(self._low) == 1 else self._high
+            column_names.remove(base[0])
+            base = str(base[0])
+
+        for column in list(map(str, column_names)):
+            token = '#'
+            name = token.join((column, base))
             while name in table_data.columns:
-                name += '#'
+                token += '#'
 
-            return name
+            names.append(name)
 
-        while token.join(self.constraint_columns) in table_data.columns:
-            token += '#'
-
-        return token.join(self.constraint_columns)
+        return names
 
     def _get_is_datetime(self, table_data):
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = self._get_value(table_data, 'low')
+        high = self._get_value(table_data, 'high')
 
         is_low_datetime = is_datetime_type(low)
         is_high_datetime = is_datetime_type(high)
@@ -341,6 +389,14 @@ class GreaterThan(Constraint):
 
         return is_datetime
 
+    def _check_columns_exist(self, table_data, field):
+        values = getattr(self, f'_{field}')
+        missing = set(values) - set(table_data.columns)
+        if missing:
+            raise KeyError(f'The `{field}` columns {missing} '
+                           f'were not found in table_data. If `{field}` is a scalar, '
+                           f'set `scalar="{field}"`.')
+
     def _fit(self, table_data):
         """Learn the dtype of the high column.
 
@@ -348,24 +404,13 @@ class GreaterThan(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        if self._high_is_scalar is None:
-            self._high_is_scalar = self._high not in table_data.columns
-        if self._low_is_scalar is None:
-            self._low_is_scalar = self._low not in table_data.columns
+        if self._scalar != 'high':
+            self._check_columns_exist(table_data, 'high')
+        if self._scalar != 'low':
+            self._check_columns_exist(table_data, 'low')
 
-        if self._high_is_scalar and self._low_is_scalar:
-            raise TypeError('`low` and `high` cannot be both scalars at the same time')
-        elif self._low_is_scalar:
-            self.constraint_columns = (self._high,)
-            self._dtype = table_data[self._high].dtype
-        elif self._high_is_scalar:
-            self.constraint_columns = (self._low,)
-            self._dtype = table_data[self._low].dtype
-        else:
-            self._dtype = table_data[self._high].dtype
-
-        self._column_to_reconstruct = self._get_column_to_reconstruct()
-        self._diff_column = self._get_diff_column_name(table_data)
+        self._dtype = table_data[self._columns_to_reconstruct].dtypes
+        self._diff_columns = self._get_diff_columns_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
@@ -379,12 +424,10 @@ class GreaterThan(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
-        if self._strict:
-            return high > low
+        low = self._get_value(table_data, 'low')
+        high = self._get_value(table_data, 'high')
 
-        return high >= low
+        return self.operator(high, low).all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -404,18 +447,22 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = self._get_high_value(table_data) - self._get_low_value(table_data)
+        diff = self._get_value(table_data, 'high') - self._get_value(table_data, 'low')
 
         if self._is_datetime:
-            diff = pd.to_numeric(diff)
+            diff = diff.astype(np.float64)
 
-        table_data[self._diff_column] = np.log(diff + 1)
+        table_data[self._diff_columns] = np.log(diff + 1)
         if self._drop == 'high':
             table_data = table_data.drop(self._high, axis=1)
         elif self._drop == 'low':
             table_data = table_data.drop(self._low, axis=1)
 
         return table_data
+
+    def _construct_columns(self, diff, column_values, columns):
+        new_values = pd.DataFrame(diff + column_values, columns=columns)
+        return new_values.astype(dict(zip(columns, self._dtype)))
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -436,93 +483,93 @@ class GreaterThan(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = (np.exp(table_data[self._diff_column]).round() - 1).clip(0)
+        diff = (np.exp(table_data[self._diff_columns].values).round() - 1).clip(0)
         if self._is_datetime:
-            diff = pd.to_timedelta(diff)
-
-        high = self._get_high_value(table_data)
-        low = self._get_low_value(table_data)
+            diff = diff.astype('timedelta64[ns]')
 
         if self._drop == 'high':
-            table_data[self._high] = (low + diff).astype(self._dtype)
+            low = self._get_value(table_data, 'low')
+            table_data[self._high] = self._construct_columns(diff, low, self._high)
         elif self._drop == 'low':
-            table_data[self._low] = (high - diff).astype(self._dtype)
+            high = self._get_value(table_data, 'high')
+            table_data[self._low] = self._construct_columns(-diff, high, self._low)
         else:
+            low = self._get_value(table_data, 'low')
+            high = self._get_value(table_data, 'high')
             invalid = ~self.is_valid(table_data)
-            if not self._high_is_scalar and not self._low_is_scalar:
-                new_values = low.loc[invalid] + diff.loc[invalid]
-            elif self._high_is_scalar:
-                new_values = high - diff.loc[invalid]
+            if self._scalar == 'high':
+                new_values = high - diff[invalid]
+            elif self._scalar == 'low':
+                new_values = low + diff[invalid]
             else:
-                new_values = low + diff.loc[invalid]
+                new_values = low[invalid] + diff[invalid]
 
-            table_data[self._column_to_reconstruct].loc[invalid] = new_values.astype(self._dtype)
+            for i, column in enumerate(self._columns_to_reconstruct):
+                table_data.at[invalid, column] = new_values[:, i].astype(self._dtype[i])
 
-        table_data = table_data.drop(self._diff_column, axis=1)
+        table_data = table_data.drop(self._diff_columns, axis=1)
 
         return table_data
 
 
 class Positive(GreaterThan):
-    """Ensure that the ``high`` column is always positive.
+    """Ensure that the given column(s) are always positive.
 
-    The transformation strategy works by creating a column with the
-    difference between ``high`` and 0 value and then computing back the ``high``
-    value by adding the difference to 0 when reversing the transformation.
+    The transformation strategy works by creating columns with the
+    difference between given columns and zero then computing back the
+    necessary columns using the difference.
 
     Args:
-        high (str or int):
-            Either the name of the column that contains the high value,
-            or a scalar that is the high value.
+        columns (str or list[str]):
+            The name of the column(s) that are constrained to be positive.
         strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
+            Whether the comparison of the values should be strict; disclude
+            zero ``>`` or include it ``>=``. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        drop (str):
-            Which column to drop during transformation. Can be ``'high'``
-            or ``None``.
+        drop (bool):
+            Whether to drop columns during transformation.
     """
 
-    def __init__(self, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None):
+    def __init__(self, columns, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=False):
+        drop = 'high' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
-                         high=high, low=0, high_is_scalar=False,
-                         low_is_scalar=True, drop=drop, strict=strict)
+                         high=columns, low=0, scalar='low',
+                         drop=drop, strict=strict)
 
 
 class Negative(GreaterThan):
-    """Ensure that the ``low`` column is always negative.
+    """Ensure that the given columns are always negative.
 
-    The transformation strategy works by creating a column with the
-    difference between ``low`` and 0 and then computing back the ``low``
-    value by subtracting the difference from 0 when reversing the transformation.
+    The transformation strategy works by creating columns with the
+    difference between zero and given columns then computing back the
+    necessary columns using the difference.
 
     Args:
-        high (str or int):
-            Either the name of the column that contains the high value,
-            or a scalar that is the high value.
+        columns (str or list[str]):
+            The name of the column(s) that are constrained to be negative.
         strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
+            Whether the comparison of the values should be strict, disclude
+            zero ``<`` or include it ``<=``. Currently, this is only respected
             if ``reject_sampling`` or ``all`` handling strategies are used.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        drop (str):
-            Which column to drop during transformation. Can be ``'low'``
-            or ``None``.
+        drop (bool):
+            Whether to drop columns during transformation.
     """
 
-    def __init__(self, low, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None):
+    def __init__(self, columns, strict=False, handling_strategy='transform',
+                 fit_columns_model=True, drop=False):
+        drop = 'low' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
-                         high=0, low=low, high_is_scalar=True,
-                         low_is_scalar=False, drop=drop, strict=strict)
+                         high=0, low=columns, scalar='high',
+                         drop=drop, strict=strict)
 
 
 class ColumnFormula(Constraint):

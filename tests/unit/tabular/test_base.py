@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.table import Table
+from sdv.tabular.base import COND_IDX
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
+from tests.utils import DataFrameMatcher
 
 MODELS = [
     CTGAN(epochs=1),
@@ -14,6 +16,60 @@ MODELS = [
     GaussianCopula(),
     CopulaGAN(epochs=1),
 ]
+
+
+class TestBaseTabularModel:
+
+    def test_sample_no_transformed_columns(self):
+        """Test the ``BaseTabularModel.sample`` method with no transformed columns.
+
+        When the transformed conditions DataFrame has no columns, expect that sample
+        does not pass through any conditions when conditionally sampling.
+
+        Setup:
+            - Mock the ``_make_conditions_df`` method to return a dataframe representing
+              the expected conditions, and the ``get_fields`` method to return metadata
+              fields containing the expected conditioned column.
+            - Mock the ``_metadata.transform`` method to return an empty transformed
+              conditions dataframe.
+            - Mock the ``_conditionally_sample_rows`` method to return the expected
+              sampled rows.
+            - Mock the `make_ids_unique` to return the expected sampled rows.
+        Input:
+            - number of rows
+            - one set of conditions
+        Output:
+            - the expected sampled rows
+        Side Effects:
+            - Expect ``_conditionally_sample_rows`` to be called with the given condition
+              and a transformed_condition of None.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        expected = pd.DataFrame(['a', 'a', 'a'])
+
+        gaussian_copula._make_conditions_df.return_value = pd.DataFrame({'a': ['a', 'a', 'a']})
+        gaussian_copula._metadata.get_fields.return_value = ['a']
+        gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
+            'a': ['a', 'a', 'a'],
+            COND_IDX: [0, 1, 2]})
+        gaussian_copula._metadata.make_ids_unique.return_value = expected
+
+        # Run
+        out = GaussianCopula.sample(gaussian_copula, num_rows=3, conditions={'a': 'a'})
+
+        # Asserts
+        gaussian_copula._conditionally_sample_rows.assert_called_once_with(
+            DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
+            100,
+            10,
+            {'a': 'a'},
+            None,
+            0.01,
+            False,
+        )
+        pd.testing.assert_frame_equal(out, expected)
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
