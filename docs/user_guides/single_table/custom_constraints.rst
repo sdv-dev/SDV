@@ -5,10 +5,11 @@ Defining Custom Constraints
 
 In some cases, the predefined constraints do not cover all your needs. 
 In such scenarios, you can use ``CustomConstraint`` to define your own 
-logic on how you would like to apply it to your data. There are three 
-main functions that you can create:
+logic on how to constrain your data. There are three main functions that 
+you can create:
 
 - ``transform`` which is responsible for the forward pass when using ``transform`` strategy.
+  Its main function is to change your data in a way that enforces the constraint.
 - ``reverse_transform`` which defines how to reverse the transformation of the ``transform``.
 - ``is_valid`` which indicates which rows satisfy the constraint and which ones do not.
 
@@ -47,7 +48,7 @@ We can achieve our goal by performing transformations in a 2 step process:
     :okwarning:
 
     def transform(table_data):
-        base = 500
+        base = 500.
         table_data['salary'] = table_data['salary'] / base
         return table_data
 
@@ -58,7 +59,7 @@ After defining ``transform`` we create ``reverse_transform`` that reverses the o
     :okwarning:
 
     def reverse_transform(table_data):
-        base = 500
+        base = 500.
         table_data['salary'] = table_data['salary'].round() * base
         return table_data
 
@@ -90,7 +91,7 @@ The ``transform`` function takes ``column_data`` as input and returns the transf
     :okwarning:
 
     def transform(column_data):
-        base = 500
+        base = 500.
         return column_data / base
 
 Similarly we defined ``reverse_transform`` in a way that it operates on the data of a 
@@ -100,7 +101,7 @@ single column.
     :okwarning:
 
     def reverse_transform(column_data):
-        base = 500
+        base = 500.
         return column_data.round() * base
 
 Now that we have our functions, we initialize ``CustomConstraint`` and we 
@@ -139,7 +140,7 @@ We first write our ``transform`` function as we have done previously:
     :okwarning:
 
     def transform(table_data, column):
-        base = 500
+        base = 500.
         table_data[column] = table_data[column] / base
         return table_data
 
@@ -198,9 +199,10 @@ Can I write a ``CustomConstraint`` based on reject sampling?
 
 In the previous section, we defined our ``CustomConstraint`` using ``transform`` and 
 ``reverse_transform`` functions. Sometimes, our constraints are not possible to implement 
-using these methods, that is when we rely on ``reject_sampling`` strategy. In ``reject_sampling`` 
-we need to implement an ``is_valid`` function that identifies which rows do not follow the 
-said constraint, in our case, which rows are not a multiple of the *base* unit.
+using these methods, that is when we rely on the ``reject_sampling`` strategy. 
+In ``reject_sampling`` we need to implement an ``is_valid`` function that identifies 
+which rows do not follow the said constraint, in our case, which rows are not a multiple 
+of the *base* unit.
 
 We can define ``is_valid`` according to the three styles mentioned in the previous section:
 
@@ -208,20 +210,22 @@ We can define ``is_valid`` according to the three styles mentioned in the previo
 2. function with ``column_data`` argument.
 3. function with ``table_data`` and ``column`` argument.
 
-Here is an example of how you would define ``is_valid`` for each one of the mentioned styles:
+``is_valid`` should return a ``pd.Series`` where every valid row corresponds to *True*,
+otherwise it should contain *False*. Here is an example of how you would define 
+``is_valid`` for each one of the mentioned styles:
 
 .. code-block:: python
 
     def is_valid(table_data):
-        base = 500
+        base = 500.
         return table_data['salary'] % base == 0
 
     def is_valid(column_data):
-        base = 500
+        base = 500.
         return column_data % base == 0
 
     def is_valid(table_data, column):
-        base = 500
+        base = 500.
         is_contractor = table_data.contractor == 1
         valid = table_data[column] % base == 0
         contractor_salary = employees['salary'].loc[is_contractor]
