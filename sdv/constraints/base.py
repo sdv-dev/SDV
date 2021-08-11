@@ -229,9 +229,10 @@ class Constraint(metaclass=ConstraintMeta):
         if missing_columns:
             if not self._columns_model:
                 warning_message = (
-                    'The following constraint columns are missing from the table data '
-                    f'- `{missing_columns}`. When `fit_columns_model` is `False` and one or more '
-                    'constraint columns are missing, reject sampling can become slow.'
+                    'When `fit_columns_model` is False and we are conditioning on a subset '
+                    'of the constraint columns, conditional sampling uses reject sampling '
+                    'which can be slow. Changing `fit_columns_model` to True can improve '
+                    'the performance.'
                 )
                 warnings.warn(warning_message, UserWarning)
 
