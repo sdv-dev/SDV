@@ -1,6 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import uuid
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -12,16 +13,40 @@ from sdv.constraints.tabular import (
     Rounding, Unique, UniqueCombinations)
 
 
-def dummy_transform():
-    pass
+def dummy_transform_table(table_data):
+    return table_data
 
 
-def dummy_reverse_transform():
-    pass
+def dummy_reverse_transform_table(table_data):
+    return table_data
 
 
-def dummy_is_valid():
-    pass
+def dummy_is_valid_table(table_data):
+    return [True] * len(table_data)
+
+
+def dummy_transform_table_column(table_data, column):
+    return table_data
+
+
+def dummy_reverse_transform_table_column(table_data, column):
+    return table_data
+
+
+def dummy_is_valid_table_column(table_data, column):
+    return [True] * len(table_data[column])
+
+
+def dummy_transform_column(column_data):
+    return column_data
+
+
+def dummy_reverse_transform_column(column_data):
+    return column_data
+
+
+def dummy_is_valid_column(column_data):
+    return [True] * len(column_data)
 
 
 class TestCustomConstraint():
@@ -40,19 +65,295 @@ class TestCustomConstraint():
         Output:
         - Instance with all the methods replaced by the dummy versions.
         """
-        is_valid_fqn = __name__ + '.dummy_is_valid'
+        is_valid_fqn = __name__ + '.dummy_is_valid_table'
 
         # Run
         instance = CustomConstraint(
-            transform=dummy_transform,
-            reverse_transform=dummy_reverse_transform,
+            transform=dummy_transform_table,
+            reverse_transform=dummy_reverse_transform_table,
             is_valid=is_valid_fqn
         )
 
         # Assert
-        assert instance.transform == dummy_transform
-        assert instance.reverse_transform == dummy_reverse_transform
-        assert instance.is_valid == dummy_is_valid
+        assert instance._transform == dummy_transform_table
+        assert instance._reverse_transform == dummy_reverse_transform_table
+        assert instance._is_valid == dummy_is_valid_table
+
+    def test__run_transform_table(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" based functions.
+
+        Setup:
+        - Pass dummy transform function with ``table_data`` argument.
+        Side Effects:
+        - Run transform function once with ``table_data`` as input.
+        Output:
+        - applied identity transformation "table_data = transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_transform_mock = Mock(side_effect=dummy_transform_table,
+                                    return_value=table_data)
+        # Run
+        instance = CustomConstraint(transform=dummy_transform_mock)
+        transformed = instance.transform(table_data)
+
+        # Asserts
+        called = dummy_transform_mock.call_args
+        dummy_transform_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        pd.testing.assert_frame_equal(transformed, dummy_transform_mock.return_value)
+
+    def test__run_reverse_transform_table(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" based functions.
+
+        Setup:
+        - Pass dummy reverse transform function with ``table_data`` argument.
+        Side Effects:
+        - Run reverse transform function once with ``table_data`` as input.
+        Output:
+        - applied identity transformation "table_data = reverse_transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_reverse_transform_mock = Mock(side_effect=dummy_reverse_transform_table,
+                                            return_value=table_data)
+        # Run
+        instance = CustomConstraint(reverse_transform=dummy_reverse_transform_mock)
+        reverse_transformed = instance.reverse_transform(table_data)
+
+        # Asserts
+        called = dummy_reverse_transform_mock.call_args
+        dummy_reverse_transform_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        pd.testing.assert_frame_equal(
+            reverse_transformed, dummy_reverse_transform_mock.return_value)
+
+    def test__run_is_valid_table(self):
+        """Test the ``CustomConstraint._run_is_valid`` method.
+
+        The ``_run_is_valid`` method excutes ``is_valid`` based on
+        the signature of the functions. In this test, we evaluate
+        the execution of "table" based functions.
+
+        Setup:
+        - Pass dummy is valid function with ``table_data`` argument.
+        Side Effects:
+        - Run is valid function once with ``table_data`` as input.
+        Output:
+        - Return a list of [True] of length ``table_data``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_is_valid_mock = Mock(side_effect=dummy_is_valid_table)
+
+        # Run
+        instance = CustomConstraint(is_valid=dummy_is_valid_mock)
+        is_valid = instance.is_valid(table_data)
+
+        # Asserts
+        expected_out = [True] * len(table_data)
+        called = dummy_is_valid_mock.call_args
+        dummy_is_valid_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        np.testing.assert_array_equal(is_valid, expected_out)
+
+    def test__run_transform_table_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" and "column" based functions.
+
+        Setup:
+        - Pass dummy transform function with ``table_data`` and ``column`` arguments.
+        Side Effects:
+        - Run transform function once with ``table_data`` and ``column`` as input.
+        Output:
+        - applied identity transformation "table_data = transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_transform_mock = Mock(side_effect=dummy_transform_table_column,
+                                    return_value=table_data)
+        # Run
+        instance = CustomConstraint(columns='a', transform=dummy_transform_mock)
+        transformed = instance.transform(table_data)
+
+        # Asserts
+        called = dummy_transform_mock.call_args
+        assert called[0][1] == 'a'
+        dummy_transform_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        pd.testing.assert_frame_equal(transformed, dummy_transform_mock.return_value)
+
+    def test__run_reverse_transform_table_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" and "column" based functions.
+
+        Setup:
+        - Pass dummy reverse transform function with ``table_data`` and ``column`` arguments.
+        Side Effects:
+        - Run reverse transform function once with ``table_data`` and ``column`` as input.
+        Output:
+        - applied identity transformation "table_data = transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_reverse_transform_mock = Mock(side_effect=dummy_reverse_transform_table_column,
+                                            return_value=table_data)
+        # Run
+        instance = CustomConstraint(columns='a', reverse_transform=dummy_reverse_transform_mock)
+        reverse_transformed = instance.reverse_transform(table_data)
+
+        # Asserts
+        called = dummy_reverse_transform_mock.call_args
+        assert called[0][1] == 'a'
+        dummy_reverse_transform_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        pd.testing.assert_frame_equal(
+            reverse_transformed, dummy_reverse_transform_mock.return_value)
+
+    def test__run_is_valid_table_column(self):
+        """Test the ``CustomConstraint._run_is_valid`` method.
+
+        The ``_run_is_valid`` method excutes ``is_valid`` based on
+        the signature of the functions. In this test, we evaluate
+        the execution of "table" and "column" based functions.
+
+        Setup:
+        - Pass dummy is valid function with ``table_data`` and ``column`` argument.
+        Side Effects:
+        - Run is valid function once with ``table_data`` and ``column`` as input.
+        Output:
+        - Return a list of [True] of length ``table_data``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_is_valid_mock = Mock(side_effect=dummy_is_valid_table_column)
+
+        # Run
+        instance = CustomConstraint(columns='a', is_valid=dummy_is_valid_mock)
+        is_valid = instance.is_valid(table_data)
+
+        # Asserts
+        expected_out = [True] * len(table_data)
+        called = dummy_is_valid_mock.call_args
+        assert called[0][1] == 'a'
+        dummy_is_valid_mock.assert_called_once()
+        pd.testing.assert_frame_equal(called[0][0], table_data)
+        np.testing.assert_array_equal(is_valid, expected_out)
+
+    def test__run_transform_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "column" based functions.
+
+        Setup:
+        - Pass dummy transform function with ``column_data`` argument.
+        Side Effects:
+        - Run transform function twice, once with the attempt of
+        ``table_data`` and ``column`` and second with ``column_data`` as input.
+        Output:
+        - applied identity transformation "table_data = transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_transform_mock = Mock(side_effect=dummy_transform_column,
+                                    return_value=table_data)
+        # Run
+        instance = CustomConstraint(columns='a', transform=dummy_transform_mock)
+        transformed = instance.transform(table_data)
+
+        # Asserts
+        called = dummy_transform_mock.call_args_list
+        assert len(called) == 2
+        # call 1 (try)
+        assert called[0][0][1] == 'a'
+        pd.testing.assert_frame_equal(called[0][0][0], table_data)
+        # call 2 (catch TypeError)
+        pd.testing.assert_series_equal(called[1][0][0], table_data['a'])
+        pd.testing.assert_frame_equal(transformed, dummy_transform_mock.return_value)
+
+    def test__run_reverse_transform_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "column" based functions.
+
+        Setup:
+        - Pass dummy reverse transform function with ``column_data`` argument.
+        Side Effects:
+        - Run reverse transform function twice, once with the attempt of
+        ``table_data`` and ``column`` and second with ``column_data`` as input.
+        Output:
+        - Applied identity transformation "table_data = transformed".
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_reverse_transform_mock = Mock(side_effect=dummy_reverse_transform_column,
+                                            return_value=table_data)
+        # Run
+        instance = CustomConstraint(columns='a', reverse_transform=dummy_reverse_transform_mock)
+        reverse_transformed = instance.reverse_transform(table_data)
+
+        # Asserts
+        called = dummy_reverse_transform_mock.call_args_list
+        assert len(called) == 2
+        # call 1 (try)
+        assert called[0][0][1] == 'a'
+        pd.testing.assert_frame_equal(called[0][0][0], table_data)
+        # call 2 (catch TypeError)
+        pd.testing.assert_series_equal(called[1][0][0], table_data['a'])
+        pd.testing.assert_frame_equal(
+            reverse_transformed, dummy_reverse_transform_mock.return_value)
+
+    def test__run_is_valid_column(self):
+        """Test the ``CustomConstraint._run_is_valid`` method.
+
+        The ``_run_is_valid`` method excutes ``is_valid`` based on
+        the signature of the functions. In this test, we evaluate
+        the execution of "column" based functions.
+
+        Setup:
+        - Pass dummy is valid function with ``column_data`` argument.
+        Side Effects:
+        - Run is valid function twice, once with the attempt of
+        ``table_data`` and ``column`` and second with ``column_data`` as input.
+        Output:
+        - Return a list of [True] of length ``table_data``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
+        dummy_is_valid_mock = Mock(side_effect=dummy_is_valid_column)
+
+        # Run
+        instance = CustomConstraint(columns='a', is_valid=dummy_is_valid_mock)
+        is_valid = instance.is_valid(table_data)
+
+        # Asserts
+        expected_out = [True] * len(table_data)
+        called = dummy_is_valid_mock.call_args_list
+        assert len(called) == 2
+        # call 1 (try)
+        assert called[0][0][1] == 'a'
+        pd.testing.assert_frame_equal(called[0][0][0], table_data)
+        # call 2 (catch TypeError)
+        pd.testing.assert_series_equal(called[1][0][0], table_data['a'])
+        np.testing.assert_array_equal(is_valid, expected_out)
 
 
 class TestUniqueCombinations():

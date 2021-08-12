@@ -48,16 +48,60 @@ class CustomConstraint(Constraint):
             Function to replace the ``is_valid`` method.
     """
 
-    def __init__(self, transform=None, reverse_transform=None, is_valid=None):
+    def _run(self, function, table_data, reverse=False):
+        table_data = table_data.copy()
+        if self._columns:
+            if reverse:
+                columns = reversed(self._columns)
+            else:
+                columns = self._columns
+
+            for column in columns:
+                try:
+                    table_data = function(table_data, column)
+                except TypeError:
+                    table_data[column] = function(table_data[column])
+
+        else:
+            table_data = function(table_data)
+
+        return table_data
+
+    def _run_transform(self, table_data):
+        return self._run(self._transform, table_data)
+
+    def _run_reverse_transform(self, table_data):
+        return self._run(self._reverse_transform, table_data, reverse=True)
+
+    def _run_is_valid(self, table_data):
+        if self._columns:
+            try:
+                valid = [self._is_valid(table_data, column) for column in self._columns]
+            except TypeError:
+                valid = [self._is_valid(table_data[column]) for column in self._columns]
+
+            return np.logical_and.reduce(valid)
+
+        return self._is_valid(table_data)
+
+    def __init__(self, columns=None, transform=None, reverse_transform=None, is_valid=None):
+        if isinstance(columns, str):
+            self._columns = [columns]
+        else:
+            self._columns = columns
+
         self.fit_columns_model = False
         if transform is not None:
-            self.transform = import_object(transform)
+            self._transform = import_object(transform)
+            self.transform = self._run_transform
 
         if reverse_transform is not None:
-            self.reverse_transform = import_object(reverse_transform)
+            self._reverse_transform = import_object(reverse_transform)
+            self.reverse_transform = self._run_reverse_transform
 
         if is_valid is not None:
-            self.is_valid = import_object(is_valid)
+            self._is_valid = import_object(is_valid)
+            self.is_valid = self._run_is_valid
 
 
 class UniqueCombinations(Constraint):

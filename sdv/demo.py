@@ -322,8 +322,14 @@ def _load_tabular_dummy():
     """Load a dummy tabular demo dataframe."""
     age = np.random.randint(30, 50, 12)
     age_when_joined = age - np.random.randint(1, 10, 12)
-    salary = np.random.uniform(30000, 160000, 12).round(2)
     years_exp = np.random.randint(1, 6, 12)
+    contractor = [0.0, 1.0, 0.0, 1.0, 0.0, 0.0] * 2
+
+    is_contractor = np.array(contractor).astype(bool)
+    salary = np.random.randint(60, 320, 12) * 500.
+    bonus = np.random.randint(10, 50, 12) * 500.
+    salary[is_contractor] = np.random.uniform(30000, 160000, 4).round(2)
+    bonus[is_contractor] = np.random.uniform(5000, 25000, 4).round(2)
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
@@ -333,10 +339,11 @@ def _load_tabular_dummy():
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,
         'salary': salary,
+        'annual_bonus': bonus,
         'prior_years_experience': years_exp,
-        'full_time': [1.0, 0.0, 1.0, 1.0, 0.0, 0.0] * 2,
+        'full_time': [1.0, 0.0, 1.0, 0.0, 0.0, 0.0] * 2,
         'part_time': [0.0, 0.0, 0.0, 0.0, 1.0, 1.0] * 2,
-        'contractor': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0] * 2
+        'contractor': contractor
     })
 
 
@@ -392,6 +399,7 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
                 'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'},
                 'salary': {'type': 'numerical', 'subtype': 'float'},
+                'annual_bonus': {'type': 'numerical', 'subtype': 'float'},
                 'prior_years_experience': {'type': 'numerical', 'subtype': 'integer'}
             },
             'constraints': [
