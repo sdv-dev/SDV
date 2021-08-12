@@ -461,7 +461,7 @@ class GreaterThan(Constraint):
                 new_values = low[invalid] + diff[invalid]
 
             for i, column in enumerate(self._columns_to_reconstruct):
-                table_data[column].loc[invalid] = new_values[:, i].astype(self._dtype[i])
+                table_data.loc[invalid, column] = new_values[:, i].astype(self._dtype[i])
 
         table_data = table_data.drop(self._diff_columns, axis=1)
 
