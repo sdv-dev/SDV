@@ -114,7 +114,6 @@ class Constraint(metaclass=ConstraintMeta):
 
     def __init__(self, handling_strategy, fit_columns_model=True):
         self.fit_columns_model = fit_columns_model
-        self.handling_strategy = handling_strategy
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':

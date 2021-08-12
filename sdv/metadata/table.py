@@ -3,6 +3,7 @@
 import copy
 import json
 import logging
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -208,7 +209,7 @@ class Table:
     @staticmethod
     def _get_constraint_sort_key(constraint):
         try:
-            if constraint.handling_strategy == 'reject_sampling':
+            if not constraint.rebuild_columns:
                 return 0
             else:
                 return 1
@@ -228,27 +229,33 @@ class Table:
         self._constraints.sort(key=self._get_constraint_sort_key)
 
     def _validate_constraint_order(self):
-        transform_constraints = list()
+        rebuild_constraints = list()
+        constraints_with_columns = list()
         for constraint in self._constraints:
             try:
-                if constraint.handling_strategy == 'transform':
-                    transform_constraints.append(constraint)
+                if constraint.constraint_columns:
+                    constraints_with_columns.append(constraint)
             except AttributeError:
                 pass
 
-        for i in range(len(transform_constraints) - 1):
-            cur_constraint = transform_constraints[i]
-            for j in range(i + 1, len(transform_constraints)):
-                next_constraint = transform_constraints[j]
-                try:
-                    for column in cur_constraint.rebuild_columns:
-                        if column in next_constraint.constraint_columns:
-                            raise Exception('Multiple constraints will modify the same column: '
-                                            f'"{column}", which may lead to the constraint being '
-                                            'unenforceable. Please use "reject_sampling" as the '
-                                            '"handling_strategy" instead.')
-                except AttributeError:
-                    pass
+            try:
+                if constraint.rebuild_columns:
+                    rebuild_constraints.append(constraint)
+            except AttributeError:
+                pass
+
+        counter = Counter()
+        for constraint in constraints_with_columns:
+            counter.update(set(constraint.constraint_columns))
+
+        for constraint in rebuild_constraints:
+            counter.subtract(set(constraint.constraint_columns))
+            for column in constraint.rebuild_columns:
+                if counter[column] > 0:
+                    raise Exception('Multiple constraints will modify the same column: '
+                                    f'"{column}", which may lead to the constraint being '
+                                    'unenforceable. Please use "reject_sampling" as the '
+                                    '"handling_strategy" instead.')
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,

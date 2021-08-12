@@ -6,7 +6,6 @@ from rdt.transformers.numerical import NumericalTransformer
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.tabular import CustomConstraint
 from sdv.metadata import Table
 
 
@@ -37,16 +36,17 @@ class TestTable:
         transformer_mock.assert_any_call(
             dtype=float, rounding=-1, max_value=100, min_value=-50)
 
-    def test__init__sorts_constraints(self):
+    @patch.object(Constraint, 'from_dict')
+    def test__init__sorts_constraints(self, from_dict_mock):
         """Test that ``__init__`` method sorts constraints.
 
         The ``__init__`` method should sort constraints by putting
-        constraints with a ``handling_strategy`` of ``reject_sampling``
-        before the ones with ``transform``.
+        constraints with ``rebuild_columns`` before the ones
+        without them.
 
         Input:
-        - list of constraints with some ``transform`` constraints listed
-        before ``reject_sampling`` constraints.
+        - list of constraints with some having ``rebuild_columns``
+        before constraints without them.
         Output:
         - Instance with ``instance.constraints`` sorted properly.
         """
@@ -55,36 +55,45 @@ class TestTable:
         constraint2 = Constraint(handling_strategy='transform')
         constraint3 = Constraint(handling_strategy='reject_sampling')
         constraints = [constraint1, constraint2, constraint3]
+        constraint1.rebuild_columns = ['a']
+        constraint2.rebuild_columns = ['b']
+        constraint3.rebuild_columns = []
+        from_dict_mock.side_effect = [constraint1, constraint2, constraint3]
 
         # Run
         instance = Table(constraints=constraints)
 
         # Asserts
-        instance._constraints == [constraint3, constraint1, constraint2]
+        assert instance._constraints == [constraint3, constraint1, constraint2]
 
-    def test__init__sorts_constraints_no_handling_strategy(self):
+    @patch.object(Constraint, 'from_dict')
+    def test__init__sorts_constraints_no_rebuild_columns(self, from_dict_mock):
         """Test that ``__init__`` method sorts constraints.
 
-        The ``__init__`` method should sort constraints with no
-        ``handling_strategy`` after those with ``reject_sampling``.
+        The ``__init__`` method should sort constraints with None as
+        ``rebuild_columns`` before those that have them.
 
         Input:
-        - list of constraints with some having no ``handling_strategy`` listed
-        before ``reject_sampling`` constraints.
+        - list of constraints with some having None as ``rebuild_columns``
+        listed after those with ``rebuild_columns``.
         Output:
         - Instance with ``instance.constraints`` sorted properly.
         """
         # Setup
-        constraint1 = CustomConstraint()
+        constraint1 = Constraint(handling_strategy='transform')
         constraint2 = Constraint(handling_strategy='transform')
         constraint3 = Constraint(handling_strategy='reject_sampling')
         constraints = [constraint1, constraint2, constraint3]
+        constraint1.rebuild_columns = ['a']
+        constraint2.rebuild_columns = ['b']
+        constraint3.rebuild_columns = None
+        from_dict_mock.side_effect = [constraint1, constraint2, constraint3]
 
         # Run
         instance = Table(constraints=constraints)
 
         # Asserts
-        instance._constraints == [constraint3, constraint1, constraint2]
+        assert instance._constraints == [constraint3, constraint1, constraint2]
 
     @patch('sdv.metadata.table.Table._sort_constraints')
     def test__init__validates_constraint_order_raises_exception(self, _):
@@ -101,7 +110,7 @@ class TestTable:
         - Exception should be raised.
         """
         # Setup
-        constraint1 = CustomConstraint()
+        constraint1 = Constraint(handling_strategy='transform')
         constraint2 = Constraint(handling_strategy='transform')
         constraint3 = Constraint(handling_strategy='reject_sampling')
         constraint4 = Constraint(handling_strategy='transform')
@@ -128,7 +137,7 @@ class TestTable:
         - Constraints are set.
         """
         # Setup
-        constraint1 = CustomConstraint()
+        constraint1 = Constraint(handling_strategy='transform')
         constraint2 = Constraint(handling_strategy='transform')
         constraint3 = Constraint(handling_strategy='reject_sampling')
         constraint4 = Constraint(handling_strategy='transform')
