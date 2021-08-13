@@ -141,6 +141,7 @@ class UniqueCombinations(Constraint):
 
         self._columns = columns
         self.constraint_columns = tuple(columns)
+        self.rebuild_columns = tuple(columns)
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -349,6 +350,7 @@ class GreaterThan(Constraint):
         self._low, self._high, self.constraint_columns = self._validate_inputs(
             low=low, high=high, scalar=scalar, drop=drop)
         self._columns_to_reconstruct = self._get_columns_to_reconstruct()
+        self.rebuild_columns = self._columns_to_reconstruct.copy()
 
         if strict:
             self.operator = np.greater
@@ -613,6 +615,7 @@ class ColumnFormula(Constraint):
         self.constraint_columns = (column,)
         self._formula = import_object(formula)
         self._drop_column = drop_column
+        self.rebuild_columns = (column,)
         super().__init__(handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -713,6 +716,7 @@ class Between(Constraint):
                  fit_columns_model=False, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
         self.constraint_columns = (column,)
+        self.rebuild_columns = (column,)
         self._low = low
         self._high = high
         self._strict = strict

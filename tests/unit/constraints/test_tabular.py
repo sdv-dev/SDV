@@ -376,6 +376,42 @@ class TestUniqueCombinations():
         # Assert
         assert instance._columns == columns
 
+    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
+        """Test the ``UniqueCombinations.__init__`` method.
+
+        The rebuild columns should only be set if the ``handling_strategy``
+        is not ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are set
+        """
+        # Setup
+        columns = ['b', 'c']
+
+        # Run
+        instance = UniqueCombinations(columns=columns, handling_strategy='transform')
+
+        # Assert
+        assert instance.rebuild_columns == tuple(columns)
+
+    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
+        """Test the ``UniqueCombinations.__init__`` method.
+
+        The rebuild columns should not be set if the ``handling_strategy``
+        is ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are empty
+        """
+        # Setup
+        columns = ['b', 'c']
+
+        # Run
+        instance = UniqueCombinations(columns=columns, handling_strategy='reject_sampling')
+
+        # Assert
+        assert instance.rebuild_columns == ()
+
     def test___init__with_one_column(self):
         """Test the ``UniqueCombinations.__init__`` method with only one constraint column.
 
@@ -1021,6 +1057,36 @@ class TestGreaterThan():
         assert instance._scalar is None
         assert instance._drop is None
         assert instance.constraint_columns == ('a', 'b')
+
+    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        The rebuild columns should only be set if the ``handling_strategy``
+        is not ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are set
+        """
+        # Run
+        instance = GreaterThan(low='a', high='b', handling_strategy='transform')
+
+        # Assert
+        assert instance.rebuild_columns == ['b']
+
+    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
+        """Test the ``GreaterThan.__init__`` method.
+
+        The rebuild columns should not be set if the ``handling_strategy``
+        is ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are empty
+        """
+        # Run
+        instance = GreaterThan(low='a', high='b', handling_strategy='reject_sampling')
+
+        # Assert
+        assert instance.rebuild_columns == ()
 
     def test___init___high_is_scalar(self):
         """Test the ``GreaterThan.__init__`` method.
@@ -3166,6 +3232,43 @@ class TestColumnFormula():
         assert instance._formula == new_column
         assert instance.constraint_columns == ('col', )
 
+    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
+        """Test the ``ColumnFormula.__init__`` method.
+
+        The rebuild columns should only be set if the ``handling_strategy``
+        is not ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are set
+        """
+        # Setup
+        column = 'col'
+
+        # Run
+        instance = ColumnFormula(column=column, formula=new_column, handling_strategy='transform')
+
+        # Assert
+        assert instance.rebuild_columns == (column,)
+
+    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
+        """Test the ``ColumnFormula.__init__`` method.
+
+        The rebuild columns should not be set if the ``handling_strategy``
+        is ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are empty
+        """
+        # Setup
+        column = 'col'
+
+        # Run
+        instance = ColumnFormula(column=column, formula=new_column,
+                                 handling_strategy='reject_sampling')
+
+        # Assert
+        assert instance.rebuild_columns == ()
+
     def test_is_valid_valid(self):
         """Test the ``ColumnFormula.is_valid`` method for a valid data.
 
@@ -3589,6 +3692,42 @@ def transform(data, low, high):
 
 
 class TestBetween():
+
+    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
+        """Test the ``Between.__init__`` method.
+
+        The rebuild columns should only be set if the ``handling_strategy``
+        is not ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are set
+        """
+        # Setup
+        column = 'col'
+
+        # Run
+        instance = Between(column=column, low=10, high=20, handling_strategy='transform')
+
+        # Assert
+        assert instance.rebuild_columns == (column,)
+
+    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
+        """Test the ``Between.__init__`` method.
+
+        The rebuild columns should not be set if the ``handling_strategy``
+        is ``reject_sampling``.
+
+        Side effects:
+        - instance.rebuild_columns are empty
+        """
+        # Setup
+        column = 'col'
+
+        # Run
+        instance = Between(column=column, low=10, high=20, handling_strategy='reject_sampling')
+
+        # Assert
+        assert instance.rebuild_columns == ()
 
     def test_fit_only_one_datetime_arg(self):
         """Test the ``Between.fit`` method by passing in only one arg as datetime.

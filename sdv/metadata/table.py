@@ -206,6 +206,34 @@ class Table:
                 'float': custom_float
             })
 
+    @staticmethod
+    def _prepare_constraints(constraints):
+        constraints = constraints or []
+        rebuild_columns = set()
+        transform_constraints = []
+        reject_sampling_constraints = []
+        for constraint in constraints:
+            if isinstance(constraint, type):
+                constraint = constraint().to_dict()
+            elif isinstance(constraint, Constraint):
+                constraint = constraint.to_dict()
+
+            constraint = Constraint.from_dict(constraint)
+
+            if not constraint.rebuild_columns:
+                reject_sampling_constraints.append(constraint)
+            elif rebuild_columns & set(constraint.constraint_columns):
+                intersecting_columns = rebuild_columns & set(constraint.constraint_columns)
+                raise Exception('Multiple constraints will modify the same column(s): '
+                                f'"{intersecting_columns}", which may lead to the constraint '
+                                'being unenforceable. Please use "reject_sampling" as the '
+                                '"handling_strategy" instead.')
+            else:
+                transform_constraints.append(constraint)
+                rebuild_columns.update(constraint.rebuild_columns)
+
+        return reject_sampling_constraints + transform_constraints
+
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
@@ -222,7 +250,7 @@ class Table:
         self._sequence_index = sequence_index
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
-        self._constraints = constraints or []
+        self._constraints = self._prepare_constraints(constraints)
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
@@ -376,15 +404,7 @@ class Table:
         return transformers
 
     def _fit_transform_constraints(self, data):
-        for idx, constraint in enumerate(self._constraints):
-            if isinstance(constraint, type):
-                constraint = constraint().to_dict()
-            elif isinstance(constraint, Constraint):
-                constraint = constraint.to_dict()
-
-            constraint = Constraint.from_dict(constraint)
-            self._constraints[idx] = constraint
-
+        for constraint in self._constraints:
             data = constraint.fit_transform(data)
 
         return data
