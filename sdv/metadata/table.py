@@ -249,7 +249,7 @@ class Table:
         self._sequence_index = sequence_index
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
-        self._constraints = self._prepare_constraints(self._constraints)
+        self._constraints = self._prepare_constraints(constraints)
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
