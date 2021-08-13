@@ -71,6 +71,43 @@ class TestBaseTabularModel:
         )
         pd.testing.assert_frame_equal(out, expected)
 
+    def test__sample_batch_zero_valid(self):
+        """Test the `BaseTabularModel._sample_batch` method with zero valid rows.
+
+        Expect that the requested number of rows are returned, if the first `_sample_rows` call
+        returns zero valid rows, and the second one returns enough valid rows.
+        See https://github.com/sdv-dev/SDV/issues/285.
+
+        Input:
+            - num_rows = 5
+            - condition on `column1` = 2
+        Output:
+            - The requested number of sampled rows (5).
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        valid_sampled_data = pd.DataFrame({
+            "column1": [28, 28, 21, 1, 2],
+            "column2": [37, 37, 1, 4, 5],
+            "column3": [93, 93, 6, 4, 12],
+        })
+        gaussian_copula._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
+
+        conditions = {
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+        }
+
+        # Run
+        output = GaussianCopula._sample_batch(gaussian_copula, num_rows=5, conditions=conditions)
+
+        # Assert
+        assert gaussian_copula._sample_rows.call_count == 2
+        assert len(output) == 5
+
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
 def test__init__passes_correct_parameters(metadata_mock):
