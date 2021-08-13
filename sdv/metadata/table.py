@@ -3,7 +3,6 @@
 import copy
 import json
 import logging
-from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -207,55 +206,31 @@ class Table:
             })
 
     @staticmethod
-    def _get_constraint_sort_key(constraint):
-        try:
-            if not constraint.rebuild_columns:
-                return 0
-            else:
-                return 1
-        except AttributeError:
-            return 1
-
-    def _sort_constraints(self):
-        for idx, constraint in enumerate(self._constraints):
+    def _prepare_constraints(constraints):
+        rebuild_columns = set()
+        transform_constraints = []
+        reject_sampling_constraints = []
+        for constraint in constraints:
             if isinstance(constraint, type):
                 constraint = constraint().to_dict()
             elif isinstance(constraint, Constraint):
                 constraint = constraint.to_dict()
 
             constraint = Constraint.from_dict(constraint)
-            self._constraints[idx] = constraint
 
-        self._constraints.sort(key=self._get_constraint_sort_key)
+            if not constraint.rebuild_columns:
+                reject_sampling_constraints.append(constraint)
+            elif rebuild_columns & set(constraint.constraint_columns):
+                intersecting_columns = rebuild_columns & set(constraint.constraint_columns)
+                raise Exception('Multiple constraints will modify the same column(s): '
+                                f'"{intersecting_columns}", which may lead to the constraint '
+                                'being unenforceable. Please use "reject_sampling" as the '
+                                '"handling_strategy" instead.')
+            else:
+                transform_constraints.append(constraint)
+                rebuild_columns.update(constraint.rebuild_columns)
 
-    def _validate_constraint_order(self):
-        rebuild_constraints = list()
-        constraints_with_columns = list()
-        for constraint in self._constraints:
-            try:
-                if constraint.constraint_columns:
-                    constraints_with_columns.append(constraint)
-            except AttributeError:
-                pass
-
-            try:
-                if constraint.rebuild_columns:
-                    rebuild_constraints.append(constraint)
-            except AttributeError:
-                pass
-
-        counter = Counter()
-        for constraint in constraints_with_columns:
-            counter.update(set(constraint.constraint_columns))
-
-        for constraint in rebuild_constraints:
-            counter.subtract(set(constraint.constraint_columns))
-            for column in constraint.rebuild_columns:
-                if counter[column] > 0:
-                    raise Exception('Multiple constraints will modify the same column: '
-                                    f'"{column}", which may lead to the constraint being '
-                                    'unenforceable. Please use "reject_sampling" as the '
-                                    '"handling_strategy" instead.')
+        return reject_sampling_constraints + transform_constraints
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
@@ -274,8 +249,7 @@ class Table:
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
         self._constraints = constraints or []
-        self._sort_constraints()
-        self._validate_constraint_order()
+        self._constraints = self._prepare_constraints(self._constraints)
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)

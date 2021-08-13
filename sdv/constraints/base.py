@@ -94,6 +94,12 @@ class Constraint(metaclass=ConstraintMeta):
     ``reverse_transform`` methods will be replaced respectively by a simple
     identity function.
 
+    Attributes:
+        constraint_columns (tuple[str]):
+            The names of the columns used by this constraint.
+        rebuild_columns (typle[str]):
+            The names of the columns that this constraint will rebuild during
+            ``reverse_transform``.
     Args:
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
