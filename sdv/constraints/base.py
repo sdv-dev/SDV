@@ -123,6 +123,7 @@ class Constraint(metaclass=ConstraintMeta):
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
+            self.rebuild_columns = ()
             self.transform = self._identity
             self.reverse_transform = self._identity
         elif handling_strategy != 'all':
