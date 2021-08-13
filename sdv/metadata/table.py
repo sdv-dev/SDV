@@ -207,6 +207,7 @@ class Table:
 
     @staticmethod
     def _prepare_constraints(constraints):
+        constraints = constraints or []
         rebuild_columns = set()
         transform_constraints = []
         reject_sampling_constraints = []
@@ -248,7 +249,6 @@ class Table:
         self._sequence_index = sequence_index
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
-        self._constraints = constraints or []
         self._constraints = self._prepare_constraints(self._constraints)
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
