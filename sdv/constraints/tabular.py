@@ -124,6 +124,10 @@ class UniqueCombinations(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``. Defaults to ``transform``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column. Defaults to False.
     """
 
     _separator = None
@@ -131,7 +135,7 @@ class UniqueCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
-    def __init__(self, columns, handling_strategy='transform', fit_columns_model=True):
+    def __init__(self, columns, handling_strategy='transform', fit_columns_model=False):
         if len(columns) < 2:
             raise ValueError('UniqueCombinations requires at least two constraint columns.')
 
@@ -258,6 +262,10 @@ class GreaterThan(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column. Defaults to False.
         drop (str):
             Which column to drop during transformation. Can be ``'high'``,
             ``'low'`` or ``None``.
@@ -334,7 +342,7 @@ class GreaterThan(Constraint):
         return column
 
     def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=None, scalar=None):
+                 fit_columns_model=False, drop=None, scalar=None):
         self._strict = strict
         self._drop = drop
         self._scalar = scalar
@@ -529,12 +537,16 @@ class Positive(GreaterThan):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column. Defaults to False.
         drop (bool):
             Whether to drop columns during transformation.
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=False):
+                 fit_columns_model=False, drop=False):
         drop = 'high' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
@@ -559,12 +571,16 @@ class Negative(GreaterThan):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column. Defaults to False.
         drop (bool):
             Whether to drop columns during transformation.
     """
 
     def __init__(self, columns, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, drop=False):
+                 fit_columns_model=False, drop=False):
         drop = 'low' if drop else None
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model,
@@ -677,6 +693,10 @@ class Between(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
+        fit_columns_model (bool):
+            If False, reject sampling will be used to handle conditional sampling.
+            Otherwise, a model will be trained and used to sample other columns
+            based on the conditioned column. Defaults to False.
         high_is_scalar(bool or None):
             Whether or not the value for high is a scalar or a column name.
             If ``None``, this will be determined during the ``fit`` method
@@ -690,7 +710,7 @@ class Between(Constraint):
     _transformed_column = None
 
     def __init__(self, column, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=True, high_is_scalar=None, low_is_scalar=None):
+                 fit_columns_model=False, high_is_scalar=None, low_is_scalar=None):
         self.constraint_column = column
         self.constraint_columns = (column,)
         self._low = low
