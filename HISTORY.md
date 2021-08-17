@@ -4,7 +4,7 @@
 
 This release focuses on improving and expanding upon the existing constraints. More specifically, the users can now
 (1) specify multiple columns in `Positive` and `Negative` constraints, (2) use the new `Unique`constraint and
-(3) use datetime data with the `Between` constraint. Additionaly, error messages have also been added and updated
+(3) use datetime data with the `Between` constraint. Additionaly, error messages have been added and updated
 to provide more useful feedback to the user.
 
 Besides the added features, several bugs regarding the `UniqueCombinations` and `ColumnFormula` constraints have been fixed,
@@ -13,10 +13,11 @@ for the `fit_columns_model` which affects the majority of the available constrai
 
 ### New Features
 
+* Change default fit_columns_model to False - Issue [#550](https://github.com/sdv-dev/SDV/issues/550) by @katxiao
 * Support multi-column specification for positive and negative constraint - Issue [#545](https://github.com/sdv-dev/SDV/issues/545) by @sarahmish
 * Raise error when multiple constraints can't be enforced - Issue [#541](https://github.com/sdv-dev/SDV/issues/541) by @amontanez24
 * Create Unique Constraint - Issue [#532](https://github.com/sdv-dev/SDV/issues/532) by @amontanez24
-* Passing invalid conditions when using constraints produces unreadable errors - Issue [#511](https://github.com/sdv-dev/SDV/issues/545) by @katxiao
+* Passing invalid conditions when using constraints produces unreadable errors - Issue [#511](https://github.com/sdv-dev/SDV/issues/511) by @katxiao
 * Improve error message for ColumnFormula constraint when constraint column used in formula - Issue [#508](https://github.com/sdv-dev/SDV/issues/508) by @katxiao
 * Add datetime functionality to Between constraint - Issue [#504](https://github.com/sdv-dev/SDV/issues/504) by @katxiao
 
