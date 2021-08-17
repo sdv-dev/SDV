@@ -4,6 +4,7 @@ import copy
 import importlib
 import inspect
 import logging
+import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -94,6 +95,12 @@ class Constraint(metaclass=ConstraintMeta):
     ``reverse_transform`` methods will be replaced respectively by a simple
     identity function.
 
+    Attributes:
+        constraint_columns (tuple[str]):
+            The names of the columns used by this constraint.
+        rebuild_columns (typle[str]):
+            The names of the columns that this constraint will rebuild during
+            ``reverse_transform``.
     Args:
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
@@ -105,17 +112,19 @@ class Constraint(metaclass=ConstraintMeta):
     """
 
     constraint_columns = ()
+    rebuild_columns = ()
     _hyper_transformer = None
     _columns_model = None
 
     def _identity(self, table_data):
         return table_data
 
-    def __init__(self, handling_strategy, fit_columns_model=True):
+    def __init__(self, handling_strategy, fit_columns_model=False):
         self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
+            self.rebuild_columns = ()
             self.transform = self._identity
             self.reverse_transform = self._identity
         elif handling_strategy != 'all':
@@ -226,6 +235,15 @@ class Constraint(metaclass=ConstraintMeta):
         """
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
+            if not self._columns_model:
+                warning_message = (
+                    'When `fit_columns_model` is False and we are conditioning on a subset '
+                    'of the constraint columns, conditional sampling uses reject sampling '
+                    'which can be slow. Changing `fit_columns_model` to True can improve '
+                    'the performance.'
+                )
+                warnings.warn(warning_message, UserWarning)
+
             all_columns_missing = len(missing_columns) == len(self.constraint_columns)
             if self._columns_model is None or all_columns_missing:
                 raise MissingConstraintColumnError()

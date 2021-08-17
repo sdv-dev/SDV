@@ -321,26 +321,29 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
 def _load_tabular_dummy():
     """Load a dummy tabular demo dataframe."""
     age = np.random.randint(30, 50, 12)
-    age_when_joined = age - np.random.randint(0, 10, 12)
-    faker = Faker()
-    names = [faker.name() for _ in range(12)]
-    adresses = [faker.address() for _ in range(12)]
-    salary = np.random.uniform(30000, 160000, 12).round(2)
+    age_when_joined = age - np.random.randint(1, 10, 12)
     years_exp = np.random.randint(1, 6, 12)
+    contractor = [0.0, 1.0, 0.0, 1.0, 0.0, 0.0] * 2
+
+    is_contractor = np.array(contractor).astype(bool)
+    salary = np.random.randint(60, 320, 12) * 500.
+    bonus = np.random.randint(10, 50, 12) * 500.
+    salary[is_contractor] = np.random.uniform(30000, 160000, 4).round(2)
+    bonus[is_contractor] = np.random.uniform(5000, 25000, 4).round(2)
 
     return pd.DataFrame({
         'company': ['Pear', 'Pear', 'Glasses', 'Glasses', 'Cheerper', 'Cheerper'] * 2,
         'department': ['Sales', 'Design', 'AI', 'Search Engine', 'BigData', 'Support'] * 2,
-        'name': names,
-        'address': adresses,
+        'employee_id': [1, 5, 1, 7, 6, 11, 28, 75, 33, 56, 42, 80],
         'age': age,
         'age_when_joined': age_when_joined,
         'years_in_the_company': age - age_when_joined,
         'salary': salary,
+        'annual_bonus': bonus,
         'prior_years_experience': years_exp,
-        'full_time': [1.0, 0.0, 1.0, 1.0, 0.0, 0.0] * 2,
+        'full_time': [1.0, 0.0, 1.0, 0.0, 0.0, 0.0] * 2,
         'part_time': [0.0, 0.0, 0.0, 0.0, 1.0, 1.0] * 2,
-        'contractor': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0] * 2
+        'contractor': contractor
     })
 
 
@@ -391,12 +394,12 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
             'fields': {
                 'company': {'type': 'categorical'},
                 'department': {'type': 'categorical'},
-                'name': {'type': 'categorical'},
-                'address': {'type': 'categorical'},
+                'employee_id': {'type': 'numerical', 'subtype': 'integer'},
                 'age': {'type': 'numerical', 'subtype': 'integer'},
                 'age_when_joined': {'type': 'numerical', 'subtype': 'integer'},
                 'years_in_the_company': {'type': 'numerical', 'subtype': 'integer'},
                 'salary': {'type': 'numerical', 'subtype': 'float'},
+                'annual_bonus': {'type': 'numerical', 'subtype': 'float'},
                 'prior_years_experience': {'type': 'numerical', 'subtype': 'integer'}
             },
             'constraints': [

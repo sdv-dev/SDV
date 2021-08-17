@@ -8,6 +8,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
@@ -234,7 +235,7 @@ class BaseTabularModel:
             sampled = self._metadata.reverse_transform(sampled)
 
             if previous_rows is not None:
-                sampled = previous_rows.append(sampled)
+                sampled = previous_rows.append(sampled, ignore_index=True)
 
             sampled = self._metadata.filter_valid(sampled)
 
@@ -419,13 +420,22 @@ class BaseTabularModel:
             graceful_reject_sampling (bool):
                 If `False` raises a `ValueError` if not enough valid rows could be sampled
                 within `max_retries` trials. If `True` prints a warning and returns
-                as many rows as it was able to sample within `max_retries`. If no rows could
-                be generated, raises a `ValueError`.
+                as many rows as it was able to sample within `max_retries`.
                 Defaults to False.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
+                      sampled within `max_retries` trials.
+                    * no rows could be generated.
         """
         if conditions is None:
             num_rows = num_rows or self._num_rows
@@ -439,7 +449,12 @@ class BaseTabularModel:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Invalid column name `{column}`')
 
-        transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        try:
+            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        except ConstraintsNotMetError as cnme:
+            cnme.message = 'Passed conditions are not valid for the given constraints'
+            raise
+
         condition_columns = list(conditions.columns)
         transformed_columns = list(transformed_conditions.columns)
         conditions.index.name = COND_IDX
@@ -457,7 +472,7 @@ class BaseTabularModel:
 
             condition_indices = dataframe[COND_IDX]
             condition = dict(zip(condition_columns, group))
-            if transformed_conditions.empty:
+            if len(transformed_columns) == 0:
                 sampled_rows = self._conditionally_sample_rows(
                     dataframe,
                     max_retries,

@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.table import Table
+from sdv.tabular.base import COND_IDX
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
+from tests.utils import DataFrameMatcher
 
 MODELS = [
     CTGAN(epochs=1),
@@ -14,6 +16,97 @@ MODELS = [
     GaussianCopula(),
     CopulaGAN(epochs=1),
 ]
+
+
+class TestBaseTabularModel:
+
+    def test_sample_no_transformed_columns(self):
+        """Test the ``BaseTabularModel.sample`` method with no transformed columns.
+
+        When the transformed conditions DataFrame has no columns, expect that sample
+        does not pass through any conditions when conditionally sampling.
+
+        Setup:
+            - Mock the ``_make_conditions_df`` method to return a dataframe representing
+              the expected conditions, and the ``get_fields`` method to return metadata
+              fields containing the expected conditioned column.
+            - Mock the ``_metadata.transform`` method to return an empty transformed
+              conditions dataframe.
+            - Mock the ``_conditionally_sample_rows`` method to return the expected
+              sampled rows.
+            - Mock the `make_ids_unique` to return the expected sampled rows.
+        Input:
+            - number of rows
+            - one set of conditions
+        Output:
+            - the expected sampled rows
+        Side Effects:
+            - Expect ``_conditionally_sample_rows`` to be called with the given condition
+              and a transformed_condition of None.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        expected = pd.DataFrame(['a', 'a', 'a'])
+
+        gaussian_copula._make_conditions_df.return_value = pd.DataFrame({'a': ['a', 'a', 'a']})
+        gaussian_copula._metadata.get_fields.return_value = ['a']
+        gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
+            'a': ['a', 'a', 'a'],
+            COND_IDX: [0, 1, 2]})
+        gaussian_copula._metadata.make_ids_unique.return_value = expected
+
+        # Run
+        out = GaussianCopula.sample(gaussian_copula, num_rows=3, conditions={'a': 'a'})
+
+        # Asserts
+        gaussian_copula._conditionally_sample_rows.assert_called_once_with(
+            DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
+            100,
+            10,
+            {'a': 'a'},
+            None,
+            0.01,
+            False,
+        )
+        pd.testing.assert_frame_equal(out, expected)
+
+    def test__sample_batch_zero_valid(self):
+        """Test the `BaseTabularModel._sample_batch` method with zero valid rows.
+
+        Expect that the requested number of rows are returned, if the first `_sample_rows` call
+        returns zero valid rows, and the second one returns enough valid rows.
+        See https://github.com/sdv-dev/SDV/issues/285.
+
+        Input:
+            - num_rows = 5
+            - condition on `column1` = 2
+        Output:
+            - The requested number of sampled rows (5).
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        valid_sampled_data = pd.DataFrame({
+            "column1": [28, 28, 21, 1, 2],
+            "column2": [37, 37, 1, 4, 5],
+            "column3": [93, 93, 6, 4, 12],
+        })
+        gaussian_copula._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
+
+        conditions = {
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+            'column1': 2,
+        }
+
+        # Run
+        output = GaussianCopula._sample_batch(gaussian_copula, num_rows=5, conditions=conditions)
+
+        # Assert
+        assert gaussian_copula._sample_rows.call_count == 2
+        assert len(output) == 5
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
@@ -44,13 +137,13 @@ def test__init__passes_correct_parameters(metadata_mock):
              anonymize_fields=None, constraints=None, dtype_transformers={'O': 'one_hot_encoding'},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'label_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50)
     ]
     metadata_mock.assert_has_calls(expected_calls, any_order=True)
@@ -80,6 +173,51 @@ def test_conditional_sampling_graceful_reject_sampling(model):
     assert len(output) == 2, "Only expected 2 valid rows."
     with pytest.raises(ValueError):
         model.sample(5, conditions=conditions, graceful_reject_sampling=False)
+
+
+def test__sample_rows_previous_rows_appended_correctly():
+    """Test the ``BaseTabularModel._sample_rows`` method.
+
+    If ``_sample_rows`` is passed ``previous_rows``, then it
+    should reset the index when appending them to the new
+    sampled rows.
+
+    Input:
+    - num_rows is 5
+    - previous_rows is a DataFrame of 3 existing rows.
+
+    Output:
+    - 5 sampled rows with index set to [0, 1, 2, 3, 4]
+    """
+    # Setup
+    model = GaussianCopula()
+    previous_data = pd.DataFrame({
+        'column1': [1, 2, 3],
+        'column2': [4, 5, 6],
+        'column3': [7, 8, 9]
+    })
+    new_data = pd.DataFrame({
+        'column1': [4, 5],
+        'column2': [7, 8],
+        'column3': [10, 11]
+    })
+    model._metadata = Mock()
+    model._sample = Mock()
+    model._sample.return_value = new_data
+    model._metadata.reverse_transform.return_value = new_data
+    model._metadata.filter_valid = lambda x: x
+
+    # Run
+    sampled, num_valid = model._sample_rows(5, previous_rows=previous_data)
+
+    # Assert
+    expected = pd.DataFrame({
+        'column1': [1, 2, 3, 4, 5],
+        'column2': [4, 5, 6, 7, 8],
+        'column3': [7, 8, 9, 10, 11]
+    })
+    assert num_valid == 5
+    pd.testing.assert_frame_equal(sampled, expected)
 
 
 def test_sample_empty_transformed_conditions():

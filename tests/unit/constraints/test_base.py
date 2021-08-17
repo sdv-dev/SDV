@@ -1,4 +1,5 @@
 """Tests for the sdv.constraints.base module."""
+import warnings
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -260,7 +261,7 @@ class TestConstraint():
             'a': [1, 2, 3],
             'b': [4, 5, 6]
         })
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint(handling_strategy='transform', fit_columns_model=True)
         instance.constraint_columns = ('a', 'b')
 
         # Run
@@ -756,3 +757,35 @@ class TestConstraint():
 
         # Assert
         assert constraint_dict['formula'](1) == 2
+
+    def test__validate_constraint_columns_warning(self):
+        """Test the ``Constraint._validate_constraint_columns`` method.
+
+        Expect that ``_validate_constraint_columns`` throws a warning
+        when missing columns and not using columns model.
+
+        Setup:
+        - Mock the constraint columns to have one more column than the table_data: ('a', 'b').
+        - Mock the ``_columns_model`` to be False.
+        - Mock the ``_sample_constraint_columns`` to return a dataframe.
+        Input:
+        - table_data with one column ('a').
+        Output:
+        - table_data
+        Side Effects:
+        - A UserWarning is thrown.
+        """
+        # Setup
+        constraint = Mock()
+        constraint.constraint_columns = ['a', 'b']
+        constraint._columns_model = False
+        constraint._sample_constraint_columns.return_value = pd.DataFrame({'a': [0, 1, 2]})
+
+        table_data = pd.DataFrame({'a': [0, 1, 2]})
+
+        # Run and assert
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            Constraint._validate_constraint_columns(constraint, table_data)
+            assert len(w) == 1
+            assert issubclass(w[0].category, UserWarning)

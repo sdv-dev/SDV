@@ -1,5 +1,41 @@
 # Release Notes
 
+## 0.12.0 - 2021-08-17
+
+This release focuses on improving and expanding upon the existing constraints. More specifically, the users can now
+(1) specify multiple columns in `Positive` and `Negative` constraints, (2) use the new `Unique`constraint and
+(3) use datetime data with the `Between` constraint. Additionaly, error messages have been added and updated
+to provide more useful feedback to the user.
+
+Besides the added features, several bugs regarding the `UniqueCombinations` and `ColumnFormula` constraints have been fixed,
+and an error in the metadata.json for the `student_placements` dataset was corrected. The release also added documentation
+for the `fit_columns_model` which affects the majority of the available constraints.
+
+### New Features
+
+* Change default fit_columns_model to False - Issue [#550](https://github.com/sdv-dev/SDV/issues/550) by @katxiao
+* Support multi-column specification for positive and negative constraint - Issue [#545](https://github.com/sdv-dev/SDV/issues/545) by @sarahmish
+* Raise error when multiple constraints can't be enforced - Issue [#541](https://github.com/sdv-dev/SDV/issues/541) by @amontanez24
+* Create Unique Constraint - Issue [#532](https://github.com/sdv-dev/SDV/issues/532) by @amontanez24
+* Passing invalid conditions when using constraints produces unreadable errors - Issue [#511](https://github.com/sdv-dev/SDV/issues/511) by @katxiao
+* Improve error message for ColumnFormula constraint when constraint column used in formula - Issue [#508](https://github.com/sdv-dev/SDV/issues/508) by @katxiao
+* Add datetime functionality to Between constraint - Issue [#504](https://github.com/sdv-dev/SDV/issues/504) by @katxiao
+
+### Bugs Fixed
+
+* UniqueCombinations constraint with handling_strategy = 'transform' yields synthetic data with nan values - Issue [#521](https://github.com/sdv-dev/SDV/issues/521) by @katxiao and @csala
+* UniqueCombinations constraint outputting wrong data type - Issue [#510](https://github.com/sdv-dev/SDV/issues/510) by @katxiao and @csala
+* UniqueCombinations constraint on only one column gets stuck in an infinite loop - Issue [#509](https://github.com/sdv-dev/SDV/issues/509) by @katxiao
+* Conditioning on a non-constraint column using the ColumnFormula constraint - Issue [#507](https://github.com/sdv-dev/SDV/issues/507) by @katxiao
+* Conditioning on the constraint column of the ColumnFormula constraint - Issue [#506](https://github.com/sdv-dev/SDV/issues/506) by @katxiao
+* Update metadata.json for duration of student_placements dataset - Issue [#503](https://github.com/sdv-dev/SDV/issues/503) by @amontanez24
+* Unit test for HMA1 when working with a single child row per parent row - Issue [#497](https://github.com/sdv-dev/SDV/issues/497) by @pvk-developer
+* UniqueCombinations constraint for more than 2 columns - Issue [#494](https://github.com/sdv-dev/SDV/issues/494) by @katxiao and @csala
+
+### Documentation Changes
+
+* Add explanation of fit_columns_model to API docs - Issue [#517](https://github.com/sdv-dev/SDV/issues/517) by @katxiao
+
 ## 0.11.0 - 2021-07-12
 
 This release primarily addresses bugs and feature requests related to using constraints for the single-table models.
