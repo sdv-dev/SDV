@@ -170,6 +170,8 @@ We now stich everything together and pass it to the model.
 .. ipython:: python
     :okwarning:
 
+    from sdv.tabular import GaussianCopula
+
     constraint = CustomConstraint(
         columns=['salary', 'annual_bonus'],
         transform=transform, 
