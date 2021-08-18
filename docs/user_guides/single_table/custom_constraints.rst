@@ -69,6 +69,8 @@ Then, we pack every thing together in ``CustomConstraint``.
 .. ipython:: python
     :okwarning:
 
+    from sdv.constraints import CustomConstraint
+
     constraint = CustomConstraint(
         transform=transform, 
         reverse_transform=reverse_transform
