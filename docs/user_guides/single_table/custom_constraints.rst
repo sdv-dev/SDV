@@ -69,6 +69,8 @@ Then, we pack every thing together in ``CustomConstraint``.
 .. ipython:: python
     :okwarning:
 
+    from sdv.constraints import CustomConstraint
+
     constraint = CustomConstraint(
         transform=transform, 
         reverse_transform=reverse_transform
@@ -167,6 +169,8 @@ We now stich everything together and pass it to the model.
 
 .. ipython:: python
     :okwarning:
+
+    from sdv.tabular import GaussianCopula
 
     constraint = CustomConstraint(
         columns=['salary', 'annual_bonus'],
