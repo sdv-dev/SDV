@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.ColumnFormula &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.ColumnFormula &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -572,7 +608,7 @@
 <h1>sdv.constraints.ColumnFormula<a class="headerlink" href="#sdv-constraints-columnformula" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.ColumnFormula">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">ColumnFormula</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">column</span></em>, <em class="sig-param"><span class="n">formula</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#ColumnFormula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.ColumnFormula" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">ColumnFormula</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">column</span></em>, <em class="sig-param"><span class="n">formula</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">drop_column</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#ColumnFormula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.ColumnFormula" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute a column based on applying a formula on the others.</p>
 <p>This contraint accepts as input a simple function and a column name.
 During the transformation phase the column is simply dropped.
@@ -585,12 +621,13 @@ applying the whole table to the given function.</p>
 <li><p><strong>formula</strong> (<em>callable</em>) – Function to use for the computation.</p></li>
 <li><p><strong>handling_strategy</strong> (<em>str</em>) – How this Constraint should be handled, which can be <code class="docutils literal notranslate"><span class="pre">transform</span></code>
 or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
+<li><p><strong>drop_column</strong> (<em>bool</em>) – Whether or not to drop the constraint column.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.ColumnFormula.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">column</span></em>, <em class="sig-param"><span class="n">formula</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.ColumnFormula.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">column</span></em>, <em class="sig-param"><span class="n">formula</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">drop_column</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.ColumnFormula.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -601,7 +638,7 @@ or <code class="docutils literal notranslate"><span class="pre">reject_sampling<
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.ColumnFormula.__init__" title="sdv.constraints.ColumnFormula.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(column, formula[, handling_strategy])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.ColumnFormula.__init__" title="sdv.constraints.ColumnFormula.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(column, formula[, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.ColumnFormula.filter_valid.html#sdv.constraints.ColumnFormula.filter_valid" title="sdv.constraints.ColumnFormula.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(table_data)</p></td>
@@ -626,7 +663,7 @@ or <code class="docutils literal notranslate"><span class="pre">reject_sampling<
 <td><p>Return a dict representation of this Constraint.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.constraints.ColumnFormula.transform.html#sdv.constraints.ColumnFormula.transform" title="sdv.constraints.ColumnFormula.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 </tbody>
 </table>
@@ -638,6 +675,9 @@ or <code class="docutils literal notranslate"><span class="pre">reject_sampling<
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rebuild_columns</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

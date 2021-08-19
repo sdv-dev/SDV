@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -176,6 +176,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
+<span class="kn">from</span> <span class="nn">sdv.errors</span> <span class="kn">import</span> <span class="n">ConstraintsNotMetError</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">Table</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -402,7 +403,7 @@
             <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">previous_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">sampled</span> <span class="o">=</span> <span class="n">previous_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="n">previous_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
             <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">filter_valid</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
 
@@ -587,13 +588,22 @@
 <span class="sd">            graceful_reject_sampling (bool):</span>
 <span class="sd">                If `False` raises a `ValueError` if not enough valid rows could be sampled</span>
 <span class="sd">                within `max_retries` trials. If `True` prints a warning and returns</span>
-<span class="sd">                as many rows as it was able to sample within `max_retries`. If no rows could</span>
-<span class="sd">                be generated, raises a `ValueError`.</span>
+<span class="sd">                as many rows as it was able to sample within `max_retries`.</span>
 <span class="sd">                Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Sampled data.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ConstraintsNotMetError:</span>
+<span class="sd">                If the conditions are not valid for the given constraints.</span>
+<span class="sd">            ValueError:</span>
+<span class="sd">                If any of the following happens:</span>
+<span class="sd">                    * any of the conditions&#39; columns are not valid.</span>
+<span class="sd">                    * `graceful_reject_sampling` is `False` and not enough valid rows could be</span>
+<span class="sd">                      sampled within `max_retries` trials.</span>
+<span class="sd">                    * no rows could be generated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">num_rows</span> <span class="o">=</span> <span class="n">num_rows</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_rows</span>
@@ -607,7 +617,12 @@
             <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid column name `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
 
-        <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;drop&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;drop&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConstraintsNotMetError</span> <span class="k">as</span> <span class="n">cnme</span><span class="p">:</span>
+            <span class="n">cnme</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Passed conditions are not valid for the given constraints&#39;</span>
+            <span class="k">raise</span>
+
         <span class="n">condition_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
         <span class="n">transformed_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
         <span class="n">conditions</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">COND_IDX</span>
@@ -625,7 +640,7 @@
 
             <span class="n">condition_indices</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">COND_IDX</span><span class="p">]</span>
             <span class="n">condition</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">,</span> <span class="n">group</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transformed_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">sampled_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditionally_sample_rows</span><span class="p">(</span>
                     <span class="n">dataframe</span><span class="p">,</span>
                     <span class="n">max_retries</span><span class="p">,</span>

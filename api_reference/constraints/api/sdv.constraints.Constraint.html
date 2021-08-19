@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.Constraint &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.Constraint &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -284,7 +284,7 @@
 <h1>sdv.constraints.Constraint<a class="headerlink" href="#sdv-constraints-constraint" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.Constraint">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">Constraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handling_strategy</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/base.html#Constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Constraint" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">Constraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handling_strategy</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/base.html#Constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Constraint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constraint base class.</p>
 <p>This class is not intended to be used directly and should rather be
 subclassed to create different types of constraints.</p>
@@ -292,6 +292,29 @@ subclassed to create different types of constraints.</p>
 or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code>, the <code class="docutils literal notranslate"><span class="pre">filter_valid</span></code> or <code class="docutils literal notranslate"><span class="pre">transform</span></code> and
 <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> methods will be replaced respectively by a simple
 identity function.</p>
+<dl class="py attribute">
+<dt id="sdv.constraints.Constraint.constraint_columns">
+<code class="sig-name descname">constraint_columns</code><a class="headerlink" href="#sdv.constraints.Constraint.constraint_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>The names of the columns used by this constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="sdv.constraints.Constraint.rebuild_columns">
+<code class="sig-name descname">rebuild_columns</code><a class="headerlink" href="#sdv.constraints.Constraint.rebuild_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>The names of the columns that this constraint will rebuild during
+<code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>typle[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -305,7 +328,7 @@ based on the conditioned column.</p></li>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.Constraint.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handling_strategy</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/base.html#Constraint.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Constraint.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handling_strategy</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/base.html#Constraint.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Constraint.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -352,7 +375,10 @@ based on the conditioned column.</p></li>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.Constraint.constraint_columns" title="sdv.constraints.Constraint.constraint_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sdv.constraints.Constraint.rebuild_columns" title="sdv.constraints.Constraint.rebuild_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rebuild_columns</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

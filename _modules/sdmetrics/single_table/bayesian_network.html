@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.11.0 documentation</title>
+    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,7 +172,6 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pomegranate</span> <span class="kn">import</span> <span class="n">BayesianNetwork</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.goal</span> <span class="kn">import</span> <span class="n">Goal</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
@@ -206,6 +205,11 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_likelihoods</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pomegranate</span> <span class="kn">import</span> <span class="n">BayesianNetwork</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Please install pomegranate with `pip install pomegranate`&quot;</span><span class="p">)</span>
+
         <span class="n">metadata</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
         <span class="n">structure</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structure&#39;</span><span class="p">,</span> <span class="n">structure</span><span class="p">)</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">))</span>

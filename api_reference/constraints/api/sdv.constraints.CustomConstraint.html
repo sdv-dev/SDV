@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.CustomConstraint &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.CustomConstraint &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -572,7 +608,7 @@
 <h1>sdv.constraints.CustomConstraint<a class="headerlink" href="#sdv-constraints-customconstraint" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.CustomConstraint">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">CustomConstraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">reverse_transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">is_valid</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#CustomConstraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.CustomConstraint" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">CustomConstraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">reverse_transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">is_valid</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#CustomConstraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.CustomConstraint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Custom Constraint Class.</p>
 <p>This class simply takes the <code class="docutils literal notranslate"><span class="pre">transform</span></code>, <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code>
 and <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> methods as optional arguments, so users can
@@ -588,7 +624,7 @@ pass custom functions for each one of them.</p>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.CustomConstraint.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">reverse_transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">is_valid</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.CustomConstraint.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">reverse_transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">is_valid</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.CustomConstraint.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -599,7 +635,7 @@ pass custom functions for each one of them.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.CustomConstraint.__init__" title="sdv.constraints.CustomConstraint.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([transform, reverse_transform, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.CustomConstraint.__init__" title="sdv.constraints.CustomConstraint.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([columns, transform, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.CustomConstraint.filter_valid.html#sdv.constraints.CustomConstraint.filter_valid" title="sdv.constraints.CustomConstraint.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(table_data)</p></td>
@@ -636,6 +672,9 @@ pass custom functions for each one of them.</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rebuild_columns</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

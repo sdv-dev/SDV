@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Tabular Constraints &#8212; SDV 0.11.0 documentation</title>
+    <title>Tabular Constraints &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="api/sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -594,6 +630,10 @@
             <a href="#onehotencoding" class="nav-link">OneHotEncoding</a>
         </li>
     
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#unique" class="nav-link">Unique</a>
+        </li>
+    
     </ul>
 </nav>
 
@@ -617,7 +657,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.html#sdv.constraints.CustomConstraint" title="sdv.constraints.CustomConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint</span></code></a>([transform, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.html#sdv.constraints.CustomConstraint" title="sdv.constraints.CustomConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint</span></code></a>([columns, transform, …])</p></td>
 <td><p>Custom Constraint Class.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.CustomConstraint.fit.html#sdv.constraints.CustomConstraint.fit" title="sdv.constraints.CustomConstraint.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomConstraint.fit</span></code></a>(table_data)</p></td>
@@ -731,8 +771,8 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Positive.html#sdv.constraints.Positive" title="sdv.constraints.Positive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Positive</span></code></a>(high[, strict, handling_strategy, …])</p></td>
-<td><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">high</span></code> column is always positive.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Positive.html#sdv.constraints.Positive" title="sdv.constraints.Positive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Positive</span></code></a>(columns[, strict, …])</p></td>
+<td><p>Ensure that the given column(s) are always positive.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Positive.fit.html#sdv.constraints.Positive.fit" title="sdv.constraints.Positive.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Positive.fit</span></code></a>(table_data)</p></td>
 <td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
@@ -769,8 +809,8 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Negative.html#sdv.constraints.Negative" title="sdv.constraints.Negative"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Negative</span></code></a>(low[, strict, handling_strategy, …])</p></td>
-<td><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">low</span></code> column is always negative.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Negative.html#sdv.constraints.Negative" title="sdv.constraints.Negative"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Negative</span></code></a>(columns[, strict, …])</p></td>
+<td><p>Ensure that the given columns are always negative.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Negative.fit.html#sdv.constraints.Negative.fit" title="sdv.constraints.Negative.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Negative.fit</span></code></a>(table_data)</p></td>
 <td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
@@ -814,7 +854,7 @@
 <td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.ColumnFormula.transform.html#sdv.constraints.ColumnFormula.transform" title="sdv.constraints.ColumnFormula.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnFormula.transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.ColumnFormula.fit_transform.html#sdv.constraints.ColumnFormula.fit_transform" title="sdv.constraints.ColumnFormula.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnFormula.fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -852,7 +892,7 @@
 <td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Between.transform.html#sdv.constraints.Between.transform" title="sdv.constraints.Between.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Between.transform</span></code></a>(table_data)</p></td>
-<td><p>Transform the table data.</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Between.fit_transform.html#sdv.constraints.Between.fit_transform" title="sdv.constraints.Between.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Between.fit_transform</span></code></a>(table_data)</p></td>
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
@@ -946,6 +986,44 @@
 <td><p>Build a Constraint object from a dict.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.OneHotEncoding.to_dict.html#sdv.constraints.OneHotEncoding.to_dict" title="sdv.constraints.OneHotEncoding.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OneHotEncoding.to_dict</span></code></a>()</p></td>
+<td><p>Return a dict representation of this Constraint.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="unique">
+<h2>Unique<a class="headerlink" href="#unique" title="Permalink to this headline">¶</a></h2>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.html#sdv.constraints.Unique" title="sdv.constraints.Unique"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique</span></code></a>(columns)</p></td>
+<td><p>Ensure that each value for a specified column/group of columns is unique.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.fit.html#sdv.constraints.Unique.fit" title="sdv.constraints.Unique.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.fit</span></code></a>(table_data)</p></td>
+<td><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.transform.html#sdv.constraints.Unique.transform" title="sdv.constraints.Unique.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.transform</span></code></a>(table_data)</p></td>
+<td><p>Perform necessary transformations needed by constraint.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.fit_transform.html#sdv.constraints.Unique.fit_transform" title="sdv.constraints.Unique.fit_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.fit_transform</span></code></a>(table_data)</p></td>
+<td><p>Fit this Constraint to the data and then transform it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.reverse_transform.html#sdv.constraints.Unique.reverse_transform" title="sdv.constraints.Unique.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.reverse_transform</span></code></a>(table_data)</p></td>
+<td><p>Identity method for completion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.is_valid.html#sdv.constraints.Unique.is_valid" title="sdv.constraints.Unique.is_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.is_valid</span></code></a>(table_data)</p></td>
+<td><p>Get indices of first instance of unique rows.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.filter_valid.html#sdv.constraints.Unique.filter_valid" title="sdv.constraints.Unique.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.filter_valid</span></code></a>(table_data)</p></td>
+<td><p>Get only the rows that are valid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.from_dict.html#sdv.constraints.Unique.from_dict" title="sdv.constraints.Unique.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.from_dict</span></code></a>(constraint_dict)</p></td>
+<td><p>Build a Constraint object from a dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Unique.to_dict.html#sdv.constraints.Unique.to_dict" title="sdv.constraints.Unique.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Unique.to_dict</span></code></a>()</p></td>
 <td><p>Return a dict representation of this Constraint.</p></td>
 </tr>
 </tbody>

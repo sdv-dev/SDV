@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~GreaterThan.constraint_columns
+      ~GreaterThan.rebuild_columns
    
    

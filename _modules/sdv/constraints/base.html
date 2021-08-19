@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,6 +172,7 @@
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">copulas.multivariate.gaussian</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
@@ -262,6 +263,12 @@
 <span class="sd">    ``reverse_transform`` methods will be replaced respectively by a simple</span>
 <span class="sd">    identity function.</span>
 
+<span class="sd">    Attributes:</span>
+<span class="sd">        constraint_columns (tuple[str]):</span>
+<span class="sd">            The names of the columns used by this constraint.</span>
+<span class="sd">        rebuild_columns (typle[str]):</span>
+<span class="sd">            The names of the columns that this constraint will rebuild during</span>
+<span class="sd">            ``reverse_transform``.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        handling_strategy (str):</span>
 <span class="sd">            How this Constraint should be handled, which can be ``transform``,</span>
@@ -273,17 +280,19 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">rebuild_columns</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_columns_model</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">table_data</span>
 
-<div class="viewcode-block" id="Constraint.__init__"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Constraint.__init__"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="p">,</span> <span class="n">fit_columns_model</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit_columns_model</span> <span class="o">=</span> <span class="n">fit_columns_model</span>
         <span class="k">if</span> <span class="n">handling_strategy</span> <span class="o">==</span> <span class="s1">&#39;transform&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">filter_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity</span>
         <span class="k">elif</span> <span class="n">handling_strategy</span> <span class="o">==</span> <span class="s1">&#39;reject_sampling&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_columns</span> <span class="o">=</span> <span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reverse_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity</span>
         <span class="k">elif</span> <span class="n">handling_strategy</span> <span class="o">!=</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
@@ -394,6 +403,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">missing_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">missing_columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="p">:</span>
+                <span class="n">warning_message</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s1">&#39;When `fit_columns_model` is False and we are conditioning on a subset &#39;</span>
+                    <span class="s1">&#39;of the constraint columns, conditional sampling uses reject sampling &#39;</span>
+                    <span class="s1">&#39;which can be slow. Changing `fit_columns_model` to True can improve &#39;</span>
+                    <span class="s1">&#39;the performance.&#39;</span>
+                <span class="p">)</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">warning_message</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+
             <span class="n">all_columns_missing</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">all_columns_missing</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">MissingConstraintColumnError</span><span class="p">()</span>

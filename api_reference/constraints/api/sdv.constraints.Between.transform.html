@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.Between.transform &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.Between.transform &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -572,17 +608,20 @@
 <h1>sdv.constraints.Between.transform<a class="headerlink" href="#sdv-constraints-between-transform" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.constraints.Between.transform">
-<code class="sig-prename descclassname">Between.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#Between.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Between.transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transform the table data.</p>
-<p>The transformation consists of scaling the <code class="docutils literal notranslate"><span class="pre">constraint_column</span></code>
-(<code class="docutils literal notranslate"><span class="pre">(column-low)/(high-low)</span> <span class="pre">*</span> <span class="pre">cnt</span> <span class="pre">+</span> <span class="pre">small_cnt</span></code>) and then applying
-a logit function to the scaled version of the column.</p>
+<code class="sig-prename descclassname">Between.</code><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.Between.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform necessary transformations needed by constraint.</p>
+<p>Subclasses can optionally overwrite this method. If the transformation
+requires certain columns to be present in <code class="docutils literal notranslate"><span class="pre">table_data</span></code>, then the subclass
+should overwrite the <code class="docutils literal notranslate"><span class="pre">_transform</span></code> method instead. This method raises a
+<code class="docutils literal notranslate"><span class="pre">MissingConstraintColumnError</span></code> if the <code class="docutils literal notranslate"><span class="pre">table_data</span></code> is missing any columns
+needed to do the transformation. If columns are present, this method will call
+the <code class="docutils literal notranslate"><span class="pre">_transform</span></code> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>table_data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Transformed data.</p>
+<dd class="field-even"><p>Input data unmodified.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>

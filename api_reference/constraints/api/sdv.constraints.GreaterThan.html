@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.GreaterThan &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.GreaterThan &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -572,7 +608,7 @@
 <h1>sdv.constraints.GreaterThan<a class="headerlink" href="#sdv-constraints-greaterthan" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.GreaterThan">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">GreaterThan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">high_is_scalar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">low_is_scalar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#GreaterThan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.GreaterThan" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">GreaterThan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scalar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#GreaterThan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.GreaterThan" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">high</span></code> column is always greater than the <code class="docutils literal notranslate"><span class="pre">low</span></code> one.</p>
 <p>The transformation strategy works by creating a column with the
 difference between the <code class="docutils literal notranslate"><span class="pre">high</span></code> and <code class="docutils literal notranslate"><span class="pre">low</span></code> values and then computing back the
@@ -582,29 +618,28 @@ will be added to the diff to reconstruct the <code class="docutils literal notra
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>low</strong> (<em>str</em><em> or </em><em>int</em>) – Either the name of the column that contains the low value,
+<li><p><strong>low</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>]</em>) – Either the name of the column(s) that contains the low value,
 or a scalar that is the low value.</p></li>
-<li><p><strong>high</strong> (<em>str</em><em> or </em><em>int</em>) – Either the name of the column that contains the high value,
+<li><p><strong>high</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>]</em>) – Either the name of the column(s) that contains the high value,
 or a scalar that is the high value.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – Whether the comparison of the values should be strict <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> or
 not <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> when comparing them. Currently, this is only respected
 if <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> or <code class="docutils literal notranslate"><span class="pre">all</span></code> handling strategies are used.</p></li>
 <li><p><strong>handling_strategy</strong> (<em>str</em>) – How this Constraint should be handled, which can be <code class="docutils literal notranslate"><span class="pre">transform</span></code>
 or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
+<li><p><strong>fit_columns_model</strong> (<em>bool</em>) – If False, reject sampling will be used to handle conditional sampling.
+Otherwise, a model will be trained and used to sample other columns
+based on the conditioned column. Defaults to False.</p></li>
 <li><p><strong>drop</strong> (<em>str</em>) – Which column to drop during transformation. Can be <code class="docutils literal notranslate"><span class="pre">'high'</span></code>,
 <code class="docutils literal notranslate"><span class="pre">'low'</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>high_is_scalar</strong> (<em>bool</em><em> or </em><em>None</em>) – Whether or not the value for high is a scalar or a column name.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code>, this will be determined during the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method
-by checking if the value provided is a column name.</p></li>
-<li><p><strong>low_is_scalar</strong> (<em>bool</em><em> or </em><em>None</em>) – Whether or not the value for low is a scalar or a column name.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code>, this will be determined during the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method
-by checking if the value provided is a column name.</p></li>
+<li><p><strong>scalar</strong> (<em>str</em>) – Which value is a scalar. Can be <code class="docutils literal notranslate"><span class="pre">'high'</span></code>, <code class="docutils literal notranslate"><span class="pre">'low'</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code> then both <code class="docutils literal notranslate"><span class="pre">high</span></code> and <code class="docutils literal notranslate"><span class="pre">low</span></code> are column names.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.GreaterThan.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">high_is_scalar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">low_is_scalar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.GreaterThan.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">high</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scalar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.GreaterThan.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -652,6 +687,9 @@ by checking if the value provided is a column name.</p></li>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rebuild_columns</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.constraints.Negative &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.constraints.Negative &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,42 @@
                                         <a href="sdv.constraints.OneHotEncoding.to_dict.html">sdv.constraints.OneHotEncoding.to_dict</a>
                                     </li>
                                 
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.html">sdv.constraints.Unique</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit.html">sdv.constraints.Unique.fit</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.transform.html">sdv.constraints.Unique.transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.fit_transform.html">sdv.constraints.Unique.fit_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.reverse_transform.html">sdv.constraints.Unique.reverse_transform</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.is_valid.html">sdv.constraints.Unique.is_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.filter_valid.html">sdv.constraints.Unique.filter_valid</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.from_dict.html">sdv.constraints.Unique.from_dict</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.constraints.Unique.to_dict.html">sdv.constraints.Unique.to_dict</a>
+                                    </li>
+                                
                                 </ul>
                             </li>
                         
@@ -572,29 +608,30 @@
 <h1>sdv.constraints.Negative<a class="headerlink" href="#sdv-constraints-negative" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="sdv.constraints.Negative">
-<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">Negative</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#Negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Negative" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ensure that the <code class="docutils literal notranslate"><span class="pre">low</span></code> column is always negative.</p>
-<p>The transformation strategy works by creating a column with the
-difference between <code class="docutils literal notranslate"><span class="pre">low</span></code> and 0 and then computing back the <code class="docutils literal notranslate"><span class="pre">low</span></code>
-value by subtracting the difference from 0 when reversing the transformation.</p>
+<em class="property">class </em><code class="sig-prename descclassname">sdv.constraints.</code><code class="sig-name descname">Negative</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/tabular.html#Negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Negative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure that the given columns are always negative.</p>
+<p>The transformation strategy works by creating columns with the
+difference between zero and given columns then computing back the
+necessary columns using the difference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>high</strong> (<em>str</em><em> or </em><em>int</em>) – Either the name of the column that contains the high value,
-or a scalar that is the high value.</p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – Whether the comparison of the values should be strict <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> or
-not <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> when comparing them. Currently, this is only respected
+<li><p><strong>columns</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>]</em>) – The name of the column(s) that are constrained to be negative.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – Whether the comparison of the values should be strict, disclude
+zero <code class="docutils literal notranslate"><span class="pre">&lt;</span></code> or include it <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code>. Currently, this is only respected
 if <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> or <code class="docutils literal notranslate"><span class="pre">all</span></code> handling strategies are used.</p></li>
 <li><p><strong>handling_strategy</strong> (<em>str</em>) – How this Constraint should be handled, which can be <code class="docutils literal notranslate"><span class="pre">transform</span></code>
 or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
-<li><p><strong>drop</strong> (<em>str</em>) – Which column to drop during transformation. Can be <code class="docutils literal notranslate"><span class="pre">'low'</span></code>
-or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>fit_columns_model</strong> (<em>bool</em>) – If False, reject sampling will be used to handle conditional sampling.
+Otherwise, a model will be trained and used to sample other columns
+based on the conditioned column. Defaults to False.</p></li>
+<li><p><strong>drop</strong> (<em>bool</em>) – Whether to drop columns during transformation.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="sdv.constraints.Negative.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">low</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.Negative.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">columns</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">handling_strategy</span><span class="o">=</span><span class="default_value">'transform'</span></em>, <em class="sig-param"><span class="n">fit_columns_model</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drop</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.constraints.Negative.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -605,7 +642,7 @@ or <code class="docutils literal notranslate"><span class="pre">None</span></cod
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.Negative.__init__" title="sdv.constraints.Negative.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(low[, strict, handling_strategy, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.constraints.Negative.__init__" title="sdv.constraints.Negative.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(columns[, strict, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.constraints.Negative.filter_valid.html#sdv.constraints.Negative.filter_valid" title="sdv.constraints.Negative.filter_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_valid</span></code></a>(table_data)</p></td>
@@ -642,6 +679,9 @@ or <code class="docutils literal notranslate"><span class="pre">None</span></cod
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraint_columns</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rebuild_columns</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

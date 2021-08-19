@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Handling Constraints &#8212; SDV 0.11.0 documentation</title>
+    <title>Constraints &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -43,7 +43,7 @@
     <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Relational Data" href="../relational/index.html" />
+    <link rel="next" title="Handling Constraints" href="handling_constraints.html" />
     <link rel="prev" title="TVAE Model" href="tvae.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -157,7 +157,18 @@
                     
                         
                             <li class="active">
-                                <a href="">Handling Constraints</a>
+                                <a href="">Constraints</a>
+                                <ul>
+                                
+                                    <li class="">
+                                        <a href="handling_constraints.html">Handling Constraints</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="custom_constraints.html">Defining Custom Constraints</a>
+                                    </li>
+                                
+                                </ul>
                             </li>
                         
 
@@ -207,68 +218,9 @@
           
           <div class="d-none d-xl-block col-xl-2 bd-toc">
               
-<div class="tocsection onthispage pt-5 pb-3">
-    <i class="fas fa-list"></i> On this page
-</div>
 
 <nav id="bd-toc-nav">
     <ul class="nav section-nav flex-column">
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#load-a-tabular-demo" class="nav-link">Load a Tabular Demo</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#how-does-sdv-handle-constraints" class="nav-link">How does SDV Handle Constraints?</a><ul class="nav section-nav flex-column">
-                
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#transform-strategy" class="nav-link">Transform Strategy</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#reject-sampling-strategy" class="nav-link">Reject Sampling Strategy</a>
-        </li>
-    
-            </ul>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#defining-constraints" class="nav-link">Defining Constraints</a><ul class="nav section-nav flex-column">
-                
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#uniquecombinations-constraint" class="nav-link">UniqueCombinations Constraint</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#greaterthan-constraint" class="nav-link">GreaterThan Constraint</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#positive-and-negative-constraints" class="nav-link">Positive and Negative Constraints</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#columnformula-constraint" class="nav-link">ColumnFormula Constraint</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#rounding-constraint" class="nav-link">Rounding Constraint</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#between-constraint" class="nav-link">Between Constraint</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#onehotencoding-constraint" class="nav-link">OneHotEncoding Constraint</a>
-        </li>
-    
-            </ul>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#using-the-constraints" class="nav-link">Using the Constraints</a>
-        </li>
     
     </ul>
 </nav>
@@ -283,344 +235,26 @@
               
               <div>
                 
-  <section id="handling-constraints">
-<span id="single-table-constraints"></span><h1>Handling Constraints<a class="headerlink" href="#handling-constraints" title="Permalink to this headline">¶</a></h1>
-<p>A very common scenario that we face when working with tabular data is
-finding columns that have very particular relationships between them
-which are very hard to model and easily confuse the Tabular Models.</p>
-<p>Some simple examples of these scenarios include:</p>
-<ul class="simple">
-<li><p>A table that has the columns <code class="docutils literal notranslate"><span class="pre">country</span></code> and <code class="docutils literal notranslate"><span class="pre">city</span></code>: In such
-scenario, it might be very hard to learn which country each city
-belongs to, and when sampling probabilistically, the model is likely
-to end up generating invalid country/city combinations.</p></li>
-<li><p>A table that contains both the <code class="docutils literal notranslate"><span class="pre">age</span></code> and the <code class="docutils literal notranslate"><span class="pre">date</span> <span class="pre">of</span> <span class="pre">birth</span></code> of a
-user. The model will learn the age and date of birth distributions
-and mostly generate valid combinations, but in some cases it might
-end up giving back ages that do not correspond to the given date of
-birth.</p></li>
+  <section id="constraints">
+<span id="single-table-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="handling_constraints.html">Handling Constraints</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#load-a-tabular-demo">Load a Tabular Demo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#how-does-sdv-handle-constraints">How does SDV Handle Constraints?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#predefined-constraints">Predefined Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#using-the-constraints">Using the Constraints</a></li>
 </ul>
-<p>These kind of special relationships between columns are called
-<code class="docutils literal notranslate"><span class="pre">Constraints</span></code>, and <strong>SDV</strong> provides a very powerful and flexible
-mechanism to take them into account and guarantee that the sampled data
-always respects them.</p>
-<p>Let us explore a few <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> examples and learn how to handle
-them:</p>
-<section id="load-a-tabular-demo">
-<h2>Load a Tabular Demo<a class="headerlink" href="#load-a-tabular-demo" title="Permalink to this headline">¶</a></h2>
-<p>We will start by loading a small table that contains data with some
-constraints:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
-
-<span class="gp">In [2]: </span><span class="n">employees</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">()</span>
-
-<span class="gp">In [3]: </span><span class="n">employees</span>
-<span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department                 name                                            address  age  age_when_joined  years_in_the_company     salary  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales           Angel Bray             2645 Ritter Hill\nDanielview, NV 30074   40               39                     1  113251.24                       5        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design       Stacy Sandoval                          USNV Weaver\nFPO AA 44239   41               38                     3  120010.01                       3        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI         Miranda Cook   016 Torres Plains Suite 776\nKaylaberg, TN 65995   30               26                     4  127590.71                       4        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine     Justin Frederick  7308 Williams Village Suite 402\nPort Jennifer...   47               43                     4   67378.35                       2        1.0        0.0         0.0</span>
-<span class="go">4   Cheerper        BigData         Summer Ellis  22299 Rosario Burg Suite 228\nAndrewsville, DC...   40               36                     4   80377.27                       4        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support      Ashley Mitchell  306 Wilkerson Pines Apt. 481\nNorth Garrettche...   36               27                     9   41108.45                       4        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales          Lauren King  39497 Aguirre Fields Suite 392\nPort Sheila, P...   44               35                     9   82441.32                       3        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design       Tiffany Nelson    7678 Morales Mount\nWest Patriciafort, AK 09161   34               25                     9   51947.44                       4        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           Mary Olson            757 Aaron Dam\nEast Elizabeth, PA 90453   49               45                     4   69391.95                       3        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine         Tyler Murphy             034 Gill Keys\nCassandrafurt, TN 45774   47               40                     7   78785.02                       1        1.0        0.0         0.0</span>
-<span class="go">10  Cheerper        BigData          Kelly Smith                         USCGC Taylor\nFPO AE 04780   47               43                     4   48509.85                       2        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support  Dr. Claudia Collier  959 Munoz Drives Apt. 174\nCristinahaven, NH 6...   33               24                     9  144091.34                       2        0.0        1.0         0.0</span>
-</pre></div>
-</div>
-<p>This step loaded a simple table that gives us some basic details about
-simulated employees from several companies.</p>
-<p>If we observe the data closely we will find a few <strong>constraints</strong>:</p>
-<ol class="arabic simple">
-<li><p>Each <code class="docutils literal notranslate"><span class="pre">company</span></code> has employees from two or more <code class="docutils literal notranslate"><span class="pre">departments</span></code>, but
-<code class="docutils literal notranslate"><span class="pre">department</span></code> names are different across <code class="docutils literal notranslate"><span class="pre">companies</span></code>. This implies
-that a <code class="docutils literal notranslate"><span class="pre">company</span></code> should only be paired with its own <code class="docutils literal notranslate"><span class="pre">departments</span></code>
-and never with the <code class="docutils literal notranslate"><span class="pre">departments</span></code> of other <code class="docutils literal notranslate"><span class="pre">companies</span></code>.</p></li>
-<li><p>We have an <code class="docutils literal notranslate"><span class="pre">age</span></code> column that represents the age of the employee at
-the date when the data was created and an <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> that
-represents the age of the employee when they joined the <code class="docutils literal notranslate"><span class="pre">company</span></code>.
-Since all of them joined the <code class="docutils literal notranslate"><span class="pre">company</span></code> before the data was created,
-the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> will always be equal or lower than the
-<code class="docutils literal notranslate"><span class="pre">age</span></code> column.</p></li>
-<li><p>We have a <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> column that indicates how many
-years passed since they joined the company, which means that the
-<code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> will always be equal to the <code class="docutils literal notranslate"><span class="pre">age</span></code> minus
-the <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code>.</p></li>
-<li><p>We have a <code class="docutils literal notranslate"><span class="pre">salary</span></code> column that should always be rounded to 2
-decimal points.</p></li>
-<li><p>The <code class="docutils literal notranslate"><span class="pre">age</span></code> column is bounded, since realistically an employee can only be
-so old (or so young).</p></li>
-<li><p>The <code class="docutils literal notranslate"><span class="pre">full_time</span></code>, <code class="docutils literal notranslate"><span class="pre">part_time</span></code> and <code class="docutils literal notranslate"><span class="pre">contractor</span></code> columns
-are related in such a way that one of them will always be one and the others
-zero, since the employee must be part of one of the three categories.</p></li>
-</ol>
-</section>
-<section id="how-does-sdv-handle-constraints">
-<h2>How does SDV Handle Constraints?<a class="headerlink" href="#how-does-sdv-handle-constraints" title="Permalink to this headline">¶</a></h2>
-<p><strong>SDV</strong> handles constraints using two different strategies:</p>
-<section id="transform-strategy">
-<h3>Transform Strategy<a class="headerlink" href="#transform-strategy" title="Permalink to this headline">¶</a></h3>
-<p>When using this strategy, <strong>SDV</strong> applies a transformation to the data
-before learning it in a way that allows the model to better capture the
-data properties. For example, if we have one column that needs to be
-always greater than the other one, SDV can do the following:</p>
-<ol class="arabic simple">
-<li><p>Replace the higher column with the difference between the two
-columns, which will always be positive.</p></li>
-<li><p>Model the transformed data and sample new values.</p></li>
-<li><p>Recompute the value of the high column by adding the values of the
-lower column to it.</p></li>
-</ol>
-<p>The <strong>Transform</strong> strategy is very efficient and does not affect the
-speed of the modeling and sampling process, but in some cases might
-affect the quality of the learning process or simply not be possible.</p>
-</section>
-<section id="reject-sampling-strategy">
-<h3>Reject Sampling Strategy<a class="headerlink" href="#reject-sampling-strategy" title="Permalink to this headline">¶</a></h3>
-<p>In the cases where applying a <strong>Transform</strong> strategy is not possible or
-may affect the quality of the learning process, <strong>SDV</strong> can apply a
-<strong>Reject Sampling</strong> strategy.</p>
-<p>When using this strategy, <strong>SDV</strong> validates the sampled rows, discards
-the ones that do not adjust to the constraint, and re-samples them. This
-process is repeated until enough rows have been sampled.</p>
-</section>
-</section>
-<section id="defining-constraints">
-<h2>Defining Constraints<a class="headerlink" href="#defining-constraints" title="Permalink to this headline">¶</a></h2>
-<p>Let us go back to the demo data that we loaded before and define
-<strong>Constraints</strong> that indicate <strong>SDV</strong> how to work with this data.</p>
-<section id="uniquecombinations-constraint">
-<h3>UniqueCombinations Constraint<a class="headerlink" href="#uniquecombinations-constraint" title="Permalink to this headline">¶</a></h3>
-<p>The first constraint that we will explore is the <code class="docutils literal notranslate"><span class="pre">UniqueCombinations</span></code>
-constraint.</p>
-<p>This Constraint class can handle the situation number 1 indicated above,
-in which the values of a set of columns can only be combined exactly as
-seen in the original data, and new combinations are not accepted. In
-order to use this constraint we will need to import it from the
-<code class="docutils literal notranslate"><span class="pre">sdv.constraints</span></code> module and create an instance of it indicating:</p>
-<ul class="simple">
-<li><p>the names of the affected columns</p></li>
-<li><p>which strategy we want to use: <code class="docutils literal notranslate"><span class="pre">transform</span></code> or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code></p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="custom_constraints.html">Defining Custom Constraints</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#using-the-customconstraint">Using the <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-apply-the-same-function-to-multiple-columns">Can I apply the same function to multiple columns?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-access-the-rest-of-the-table-from-my-column-functions">Can I access the rest of the table from my column functions?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-write-a-customconstraint-based-on-reject-sampling">Can I write a <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> based on reject sampling?</a></li>
 </ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">UniqueCombinations</span>
-
-<span class="gp">In [5]: </span><span class="n">unique_company_department_constraint</span> <span class="o">=</span> <span class="n">UniqueCombinations</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;company&#39;</span><span class="p">,</span> <span class="s1">&#39;department&#39;</span><span class="p">],</span>
-<span class="gp">   ...: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
-<span class="gp">   ...: </span><span class="p">)</span>
-<span class="gp">   ...: </span>
-</pre></div>
-</div>
-</section>
-<section id="greaterthan-constraint">
-<h3>GreaterThan Constraint<a class="headerlink" href="#greaterthan-constraint" title="Permalink to this headline">¶</a></h3>
-<p>The second constraint that we need for our data is the <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code>
-constraint. This constraint guarantees that one column is always greater
-than the other one. In order to use it, we need to create an instance
-passing:</p>
-<ul class="simple">
-<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column</p></li>
-<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column</p></li>
-<li><p>the handling strategy that we want to use</p></li>
+</li>
 </ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
-
-<span class="gp">In [7]: </span><span class="n">age_gt_age_when_joined_constraint</span> <span class="o">=</span> <span class="n">GreaterThan</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">low</span><span class="o">=</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
-<span class="gp">   ...: </span><span class="p">)</span>
-<span class="gp">   ...: </span>
-</pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code> constraint can also be used to guarantee a column is greater
-than a scalar value or specific datetime value instead of another column. To use
-this functionality, we can pass:</p>
-<ul class="simple">
-<li><p>the scalar value for <code class="docutils literal notranslate"><span class="pre">low</span></code></p></li>
-<li><p>the scalar value for <code class="docutils literal notranslate"><span class="pre">high</span></code></p></li>
-<li><p>a boolean indicating <code class="docutils literal notranslate"><span class="pre">low</span></code> or <code class="docutils literal notranslate"><span class="pre">high</span></code> is a scalar</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">salary_gt_30000_constraint</span> <span class="o">=</span> <span class="n">GreaterThan</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">low</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
-<span class="gp">   ...: </span><span class="p">)</span>
-<span class="gp">   ...: </span>
-</pre></div>
-</div>
-</section>
-<section id="positive-and-negative-constraints">
-<h3>Positive and Negative Constraints<a class="headerlink" href="#positive-and-negative-constraints" title="Permalink to this headline">¶</a></h3>
-<p>Similar to the <code class="docutils literal notranslate"><span class="pre">GreaterThan</span></code> constraint, we can use the <code class="docutils literal notranslate"><span class="pre">Positive</span></code>
-or <code class="docutils literal notranslate"><span class="pre">Negative</span></code> constraints. These constraints enforce that a specified
-column is always positive or negative. We can create an instance passing:</p>
-<ul class="simple">
-<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column for <code class="docutils literal notranslate"><span class="pre">Negative</span></code> or the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column for <code class="docutils literal notranslate"><span class="pre">Positive</span></code></p></li>
-<li><p>the handling strategy that we want to use</p></li>
-<li><p>a boolean specifying whether to make the data strictly above or below 0, or include 0 as a possible value</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Positive</span>
-
-<span class="gp">In [10]: </span><span class="n">positive_prior_exp_constraint</span> <span class="o">=</span> <span class="n">Positive</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">high</span><span class="o">=</span><span class="s1">&#39;prior_years_experience&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;reject_sampling&#39;</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-<section id="columnformula-constraint">
-<h3>ColumnFormula Constraint<a class="headerlink" href="#columnformula-constraint" title="Permalink to this headline">¶</a></h3>
-<p>In some cases, one column will need to be computed based on the other
-columns using a custom formula. This is, for example, what happens with
-the <code class="docutils literal notranslate"><span class="pre">years_in_the_company</span></code> column in our demo data, which will always
-need to be computed based on the <code class="docutils literal notranslate"><span class="pre">age</span></code> and <code class="docutils literal notranslate"><span class="pre">age_when_joined</span></code> columns
-by subtracting them. In these cases, we need to define a custom function
-that defines how to compute the value of the column:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="k">def</span> <span class="nf">years_in_the_company</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age_when_joined&#39;</span><span class="p">]</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-<p>Once we have defined this function, we can use the <code class="docutils literal notranslate"><span class="pre">ColumnFormula</span></code>
-constraint by passing it:</p>
-<ul class="simple">
-<li><p>the name of the column that we want to generate</p></li>
-<li><p>the function that generates the column values</p></li>
-<li><p>the handling strategy that we want to use</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">ColumnFormula</span>
-
-<span class="gp">In [13]: </span><span class="n">years_in_the_company_constraint</span> <span class="o">=</span> <span class="n">ColumnFormula</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;years_in_the_company&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">formula</span><span class="o">=</span><span class="n">years_in_the_company</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-<section id="rounding-constraint">
-<h3>Rounding Constraint<a class="headerlink" href="#rounding-constraint" title="Permalink to this headline">¶</a></h3>
-<p>In order for data to be realistic, we also might want to round data
-to a certain number of digits. To do this, we can use the Rounding
-Constraint. We will pass this constraint:</p>
-<ul class="simple">
-<li><p>the name of the column(s) that should be rounded.</p></li>
-<li><p>the number of digits each column should be rounded to.</p></li>
-<li><p>the handling strategy that we want to use</p></li>
-<li><p>(optional) if reject sampling, we can customize the threshold of
-the sampled values.</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Rounding</span>
-
-<span class="gp">In [15]: </span><span class="n">salary_rounding_constraint</span> <span class="o">=</span> <span class="n">Rounding</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-<section id="between-constraint">
-<h3>Between Constraint<a class="headerlink" href="#between-constraint" title="Permalink to this headline">¶</a></h3>
-<p>Another possibility is the <code class="docutils literal notranslate"><span class="pre">Between</span></code> constraint. It guarantees
-that one column is always in between two other columns/values. For example,
-the <code class="docutils literal notranslate"><span class="pre">age</span></code> column in our demo data is realistically bounded to the ages of
-15 and 90 since acual employees won’t be too young or too old.</p>
-<p>In order to use it, we need to create an instance passing:</p>
-<ul class="simple">
-<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">low</span></code> column or a scalar value to be used as the lower bound</p></li>
-<li><p>the name of the <code class="docutils literal notranslate"><span class="pre">high</span></code> column or a scalar value to be used as the upper bound</p></li>
-<li><p>the handling strategy that we want to use</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Between</span>
-
-<span class="gp">In [17]: </span><span class="n">reasonable_age_constraint</span> <span class="o">=</span> <span class="n">Between</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">low</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">high</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-<section id="onehotencoding-constraint">
-<h3>OneHotEncoding Constraint<a class="headerlink" href="#onehotencoding-constraint" title="Permalink to this headline">¶</a></h3>
-<p>Another constraint available is the <code class="docutils literal notranslate"><span class="pre">OneHotEncoding</span></code> constraint.
-This constraint allows the user to specify a list of columns where each row
-is a one hot vector. Then, the constraint will make sure that the output
-of the model is transformed so that the column with the largest value is
-set to 1 while all other columns are set to 0. To apply the constraint we
-need to create an instance passing:</p>
-<ul class="simple">
-<li><p>A list of the names of the columns of interest</p></li>
-<li><p>The strategy we want to use (<code class="docutils literal notranslate"><span class="pre">transform</span></code> is recommended)</p></li>
-</ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">OneHotEncoding</span>
-
-<span class="gp">In [19]: </span><span class="n">one_hot_constraint</span> <span class="o">=</span> <span class="n">OneHotEncoding</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;full_time&#39;</span><span class="p">,</span> <span class="s1">&#39;part_time&#39;</span><span class="p">,</span> <span class="s1">&#39;contractor&#39;</span><span class="p">]</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="using-the-constraints">
-<h2>Using the Constraints<a class="headerlink" href="#using-the-constraints" title="Permalink to this headline">¶</a></h2>
-<p>Now that we have defined the constraints needed to properly describe our
-dataset, we can pass them to the Tabular Model of our choice. For
-example, let us create a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model passing it the
-constraints that we just defined as a <code class="docutils literal notranslate"><span class="pre">list</span></code>:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
-
-<span class="gp">In [21]: </span><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
-<span class="gp">   ....: </span>    <span class="n">unique_company_department_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">age_gt_age_when_joined_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">years_in_the_company_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">salary_gt_30000_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">positive_prior_exp_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">salary_rounding_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">reasonable_age_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">one_hot_constraint</span>
-<span class="gp">   ....: </span><span class="p">]</span>
-<span class="gp">   ....: </span>
-
-<span class="gp">In [22]: </span><span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>After creating the model, we can just fit and sample as usual:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [23]: </span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
-
-<span class="gp">In [24]: </span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>And observe that the sampled rows really adjust to the constraints that
-we defined:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [25]: </span><span class="n">sampled</span>
-<span class="gh">Out[25]: </span><span class="go"></span>
-<span class="go">   company     department                 name                                            address  age  age_when_joined  years_in_the_company     salary  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0     Pear         Design       Stacy Sandoval                          USNV Weaver\nFPO AA 44239   40               36                     4   82735.14                       4        1.0        0.0         0.0</span>
-<span class="go">1     Pear         Design          Kelly Smith                         USCGC Taylor\nFPO AE 04780   33               33                     0  117191.01                       4        1.0        0.0         0.0</span>
-<span class="go">2  Glasses             AI         Tyler Murphy             034 Gill Keys\nCassandrafurt, TN 45774   36               30                     6   65096.33                       3        1.0        0.0         0.0</span>
-<span class="go">3     Pear          Sales  Dr. Claudia Collier  959 Munoz Drives Apt. 174\nCristinahaven, NH 6...   33               25                     8  141853.68                       3        0.0        1.0         0.0</span>
-<span class="go">4     Pear          Sales          Kelly Smith                         USCGC Taylor\nFPO AE 04780   47               41                     6  112648.30                       5        1.0        0.0         0.0</span>
-<span class="go">6  Glasses  Search Engine          Lauren King  39497 Aguirre Fields Suite 392\nPort Sheila, P...   48               44                     4   45294.96                       1        1.0        0.0         0.0</span>
-<span class="go">7  Glasses  Search Engine         Tyler Murphy             034 Gill Keys\nCassandrafurt, TN 45774   32               30                     2   50939.44                       2        1.0        0.0         0.0</span>
-<span class="go">8  Glasses             AI           Mary Olson            757 Aaron Dam\nEast Elizabeth, PA 90453   47               41                     6   53311.42                       4        1.0        0.0         0.0</span>
-<span class="go">0  Glasses             AI           Mary Olson            757 Aaron Dam\nEast Elizabeth, PA 90453   47               37                    10  114132.29                       5        1.0        0.0         0.0</span>
-<span class="go">0  Glasses             AI         Tyler Murphy             034 Gill Keys\nCassandrafurt, TN 45774   34               30                     4  136161.59                       1        1.0        0.0         0.0</span>
-</pre></div>
-</div>
-</section>
 </section>
 
 
@@ -630,7 +264,7 @@ we defined:</p>
               <div class='prev-next-bottom'>
                 
     <a class='left-prev' id="prev-link" href="tvae.html" title="previous page">TVAE Model</a>
-    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
+    <a class='right-next' id="next-link" href="handling_constraints.html" title="next page">Handling Constraints</a>
 
               </div>
               

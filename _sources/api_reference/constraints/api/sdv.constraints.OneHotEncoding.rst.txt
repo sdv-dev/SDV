@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~OneHotEncoding.constraint_columns
+      ~OneHotEncoding.rebuild_columns
    
    

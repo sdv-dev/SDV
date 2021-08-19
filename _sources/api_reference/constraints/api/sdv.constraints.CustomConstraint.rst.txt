@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~CustomConstraint.constraint_columns
+      ~CustomConstraint.rebuild_columns
    
    

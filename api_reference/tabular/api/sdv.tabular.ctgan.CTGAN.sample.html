@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.tabular.ctgan.CTGAN.sample &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.tabular.ctgan.CTGAN.sample &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -311,8 +311,7 @@ relative distance at which a float value will be considered a match
 when performing reject-sampling based conditioning. Defaults to 0.01.</p></li>
 <li><p><strong>graceful_reject_sampling</strong> (<em>bool</em>) – If <cite>False</cite> raises a <cite>ValueError</cite> if not enough valid rows could be sampled
 within <cite>max_retries</cite> trials. If <cite>True</cite> prints a warning and returns
-as many rows as it was able to sample within <cite>max_retries</cite>. If no rows could
-be generated, raises a <cite>ValueError</cite>.
+as many rows as it was able to sample within <cite>max_retries</cite>.
 Defaults to False.</p></li>
 </ul>
 </dd>
@@ -321,6 +320,16 @@ Defaults to False.</p></li>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ConstraintsNotMetError</strong> – If the conditions are not valid for the given constraints.</p></li>
+<li><p><strong>ValueError</strong> – If any of the following happens:
+        * any of the conditions’ columns are not valid.
+        * <cite>graceful_reject_sampling</cite> is <cite>False</cite> and not enough valid rows could be
+          sampled within <cite>max_retries</cite> trials.
+        * no rows could be generated.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

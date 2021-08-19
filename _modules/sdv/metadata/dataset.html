@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.11.0 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.12.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -189,9 +189,7 @@
     <span class="n">dtypes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
-            <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span>
-        <span class="k">elif</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">,</span> <span class="s1">&#39;integer&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
             <span class="n">dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span>
 
     <span class="k">return</span> <span class="n">dtypes</span>

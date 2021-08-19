@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Defining Custom Constraints &#8212; SDV 0.12.0 documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sdv.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Relational Data" href="../relational/index.html" />
+    <link rel="prev" title="Handling Constraints" href="handling_constraints.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <a class="navbar-brand" href="../../index.html">
+    
+      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../getting_started/index.html">Getting Started</a>
+        </li>
+        
+        <li class="nav-item active">
+            <a class="nav-link" href="../index.html">User Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../api_reference/index.html">API Reference</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../developer_guides/index.html">Developer Guides</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../history.html">Release Notes</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/sdv-dev/SDV" target="_blank" rel="noopener">
+              <span><i class="fab fa-github-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://twitter.com/sdv_dev" target="_blank" rel="noopener">
+              <span><i class="fab fa-twitter-square"></i></span>
+            </a>
+          </li>
+        
+        
+          <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+              <img class="nav-icon-img" src="../../_static/slack-32.png">
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+</div>
+
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+    
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+          
+            
+                <li class="active">
+                    <a href="index.html">Single Table Data</a>
+                    <ul>
+                    
+                        
+                            <li class="">
+                                <a href="data_description.html">Data Description</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="">
+                                <a href="models.html">Models</a>
+                            </li>
+                        
+
+                    
+                        
+                            <li class="active">
+                                <a href="constraints.html">Constraints</a>
+                                <ul>
+                                
+                                    <li class="">
+                                        <a href="handling_constraints.html">Handling Constraints</a>
+                                    </li>
+                                
+                                    <li class="active">
+                                        <a href="">Defining Custom Constraints</a>
+                                    </li>
+                                
+                                </ul>
+                            </li>
+                        
+
+                    
+                    </ul>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../relational/index.html">Relational Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../timeseries/index.html">Timeseries Data</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../evaluation/index.html">Synthetic Data Evaluation</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../benchmarking/index.html">Benchmarking Framework</a>
+                </li>
+            
+          
+        
+        
+        
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#using-the-customconstraint" class="nav-link">Using the CustomConstraint</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#can-i-apply-the-same-function-to-multiple-columns" class="nav-link">Can I apply the same function to multiple columns?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#can-i-access-the-rest-of-the-table-from-my-column-functions" class="nav-link">Can I access the rest of the table from my column functions?</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#can-i-write-a-customconstraint-based-on-reject-sampling" class="nav-link">Can I write a CustomConstraint based on reject sampling?</a>
+        </li>
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="defining-custom-constraints">
+<span id="custom-constraints"></span><h1>Defining Custom Constraints<a class="headerlink" href="#defining-custom-constraints" title="Permalink to this headline">¶</a></h1>
+<p>In some cases, the predefined constraints do not cover all your needs.
+In such scenarios, you can use <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> to define your own
+logic on how to constrain your data. There are three main functions that
+you can create:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">transform</span></code> which is responsible for the forward pass when using <code class="docutils literal notranslate"><span class="pre">transform</span></code> strategy.
+Its main function is to change your data in a way that enforces the constraint.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> which defines how to reverse the transformation of the <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code> which indicates which rows satisfy the constraint and which ones do not.</p></li>
+</ul>
+<p>Let’s look at a demo dataset:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
+
+<span class="gp">In [2]: </span><span class="n">employees</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">()</span>
+
+<span class="gp">In [3]: </span><span class="n">employees</span>
+<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0       Pear          Sales            1   38               33                     5  109500.00      19500.00                       2        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   31               30                     1  111023.72      20804.67                       5        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   32               29                     3  110500.00      13500.00                       3        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   32               27                     5  138559.67      22440.78                       1        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   39               35                     4  141000.00      22500.00                       1        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   42               41                     1  148500.00       5500.00                       5        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   49               44                     5  140000.00      15500.00                       5        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   49               46                     3  102856.89      18708.69                       4        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   32               29                     3   71000.00       9000.00                       5        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   30               25                     5   46508.76      19843.82                       5        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   44               39                     5  103000.00      21500.00                       3        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   38               35                     3  146000.00       6500.00                       5        0.0        1.0         0.0</span>
+</pre></div>
+</div>
+<p>The dataset defined in <span class="xref std std-ref">_single_table_constraints</span> contains basic details about employees.
+We will use this dataset to demonstrate how you can create your own constraint.</p>
+<section id="using-the-customconstraint">
+<h2>Using the <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code><a class="headerlink" href="#using-the-customconstraint" title="Permalink to this headline">¶</a></h2>
+<p>We wish to generate synthetic data from the <code class="docutils literal notranslate"><span class="pre">employees</span></code> records. If you look at the data
+above, you will notice that the <code class="docutils literal notranslate"><span class="pre">salary</span></code> column is a multiple of a <em>base</em> value, in
+this case the base unit is 500. In other words, the <code class="docutils literal notranslate"><span class="pre">salary</span></code> increments by 500.
+We will define <code class="docutils literal notranslate"><span class="pre">transform</span></code> and <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> methods to make sure our
+data satisfy our constraint.</p>
+<p>We can achieve our goal by performing transformations in a 2 step process:</p>
+<ul class="simple">
+<li><p>Divide <code class="docutils literal notranslate"><span class="pre">salary</span></code> by the base unit (500). This transformation makes it easier for the model
+to learn the data since it would now learn regular integer values without any explicit constraint on the data.</p></li>
+<li><p>Reversing the effect by multiplying <code class="docutils literal notranslate"><span class="pre">salary</span></code> back with the base unit. Now that the model has
+learned regular integer values, we multiply it with the base (500) such that it now conforms to our original data range.</p></li>
+</ul>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
+<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ...: </span>    <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">base</span>
+<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">table_data</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
+<p>After defining <code class="docutils literal notranslate"><span class="pre">transform</span></code> we create <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> that reverses the operations made.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
+<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ...: </span>    <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">*</span> <span class="n">base</span>
+<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">table_data</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
+<p>Then, we pack every thing together in <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">CustomConstraint</span>
+
+<span class="gp">In [7]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+<span class="gp">   ...: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
+<span class="gp">   ...: </span><span class="p">)</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
+</section>
+<section id="can-i-apply-the-same-function-to-multiple-columns">
+<h2>Can I apply the same function to multiple columns?<a class="headerlink" href="#can-i-apply-the-same-function-to-multiple-columns" title="Permalink to this headline">¶</a></h2>
+<p>In the example above we fixed the <code class="docutils literal notranslate"><span class="pre">salary</span></code> format, but if we continue observing the data
+we will see that <code class="docutils literal notranslate"><span class="pre">annual_bonus</span></code> is also constrained by the same logic. Rather than
+defining two constraints, or editing the code of our functions for each new column that we want
+to constraint, we provide another style of writing functions such that the function should accept
+a column data as input.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">transform</span></code> function takes <code class="docutils literal notranslate"><span class="pre">column_data</span></code> as input and returns the transformed column.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
+<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">column_data</span> <span class="o">/</span> <span class="n">base</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
+<p>Similarly we defined <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> in a way that it operates on the data of a
+single column.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
+<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">column_data</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">*</span> <span class="n">base</span>
+<span class="gp">   ...: </span>
+</pre></div>
+</div>
+<p>Now that we have our functions, we initialize <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> and we
+specify which column(s) are the desired ones.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
+<span class="gp">   ....: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+</section>
+<section id="can-i-access-the-rest-of-the-table-from-my-column-functions">
+<h2>Can I access the rest of the table from my column functions?<a class="headerlink" href="#can-i-access-the-rest-of-the-table-from-my-column-functions" title="Permalink to this headline">¶</a></h2>
+<p>If we look closely at the data, we notice that <code class="docutils literal notranslate"><span class="pre">salary</span></code> and <code class="docutils literal notranslate"><span class="pre">annual_bonus</span></code> are only a
+multiple of 500 when the employee is not a “contractor”. To take this requirement into
+consideration, we refer to a “fixed” column <code class="docutils literal notranslate"><span class="pre">contractor</span></code> in order to know whether we
+should apply this constraint or not. The access to <code class="docutils literal notranslate"><span class="pre">contractor</span></code> column will allow us
+to properly transform and reverse transform the data.</p>
+<p>We write our functions to take as input:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">table_data</span></code> which contains all the information.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">column</span></code> which is a an argument to represent the columns of interest.</p></li>
+</ul>
+<p>Now we can construct our functions freely, we write our methods
+with said arguments and be able to access <code class="docutils literal notranslate"><span class="pre">'contractor'</span></code>.</p>
+<p>We first write our <code class="docutils literal notranslate"><span class="pre">transform</span></code> function as we have done previously:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
+<span class="gp">   ....: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">/</span> <span class="n">base</span>
+<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">table_data</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+<p>When it comes to defining <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code>, we need to distinguish between
+contractors and non contractors, the operations are as follows:</p>
+<ol class="arabic simple">
+<li><p>round values to four decimal points for contractors such that the end result will
+be two decimal points after multiplying the result with 500.</p></li>
+<li><p>round values to zero for employees that are not contractors such that the end
+result will be a multiple of 500.</p></li>
+</ol>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
+<span class="gp">   ....: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+<span class="gp">   ....: </span>    <span class="n">is_not_contractor</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">contractor</span> <span class="o">==</span> <span class="mf">0.</span>
+<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_not_contractor</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_not_contractor</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
+<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">*=</span> <span class="n">base</span>
+<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">table_data</span>
+<span class="gp">   ....: </span>
+</pre></div>
+</div>
+<p>We now stich everything together and pass it to the model.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="gp">In [14]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
+<span class="gp">   ....: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
+<span class="gp">   ....: </span><span class="p">)</span>
+<span class="gp">   ....: </span>
+
+<span class="gp">In [15]: </span><span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">constraint</span><span class="p">])</span>
+
+<span class="gp">In [16]: </span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
+
+<span class="gp">In [17]: </span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When we view the <code class="docutils literal notranslate"><span class="pre">sampled</span></code> data, we should find that all the rows in the sampled
+data have a salary that is a multiple of the base value with the exception
+of “contractor” records.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">sampled</span>
+<span class="gh">Out[18]: </span><span class="go"></span>
+<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0      Pear          Sales           79   46               39                     4   96000.00      10500.00                       5        1.0        0.0         0.0</span>
+<span class="go">1      Pear         Design           26   32               32                     2   95577.15       8680.10                       5        0.0        0.0         1.0</span>
+<span class="go">2      Pear         Design           16   42               36                     1  126480.15       9222.05                       5        0.0        0.0         1.0</span>
+<span class="go">3   Glasses             AI           16   31               27                     4   58500.00      22500.00                       4        0.0        0.0         0.0</span>
+<span class="go">4      Pear        BigData            1   47               41                     4  148500.00      22500.00                       1        0.0        0.0         0.0</span>
+<span class="go">5      Pear        Support           13   35               35                     2   86000.00      12500.00                       5        0.0        0.0         0.0</span>
+<span class="go">6      Pear         Design            1   34               29                     3  141000.00      22500.00                       2        1.0        0.0         0.0</span>
+<span class="go">7  Cheerper        Support           80   44               46                     4  117842.20       9358.25                       5        0.0        1.0         1.0</span>
+<span class="go">8  Cheerper        Support           58   31               30                     2  115000.00      17000.00                       5        0.0        1.0         0.0</span>
+<span class="go">9   Glasses  Search Engine           20   30               25                     5   60273.75      21419.15                       4        1.0        0.0         1.0</span>
+</pre></div>
+</div>
+<p>This style gives flexibility to access any column in the table while still operating on
+a column basis.</p>
+</section>
+<section id="can-i-write-a-customconstraint-based-on-reject-sampling">
+<h2>Can I write a <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> based on reject sampling?<a class="headerlink" href="#can-i-write-a-customconstraint-based-on-reject-sampling" title="Permalink to this headline">¶</a></h2>
+<p>In the previous section, we defined our <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> using <code class="docutils literal notranslate"><span class="pre">transform</span></code> and
+<code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> functions. Sometimes, our constraints are not possible to implement
+using these methods, that is when we rely on the <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> strategy.
+In <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> we need to implement an <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> function that identifies
+which rows do not follow the said constraint, in our case, which rows are not a multiple
+of the <em>base</em> unit.</p>
+<p>We can define <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> according to the three styles mentioned in the previous section:</p>
+<ol class="arabic simple">
+<li><p>function with <code class="docutils literal notranslate"><span class="pre">table_data</span></code> argument.</p></li>
+<li><p>function with <code class="docutils literal notranslate"><span class="pre">column_data</span></code> argument.</p></li>
+<li><p>function with <code class="docutils literal notranslate"><span class="pre">table_data</span></code> and <code class="docutils literal notranslate"><span class="pre">column</span></code> argument.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code> should return a <code class="docutils literal notranslate"><span class="pre">pd.Series</span></code> where every valid row corresponds to <em>True</em>,
+otherwise it should contain <em>False</em>. Here is an example of how you would define
+<code class="docutils literal notranslate"><span class="pre">is_valid</span></code> for each one of the mentioned styles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+    <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
+
+<span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+    <span class="k">return</span> <span class="n">column_data</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
+
+<span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
+    <span class="n">is_contractor</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">contractor</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="n">contractor_salary</span> <span class="o">=</span> <span class="n">employees</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_contractor</span><span class="p">]</span>
+    <span class="n">valid</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_contractor</span><span class="p">]</span> <span class="o">=</span> <span class="n">contractor_salary</span> <span class="o">==</span> <span class="n">contractor_salary</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">valid</span>
+</pre></div>
+</div>
+<p>Then we construct <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> to take <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> on its own.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
+    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
+    <span class="n">is_valid</span><span class="o">=</span><span class="n">is_valid</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="handling_constraints.html" title="previous page">Handling Constraints</a>
+    <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+    <!-- Google Analytics -->
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-180602145-3', 'auto');
+      ga('set', 'anonymizeIp', true);
+      ga('send', 'pageview');
+    </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <!-- End Google Analytics -->
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~Between.constraint_columns
+      ~Between.rebuild_columns
    
    

@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~UniqueCombinations.constraint_columns
+      ~UniqueCombinations.rebuild_columns
    
    

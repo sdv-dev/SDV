@@ -32,5 +32,6 @@
    .. autosummary::
    
       ~Rounding.constraint_columns
+      ~Rounding.rebuild_columns
    
    
