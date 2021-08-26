@@ -324,7 +324,10 @@ class Constraint(metaclass=ConstraintMeta):
             LOGGER.debug('%s: %s invalid rows out of %s.',
                          self.__class__.__name__, sum(~valid), len(valid))
 
-        return table_data[valid.values]
+        if isinstance(valid, pd.Series):
+            return table_data[valid.values]
+
+        return table_data[valid]
 
     @classmethod
     def from_dict(cls, constraint_dict):
