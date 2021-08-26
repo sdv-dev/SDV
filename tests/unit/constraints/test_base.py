@@ -639,8 +639,12 @@ class TestConstraint():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_filter_valid_with_invalid_index(self):
-        """Test the ``Constraint.filter_valid`` method where the is_valid
-        method returns a Series with an invalid index.
+        """Test the ``Constraint.filter_valid`` method.
+
+        Tests when the is_valid method returns a Series with an invalid index.
+
+        Note: `is_valid.index` can be [0, 1, 5] if, for example, the Series is a subset
+        of an original table with 10 rows, but only rows 0/1/5 were selected.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -654,7 +658,7 @@ class TestConstraint():
 
         constraint_mock = Mock()
         is_valid = pd.Series([True, True, False])
-        is_valid.index = [0,1,5] # This can happen if, for example, the Series is a subset of an original table with 10 rows, but only ros 0/1/5 were selected.
+        is_valid.index = [0, 1, 5]
         constraint_mock.is_valid.return_value = is_valid
 
         # Run
