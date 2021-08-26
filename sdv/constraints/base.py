@@ -324,7 +324,7 @@ class Constraint(metaclass=ConstraintMeta):
             LOGGER.debug('%s: %s invalid rows out of %s.',
                          self.__class__.__name__, sum(~valid), len(valid))
 
-        return table_data[valid]
+        return table_data[valid.values]
 
     @classmethod
     def from_dict(cls, constraint_dict):

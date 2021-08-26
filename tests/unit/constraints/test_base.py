@@ -638,6 +638,34 @@ class TestConstraint():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
+    def test_filter_valid_with_invalid_index(self):
+        """Test the ``Constraint.filter_valid`` method where the is_valid
+        method returns a Series with an invalid index.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        Output:
+        - Table data, with only the valid rows (pandas.DataFrame)
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3]
+        })
+
+        constraint_mock = Mock()
+        is_valid = pd.Series([True, True, False])
+        is_valid.index = [0,1,5] # This can happen if, for example, the Series is a subset of an original table with 10 rows, but only ros 0/1/5 were selected.
+        constraint_mock.is_valid.return_value = is_valid
+
+        # Run
+        out = Constraint.filter_valid(constraint_mock, table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2]
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
     def test_from_dict_fqn(self):
         """Test the ``Constraint.from_dict`` method passing a FQN.
 
