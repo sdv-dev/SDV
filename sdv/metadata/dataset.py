@@ -21,9 +21,7 @@ def _read_csv_dtypes(table_meta):
     dtypes = dict()
     for name, field in table_meta['fields'].items():
         field_type = field['type']
-        if field_type == 'categorical':
-            dtypes[name] = str
-        elif field_type == 'id' and field.get('subtype', 'integer') == 'string':
+        if field_type == 'id' and field.get('subtype', 'integer') == 'string':
             dtypes[name] = str
 
     return dtypes
@@ -360,7 +358,7 @@ class Metadata:
             for table_name in tables or self.get_tables()
         }
 
-    def get_dtypes(self, table_name, ids=False):
+    def get_dtypes(self, table_name, ids=False, errors=None):
         """Get a ``dict`` with the ``dtypes`` for each field of a given table.
 
         Args:
@@ -378,6 +376,7 @@ class Metadata:
                 If a field has an invalid type or subtype or if the table does not
                 exist in this metadata.
         """
+        errors = [] if errors is None else errors
         dtypes = dict()
         table_meta = self.get_table_meta(table_name)
         for name, field in table_meta['fields'].items():
@@ -385,19 +384,19 @@ class Metadata:
             field_subtype = field.get('subtype')
             dtype = self._DTYPES.get((field_type, field_subtype))
             if not dtype:
-                raise MetadataError(
+                errors.append(
                     'Invalid type and subtype combination for field {}: ({}, {})'.format(
                         name, field_type, field_subtype)
                 )
+            else:
+                if ids and field_type == 'id':
+                    if (name != table_meta.get('primary_key')) and not field.get('ref'):
+                        for child_table in self.get_children(table_name):
+                            if name in self.get_foreign_keys(table_name, child_table):
+                                break
 
-            if ids and field_type == 'id':
-                if (name != table_meta.get('primary_key')) and not field.get('ref'):
-                    for child_table in self.get_children(table_name):
-                        if name in self.get_foreign_keys(table_name, child_table):
-                            break
-
-            if ids or (field_type != 'id'):
-                dtypes[name] = dtype
+                if ids or (field_type != 'id'):
+                    dtypes[name] = dtype
 
         return dtypes
 
@@ -528,7 +527,7 @@ class Metadata:
     # Metadata Validation #
     # ################### #
 
-    def _validate_table(self, table_name, table_meta, table_data=None):
+    def _validate_table(self, table_name, table_meta, table_data=None, errors=None):
         """Validate table metadata.
 
         Validate the type and subtype combination for each field in ``table_meta``.
@@ -555,7 +554,8 @@ class Metadata:
                 If there is any error in the metadata or the data does not
                 match the metadata description.
         """
-        dtypes = self.get_dtypes(table_name, ids=True)
+        errors = [] if errors is None else errors
+        dtypes = self.get_dtypes(table_name, ids=True, errors=errors)
 
         # Primary key field exists and its type is 'id'
         primary_key = table_meta.get('primary_key')
@@ -563,10 +563,11 @@ class Metadata:
             pk_field = table_meta['fields'].get(primary_key)
 
             if not pk_field:
-                raise MetadataError('Primary key is not an existing field.')
-
-            if pk_field['type'] != 'id':
-                raise MetadataError('Primary key is not of type `id`.')
+                errors.append(
+                    f'Invalid primary key: "{primary_key}" not found in table "{table_name}"')
+            elif pk_field['type'] != 'id':
+                errors.append(
+                    f'Primary key "{primary_key}" of table "{table_name}" not of type "id"')
 
         if table_data is not None:
             for column in table_data:
@@ -575,28 +576,36 @@ class Metadata:
                     table_data[column].dropna().astype(dtype)
                 except KeyError:
                     message = 'Unexpected column in table `{}`: `{}`'.format(table_name, column)
-                    raise MetadataError(message) from None
+                    errors.append(message)
                 except ValueError as ve:
                     message = 'Invalid values found in column `{}` of table `{}`: `{}`'.format(
                         column, table_name, ve)
-                    raise MetadataError(message) from None
+                    errors.append(message)
 
             # assert all dtypes are in data
             if dtypes:
-                raise MetadataError(
+                errors.append(
                     'Missing columns on table {}: {}.'.format(table_name, list(dtypes.keys()))
                 )
 
-    def _validate_circular_relationships(self, parent, children=None):
+    def _validate_circular_relationships(self, parent, children=None, errors=None, parents=None):
         """Validate that there is no circular relatioship in the metadata."""
+        errors = [] if errors is None else errors
+        parents = set() if parents is None else parents
         if children is None:
             children = self.get_children(parent)
 
         if parent in children:
-            raise MetadataError('Circular relationship found for table "{}"'.format(parent))
+            error = 'Circular relationship found for table "{}"'.format(parent)
+            errors.append(error)
 
         for child in children:
-            self._validate_circular_relationships(parent, self.get_children(child))
+            if child in parents:
+                break
+
+            parents.add(child)
+            self._validate_circular_relationships(
+                parent, self.get_children(child), errors, parents)
 
     def validate(self, tables=None):
         """Validate this metadata.
@@ -630,17 +639,21 @@ class Metadata:
         if tables and not isinstance(tables, dict):
             tables = self.load_tables()
 
+        errors = []
         for table_name, table_meta in tables_meta.items():
             if tables:
                 table = tables.get(table_name)
                 if table is None:
-                    raise MetadataError('Table `{}` not found in tables'.format(table_name))
+                    errors.append('Table `{}` not found in tables'.format(table_name))
 
             else:
                 table = None
 
-            self._validate_table(table_name, table_meta, table)
-            self._validate_circular_relationships(table_name)
+            self._validate_table(table_name, table_meta, table, errors)
+            self._validate_circular_relationships(table_name, errors=errors)
+
+        if errors:
+            raise MetadataError('Invalid Metadata specification:\n - ' + '\n - '.join(errors))
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
@@ -984,7 +997,7 @@ class Metadata:
             '\n'.join(relationships)
         )
 
-    def visualize(self, path=None, names=True):
+    def visualize(self, path=None, names=True, details=True):
         """Plot metadata usign graphviz.
 
         Generate a plot using graphviz.
@@ -999,4 +1012,4 @@ class Metadata:
             names (bool):
                 Whether to add names to the diagram or not. Defaults to ``True``
         """
-        return visualization.visualize(self, path, names=names)
+        return visualization.visualize(self, path, names=names, details=details)

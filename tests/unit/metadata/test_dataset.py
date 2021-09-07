@@ -5,8 +5,7 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata.dataset import (
-    Metadata, MetadataError, _load_csv, _parse_dtypes, _read_csv_dtypes)
+from sdv.metadata.dataset import Metadata, _load_csv, _parse_dtypes, _read_csv_dtypes
 
 
 def test__read_csv_dtypes():
@@ -36,7 +35,7 @@ def test__read_csv_dtypes():
     result = _read_csv_dtypes(table_meta)
 
     # Asserts
-    assert result == {'a_field': str, 'd_field': str}
+    assert result == {'d_field': str}
 
 
 def test__parse_dtypes():
@@ -369,8 +368,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test')
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', errors=errors)
+
+        assert len(errors) == 1
 
     def test_get_dtypes_error_subtype_numerical(self):
         """Test get data types with an invalid numerical subtype."""
@@ -385,8 +386,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test')
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', errors=errors)
+
+        assert len(errors) == 1
 
     def test_get_dtypes_error_subtype_id(self):
         """Test get data types with an invalid id subtype."""
@@ -401,8 +404,10 @@ class TestMetadata(TestCase):
         metadata._DTYPES = Metadata._DTYPES
 
         # Run
-        with pytest.raises(MetadataError):
-            Metadata.get_dtypes(metadata, 'test', ids=True)
+        errors = []
+        Metadata.get_dtypes(metadata, 'test', ids=True, errors=errors)
+
+        assert len(errors) == 1
 
     def test__get_pii_fields(self):
         """Test get pii fields"""

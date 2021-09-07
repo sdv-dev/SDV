@@ -19,10 +19,10 @@ install_requires = [
     'torch>=1.4,<2',
     'tqdm>=4.14,<5',
     'copulas>=0.5.0,<0.6',
-    'ctgan>=0.4.1.dev0,<0.5',
-    'deepecho>=0.1.4,<0.2',
-    'rdt>=0.4.0,<0.5',
-    'sdmetrics>=0.2.0,<0.3',
+    'ctgan>=0.4.3,<0.5',
+    'deepecho>=0.2.0,<0.3',
+    'rdt>=0.5.0,<0.6',
+    'sdmetrics>=0.3.1,<0.4',
     'torchvision>=0.5.0,<1',
     'sktime>=0.4,<0.6',
     'pomegranate>=0.13.4,<0.14.2',
@@ -50,7 +50,10 @@ development_requires = [
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
-    'pydata-sphinx-theme',
+    'pydata-sphinx-theme<0.5',
+
+    # Jinja2>=3 makes the sphinx theme fail
+    'Jinja2>=2,<3',
 
     # style check
     'flake8>=3.7.7,<4',
@@ -104,6 +107,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.8.1.dev0',
+    version='0.12.1.dev0',
     zip_safe=False,
 )

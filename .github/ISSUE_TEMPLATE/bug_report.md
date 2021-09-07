@@ -28,7 +28,3 @@ Tell us what happened, what went wrong, and what you expected to happen.>
 Paste the command(s) you ran and the output.
 If there was a crash, please include the traceback here.
 ```
-
-### Ability to contribute
-
-<If you are available to contribute the necessary changes to the project to solve this issue please indicate so here, so the maintainers can assign the issue to you and provide the necessary support. Otherwise, please remove this section.>

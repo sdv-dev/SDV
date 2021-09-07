@@ -53,6 +53,38 @@ GreaterThan
    GreaterThan.from_dict
    GreaterThan.to_dict
 
+Positive
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Positive
+   Positive.fit
+   Positive.transform
+   Positive.fit_transform
+   Positive.reverse_transform
+   Positive.is_valid
+   Positive.filter_valid
+   Positive.from_dict
+   Positive.to_dict
+
+Negative
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Negative
+   Negative.fit
+   Negative.transform
+   Negative.fit_transform
+   Negative.reverse_transform
+   Negative.is_valid
+   Negative.filter_valid
+   Negative.from_dict
+   Negative.to_dict
+
 ColumnFormula
 ~~~~~~~~~~~~~~~~
 
@@ -68,3 +100,67 @@ ColumnFormula
    ColumnFormula.filter_valid
    ColumnFormula.from_dict
    ColumnFormula.to_dict
+
+Between
+~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Between
+   Between.fit
+   Between.transform
+   Between.fit_transform
+   Between.reverse_transform
+   Between.is_valid
+   Between.filter_valid
+   Between.from_dict
+   Between.to_dict
+
+Rounding
+~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Rounding
+   Rounding.fit
+   Rounding.transform
+   Rounding.fit_transform
+   Rounding.reverse_transform
+   Rounding.is_valid
+   Rounding.filter_valid
+   Rounding.from_dict
+   Rounding.to_dict
+
+OneHotEncoding
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   OneHotEncoding
+   OneHotEncoding.fit
+   OneHotEncoding.transform
+   OneHotEncoding.fit_transform
+   OneHotEncoding.reverse_transform
+   OneHotEncoding.is_valid
+   OneHotEncoding.filter_valid
+   OneHotEncoding.from_dict
+   OneHotEncoding.to_dict
+
+Unique
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Unique
+   Unique.fit
+   Unique.transform
+   Unique.fit_transform
+   Unique.reverse_transform
+   Unique.is_valid
+   Unique.filter_valid
+   Unique.from_dict
+   Unique.to_dict

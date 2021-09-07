@@ -79,6 +79,10 @@ The ``sdgym.run`` function accepts the following arguments:
 -  ``output_path (str)``:: If an ``output_path`` is given, the generated
    leaderboard will be stored in the indicated path as a CSV file. The
    given path must be a complete path including the ``.csv`` filename.
+-  ``aws_key (str)``:: If an ``aws_key`` is provided, the given access
+   key id will be used to read from the specified bucket.
+-  ``aws_secret (str)``:: If an ``aws_secret`` is provided, the given
+   secret access key will be used to read from the specified bucket.
 
 Synthesizers
 ~~~~~~~~~~~~
@@ -167,6 +171,24 @@ For example, if we want to evaluate our synthesizer function on only the
 
    In [15]: scores = sdgym.run(my_synthesizer_function, datasets=datasets)
 
+Running on Private Datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If we want to run sdgym on datasets in a private S3 bucket for which we do not have
+`system-wide credentials configured <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html>`__,
+we can pass in the s3 bucket name, along with the aws access key ID and the aws secret
+access key. For example:
+
+.. code:: python3
+
+   In [16]: scores = sdgym.run(
+       ...:     my_synthesizer_function,
+       ...:     datasets=datasets,
+       ...:     bucket='my-bucket',
+       ...:     aws_key='my-key',
+       ...:     aws_secret='my-secret'
+       ...: )
+
 Iterations
 ~~~~~~~~~~
 
@@ -181,4 +203,4 @@ combination can be altered by passing a different value to the
 
 .. code:: python3
 
-   In [16]: scores = sdgym.run(my_synthesizer_function, iterations=10)
+   In [17]: scores = sdgym.run(my_synthesizer_function, iterations=10)

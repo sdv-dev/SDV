@@ -1,11 +1,149 @@
 # Release Notes
 
+## 0.12.0 - 2021-08-17
+
+This release focuses on improving and expanding upon the existing constraints. More specifically, the users can now
+(1) specify multiple columns in `Positive` and `Negative` constraints, (2) use the new `Unique`constraint and
+(3) use datetime data with the `Between` constraint. Additionaly, error messages have been added and updated
+to provide more useful feedback to the user.
+
+Besides the added features, several bugs regarding the `UniqueCombinations` and `ColumnFormula` constraints have been fixed,
+and an error in the metadata.json for the `student_placements` dataset was corrected. The release also added documentation
+for the `fit_columns_model` which affects the majority of the available constraints.
+
+### New Features
+
+* Change default fit_columns_model to False - Issue [#550](https://github.com/sdv-dev/SDV/issues/550) by @katxiao
+* Support multi-column specification for positive and negative constraint - Issue [#545](https://github.com/sdv-dev/SDV/issues/545) by @sarahmish
+* Raise error when multiple constraints can't be enforced - Issue [#541](https://github.com/sdv-dev/SDV/issues/541) by @amontanez24
+* Create Unique Constraint - Issue [#532](https://github.com/sdv-dev/SDV/issues/532) by @amontanez24
+* Passing invalid conditions when using constraints produces unreadable errors - Issue [#511](https://github.com/sdv-dev/SDV/issues/511) by @katxiao
+* Improve error message for ColumnFormula constraint when constraint column used in formula - Issue [#508](https://github.com/sdv-dev/SDV/issues/508) by @katxiao
+* Add datetime functionality to Between constraint - Issue [#504](https://github.com/sdv-dev/SDV/issues/504) by @katxiao
+
+### Bugs Fixed
+
+* UniqueCombinations constraint with handling_strategy = 'transform' yields synthetic data with nan values - Issue [#521](https://github.com/sdv-dev/SDV/issues/521) by @katxiao and @csala
+* UniqueCombinations constraint outputting wrong data type - Issue [#510](https://github.com/sdv-dev/SDV/issues/510) by @katxiao and @csala
+* UniqueCombinations constraint on only one column gets stuck in an infinite loop - Issue [#509](https://github.com/sdv-dev/SDV/issues/509) by @katxiao
+* Conditioning on a non-constraint column using the ColumnFormula constraint - Issue [#507](https://github.com/sdv-dev/SDV/issues/507) by @katxiao
+* Conditioning on the constraint column of the ColumnFormula constraint - Issue [#506](https://github.com/sdv-dev/SDV/issues/506) by @katxiao
+* Update metadata.json for duration of student_placements dataset - Issue [#503](https://github.com/sdv-dev/SDV/issues/503) by @amontanez24
+* Unit test for HMA1 when working with a single child row per parent row - Issue [#497](https://github.com/sdv-dev/SDV/issues/497) by @pvk-developer
+* UniqueCombinations constraint for more than 2 columns - Issue [#494](https://github.com/sdv-dev/SDV/issues/494) by @katxiao and @csala
+
+### Documentation Changes
+
+* Add explanation of fit_columns_model to API docs - Issue [#517](https://github.com/sdv-dev/SDV/issues/517) by @katxiao
+
+## 0.11.0 - 2021-07-12
+
+This release primarily addresses bugs and feature requests related to using constraints for the single-table models.
+Users can now enforce scalar comparison with the existing `GreaterThan` constraint and apply 5 new constraints: `OneHotEncoding`, `Positive`, `Negative`, `Between` and `Rounding`.
+Additionally, the SDV will now auto-apply constraints for rounding numerical values, and for keeping the data within the observed bounds.
+All related user guides are updated with the new functionality.
+
+### New Features
+
+* Add OneHotEncoding Constraint - Issue [#303](https://github.com/sdv-dev/SDV/issues/303) by @fealho
+* GreaterThan Constraint should apply to scalars - Issue [#410](https://github.com/sdv-dev/SDV/issues/410) by @amontanez24
+* Improve GreaterThan constraint - Issue [#368](https://github.com/sdv-dev/SDV/issues/368) by @amontanez24
+* Add Non-negative and Positive constraints across multiple columns- Issue [#409](https://github.com/sdv-dev/SDV/issues/409) by @amontanez24
+* Add Between values constraint - Issue [#367](https://github.com/sdv-dev/SDV/issues/367) by @fealho
+* Ensure values fall within the specified range - Issue [#423](https://github.com/sdv-dev/SDV/issues/423) by @amontanez24
+* Add Rounding constraint - Issue [#482](https://github.com/sdv-dev/SDV/issues/482) by @katxiao
+* Add rounding and min/max arguments that are passed down to the NumericalTransformer - Issue [#491](https://github.com/sdv-dev/SDV/issues/491) by @amontanez24
+
+### Bugs Fixed
+
+* GreaterThan constraint between Date columns rasises TypeError - Issue [#421](https://github.com/sdv-dev/SDV/issues/421) by @amontanez24
+* GreaterThan constraint's transform strategy fails on columns that are not float - Issue [#448](https://github.com/sdv-dev/SDV/issues/448) by @amontanez24
+* AttributeError on UniqueCombinations constraint with non-strings - Issue [#196](https://github.com/sdv-dev/SDV/issues/196) by @katxiao
+* Use reject sampling to sample missing columns for constraints - Issue [#435](https://github.com/sdv-dev/SDV/issues/435) by @amontanez24
+
+### Documentation Changes
+
+* Ensure privacy metrics are available in the API docs - Issue [#458](https://github.com/sdv-dev/SDV/issues/458) by @fealho
+* Ensure forumla constraint is called ColumnFormula everywhere in the docs - Issue [#449](https://github.com/sdv-dev/SDV/issues/449) by @fealho
+
+## 0.10.1 - 2021-06-10
+
+This release changes the way we sample conditions to not only group by the conditions passed by the user, but also by the transformed conditions that result from them.
+
+### Issues resolved
+
+* Conditionally sampling on variable in constraint should have variety for other variables - Issue [#440](https://github.com/sdv-dev/SDV/issues/440) by @amontanez24
+
+## 0.10.0 - 2021-05-21
+
+This release improves the constraint functionality by allowing constraints and conditions
+at the same time. Additional changes were made to update tutorials.
+
+### Issues resolved
+
+* Not able to use constraints and conditions in the same time - Issue [#379](https://github.com/sdv-dev/SDV/issues/379)
+by @amontanez24
+* Update benchmarking user guide for reading private datasets - Issue [#427](https://github.com/sdv-dev/SDV/issues/427)
+by @katxiao
+
+## 0.9.1 - 2021-04-29
+
+This release broadens the constraint functionality by allowing for the `ColumnFormula`
+constraint to take lambda functions and returned functions as an input for its formula.
+
+It also improves conditional sampling by ensuring that any `id` fields generated by the
+model remain unique throughout the sampled data.
+
+The `CTGAN` model was improved by adjusting a default parameter to be more mathematically
+correct.
+
+Additional changes were made to improve tutorials as well as fix fragile tests.
+
+### Issues resolved
+
+* Tutorials test sometimes fails - Issue [#355](https://github.com/sdv-dev/SDV/issues/355)
+by @fealho
+* Duplicate IDs when using reject-sampling - Issue [#331](https://github.com/sdv-dev/SDV/issues/331)
+by @amontanez24 and @csala
+* discriminator_decay should be initialized at 1e-6 but it's 0 - Issue [#401](https://github.com/sdv-dev/SDV/issues/401) by @fealho and @YoucefZemmouri
+* Tutorial typo - Issue [#380](https://github.com/sdv-dev/SDV/issues/380) by @fealho
+* Request for sdv.constraint.ColumnFormula for a wider range of function - Issue [#373](https://github.com/sdv-dev/SDV/issues/373) by @amontanez24 and @JetfiRex
+
+## 0.9.0 - 2021-03-31
+
+This release brings new privacy metrics to the evaluate framework which help to determine
+if the real data could be obtained or deduced from the synthetic samples.
+Additionally, now there is a normalized score for the metrics, which stays between `0` and `1`.
+
+There are improvements that reduce the usage of memory ram when sampling new data. Also there
+is a new parameter to control the reject sampling crash, `graceful_reject_sampling`, which if
+set to `True` and if it's not possible to generate all the requested rows, it will just issue a
+warning and return whatever it was able to generate.
+
+The `Metadata` object can now be visualized using different combinations of `names` and `details`,
+which can be set to `True` or `False` in order to display only the table names with details or
+without. There is also an improvement on the `validation`, which now will display all the errors
+found at the end of the validation instead of only the first one.
+
+This version also exposes all the hyperparameters of the models `CTGAN` and `TVAE` to allow a more
+advanced usage. There is also a fix for the `TVAE` model on small datasets and it's performance
+with `NaN` values has been improved. There is a fix for when using
+`UniqueCombinationConstraint` with the `transform` strategy.
+
+### Issues resolved
+
+* Memory Usage Gaussian Copula Trained Model consuming high memory when generating synthetic data - Issue [#304](https://github.com/sdv-dev/SDV/issues/304) by @pvk-developer and @AnupamaGangadhar
+* Add option to visualize metadata with only table names - Issue [#347](https://github.com/sdv-dev/SDV/issues/347) by @csala
+* Add sample parameter to control reject sampling crash - Issue [#343](https://github.com/sdv-dev/SDV/issues/343) by @fealho
+* Verbose metadata validation - Issue [#348](https://github.com/sdv-dev/SDV/issues/348) by @csala
+* Missing the introduction of custom specification for hyperparameters in the TVAE model - Issue [#344](https://github.com/sdv-dev/SDV/issues/343) by @imkhoa99 and @pvk-developer
+
 ## 0.8.0 - 2021-02-24
 
 This version adds conditional sampling for tabular models by combining a reject-sampling
 strategy with the native conditional sampling capabilities from the gaussian copulas.
 
-It also introduces several upgrades on the HMA1 algorith that improve data quality and
+It also introduces several upgrades on the HMA1 algorithm that improve data quality and
 robustness in the multi-table scenarios by making changes in how the parameters of the child
 tables are aggregated on the parent tables, including a complete rework of how the correlation
 matrices are modeled and rebuild after sampling.

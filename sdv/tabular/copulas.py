@@ -104,6 +104,21 @@ class GaussianCopula(BaseTabularModel):
                 * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
                   ``fuzzy`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _field_distributions = None
@@ -182,7 +197,8 @@ class GaussianCopula(BaseTabularModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  field_distributions=None, default_distribution=None,
-                 categorical_transformer=None):
+                 categorical_transformer=None, rounding='auto', min_value='auto',
+                 max_value='auto'):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
@@ -221,6 +237,9 @@ class GaussianCopula(BaseTabularModel):
             primary_key=primary_key,
             constraints=constraints,
             table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._metadata.set_model_kwargs(self.__class__.__name__, {
@@ -319,7 +338,8 @@ class GaussianCopula(BaseTabularModel):
                 If a non-parametric distribution has been used.
         """
         for univariate in self._model.univariates:
-            if type(univariate) is copulas.univariate.Univariate:
+            univariate_type = type(univariate)
+            if univariate_type is copulas.univariate.Univariate:
                 univariate = univariate._instance
 
             if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:

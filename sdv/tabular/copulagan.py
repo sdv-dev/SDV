@@ -128,6 +128,21 @@ class CopulaGAN(CTGAN):
         default_distribution (copulas.univariate.Univariate or str):
             Distribution to use on the fields for which no specific distribution has been given.
             Defaults to ``parametric``.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     DEFAULT_DISTRIBUTION = 'parametric'
@@ -136,9 +151,10 @@ class CopulaGAN(CTGAN):
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=0, batch_size=500, discriminator_steps=1,
+                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
                  log_frequency=True, verbose=False, epochs=300, cuda=True,
-                 field_distributions=None, default_distribution=None):
+                 field_distributions=None, default_distribution=None, rounding='auto',
+                 min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -159,7 +175,10 @@ class CopulaGAN(CTGAN):
             log_frequency=log_frequency,
             verbose=verbose,
             epochs=epochs,
-            cuda=cuda
+            cuda=cuda,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
@@ -192,7 +211,7 @@ class CopulaGAN(CTGAN):
                 distribution=distributions.get(field, default)
             )
             for field in table_data.columns
-            if fields.get(field, dict()).get('type') != 'categorical'
+            if field in fields and fields.get(field, dict()).get('type') != 'categorical'
         }
         self._ht = HyperTransformer(transformers=transformers)
         table_data = self._ht.fit_transform(table_data)

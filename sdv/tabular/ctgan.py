@@ -16,7 +16,7 @@ class CTGANModel(BaseTabularModel):
     _model_kwargs = None
 
     _DTYPE_TRANSFORMERS = {
-        'O': 'label_encoding'
+        'O': None
     }
 
     def _build_model(self):
@@ -40,13 +40,17 @@ class CTGANModel(BaseTabularModel):
                     categoricals.append(field)
 
             else:
-                dtype = table_data[field].dropna().infer_objects().dtype
+                field_data = table_data[field].dropna()
+                if set(field_data.unique()) == {0.0, 1.0}:
+                    # booleans encoded as float values must be modeled as bool
+                    field_data = field_data.astype(bool)
+
+                dtype = field_data.infer_objects().dtype
                 try:
                     kind = np.dtype(dtype).kind
                 except TypeError:
                     # probably category
                     kind = 'O'
-
                 if kind in ['O', 'b']:
                     categoricals.append(field)
 
@@ -151,6 +155,21 @@ class CTGAN(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _MODEL_CLASS = CTGANSynthesizer
@@ -159,8 +178,9 @@ class CTGAN(CTGANModel):
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=0, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
+                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
+                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True,
+                 rounding='auto', min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -168,7 +188,10 @@ class CTGAN(CTGANModel):
             field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._model_kwargs = {
@@ -231,9 +254,9 @@ class TVAE(CTGANModel):
             arguments or learned from the data.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
-        compress_dim (tuple or list of ints):
+        compress_dims (tuple or list of ints):
             Size of each hidden layer in the encoder. Defaults to (128, 128).
-        decompress_dim (tuple or list of ints):
+        decompress_dims (tuple or list of ints):
            Size of each hidden layer in the decoder. Defaults to (128, 128).
         l2scale (int):
             Regularization term. Defaults to 1e-5.
@@ -246,6 +269,21 @@ class TVAE(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _MODEL_CLASS = TVAESynthesizer
@@ -253,7 +291,8 @@ class TVAE(CTGANModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
+                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True,
+                 rounding='auto', min_value='auto', max_value='auto'):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -261,7 +300,10 @@ class TVAE(CTGANModel):
             field_transformers=field_transformers,
             anonymize_fields=anonymize_fields,
             constraints=constraints,
-            table_metadata=table_metadata
+            table_metadata=table_metadata,
+            rounding=rounding,
+            max_value=max_value,
+            min_value=min_value
         )
 
         self._model_kwargs = {

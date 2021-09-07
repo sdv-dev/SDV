@@ -2,13 +2,17 @@
 
 import logging
 import pickle
+import uuid
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
+COND_IDX = str(uuid.uuid4())
 
 
 class NonParametricError(Exception):
@@ -58,6 +62,21 @@ class BaseTabularModel:
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
+        rounding (int, str or None):
+            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
+            will be rounded to that number of decimal places. If ``None``, values will not
+            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
+            of decimal places detected in the fitted data. Defaults to ``'auto'``.
+        min_value (int, str or None):
+            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum. Defaults to ``'auto'``.
+        max_value (int, str or None):
+            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
+            is given, sampled data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
     _DTYPE_TRANSFORMERS = None
@@ -65,7 +84,8 @@ class BaseTabularModel:
     _metadata = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
-                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None):
+                 anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
+                 rounding='auto', min_value='auto', max_value='auto'):
         if table_metadata is None:
             self._metadata = Table(
                 field_names=field_names,
@@ -75,6 +95,9 @@ class BaseTabularModel:
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
+                rounding=rounding,
+                min_value=min_value,
+                max_value=max_value
             )
             self._metadata_fitted = False
         else:
@@ -212,7 +235,7 @@ class BaseTabularModel:
             sampled = self._metadata.reverse_transform(sampled)
 
             if previous_rows is not None:
-                sampled = previous_rows.append(sampled)
+                sampled = previous_rows.append(sampled, ignore_index=True)
 
             sampled = self._metadata.filter_valid(sampled)
 
@@ -233,7 +256,9 @@ class BaseTabularModel:
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
-        all of them are valid and match the requested conditions.
+        all of them are valid and match the requested conditions. If `max_retries`
+        is exceeded, it will return as many rows as it has sampled, which may be less
+        than the target number of rows.
 
         Input conditions is taken both in the raw input format, which will be used
         for filtering during the reject-sampling loop, and already transformed
@@ -277,9 +302,8 @@ class BaseTabularModel:
         counter = 0
         total_sampled = num_rows
         while num_valid < num_rows:
-            counter += 1
             if counter >= max_retries:
-                raise ValueError(f'Could not get enough valid rows within {max_retries} trials')
+                break
 
             remaining = num_rows - num_valid
             valid_probability = (num_valid + 1) / (total_sampled + 1)
@@ -289,9 +313,12 @@ class BaseTabularModel:
 
             LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
             sampled, num_valid = self._sample_rows(
-                num_to_sample, conditions, transformed_conditions, float_rtol, sampled)
+                num_to_sample, conditions, transformed_conditions, float_rtol, sampled
+            )
 
-        return sampled.head(num_rows)
+            counter += 1
+
+        return sampled.head(min(len(sampled), num_rows))
 
     def _make_conditions_df(self, conditions, num_rows):
         """Transform `conditions` into a dataframe.
@@ -329,8 +356,41 @@ class BaseTabularModel:
 
         return conditions.copy()
 
+    def _conditionally_sample_rows(self, dataframe, max_retries, max_rows_multiplier,
+                                   condition, transformed_condition, float_rtol,
+                                   graceful_reject_sampling):
+        num_rows = len(dataframe)
+        sampled_rows = self._sample_batch(
+            num_rows,
+            max_retries,
+            max_rows_multiplier,
+            condition,
+            transformed_condition,
+            float_rtol
+        )
+        num_sampled_rows = len(sampled_rows)
+
+        if num_sampled_rows < num_rows:
+            # Didn't get enough rows.
+            if len(sampled_rows) == 0:
+                error = 'No valid rows could be generated with the given conditions.'
+                raise ValueError(error)
+
+            elif not graceful_reject_sampling:
+                error = f'Could not get enough valid rows within {max_retries} trials.'
+                raise ValueError(error)
+
+            else:
+                warn(f'Only {len(sampled_rows)} rows could '
+                     f'be sampled within {max_retries} trials.')
+
+        if len(sampled_rows) > 0:
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+
+        return sampled_rows
+
     def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-               conditions=None, float_rtol=0.01):
+               conditions=None, float_rtol=0.01, graceful_reject_sampling=False):
         """Sample rows from this table.
 
         Args:
@@ -357,10 +417,25 @@ class BaseTabularModel:
                 Maximum tolerance when considering a float match. This is the maximum
                 relative distance at which a float value will be considered a match
                 when performing reject-sampling based conditioning. Defaults to 0.01.
+            graceful_reject_sampling (bool):
+                If `False` raises a `ValueError` if not enough valid rows could be sampled
+                within `max_retries` trials. If `True` prints a warning and returns
+                as many rows as it was able to sample within `max_retries`.
+                Defaults to False.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
+                      sampled within `max_retries` trials.
+                    * no rows could be generated.
         """
         if conditions is None:
             num_rows = num_rows or self._num_rows
@@ -374,39 +449,64 @@ class BaseTabularModel:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Invalid column name `{column}`')
 
-            if len(self._metadata.transform(conditions[[column]]).columns) == 0:
-                raise ValueError('Conditioning on column `{column}` is not possible')
+        try:
+            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        except ConstraintsNotMetError as cnme:
+            cnme.message = 'Passed conditions are not valid for the given constraints'
+            raise
 
-        transformed_conditions = self._metadata.transform(conditions)
-        condition_columns = list(transformed_conditions.columns)
-        transformed_conditions.index.name = '__condition_idx__'
+        condition_columns = list(conditions.columns)
+        transformed_columns = list(transformed_conditions.columns)
+        conditions.index.name = COND_IDX
+        conditions.reset_index(inplace=True)
+        transformed_conditions.index.name = COND_IDX
         transformed_conditions.reset_index(inplace=True)
-        grouped_conditions = transformed_conditions.groupby(condition_columns)
+        grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
         all_sampled_rows = list()
-        for index, dataframe in grouped_conditions:
-            if not isinstance(index, tuple):
-                index = [index]
 
-            condition = conditions.loc[dataframe['__condition_idx__'].iloc[0]]
-            transformed_condition = dict(zip(condition_columns, index))
+        for group, dataframe in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
 
-            sampled_rows = self._sample_batch(
-                len(dataframe),
-                max_retries,
-                max_rows_multiplier,
-                condition,
-                transformed_condition,
-                float_rtol,
-            )
-            sampled_rows['__condition_idx__'] = dataframe['__condition_idx__'].values
-            all_sampled_rows.append(sampled_rows)
+            condition_indices = dataframe[COND_IDX]
+            condition = dict(zip(condition_columns, group))
+            if len(transformed_columns) == 0:
+                sampled_rows = self._conditionally_sample_rows(
+                    dataframe,
+                    max_retries,
+                    max_rows_multiplier,
+                    condition,
+                    None,
+                    float_rtol,
+                    graceful_reject_sampling
+                )
+                all_sampled_rows.append(sampled_rows)
+            else:
+                transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
+                transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
+                for transformed_group, transformed_dataframe in transformed_groups:
+                    if not isinstance(transformed_group, tuple):
+                        transformed_group = [transformed_group]
+
+                    transformed_condition = dict(zip(transformed_columns, transformed_group))
+                    sampled_rows = self._conditionally_sample_rows(
+                        transformed_dataframe,
+                        max_retries,
+                        max_rows_multiplier,
+                        condition,
+                        transformed_condition,
+                        float_rtol,
+                        graceful_reject_sampling
+                    )
+                    all_sampled_rows.append(sampled_rows)
 
         all_sampled_rows = pd.concat(all_sampled_rows)
-        all_sampled_rows = all_sampled_rows.set_index('__condition_idx__')
+        all_sampled_rows = all_sampled_rows.set_index(COND_IDX)
         all_sampled_rows.index.name = conditions.index.name
         all_sampled_rows = all_sampled_rows.sort_index()
+        all_sampled_rows = self._metadata.make_ids_unique(all_sampled_rows)
 
         return all_sampled_rows
 

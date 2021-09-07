@@ -36,11 +36,11 @@ def test_copulagan():
             },
             'country': {
                 'type': 'categorical',
-                'transformer': 'label_encoding',
+                'transformer': None,
             },
             'gender': {
                 'type': 'categorical',
-                'transformer': 'label_encoding',
+                'transformer': None,
             },
             'age': {
                 'type': 'numerical',

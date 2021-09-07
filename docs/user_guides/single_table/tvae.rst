@@ -53,7 +53,7 @@ includes, among other things:
 -  Their id and gender
 -  Their grades and specializations
 -  Their work experience
--  The salary that they where offered
+-  The salary that they were offered
 -  The duration and dates of their placement
 
 You will notice that there is data with the following characteristics:
@@ -64,7 +64,7 @@ You will notice that there is data with the following characteristics:
    where the student was not placed.
 
 Let us use ``TVAE`` to learn this data and then sample synthetic data
-about new students to see how well de model captures the characteristics
+about new students to see how well the model captures the characteristics
 indicated above. In order to do this you will need to:
 
 -  Import the ``sdv.tabular.TVAE`` class and create an instance of it.
@@ -161,7 +161,7 @@ directory in which you are running SDV.
 Load the model and generate new data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The file you just generated can be send over to the system where the
+The file you just generated can be sent over to the system where the
 synthetic data will be generated. Once it is there, you can load it
 using the ``TVAE.load`` method, and then you are ready to sample new
 data from the loaded instance:
@@ -181,7 +181,7 @@ data from the loaded instance:
 Specifying the Primary Key of the table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One of the first things that you may have noticed when looking that demo
+One of the first things that you may have noticed when looking at the demo
 data is that there is a ``student_id`` column which acts as the primary
 key of the table, and which is supposed to have unique values. Indeed,
 if we look at the number of times that each value appears, we see that
@@ -335,6 +335,225 @@ data:
     data_pii.address.isin(new_data_pii.address).sum()
 
 
+Advanced Usage
+--------------
+
+Now that we have discovered the basics, let's go over a few more
+advanced usage examples and see the different arguments that we can pass
+to our ``CTGAN`` Model in order to customize it to our needs.
+
+Setting Bounds and Specifying Rounding for Numerical Columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the model will learn the upper and lower bounds of the
+input data, and use that for sampling. This means that all sampled data
+will be between the maximum and minimum values found in the original
+dataset for each numeric column. This option can be overwritten using the
+``min_value`` and ``max_value`` model arguments. These values can either
+be set to a numeric value, set to ``'auto'`` which is the default setting,
+or set to ``None`` which will mean the column is boundless.
+
+The model will also learn the number of decimal places to round to by default.
+This option can be overwritten using the ``rounding`` parameter. The value can
+be an int specifying how many decimal places to round to, ``'auto'`` which is
+the default setting, or ``None`` which means the data will not be rounded.
+
+Since we may want to sample values outside of the ranges in the original data,
+let's pass the ``min_value`` and ``max_value`` arguments as `None` to the model.
+To keep the number of decimals consistent across columns, we can set ``rounding``
+to be 2.
+
+.. ipython:: python
+    :okwarning:
+
+    model = TVAE(
+        primary_key='student_id',
+        min_value=None,
+        max_value=None,
+        rounding=2
+    )
+    model.fit(data)
+
+    unbounded_data = model.sample(10)
+    unbounded_data
+
+As you may notice, the sampled data may have values outside the range of
+the original data.
+
+How to modify the TVAE Hyperparameters?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A part from the common Tabular Model arguments, ``TVAE`` has a number
+of additional hyperparameters that control its learning behavior and can
+impact on the performance of the model, both in terms of quality of the
+generated data and computational time.
+
+-   ``epochs`` and ``batch_size``: these arguments control the number of
+    iterations that the model will perform to optimize its parameters,
+    as well as the number of samples used in each step. Its default
+    values are ``300`` and ``500`` respectively, and ``batch_size`` needs
+    to always be a value which is multiple of ``10``.
+
+    These hyperparameters have a very direct effect in time the training
+    process lasts but also on the performance of the data, so for new
+    datasets, you might want to start by setting a low value on both of
+    them to see how long the training process takes on your data and later
+    on increase the number to acceptable values in order to improve the
+    performance.
+
+-   ``log_frequency``: Whether to use log frequency of categorical levels
+    in conditional sampling. It defaults to ``True``.
+    This argument affects how the model processes the frequencies of the
+    categorical values that are used to condition the rest of the values.
+    In some cases, changing it to ``False`` could lead to better performance.
+
+-   ``embedding_dim`` (int): Size of the random sample passed to the
+    Generator. Defaults to 128.
+
+-   ``compress_dims`` (tuple or list of ints): Size of each hidden layer
+    in the encoder. Defaults to (128, 128).
+
+-   ``decompress_dims`` (tuple or list of ints): Size of each hidden layer
+    in the decoder. Defaults to (128, 128).
+
+-   ``l2scale`` (int): Regularization term. Defaults to 1e-5.
+
+-   ``batch_size`` (int): Number of data samples to process in each step.
+
+-   ``loss_factor`` (int): Multiplier for the reconstruction error. Defaults to 2.
+
+-   ``cuda`` (bool or str): If ``True``, use CUDA. If a ``str``, use the
+    indicated device. If ``False``, do not use cuda at all.
+
+.. warning::
+
+    Notice that the value that you set on the ``batch_size`` argument must always be a
+    multiple of ``10``!
+
+As an example, we will try to fit the ``TVAE`` model slightly
+increasing the number of epochs, reducing the ``batch_size``, adding one
+additional layer to the models involved and using a smaller wright
+decay.
+
+Before we start, we will evaluate the quality of the previously
+generated data using the ``sdv.evaluation.evaluate`` function
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.evaluation import evaluate
+
+    evaluate(new_data, data)
+
+
+Afterwards, we create a new instance of the ``TVAE`` model with the
+hyperparameter values that we want to use
+
+.. ipython:: python
+    :okwarning:
+
+    model = TVAE(
+        primary_key='student_id',
+        epochs=500,
+        compress_dims=(256, 256, 256),
+        decompress_dims=(256, 256, 256)
+    )
+
+And fit to our data.
+
+.. ipython:: python
+    :okwarning:
+
+    model.fit(data)
+
+Finally, we are ready to generate new data and evaluate the results.
+
+.. ipython:: python
+    :okwarning:
+
+    new_data = model.sample(len(data))
+    evaluate(new_data, data)
+
+
+As we can see, in this case these modifications changed the obtained
+results slightly, but they did neither introduce dramatic changes in the
+performance.
+
+Conditional Sampling
+~~~~~~~~~~~~~~~~~~~~
+
+As the name implies, conditional sampling allows us to sample from a conditional
+distribution using the ``TVAE`` model, which means we can generate only values that
+satisfy certain conditions. These conditional values can be passed to the ``conditions``
+parameter in the ``sample`` method either as a dataframe or a dictionary.
+
+In case a dictionary is passed, the model will generate as many rows as requested,
+all of which will satisfy the specified conditions, such as ``gender = M``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M'
+    }
+    model.sample(5, conditions=conditions)
+
+
+It's also possible to condition on multiple columns, such as
+``gender = M, 'experience_years': 0``.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'gender': 'M',
+        'experience_years': 0
+    }
+    model.sample(5, conditions=conditions)
+
+
+The ``conditions`` can also be passed as a dataframe. In that case, the model
+will generate one sample for each row of the dataframe, sorted in the same
+order. Since the model already knows how many samples to generate, passing
+it as a parameter is unnecessary. For example, if we want to generate three
+samples where ``gender = M`` and three samples with ``gender = F``, we can do the
+following:
+
+.. ipython:: python
+    :okwarning:
+
+    import pandas as pd
+
+    conditions = pd.DataFrame({
+        'gender': ['M', 'M', 'M', 'F', 'F', 'F'],
+    })
+    model.sample(conditions=conditions)
+
+
+``TVAE`` also supports conditioning on continuous values, as long as the values
+are within the range of seen numbers. For example, if all the values of the
+dataset are within 0 and 1, ``TVAE`` will not be able to set this value to 1000.
+
+.. ipython:: python
+    :okwarning:
+
+    conditions = {
+        'degree_perc': 70.0
+    }
+    model.sample(5, conditions=conditions)
+
+
+.. note::
+
+    Currently, conditional sampling works through a rejection sampling process,
+    where rows are sampled repeatedly until one that satisfies the conditions is
+    found. In case you are running into a ``Could not get enough valid rows within
+    x trials`` or simply wish to optimize the results, there are three parameters
+    that can be fine-tuned: ``max_rows_multiplier``, ``max_retries`` and ``float_rtol``.
+    More information about these parameters can be found in the `API section
+    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.ctgan.TVAE.sample.
+    html>`__.
+
 
 How do I specify constraints?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,7 +562,7 @@ If you look closely at the data you may notice that some properties were
 not completely captured by the model. For example, you may have seen
 that sometimes the model produces an ``experience_years`` number greater
 than ``0`` while also indicating that ``work_experience`` is ``False``.
-These type of properties are what we call ``Constraints`` and can also
+These types of properties are what we call ``Constraints`` and can also
 be handled using ``SDV``. For further details about them please visit
 the :ref:`single_table_constraints` guide.
 
