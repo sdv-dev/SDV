@@ -63,6 +63,7 @@ def test_column_after_date_simple():
     model = PAR(entity_columns=['col'], sequence_index='date', epochs=1)
     model.fit(daily_timeseries)
 
+
 def test_column_after_date_complex():
     """Test that adding multiple columns after the `sequence_index` column works."""
     date = datetime.datetime.strptime('2020-01-01', '%Y-%m-%d')
