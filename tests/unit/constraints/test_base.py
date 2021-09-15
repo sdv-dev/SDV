@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 from rdt.hyper_transformer import HyperTransformer
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
@@ -262,7 +263,6 @@ class TestConstraint():
         instance.fit(table_data)
 
         # Assert
-        from copulas.univariate import GaussianUnivariate
         gm_mock.assert_called_once_with(distribution=GaussianUnivariate)
 
     @patch('sdv.constraints.base.GaussianMultivariate', spec_set=GaussianMultivariate)
