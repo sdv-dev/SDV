@@ -1,6 +1,6 @@
 ---
 name: Question
-about: Doubts about SDV usage
+about: Ask a general question about SDV usage
 title: ''
 labels: question, pending review
 assignees: ''
