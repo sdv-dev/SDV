@@ -442,8 +442,11 @@ class GreaterThan(Constraint):
         """
         low = self._get_value(table_data, 'low')
         high = self._get_value(table_data, 'high')
+        isnull = np.logical_or(np.isnan(low), np.isnan(high))
 
-        return self.operator(high, low).all(axis=1)
+        valid = np.logical_or(self.operator(high, low), isnull)
+
+        return valid.all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.

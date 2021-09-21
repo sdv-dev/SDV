@@ -2110,6 +2110,8 @@ class TestGreaterThan():
             'b': [4, 2, 2],
             'c': [7, 8, 9]
         })
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
@@ -2136,6 +2138,8 @@ class TestGreaterThan():
             'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
             'b': [4, 2, 2],
         })
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
@@ -2162,10 +2166,63 @@ class TestGreaterThan():
             'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
             'b': [4, 2, 2],
         })
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_nans(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a NaN row, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, None, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_one_nan(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a row in which we compare one NaN value with one
+        non-NaN value, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a row that contains only one NaN value.
+        Output:
+        - True should be returned for the row with the NaN value.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, 5, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
         np.testing.assert_array_equal(expected_out, out)
 
     def test__transform_int_drop_none(self):
