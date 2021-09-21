@@ -1,6 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import uuid
+from datetime import datetime
 from unittest.mock import Mock
 
 import numpy as np
@@ -2113,6 +2114,58 @@ class TestGreaterThan():
 
         # Assert
         expected_out = [False, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_high_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If high is a datetime and low is a column,
+        the values in that column should all be lower than
+        ``instance._high``.
+
+        Input:
+        - Table with values above and below `high`.
+        Output:
+        - True should be returned for the rows where the low
+        column is below `high`.
+        """
+        # Setup
+        high_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low='a', high=high_dt, strict=False, scalar='high')
+        table_data = pd.DataFrame({
+            'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_low_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If low is a datetime and high is a column,
+        the values in that column should all be higher than
+        ``instance._low``.
+
+        Input:
+        - Table with values above and below `low`.
+        Output:
+        - True should be returned for the rows where the high
+        column is above `low`.
+        """
+        # Setup
+        low_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low=low_dt, high='a', strict=False, scalar='low')
+        table_data = pd.DataFrame({
+            'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
 
     def test__transform_int_drop_none(self):
