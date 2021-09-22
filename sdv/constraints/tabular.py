@@ -320,10 +320,16 @@ class GreaterThan(Constraint):
             cls._validate_drop(scalar, drop)
             high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
             constraint_columns = tuple(high)
+            if isinstance(low, pd.Timestamp):
+                low = low.to_datetime64()
+
         elif scalar == 'high':
             cls._validate_drop(scalar, drop)
             low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
             constraint_columns = tuple(low)
+            if isinstance(high, pd.Timestamp):
+                high = high.to_datetime64()
+
         else:
             raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
                              "Use either: 'high', 'low', or None.")
