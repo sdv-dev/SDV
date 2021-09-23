@@ -3258,6 +3258,9 @@ class TestNegative():
 
 def new_column(data):
     """Formula to be used for the ``TestColumnFormula`` class."""
+    if data['a'] is None or data['b'] is None:
+        return None
+
     return data['a'] + data['b']
 
 
@@ -3373,6 +3376,33 @@ class TestColumnFormula():
 
         # Assert
         expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_with_nans(self):
+        """Test the ``ColumnFormula.is_valid`` method for with a formula that produces nans.
+
+        If the data fulfills the formula, result is a series of ``True`` values.
+
+        Input:
+        - Table data fulfilling the formula (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, None],
+            'c': [5, 7, None]
+        })
+        instance = ColumnFormula(column=column, formula=new_column)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test__transform(self):

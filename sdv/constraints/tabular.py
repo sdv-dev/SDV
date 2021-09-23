@@ -636,7 +636,9 @@ class ColumnFormula(Constraint):
                 Whether each row is valid.
         """
         computed = self._formula(table_data)
-        return table_data[self._column] == computed
+        isnan = table_data[self._column].isna() & computed.isna()
+
+        return table_data[self._column].eq(computed) | isnan
 
     def _transform(self, table_data):
         """Transform the table data.
