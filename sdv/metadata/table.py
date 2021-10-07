@@ -771,6 +771,7 @@ class Table:
             dtype_transformers=dtype_transformers,
             min_value=metadata_dict.get('min_value', 'auto'),
             max_value=metadata_dict.get('max_value', 'auto'),
+            rounding=metadata_dict.get('rounding', 'auto'),
         )
         instance._fields_metadata = fields
         return instance

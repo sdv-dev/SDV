@@ -476,5 +476,7 @@ class TestTable:
         # Assert
         assert metadata._transformer_templates['integer'].max_value == 'auto'
         assert metadata._transformer_templates['integer'].min_value == 'auto'
+        assert metadata._transformer_templates['integer'].rounding == 'auto'
         assert metadata._transformer_templates['float'].max_value == 'auto'
         assert metadata._transformer_templates['float'].min_value == 'auto'
+        assert metadata._transformer_templates['float'].rounding == 'auto'
