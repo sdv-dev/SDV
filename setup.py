@@ -25,6 +25,9 @@ install_requires = [
     'sdmetrics>=0.3.1,<0.4',
     'torchvision>=0.5.0,<1',
     'sktime>=0.4,<0.6',
+]
+
+pomegranate_requires = [
     'pomegranate>=0.13.4,<0.14.2',
 ]
 
@@ -93,6 +96,7 @@ setup(
     extras_require={
         'test': tests_require,
         'dev': development_requires + tests_require,
+        'pomegranate': pomegranate_requires,
     },
     include_package_data=True,
     install_requires=install_requires,
