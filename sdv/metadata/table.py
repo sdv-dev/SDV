@@ -769,6 +769,9 @@ class Table:
             entity_columns=metadata_dict.get('entity_columns') or [],
             context_columns=metadata_dict.get('context_columns') or [],
             dtype_transformers=dtype_transformers,
+            min_value=metadata_dict.get('min_value', 'auto'),
+            max_value=metadata_dict.get('max_value', 'auto'),
+            rounding=metadata_dict.get('rounding', 'auto'),
         )
         instance._fields_metadata = fields
         return instance

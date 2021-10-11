@@ -449,3 +449,34 @@ class TestTable:
 
         # Assert
         assert result is None
+
+    def test_from_dict_min_max(self):
+        """Test the ``Table.from_dict`` method.
+
+        Expect that when min_value and max_value are not provided,
+        they are set to 'auto'.
+
+        Input:
+        - A dictionary representing a table's metadata
+        Output:
+        - A Table object
+        """
+        # Setup
+        metadata_dict = {
+            'fields': {
+                'item 0': {'type': 'id', 'subtype': 'integer'},
+                'item 1': {'type': 'boolean'}
+            },
+            'primary_key': 'item 0'
+        }
+
+        # Run
+        metadata = Table.from_dict(metadata_dict)
+
+        # Assert
+        assert metadata._transformer_templates['integer'].max_value == 'auto'
+        assert metadata._transformer_templates['integer'].min_value == 'auto'
+        assert metadata._transformer_templates['integer'].rounding == 'auto'
+        assert metadata._transformer_templates['float'].max_value == 'auto'
+        assert metadata._transformer_templates['float'].min_value == 'auto'
+        assert metadata._transformer_templates['float'].rounding == 'auto'
