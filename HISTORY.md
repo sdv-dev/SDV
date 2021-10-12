@@ -1,5 +1,25 @@
 # Release Notes
 
+## 0.12.1 - 2021-10-12
+
+This release fixes bugs in constraints, metadata behavior, and SDV documentation. Specifically, we added
+proper handling of data containing null values for constraints and timeseries data, and updated the
+default metadata detection behavior.
+
+### Bugs Fixed
+* ValueError: The parameter loc has invalid values - Issue [#353](https://github.com/sdv-dev/SDV/issues/353) by @fealho
+* Gaussian Copula is generating different data with metadata and without metadata - Issue [#576](https://github.com/sdv-dev/SDV/issues/576) by @katxiao
+* Make pomegranate an optional dependency - Issue [#567](https://github.com/sdv-dev/SDV/issues/567) by @katxiao
+* Small wording change for Question Issue Template - Issue [#571](https://github.com/sdv-dev/SDV/issues/571) by @katxiao
+* ConstraintsNotMetError when using GreaterThan constraint with datetime - Issue [#590](https://github.com/sdv-dev/SDV/issues/590) by @katxiao
+* GreaterThan constraint crashing with NaN values - Issue [#592](https://github.com/sdv-dev/SDV/issues/592) by @katxiao
+* Null values in GreaterThan constraint raises error - Issue [#589](https://github.com/sdv-dev/SDV/issues/589) by @katxiao
+* ColumnFormula raises ConstraintsNotMetError when checking NaN values - Issue [#593](https://github.com/sdv-dev/SDV/issues/593) by @katxiao
+* GreaterThan constraint raises TypeError when using datetime - Issue [#596](https://github.com/sdv-dev/SDV/issues/596) by @katxiao
+* Fix repository language - Issue [#464](https://github.com/sdv-dev/SDV/issues/464) by @fealho
+* Update __init__.py - Issue [#578](https://github.com/sdv-dev/SDV/issues/578) by @dyuliu
+* IndexingError: Unalignable boolean - Issue [#446](https://github.com/sdv-dev/SDV/issues/446) by @fealho
+
 ## 0.12.0 - 2021-08-17
 
 This release focuses on improving and expanding upon the existing constraints. More specifically, the users can now
