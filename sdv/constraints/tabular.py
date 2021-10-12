@@ -320,10 +320,16 @@ class GreaterThan(Constraint):
             cls._validate_drop(scalar, drop)
             high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
             constraint_columns = tuple(high)
+            if isinstance(low, pd.Timestamp):
+                low = low.to_datetime64()
+
         elif scalar == 'high':
             cls._validate_drop(scalar, drop)
             low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
             constraint_columns = tuple(low)
+            if isinstance(high, pd.Timestamp):
+                high = high.to_datetime64()
+
         else:
             raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
                              "Use either: 'high', 'low', or None.")
@@ -436,8 +442,11 @@ class GreaterThan(Constraint):
         """
         low = self._get_value(table_data, 'low')
         high = self._get_value(table_data, 'high')
+        isnull = np.logical_or(np.isnan(low), np.isnan(high))
 
-        return self.operator(high, low).all(axis=1)
+        valid = np.logical_or(self.operator(high, low), isnull)
+
+        return valid.all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -630,7 +639,9 @@ class ColumnFormula(Constraint):
                 Whether each row is valid.
         """
         computed = self._formula(table_data)
-        return table_data[self._column] == computed
+        isnan = table_data[self._column].isna() & computed.isna()
+
+        return table_data[self._column].eq(computed) | isnan
 
     def _transform(self, table_data):
         """Transform the table data.

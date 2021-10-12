@@ -20,11 +20,14 @@ install_requires = [
     'tqdm>=4.14,<5',
     'copulas>=0.5.0,<0.6',
     'ctgan>=0.4.3,<0.5',
-    'deepecho>=0.2.0,<0.3',
-    'rdt>=0.5.0,<0.6',
+    'deepecho>=0.2.1,<0.3',
+    'rdt>=0.5.3,<0.6',
     'sdmetrics>=0.3.1,<0.4',
     'torchvision>=0.5.0,<1',
     'sktime>=0.4,<0.6',
+]
+
+pomegranate_requires = [
     'pomegranate>=0.13.4,<0.14.2',
 ]
 
@@ -93,6 +96,7 @@ setup(
     extras_require={
         'test': tests_require,
         'dev': development_requires + tests_require,
+        'pomegranate': pomegranate_requires,
     },
     include_package_data=True,
     install_requires=install_requires,
@@ -107,6 +111,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.12.0',
+    version='0.12.1.dev1',
     zip_safe=False,
 )

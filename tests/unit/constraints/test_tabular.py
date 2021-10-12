@@ -1,6 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import uuid
+from datetime import datetime
 from unittest.mock import Mock
 
 import numpy as np
@@ -2109,10 +2110,119 @@ class TestGreaterThan():
             'b': [4, 2, 2],
             'c': [7, 8, 9]
         })
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = [False, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_high_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If high is a datetime and low is a column,
+        the values in that column should all be lower than
+        ``instance._high``.
+
+        Input:
+        - Table with values above and below `high`.
+        Output:
+        - True should be returned for the rows where the low
+        column is below `high`.
+        """
+        # Setup
+        high_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low='a', high=high_dt, strict=False, scalar='high')
+        table_data = pd.DataFrame({
+            'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_low_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If low is a datetime and high is a column,
+        the values in that column should all be higher than
+        ``instance._low``.
+
+        Input:
+        - Table with values above and below `low`.
+        Output:
+        - True should be returned for the rows where the high
+        column is above `low`.
+        """
+        # Setup
+        low_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low=low_dt, high='a', strict=False, scalar='low')
+        table_data = pd.DataFrame({
+            'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_nans(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a NaN row, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, None, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_one_nan(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a row in which we compare one NaN value with one
+        non-NaN value, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a row that contains only one NaN value.
+        Output:
+        - True should be returned for the row with the NaN value.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, 5, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
         np.testing.assert_array_equal(expected_out, out)
 
     def test__transform_int_drop_none(self):
@@ -3205,6 +3315,9 @@ class TestNegative():
 
 def new_column(data):
     """Formula to be used for the ``TestColumnFormula`` class."""
+    if data['a'] is None or data['b'] is None:
+        return None
+
     return data['a'] + data['b']
 
 
@@ -3320,6 +3433,33 @@ class TestColumnFormula():
 
         # Assert
         expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_with_nans(self):
+        """Test the ``ColumnFormula.is_valid`` method for with a formula that produces nans.
+
+        If the data fulfills the formula, result is a series of ``True`` values.
+
+        Input:
+        - Table data fulfilling the formula (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, None],
+            'c': [5, 7, None]
+        })
+        instance = ColumnFormula(column=column, formula=new_column)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test__transform(self):

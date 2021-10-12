@@ -23,7 +23,8 @@ def install_minimum(c):
     for line in lines:
         if started:
             if line == ']':
-                break
+                started = False
+                continue
 
             line = line.strip()
             line = re.sub(r',?<=?[\d.]*,?', '', line)
@@ -31,7 +32,8 @@ def install_minimum(c):
             line = re.sub(r"""['",]""", '', line)
             versions.append(line)
 
-        elif line.startswith('install_requires = ['):
+        elif (line.startswith('install_requires = [') or
+              line.startswith('pomegranate_requires = [')):
             started = True
 
     c.run(f'python -m pip install {" ".join(versions)}')
