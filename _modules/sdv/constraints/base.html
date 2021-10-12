@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.12.0 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.12.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -509,6 +509,9 @@
         <span class="k">if</span> <span class="n">invalid</span><span class="p">:</span>
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1"> invalid rows out of </span><span class="si">%s</span><span class="s1">.&#39;</span><span class="p">,</span>
                          <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="o">~</span><span class="n">valid</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="n">valid</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span></div>
 

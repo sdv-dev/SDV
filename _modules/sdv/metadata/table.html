@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.12.0 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.12.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -937,6 +937,9 @@
             <span class="n">entity_columns</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_columns&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
             <span class="n">context_columns</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;context_columns&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
             <span class="n">dtype_transformers</span><span class="o">=</span><span class="n">dtype_transformers</span><span class="p">,</span>
+            <span class="n">min_value</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;min_value&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">),</span>
+            <span class="n">max_value</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_value&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">),</span>
+            <span class="n">rounding</span><span class="o">=</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rounding&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_fields_metadata</span> <span class="o">=</span> <span class="n">fields</span>
         <span class="k">return</span> <span class="n">instance</span></div>
