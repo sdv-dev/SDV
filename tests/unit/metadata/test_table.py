@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import faker
 import pandas as pd
 import pytest
 from rdt.transformers.numerical import NumericalTransformer
@@ -11,6 +12,108 @@ from sdv.metadata import Table
 
 
 class TestTable:
+
+    def test__anonimized_mappings(self):
+        """Test anonimized values map to same faked value when equal in original data."""
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'email'
+                }
+            }
+        }
+        data = pd.DataFrame({
+            'foo': ['test1@example.com', 'test2@example.com', 'test1@example.com']
+        })
+        metadata = Table.from_dict(metadata_dict)
+        metadata.fit(data)
+
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        assert len(foo_mappings) == 2
+        assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
+
+    def test__get_faker_default(self):
+        """Test Provider retrieved is DEFAULT_LOCALE Faker when not set explicitly."""
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'email'
+                }
+            }
+        }
+        data = pd.DataFrame({
+            'foo': ['test1@example.com', 'test2@example.com', 'test1@example.com']
+        })
+        metadata = Table.from_dict(metadata_dict)
+        metadata.fit(data)
+
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        assert len(foo_mappings) == 2
+        assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
+
+        fake_fn = metadata._get_faker(metadata_dict['fields']['foo']['pii_category'])
+        assert fake_fn.__self__.__lang__ == faker.proxy.DEFAULT_LOCALE
+
+    def test__get_faker_change_default(self):
+        """Test Provider retrieved is specified local Faker when set explicitly."""
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'email'
+                }
+            }
+        }
+        def_locale = faker.proxy.DEFAULT_LOCALE
+        try:
+            faker.proxy.DEFAULT_LOCALE = 'sv_SE'
+            data = pd.DataFrame({
+                'foo': ['test1@example.com', 'test2@example.com', 'test1@example.com']
+            })
+            metadata = Table.from_dict(metadata_dict)
+            metadata.fit(data)
+
+            foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+            assert len(foo_mappings) == 2
+            assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
+
+            fake_fn = metadata._get_faker(metadata_dict['fields']['foo']['pii_category'])
+            assert fake_fn.__self__.__lang__ == 'sv_SE'
+        finally:
+            faker.proxy.DEFAULT_LOCALE = def_locale
+
+    def test__get_faker_multiple_locales(self):
+        """Test specifying multiple locales as list creates Faker with locales set."""
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'company',
+                    'pii_locales': ['en_US', 'sv_SE']
+                }
+            }
+        }
+        n_values = 100
+
+        data = pd.DataFrame({'foo': list(range(n_values))})
+        metadata = Table.from_dict(metadata_dict)
+        metadata.fit(data)
+
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        assert len(foo_mappings) == n_values
+        assert list(foo_mappings.keys()) == list(range(n_values))
+
+        # contains sweedish company name
+        assert any("AB" in value or "HB" in value for value in foo_mappings.values())
+
+        # contains us company name
+        assert any("LLC" in value or "Inc" in value for value in foo_mappings.values())
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
