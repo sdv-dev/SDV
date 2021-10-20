@@ -120,7 +120,7 @@ def test_regression_unique_on_subset():
         "primary_key": "key",
         "fields": {
             "key": {
-                "type": "id", "subtype": "string"
+                "type": "id", "subtype": "integer"
             },
             "error_column": {
                 "type": "categorical",
