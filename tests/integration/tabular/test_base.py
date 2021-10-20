@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import UniqueCombinations
+from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
@@ -92,6 +92,46 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
 
     with pytest.raises(ValueError):
         model.sample(conditions=conditions)
+
+
+def test_regression_unique_on_subset():
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "error_column": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ]
+    })
+    unique = Unique(
+        columns=["error_column"]
+    )
+    err_metadata = {
+        "name": "error",
+        "constraints": [unique],
+        "primary_key": "key",
+        "fields": {
+            "key": {
+                "type": "id", "subtype": "string"
+            },
+            "error_column": {
+                "type": "categorical",
+            }
+        }
+    }
+
+    test_df = test_df.iloc[[3]]
+    model = GaussianCopula(table_metadata=err_metadata)
+    model.fit(test_df)
+    model.sample()
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
