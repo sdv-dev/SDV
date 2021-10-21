@@ -12,7 +12,7 @@ from sdv.metadata import Table
 
 class TestTable:
 
-    def test__anonimized_mappings(self):
+    def test__make_anonymization_mappings_unique_faked_value_in_field(self):
         """Test anonimized values map to same faked value when equal in original data."""
         metadata_dict = {
             'fields': {
@@ -27,14 +27,24 @@ class TestTable:
             'foo': ['test1@example.com', 'test2@example.com', 'test1@example.com']
         })
         metadata = Table.from_dict(metadata_dict)
-        metadata.fit(data)
+        foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
 
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    def test__get_faker_multiple_locales(self):
+    def test__make_anonymization_mappings_multi_locales(self):
         """Test specifying multiple locales as list creates Faker with locales set."""
+
+        def _mock_faker_getattr(obj, fn_name):
+            if fn_name == "company" and _mock_faker_getattr.se:
+                _mock_faker_getattr.se = False
+                return lambda: "Swedish"
+            elif fn_name == "company":
+                return lambda: "English"
+            else:
+                return getattr(obj, fn_name)
+        _mock_faker_getattr.se = True
+
         metadata_dict = {
             'fields': {
                 'foo': {
@@ -45,21 +55,18 @@ class TestTable:
                 }
             }
         }
-        n_values = 100
 
-        data = pd.DataFrame({'foo': list(range(n_values))})
-        metadata = Table.from_dict(metadata_dict)
-        metadata.fit(data)
+        n_values = 2
+        with patch("faker.proxy.getattr", _mock_faker_getattr):
+            data = pd.DataFrame({'foo': list(range(n_values))})
+            metadata = Table.from_dict(metadata_dict)
+            foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
 
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
-        assert len(foo_mappings) == n_values
-        assert list(foo_mappings.keys()) == list(range(n_values))
+            assert len(foo_mappings) == n_values
+            assert list(foo_mappings.keys()) == list(range(n_values))
 
-        # contains sweedish company name
-        assert any("AB" in value or "HB" in value for value in foo_mappings.values())
-
-        # contains us company name
-        assert any("LLC" in value or "Inc" in value for value in foo_mappings.values())
+            assert list(foo_mappings.values())[0] == "Swedish"
+            assert list(foo_mappings.values())[1] == "English"
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
