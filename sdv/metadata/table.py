@@ -158,6 +158,16 @@ class Table:
     }
 
     def _get_faker(self, field_metadata):
+        """Return the faker object with localisaton set if specified in field_metadata.
+
+        Args:
+            field_metadata (dict):
+                Metadata for field to read localisation from if set in `pii_locales`.
+
+        Returns:
+            Faker object:
+                The Faker object to anonymize the data in the field using its functions.
+        """
         pii_locales = field_metadata.get('pii_locales', None)
         return Faker(locale=pii_locales) if pii_locales is not None else Faker()
 
