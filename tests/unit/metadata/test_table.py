@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import faker
 import pandas as pd
 import pytest
 from rdt.transformers.numerical import NumericalTransformer
@@ -11,6 +12,41 @@ from sdv.metadata import Table
 
 
 class TestTable:
+
+    def test__get_faker_fn_pass_args(self):
+        """Test that ``_get_faker_fn`` method utilizes parameters passed in category argument.
+
+        The ``_get_faker_fn`` method utilize the parameters passed to it in the category argument.
+
+        Input:
+        - Faker object to create faked values with.
+        - Category tuple of category name and parameters passed to the method creating fake values.
+        Output:
+        - Fake values created with the specified method from the Faker object.
+        Utilizing the arguments given to it.
+        """
+        # Setup
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'ean'
+                }
+            }
+        }
+        metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        fake_8_ean = metadata._get_faker_fn(faker.Faker(), ("ean", 8))
+        ean_8 = fake_8_ean()
+
+        fake_13_ean = metadata._get_faker_fn(faker.Faker(), ("ean", 13))
+        ean_13 = fake_13_ean()
+
+        # Assert
+        assert len(ean_8) == 8
+        assert len(ean_13) == 13
 
     def test__make_anonymization_mappings_unique_faked_value_in_field(self):
         """Test that ``_make_anonymization_mappings`` method creates mappings for anonymized values.
