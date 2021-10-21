@@ -94,7 +94,22 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
         model.sample(conditions=conditions)
 
 
-def test_regression_unique_on_subset():
+def test_fit_with_unique_constraint_on_data_subset():
+    """
+    Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on a subset of the original data.
+
+    The ``fit`` method is expected to fit the model to the subset of data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed a metadata ``dict`` that contains a ``Unique`` constraint and is
+    matched to a subset of the specified data.
+    Subdividing the data results in missing indexes in the subset contained in the original data.
+
+    Input:
+    - Subset of data, Metadata with unique constraint
+    """
     test_df = pd.DataFrame({
         "key": [
             1,
