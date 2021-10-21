@@ -56,14 +56,14 @@ class TestTable:
             }
         }
 
-        n_values = 2
+        N_VALUES = 2
         with patch("faker.proxy.getattr", _mock_faker_getattr):
-            data = pd.DataFrame({'foo': list(range(n_values))})
+            data = pd.DataFrame({'foo': list(range(N_VALUES))})
             metadata = Table.from_dict(metadata_dict)
             foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
 
-            assert len(foo_mappings) == n_values
-            assert list(foo_mappings.keys()) == list(range(n_values))
+            assert len(foo_mappings) == N_VALUES
+            assert list(foo_mappings.keys()) == list(range(N_VALUES))
 
             assert list(foo_mappings.values())[0] == "Swedish"
             assert list(foo_mappings.values())[1] == "English"
