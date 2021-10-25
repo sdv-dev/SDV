@@ -144,14 +144,14 @@ def test_fit_with_unique_constraint_on_data_subset():
         }
     }
 
-    test_df = test_df.iloc[[3]]
+    test_df = test_df.iloc[[1, 3, 4]]
     model = GaussianCopula(table_metadata=err_metadata)
 
     # Run
     model.fit(test_df)
 
     # Assert
-    assert model._num_rows == 1
+    assert len(model.sample(2)) == 2
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
