@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
@@ -95,8 +96,7 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
 
 
 def test_fit_with_unique_constraint_on_data_subset():
-    """
-    Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
     ``fit`` is called on a subset of the original data.
 
     The ``fit`` method is expected to fit the model to the subset of data,
@@ -110,6 +110,7 @@ def test_fit_with_unique_constraint_on_data_subset():
     Input:
     - Subset of data, Metadata with unique constraint
     """
+    # Setup
     test_df = pd.DataFrame({
         "key": [
             1,
@@ -145,8 +146,12 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     test_df = test_df.iloc[[3]]
     model = GaussianCopula(table_metadata=err_metadata)
+
+    # Run
     model.fit(test_df)
-    model.sample()
+
+    # Assert
+    assert model._num_rows == 1
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
