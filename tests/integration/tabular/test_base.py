@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pandas as pd
-
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
