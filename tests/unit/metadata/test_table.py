@@ -81,7 +81,8 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    def test__make_anonymization_mappings_localisation(self):
+    @pytest.mark.skipif(faker.VERSION < "3.0.0", reason="Higher version of Faker required.")
+    def test__make_anonymization_mappings_multiple_localizations(self):
         """Test that the ``_make_anonymization_mappings`` method takes localizations into account
         when creating mappings for anonymized values.
 
@@ -90,22 +91,19 @@ class TestTable:
 
         Input:
         - DataFrame with a field that should be anonymized based on the metadata description.
-        Metadata description specifies localization using `pii_locales`.
+        Metadata description specifies multiple localizations using `pii_locales`.
         Output:
         - The mappings created from the original values to localized faked values.
         """
         # Setup
-        can_multi_locale = faker.VERSION >= '3.0.0'
-
         def _mock_faker_getattr(obj, fn_name):
-            if fn_name == "company" and not _mock_faker_getattr.switch_lang:
-                _mock_faker_getattr.switch_lang = can_multi_locale
-                return lambda: "Swedish"
-            elif fn_name == "company" and _mock_faker_getattr.switch_lang:
-                return lambda: "English"
+            if fn_name == "company":
+                lang = _mock_faker_getattr.lang
+                _mock_faker_getattr.lang = "English"
+                return lambda: lang
             else:
                 return getattr(obj, fn_name)
-        _mock_faker_getattr.switch_lang = False
+        _mock_faker_getattr.lang = "Swedish"
 
         metadata_dict = {
             'fields': {
@@ -113,7 +111,7 @@ class TestTable:
                     'type': 'categorical',
                     'pii': True,
                     'pii_category': 'company',
-                    'pii_locales': ['en_US', 'sv_SE'] if can_multi_locale else 'sv_SE'
+                    'pii_locales': ['en_US', 'sv_SE']
                 }
             }
         }
@@ -123,15 +121,59 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        with patch("faker.generator.getattr", _mock_faker_getattr):
-            foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
+        with patch('faker.proxy.getattr', _mock_faker_getattr):
+            foo_mappings = metadata._make_anonymization_mappings(data)['foo']
 
         # Assert
         assert len(foo_mappings) == N_VALUES
         assert list(foo_mappings.keys()) == list(range(N_VALUES))
 
-        assert list(foo_mappings.values())[0] == "Swedish"
-        assert list(foo_mappings.values())[1] == "English" if can_multi_locale else "Swedish"
+        assert list(foo_mappings.values())[0] == 'Swedish'
+        assert list(foo_mappings.values())[1] == 'English'
+
+    def test__make_anonymization_mappings_single_localization(self):
+        """Test that the ``_make_anonymization_mappings`` method takes single localization into account
+        when creating mappings for anonymized values.
+
+        The ``_make_anonymization_mappings`` method should create localized fake values if
+        `pii_locales` is specified in the metadata description.
+
+        Input:
+        - DataFrame with a field that should be anonymized based on the metadata description.
+        Metadata description specifies single localization using `pii_locales`.
+        Output:
+        - The mappings created from the original values to localized faked values.
+        """
+        # Setup
+        def _mock_faker_getattr(obj, fn_name):
+            if fn_name == "company":
+                return lambda: "Swedish"
+            else:
+                return getattr(obj, fn_name)
+
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'company',
+                    'pii_locales': 'sv_SE'
+                }
+            }
+        }
+
+        N_VALUES = 2
+        data = pd.DataFrame({'foo': list(range(N_VALUES))})
+        metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        with patch('faker.generator.getattr', _mock_faker_getattr):
+            foo_mappings = metadata._make_anonymization_mappings(data)['foo']
+
+        # Assert
+        assert len(foo_mappings) == N_VALUES
+        assert list(foo_mappings.keys()) == list(range(N_VALUES))
+        assert all([value == 'Swedish' for value in foo_mappings.values()])
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
