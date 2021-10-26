@@ -81,7 +81,7 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    def test__make_anonymization_mappings_multi_locales(self):
+    def test__make_anonymization_mappings_localisation(self):
         """Test that the ``_make_anonymization_mappings`` method takes localizations into account
         when creating mappings for anonymized values.
 
@@ -95,15 +95,17 @@ class TestTable:
         - The mappings created from the original values to localized faked values.
         """
         # Setup
+        can_multi_locale = faker.VERSION >= '3.0.0'
+
         def _mock_faker_getattr(obj, fn_name):
-            if fn_name == "company" and _mock_faker_getattr.se:
-                _mock_faker_getattr.se = False
+            if fn_name == "company" and not _mock_faker_getattr.switch_lang:
+                _mock_faker_getattr.switch_lang = can_multi_locale
                 return lambda: "Swedish"
-            elif fn_name == "company":
+            elif fn_name == "company" and _mock_faker_getattr.switch_lang:
                 return lambda: "English"
             else:
                 return getattr(obj, fn_name)
-        _mock_faker_getattr.se = True
+        _mock_faker_getattr.switch_lang = False
 
         metadata_dict = {
             'fields': {
@@ -111,7 +113,7 @@ class TestTable:
                     'type': 'categorical',
                     'pii': True,
                     'pii_category': 'company',
-                    'pii_locales': ['en_US', 'sv_SE']
+                    'pii_locales': ['en_US', 'sv_SE'] if can_multi_locale else 'sv_SE'
                 }
             }
         }
@@ -121,7 +123,7 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        with patch("faker.proxy.getattr", _mock_faker_getattr):
+        with patch("faker.generator.getattr", _mock_faker_getattr):
             foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
 
         # Assert
@@ -129,7 +131,7 @@ class TestTable:
         assert list(foo_mappings.keys()) == list(range(N_VALUES))
 
         assert list(foo_mappings.values())[0] == "Swedish"
-        assert list(foo_mappings.values())[1] == "English"
+        assert list(foo_mappings.values())[1] == "English" if can_multi_locale else "Swedish"
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
