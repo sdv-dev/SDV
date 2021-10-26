@@ -194,6 +194,10 @@ A list of all possible localizations can be found on the `Faker documentation si
 .. note:: Specifying localizations and using ``Faker`` categories may result in an error 
           if the defined ``pii_category`` is not available for all specified languages.
 
+.. warning:: When using versions of ``Faker`` prior to ``3.0.0``, 
+             only a single localization can be specified as a ``string`` in ``pii_locales``.
+
+
 Primary key fields
 ******************
 
