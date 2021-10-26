@@ -301,7 +301,7 @@ page, and it contains a huge list of concepts such as:
 -  telephone
 -  ...
 
-In this case, since the field is an e-mail address, we will pass a
+In this case, since the field is an address, we will pass a
 dictionary indicating the category ``address``
 
 .. ipython:: python
