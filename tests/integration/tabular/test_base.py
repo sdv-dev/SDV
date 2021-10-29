@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import UniqueCombinations
+from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
@@ -96,7 +96,7 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
 
 def test_fit_with_unique_constraint_on_data_which_has_index_column():
     """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
-    ``fit`` is called on data containing a column named index. 
+    ``fit`` is called on data containing a column named index.
 
     The ``fit`` method is expected to fit the model to data,
     taking into account the metadata and the ``Unique`` constraint.
