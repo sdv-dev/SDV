@@ -108,6 +108,9 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     Input:
     - Subset of data, Metadata with unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/610 does not occur
     """
     # Setup
     test_df = pd.DataFrame({
@@ -148,9 +151,11 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     # Run
     model.fit(test_df)
+    samples = model.sample(2)
 
     # Assert
-    assert len(model.sample(2)) == 2
+    assert len(samples) == 2
+    assert samples["error_column"].is_unique
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
