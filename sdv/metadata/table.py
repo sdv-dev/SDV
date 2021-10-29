@@ -533,8 +533,6 @@ class Table:
 
         self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
 
-        return mappings
-
     def _anonymize(self, data):
         anonymization_mappings = self._ANONYMIZATION_MAPPINGS.get(id(self))
         if anonymization_mappings:

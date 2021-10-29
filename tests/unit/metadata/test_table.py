@@ -75,7 +75,8 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        foo_mappings = metadata._make_anonymization_mappings(data)["foo"]
+        metadata._make_anonymization_mappings(data)
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
 
         # Assert
         assert len(foo_mappings) == 2
@@ -119,7 +120,8 @@ class TestTable:
 
         # Run
         with patch('faker.generator.getattr', _mock_faker_getattr):
-            foo_mappings = metadata._make_anonymization_mappings(data)['foo']
+            metadata._make_anonymization_mappings(data)
+            foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
 
         # Assert
         assert len(foo_mappings) == N_VALUES
@@ -164,7 +166,8 @@ class TestTable:
 
         # Run
         with patch('faker.generator.getattr', _mock_faker_getattr):
-            foo_mappings = metadata._make_anonymization_mappings(data)['foo']
+            metadata._make_anonymization_mappings(data)
+            foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
 
         # Assert
         assert len(foo_mappings) == N_VALUES
