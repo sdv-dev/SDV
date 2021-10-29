@@ -1121,7 +1121,6 @@ class Unique(Constraint):
                 Whether each row is valid.
         """
         valid = pd.Series([False] * table_data.shape[0])
-        data = table_data.reset_index()
-        groups = data.groupby(self.columns)
-        valid.iloc[groups.first()['index'].values] = True
+        valid_rows = table_data.groupby(self.columns).size().reset_index()[0] == 1
+        valid[valid_rows] = True
         return valid
