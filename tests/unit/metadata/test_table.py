@@ -82,7 +82,6 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    @pytest.mark.skipif(faker.VERSION < "3.0.0", reason="Higher version of Faker required.")
     def test__make_anonymization_mappings_multiple_localizations(self):
         """Test that the ``_make_anonymization_mappings`` method takes localizations into account
         when creating mappings for anonymized values.

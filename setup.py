@@ -12,7 +12,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'Faker>=1.0.1,<4.15',
+    'Faker>=3.0.0,<4.15',
     'graphviz>=0.13.2,<1',
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
