@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 import faker
+from faker.config import DEFAULT_LOCALE
 import pandas as pd
 import pytest
 from rdt.transformers.numerical import NumericalTransformer
@@ -13,10 +14,97 @@ from sdv.metadata import Table
 
 class TestTable:
 
+    def test__get_faker_default_locale(self):
+        """Test that ``_get_faker`` without locales parameter has default locale.
+
+        The ``_get_faker`` should return a Faker object localized to the default locale.
+        When no locales are specified explicitly.
+
+        Input:
+        - Field metadata from metadata dict.
+        Output:
+        - Faker object with default localization.
+        """
+        # Setup
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'company'
+                }
+            }
+        }
+        metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+
+        # Assert
+        assert faker.locales == [DEFAULT_LOCALE]
+
+    def test__get_faker_specified_locales_strig(self):
+        """Test that ``_get_faker`` with locales parameter sets localization correctly.
+
+        The ``_get_faker`` should return a Faker object localized to the specified locale.
+
+        Input:
+        - Field metadata from metadata dict.
+        Output:
+        - Faker object with specified localization string.
+        """
+        # Setup
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'company',
+                    'pii_locales': 'sv_SE'
+                }
+            }
+        }
+        metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+
+        # Assert
+        assert faker.locales == ['sv_SE']
+
+    def test__get_faker_specified_locales_list(self):
+        """Test that ``_get_faker`` with locales parameter sets localization correctly.
+
+        The ``_get_faker`` should return a Faker object localized to the specified locales.
+
+        Input:
+        - Field metadata from metadata dict.
+        Output:
+        - Faker object with specified list of localizations.
+        """
+        # Setup
+        metadata_dict = {
+            'fields': {
+                'foo': {
+                    'type': 'categorical',
+                    'pii': True,
+                    'pii_category': 'company',
+                    'pii_locales': ['en_US', 'sv_SE']
+                }
+            }
+        }
+        metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+
+        # Assert
+        assert faker.locales == ['en_US', 'sv_SE']
+
     def test__get_faker_method_pass_args(self):
         """Test that ``_get_faker_method`` method utilizes parameters passed in category argument.
 
-        The ``_get_faker_method`` method utilize the parameters passed to it in the category argument.
+        The ``_get_faker_method`` method uses the parameters passed to it in the category argument.
 
         Input:
         - Faker object to create faked values with.
