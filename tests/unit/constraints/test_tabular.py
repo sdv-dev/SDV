@@ -5200,6 +5200,8 @@ class TestUnique():
         - DataFrame has a custom index column which is set to 0 for rows.
         Output:
         - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
         """
         # Setup
         instance = Unique(columns=['a', 'b', 'c'])
@@ -5228,6 +5230,8 @@ class TestUnique():
         - DataFrame has a custom index column which is set in an unsorted way.
         Output:
         - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
         """
         # Setup
         instance = Unique(columns=['a', 'b', 'c'])
@@ -5257,6 +5261,8 @@ class TestUnique():
         - DataFrame has a custom index column which is set in an unsorted way.
         Output:
         - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
         """
         # Setup
         instance = Unique(columns='a')
@@ -5286,6 +5292,8 @@ class TestUnique():
         - DataFrame has a custom index column which is set to 0 for rows.
         Output:
         - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
         """
         # Setup
         instance = Unique(columns='a')
