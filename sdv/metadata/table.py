@@ -157,6 +157,13 @@ class Table:
         ('id', 'string'): 'str'
     }
 
+    def _get_fake_values(self, field_metadata, num_values):
+        faker = self._get_faker(field_metadata)
+        return (
+            self._get_faker_method(faker, field_metadata['pii_category'])()
+            for _ in range(num_values)
+        )
+
     def _get_faker(self, field_metadata):
         """Return the faker object with localisaton set if specified in field_metadata.
 
@@ -171,7 +178,7 @@ class Table:
         pii_locales = field_metadata.get('pii_locales', None)
         return Faker(locale=pii_locales) if pii_locales is not None else Faker()
 
-    def _get_faker_fn(self, faker, category):
+    def _get_faker_method(self, faker, category):
         """Return the faker function to anonymize data.
 
         Args:
@@ -519,14 +526,10 @@ class Table:
         mappings = {}
         for name, field_metadata in self._fields_metadata.items():
             if field_metadata['type'] != 'id' and field_metadata.get('pii'):
-                faker = self._get_faker(field_metadata)
-
                 uniques = data[name].unique()
-                fake_values = [
-                    self._get_faker_fn(faker, field_metadata['pii_category'])()
-                    for _ in range(len(uniques))
-                ]
-                mappings[name] = dict(zip(uniques, fake_values))
+                mappings[name] = dict(
+                    zip(uniques, self._get_fake_values(field_metadata, len(uniques)))
+                )
 
         self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
 
@@ -686,12 +689,7 @@ class Table:
             if field_type == 'id' and name not in reversed_data:
                 field_data = self._make_ids(field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
-                faker = self._get_faker(field_metadata)
-
-                field_data = pd.Series([
-                    self._get_faker_fn(faker, field_metadata['pii_category'])()
-                    for _ in range(len(reversed_data))
-                ])
+                field_data = pd.Series(self._get_fake_values(field_metadata, len(reversed_data)))
             else:
                 field_data = reversed_data[name]
 

@@ -38,10 +38,10 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        fake_8_ean = metadata._get_faker_fn(faker.Faker(), ("ean", 8))
+        fake_8_ean = metadata._get_faker_method(faker.Faker(), ("ean", 8))
         ean_8 = fake_8_ean()
 
-        fake_13_ean = metadata._get_faker_fn(faker.Faker(), ("ean", 13))
+        fake_13_ean = metadata._get_faker_method(faker.Faker(), ("ean", 13))
         ean_13 = fake_13_ean()
 
         # Assert
@@ -98,12 +98,9 @@ class TestTable:
         # Setup
         def _mock_faker_getattr(obj, fn_name):
             if fn_name == "company":
-                lang = _mock_faker_getattr.lang
-                _mock_faker_getattr.lang = "English"
-                return lambda: lang
+                return lambda: obj.__lang__
             else:
                 return getattr(obj, fn_name)
-        _mock_faker_getattr.lang = "Swedish"
 
         metadata_dict = {
             'fields': {
@@ -116,20 +113,19 @@ class TestTable:
             }
         }
 
-        N_VALUES = 2
+        N_VALUES = 100
         data = pd.DataFrame({'foo': list(range(N_VALUES))})
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        with patch('faker.proxy.getattr', _mock_faker_getattr):
+        with patch('faker.generator.getattr', _mock_faker_getattr):
             foo_mappings = metadata._make_anonymization_mappings(data)['foo']
 
         # Assert
         assert len(foo_mappings) == N_VALUES
         assert list(foo_mappings.keys()) == list(range(N_VALUES))
 
-        assert list(foo_mappings.values())[0] == 'Swedish'
-        assert list(foo_mappings.values())[1] == 'English'
+        assert 'en_US' in list(foo_mappings.values()) and 'sv_SE' in list(foo_mappings.values())
 
     def test__make_anonymization_mappings_single_localization(self):
         """Test that the ``_make_anonymization_mappings`` method takes single localization into account
@@ -147,7 +143,7 @@ class TestTable:
         # Setup
         def _mock_faker_getattr(obj, fn_name):
             if fn_name == "company":
-                return lambda: "Swedish"
+                return lambda: obj.__lang__
             else:
                 return getattr(obj, fn_name)
 
@@ -173,7 +169,7 @@ class TestTable:
         # Assert
         assert len(foo_mappings) == N_VALUES
         assert list(foo_mappings.keys()) == list(range(N_VALUES))
-        assert all([value == 'Swedish' for value in foo_mappings.values()])
+        assert all([value == 'sv_SE' for value in foo_mappings.values()])
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
