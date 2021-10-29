@@ -5215,7 +5215,7 @@ class TestUnique():
         valid = instance.is_valid(data)
 
         # Assert
-        expected = pd.Series([True, False, True, False, True])
+        expected = pd.Series([True, False, True, False, True], index=[0, 0, 0, 0, 0])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_custom_index_not_sorted(self):
@@ -5245,7 +5245,7 @@ class TestUnique():
         valid = instance.is_valid(data)
 
         # Assert
-        expected = pd.Series([True, False, True, False, True])
+        expected = pd.Series([True, False, True, False, True], index=[2, 1, 3, 5, 4])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_one_column_custom_index_not_sorted(self):
@@ -5276,7 +5276,7 @@ class TestUnique():
         valid = instance.is_valid(data)
 
         # Assert
-        expected = pd.Series([True, False, False, True, True, False])
+        expected = pd.Series([True, False, False, True, True, False], index=[2, 1, 3, 5, 4, 6])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_one_column_custom_index_same_values(self):
@@ -5307,7 +5307,7 @@ class TestUnique():
         valid = instance.is_valid(data)
 
         # Assert
-        expected = pd.Series([True, False, False, True, True, False])
+        expected = pd.Series([True, False, False, True, True, False], index=[0, 0, 0, 0, 0, 0])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_one_column(self):
