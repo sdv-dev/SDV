@@ -13,10 +13,10 @@ from sdv.metadata import Table
 
 class TestTable:
 
-    def test__get_faker_fn_pass_args(self):
-        """Test that ``_get_faker_fn`` method utilizes parameters passed in category argument.
+    def test__get_faker_method_pass_args(self):
+        """Test that ``_get_faker_method`` method utilizes parameters passed in category argument.
 
-        The ``_get_faker_fn`` method utilize the parameters passed to it in the category argument.
+        The ``_get_faker_method`` method utilize the parameters passed to it in the category argument.
 
         Input:
         - Faker object to create faked values with.
