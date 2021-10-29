@@ -1,9 +1,9 @@
 from unittest.mock import Mock, patch
 
 import faker
-from faker.config import DEFAULT_LOCALE
 import pandas as pd
 import pytest
+from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import NumericalTransformer
 
 from sdv.constraints.base import Constraint
