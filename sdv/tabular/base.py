@@ -127,6 +127,9 @@ class BaseTabularModel:
                 the path to a CSV file which can be loaded using
                 ``pandas.read_csv``.
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.reset_index(drop=True)
+
         LOGGER.debug('Fitting %s to table %s; shape: %s', self.__class__.__name__,
                      self._metadata.name, data.shape)
         if not self._metadata_fitted:

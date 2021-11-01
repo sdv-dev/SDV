@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 from rdt.hyper_transformer import HyperTransformer
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
@@ -241,8 +242,31 @@ class TestConstraint():
         # Assert
         instance._fit.assert_called_once_with(table_data)
 
-    @patch('sdv.constraints.base.GaussianMultivariate',
-           spec_set=GaussianMultivariate)
+    @patch('sdv.constraints.base.GaussianMultivariate', spec_set=GaussianMultivariate)
+    def test_fit_gaussian_multivariate_correct_distribution(self, gm_mock):
+        """Test the ``GaussianMultivariate`` from the ``Constraint.fit`` method.
+
+        The ``GaussianMultivariate`` is expected to be called with default distribution
+        set as ``GaussianUnivariate``.
+
+        Input:
+        - Table data (pandas.DataFrame)
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [1, 2, 3]
+        })
+        instance = Constraint(handling_strategy='transform', fit_columns_model=True)
+        instance.constraint_columns = ('a', 'b')
+
+        # Run
+        instance.fit(table_data)
+
+        # Assert
+        gm_mock.assert_called_once_with(distribution=GaussianUnivariate)
+
+    @patch('sdv.constraints.base.GaussianMultivariate', spec_set=GaussianMultivariate)
     @patch('sdv.constraints.base.HyperTransformer', spec_set=HyperTransformer)
     def test_fit_trains_column_model(self, ht_mock, gm_mock):
         """Test the ``Constraint.fit`` method trains the column model.
