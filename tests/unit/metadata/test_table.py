@@ -170,6 +170,13 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
+    def _mock_faker_getattr(obj, fn_name):
+        if fn_name == "company":
+            return lambda: obj.__lang__
+        else:
+            return getattr(obj, fn_name)
+
+    @patch('faker.generator.getattr', _mock_faker_getattr)
     def test__make_anonymization_mappings_multiple_localizations(self):
         """Test that the ``_make_anonymization_mappings`` method takes localizations into account
         when creating mappings for anonymized values.
@@ -184,12 +191,6 @@ class TestTable:
         - The mappings created from the original values to localized faked values.
         """
         # Setup
-        def _mock_faker_getattr(obj, fn_name):
-            if fn_name == "company":
-                return lambda: obj.__lang__
-            else:
-                return getattr(obj, fn_name)
-
         metadata_dict = {
             'fields': {
                 'foo': {
@@ -206,9 +207,8 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        with patch('faker.generator.getattr', _mock_faker_getattr):
-            metadata._make_anonymization_mappings(data)
-            foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        metadata._make_anonymization_mappings(data)
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
 
         # Assert
         assert len(foo_mappings) == N_VALUES
@@ -216,6 +216,7 @@ class TestTable:
 
         assert 'en_US' in list(foo_mappings.values()) and 'sv_SE' in list(foo_mappings.values())
 
+    @patch('faker.generator.getattr', _mock_faker_getattr)
     def test__make_anonymization_mappings_single_localization(self):
         """Test that the ``_make_anonymization_mappings`` method takes single localization into account
         when creating mappings for anonymized values.
@@ -230,12 +231,6 @@ class TestTable:
         - The mappings created from the original values to localized faked values.
         """
         # Setup
-        def _mock_faker_getattr(obj, fn_name):
-            if fn_name == "company":
-                return lambda: obj.__lang__
-            else:
-                return getattr(obj, fn_name)
-
         metadata_dict = {
             'fields': {
                 'foo': {
@@ -252,9 +247,8 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        with patch('faker.generator.getattr', _mock_faker_getattr):
-            metadata._make_anonymization_mappings(data)
-            foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        metadata._make_anonymization_mappings(data)
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
 
         # Assert
         assert len(foo_mappings) == N_VALUES
