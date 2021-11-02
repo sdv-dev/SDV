@@ -1,6 +1,5 @@
 from unittest.mock import Mock, patch
 
-import faker
 import pandas as pd
 import pytest
 from faker import Faker
@@ -130,10 +129,10 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        fake_8_ean = metadata._get_faker_method(faker.Faker(), ("ean", 8))
+        fake_8_ean = metadata._get_faker_method(Faker(), ("ean", 8))
         ean_8 = fake_8_ean()
 
-        fake_13_ean = metadata._get_faker_method(faker.Faker(), ("ean", 13))
+        fake_13_ean = metadata._get_faker_method(Faker(), ("ean", 13))
         ean_13 = fake_13_ean()
 
         # Assert
