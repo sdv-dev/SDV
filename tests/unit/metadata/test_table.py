@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import faker
 import pandas as pd
 import pytest
+from faker import Faker
 from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import NumericalTransformer
 
@@ -41,6 +42,7 @@ class TestTable:
         faker = metadata._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
+        assert isinstance(faker, Faker)
         assert faker.locales == [DEFAULT_LOCALE]
 
     def test__get_faker_specified_locales_strig(self):
@@ -70,6 +72,7 @@ class TestTable:
         faker = metadata._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
+        assert isinstance(faker, Faker)
         assert faker.locales == ['sv_SE']
 
     def test__get_faker_specified_locales_list(self):
@@ -99,6 +102,7 @@ class TestTable:
         faker = metadata._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
+        assert isinstance(faker, Faker)
         assert faker.locales == ['en_US', 'sv_SE']
 
     def test__get_faker_method_pass_args(self):
