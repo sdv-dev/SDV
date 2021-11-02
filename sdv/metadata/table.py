@@ -157,13 +157,6 @@ class Table:
         ('id', 'string'): 'str'
     }
 
-    def _get_fake_values(self, field_metadata, num_values):
-        faker = self._get_faker(field_metadata)
-        return (
-            self._get_faker_method(faker, field_metadata['pii_category'])()
-            for _ in range(num_values)
-        )
-
     def _get_faker(self, field_metadata):
         """Return the faker object with localisaton set if specified in field_metadata.
 
@@ -176,7 +169,7 @@ class Table:
                 The Faker object to anonymize the data in the field using its functions.
         """
         pii_locales = field_metadata.get('pii_locales', None)
-        return Faker(locale=pii_locales) if pii_locales is not None else Faker()
+        return Faker(locale=pii_locales)
 
     def _get_faker_method(self, faker, category):
         """Return the faker function to anonymize data.
@@ -202,18 +195,23 @@ class Table:
             args = tuple()
 
         try:
-            faker_method = getattr(faker, category)
-
-            if not args:
-                return faker_method
-
-            def faker():
-                return faker_method(*args)
-
-            return faker
-
+            if args:
+                def _faker():
+                    return getattr(faker, category)(*args)
+            else:
+                def _faker():
+                    return getattr(faker, category)()
+            return _faker
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
+
+    def _get_fake_values(self, field_metadata, num_values):
+        faker = self._get_faker(field_metadata)
+        faker_method = self._get_faker_method(faker, field_metadata['pii_category'])
+        return (
+            faker_method()
+            for _ in range(num_values)
+        )
 
     def _update_transformer_templates(self, rounding, min_value, max_value):
         default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
