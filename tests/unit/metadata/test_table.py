@@ -35,10 +35,9 @@ class TestTable:
                 }
             }
         }
-        metadata = Table.from_dict(metadata_dict)
 
         # Run
-        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
         assert isinstance(faker, Faker)
@@ -65,10 +64,9 @@ class TestTable:
                 }
             }
         }
-        metadata = Table.from_dict(metadata_dict)
 
         # Run
-        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
         assert isinstance(faker, Faker)
@@ -95,10 +93,9 @@ class TestTable:
                 }
             }
         }
-        metadata = Table.from_dict(metadata_dict)
 
         # Run
-        faker = metadata._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
 
         # Assert
         assert isinstance(faker, Faker)
