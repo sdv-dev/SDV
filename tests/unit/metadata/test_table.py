@@ -37,7 +37,7 @@ class TestTable:
         }
 
         # Run
-        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict['fields']['foo'])
 
         # Assert
         assert isinstance(faker, Faker)
@@ -66,7 +66,7 @@ class TestTable:
         }
 
         # Run
-        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict['fields']['foo'])
 
         # Assert
         assert isinstance(faker, Faker)
@@ -95,7 +95,7 @@ class TestTable:
         }
 
         # Run
-        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict["fields"]["foo"])
+        faker = Table.from_dict(metadata_dict)._get_faker(metadata_dict['fields']['foo'])
 
         # Assert
         assert isinstance(faker, Faker)
@@ -126,10 +126,10 @@ class TestTable:
         metadata = Table.from_dict(metadata_dict)
 
         # Run
-        fake_8_ean = metadata._get_faker_method(Faker(), ("ean", 8))
+        fake_8_ean = metadata._get_faker_method(Faker(), ('ean', 8))
         ean_8 = fake_8_ean()
 
-        fake_13_ean = metadata._get_faker_method(Faker(), ("ean", 13))
+        fake_13_ean = metadata._get_faker_method(Faker(), ('ean', 13))
         ean_13 = fake_13_ean()
 
         # Assert
@@ -164,14 +164,14 @@ class TestTable:
 
         # Run
         metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
 
         # Assert
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
     def _mock_faker_getattr(obj, fn_name):
-        if fn_name == "company":
+        if fn_name == 'company':
             return lambda: obj.__lang__
         else:
             return getattr(obj, fn_name)
@@ -208,7 +208,7 @@ class TestTable:
 
         # Run
         metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
 
         # Assert
         assert len(foo_mappings) == N_VALUES
@@ -248,7 +248,7 @@ class TestTable:
 
         # Run
         metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]["foo"]
+        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
 
         # Assert
         assert len(foo_mappings) == N_VALUES
