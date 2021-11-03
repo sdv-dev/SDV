@@ -4,7 +4,7 @@ from sdv import SDV
 
 
 def test_pii_with_single_localization():
-    """Test SDV with pii data that specifies one localizations."""
+    """Test SDV with pii data that specifies one localization."""
     table_name = 'table1'
     num_values = 100
 
