@@ -157,7 +157,8 @@ class Table:
         ('id', 'string'): 'str'
     }
 
-    def _get_faker(self, field_metadata):
+    @staticmethod
+    def _get_faker(field_metadata):
         """Return the faker object with localisaton set if specified in field_metadata.
 
         Args:
@@ -171,7 +172,8 @@ class Table:
         pii_locales = field_metadata.get('pii_locales', None)
         return Faker(locale=pii_locales)
 
-    def _get_faker_method(self, faker, category):
+    @staticmethod
+    def _get_faker_method(faker, category):
         """Return the faker function to anonymize data.
 
         Args:
@@ -207,9 +209,23 @@ class Table:
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
 
-    def _get_fake_values(self, field_metadata, num_values):
-        faker = self._get_faker(field_metadata)
-        faker_method = self._get_faker_method(faker, field_metadata['pii_category'])
+    @staticmethod
+    def _get_fake_values(field_metadata, num_values):
+        """Return the anonymized values from Faker.
+
+        Args:
+            field_metadata (dict):
+                Metadata for field to read localisation from if set in `pii_locales`.
+                And to read the faker category from `pii_category`.
+            num_values (int):
+                Number of values to create.
+
+        Returns:
+            generator:
+                Generator containing the anonymized values.
+        """
+        faker = Table._get_faker(field_metadata)
+        faker_method = Table._get_faker_method(faker, field_metadata['pii_category'])
         return (
             faker_method()
             for _ in range(num_values)
@@ -528,7 +544,7 @@ class Table:
             if field_metadata['type'] != 'id' and field_metadata.get('pii'):
                 uniques = data[name].unique()
                 mappings[name] = dict(
-                    zip(uniques, self._get_fake_values(field_metadata, len(uniques)))
+                    zip(uniques, Table._get_fake_values(field_metadata, len(uniques)))
                 )
 
         self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
@@ -687,7 +703,7 @@ class Table:
             if field_type == 'id' and name not in reversed_data:
                 field_data = self._make_ids(field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
-                field_data = pd.Series(self._get_fake_values(field_metadata, len(reversed_data)))
+                field_data = pd.Series(Table._get_fake_values(field_metadata, len(reversed_data)))
             else:
                 field_data = reversed_data[name]
 
