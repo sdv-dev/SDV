@@ -2,7 +2,6 @@ import random
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-from pandas.core.frame import DataFrame
 import pytest
 
 from sdv.metadata.table import Table
