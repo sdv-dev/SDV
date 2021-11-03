@@ -43,7 +43,7 @@ class TestTable:
         assert isinstance(faker, Faker)
         assert faker.locales == [DEFAULT_LOCALE]
 
-    def test__get_faker_specified_locales_strig(self):
+    def test__get_faker_specified_locales_string(self):
         """Test that ``_get_faker`` with locales parameter sets localization correctly.
 
         The ``_get_faker`` should return a Faker object localized to the specified locale.
