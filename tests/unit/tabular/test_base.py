@@ -1,6 +1,8 @@
+import random
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 import pytest
 
 from sdv.metadata.table import Table
@@ -343,3 +345,38 @@ def test_sample_batches_transform_conditions_correctly():
     model._sample_batch.assert_any_call(
         1, 100, 10, {'column1': 30}, {'transformed_column': 70}, 0.01
     )
+
+
+def test__make_conditions_df_without_num_rows():
+    """Test ``_make_conditions_df`` works correctly when ``num_rows`` is not passed.
+
+    The ``_make_conditions_df`` method is expected to:
+    - Return conditions as a ``DataFrame`` for every row in the data.
+
+    Input:
+    - Conditions
+
+    Output:
+    - Conditions as ``DataFrame``
+    """
+    # Setup
+    N_ROWS = 1000
+    model = GaussianCopula()
+    data = pd.DataFrame({
+        'column1': list(range(N_ROWS)),
+        'column2': [random.choice(['M', 'F']) for _ in range(N_ROWS)],
+    })
+    conditions = {
+        'column2': 'M'
+    }
+    expected_conditions = pd.DataFrame([conditions] * len(data))
+
+    model.fit(data)
+
+    # Run
+    result_conditions = model._make_conditions_df(conditions=conditions, num_rows=None)
+
+    # Assert
+    assert isinstance(result_conditions, pd.DataFrame)
+    assert len(result_conditions) == len(data)
+    assert all(result_conditions == expected_conditions)
