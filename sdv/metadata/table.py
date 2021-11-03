@@ -198,9 +198,11 @@ class Table:
             if args:
                 def _faker():
                     return getattr(faker, category)(*args)
+
             else:
                 def _faker():
                     return getattr(faker, category)()
+
             return _faker
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
