@@ -19,7 +19,7 @@ requirements:
     - pytest-runner
     - graphviz
     - python >=3.6,<3.9
-    - faker >=3.0.0,<4.15.0
+    - faker >=3.0.0,<10
     - python-graphviz >=0.13.2,<1
     - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
@@ -36,7 +36,7 @@ requirements:
   run:
     - graphviz
     - python >=3.6,<3.9
-    - faker >=3.0.0,<4.15.0
+    - faker >=3.0.0,<10
     - python-graphviz >=0.13.2,<1
     - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
