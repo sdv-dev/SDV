@@ -180,10 +180,14 @@ class TestTable:
 
         # Run
         Table._make_anonymization_mappings(metadata, data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS.get(id(metadata), {}).get('foo')
 
         # Assert
         assert mock_table._get_fake_values.called_once_with(foo_metadata, 3)
+
+        mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]
+        assert len(mappings) == 1
+
+        foo_mappings = mappings['foo']
         assert len(foo_mappings) == 3
         assert list(foo_mappings.keys()) == foo_values
 
@@ -196,8 +200,8 @@ class TestTable:
 
         Input:
         - DataFrame with a field that should be anonymized based on the metadata description.
-        Output:
-        - The mappings created from the original values to faked values.
+        Side Effect:
+        - Mappings are created from the original values to faked values.
         """
         # Setup
         metadata = Mock()
@@ -216,10 +220,14 @@ class TestTable:
 
         # Run
         Table._make_anonymization_mappings(metadata, data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
 
         # Assert
         assert mock_table._get_fake_values.called_once_with(foo_metadata, 2)
+
+        mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]
+        assert len(mappings) == 1
+
+        foo_mappings = mappings['foo']
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
