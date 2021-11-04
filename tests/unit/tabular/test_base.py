@@ -1,4 +1,3 @@
-import random
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
