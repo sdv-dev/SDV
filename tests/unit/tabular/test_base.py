@@ -346,7 +346,36 @@ def test_sample_batches_transform_conditions_correctly():
     )
 
 
-def test__make_conditions_df_without_num_rows():
+@pytest.mark.parametrize('model', MODELS)
+def test_fit_sets_num_rows(model):
+    """Test ``fit`` sets ``_num_rows`` to the length of the data passed.
+
+    The ``fit`` method is expected to:
+    - Save the length of the data passed to the ``fit`` method in the ``_num_rows`` attribute.
+
+    Input:
+    - DataFrame
+
+    Side Effects:
+    - ``_num_rows`` is set to the length of the data passed to ``fit``.
+    """
+    # Setup
+    _N_DATA_ROWS = 100
+    data = pd.DataFrame({
+        'column1': list(range(_N_DATA_ROWS)),
+        'column2': list(range(_N_DATA_ROWS)),
+        'column3': list(range(_N_DATA_ROWS))
+    })
+
+    # Run
+    model.fit(data)
+
+    # Assert
+    assert model._num_rows == _N_DATA_ROWS
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test__make_conditions_df_without_num_rows(model):
     """Test ``_make_conditions_df`` works correctly when ``num_rows`` is not passed.
 
     The ``_make_conditions_df`` method is expected to:
@@ -359,9 +388,7 @@ def test__make_conditions_df_without_num_rows():
     - Conditions as ``DataFrame``
     """
     # Setup
-    _N_DATA_ROWS = 1000
-
-    model = GaussianCopula()
+    _N_DATA_ROWS = 100
     conditions = {'column2': 'M'}
     expected_conditions = pd.DataFrame([conditions] * _N_DATA_ROWS)
 
@@ -376,7 +403,8 @@ def test__make_conditions_df_without_num_rows():
     assert all(result_conditions == expected_conditions)
 
 
-def test__make_conditions_df_specifying_num_rows():
+@pytest.mark.parametrize('model', MODELS)
+def test__make_conditions_df_specifying_num_rows(model):
     """Test ``_make_conditions_df`` works correctly when ``num_rows`` is passed.
 
     The ``_make_conditions_df`` method is expected to:
@@ -390,10 +418,9 @@ def test__make_conditions_df_specifying_num_rows():
     - Conditions as ``DataFrame``
     """
     # Setup
-    _N_DATA_ROWS = 1000
-    _NUM_ROWS = 100
+    _N_DATA_ROWS = 100
+    _NUM_ROWS = 10
 
-    model = GaussianCopula()
     conditions = {'column2': 'M'}
     expected_conditions = pd.DataFrame([conditions] * _NUM_ROWS)
 
