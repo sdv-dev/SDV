@@ -359,23 +359,50 @@ def test__make_conditions_df_without_num_rows():
     - Conditions as ``DataFrame``
     """
     # Setup
-    N_ROWS = 1000
-    model = GaussianCopula()
-    data = pd.DataFrame({
-        'column1': list(range(N_ROWS)),
-        'column2': [random.choice(['M', 'F']) for _ in range(N_ROWS)],
-    })
-    conditions = {
-        'column2': 'M'
-    }
-    expected_conditions = pd.DataFrame([conditions] * len(data))
+    _N_DATA_ROWS = 1000
 
-    model.fit(data)
+    model = GaussianCopula()
+    conditions = {'column2': 'M'}
+    expected_conditions = pd.DataFrame([conditions] * _N_DATA_ROWS)
+
+    model._num_rows = _N_DATA_ROWS
 
     # Run
     result_conditions = model._make_conditions_df(conditions=conditions, num_rows=None)
 
     # Assert
     assert isinstance(result_conditions, pd.DataFrame)
-    assert len(result_conditions) == len(data)
+    assert len(result_conditions) == _N_DATA_ROWS
+    assert all(result_conditions == expected_conditions)
+
+
+def test__make_conditions_df_specifying_num_rows():
+    """Test ``_make_conditions_df`` works correctly when ``num_rows`` is passed.
+
+    The ``_make_conditions_df`` method is expected to:
+    - Return as many condition rows as specified with ``num_rows`` as a ``DataFrame``.
+
+    Input:
+    - Conditions
+    - Num_rows
+
+    Output:
+    - Conditions as ``DataFrame``
+    """
+    # Setup
+    _N_DATA_ROWS = 1000
+    _NUM_ROWS = 100
+
+    model = GaussianCopula()
+    conditions = {'column2': 'M'}
+    expected_conditions = pd.DataFrame([conditions] * _NUM_ROWS)
+
+    model._num_rows = _N_DATA_ROWS
+
+    # Run
+    result_conditions = model._make_conditions_df(conditions=conditions, num_rows=_NUM_ROWS)
+
+    # Assert
+    assert isinstance(result_conditions, pd.DataFrame)
+    assert len(result_conditions) == _NUM_ROWS
     assert all(result_conditions == expected_conditions)
