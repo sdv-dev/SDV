@@ -350,13 +350,13 @@ def test_fit_sets_num_rows(model):
     """Test ``fit`` sets ``_num_rows`` to the length of the data passed.
 
     The ``fit`` method is expected to:
-    - Save the length of the data passed to the ``fit`` method in the ``_num_rows`` attribute.
+        - Save the length of the data passed to the ``fit`` method in the ``_num_rows`` attribute.
 
     Input:
-    - DataFrame
+        - DataFrame
 
     Side Effects:
-    - ``_num_rows`` is set to the length of the data passed to ``fit``.
+        - ``_num_rows`` is set to the length of the data passed to ``fit``.
     """
     # Setup
     _N_DATA_ROWS = 100
@@ -378,13 +378,13 @@ def test__make_conditions_df_without_num_rows(model):
     """Test ``_make_conditions_df`` works correctly when ``num_rows`` is not passed.
 
     The ``_make_conditions_df`` method is expected to:
-    - Return conditions as a ``DataFrame`` for every row in the data.
+        - Return conditions as a ``DataFrame`` for every row in the data.
 
     Input:
-    - Conditions
+        - Conditions
 
     Output:
-    - Conditions as ``DataFrame``
+        - Conditions as ``DataFrame``
     """
     # Setup
     _N_DATA_ROWS = 100
@@ -410,11 +410,11 @@ def test__make_conditions_df_specifying_num_rows(model):
     - Return as many condition rows as specified with ``num_rows`` as a ``DataFrame``.
 
     Input:
-    - Conditions
-    - Num_rows
+        - Conditions
+        - Num_rows
 
     Output:
-    - Conditions as ``DataFrame``
+        - Conditions as ``DataFrame``
     """
     # Setup
     _N_DATA_ROWS = 100
