@@ -136,7 +136,63 @@ class TestTable:
         assert len(ean_8) == 8
         assert len(ean_13) == 13
 
-    def test__make_anonymization_mappings_unique_faked_value_in_field(self):
+    @patch('sdv.metadata.Table')
+    def test__make_anonymization_mappings(self, mock_table):
+        """Test that ``_make_anonymization_mappings`` creates the expected mappings.
+
+        The ``_make_anonymization_mappings`` method should map values in the original
+        data to fake values for non-id fields that are labeled pii.
+
+        Setup:
+        - Create a Table that has metadata about three fields (one pii field, one id field,
+          and one non-pii field).
+        Input:
+        - Data that contains a pii field, an id field, and a non-pii field.
+        Side Effects:
+        - Expect ``_get_fake_values`` to be called with the number of unique values of the
+          pii field.
+        - Expect the resulting `_ANONYMIZATION_MAPPINGS` field to contain the pii field, with
+          the correct number of mappings and keys.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._ANONYMIZATION_MAPPINGS = {}
+        foo_metadata = {
+            'type': 'categorical',
+            'pii': True,
+            'pii_category': 'email',
+        }
+        metadata._fields_metadata = {
+            'foo': foo_metadata,
+            'bar': {
+                'type': 'categorical',
+            },
+            'baz': {
+                'type': 'id',
+            }
+        }
+        foo_values = ['test1@example.com', 'test2@example.com', 'test3@example.com']
+        data = pd.DataFrame({
+            'foo': foo_values,
+            'bar': ['a', 'b', 'c'],
+            'baz': [1, 2, 3],
+        })
+
+        # Run
+        Table._make_anonymization_mappings(metadata, data)
+
+        # Assert
+        assert mock_table._get_fake_values.called_once_with(foo_metadata, 3)
+
+        mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]
+        assert len(mappings) == 1
+
+        foo_mappings = mappings['foo']
+        assert len(foo_mappings) == 3
+        assert list(foo_mappings.keys()) == foo_values
+
+    @patch('sdv.metadata.Table')
+    def test__make_anonymization_mappings_unique_faked_value_in_field(self, mock_table):
         """Test that ``_make_anonymization_mappings`` method creates mappings for anonymized values.
 
         The ``_make_anonymization_mappings`` method should map equal values in the original data
@@ -144,116 +200,36 @@ class TestTable:
 
         Input:
         - DataFrame with a field that should be anonymized based on the metadata description.
-        Output:
-        - The mappings created from the original values to faked values.
+        Side Effect:
+        - Mappings are created from the original values to faked values.
         """
         # Setup
-        metadata_dict = {
-            'fields': {
-                'foo': {
-                    'type': 'categorical',
-                    'pii': True,
-                    'pii_category': 'email'
-                }
-            }
+        metadata = Mock()
+        metadata._ANONYMIZATION_MAPPINGS = {}
+        foo_metadata = {
+            'type': 'categorical',
+            'pii': True,
+            'pii_category': 'email'
+        }
+        metadata._fields_metadata = {
+            'foo': foo_metadata
         }
         data = pd.DataFrame({
             'foo': ['test1@example.com', 'test2@example.com', 'test1@example.com']
         })
-        metadata = Table.from_dict(metadata_dict)
 
         # Run
-        metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
+        Table._make_anonymization_mappings(metadata, data)
 
         # Assert
+        assert mock_table._get_fake_values.called_once_with(foo_metadata, 2)
+
+        mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]
+        assert len(mappings) == 1
+
+        foo_mappings = mappings['foo']
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
-
-    def _mock_faker_getattr(obj, fn_name):
-        if fn_name == 'company':
-            return lambda: obj.__lang__
-        else:
-            return getattr(obj, fn_name)
-
-    @patch('faker.generator.getattr', _mock_faker_getattr)
-    def test__make_anonymization_mappings_multiple_localizations(self):
-        """Test that the ``_make_anonymization_mappings`` method takes localizations into account
-        when creating mappings for anonymized values.
-
-        The ``_make_anonymization_mappings`` method should create localized fake values if
-        `pii_locales` is specified in the metadata description.
-
-        Input:
-        - DataFrame with a field that should be anonymized based on the metadata description.
-        Metadata description specifies multiple localizations using `pii_locales`.
-        Output:
-        - The mappings created from the original values to localized faked values.
-        """
-        # Setup
-        metadata_dict = {
-            'fields': {
-                'foo': {
-                    'type': 'categorical',
-                    'pii': True,
-                    'pii_category': 'company',
-                    'pii_locales': ['en_US', 'sv_SE']
-                }
-            }
-        }
-
-        N_VALUES = 100
-        data = pd.DataFrame({'foo': list(range(N_VALUES))})
-        metadata = Table.from_dict(metadata_dict)
-
-        # Run
-        metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
-
-        # Assert
-        assert len(foo_mappings) == N_VALUES
-        assert list(foo_mappings.keys()) == list(range(N_VALUES))
-
-        assert 'en_US' in list(foo_mappings.values()) and 'sv_SE' in list(foo_mappings.values())
-
-    @patch('faker.generator.getattr', _mock_faker_getattr)
-    def test__make_anonymization_mappings_single_localization(self):
-        """Test that the ``_make_anonymization_mappings`` method takes single localization into account
-        when creating mappings for anonymized values.
-
-        The ``_make_anonymization_mappings`` method should create localized fake values if
-        `pii_locales` is specified in the metadata description.
-
-        Input:
-        - DataFrame with a field that should be anonymized based on the metadata description.
-        Metadata description specifies single localization using `pii_locales`.
-        Output:
-        - The mappings created from the original values to localized faked values.
-        """
-        # Setup
-        metadata_dict = {
-            'fields': {
-                'foo': {
-                    'type': 'categorical',
-                    'pii': True,
-                    'pii_category': 'company',
-                    'pii_locales': 'sv_SE'
-                }
-            }
-        }
-
-        N_VALUES = 2
-        data = pd.DataFrame({'foo': list(range(N_VALUES))})
-        metadata = Table.from_dict(metadata_dict)
-
-        # Run
-        metadata._make_anonymization_mappings(data)
-        foo_mappings = metadata._ANONYMIZATION_MAPPINGS[id(metadata)]['foo']
-
-        # Assert
-        assert len(foo_mappings) == N_VALUES
-        assert list(foo_mappings.keys()) == list(range(N_VALUES))
-        assert all([value == 'sv_SE' for value in foo_mappings.values()])
 
     @patch.object(Constraint, 'from_dict')
     def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
