@@ -9,8 +9,18 @@ from invoke import task
 
 
 @task
-def pytest(c):
-    c.run('python -m pytest --reruns 5 --cov=sdv')
+def check_dependencies(c):
+    c.run('python -m pip check')
+
+
+@task
+def unit(c):
+    c.run('python -m pytest ./tests/unit --cov=sdv --cov-report=xml')
+
+
+@task
+def integration(c):
+    c.run('python -m pytest ./tests/integration')
 
 
 @task
@@ -42,8 +52,9 @@ def install_minimum(c):
 @task
 def minimum(c):
     install_minimum(c)
-    c.run('python -m pip check')
-    c.run('python -m pytest --reruns 5')
+    check_dependencies(c)
+    unit(c)
+    integration(c)
 
 
 @task
@@ -73,6 +84,7 @@ def tutorials(c):
 
 @task
 def lint(c):
+    check_dependencies(c)
     c.run('flake8 sdv')
     c.run('flake8 tests --ignore=D,SFS2')
     c.run('isort -c --recursive sdv tests')

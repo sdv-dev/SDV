@@ -18,13 +18,14 @@ install_requires = [
     'pandas>=1.1,<1.1.5',
     'torch>=1.4,<2',
     'tqdm>=4.14,<5',
-    'copulas>=0.5.0,<0.6',
-    'ctgan>=0.4.3,<0.5',
-    'deepecho>=0.2.1,<0.3',
+    'copulas>=0.5.2.dev0,<0.6',
+    'ctgan>=0.4.4.dev0,<0.5',
+    'pyparsing>2.0.2,<3',
+    'deepecho==0.2.2.dev0,<0.3',
     'rdt>=0.5.3,<0.6',
-    'sdmetrics>=0.3.1,<0.4',
+    'sdmetrics>=0.3.3.dev0,<0.4',
+    'statsmodels==0.12.1',
     'torchvision>=0.5.0,<1',
-    'sktime>=0.4,<0.6',
 ]
 
 pomegranate_requires = [
@@ -67,7 +68,7 @@ development_requires = [
 
     # fix style issues
     'autoflake>=1.1,<2',
-    'autopep8>=1.4.3,<2',
+    'autopep8>=1.4.3,<1.6',
 
     # distribute on PyPI
     'twine>=1.10.0,<4',
