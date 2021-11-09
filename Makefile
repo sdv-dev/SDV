@@ -122,7 +122,7 @@ test-unit: ## run tests quickly with the default Python
 	invoke unit
 
 .PHONY: test-integration
-test-unit: ## run tests quickly with the default Python
+test-integration: ## run tests quickly with the default Python
 	invoke integration
 
 .PHONY: test-readme
