@@ -3,7 +3,7 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open('README.md', encoding='utf-8') as readme_file:
     readme = readme_file.read()
@@ -13,7 +13,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'Faker>=1.0.1,<4.15',
-    'graphviz>=0.13.2,<1',
+    'graphviz>=0.13.2,<0.18.1',
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
     'torch>=1.4,<2',
