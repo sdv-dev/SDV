@@ -13,7 +13,7 @@ def _get_graphviz_extension(path):
 
         graphviz_extension = path_splitted[-1]
 
-        if graphviz_extension not in graphviz.backend.FORMATS:
+        if graphviz_extension not in graphviz.FORMATS:
             raise ValueError(
                 '"{}" not a valid graphviz extension format.'.format(graphviz_extension)
             )
