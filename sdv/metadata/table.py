@@ -157,10 +157,28 @@ class Table:
         ('id', 'string'): 'str'
     }
 
-    def _get_faker(self, category):
-        """Return the faker object to anonymize data.
+    @staticmethod
+    def _get_faker(field_metadata):
+        """Return the faker object with localisaton set if specified in field_metadata.
 
         Args:
+            field_metadata (dict):
+                Metadata for field to read localisation from if set in `pii_locales`.
+
+        Returns:
+            Faker object:
+                The Faker object to anonymize the data in the field using its functions.
+        """
+        pii_locales = field_metadata.get('pii_locales', None)
+        return Faker(locale=pii_locales)
+
+    @staticmethod
+    def _get_faker_method(faker, category):
+        """Return the faker function to anonymize data.
+
+        Args:
+            faker (Faker object):
+                The faker object created to get functions from.
             category (str or tuple):
                 Fake category to use. If a tuple is passed, the first element is
                 the category and the rest are additional arguments for the Faker.
@@ -179,18 +197,39 @@ class Table:
             args = tuple()
 
         try:
-            faker_method = getattr(Faker(), category)
+            if args:
+                def _faker():
+                    return getattr(faker, category)(*args)
 
-            if not args:
-                return faker_method
+            else:
+                def _faker():
+                    return getattr(faker, category)()
 
-            def faker():
-                return faker_method(*args)
-
-            return faker
-
+            return _faker
         except AttributeError:
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
+
+    @staticmethod
+    def _get_fake_values(field_metadata, num_values):
+        """Return the anonymized values from Faker.
+
+        Args:
+            field_metadata (dict):
+                Metadata for field to read localisation from if set in `pii_locales`.
+                And to read the faker category from `pii_category`.
+            num_values (int):
+                Number of values to create.
+
+        Returns:
+            generator:
+                Generator containing the anonymized values.
+        """
+        faker = Table._get_faker(field_metadata)
+        faker_method = Table._get_faker_method(faker, field_metadata['pii_category'])
+        return (
+            faker_method()
+            for _ in range(num_values)
+        )
 
     def _update_transformer_templates(self, rounding, min_value, max_value):
         default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
@@ -503,15 +542,12 @@ class Table:
         mappings = {}
         for name, field_metadata in self._fields_metadata.items():
             if field_metadata['type'] != 'id' and field_metadata.get('pii'):
-                faker = self._get_faker(field_metadata['pii_category'])
-
                 uniques = data[name].unique()
-                fake_values = [faker() for _ in range(len(uniques))]
-                mappings[name] = dict(zip(uniques, fake_values))
+                mappings[name] = dict(
+                    zip(uniques, Table._get_fake_values(field_metadata, len(uniques)))
+                )
 
         self._ANONYMIZATION_MAPPINGS[id(self)] = mappings
-
-        return mappings
 
     def _anonymize(self, data):
         anonymization_mappings = self._ANONYMIZATION_MAPPINGS.get(id(self))
@@ -667,8 +703,7 @@ class Table:
             if field_type == 'id' and name not in reversed_data:
                 field_data = self._make_ids(field_metadata, len(reversed_data))
             elif field_metadata.get('pii', False):
-                faker = self._get_faker(field_metadata['pii_category'])
-                field_data = pd.Series([faker() for _ in range(len(reversed_data))])
+                field_data = pd.Series(Table._get_fake_values(field_metadata, len(reversed_data)))
             else:
                 field_data = reversed_data[name]
 
