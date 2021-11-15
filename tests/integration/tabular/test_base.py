@@ -102,11 +102,11 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     taking into account the metadata and the ``Unique`` constraint.
 
     Setup:
-    - The model is passed a metadata ``dict`` that contains a ``Unique`` constraint and is
-    matched to the specified data.
+    - The model is passed the unique constraint and
+    the primary key column.
 
     Input:
-    - Data, Metadata with unique constraint
+    - Data, Unique constraint
 
     Github Issue:
     - Tests that https://github.com/sdv-dev/SDV/issues/616 does not occur
@@ -148,12 +148,12 @@ def test_fit_with_unique_constraint_on_data_subset():
     taking into account the metadata and the ``Unique`` constraint.
 
     Setup:
-    - The model is passed a metadata ``dict`` that contains a ``Unique`` constraint and is
+    - The model is passed a ``Unique`` constraint and is
     matched to a subset of the specified data.
     Subdividing the data results in missing indexes in the subset contained in the original data.
 
     Input:
-    - Subset of data, Metadata with unique constraint
+    - Subset of data, unique constraint
 
     Github Issue:
     - Tests that https://github.com/sdv-dev/SDV/issues/610 does not occur
@@ -167,7 +167,7 @@ def test_fit_with_unique_constraint_on_data_subset():
             4,
             5,
         ],
-        "error_column": [
+        "test_column": [
             "A",
             "B",
             "C",
@@ -176,24 +176,11 @@ def test_fit_with_unique_constraint_on_data_subset():
         ]
     })
     unique = Unique(
-        columns=["error_column"]
+        columns=["test_column"]
     )
-    err_metadata = {
-        "name": "error",
-        "constraints": [unique],
-        "primary_key": "key",
-        "fields": {
-            "key": {
-                "type": "id", "subtype": "integer"
-            },
-            "error_column": {
-                "type": "categorical",
-            }
-        }
-    }
 
     test_df = test_df.iloc[[1, 3, 4]]
-    model = GaussianCopula(table_metadata=err_metadata)
+    model = GaussianCopula(primary_key="key", constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -201,7 +188,7 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     # Assert
     assert len(samples) == 2
-    assert samples["error_column"].is_unique
+    assert samples["test_column"].is_unique
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
