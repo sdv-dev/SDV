@@ -94,7 +94,7 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
         model.sample(conditions=conditions)
 
 
-def test_fit_with_unique_constraint_on_data_which_has_index_column():
+def test_fit_with_unique_constraint_on_data_with_only_index_column():
     """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
     ``fit`` is called on data containing a column named index.
 
@@ -138,6 +138,60 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     # Assert
     assert len(samples) == 2
     assert samples["index"].is_unique
+
+
+def test_fit_with_unique_constraint_on_data_which_has_index_column():
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on data containing a column named index and other columns.
+
+    The ``fit`` method is expected to fit the model to data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed the unique constraint and
+    the primary key column.
+    - The unique constraint is set on the ``test_column``
+
+    Input:
+    - Data, Unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/616 does not occur
+    """
+    # Setup
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "index": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ],
+        "test_column": [
+            "A1",
+            "B2",
+            "C3",
+            "D4",
+            "E5",
+        ]
+    })
+    unique = Unique(columns=["test_column"])
+    model = GaussianCopula(primary_key="key", constraints=[unique])
+
+    # Run
+    model.fit(test_df)
+    samples = model.sample(2)
+
+    # Assert
+    assert len(samples) == 2
+    assert samples["test_column"].is_unique
 
 
 def test_fit_with_unique_constraint_on_data_subset():
