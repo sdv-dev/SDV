@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import UniqueCombinations
+from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
@@ -92,6 +92,70 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
 
     with pytest.raises(ValueError):
         model.sample(conditions=conditions)
+
+
+def test_fit_with_unique_constraint_on_data_subset():
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on a subset of the original data.
+
+    The ``fit`` method is expected to fit the model to the subset of data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed a metadata ``dict`` that contains a ``Unique`` constraint and is
+    matched to a subset of the specified data.
+    Subdividing the data results in missing indexes in the subset contained in the original data.
+
+    Input:
+    - Subset of data, Metadata with unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/610 does not occur
+    """
+    # Setup
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "error_column": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ]
+    })
+    unique = Unique(
+        columns=["error_column"]
+    )
+    err_metadata = {
+        "name": "error",
+        "constraints": [unique],
+        "primary_key": "key",
+        "fields": {
+            "key": {
+                "type": "id", "subtype": "integer"
+            },
+            "error_column": {
+                "type": "categorical",
+            }
+        }
+    }
+
+    test_df = test_df.iloc[[1, 3, 4]]
+    model = GaussianCopula(table_metadata=err_metadata)
+
+    # Run
+    model.fit(test_df)
+    samples = model.sample(2)
+
+    # Assert
+    assert len(samples) == 2
+    assert samples["error_column"].is_unique
 
 
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',

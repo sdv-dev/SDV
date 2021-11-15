@@ -8,6 +8,7 @@ import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
+from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
@@ -153,7 +154,9 @@ class Constraint(metaclass=ConstraintMeta):
                 'O': 'one_hot_encoding',
             })
             transformed_data = self._hyper_transformer.fit_transform(data_to_model)
-            self._columns_model = GaussianMultivariate()
+            self._columns_model = GaussianMultivariate(
+                distribution=GaussianUnivariate
+            )
             self._columns_model.fit(transformed_data)
 
     def _transform(self, table_data):

@@ -12,7 +12,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'Faker>=1.0.1,<4.15',
+    'Faker>=3.0.0,<10',
     'graphviz>=0.13.2,<1',
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
@@ -111,6 +111,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.12.1',
+    version='0.12.2.dev0',
     zip_safe=False,
 )
