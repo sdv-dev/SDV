@@ -128,24 +128,8 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
             "E",
         ]
     })
-    unique = Unique(
-        columns=["index"]
-    )
-    err_metadata = {
-        "name": "error",
-        "constraints": [unique],
-        "primary_key": "key",
-        "fields": {
-            "key": {
-                "type": "id", "subtype": "integer"
-            },
-            "index": {
-                "type": "categorical",
-            }
-        }
-    }
-
-    model = GaussianCopula(table_metadata=err_metadata)
+    unique = Unique(columns=["index"])
+    model = GaussianCopula(primary_key="key", constraints=[unique])
 
     # Run
     model.fit(test_df)
