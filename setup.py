@@ -14,19 +14,14 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'Faker>=3.0.0,<10',
     'graphviz>=0.13.2,<1',
-    'numpy>=1.19.0,<2',
+    'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
-    'torch>=1.4,<2',
     'tqdm>=4.14,<5',
     'copulas>=0.6.0,<0.7',
     'ctgan>=0.4.4.dev0,<0.5',
-    'pyparsing>=2.2.2,<3',
     'deepecho>=0.2.2.dev0,<0.3',
     'rdt>=0.5.3,<0.6',
     'sdmetrics>=0.3.3.dev0,<0.4',
-    'sktime>=0.6,<1',
-    'statsmodels==0.12.1',
-    'torchvision>=0.5.0,<1',
 ]
 
 pomegranate_requires = [
