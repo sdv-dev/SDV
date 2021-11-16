@@ -4061,7 +4061,8 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4105,7 +4106,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4149,7 +4151,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4388,7 +4391,8 @@ class TestBetween():
         instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -4437,7 +4441,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         out = instance.reverse_transform(transformed)
 
@@ -4485,7 +4490,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         out = instance.reverse_transform(transformed)
 
