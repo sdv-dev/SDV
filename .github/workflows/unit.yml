@@ -31,5 +31,4 @@ jobs:
       run: invoke unit
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
       name: Upload codecov report
-      run: invoke coverage
       uses: codecov/codecov-action@v2
