@@ -824,14 +824,18 @@ class Between(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        satisfy_low_bound = self._lt(
-            self._get_low_value(table_data), table_data[self.constraint_column]
-        )
-        satisfy_high_bound = self._lt(
-            table_data[self.constraint_column], self._get_high_value(table_data)
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+
+        satisfy_low_bound = self._lt(low, table_data[self.constraint_column])
+        satisfy_high_bound = self._lt(table_data[self.constraint_column], high)
+
+        isnull = np.logical_or(
+            np.isnan(table_data[self.constraint_column]),
+            np.logical_or(np.isnan(low), np.isnan(high))
         )
 
-        return satisfy_low_bound & satisfy_high_bound
+        return np.logical_or((satisfy_low_bound & satisfy_high_bound), isnull)
 
     def _transform(self, table_data):
         """Transform the table data.
