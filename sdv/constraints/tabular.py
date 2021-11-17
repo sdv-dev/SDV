@@ -1120,8 +1120,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        valid = pd.Series([False] * table_data.shape[0])
-        data = table_data.reset_index()
-        groups = data.groupby(self.columns)
-        valid.iloc[groups.first()['index'].values] = True
-        return valid
+        return table_data.groupby(self.columns).cumcount() == 0

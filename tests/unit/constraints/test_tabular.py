@@ -5188,6 +5188,128 @@ class TestUnique():
         expected = pd.Series([True, False, True, False, True, True])
         pd.testing.assert_series_equal(valid, expected)
 
+    def test_is_valid_custom_index_same_values(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns.
+        - DataFrame has a custom index column which is set to 0 for rows.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b', 'c'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 2, 2, 3],
+            'b': [5, 5, 6, 6, 7],
+            'c': [8, 8, 9, 9, 10]
+        }, index=[0, 0, 0, 0, 0])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, True, False, True], index=[0, 0, 0, 0, 0])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_custom_index_not_sorted(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns.
+        - DataFrame has a custom index column which is set in an unsorted way.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b', 'c'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 2, 2, 3],
+            'b': [5, 5, 6, 6, 7],
+            'c': [8, 8, 9, 9, 10]
+        }, index=[2, 1, 3, 5, 4])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, True, False, True], index=[2, 1, 3, 5, 4])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_custom_index_not_sorted(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``self.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple occurences of the same value of the
+        one column in ``instance.columns``.
+        - DataFrame has a custom index column which is set in an unsorted way.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
+        """
+        # Setup
+        instance = Unique(columns='a')
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 1, 2, 3, 2],
+            'b': [1, 2, 3, 4, 5, 6],
+            'c': [False, False, True, False, False, True]
+        }, index=[2, 1, 3, 5, 4, 6])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, False, True, True, False], index=[2, 1, 3, 5, 4, 6])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_custom_index_same_values(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``self.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple occurences of the same value of the
+        one column in ``instance.columns``.
+        - DataFrame has a custom index column which is set to 0 for rows.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
+        """
+        # Setup
+        instance = Unique(columns='a')
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 1, 2, 3, 2],
+            'b': [1, 2, 3, 4, 5, 6],
+            'c': [False, False, True, False, False, True]
+        }, index=[0, 0, 0, 0, 0, 0])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, False, True, True, False], index=[0, 0, 0, 0, 0, 0])
+        pd.testing.assert_series_equal(valid, expected)
+
     def test_is_valid_one_column(self):
         """Test the ``Unique.is_valid`` method.
 
