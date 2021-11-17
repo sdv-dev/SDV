@@ -1,0 +1,25 @@
+name: Test README
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  readme:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-10.15]   # skip windows bc rundoc fails
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          python -m pip install invoke rundoc .
+    - name: Run the README.md
+      run: invoke readme
