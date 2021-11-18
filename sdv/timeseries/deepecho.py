@@ -64,7 +64,6 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         data_types = list()
         context_types = list()
-        fields_metadata = self._metadata.get_fields()
         for field in self._output_columns:
             dtype = timeseries_data[field].dtype
             kind = dtype.kind
