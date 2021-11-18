@@ -536,7 +536,7 @@ Was the ``GaussianCopula`` able to capture this distribution on its own?
 .. ipython:: python
     :okwarning:
 
-    distributions['experience_years']
+    distributions['experience_years.value']
 
 
 It seems that it was not, as it rather thought that the behavior was
