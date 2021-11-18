@@ -844,7 +844,7 @@ class Between(Constraint):
         )
 
         return np.logical_or(
-            (satisfy_low_bound & satisfy_high_bound),
+            np.logical_and(satisfy_low_bound, satisfy_high_bound),
             np.isnan(table_data[self.constraint_column]),
         )
 
