@@ -193,7 +193,7 @@ class CopulaGAN(CTGAN):
         """
         return {
             field: transformer._univariate.to_dict()['type']
-            for field, transformer in self._ht.transformers.items()
+            for field, transformer in self._ht.field_transformers.items()
         }
 
     def _fit(self, table_data):
