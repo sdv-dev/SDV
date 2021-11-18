@@ -210,7 +210,7 @@ class CopulaGAN(CTGAN):
             field: GaussianCopulaTransformer(
                 distribution=distributions.get(field, default)
             )
-            for field in table_data.columns
+            for field in self._metadata._hyper_transformer._input_columns
             if field in fields and fields.get(field, dict()).get('type') != 'categorical'
         }
         self._ht = HyperTransformer(field_transformers=transformers)
