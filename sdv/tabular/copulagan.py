@@ -213,7 +213,7 @@ class CopulaGAN(CTGAN):
             for field in table_data.columns
             if field in fields and fields.get(field, dict()).get('type') != 'categorical'
         }
-        self._ht = HyperTransformer(transformers=transformers)
+        self._ht = HyperTransformer(field_transformers=transformers)
         table_data = self._ht.fit_transform(table_data)
 
         super()._fit(table_data)

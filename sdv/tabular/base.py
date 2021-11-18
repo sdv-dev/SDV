@@ -234,7 +234,6 @@ class BaseTabularModel:
                     sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
                     sampled = self._sample(num_rows)
-
             sampled = self._metadata.reverse_transform(sampled)
 
             if previous_rows is not None:

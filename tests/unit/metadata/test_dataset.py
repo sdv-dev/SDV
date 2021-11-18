@@ -509,7 +509,7 @@ class TestMetadata(TestCase):
             {'meta': 'dtypes'},
             {'meta': 'pii_fields'}
         )
-        mock_ht.assert_called_once_with(transformers={'meta': 'transformers'})
+        mock_ht.assert_called_once_with(field_transformers={'meta': 'transformers'})
 
     def test_get_tables(self):
         """Test get table names"""
