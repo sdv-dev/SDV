@@ -546,7 +546,7 @@ distribution for the ``experience_years`` column
 .. ipython:: python
     :okwarning:
 
-    model.get_distributions()['experience_years']
+    model.get_distributions()['experience_years.value']
 
 
 And, as a result, now we can see how the generated data now have a
