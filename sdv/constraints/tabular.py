@@ -728,12 +728,19 @@ class Between(Constraint):
         self.constraint_column = column
         self.constraint_columns = (column,)
         self.rebuild_columns = (column,)
-        self._low = low
-        self._high = high
         self._strict = strict
         self._high_is_scalar = high_is_scalar
         self._low_is_scalar = low_is_scalar
         self._lt = operator.lt if strict else operator.le
+
+        self._low = low
+        if self._low_is_scalar and isinstance(low, pd.Timestamp):
+            self._low = low.to_datetime64()
+
+        self._high = high
+        if self._high_is_scalar and isinstance(high, pd.Timestamp):
+            self._high = high.to_datetime64()
+
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -824,14 +831,22 @@ class Between(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        satisfy_low_bound = self._lt(
-            self._get_low_value(table_data), table_data[self.constraint_column]
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+
+        satisfy_low_bound = np.logical_or(
+            self._lt(low, table_data[self.constraint_column]),
+            np.isnan(low),
         )
-        satisfy_high_bound = self._lt(
-            table_data[self.constraint_column], self._get_high_value(table_data)
+        satisfy_high_bound = np.logical_or(
+            self._lt(table_data[self.constraint_column], high),
+            np.isnan(high),
         )
 
-        return satisfy_low_bound & satisfy_high_bound
+        return np.logical_or(
+            np.logical_and(satisfy_low_bound, satisfy_high_bound),
+            np.isnan(table_data[self.constraint_column]),
+        )
 
     def _transform(self, table_data):
         """Transform the table data.

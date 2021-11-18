@@ -4061,7 +4061,8 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4105,7 +4106,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4149,7 +4151,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4388,7 +4391,8 @@ class TestBetween():
         instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -4437,7 +4441,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         out = instance.reverse_transform(transformed)
 
@@ -4485,7 +4490,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -4702,7 +4708,203 @@ class TestBetween():
 
         # Assert
         expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
 
+    def test_is_valid_low_high_nans(self):
+        """Test the ``Between.is_valid`` method with nan values in low and high columns.
+
+        If one of `low` or `high` is NaN, expect it to be ignored in the comparison.
+        If both are NaN or the constraint column is NaN, return True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9, 1.0],
+            'b': [0, None, None, 0.4],
+            'c': [0.5, None, 0.6, None]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_nans(self):
+        """Test the ``Between.is_valid`` method with nan values in constraint column.
+
+        If the constraint column is Nan, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, None],
+            'b': [0, 0.1, 0.5],
+            'c': [0.5, 1.5, 0.6]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_high_scalar_low_nans(self):
+        """Test the ``Between.is_valid`` method with ``high`` as scalar and ``low`` containing NaNs.
+
+        The NaNs in ``low`` should be ignored.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - The NaN values should be ignored when making comparisons.
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 1.9],
+            'b': [-0.5, None, None],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_low_high_nans_datetime(self):
+        """Test the ``Between.is_valid`` method with nan values in low and high datetime columns.
+
+        If one of `low` or `high` is NaN, expect it to be ignored in the comparison.
+        If both are NaN or the constraint column is NaN, return True.
+
+        Input:
+        - Table with row NaN containing NaNs.
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-13'),
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-13'),
+                pd.to_datetime('2020-08-14'),
+            ],
+            'b': [
+                pd.to_datetime('2020-09-03'),
+                None,
+                None,
+                pd.to_datetime('2020-10-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                None,
+                None,
+            ]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_nans_datetime(self):
+        """Test the ``Between.is_valid`` method with nan values in the constraint column.
+
+        If there is a row containing NaNs, expect that `is_valid` returns True.
+
+        Input:
+        - Table with row NaN containing NaNs.
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                None,
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-13'),
+            ],
+            'b': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-02'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-01'),
+            ]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_high_datetime_low_nans(self):
+        """Test the ``Between.is_valid`` method with ``high`` as datetime and ``low`` with NaNs.
+
+        The NaNs in ``low`` should be ignored.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - The NaN values should be ignored when making comparisons.
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = pd.to_datetime('2020-08-13')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-14'),
+            ],
+            'b': [
+                pd.to_datetime('2020-06-03'),
+                None,
+                None,
+            ],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
         pd.testing.assert_series_equal(expected_out, out)
 
 
