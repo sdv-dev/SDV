@@ -1011,13 +1011,15 @@ class OneHotEncoding(Constraint):
         table_data = table_data.copy()
 
         condition_columns = [col for col in self._columns if col in table_data.columns]
-        if not table_data[condition_columns].isin([0.0, 1.0]).all(axis=1).all():
+        conditions_data = table_data[condition_columns]
+        conditions_data_sum = conditions_data.sum(axis=1)
+        if not conditions_data.isin([0.0, 1.0]).all(axis=1).all():
             raise ValueError('Condition values must be ones or zeros.')
 
-        if (table_data[condition_columns].sum(axis=1) > 1.0).any():
+        if (conditions_data_sum > 1.0).any():
             raise ValueError('Each row of a condition can only contain one number one.')
 
-        has_one = table_data[condition_columns].sum(axis=1) == 1.0
+        has_one = conditions_data_sum == 1.0
         if (~has_one).sum() > 0:
             sub_table_data = table_data.loc[~has_one, condition_columns]
             should_transform = False
@@ -1033,7 +1035,7 @@ class OneHotEncoding(Constraint):
                 conditions = sub_table_data[condition_columns]
                 transformed_conditions = self._hyper_transformer.transform(conditions)
                 proposed_table_data = self._columns_model.sample(
-                    num_rows=sub_table_data[condition_columns].shape[0],
+                    num_rows=len(sub_table_data),
                     conditions=transformed_conditions.iloc[0].to_dict()
                 )
 
