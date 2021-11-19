@@ -14,18 +14,20 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'Faker>=3.0.0,<10',
     'graphviz>=0.13.2,<1',
-    'numpy>=1.18.0,<2',
-    'pandas>=1.1,<1.1.5',
-    'tqdm>=4.14,<5',
-    'copulas>=0.5.0,<0.6',
-    'ctgan>=0.4.3,<0.5',
-    'deepecho>=0.2.1,<0.3',
-    'rdt>=0.5.3,<0.6',
-    'sdmetrics>=0.3.1,<0.4',
+    "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
+    "numpy>=1.20.0,<2;python_version>='3.7'",
+    'pandas>=1.1.3,<2',
+    'tqdm>=4.15,<5',
+    'copulas>=0.6.0,<0.7',
+    'ctgan>=0.5.0,<0.6',
+    'deepecho>=0.3.0.post1,<0.4',
+    'rdt>=0.6.1,<0.7',
+    'sdmetrics>=0.4.0,<0.5',
 ]
 
 pomegranate_requires = [
-    'pomegranate>=0.13.4,<0.14.2',
+    "pomegranate>=0.13.4,<0.14.2;python_version<'3.7'",
+    "pomegranate>=0.14.1,<0.15;python_version>='3.7'",
 ]
 
 setup_requires = [
@@ -103,7 +105,7 @@ setup(
     long_description_content_type='text/markdown',
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
-    python_requires='>=3.6,<3.9',
+    python_requires='>=3.6,<3.10',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,

@@ -280,11 +280,11 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
     sampled_numeric_data = [pd.DataFrame({
-        'city#state': [0, 1, 2, 0, 0],
-        'age': [30, 30, 30, 30, 30]
+        'city#state.value': [0, 1, 2, 0, 0],
+        'age.value': [30, 30, 30, 30, 30]
     }), pd.DataFrame({
-        'city#state': [1],
-        'age': [30]
+        'city#state.value': [1],
+        'age.value': [30]
     })]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
@@ -294,7 +294,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     sampled_data = model.sample(5, conditions=conditions)
 
     # Assert
-    expected_transformed_conditions = {'age': 30}
+    expected_transformed_conditions = {'age.value': 30}
     expected_data = pd.DataFrame({
         'city': ['LA', 'SF', 'LA', 'LA', 'SF'],
         'state': ['CA', 'CA', 'CA', 'CA', 'CA'],
@@ -341,14 +341,14 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
     sampled_numeric_data = [pd.DataFrame({
-        'city#state': [2],
-        'age': [30]
+        'city#state.value': [2],
+        'age.value': [30]
     }), pd.DataFrame({
-        'city#state': [1, 1, 0, 0, 0],
-        'age': [30, 30, 30, 30, 30]
+        'city#state.value': [1, 1, 0, 0, 0],
+        'age.value': [30, 30, 30, 30, 30]
     }), pd.DataFrame({
-        'city#state': [0, 0, 1, 1, 1],
-        'age': [30, 30, 30, 30, 30]})
+        'city#state.value': [0, 0, 1, 1, 1],
+        'age.value': [30, 30, 30, 30, 30]})
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
@@ -362,8 +362,8 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     expected_ages = pd.Series([30, 30, 30, 30, 30], name='age')
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) >= 2 and len(sample_calls) <= 3
-    assert all(c[2]['conditions']['age'] == 30 for c in sample_calls)
-    assert all('city#state' in c[2]['conditions'] for c in sample_calls)
+    assert all(c[2]['conditions']['age.value'] == 30 for c in sample_calls)
+    assert all('city#state.value' in c[2]['conditions'] for c in sample_calls)
     pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
     pd.testing.assert_series_equal(sampled_data['state'], expected_states)
     assert all(c in ('SF', 'LA') for c in sampled_data['city'])
@@ -407,16 +407,16 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     model = GaussianCopula(constraints=[constraint])
     sampled_conditions = [
         pd.DataFrame({
-            'age_joined': [26.0, 18.0, 31.0, 29.0, 32.0],
-            'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+            'age_joined.value': [26.0, 18.0, 31.0, 29.0, 32.0],
+            'age.value': [30.0, 30.0, 30.0, 30.0, 30.0]
         }),
         pd.DataFrame({
-            'age_joined': [28.0, 33.0, 31.0],
-            'age': [30.0, 30.0, 30.0]
+            'age_joined.value': [28.0, 33.0, 31.0],
+            'age.value': [30.0, 30.0, 30.0]
         }),
         pd.DataFrame({
-            'age_joined': [27.0],
-            'age': [30.0]
+            'age_joined.value': [27.0],
+            'age.value': [30.0]
         })
     ]
 

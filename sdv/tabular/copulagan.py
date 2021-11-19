@@ -192,8 +192,9 @@ class CopulaGAN(CTGAN):
                 for each column.
         """
         return {
-            field: transformer._univariate.to_dict()['type']
-            for field, transformer in self._ht.transformers.items()
+            transformer.column_prefix: transformer._univariate.to_dict()['type']
+            for transformer in self._ht._transformers_sequence
+            if isinstance(transformer, GaussianCopulaTransformer)
         }
 
     def _fit(self, table_data):
@@ -210,10 +211,11 @@ class CopulaGAN(CTGAN):
             field: GaussianCopulaTransformer(
                 distribution=distributions.get(field, default)
             )
-            for field in table_data.columns
-            if field in fields and fields.get(field, dict()).get('type') != 'categorical'
+            for field in table_data
+            if field.replace('.value', '')
+            in fields and fields.get(field, dict()).get('type') != 'categorical'
         }
-        self._ht = HyperTransformer(transformers=transformers)
+        self._ht = HyperTransformer(field_transformers=transformers)
         table_data = self._ht.fit_transform(table_data)
 
         super()._fit(table_data)

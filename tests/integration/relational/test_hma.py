@@ -25,13 +25,13 @@ def test_sdv_model_kwargs():
     assert model._default_distribution == BetaUnivariate
     assert model._DTYPE_TRANSFORMERS['O'] == 'label_encoding'
     assert isinstance(
-        model._metadata._hyper_transformer._transformers['gender'],
+        model._metadata._hyper_transformer.field_transformers['gender'],
         rdt.transformers.categorical.LabelEncodingTransformer
     )
 
 
 def test_ids_only_child():
-    """Ensure tables with nothing else than ids can be modeled and sampled."""
+    """Ensure tables with nothing other than ids can be modeled and sampled."""
     parent = pd.DataFrame({
         'parent_id': range(10),
     })

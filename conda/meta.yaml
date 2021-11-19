@@ -18,34 +18,34 @@ requirements:
     - pip
     - pytest-runner
     - graphviz
-    - python >=3.6,<3.9
+    - python >=3.6,<3.10
     - faker >=3.0.0,<10
     - python-graphviz >=0.13.2,<1
     - numpy >=1.18.0,<2
-    - pandas >=1.1,<1.1.5
-    - pomegranate >=0.13.4,<0.14.2
-    - pytorch >=1.4,<2
-    - tqdm >=4.14,<5
-    - copulas >=0.5.0,<0.6
-    - ctgan >=0.4.3,<0.5
-    - deepecho >=0.2.0,<0.3
-    - rdt >=0.5.0,<0.6
-    - sdmetrics >=0.3.1,<0.4
+    - pandas >=1.1.3,<2
+    - pomegranate >=0.13.4,<0.15
+    - pytorch >=1.8,<2
+    - tqdm >=4.15,<5
+    - copulas >=0.6.0,<0.7
+    - ctgan >=0.5.0,<0.6
+    - deepecho >=0.3.0.post1,<0.4
+    - rdt >=0.6.1,<0.7
+    - sdmetrics >=0.4.0,<0.5
   run:
     - graphviz
-    - python >=3.6,<3.9
+    - python >=3.6,<3.10
     - faker >=3.0.0,<10
     - python-graphviz >=0.13.2,<1
     - numpy >=1.18.0,<2
-    - pandas >=1.1,<1.1.5
-    - pomegranate >=0.13.4,<0.14.2
-    - pytorch >=1.4,<2
-    - tqdm >=4.14,<5
-    - copulas >=0.5.0,<0.6
-    - ctgan >=0.4.3,<0.5
-    - deepecho >=0.2.0,<0.3
-    - rdt >=0.5.0,<0.6
-    - sdmetrics >=0.3.1,<0.4
+    - pandas >=1.1.3,<2
+    - pomegranate >=0.13.4,<0.15
+    - pytorch >=1.8,<2
+    - tqdm >=4.15,<5
+    - copulas >=0.6.0,<0.7
+    - ctgan >=0.5.0,<0.6
+    - deepecho >=0.3.0.post1,<0.4
+    - rdt >=0.6.1,<0.7
+    - sdmetrics >=0.4.0,<0.5
 
 about:
   home: "https://sdv.dev"
