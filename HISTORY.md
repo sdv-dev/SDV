@@ -40,6 +40,7 @@ Additionally, this release adds support for Python 3.9!
 
 * Anonymizing PII in single table tutorials states address field as e-mail type - Issue [#604](https://github.com/sdv-dev/SDV/issues/604) by @xamm
 
+Special thanks to @xamm, @katxiao, @pvk-developer and @amontanez24 for all the work that made this release possible!
 
 ## 0.12.1 - 2021-10-12
 
