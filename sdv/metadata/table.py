@@ -482,7 +482,7 @@ class Table:
         for column in numerical_extras:
             transformers_dict[column] = rdt.transformers.NumericalTransformer()
 
-        self._hyper_transformer = rdt.HyperTransformer(transformers=transformers_dict)
+        self._hyper_transformer = rdt.HyperTransformer(field_transformers=transformers_dict)
         self._hyper_transformer.fit(data[list(transformers_dict.keys())])
 
     @staticmethod
@@ -661,7 +661,10 @@ class Table:
         data = self._transform_constraints(data, on_missing_column)
 
         LOGGER.debug('Transforming table %s', self.name)
-        return self._hyper_transformer.transform(data)
+        try:
+            return self._hyper_transformer.transform(data)
+        except rdt.errors.NotFittedError:
+            return data
 
     @classmethod
     def _make_ids(cls, field_metadata, length):
@@ -693,7 +696,10 @@ class Table:
         if not self.fitted:
             raise MetadataNotFittedError()
 
-        reversed_data = self._hyper_transformer.reverse_transform(data)
+        try:
+            reversed_data = self._hyper_transformer.reverse_transform(data)
+        except rdt.errors.NotFittedError:
+            reversed_data = data
 
         for constraint in reversed(self._constraints):
             reversed_data = constraint.reverse_transform(reversed_data)

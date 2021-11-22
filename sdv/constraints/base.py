@@ -150,8 +150,8 @@ class Constraint(metaclass=ConstraintMeta):
 
         if self.fit_columns_model and len(self.constraint_columns) > 1:
             data_to_model = table_data[list(self.constraint_columns)]
-            self._hyper_transformer = HyperTransformer(dtype_transformers={
-                'O': 'one_hot_encoding',
+            self._hyper_transformer = HyperTransformer(default_data_type_transformers={
+                'categorical': 'OneHotEncodingTransformer',
             })
             transformed_data = self._hyper_transformer.fit_transform(data_to_model)
             self._columns_model = GaussianMultivariate(

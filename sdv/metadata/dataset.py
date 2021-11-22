@@ -475,7 +475,7 @@ class Metadata:
         dtypes = self.get_dtypes(table_name)
         pii_fields = self._get_pii_fields(table_name)
         transformers_dict = self._get_transformers(dtypes, pii_fields)
-        return HyperTransformer(transformers=transformers_dict)
+        return HyperTransformer(field_transformers=transformers_dict)
 
     def transform(self, table_name, data):
         """Transform data for a given table.

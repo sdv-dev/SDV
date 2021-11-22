@@ -1,0 +1,31 @@
+name: Unit Tests Minimum Versions
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  minimum:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-10.15, windows-latest]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - if: matrix.os == 'windows-latest'
+      name: Install dependencies - Windows
+      run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'torch==1.8.0' -f https://download.pytorch.org/whl/cpu/torch/
+          python -m pip install 'torchvision==0.9.0' -f https://download.pytorch.org/whl/cpu/torchvision/
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          python -m pip install invoke .[test]
+    - name: Test with minimum versions
+      run: invoke minimum
