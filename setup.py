@@ -49,6 +49,7 @@ development_requires = [
     'watchdog>=0.8.3,<0.11',
 
     # docs
+    'docutils>=0.12,<0.18',
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
