@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.base &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.base &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -205,7 +205,7 @@
 <span class="sd">                Whether to include subclasses which are parents to</span>
 <span class="sd">                other classes. Defaults to ``False``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">subclasses</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">subclasses</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
             <span class="n">grandchildren</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">get_subclasses</span><span class="p">(</span><span class="n">include_parents</span><span class="p">)</span>
             <span class="n">subclasses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">grandchildren</span><span class="p">)</span>

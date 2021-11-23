@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Defining Custom Constraints &#8212; SDV 0.12.1 documentation</title>
+    <title>Defining Custom Constraints &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -274,18 +274,18 @@ Its main function is to change your data in a way that enforces the constraint.<
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   39               35                     4   58000.00       7000.00                       3        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   45               36                     9   98947.75      21467.35                       1        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   40               39                     1   54000.00      11000.00                       3        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   35               26                     9  106108.72      24939.74                       4        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   44               37                     7  103000.00      23500.00                       1        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   40               36                     4  101000.00       6000.00                       2        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   38               36                     2  130500.00      20500.00                       1        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   45               39                     6  103387.11      19265.98                       2        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   48               44                     4  150000.00      16500.00                       4        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   43               39                     4   39455.32      18809.48                       1        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   44               36                     8  110000.00      13000.00                       2        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   46               42                     4   35500.00       6500.00                       2        0.0        1.0         0.0</span>
+<span class="go">0       Pear          Sales            1   44               36                     8   54500.00       9500.00                       2        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   34               26                     8   96059.73       9245.19                       2        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   30               25                     5  104500.00       9500.00                       2        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   30               23                     7   93064.75       6256.07                       3        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   46               38                     8   54000.00      11000.00                       2        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   34               29                     5   99000.00      24500.00                       2        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   44               37                     7   75500.00      16000.00                       5        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   45               41                     4   59711.39      24919.45                       4        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   31               28                     3  154500.00      11000.00                       2        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   34               33                     1  122074.70      16971.29                       1        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   37               32                     5   57000.00      20000.00                       2        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   48               47                     1  118500.00      16500.00                       2        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>The dataset defined in <span class="xref std std-ref">_single_table_constraints</span> contains basic details about employees.
@@ -425,17 +425,17 @@ data have a salary that is a multiple of the base value with the exception
 of “contractor” records.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">sampled</span>
 <span class="gh">Out[18]: </span><span class="go"></span>
-<span class="go">    company department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0      Pear      Sales            2   36               32                     5   63000.00      24500.00                       1        0.0        0.0         0.0</span>
-<span class="go">1  Cheerper      Sales           46   39               33                     7   58000.00      10500.00                       1        0.0        1.0         0.0</span>
-<span class="go">2   Glasses         AI            1   35               32                     3   48500.00      14500.00                       4        1.0        0.0         0.0</span>
-<span class="go">3  Cheerper    BigData            2   36               26                     7  127500.00      19000.00                       2        0.0        1.0         0.0</span>
-<span class="go">4      Pear    Support           78   38               37                     8   41191.10      20275.65                       2        0.0        0.0         1.0</span>
-<span class="go">5   Glasses    BigData            1   41               36                     3   77000.00      24500.00                       3        1.0        0.0         0.0</span>
-<span class="go">6      Pear     Design            4   43               37                     4  144780.70      23409.50                       3        1.0        0.0         1.0</span>
-<span class="go">7   Glasses         AI            3   47               43                     2  111500.00      11000.00                       3        0.0        0.0         0.0</span>
-<span class="go">8  Cheerper    BigData           72   37               32                     9   46361.45      24774.80                       1        0.0        1.0         1.0</span>
-<span class="go">9  Cheerper         AI            1   47               39                     1  107000.00       6000.00                       1        1.0        0.0         0.0</span>
+<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0  Cheerper        Support           80   48               44                     3  107609.55       12208.6                       2        0.0        1.0         1.0</span>
+<span class="go">1      Pear          Sales            1   42               38                     8   61500.00       17500.0                       5        1.0        0.0         0.0</span>
+<span class="go">2      Pear         Design           31   48               42                     5   95830.85       18512.4                       3        1.0        0.0         1.0</span>
+<span class="go">3   Glasses             AI            1   30               25                     6   89000.00       14000.0                       4        1.0        0.0         0.0</span>
+<span class="go">4   Glasses  Search Engine            4   30               24                     7  101000.00        8000.0                       3        1.0        0.0         0.0</span>
+<span class="go">5  Cheerper        Support           72   47               36                     5   92000.00       12000.0                       3        0.0        1.0         0.0</span>
+<span class="go">6  Cheerper        BigData           19   31               30                     2   97500.00       25000.0                       1        0.0        1.0         0.0</span>
+<span class="go">7      Pear          Sales            1   31               28                     8   54000.00       16000.0                       2        1.0        0.0         0.0</span>
+<span class="go">8   Glasses             AI            1   31               30                     4   92000.00       17000.0                       2        1.0        0.0         0.0</span>
+<span class="go">9      Pear  Search Engine            1   30               23                     8   54000.00        6570.3                       3        1.0        0.0         1.0</span>
 </pre></div>
 </div>
 <p>This style gives flexibility to access any column in the table while still operating on

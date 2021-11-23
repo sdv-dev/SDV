@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.12.1 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -176,6 +176,7 @@
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">copulas.multivariate.gaussian</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
+<span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
 <span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
 
 <span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="n">MissingConstraintColumnError</span>
@@ -317,11 +318,13 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_columns_model</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">data_to_model</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="o">=</span><span class="p">{</span>
-                <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="s1">&#39;OneHotEncodingTransformer&#39;</span><span class="p">,</span>
             <span class="p">})</span>
             <span class="n">transformed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_to_model</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">(</span>
+                <span class="n">distribution</span><span class="o">=</span><span class="n">GaussianUnivariate</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">transformed_data</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>

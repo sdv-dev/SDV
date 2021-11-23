@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.categorical_sklearn &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.privacy.categorical_sklearn &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -166,7 +166,9 @@
               <div>
                 
   <h1>Source code for sdmetrics.single_table.privacy.categorical_sklearn</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;Categorical sklearn privacy metric modules and their attackers.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">sklearn.naive_bayes</span>
 <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
 <span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">KNeighborsClassifier</span>
@@ -273,9 +275,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n_labels</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_labels</span><span class="p">):</span>
-            <span class="n">Y_col</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
             <span class="n">predictor</span> <span class="o">=</span> <span class="n">SVC</span><span class="p">()</span>
-            <span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y_col</span><span class="p">)</span>
+            <span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predictor</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
@@ -313,9 +315,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n_labels</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_labels</span><span class="p">):</span>
-            <span class="n">Y_col</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
             <span class="n">predictor</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">naive_bayes</span><span class="o">.</span><span class="n">CategoricalNB</span><span class="p">()</span>
-            <span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y_col</span><span class="p">)</span>
+            <span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predictor</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>

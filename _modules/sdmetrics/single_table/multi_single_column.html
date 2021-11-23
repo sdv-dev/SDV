@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -173,11 +173,11 @@
 
 <span class="kn">from</span> <span class="nn">sdmetrics</span> <span class="kn">import</span> <span class="n">single_column</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
-<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">NestedAttrsMeta</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">nested_attrs_meta</span>
 
 
 <div class="viewcode-block" id="MultiSingleColumnMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiSingleColumnMetric.html#sdv.metrics.tabular.MultiSingleColumnMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiSingleColumnMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span>
-                              <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;single_column_metric&#39;</span><span class="p">)):</span>
+                              <span class="n">metaclass</span><span class="o">=</span><span class="n">nested_attrs_meta</span><span class="p">(</span><span class="s1">&#39;single_column_metric&#39;</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a SingleColumnMetric on each column.</span>
 
 <span class="sd">    This class can either be used by creating a subclass that inherits from it and</span>
@@ -238,8 +238,8 @@
         <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">real_column</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-                <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">values</span>
-                <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
                 <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
                     <span class="n">real_column</span><span class="p">,</span>
@@ -279,7 +279,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -352,8 +352,8 @@
 
         <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">real_column</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">values</span>
-            <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+            <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
             <span class="n">score</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">single_column_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_column</span><span class="p">,</span> <span class="n">synthetic_column</span><span class="p">)</span>
             <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>

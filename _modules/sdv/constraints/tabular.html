@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.12.1 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -896,12 +896,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span> <span class="o">=</span> <span class="n">column</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="p">(</span><span class="n">column</span><span class="p">,)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_columns</span> <span class="o">=</span> <span class="p">(</span><span class="n">column</span><span class="p">,)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_strict</span> <span class="o">=</span> <span class="n">strict</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="o">=</span> <span class="n">high_is_scalar</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="o">=</span> <span class="n">low_is_scalar</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">lt</span> <span class="k">if</span> <span class="n">strict</span> <span class="k">else</span> <span class="n">operator</span><span class="o">.</span><span class="n">le</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_low_is_scalar</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_low</span> <span class="o">=</span> <span class="n">low</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_high_is_scalar</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">high</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_high</span> <span class="o">=</span> <span class="n">high</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">,</span>
                          <span class="n">fit_columns_model</span><span class="o">=</span><span class="n">fit_columns_model</span><span class="p">)</span>
 
@@ -992,14 +999,22 @@
 <span class="sd">            pandas.Series:</span>
 <span class="sd">                Whether each row is valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">satisfy_low_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">),</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_low_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="n">satisfy_low_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">low</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">satisfy_high_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span>
-            <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_high_value</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+        <span class="n">satisfy_high_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lt</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">],</span> <span class="n">high</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">high</span><span class="p">),</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">satisfy_low_bound</span> <span class="o">&amp;</span> <span class="n">satisfy_high_bound</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">satisfy_low_bound</span><span class="p">,</span> <span class="n">satisfy_high_bound</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_column</span><span class="p">]),</span>
+        <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
@@ -1179,15 +1194,18 @@
         <span class="n">table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="n">condition_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">conditions_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span>
+        <span class="n">conditions_data_sum</span> <span class="o">=</span> <span class="n">conditions_data</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">conditions_data</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Condition values must be ones or zeros.&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conditions_data_sum</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Each row of a condition can only contain one number one.&#39;</span><span class="p">)</span>
 
-        <span class="n">has_one</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+        <span class="n">has_one</span> <span class="o">=</span> <span class="n">conditions_data_sum</span> <span class="o">==</span> <span class="mf">1.0</span>
         <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">has_one</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">sub_table_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_one</span><span class="p">,</span> <span class="n">condition_columns</span><span class="p">]</span>
+            <span class="n">should_transform</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">condition_columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">proposed_table_data</span> <span class="o">=</span> <span class="n">sub_table_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1196,10 +1214,17 @@
                         <span class="n">proposed_table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
 
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">should_transform</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">conditions</span> <span class="o">=</span> <span class="n">sub_table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span>
+                <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
                 <span class="n">proposed_table_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-                    <span class="n">num_rows</span><span class="o">=</span><span class="n">sub_table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                    <span class="n">conditions</span><span class="o">=</span><span class="n">sub_table_data</span><span class="p">[</span><span class="n">condition_columns</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                    <span class="n">num_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">sub_table_data</span><span class="p">),</span>
+                    <span class="n">conditions</span><span class="o">=</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
                 <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">should_transform</span><span class="p">:</span>
+                <span class="n">proposed_table_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span>
+                    <span class="n">proposed_table_data</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">condition_columns</span><span class="p">:</span>
@@ -1288,11 +1313,7 @@
 <span class="sd">            pandas.Series:</span>
 <span class="sd">                Whether each row is valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">valid</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">table_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-        <span class="n">groups</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">valid</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">groups</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="n">valid</span></div></div>
+        <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">cumcount</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span></div></div>
 </pre></div>
 
               </div>

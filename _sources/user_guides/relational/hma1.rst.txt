@@ -85,7 +85,7 @@ Generate synthetic data from the model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once the training process has finished you are ready to generate new
-synthetic data by calling the ``sample_all`` method from your model.
+synthetic data by calling the ``sample`` method from your model.
 
 .. ipython:: python
     :okwarning:

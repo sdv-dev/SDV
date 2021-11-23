@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.column_pairs.statistical.kl_divergence &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.column_pairs.statistical.kl_divergence &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -216,8 +216,8 @@
 <span class="sd">            Union[float, tuple[float]]:</span>
 <span class="sd">                Metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">real_data</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">real_data</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="n">synthetic_data</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">real_data</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">real_data</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">synthetic_data</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">column1</span><span class="p">,</span> <span class="n">column2</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">columns</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
 
         <span class="n">real</span><span class="p">,</span> <span class="n">xedges</span><span class="p">,</span> <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">real_data</span><span class="p">[</span><span class="n">column1</span><span class="p">],</span> <span class="n">real_data</span><span class="p">[</span><span class="n">column2</span><span class="p">])</span>
@@ -231,7 +231,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -268,6 +268,18 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the KL divergence.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            real_data:</span>
+<span class="sd">                The values from the real dataset.</span>
+<span class="sd">            synthetic_data:</span>
+<span class="sd">                The values from the synthetic dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Union[float, tuple[float]]:</span>
+<span class="sd">                Metric output or outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">columns</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">real</span> <span class="o">=</span> <span class="n">real_data</span><span class="p">[</span><span class="n">columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">synthetic</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">columns</span><span class="p">]</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -277,7 +289,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.12.1 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -643,7 +643,7 @@
         <span class="n">dtypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dtypes</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="n">pii_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pii_fields</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="n">transformers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_transformers</span><span class="p">(</span><span class="n">dtypes</span><span class="p">,</span> <span class="n">pii_fields</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">field_transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.transform.html#sdv.metadata.dataset.Metadata.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform data for a given table.</span>

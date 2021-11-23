@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Metadata Schema &#8212; SDV 0.12.1 documentation</title>
+    <title>Metadata Schema &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -213,7 +213,13 @@
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#categorical-fields-data-anonymization" class="nav-link">Categorical fields (Data anonymization)</a>
+            <a href="#categorical-fields-data-anonymization" class="nav-link">Categorical fields (Data anonymization)</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#localized-data-anonymization" class="nav-link">Localized data anonymization</a>
+        </li>
+    
+            </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
@@ -294,9 +300,9 @@ other properties.</p>
 <p>The available types and subtypes are in this table:</p>
 <table class="table">
 <colgroup>
-<col style="width: 28%" />
-<col style="width: 28%" />
-<col style="width: 43%" />
+<col style="width: 23%" />
+<col style="width: 23%" />
+<col style="width: 54%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Type</p></th>
@@ -319,7 +325,7 @@ other properties.</p>
 </tr>
 <tr class="row-odd"><td><p>categorical</p></td>
 <td></td>
-<td><p>pii, pii_category</p></td>
+<td><p>pii, pii_category, pii_locales</p></td>
 </tr>
 <tr class="row-even"><td><p>boolean</p></td>
 <td></td>
@@ -425,6 +431,35 @@ but any value supported by faker can be used:</p>
 argument. If that is the case, you set a <code class="docutils literal notranslate"><span class="pre">list</span></code> containing both the category and
 the type instead of only the string: <code class="docutils literal notranslate"><span class="pre">'pii_category':</span> <span class="pre">['credict_card_number',</span> <span class="pre">'visa']</span></code></p>
 </div>
+<section id="localized-data-anonymization">
+<h4>Localized data anonymization<a class="headerlink" href="#localized-data-anonymization" title="Permalink to this headline">¶</a></h4>
+<p>To use localizations in anonymization to get values in the specified language,
+the <code class="docutils literal notranslate"><span class="pre">pii_locales</span></code> parameter must be set.
+It must be passed the localizations with their country codes as a list.
+A list of all possible localizations can be found on the <a class="reference external" href="https://faker.readthedocs.io/en/master/providers.html">Faker documentation site</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pii&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;pii_category&quot;</span><span class="p">:</span> <span class="s2">&quot;address&quot;</span>
+                <span class="s2">&quot;pii_locales&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sv_SE&quot;</span><span class="p">,</span> <span class="s2">&quot;en_US&quot;</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="o">...</span>
+        <span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Specifying localizations and using <code class="docutils literal notranslate"><span class="pre">Faker</span></code> categories may result in an error
+if the defined <code class="docutils literal notranslate"><span class="pre">pii_category</span></code> is not available for all specified languages.</p>
+</div>
+</section>
 </section>
 <section id="primary-key-fields">
 <h3>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h3>

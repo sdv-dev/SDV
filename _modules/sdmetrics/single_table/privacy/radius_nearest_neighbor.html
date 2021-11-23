@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.radius_nearest_neighbor &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.privacy.radius_nearest_neighbor &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -166,7 +166,8 @@
               <div>
                 
   <h1>Source code for sdmetrics.single_table.privacy.radius_nearest_neighbor</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;RadiusNearestNeighbor module and its attacker/utilities.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.base</span> <span class="kn">import</span> <span class="n">NumericalPrivacyMetric</span><span class="p">,</span> <span class="n">PrivacyAttackerModel</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.loss</span> <span class="kn">import</span> <span class="n">InverseCDFDistance</span>
@@ -178,16 +179,15 @@
 <span class="sd">    It will predict the sensitive value to be a weighted mean of the entries in the</span>
 <span class="sd">    synthetic table. Where this weight is given by a separate function, and typically</span>
 <span class="sd">    describes the closeness between the given key and the corresponding entry in the table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weight_func (Class):</span>
+<span class="sd">            The weight function to use.</span>
+<span class="sd">        weight_func_kwargs (dict):</span>
+<span class="sd">            Parameters of the weight function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weight_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weight_func_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            weight_func (Class):</span>
-<span class="sd">                The weight function to use.</span>
-<span class="sd">            weight_func_kwargs (dict):</span>
-<span class="sd">                Parameters of the weight function.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">weight_func_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">weight_func_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
 

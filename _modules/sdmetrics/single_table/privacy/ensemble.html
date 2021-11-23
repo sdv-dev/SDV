@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.ensemble &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.privacy.ensemble &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -166,7 +166,9 @@
               <div>
                 
   <h1>Source code for sdmetrics.single_table.privacy.ensemble</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;CategoricalEnsemble module and its attacker.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.base</span> <span class="kn">import</span> <span class="n">CategoricalPrivacyMetric</span><span class="p">,</span> <span class="n">PrivacyAttackerModel</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.util</span> <span class="kn">import</span> <span class="n">majority</span>

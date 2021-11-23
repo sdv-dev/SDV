@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.timeseries.efficacy.base &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.timeseries.efficacy.base &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -231,7 +231,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_compute_score</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span>
             <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">,</span>
             <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">DatetimeTransformer</span><span class="p">(</span><span class="n">strip_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">})</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.12.1 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -325,10 +325,28 @@
         <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">):</span> <span class="s1">&#39;str&#39;</span>
     <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">_get_faker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the faker object to anonymize data.</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the faker object with localisaton set if specified in field_metadata.</span>
 
 <span class="sd">        Args:</span>
+<span class="sd">            field_metadata (dict):</span>
+<span class="sd">                Metadata for field to read localisation from if set in `pii_locales`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Faker object:</span>
+<span class="sd">                The Faker object to anonymize the data in the field using its functions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pii_locales</span> <span class="o">=</span> <span class="n">field_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pii_locales&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Faker</span><span class="p">(</span><span class="n">locale</span><span class="o">=</span><span class="n">pii_locales</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_faker_method</span><span class="p">(</span><span class="n">faker</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the faker function to anonymize data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            faker (Faker object):</span>
+<span class="sd">                The faker object created to get functions from.</span>
 <span class="sd">            category (str or tuple):</span>
 <span class="sd">                Fake category to use. If a tuple is passed, the first element is</span>
 <span class="sd">                the category and the rest are additional arguments for the Faker.</span>
@@ -347,18 +365,39 @@
             <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">faker_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Faker</span><span class="p">(),</span> <span class="n">category</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+                <span class="k">def</span> <span class="nf">_faker</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">faker</span><span class="p">,</span> <span class="n">category</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">faker_method</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">def</span> <span class="nf">_faker</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">faker</span><span class="p">,</span> <span class="n">category</span><span class="p">)()</span>
 
-            <span class="k">def</span> <span class="nf">faker</span><span class="p">():</span>
-                <span class="k">return</span> <span class="n">faker_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">faker</span>
-
+            <span class="k">return</span> <span class="n">_faker</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Category &quot;</span><span class="si">{}</span><span class="s1">&quot; couldn</span><span class="se">\&#39;</span><span class="s1">t be found on faker&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">category</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_fake_values</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="n">num_values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the anonymized values from Faker.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_metadata (dict):</span>
+<span class="sd">                Metadata for field to read localisation from if set in `pii_locales`.</span>
+<span class="sd">                And to read the faker category from `pii_category`.</span>
+<span class="sd">            num_values (int):</span>
+<span class="sd">                Number of values to create.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            generator:</span>
+<span class="sd">                Generator containing the anonymized values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">faker</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">)</span>
+        <span class="n">faker_method</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">_get_faker_method</span><span class="p">(</span><span class="n">faker</span><span class="p">,</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;pii_category&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">faker_method</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_values</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_update_transformer_templates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rounding</span><span class="p">,</span> <span class="n">min_value</span><span class="p">,</span> <span class="n">max_value</span><span class="p">):</span>
         <span class="n">default_numerical_transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_TRANSFORMER_TEMPLATES</span><span class="p">[</span><span class="s1">&#39;integer&#39;</span><span class="p">]</span>
@@ -611,7 +650,7 @@
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">numerical_extras</span><span class="p">:</span>
             <span class="n">transformers_dict</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">NumericalTransformer</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">field_transformers</span><span class="o">=</span><span class="n">transformers_dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">transformers_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span>
 
     <span class="nd">@staticmethod</span>
@@ -671,15 +710,12 @@
         <span class="n">mappings</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="n">field_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pii&#39;</span><span class="p">):</span>
-                <span class="n">faker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;pii_category&#39;</span><span class="p">])</span>
-
                 <span class="n">uniques</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
-                <span class="n">fake_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">))]</span>
-                <span class="n">mappings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">uniques</span><span class="p">,</span> <span class="n">fake_values</span><span class="p">))</span>
+                <span class="n">mappings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="nb">zip</span><span class="p">(</span><span class="n">uniques</span><span class="p">,</span> <span class="n">Table</span><span class="o">.</span><span class="n">_get_fake_values</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">)))</span>
+                <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_ANONYMIZATION_MAPPINGS</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span> <span class="o">=</span> <span class="n">mappings</span>
-
-        <span class="k">return</span> <span class="n">mappings</span>
 
     <span class="k">def</span> <span class="nf">_anonymize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">anonymization_mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ANONYMIZATION_MAPPINGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
@@ -793,7 +829,10 @@
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NotFittedError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span></div>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_make_ids</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">field_metadata</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
@@ -825,7 +864,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MetadataNotFittedError</span><span class="p">()</span>
 
-        <span class="n">reversed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">reversed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NotFittedError</span><span class="p">:</span>
+            <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">data</span>
 
         <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">):</span>
             <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)</span>
@@ -835,8 +877,7 @@
             <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reversed_data</span><span class="p">:</span>
                 <span class="n">field_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_ids</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">))</span>
             <span class="k">elif</span> <span class="n">field_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pii&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-                <span class="n">faker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;pii_category&#39;</span><span class="p">])</span>
-                <span class="n">field_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">faker</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">))])</span>
+                <span class="n">field_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">Table</span><span class="o">.</span><span class="n">_get_fake_values</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">field_data</span> <span class="o">=</span> <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 

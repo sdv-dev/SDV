@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -182,8 +182,8 @@
 <span class="sd">    The value can be one-hot-encoded, or coded as class number.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">CLASS_NUM</span> <span class="o">=</span> <span class="s2">&quot;Class_num&quot;</span>
-    <span class="n">ONE_HOT</span> <span class="o">=</span> <span class="s2">&quot;One_hot&quot;</span>
+    <span class="n">CLASS_NUM</span> <span class="o">=</span> <span class="s1">&#39;Class_num&#39;</span>
+    <span class="n">ONE_HOT</span> <span class="o">=</span> <span class="s1">&#39;One_hot&#39;</span>
 
 
 <div class="viewcode-block" id="CategoricalPrivacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalPrivacyMetric.html#sdv.metrics.tabular.CategoricalPrivacyMetric">[docs]</a><span class="k">class</span> <span class="nc">CategoricalPrivacyMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
@@ -488,7 +488,7 @@
 <span class="sd">            sensitive_fields(list[str]):</span>
 <span class="sd">                The names of the sensitive columns.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Please implement fit method of attackers&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Please implement fit method of attackers&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
@@ -501,7 +501,7 @@
 <span class="sd">            tuple:</span>
 <span class="sd">                The predicted sensitive data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Please implement predict method of attackers&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Please implement predict method of attackers&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">,</span> <span class="n">sensitive_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>

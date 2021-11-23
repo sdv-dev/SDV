@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -233,9 +233,9 @@
 <span class="sd">                One minus the ROC AUC Cross Validation Score obtained by the classifier.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">})</span>
-        <span class="n">real_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">})</span>
+        <span class="n">real_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
         <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">])</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">))])</span>
@@ -258,7 +258,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>

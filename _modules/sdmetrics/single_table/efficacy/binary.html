@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -166,7 +166,7 @@
               <div>
                 
   <h1>Source code for sdmetrics.single_table.efficacy.binary</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Base class for Efficacy metrics for single table datasets.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Base class for Binary Efficacy metrics for single table datasets.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">AdaBoostClassifier</span>
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
@@ -206,7 +206,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>

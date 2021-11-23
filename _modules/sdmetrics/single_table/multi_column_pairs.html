@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.12.1 documentation</title>
+    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -174,10 +174,13 @@
 
 <span class="kn">from</span> <span class="nn">sdmetrics</span> <span class="kn">import</span> <span class="n">column_pairs</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
-<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">NestedAttrsMeta</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">nested_attrs_meta</span>
 
 
-<div class="viewcode-block" id="MultiColumnPairsMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiColumnPairsMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">NestedAttrsMeta</span><span class="p">(</span><span class="s1">&#39;column_pairs_metric&#39;</span><span class="p">)):</span>
+<div class="viewcode-block" id="MultiColumnPairsMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.MultiColumnPairsMetric.html#sdv.metrics.tabular.MultiColumnPairsMetric">[docs]</a><span class="k">class</span> <span class="nc">MultiColumnPairsMetric</span><span class="p">(</span>
+    <span class="n">SingleTableMetric</span><span class="p">,</span>
+    <span class="n">metaclass</span><span class="o">=</span><span class="n">nested_attrs_meta</span><span class="p">(</span><span class="s1">&#39;column_pairs_metric&#39;</span><span class="p">)</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a ColumnPairsMetric on each possible column pair.</span>
 
 <span class="sd">    Attributes:</span>
@@ -263,7 +266,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the `raw_score` as is, since it is already normalized.</span>
+        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>

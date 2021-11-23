@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.timeseries.deepecho &#8212; SDV 0.12.1 documentation</title>
+    <title>sdv.timeseries.deepecho &#8212; SDV 0.13.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -192,14 +192,6 @@
 
     <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_model_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="n">_DATA_TYPES</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;numerical&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;boolean&#39;</span><span class="p">:</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;datetime&#39;</span><span class="p">,</span>
-    <span class="p">}</span>
-
     <span class="n">_verbose</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">_build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -216,6 +208,11 @@
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries_data</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_model</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span><span class="p">:</span>
+            <span class="n">timeseries_data</span> <span class="o">=</span> <span class="n">timeseries_data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span> <span class="o">+</span> <span class="s1">&#39;.value&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span>
+            <span class="p">})</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_output_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">timeseries_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data_columns</span> <span class="o">=</span> <span class="p">[</span>
@@ -235,15 +232,20 @@
 
         <span class="n">data_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">context_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">data_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DATA_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">data_type</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span><span class="p">:</span>
-                    <span class="n">data_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;continuous&#39;</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_columns</span><span class="p">:</span>
-                    <span class="n">data_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_columns</span><span class="p">:</span>
-                    <span class="n">context_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_columns</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">timeseries_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">dtype</span><span class="o">.</span><span class="n">kind</span>
+            <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">):</span>
+                <span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;continuous&#39;</span>
+            <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">):</span>
+                <span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;categorical&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unsupported dtype </span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_columns</span><span class="p">:</span>
+                <span class="n">data_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_columns</span><span class="p">:</span>
+                <span class="n">context_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transform_sequence_index</span><span class="p">(</span><span class="n">sequences</span><span class="p">)</span>
@@ -302,7 +304,13 @@
             <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
 
         <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_columns</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_columns</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span> <span class="o">+</span> <span class="s1">&#39;.value&#39;</span>
+            <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">output</span>
 
 
 <div class="viewcode-block" id="PAR"><a class="viewcode-back" href="../../../api_reference/timeseries/api/sdv.timeseries.deepecho.PAR.html#sdv.timeseries.deepecho.PAR">[docs]</a><span class="k">class</span> <span class="nc">PAR</span><span class="p">(</span><span class="n">DeepEchoModel</span><span class="p">):</span>
