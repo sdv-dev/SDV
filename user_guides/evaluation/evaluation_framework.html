@@ -285,11 +285,11 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0       17268      F        67.83      79.69  Commerce        68.79   Comm&amp;Mgmt            False                 0               62.13  Mkt&amp;Fin     74.16  30100.0    True 2020-01-07 2020-08-28       9.0</span>
-<span class="go">1       17358      M        57.28      66.12  Commerce        63.73   Comm&amp;Mgmt            False                 0               55.00   Mkt&amp;HR     64.07      NaN   False        NaT        NaT       NaN</span>
-<span class="go">2       17445      M        73.29      63.94   Science        71.68   Comm&amp;Mgmt            False                 0               97.98   Mkt&amp;HR     74.20  33200.0    True 2020-03-02 2020-07-01       4.0</span>
-<span class="go">3       17351      M        69.03      64.00  Commerce        55.52   Comm&amp;Mgmt            False                 0               69.86   Mkt&amp;HR     59.87  24200.0    True 2020-01-30 2020-05-09       3.0</span>
-<span class="go">4       17344      M        79.90      97.70  Commerce        74.40   Comm&amp;Mgmt            False                 1               85.30  Mkt&amp;Fin     63.97  22000.0    True 2020-01-06 2020-09-01       8.0</span>
+<span class="go">0       17282      F        56.14      62.92  Commerce        64.16    Sci&amp;Tech            False                 1               51.01  Mkt&amp;Fin     61.31      NaN   False        NaT        NaT       NaN</span>
+<span class="go">1       17319      M        48.78      64.78  Commerce        67.04   Comm&amp;Mgmt            False                 0               56.87  Mkt&amp;Fin     53.95      NaN   False        NaT        NaT       NaN</span>
+<span class="go">2       17365      M        80.94      68.11   Science        73.39   Comm&amp;Mgmt            False                 0               61.16  Mkt&amp;Fin     68.09  30300.0    True 2020-01-22 2020-07-17       5.0</span>
+<span class="go">3       17416      M        54.81      63.93  Commerce        58.09   Comm&amp;Mgmt            False                 0               68.89   Mkt&amp;HR     61.88  22400.0    True 2020-06-07 2020-06-15       3.0</span>
+<span class="go">4       17269      F        66.68      62.92   Science        69.90   Comm&amp;Mgmt            False                 1               53.21  Mkt&amp;Fin     75.48      NaN   False        NaT        NaT       NaN</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -304,7 +304,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.6081595382533391</span>
+<span class="gh">Out[10]: </span><span class="go">0.6925721940609159</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -325,14 +325,14 @@ of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
 <span class="go">                    metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
-<span class="go">1        LogisticDetection             LogisticRegression Detection   0.415678      4.156777e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">2             SVCDetection                            SVC Detection   0.425517      4.255166e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">11         GMLogLikelihood           GaussianMixture Log Likelihood -37.964220      3.253486e-17       -inf        inf  MAXIMIZE</span>
-<span class="go">12                  CSTest                              Chi-Squared   0.897021      8.970212e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">13                  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.896641      8.966408e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">14          KSTestExtended  Inverted Kolmogorov-Smirnov D statistic   0.910520      9.105205e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">27  ContinuousKLDivergence   Continuous Kullback–Leibler Divergence   0.489240      4.892398e-01        0.0        1.0  MAXIMIZE</span>
-<span class="go">28    DiscreteKLDivergence     Discrete Kullback–Leibler Divergence   0.887798      8.877979e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">1        LogisticDetection             LogisticRegression Detection   0.454164      4.541638e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">2             SVCDetection                            SVC Detection   0.391704      3.917036e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">11         GMLogLikelihood           GaussianMixture Log Likelihood -38.937099      1.229795e-17       -inf        inf  MAXIMIZE</span>
+<span class="go">12                  CSTest                              Chi-Squared   0.883004      8.830039e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">13                  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.890439      8.904393e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">14          KSTestExtended  Inverted Kolmogorov-Smirnov D statistic   0.885714      8.857143e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">27  ContinuousKLDivergence   Continuous Kullback–Leibler Divergence   0.468168      4.681685e-01        0.0        1.0  MAXIMIZE</span>
+<span class="go">28    DiscreteKLDivergence     Discrete Kullback–Leibler Divergence   0.882510      8.825095e-01        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 </section>
@@ -345,15 +345,15 @@ names of the metrics that you want to apply.</p>
 <p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and
 <code class="docutils literal notranslate"><span class="pre">KSTest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.8968310087827702</span>
+<span class="gh">Out[12]: </span><span class="go">0.8867215939722333</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">   metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
-<span class="go">0  CSTest                              Chi-Squared   0.897021          0.897021        0.0        1.0  MAXIMIZE</span>
-<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.896641          0.896641        0.0        1.0  MAXIMIZE</span>
+<span class="go">0  CSTest                              Chi-Squared   0.883004          0.883004        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.890439          0.890439        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 <p>For more details about all the metrics that exist for the different data modalities
