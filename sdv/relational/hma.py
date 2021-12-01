@@ -147,7 +147,7 @@ class HMA1(BaseRelationalModel):
 
         Returns:
             pandas.DataFrame:
-                The table extension.
+                The extended table.
         """
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata.get_children(table_name):
@@ -169,6 +169,12 @@ class HMA1(BaseRelationalModel):
     def _prepare_for_modeling(self, table_data, table_name, primary_key):
         """Prepare the given table for modeling.
 
+        In preparation for modeling a given table, do the following:
+        - drop the primary key if exists
+        - drop any other columns of type 'id'
+        - add unknown fields to metadata as numerical fields,
+          and fill missing values in those fields
+
         Args:
             table_data (pandas.DataFrame):
                 The data of the desired table.
@@ -181,7 +187,6 @@ class HMA1(BaseRelationalModel):
             (dict, dict):
                 A tuple containing the table metadata to use for modeling, and
                 the values of the id columns.
-
         """
         table_meta = self.metadata.get_table_meta(table_name)
         table_meta['name'] = table_name
@@ -410,6 +415,7 @@ class HMA1(BaseRelationalModel):
             sampled_data (dict):
                 A map of table name to the sampled table data (pandas.DataFrame).
             table_rows (pandas.DataFrame):
+                The sampled rows of the given table.
         """
         for child_name in self.metadata.get_children(table_name):
             if child_name not in sampled_data:
