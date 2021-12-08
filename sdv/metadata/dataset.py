@@ -871,7 +871,7 @@ class Metadata:
         return fields_metadata
 
     def add_table(self, name, data=None, fields=None, fields_metadata=None,
-                  primary_key=None, parent=None, foreign_key=None):
+                  primary_key=None, parent=None, foreign_key=None, constraints=None):
         """Add a new table to this metadata.
 
         ``fields`` list can be a mixture of field names, which will be build automatically
@@ -902,7 +902,10 @@ class Metadata:
             parent (str):
                 Table name to refere a foreign key field. Defaults to ``None``.
             foreign_key (str):
-                Foreing key field name to ``parent`` table primary key. Defaults to ``None``.
+                Foreign key field name to ``parent`` table primary key. Defaults to ``None``.
+            constraints (list[Constraint, dict]):
+                List of Constraint objects or dicts representing the constraints for the
+                given table.
 
         Raises:
             ValueError:
@@ -937,6 +940,9 @@ class Metadata:
             table_metadata['path'] = path
 
         self._metadata['tables'][name] = table_metadata
+
+        if constraints:
+            table_metadata['constraints'] = constraints
 
         try:
             if primary_key:
