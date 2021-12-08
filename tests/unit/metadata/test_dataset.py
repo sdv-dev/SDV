@@ -879,6 +879,72 @@ class TestMetadata(TestCase):
         metadata.set_primary_key.call_count == 0
         metadata.add_relationship.call_count == 0
 
+    def test_add_table_with_constraints(self):
+        """Test the ``Metadata.add_table`` method with constraints.
+
+        Expect that when constraints are provided, the metadata for the
+        specified table is created with the given constraints.
+
+        Input:
+        - Metadata object
+        - Table name of the desired table to add
+        - Metadata for the table's fields
+        - Constraints for the given table
+        Side Effects:
+        - An entry is added to the metadata for the provided table, which contains
+          the given fields and constrants.
+        """
+        # Setup
+        metadata = Mock(spec_set=Metadata)
+        metadata.get_tables.return_value = ['a_table', 'b_table']
+        metadata._metadata = {'tables': dict()}
+
+        # Run
+        fields_metadata = {
+            'a_field': {'type': 'numerical', 'subtype': 'integer'},
+            'b_field': {'type': 'numerical', 'subtype': 'integer'}
+        }
+        constraints = [
+            {
+                'constraint': 'sdv.constraints.tabular.GreaterThan',
+                'columns': [
+                    'a_field',
+                    'b_field',
+                ],
+                'handling_strategy': 'transform',
+            }
+        ]
+
+        Metadata.add_table(
+            metadata,
+            'x_table',
+            fields_metadata=fields_metadata,
+            constraints=constraints,
+        )
+
+        # Asserts
+        expected_table_meta = {
+            'fields': {
+                'a_field': {'type': 'numerical', 'subtype': 'integer'},
+                'b_field': {'type': 'numerical', 'subtype': 'integer'},
+            },
+            'constraints': [
+                {
+                    'constraint': 'sdv.constraints.tabular.GreaterThan',
+                    'columns': [
+                        'a_field',
+                        'b_field',
+                    ],
+                    'handling_strategy': 'transform',
+                },
+            ]
+        }
+
+        assert metadata._metadata['tables']['x_table'] == expected_table_meta
+
+        metadata.set_primary_key.call_count == 0
+        metadata.add_relationship.call_count == 0
+
     def test_add_relationship_table_no_exist(self):
         """Add relationship table no exist"""
         # Setup
