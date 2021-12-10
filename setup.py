@@ -22,7 +22,7 @@ install_requires = [
     'ctgan>=0.5.0,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
     'rdt>=0.6.1,<0.7',
-    'sdmetrics>=0.4.0,<0.5',
+    'sdmetrics>=0.4.1,<0.5',
 ]
 
 pomegranate_requires = [

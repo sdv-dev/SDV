@@ -133,7 +133,6 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
         synthetic_data = synthetic_data[table]
 
     scores = sdmetrics.compute_metrics(metrics, real_data, synthetic_data, metadata=metadata)
-    scores.dropna(inplace=True)
 
     if aggregate:
         return scores.normalized_score.mean()
