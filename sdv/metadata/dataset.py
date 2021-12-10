@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from rdt import HyperTransformer, transformers
 
+from sdv.constraints import Constraint
 from sdv.metadata import visualization
 from sdv.metadata.errors import MetadataError
 
@@ -942,7 +943,14 @@ class Metadata:
         self._metadata['tables'][name] = table_metadata
 
         if constraints:
-            table_metadata['constraints'] = constraints
+            meta_constraints = []
+            for constraint in constraints:
+                if isinstance(constraint, Constraint):
+                    meta_constraints.append(constraint.to_dict())
+                else:
+                    meta_constraints.append(constraint)
+
+            table_metadata['constraints'] = meta_constraints
 
         try:
             if primary_key:
