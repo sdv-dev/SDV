@@ -39,6 +39,50 @@ def test__read_csv_dtypes():
     assert result == {'d_field': str}
 
 
+def test__parse_dtypes_boolean():
+    """Test parse data type boolean"""
+    # Setup
+    data = pd.DataFrame({
+        'bool_field_1': [-1, 0, -3, 1],
+        'bool_field_2': [True, False, True, False],
+        'bool_field_3': [None, np.nan, None, np.nan],
+        'bool_field_4': [1, True, None, np.nan],
+    })
+
+    table_meta = {
+        'fields': {
+            'bool_field_1': {
+                'type': 'boolean',
+            },
+            'bool_field_2': {
+                'type': 'boolean',
+            },
+            'bool_field_3': {
+                'type': 'boolean',
+            },
+            'bool_field_4': {
+                'type': 'boolean',
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'bool_field_1': [True, False, True, True],
+        'bool_field_2': [True, False, True, False],
+        'bool_field_3': [True, True, True, True],
+        'bool_field_4': [True, True, False, True],
+    })
+    expected.bool_field_1 = expected.bool_field_1.astype(bool)
+    expected.bool_field_2 = expected.bool_field_2.astype(bool)
+    expected.bool_field_3 = expected.bool_field_3.astype(bool)
+    expected.bool_field_4 = expected.bool_field_4.astype(bool)
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
 def test__parse_dtypes_datetime():
     """Test parse data type datetime"""
     # Setup
@@ -185,7 +229,8 @@ def test__parse_dtypes_combinations():
         'b_field': ['7', '14'],
         'c_field': ['1', '2'],
         'd_field': ['other', 'data'],
-        'cat_field': [1, 2]
+        'cat_field': [1, 2],
+        'bool_field': [1, 0],
     })
 
     table_meta = {
@@ -207,7 +252,10 @@ def test__parse_dtypes_combinations():
             },
             'cat_field': {
                 'type': 'categorical'
-            }
+            },
+            'bool_field': {
+                'type': 'boolean'
+            },
         }
     }
 
@@ -217,12 +265,14 @@ def test__parse_dtypes_combinations():
         'c_field': [1, 2],
         'd_field': ['other', 'data'],
         'cat_field': [1, 2],
+        'bool_field': [True, False],
     })
     expected.a_field = expected.a_field.astype('datetime64[ns]')
     expected.b_field = expected.b_field.astype(np.int64)
     expected.c_field = expected.c_field.astype(np.int64)
     expected.d_field = expected.d_field.astype(object)
     expected.cat_field = expected.cat_field.astype(object)
+    expected.bool_field = expected.bool_field.astype(bool)
 
     # Run
     result = _parse_dtypes(data, table_meta)
