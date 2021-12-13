@@ -40,13 +40,15 @@ def test__read_csv_dtypes():
 
 def test__parse_dtypes():
     """Test parse data types"""
-    # Run
+    # Setup
     data = pd.DataFrame({
         'a_field': ['1996-10-17', '1965-05-23'],
         'b_field': ['7', '14'],
         'c_field': ['1', '2'],
-        'd_field': ['other', 'data']
+        'd_field': ['other', 'data'],
+        'cat_field': [1, 2]
     })
+
     table_meta = {
         'fields': {
             'a_field': {
@@ -63,18 +65,30 @@ def test__parse_dtypes():
             },
             'd_field': {
                 'type': 'other'
+            },
+            'cat_field': {
+                'type': 'categorical'
             }
         }
     }
-    result = _parse_dtypes(data, table_meta)
 
-    # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
         'b_field': [7, 14],
         'c_field': [1, 2],
-        'd_field': ['other', 'data']
+        'd_field': ['other', 'data'],
+        'cat_field': [1, 2],
     })
+    expected.a_field = expected.a_field.astype('datetime64[ns]')
+    expected.b_field = expected.b_field.astype(int)
+    expected.c_field = expected.c_field.astype(int)
+    expected.d_field = expected.d_field.astype(object)
+    expected.cat_field = expected.cat_field.astype('category')
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
     pd.testing.assert_frame_equal(result, expected)
 
 
