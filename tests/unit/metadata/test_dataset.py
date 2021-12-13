@@ -84,7 +84,7 @@ def test__parse_dtypes():
     expected.b_field = expected.b_field.astype(np.int64)
     expected.c_field = expected.c_field.astype(np.int64)
     expected.d_field = expected.d_field.astype(object)
-    expected.cat_field = expected.cat_field.astype('category')
+    expected.cat_field = expected.cat_field.astype(object)
 
     # Run
     result = _parse_dtypes(data, table_meta)
