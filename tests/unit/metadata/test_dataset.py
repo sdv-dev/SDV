@@ -39,8 +39,146 @@ def test__read_csv_dtypes():
     assert result == {'d_field': str}
 
 
-def test__parse_dtypes():
-    """Test parse data types"""
+def test__parse_dtypes_datetime():
+    """Test parse data type datetime"""
+    # Setup
+    data = pd.DataFrame({
+        'a_field': ['1996-10-17', '1965-05-23'],
+    })
+
+    table_meta = {
+        'fields': {
+            'a_field': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
+    })
+    expected.a_field = expected.a_field.astype('datetime64[ns]')
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_integer():
+    """Test parse data type integer"""
+    # Setup
+    data = pd.DataFrame({
+        'b_field': ['7', '14']
+    })
+
+    table_meta = {
+        'fields': {
+            'b_field': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'b_field': [7, 14]
+    })
+    expected.b_field = expected.b_field.astype(np.int64)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_id():
+    """Test parse data type id"""
+    # Setup
+    data = pd.DataFrame({
+        'c_field': ['1', '2'],
+    })
+
+    table_meta = {
+        'fields': {
+            'c_field': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'c_field': [1, 2],
+    })
+    expected.c_field = expected.c_field.astype(np.int64)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_other():
+    """Test parse data type other"""
+    # Setup
+    data = pd.DataFrame({
+        'd_field': ['other', 'data'],
+    })
+
+    table_meta = {
+        'fields': {
+            'd_field': {
+                'type': 'other'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'd_field': ['other', 'data'],
+    })
+    expected.d_field = expected.d_field.astype(object)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_categorical():
+    """Test parse data type categorical"""
+    # Setup
+    data = pd.DataFrame({
+        'cat_field': [1, 2]
+    })
+
+    table_meta = {
+        'fields': {
+            'cat_field': {
+                'type': 'categorical'
+            }
+        }
+    }
+
+    expected = pd.DataFrame({
+        'cat_field': [1, 2],
+    })
+    expected.cat_field = expected.cat_field.astype(object)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_combinations():
+    """Test parse data type combinations"""
     # Setup
     data = pd.DataFrame({
         'a_field': ['1996-10-17', '1965-05-23'],
