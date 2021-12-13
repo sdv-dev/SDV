@@ -38,6 +38,8 @@ def _parse_dtypes(data, table_meta):
             data[name] = data[name].dropna().astype(np.int64)
         elif field_type == 'id' and field.get('subtype', 'integer') == 'integer':
             data[name] = data[name].dropna().astype(np.int64)
+        elif field_type == 'categorical':
+            data[name] = data[name].astype('category')
 
     return data
 
