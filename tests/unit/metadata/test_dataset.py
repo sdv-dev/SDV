@@ -2,6 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -80,8 +81,8 @@ def test__parse_dtypes():
         'cat_field': [1, 2],
     })
     expected.a_field = expected.a_field.astype('datetime64[ns]')
-    expected.b_field = expected.b_field.astype(int)
-    expected.c_field = expected.c_field.astype(int)
+    expected.b_field = expected.b_field.astype(np.int64)
+    expected.c_field = expected.c_field.astype(np.int64)
     expected.d_field = expected.d_field.astype(object)
     expected.cat_field = expected.cat_field.astype('category')
 
