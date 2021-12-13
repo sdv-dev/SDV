@@ -127,6 +127,9 @@ class BaseTabularModel:
                 the path to a CSV file which can be loaded using
                 ``pandas.read_csv``.
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.reset_index(drop=True)
+
         LOGGER.debug('Fitting %s to table %s; shape: %s', self.__class__.__name__,
                      self._metadata.name, data.shape)
         if not self._metadata_fitted:
@@ -338,14 +341,12 @@ class BaseTabularModel:
             pandas.DataFrame:
                 `conditions` as a dataframe.
         """
+        n_rows = num_rows if num_rows else self._num_rows
         if isinstance(conditions, pd.Series):
-            conditions = pd.DataFrame([conditions] * num_rows)
+            conditions = pd.DataFrame([conditions] * n_rows)
 
         elif isinstance(conditions, dict):
-            try:
-                conditions = pd.DataFrame(conditions)
-            except ValueError:
-                conditions = pd.DataFrame([conditions] * num_rows)
+            conditions = pd.DataFrame(conditions, index=range(n_rows))
 
         elif not isinstance(conditions, pd.DataFrame):
             raise TypeError('`conditions` must be a dataframe, a dictionary or a pandas series.')

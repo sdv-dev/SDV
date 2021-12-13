@@ -5,17 +5,14 @@ on:
     branches: [ stable ]
 
 jobs:
-
   docs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
     - name: Python
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
-
     - name: Build
       run: |
         sudo apt-get install graphviz pandoc

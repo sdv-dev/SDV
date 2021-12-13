@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import UniqueCombinations
+from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
@@ -94,6 +94,157 @@ def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
         model.sample(conditions=conditions)
 
 
+def test_fit_with_unique_constraint_on_data_with_only_index_column():
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on data containing a column named index.
+
+    The ``fit`` method is expected to fit the model to data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed the unique constraint and
+    the primary key column.
+
+    Input:
+    - Data, Unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/616 does not occur
+    """
+    # Setup
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "index": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ]
+    })
+    unique = Unique(columns=["index"])
+    model = GaussianCopula(primary_key="key", constraints=[unique])
+
+    # Run
+    model.fit(test_df)
+    samples = model.sample(2)
+
+    # Assert
+    assert len(samples) == 2
+    assert samples["index"].is_unique
+
+
+def test_fit_with_unique_constraint_on_data_which_has_index_column():
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on data containing a column named index and other columns.
+
+    The ``fit`` method is expected to fit the model to data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed the unique constraint and
+    the primary key column.
+    - The unique constraint is set on the ``test_column``
+
+    Input:
+    - Data, Unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/616 does not occur
+    """
+    # Setup
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "index": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ],
+        "test_column": [
+            "A1",
+            "B2",
+            "C3",
+            "D4",
+            "E5",
+        ]
+    })
+    unique = Unique(columns=["test_column"])
+    model = GaussianCopula(primary_key="key", constraints=[unique])
+
+    # Run
+    model.fit(test_df)
+    samples = model.sample(2)
+
+    # Assert
+    assert len(samples) == 2
+    assert samples["test_column"].is_unique
+
+
+def test_fit_with_unique_constraint_on_data_subset():
+    """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
+    ``fit`` is called on a subset of the original data.
+
+    The ``fit`` method is expected to fit the model to the subset of data,
+    taking into account the metadata and the ``Unique`` constraint.
+
+    Setup:
+    - The model is passed a ``Unique`` constraint and is
+    matched to a subset of the specified data.
+    Subdividing the data results in missing indexes in the subset contained in the original data.
+
+    Input:
+    - Subset of data, unique constraint
+
+    Github Issue:
+    - Tests that https://github.com/sdv-dev/SDV/issues/610 does not occur
+    """
+    # Setup
+    test_df = pd.DataFrame({
+        "key": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "test_column": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+        ]
+    })
+    unique = Unique(
+        columns=["test_column"]
+    )
+
+    test_df = test_df.iloc[[1, 3, 4]]
+    model = GaussianCopula(primary_key="key", constraints=[unique])
+
+    # Run
+    model.fit(test_df)
+    samples = model.sample(2)
+
+    # Assert
+    assert len(samples) == 2
+    assert samples["test_column"].is_unique
+
+
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
        spec_set=GaussianMultivariate)
 def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
@@ -129,11 +280,11 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
     sampled_numeric_data = [pd.DataFrame({
-        'city#state': [0, 1, 2, 0, 0],
-        'age': [30, 30, 30, 30, 30]
+        'city#state.value': [0, 1, 2, 0, 0],
+        'age.value': [30, 30, 30, 30, 30]
     }), pd.DataFrame({
-        'city#state': [1],
-        'age': [30]
+        'city#state.value': [1],
+        'age.value': [30]
     })]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
@@ -143,7 +294,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     sampled_data = model.sample(5, conditions=conditions)
 
     # Assert
-    expected_transformed_conditions = {'age': 30}
+    expected_transformed_conditions = {'age.value': 30}
     expected_data = pd.DataFrame({
         'city': ['LA', 'SF', 'LA', 'LA', 'SF'],
         'state': ['CA', 'CA', 'CA', 'CA', 'CA'],
@@ -190,14 +341,14 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
     sampled_numeric_data = [pd.DataFrame({
-        'city#state': [2],
-        'age': [30]
+        'city#state.value': [2],
+        'age.value': [30]
     }), pd.DataFrame({
-        'city#state': [1, 1, 0, 0, 0],
-        'age': [30, 30, 30, 30, 30]
+        'city#state.value': [1, 1, 0, 0, 0],
+        'age.value': [30, 30, 30, 30, 30]
     }), pd.DataFrame({
-        'city#state': [0, 0, 1, 1, 1],
-        'age': [30, 30, 30, 30, 30]})
+        'city#state.value': [0, 0, 1, 1, 1],
+        'age.value': [30, 30, 30, 30, 30]})
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
@@ -211,8 +362,8 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     expected_ages = pd.Series([30, 30, 30, 30, 30], name='age')
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) >= 2 and len(sample_calls) <= 3
-    assert all(c[2]['conditions']['age'] == 30 for c in sample_calls)
-    assert all('city#state' in c[2]['conditions'] for c in sample_calls)
+    assert all(c[2]['conditions']['age.value'] == 30 for c in sample_calls)
+    assert all('city#state.value' in c[2]['conditions'] for c in sample_calls)
     pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
     pd.testing.assert_series_equal(sampled_data['state'], expected_states)
     assert all(c in ('SF', 'LA') for c in sampled_data['city'])
@@ -256,16 +407,16 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     model = GaussianCopula(constraints=[constraint])
     sampled_conditions = [
         pd.DataFrame({
-            'age_joined': [26.0, 18.0, 31.0, 29.0, 32.0],
-            'age': [30.0, 30.0, 30.0, 30.0, 30.0]
+            'age_joined.value': [26.0, 18.0, 31.0, 29.0, 32.0],
+            'age.value': [30.0, 30.0, 30.0, 30.0, 30.0]
         }),
         pd.DataFrame({
-            'age_joined': [28.0, 33.0, 31.0],
-            'age': [30.0, 30.0, 30.0]
+            'age_joined.value': [28.0, 33.0, 31.0],
+            'age.value': [30.0, 30.0, 30.0]
         }),
         pd.DataFrame({
-            'age_joined': [27.0],
-            'age': [30.0]
+            'age_joined.value': [27.0],
+            'age.value': [30.0]
         })
     ]
 
