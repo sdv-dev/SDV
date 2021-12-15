@@ -13,7 +13,7 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
 [![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw)
 
-<img width=30% src="docs/images/SDV-Logo-Color-Tagline.png">
+<img width=30% src="https://user-images.githubusercontent.com/41479552/146201151-151ac6a9-6de0-4d1e-b3fe-531ed5837ab7.png">
 
 * Website: https://sdv.dev
 * Documentation: https://sdv.dev/SDV
