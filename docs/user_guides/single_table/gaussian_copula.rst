@@ -305,7 +305,7 @@ page, and it contains a huge list of concepts such as:
 -  telephone
 -  ...
 
-In this case, since the field is an e-mail address, we will pass a
+In this case, since the field is an address, we will pass a
 dictionary indicating the category ``address``
 
 .. ipython:: python
@@ -536,7 +536,7 @@ Was the ``GaussianCopula`` able to capture this distribution on its own?
 .. ipython:: python
     :okwarning:
 
-    distributions['experience_years']
+    distributions['experience_years.value']
 
 
 It seems that it was not, as it rather thought that the behavior was
@@ -618,7 +618,7 @@ distribution for the ``experience_years`` column
 .. ipython:: python
     :okwarning:
 
-    model.get_distributions()['experience_years']
+    model.get_distributions()['experience_years.value']
 
 
 And, as a result, we can see how the generated data now have a

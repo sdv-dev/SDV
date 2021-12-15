@@ -23,7 +23,7 @@ Let's look at a demo dataset:
     employees = load_tabular_demo()
     employees
 
-The dataset defined in :ref:`_single_table_constraints` contains basic details about employees.
+The dataset defined in :ref:`handling_constraints` contains basic details about employees.
 We will use this dataset to demonstrate how you can create your own constraint. 
 
 

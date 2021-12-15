@@ -24,14 +24,6 @@ class DeepEchoModel(BaseTimeseriesModel):
 
     _MODEL_CLASS = None
     _model_kwargs = None
-
-    _DATA_TYPES = {
-        'numerical': 'continuous',
-        'categorical': 'categorical',
-        'boolean': 'categorical',
-        'datetime': 'datetime',
-    }
-
     _verbose = False
 
     def _build_model(self):
@@ -48,6 +40,11 @@ class DeepEchoModel(BaseTimeseriesModel):
 
     def _fit(self, timeseries_data):
         self._model = self._build_model()
+
+        if self._sequence_index:
+            timeseries_data = timeseries_data.rename(columns={
+                self._sequence_index + '.value': self._sequence_index
+            })
 
         self._output_columns = list(timeseries_data.columns)
         self._data_columns = [
@@ -67,17 +64,20 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         data_types = list()
         context_types = list()
-        fields_metadata = self._metadata.get_fields()
         for field in self._output_columns:
-            meta = fields_metadata[field]
-            data_type = self._DATA_TYPES.get(meta['type'])
-            if data_type:
-                if field == self._sequence_index:
-                    data_types.append('continuous')
-                elif field in self._data_columns:
-                    data_types.append(data_type)
-                elif field in self._context_columns:
-                    context_types.append(data_type)
+            dtype = timeseries_data[field].dtype
+            kind = dtype.kind
+            if kind in ('i', 'f'):
+                data_type = 'continuous'
+            elif kind in ('O', 'b'):
+                data_type = 'categorical'
+            else:
+                raise ValueError(f'Unsupported dtype {dtype}')
+
+            if field in self._data_columns:
+                data_types.append(data_type)
+            elif field in self._context_columns:
+                context_types.append(data_type)
 
         if self._sequence_index:
             self._transform_sequence_index(sequences)
@@ -136,7 +136,13 @@ class DeepEchoModel(BaseTimeseriesModel):
             output.append(group)
 
         output = pd.concat(output)
-        return output[self._output_columns].reset_index(drop=True)
+        output = output[self._output_columns].reset_index(drop=True)
+        if self._sequence_index:
+            output = output.rename(columns={
+                self._sequence_index: self._sequence_index + '.value'
+            })
+
+        return output
 
 
 class PAR(DeepEchoModel):

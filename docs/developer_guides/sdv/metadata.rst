@@ -57,23 +57,23 @@ other properties.
 
 The available types and subtypes are in this table:
 
-+---------------+---------------+-----------------------+
-| Type          | Subtype       | Additional Properties |
-+===============+===============+=======================+
-| numerical     | integer       | integer               |
-+---------------+---------------+-----------------------+
-| numerical     | float         | float                 |
-+---------------+---------------+-----------------------+
-| datetime      |               | format                |
-+---------------+---------------+-----------------------+
-| categorical   |               | pii, pii_category     |
-+---------------+---------------+-----------------------+
-| boolean       |               |                       |
-+---------------+---------------+-----------------------+
-| id            | integer       | ref                   |
-+---------------+---------------+-----------------------+
-| id            | string        | ref, regex            |
-+---------------+---------------+-----------------------+
++---------------+---------------+-----------------------------------+
+| Type          | Subtype       | Additional Properties             |
++===============+===============+===================================+
+| numerical     | integer       | integer                           |
++---------------+---------------+-----------------------------------+
+| numerical     | float         | float                             |
++---------------+---------------+-----------------------------------+
+| datetime      |               | format                            |
++---------------+---------------+-----------------------------------+
+| categorical   |               | pii, pii_category, pii_locales    |
++---------------+---------------+-----------------------------------+
+| boolean       |               |                                   |
++---------------+---------------+-----------------------------------+
+| id            | integer       | ref                               |
++---------------+---------------+-----------------------------------+
+| id            | string        | ref, regex                        |
++---------------+---------------+-----------------------------------+
 
 .. code-block:: python
 
@@ -164,6 +164,36 @@ For a full list of available categories please check the `Faker documentation si
 .. note:: Sometime ``Faker`` categories admit a `type`, which can be passed as an additional
           argument. If that is the case, you set a ``list`` containing both the category and
           the type instead of only the string: ``'pii_category': ['credict_card_number', 'visa']``
+
+Localized data anonymization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use localizations in anonymization to get values in the specified language,
+the ``pii_locales`` parameter must be set.
+It must be passed the localizations with their country codes as a list. 
+A list of all possible localizations can be found on the `Faker documentation site`_.
+
+.. code-block:: python
+
+    "tables": {
+        "users": {
+            "fields": {
+                "address": {
+                    "type": "categorical",
+                    "pii": True,
+                    "pii_category": "address"
+                    "pii_locales": ["sv_SE", "en_US"]
+                },
+                ...
+            },
+            ...
+        },
+        ...
+    }
+
+.. note:: Specifying localizations and using ``Faker`` categories may result in an error 
+          if the defined ``pii_category`` is not available for all specified languages.
+
 
 Primary key fields
 ******************

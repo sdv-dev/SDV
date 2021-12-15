@@ -320,10 +320,16 @@ class GreaterThan(Constraint):
             cls._validate_drop(scalar, drop)
             high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
             constraint_columns = tuple(high)
+            if isinstance(low, pd.Timestamp):
+                low = low.to_datetime64()
+
         elif scalar == 'high':
             cls._validate_drop(scalar, drop)
             low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
             constraint_columns = tuple(low)
+            if isinstance(high, pd.Timestamp):
+                high = high.to_datetime64()
+
         else:
             raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
                              "Use either: 'high', 'low', or None.")
@@ -436,8 +442,11 @@ class GreaterThan(Constraint):
         """
         low = self._get_value(table_data, 'low')
         high = self._get_value(table_data, 'high')
+        isnull = np.logical_or(np.isnan(low), np.isnan(high))
 
-        return self.operator(high, low).all(axis=1)
+        valid = np.logical_or(self.operator(high, low), isnull)
+
+        return valid.all(axis=1)
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -630,7 +639,9 @@ class ColumnFormula(Constraint):
                 Whether each row is valid.
         """
         computed = self._formula(table_data)
-        return table_data[self._column] == computed
+        isnan = table_data[self._column].isna() & computed.isna()
+
+        return table_data[self._column].eq(computed) | isnan
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -717,12 +728,19 @@ class Between(Constraint):
         self.constraint_column = column
         self.constraint_columns = (column,)
         self.rebuild_columns = (column,)
-        self._low = low
-        self._high = high
         self._strict = strict
         self._high_is_scalar = high_is_scalar
         self._low_is_scalar = low_is_scalar
         self._lt = operator.lt if strict else operator.le
+
+        self._low = low
+        if self._low_is_scalar and isinstance(low, pd.Timestamp):
+            self._low = low.to_datetime64()
+
+        self._high = high
+        if self._high_is_scalar and isinstance(high, pd.Timestamp):
+            self._high = high.to_datetime64()
+
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -813,14 +831,22 @@ class Between(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        satisfy_low_bound = self._lt(
-            self._get_low_value(table_data), table_data[self.constraint_column]
+        low = self._get_low_value(table_data)
+        high = self._get_high_value(table_data)
+
+        satisfy_low_bound = np.logical_or(
+            self._lt(low, table_data[self.constraint_column]),
+            np.isnan(low),
         )
-        satisfy_high_bound = self._lt(
-            table_data[self.constraint_column], self._get_high_value(table_data)
+        satisfy_high_bound = np.logical_or(
+            self._lt(table_data[self.constraint_column], high),
+            np.isnan(high),
         )
 
-        return satisfy_low_bound & satisfy_high_bound
+        return np.logical_or(
+            np.logical_and(satisfy_low_bound, satisfy_high_bound),
+            np.isnan(table_data[self.constraint_column]),
+        )
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -1000,15 +1026,18 @@ class OneHotEncoding(Constraint):
         table_data = table_data.copy()
 
         condition_columns = [col for col in self._columns if col in table_data.columns]
-        if not table_data[condition_columns].isin([0.0, 1.0]).all(axis=1).all():
+        conditions_data = table_data[condition_columns]
+        conditions_data_sum = conditions_data.sum(axis=1)
+        if not conditions_data.isin([0.0, 1.0]).all(axis=1).all():
             raise ValueError('Condition values must be ones or zeros.')
 
-        if (table_data[condition_columns].sum(axis=1) > 1.0).any():
+        if (conditions_data_sum > 1.0).any():
             raise ValueError('Each row of a condition can only contain one number one.')
 
-        has_one = table_data[condition_columns].sum(axis=1) == 1.0
+        has_one = conditions_data_sum == 1.0
         if (~has_one).sum() > 0:
             sub_table_data = table_data.loc[~has_one, condition_columns]
+            should_transform = False
 
             if len(condition_columns) == len(self._columns) - 1:
                 proposed_table_data = sub_table_data.copy()
@@ -1017,10 +1046,17 @@ class OneHotEncoding(Constraint):
                         proposed_table_data[column] = 1.0
 
             else:
+                should_transform = True
+                conditions = sub_table_data[condition_columns]
+                transformed_conditions = self._hyper_transformer.transform(conditions)
                 proposed_table_data = self._columns_model.sample(
-                    num_rows=sub_table_data[condition_columns].shape[0],
-                    conditions=sub_table_data[condition_columns].iloc[0].to_dict()
+                    num_rows=len(sub_table_data),
+                    conditions=transformed_conditions.iloc[0].to_dict()
                 )
+
+            if should_transform:
+                proposed_table_data = self._hyper_transformer.reverse_transform(
+                    proposed_table_data)
 
             for column in self._columns:
                 if column not in condition_columns:
@@ -1109,8 +1145,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        valid = pd.Series([False] * table_data.shape[0])
-        data = table_data.reset_index()
-        groups = data.groupby(self.columns)
-        valid.iloc[groups.first()['index'].values] = True
-        return valid
+        return table_data.groupby(self.columns).cumcount() == 0

@@ -1,5 +1,68 @@
 # Release Notes
 
+## 0.13.0 - 2021-11-22
+
+This release makes multiple improvements to different `Constraint` classes. The `Unique` constraint can now
+handle columns with the name `index` and no longer crashes on subsets of the original data. The `Between`
+constraint can now handle columns with nulls properly. The memory of all constraints was also improved.
+
+Various other features and fixes were added. Conditional sampling no longer crashes when the `num_rows` argument
+is not provided. Multiple localizations can now be used for PII fields. Scaffolding for integration tests was added
+and the workflows now run `pip check`.
+
+Additionally, this release adds support for Python 3.9!
+
+### Bugs Fixed
+
+* Gaussian Copula – Memory Issue in Release 0.10.0 - Issue [#459](https://github.com/sdv-dev/SDV/issues/459) by @xamm
+* Applying Unique Constraint errors when calling model.fit() on a subset of data - Issue [#610](https://github.com/sdv-dev/SDV/issues/610) by @xamm
+* Calling sampling with conditions and without num_rows crashes - Issue [#614](https://github.com/sdv-dev/SDV/issues/614) by @xamm
+* Metadata.visualize with path parameter throws AttributeError - Issue [#634](https://github.com/sdv-dev/SDV/issues/634) by @xamm
+* The Unique constraint crashes when the data contains a column called index - Issue [#616](https://github.com/sdv-dev/SDV/issues/616) by @xamm
+* The Unique constraint cannot handle non-default index - Issue [#617](https://github.com/sdv-dev/SDV/issues/617) by @xamm
+* ConstraintsNotMetError when applying Between constraint on datetime columns containing null values - Issue [#632](https://github.com/sdv-dev/SDV/issues/632) by @katxiao
+
+### New Features
+
+* Adds Multi localisations feature for PII fields defined in #308 - PR [#609](https://github.com/sdv-dev/SDV/pull/609) by @xamm
+
+### Housekeeping Tasks
+
+* Support latest version of Faker - Issue [#621](https://github.com/sdv-dev/SDV/issues/621) by @katxiao
+* Add scaffolding for Metadata integration tests - Issue [#624](https://github.com/sdv-dev/SDV/issues/624) by @katxiao
+* Add support for Python 3.9 - Issue [#631](https://github.com/sdv-dev/SDV/issues/631) by @amontanez24
+
+### Internal Improvements
+
+* Add pip check to CI workflows - Issue [#626](https://github.com/sdv-dev/SDV/issues/626) by @pvk-developer
+
+### Documentation Changes
+
+* Anonymizing PII in single table tutorials states address field as e-mail type - Issue [#604](https://github.com/sdv-dev/SDV/issues/604) by @xamm
+
+Special thanks to @xamm, @katxiao, @pvk-developer and @amontanez24 for all the work that made this release possible!
+
+## 0.12.1 - 2021-10-12
+
+This release fixes bugs in constraints, metadata behavior, and SDV documentation. Specifically, we added
+proper handling of data containing null values for constraints and timeseries data, and updated the
+default metadata detection behavior.
+
+### Bugs Fixed
+
+* ValueError: The parameter loc has invalid values - Issue [#353](https://github.com/sdv-dev/SDV/issues/353) by @fealho
+* Gaussian Copula is generating different data with metadata and without metadata - Issue [#576](https://github.com/sdv-dev/SDV/issues/576) by @katxiao
+* Make pomegranate an optional dependency - Issue [#567](https://github.com/sdv-dev/SDV/issues/567) by @katxiao
+* Small wording change for Question Issue Template - Issue [#571](https://github.com/sdv-dev/SDV/issues/571) by @katxiao
+* ConstraintsNotMetError when using GreaterThan constraint with datetime - Issue [#590](https://github.com/sdv-dev/SDV/issues/590) by @katxiao
+* GreaterThan constraint crashing with NaN values - Issue [#592](https://github.com/sdv-dev/SDV/issues/592) by @katxiao
+* Null values in GreaterThan constraint raises error - Issue [#589](https://github.com/sdv-dev/SDV/issues/589) by @katxiao
+* ColumnFormula raises ConstraintsNotMetError when checking NaN values - Issue [#593](https://github.com/sdv-dev/SDV/issues/593) by @katxiao
+* GreaterThan constraint raises TypeError when using datetime - Issue [#596](https://github.com/sdv-dev/SDV/issues/596) by @katxiao
+* Fix repository language - Issue [#464](https://github.com/sdv-dev/SDV/issues/464) by @fealho
+* Update __init__.py - Issue [#578](https://github.com/sdv-dev/SDV/issues/578) by @dyuliu
+* IndexingError: Unalignable boolean - Issue [#446](https://github.com/sdv-dev/SDV/issues/446) by @fealho
+
 ## 0.12.0 - 2021-08-17
 
 This release focuses on improving and expanding upon the existing constraints. More specifically, the users can now

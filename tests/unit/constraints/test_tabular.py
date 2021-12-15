@@ -1,6 +1,7 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import uuid
+from datetime import datetime
 from unittest.mock import Mock
 
 import numpy as np
@@ -2109,10 +2110,119 @@ class TestGreaterThan():
             'b': [4, 2, 2],
             'c': [7, 8, 9]
         })
+
+        # Run
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = [False, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_high_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If high is a datetime and low is a column,
+        the values in that column should all be lower than
+        ``instance._high``.
+
+        Input:
+        - Table with values above and below `high`.
+        Output:
+        - True should be returned for the rows where the low
+        column is below `high`.
+        """
+        # Setup
+        high_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low='a', high=high_dt, strict=False, scalar='high')
+        table_data = pd.DataFrame({
+            'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_low_is_datetime(self):
+        """Test the ``GreaterThan.is_valid`` method.
+
+        If low is a datetime and high is a column,
+        the values in that column should all be higher than
+        ``instance._low``.
+
+        Input:
+        - Table with values above and below `low`.
+        Output:
+        - True should be returned for the rows where the high
+        column is above `low`.
+        """
+        # Setup
+        low_dt = pd.to_datetime('8/31/2021')
+        instance = GreaterThan(low=low_dt, high='a', strict=False, scalar='low')
+        table_data = pd.DataFrame({
+            'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
+            'b': [4, 2, 2],
+        })
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_nans(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a NaN row, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, None, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_two_cols_with_one_nan(self):
+        """Test the ``GreaterThan.is_valid`` method with nan values.
+
+        If there is a row in which we compare one NaN value with one
+        non-NaN value, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a row that contains only one NaN value.
+        Output:
+        - True should be returned for the row with the NaN value.
+        """
+        # Setup
+        instance = GreaterThan(low='a', high='b', strict=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, None, 3],
+            'b': [4, 5, 2],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False]
         np.testing.assert_array_equal(expected_out, out)
 
     def test__transform_int_drop_none(self):
@@ -3205,6 +3315,9 @@ class TestNegative():
 
 def new_column(data):
     """Formula to be used for the ``TestColumnFormula`` class."""
+    if data['a'] is None or data['b'] is None:
+        return None
+
     return data['a'] + data['b']
 
 
@@ -3320,6 +3433,33 @@ class TestColumnFormula():
 
         # Assert
         expected_out = pd.Series([False, False, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_with_nans(self):
+        """Test the ``ColumnFormula.is_valid`` method for with a formula that produces nans.
+
+        If the data fulfills the formula, result is a series of ``True`` values.
+
+        Input:
+        - Table data fulfilling the formula (pandas.DataFrame)
+        Output:
+        - Series of ``True`` values (pandas.Series)
+        """
+        # Setup
+        column = 'c'
+        instance = ColumnFormula(column=column, formula=new_column)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, None],
+            'c': [5, 7, None]
+        })
+        instance = ColumnFormula(column=column, formula=new_column)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test__transform(self):
@@ -3921,7 +4061,8 @@ class TestBetween():
         # Assert
         expected_out = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -3965,7 +4106,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4009,7 +4151,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -4248,7 +4391,8 @@ class TestBetween():
         instance.fit(table_data)
         transformed = pd.DataFrame({
             'b': [4, 5, 6],
-            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transform(table_data[column], low, high)
+            'a#1900-01-01T00:00:00.000000000#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], low, high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -4297,7 +4441,8 @@ class TestBetween():
                 pd.to_datetime('2020-11-01'),
                 pd.to_datetime('2020-11-03'),
             ],
-            'a#1900-01-01 00:00:00#b': transform(table_data[column], low, table_data[high])
+            'a#1900-01-01T00:00:00.000000000#b': transform(
+                table_data[column], low, table_data[high])
         })
         out = instance.reverse_transform(transformed)
 
@@ -4345,7 +4490,8 @@ class TestBetween():
                 pd.to_datetime('2020-02-01'),
                 pd.to_datetime('2020-02-03'),
             ],
-            'a#b#2021-01-01 00:00:00': transform(table_data[column], table_data[low], high)
+            'a#b#2021-01-01T00:00:00.000000000': transform(
+                table_data[column], table_data[low], high)
         })
         out = instance.reverse_transform(transformed)
 
@@ -4562,7 +4708,203 @@ class TestBetween():
 
         # Assert
         expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
 
+    def test_is_valid_low_high_nans(self):
+        """Test the ``Between.is_valid`` method with nan values in low and high columns.
+
+        If one of `low` or `high` is NaN, expect it to be ignored in the comparison.
+        If both are NaN or the constraint column is NaN, return True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 0.9, 1.0],
+            'b': [0, None, None, 0.4],
+            'c': [0.5, None, 0.6, None]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_nans(self):
+        """Test the ``Between.is_valid`` method with nan values in constraint column.
+
+        If the constraint column is Nan, expect that `is_valid` returns True.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, None],
+            'b': [0, 0.1, 0.5],
+            'c': [0.5, 1.5, 0.6]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_high_scalar_low_nans(self):
+        """Test the ``Between.is_valid`` method with ``high`` as scalar and ``low`` containing NaNs.
+
+        The NaNs in ``low`` should be ignored.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - The NaN values should be ignored when making comparisons.
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = 1.0
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [0.1, 0.5, 1.9],
+            'b': [-0.5, None, None],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_low_high_nans_datetime(self):
+        """Test the ``Between.is_valid`` method with nan values in low and high datetime columns.
+
+        If one of `low` or `high` is NaN, expect it to be ignored in the comparison.
+        If both are NaN or the constraint column is NaN, return True.
+
+        Input:
+        - Table with row NaN containing NaNs.
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-09-13'),
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-13'),
+                pd.to_datetime('2020-08-14'),
+            ],
+            'b': [
+                pd.to_datetime('2020-09-03'),
+                None,
+                None,
+                pd.to_datetime('2020-10-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                None,
+                None,
+            ]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True, False])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_column_nans_datetime(self):
+        """Test the ``Between.is_valid`` method with nan values in the constraint column.
+
+        If there is a row containing NaNs, expect that `is_valid` returns True.
+
+        Input:
+        - Table with row NaN containing NaNs.
+        Output:
+        - True should be returned for the NaN row.
+        """
+        # Setup
+        instance = Between(column='a', low='b', high='c')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                None,
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-13'),
+            ],
+            'b': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-02'),
+                pd.to_datetime('2020-08-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-01'),
+            ]
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_out, out)
+
+    def test_is_valid_high_datetime_low_nans(self):
+        """Test the ``Between.is_valid`` method with ``high`` as datetime and ``low`` with NaNs.
+
+        The NaNs in ``low`` should be ignored.
+
+        Input:
+        - Table with a NaN row
+        Output:
+        - The NaN values should be ignored when making comparisons.
+        """
+        # Setup
+        column = 'a'
+        low = 'b'
+        high = pd.to_datetime('2020-08-13')
+        instance = Between(column=column, low=low, high=high, high_is_scalar=True)
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-12'),
+                pd.to_datetime('2020-08-14'),
+            ],
+            'b': [
+                pd.to_datetime('2020-06-03'),
+                None,
+                None,
+            ],
+        })
+        instance.fit(table_data)
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = pd.Series([True, True, False])
         pd.testing.assert_series_equal(expected_out, out)
 
 
@@ -5046,6 +5388,128 @@ class TestUnique():
 
         # Assert
         expected = pd.Series([True, False, True, False, True, True])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_custom_index_same_values(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns.
+        - DataFrame has a custom index column which is set to 0 for rows.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b', 'c'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 2, 2, 3],
+            'b': [5, 5, 6, 6, 7],
+            'c': [8, 8, 9, 9, 10]
+        }, index=[0, 0, 0, 0, 0])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, True, False, True], index=[0, 0, 0, 0, 0])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_custom_index_not_sorted(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns.
+        - DataFrame has a custom index column which is set in an unsorted way.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b', 'c'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 2, 2, 3],
+            'b': [5, 5, 6, 6, 7],
+            'c': [8, 8, 9, 9, 10]
+        }, index=[2, 1, 3, 5, 4])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, True, False, True], index=[2, 1, 3, 5, 4])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_custom_index_not_sorted(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``self.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple occurences of the same value of the
+        one column in ``instance.columns``.
+        - DataFrame has a custom index column which is set in an unsorted way.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
+        """
+        # Setup
+        instance = Unique(columns='a')
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 1, 2, 3, 2],
+            'b': [1, 2, 3, 4, 5, 6],
+            'c': [False, False, True, False, False, True]
+        }, index=[2, 1, 3, 5, 4, 6])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, False, True, True, False], index=[2, 1, 3, 5, 4, 6])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_custom_index_same_values(self):
+        """Test the ``Unique.is_valid`` method.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``self.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+
+        Input:
+        - DataFrame with multiple occurences of the same value of the
+        one column in ``instance.columns``.
+        - DataFrame has a custom index column which is set to 0 for rows.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        Github Issue:
+        - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
+        """
+        # Setup
+        instance = Unique(columns='a')
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, 1, 1, 2, 3, 2],
+            'b': [1, 2, 3, 4, 5, 6],
+            'c': [False, False, True, False, False, True]
+        }, index=[0, 0, 0, 0, 0, 0])
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, False, False, True, True, False], index=[0, 0, 0, 0, 0, 0])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_one_column(self):
