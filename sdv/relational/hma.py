@@ -123,7 +123,7 @@ class HMA1(BaseRelationalModel):
         Returns:
             pandas.DataFrame
         """
-        if tables:
+        if tables and table_name in tables:
             table = tables[table_name].copy()
         else:
             table = self.metadata.load_table(table_name)
