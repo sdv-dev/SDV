@@ -1,5 +1,25 @@
 # Release Notes
 
+## 0.13.1 - 2021-12-22
+
+This release adds support for passing tabular constraints to the HMA1 model, and adds more explicit error handling for
+metric evaluation. It also includes a fix for using categorical columns in the PAR model and documentation updates
+for metadata and HMA1.
+
+### Bugs Fixed
+
+* Categorical column after sequence_index column - Issue [#314](https://github.com/sdv-dev/SDV/issues/314) by @fealho
+
+### New Features
+
+* Support passing tabular constraints to the HMA1 model - Issue [#296](https://github.com/sdv-dev/SDV/issues/296) by @katxiao
+* Metric evaluation error handling metrics - Issue [#638](https://github.com/sdv-dev/SDV/issues/638) by @katxiao
+
+### Documentation Changes
+
+* Make true/false values lowercase in Metadata Schema specification - Issue [#664](https://github.com/sdv-dev/SDV/issues/664) by @katxiao
+* Update docstrings for hma1 methods - Issue [#642](https://github.com/sdv-dev/SDV/issues/642) by @katxiao
+
 ## 0.13.0 - 2021-11-22
 
 This release makes multiple improvements to different `Constraint` classes. The `Unique` constraint can now

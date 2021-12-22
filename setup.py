@@ -22,7 +22,7 @@ install_requires = [
     'ctgan>=0.5.0,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
     'rdt>=0.6.1,<0.7',
-    'sdmetrics>=0.4.0,<0.5',
+    'sdmetrics>=0.4.1,<0.5',
 ]
 
 pomegranate_requires = [
@@ -91,6 +91,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     description='Synthetic Data Generation for tabular, relational and time series data.',
     extras_require={
@@ -111,6 +112,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.13.0',
+    version='0.13.1.dev1',
     zip_safe=False,
 )
