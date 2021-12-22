@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Defining Custom Constraints &#8212; SDV 0.13.0 documentation</title>
+    <title>Defining Custom Constraints &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -274,21 +274,21 @@ Its main function is to change your data in a way that enforces the constraint.<
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   33               30                     3  125000.00      11500.00                       3        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   41               36                     5  110073.24       7634.48                       2        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   38               29                     9   79000.00       9500.00                       3        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   41               37                     4  100869.41      14888.88                       4        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   34               28                     6  131500.00      23500.00                       3        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   41               35                     6  124500.00       8500.00                       5        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   38               29                     9  135000.00      19000.00                       5        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   39               31                     8   83444.71      17109.06                       2        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   33               29                     4   38000.00       9000.00                       5        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   38               30                     8   62797.05       9194.65                       2        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   31               26                     5  100000.00      16000.00                       4        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   46               45                     1   88500.00      11500.00                       4        0.0        1.0         0.0</span>
+<span class="go">0       Pear          Sales            1   42               36                     6  152500.00      21500.00                       2        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   44               39                     5   79392.77      16975.79                       4        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   31               28                     3   58500.00      11500.00                       1        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   46               40                     6   59635.71      15568.51                       4        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   44               40                     4   91500.00       6000.00                       4        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   45               43                     2   50500.00      20000.00                       1        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   43               38                     5  132500.00      22000.00                       4        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   41               34                     7  136781.42      15862.92                       2        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   31               23                     8  133500.00      18000.00                       3        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   30               24                     6   58249.81       6796.36                       3        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   48               40                     8   61500.00      16500.00                       4        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   43               40                     3  105500.00      10500.00                       3        0.0        1.0         0.0</span>
 </pre></div>
 </div>
-<p>The dataset defined in <span class="xref std std-ref">_single_table_constraints</span> contains basic details about employees.
+<p>The dataset defined in <a class="reference internal" href="handling_constraints.html#handling-constraints"><span class="std std-ref">Handling Constraints</span></a> contains basic details about employees.
 We will use this dataset to demonstrate how you can create your own constraint.</p>
 <section id="using-the-customconstraint">
 <h2>Using the <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code><a class="headerlink" href="#using-the-customconstraint" title="Permalink to this headline">¶</a></h2>
@@ -426,16 +426,16 @@ of “contractor” records.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">sampled</span>
 <span class="gh">Out[18]: </span><span class="go"></span>
 <span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0   Glasses  Search Engine           74   43               42                     2   38000.00        8600.4                       2        0.0        0.0         1.0</span>
-<span class="go">1      Pear         Design           56   41               34                     7  128196.10       11776.8                       3        0.0        0.0         1.0</span>
-<span class="go">2  Cheerper        BigData           69   35               27                     7   87909.15        9475.4                       4        0.0        1.0         1.0</span>
-<span class="go">3   Glasses             AI            1   33               30                     4   72500.00        8000.0                       4        1.0        0.0         0.0</span>
-<span class="go">4   Glasses  Search Engine           68   43               39                     4   46279.85        8121.4                       2        0.0        0.0         1.0</span>
-<span class="go">5      Pear          Sales            5   37               32                     4  135000.00       11000.0                       4        1.0        0.0         0.0</span>
-<span class="go">6      Pear             AI           11   39               30                     9   84500.00       11000.0                       3        1.0        0.0         0.0</span>
-<span class="go">7      Pear         Design            2   34               28                     8  119500.00        8000.0                       4        0.0        0.0         0.0</span>
-<span class="go">8  Cheerper        BigData            2   31               26                     6  119500.00       12500.0                       5        1.0        1.0         0.0</span>
-<span class="go">9   Glasses             AI           47   39               34                     2   54500.00       10500.0                       5        1.0        0.0         0.0</span>
+<span class="go">0      Pear         Design           69   40               28                     8   94500.00      22000.00                       3        1.0        0.0         0.0</span>
+<span class="go">1   Glasses  Search Engine            7   43               36                     4   52013.10      14291.15                       3        0.0        0.0         1.0</span>
+<span class="go">2  Cheerper          Sales           22   48               40                     5   68000.00      19500.00                       4        1.0        1.0         0.0</span>
+<span class="go">3   Glasses  Search Engine           75   44               35                     5   68500.00      19000.00                       4        0.0        0.0         0.0</span>
+<span class="go">4   Glasses             AI            1   33               26                     5   96300.55       8504.50                       3        1.0        0.0         1.0</span>
+<span class="go">5      Pear          Sales           11   43               33                     7  119000.00      19000.00                       3        1.0        0.0         0.0</span>
+<span class="go">6  Cheerper        BigData            2   43               38                     2   53696.45       7188.35                       3        0.0        1.0         1.0</span>
+<span class="go">7  Cheerper        BigData           65   45               38                     4   74500.00       7500.00                       3        0.0        1.0         0.0</span>
+<span class="go">8      Pear          Sales            4   48               43                     5   79000.00      20500.00                       3        1.0        1.0         0.0</span>
+<span class="go">9  Cheerper        Support            6   41               33                     5   52500.00      19000.00                       2        1.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>This style gives flexibility to access any column in the table while still operating on

@@ -130,7 +130,7 @@ the following keys.
             "fields": {
                 "social_security_number": {
                     "type": "categorical",
-                    "pii": True,
+                    "pii": true,
                     "pii_category": "ssn"
                 },
                 ...
@@ -180,7 +180,7 @@ A list of all possible localizations can be found on the `Faker documentation si
             "fields": {
                 "address": {
                     "type": "categorical",
-                    "pii": True,
+                    "pii": true,
                     "pii_category": "address"
                     "pii_locales": ["sv_SE", "en_US"]
                 },
@@ -215,7 +215,7 @@ If a field is specified as a ``primary_key`` of the table, then the field must b
         ...
     }
 
-If the subtype of the primary key is integer, an optional regular expression can be passed to
+If the subtype of the primary key is string, an optional regular expression can be passed to
 generate keys that match it:
 
 .. code-block:: python

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Metadata Schema &#8212; SDV 0.13.0 documentation</title>
+    <title>Metadata Schema &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -390,7 +390,7 @@ the following keys.</p>
         <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;social_security_number&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;pii&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;pii&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
                 <span class="s2">&quot;pii_category&quot;</span><span class="p">:</span> <span class="s2">&quot;ssn&quot;</span>
             <span class="p">},</span>
             <span class="o">...</span>
@@ -442,7 +442,7 @@ A list of all possible localizations can be found on the <a class="reference ext
         <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;categorical&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;pii&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;pii&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
                 <span class="s2">&quot;pii_category&quot;</span><span class="p">:</span> <span class="s2">&quot;address&quot;</span>
                 <span class="s2">&quot;pii_locales&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sv_SE&quot;</span><span class="p">,</span> <span class="s2">&quot;en_US&quot;</span><span class="p">]</span>
             <span class="p">},</span>
@@ -478,7 +478,7 @@ if the defined <code class="docutils literal notranslate"><span class="pre">pii_
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>If the subtype of the primary key is integer, an optional regular expression can be passed to
+<p>If the subtype of the primary key is string, an optional regular expression can be passed to
 generate keys that match it:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="p">{</span>

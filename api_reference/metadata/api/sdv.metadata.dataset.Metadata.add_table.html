@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.metadata.dataset.Metadata.add_table &#8212; SDV 0.13.0 documentation</title>
+    <title>sdv.metadata.dataset.Metadata.add_table &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -336,7 +336,7 @@
 <h1>sdv.metadata.dataset.Metadata.add_table<a class="headerlink" href="#sdv-metadata-dataset-metadata-add-table" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.metadata.dataset.Metadata.add_table">
-<code class="sig-prename descclassname">Metadata.</code><code class="sig-name descname">add_table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">foreign_key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/metadata/dataset.html#Metadata.add_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.dataset.Metadata.add_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">Metadata.</code><code class="sig-name descname">add_table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fields_metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">primary_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">foreign_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/metadata/dataset.html#Metadata.add_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metadata.dataset.Metadata.add_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new table to this metadata.</p>
 <p><code class="docutils literal notranslate"><span class="pre">fields</span></code> list can be a mixture of field names, which will be build automatically
 from the data, or dictionaries specifying the field details. If a field needs to be
@@ -359,7 +359,9 @@ metadata built from the fields found in data.
 Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>primary_key</strong> (<em>str</em>) – Field name to add as primary key, it must not exists. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>parent</strong> (<em>str</em>) – Table name to refere a foreign key field. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>foreign_key</strong> (<em>str</em>) – Foreing key field name to <code class="docutils literal notranslate"><span class="pre">parent</span></code> table primary key. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>foreign_key</strong> (<em>str</em>) – Foreign key field name to <code class="docutils literal notranslate"><span class="pre">parent</span></code> table primary key. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><a class="reference internal" href="../../constraints/api/sdv.constraints.Constraint.html#sdv.constraints.Constraint" title="sdv.constraints.Constraint"><em>Constraint</em></a><em>, </em><em>dict</em><em>]</em>) – List of Constraint objects or dicts representing the constraints for the
+given table.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>

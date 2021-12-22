@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.13.0 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,6 +178,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span><span class="p">,</span> <span class="n">transformers</span>
 
+<span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Constraint</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata</span> <span class="kn">import</span> <span class="n">visualization</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.errors</span> <span class="kn">import</span> <span class="n">MetadataError</span>
 
@@ -1039,7 +1040,7 @@
         <span class="k">return</span> <span class="n">fields_metadata</span>
 
 <div class="viewcode-block" id="Metadata.add_table"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.add_table.html#sdv.metadata.dataset.Metadata.add_table">[docs]</a>    <span class="k">def</span> <span class="nf">add_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                  <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                  <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a new table to this metadata.</span>
 
 <span class="sd">        ``fields`` list can be a mixture of field names, which will be build automatically</span>
@@ -1070,7 +1071,10 @@
 <span class="sd">            parent (str):</span>
 <span class="sd">                Table name to refere a foreign key field. Defaults to ``None``.</span>
 <span class="sd">            foreign_key (str):</span>
-<span class="sd">                Foreing key field name to ``parent`` table primary key. Defaults to ``None``.</span>
+<span class="sd">                Foreign key field name to ``parent`` table primary key. Defaults to ``None``.</span>
+<span class="sd">            constraints (list[Constraint, dict]):</span>
+<span class="sd">                List of Constraint objects or dicts representing the constraints for the</span>
+<span class="sd">                given table.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError:</span>
@@ -1105,6 +1109,16 @@
             <span class="n">table_metadata</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_metadata</span>
+
+        <span class="k">if</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="n">meta_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+                    <span class="n">meta_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">meta_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+            <span class="n">table_metadata</span><span class="p">[</span><span class="s1">&#39;constraints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta_constraints</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">primary_key</span><span class="p">:</span>

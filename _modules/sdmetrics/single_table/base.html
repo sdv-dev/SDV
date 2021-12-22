@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.base &#8212; SDV 0.13.0 documentation</title>
+    <title>sdmetrics.single_table.base &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -171,6 +171,7 @@
 <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">attrgetter</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.base</span> <span class="kn">import</span> <span class="n">BaseMetric</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.errors</span> <span class="kn">import</span> <span class="n">IncomputableMetricError</span>
 
 
 <div class="viewcode-block" id="SingleTableMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.SingleTableMetric.html#sdv.metrics.tabular.SingleTableMetric">[docs]</a><span class="k">class</span> <span class="nc">SingleTableMetric</span><span class="p">(</span><span class="n">BaseMetric</span><span class="p">):</span>
@@ -217,6 +218,22 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_select_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select fields from metadata that match the specified types.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metadata (dict):</span>
+<span class="sd">                The table metadata.</span>
+<span class="sd">            types (str or tuple):</span>
+<span class="sd">                The desired data types.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list:</span>
+<span class="sd">                All fields that match the specified types.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            IncompatibleMetricError:</span>
+<span class="sd">                If no matching fields are found, the metric is unable to be computed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="p">)</span>
@@ -226,6 +243,9 @@
             <span class="n">field_subtype</span> <span class="o">=</span> <span class="n">field_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;subtype&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">types</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">(</span><span class="n">field_type</span><span class="p">,</span> <span class="p">(</span><span class="n">field_type</span><span class="p">,</span> <span class="p">),</span> <span class="p">(</span><span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="p">))):</span>
                 <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IncomputableMetricError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Cannot find fields of types </span><span class="si">{</span><span class="n">types</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">fields</span>
 

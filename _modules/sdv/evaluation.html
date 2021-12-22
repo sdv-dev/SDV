@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation &#8212; SDV 0.13.0 documentation</title>
+    <title>sdv.evaluation &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -301,7 +301,6 @@
         <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
 
     <span class="n">scores</span> <span class="o">=</span> <span class="n">sdmetrics</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
-    <span class="n">scores</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">aggregate</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">scores</span><span class="o">.</span><span class="n">normalized_score</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>

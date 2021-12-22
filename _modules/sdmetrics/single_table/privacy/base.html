@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.13.0 documentation</title>
+    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -242,6 +242,9 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s1">&#39;`sensitive_fields` must be passed either directly or inside `metadata`&#39;</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;`key_fields` or `sensitive_fields` is empty&#39;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">,</span> <span class="n">metadata</span>
 
     <span class="nd">@classmethod</span>
@@ -288,15 +291,12 @@
             <span class="n">sensitive_fields</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">key_fields</span> <span class="o">+</span> <span class="n">sensitive_fields</span><span class="p">:</span>
             <span class="n">data_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">col</span><span class="p">]</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
                <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">]</span>
                <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]):</span>  <span class="c1"># check data type</span>
-                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s1"> has invalid data type </span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="n">model</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="p">)</span>
 
@@ -388,6 +388,9 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s1">&#39;`sensitive_fields` must be passed either directly or inside `metadata`&#39;</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;`key_fields` or `sensitive_fields` is empty&#39;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">,</span> <span class="n">metadata</span>
 
     <span class="nd">@classmethod</span>
@@ -436,15 +439,12 @@
             <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">key_fields</span> <span class="o">+</span> <span class="n">sensitive_fields</span><span class="p">:</span>
             <span class="n">data_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">col</span><span class="p">]</span>
 
             <span class="c1"># check data type</span>
             <span class="k">if</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s1"> has invalid data type </span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="n">model</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="p">)</span>
 

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.ensemble &#8212; SDV 0.13.0 documentation</title>
+    <title>sdmetrics.single_table.privacy.ensemble &#8212; SDV 0.13.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -168,8 +168,6 @@
   <h1>Source code for sdmetrics.single_table.privacy.ensemble</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;CategoricalEnsemble module and its attacker.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.base</span> <span class="kn">import</span> <span class="n">CategoricalPrivacyMetric</span><span class="p">,</span> <span class="n">PrivacyAttackerModel</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.util</span> <span class="kn">import</span> <span class="n">majority</span>
 
@@ -264,10 +262,10 @@
             <span class="n">model_kwargs</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">MODEL_KWARGS</span>
 
         <span class="k">if</span> <span class="s1">&#39;attackers&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_kwargs</span><span class="p">:</span>  <span class="c1"># no attackers specfied</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">return</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No attackers specified.&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;attackers&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span>
               <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;attackers&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>  <span class="c1"># zero attackers specfied</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">return</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Zero attackers specified&#39;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
             <span class="n">real_data</span><span class="p">,</span>
