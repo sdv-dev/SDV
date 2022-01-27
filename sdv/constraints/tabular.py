@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type
 
 
@@ -51,6 +52,10 @@ class CustomConstraint(Constraint):
     def _run(self, function, table_data, reverse=False):
         table_data = table_data.copy()
         if self._columns:
+            missing_columns = [col for col in self._columns if col not in table_data.columns]
+            if missing_columns:
+                raise MissingConstraintColumnError()
+
             if reverse:
                 columns = reversed(self._columns)
             else:
