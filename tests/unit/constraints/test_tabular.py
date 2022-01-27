@@ -214,7 +214,7 @@ class TestCustomConstraint():
         # Run and assert
         instance = CustomConstraint(columns='a', transform=dummy_transform_mock)
         with pytest.raises(MissingConstraintColumnError):
-            transformed = instance.transform(table_data)
+            instance.transform(table_data)
 
     def test__run_reverse_transform_table_column(self):
         """Test the ``CustomConstraint._run`` method.

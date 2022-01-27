@@ -52,10 +52,6 @@ class CustomConstraint(Constraint):
     def _run(self, function, table_data, reverse=False):
         table_data = table_data.copy()
         if self._columns:
-            missing_columns = [col for col in self._columns if col not in table_data.columns]
-            if missing_columns:
-                raise MissingConstraintColumnError()
-
             if reverse:
                 columns = reversed(self._columns)
             else:
@@ -73,6 +69,11 @@ class CustomConstraint(Constraint):
         return table_data
 
     def _run_transform(self, table_data):
+        if self._columns:
+            missing_columns = [col for col in self._columns if col not in table_data.columns]
+            if missing_columns:
+                raise MissingConstraintColumnError()
+
         return self._run(self._transform, table_data)
 
     def _run_reverse_transform(self, table_data):
