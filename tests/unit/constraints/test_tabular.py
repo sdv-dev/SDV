@@ -195,6 +195,27 @@ class TestCustomConstraint():
         pd.testing.assert_frame_equal(called[0][0], table_data)
         pd.testing.assert_frame_equal(transformed, dummy_transform_mock.return_value)
 
+    def test__run_transform_missing_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" that is missing the constraint column.
+
+        Setup:
+        - Pass dummy transform function with ``table_data`` and ``column`` arguments.
+        Side Effects:
+        - MissingConstraintColumnError is thrown.
+        """
+        # Setup
+        table_data = pd.DataFrame({'b': [1, 2, 3]})
+        dummy_transform_mock = Mock(side_effect=dummy_transform_table_column,
+                                    return_value=table_data)
+        # Run and assert
+        instance = CustomConstraint(columns='a', transform=dummy_transform_mock)
+        with pytest.raises(MissingConstraintColumnError):
+            transformed = instance.transform(table_data)
+
     def test__run_reverse_transform_table_column(self):
         """Test the ``CustomConstraint._run`` method.
 
