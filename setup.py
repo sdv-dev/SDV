@@ -46,7 +46,7 @@ development_requires = [
     # general
     'bumpversion>=0.5.3,<0.6',
     'pip>=9.0.1',
-    'watchdog>=0.8.3,<0.11',
+    'watchdog>=0.8.3,<0.9',
 
     # docs
     'docutils>=0.12,<0.18',
