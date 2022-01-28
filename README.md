@@ -300,5 +300,5 @@ data, including:
   generation models.
 
 [Get started using the SDV package](https://sdv.dev/SDV/getting_started/install.html) -- a fully
-integrated solution and your one-stop shop for synthetic data.Or, use the standalone libraries
+integrated solution and your one-stop shop for synthetic data. Or, use the standalone libraries
 for specific needs.
