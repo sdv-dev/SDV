@@ -70,8 +70,7 @@ class CustomConstraint(Constraint):
 
     def _run_transform(self, table_data):
         if self._columns:
-            missing_columns = [col for col in self._columns if col not in table_data.columns]
-            if missing_columns:
+            if any(column not in table_data.columns for column in self._columns):
                 raise MissingConstraintColumnError()
 
         return self._run(self._transform, table_data)
