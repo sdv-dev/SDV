@@ -390,39 +390,33 @@ class BaseTabularModel:
 
         return sampled_rows
 
-    def sample(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
-               conditions=None, float_rtol=0.01, graceful_reject_sampling=False):
+    def sample(self, num_rows, randomize_samples=True):
         """Sample rows from this table.
 
         Args:
             num_rows (int):
-                Number of rows to sample. If not given the model
-                will generate as many rows as there were in the
-                data passed to the ``fit`` method.
-            max_retries (int):
-                Number of times to retry sampling discarded rows.
-                Defaults to 100.
-            max_rows_multiplier (int):
-                Multiplier to use when computing the maximum number of rows
-                that can be sampled during the reject-sampling loop.
-                The maximum number of rows that are sampled at each iteration
-                will be equal to this number multiplied by the requested num_rows.
-                Defaults to 10.
-            conditions (pd.DataFrame, dict or pd.Series):
-                If this is a dictionary/Series which maps column names to the column
-                value, then this method generates `num_rows` samples, all of
-                which are conditioned on the given variables. If this is a DataFrame,
-                then it generates an output DataFrame such that each row in the output
-                is sampled conditional on the corresponding row in the input.
-            float_rtol (float):
-                Maximum tolerance when considering a float match. This is the maximum
-                relative distance at which a float value will be considered a match
-                when performing reject-sampling based conditioning. Defaults to 0.01.
-            graceful_reject_sampling (bool):
-                If `False` raises a `ValueError` if not enough valid rows could be sampled
-                within `max_retries` trials. If `True` prints a warning and returns
-                as many rows as it was able to sample within `max_retries`.
-                Defaults to False.
+                Number of rows to sample. This parameter is required.
+            randomize_samples (bool):
+                Whether or not to use a a fixed seed when sampling. Defaults
+                to True.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
+        return self._sample_batch(num_rows)
+
+    def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try):
+        """Sample rows with conditions.
+
+        Args:
+            conditions (pandas.DataFrame):
+                A DataFrame representing the conditions to be sampled.
+            max_tries (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
 
         Returns:
             pandas.DataFrame:
