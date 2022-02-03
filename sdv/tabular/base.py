@@ -549,6 +549,38 @@ class BaseTabularModel:
 
         return sampled
 
+    def sample_remaining_columns(self, known_columns, max_tries=100, batch_size_per_try=None,
+                                 randomize_samples=True):
+        """Sample rows from this table.
+
+        Args:
+            known_columns (pandas.DataFrame):
+                A pandas.DataFrame with the columns that are already known. The output
+                is a DataFrame such that each row in the output is sampled
+                conditionally on the corresponding row in the input.
+            max_tries (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
+            randomize_samples (bool):
+                Whether or not to use a a fixed seed when sampling. Defaults
+                to True.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        return self._sample_with_conditions(known_columns, max_tries, batch_size_per_try)
+
     def _get_parameters(self):
         raise NonParametricError()
 
