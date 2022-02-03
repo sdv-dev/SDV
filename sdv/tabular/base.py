@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.metadata import Table
+from sdv.sampling import Condition
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -253,12 +254,12 @@ class BaseTabularModel:
             sampled = self._metadata.reverse_transform(sampled)
             return sampled, num_rows
 
-    def _sample_batch(self, num_rows=None, max_retries=100, max_rows_multiplier=10,
+    def _sample_batch(self, num_rows=None, max_tries=100, batch_size_per_try=None,
                       conditions=None, transformed_conditions=None, float_rtol=0.01):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
-        all of them are valid and match the requested conditions. If `max_retries`
+        all of them are valid and match the requested conditions. If `max_tries`
         is exceeded, it will return as many rows as it has sampled, which may be less
         than the target number of rows.
 
@@ -278,15 +279,12 @@ class BaseTabularModel:
                 Number of rows to sample. If not given the model
                 will generate as many rows as there were in the
                 data passed to the ``fit`` method.
-            max_retries (int):
-                Number of times to retry sampling discarded rows.
+            max_tries (int):
+                Number of times to try sampling rows.
                 Defaults to 100.
-            max_rows_multiplier (int):
-                Multiplier to use when computing the maximum number of rows
-                that can be sampled during the reject-sampling loop.
-                The maximum number of rows that are sampled at each iteration
-                will be equal to this number multiplied by the requested num_rows.
-                Defaults to 10.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
             conditions (dict):
                 The dictionary of conditioning values in the original input format.
             transformed_conditions (dict):
@@ -298,75 +296,62 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
+        if not batch_size_per_try:
+            batch_size_per_try = num_rows * 10
+
         sampled, num_valid = self._sample_rows(
             num_rows, conditions, transformed_conditions, float_rtol)
 
-        counter = 0
-        total_sampled = num_rows
+        counter = 1
         while num_valid < num_rows:
-            if counter >= max_retries:
+            if counter >= max_tries:
                 break
 
             remaining = num_rows - num_valid
-            valid_probability = (num_valid + 1) / (total_sampled + 1)
-            max_rows = num_rows * max_rows_multiplier
-            num_to_sample = min(int(remaining / valid_probability), max_rows)
-            total_sampled += num_to_sample
 
-            LOGGER.info('%s valid rows remaining. Resampling %s rows', remaining, num_to_sample)
+            LOGGER.info(f'{remaining} valid rows remaining. Resampling {batch_size_per_try} rows')
             sampled, num_valid = self._sample_rows(
-                num_to_sample, conditions, transformed_conditions, float_rtol, sampled
+                batch_size_per_try, conditions, transformed_conditions, float_rtol, sampled,
             )
 
             counter += 1
 
         return sampled.head(min(len(sampled), num_rows))
 
-    def _make_conditions_df(self, conditions, num_rows):
+    def _make_conditions_df(self, conditions):
         """Transform `conditions` into a dataframe.
 
         Args:
-            conditions (pd.DataFrame, dict or pd.Series):
-                If this is a dictionary/Series which maps column names to the column
-                value, then this method generates `num_rows` samples, all of
-                which are conditioned on the given variables. If this is a DataFrame,
-                then it generates an output DataFrame such that each row in the output
-                is sampled conditional on the corresponding row in the input.
-            num_rows (int):
-                Number of rows to sample. If a conditions dataframe is given, this must
-                either be ``None`` or match the length of the ``conditions`` dataframe.
+            conditions (list[sdv.sampling.Condition]):
+                A list of `sdv.sampling.Condition`, where each `Condition` object
+                represents a desired column value mapping and the number of rows
+                to generate for that condition.
 
         Returns:
             pandas.DataFrame:
                 `conditions` as a dataframe.
         """
-        n_rows = num_rows if num_rows else self._num_rows
-        if isinstance(conditions, pd.Series):
-            conditions = pd.DataFrame([conditions] * n_rows)
+        condition_dataframes = []
+        for condition in conditions:
+            condition_dataframes.append(
+                pd.DataFrame(
+                    condition.get_column_values(),
+                    index=range(condition.get_num_rows())
+                )
+            )
+        return pd.concat(condition_dataframes, ignore_index=True)
 
-        elif isinstance(conditions, dict):
-            conditions = pd.DataFrame(conditions, index=range(n_rows))
-
-        elif not isinstance(conditions, pd.DataFrame):
-            raise TypeError('`conditions` must be a dataframe, a dictionary or a pandas series.')
-
-        elif num_rows is not None and len(conditions) != num_rows:
-            raise ValueError(
-                'If `conditions` is a `DataFrame`, `num_rows` must be `None` or match its lenght.')
-
-        return conditions.copy()
-
-    def _conditionally_sample_rows(self, dataframe, max_retries, max_rows_multiplier,
-                                   condition, transformed_condition, float_rtol,
-                                   graceful_reject_sampling):
+    def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
+                                   max_tries=None, batch_size_per_try=None, float_rtol=None,
+                                   graceful_reject_sampling=True):
         num_rows = len(dataframe)
         sampled_rows = self._sample_batch(
             num_rows,
-            max_retries,
-            max_rows_multiplier,
+            max_tries,
+            batch_size_per_try,
             condition,
             transformed_condition,
-            float_rtol
+            float_rtol,
         )
         num_sampled_rows = len(sampled_rows)
 
@@ -377,12 +362,15 @@ class BaseTabularModel:
                 raise ValueError(error)
 
             elif not graceful_reject_sampling:
-                error = f'Could not get enough valid rows within {max_retries} trials.'
+                error = f'Could not get enough valid rows within {max_tries} trials.'
                 raise ValueError(error)
 
             else:
-                warn(f'Only {len(sampled_rows)} rows could '
-                     f'be sampled within {max_retries} trials.')
+                warn(f'Warning: Only able to sample {len(sampled_rows)} rows for the given '
+                     f'conditions. To sample more rows, try increasing `max_retrues '
+                     f'(currently: {max_tries}) or increasing `batch_size_per_try` '
+                     f'(currently: {batch_size_per_try}. Note that increasing these values '
+                     f'will also increase the sampling time.')
 
         if len(sampled_rows) > 0:
             sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
@@ -416,6 +404,127 @@ class BaseTabularModel:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
         return self._sample_batch(num_rows)
+
+    def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try):
+        """Sample rows with conditions.
+
+        Args:
+            conditions (pandas.DataFrame):
+                A DataFrame representing the conditions to be sampled.
+            max_tries (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
+                      sampled within `max_tries` trials.
+                    * no rows could be generated.
+        """
+        for column in conditions.columns:
+            if column not in self._metadata.get_fields():
+                raise ValueError(f'Error: Unexpected column name `{column}`. '
+                    f'Use a column name that was present in the original data.')
+
+        try:
+            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+        except ConstraintsNotMetError as cnme:
+            cnme.message = 'Passed conditions are not valid for the given constraints'
+            raise
+
+        condition_columns = list(conditions.columns)
+        transformed_columns = list(transformed_conditions.columns)
+        conditions.index.name = COND_IDX
+        conditions.reset_index(inplace=True)
+        transformed_conditions.index.name = COND_IDX
+        transformed_conditions.reset_index(inplace=True)
+        grouped_conditions = conditions.groupby(condition_columns)
+
+        # sample
+        all_sampled_rows = list()
+
+        for group, dataframe in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
+
+            condition_indices = dataframe[COND_IDX]
+            condition = dict(zip(condition_columns, group))
+            if len(transformed_columns) == 0:
+                sampled_rows = self._conditionally_sample_rows(
+                    dataframe,
+                    condition,
+                    None,
+                    max_tries,
+                    batch_size_per_try,
+                )
+                all_sampled_rows.append(sampled_rows)
+            else:
+                transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
+                transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
+                for transformed_group, transformed_dataframe in transformed_groups:
+                    if not isinstance(transformed_group, tuple):
+                        transformed_group = [transformed_group]
+
+                    transformed_condition = dict(zip(transformed_columns, transformed_group))
+                    sampled_rows = self._conditionally_sample_rows(
+                        transformed_dataframe,
+                        condition,
+                        transformed_condition,
+                        max_tries,
+                        batch_size_per_try,
+                    )
+                    all_sampled_rows.append(sampled_rows)
+
+        all_sampled_rows = pd.concat(all_sampled_rows)
+        all_sampled_rows = all_sampled_rows.set_index(COND_IDX)
+        all_sampled_rows.index.name = conditions.index.name
+        all_sampled_rows = all_sampled_rows.sort_index()
+        all_sampled_rows = self._metadata.make_ids_unique(all_sampled_rows)
+
+        return all_sampled_rows
+
+    def sample_conditions(self, conditions, max_tries=100, batch_size_per_try=None,
+            randomize_samples=True):
+        """Sample rows from this table with the given conditions.
+
+        Args:
+            conditions (list[sdv.sampling.Condition]):
+                A list of sdv.sampling.Condition objects, which specify the column
+                values in a condition, along with the number of rows for that
+                condition.
+            max_tries (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
+            randomize_samples (bool):
+                Whether or not to use a a fixed seed when sampling. Defaults
+                to True.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        conditions = self._make_conditions_df(conditions)
+        return self._sample_with_conditions(conditions, max_tries, batch_size_per_try)
 
     def _get_parameters(self):
         raise NonParametricError()
