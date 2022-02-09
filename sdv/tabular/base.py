@@ -3,6 +3,7 @@
 import logging
 import pickle
 import uuid
+from collections import defaultdict
 from warnings import warn
 
 import numpy as np
@@ -318,8 +319,8 @@ class BaseTabularModel:
 
         return sampled.head(min(len(sampled), num_rows))
 
-    def _make_conditions_df(self, conditions):
-        """Transform `conditions` into a dataframe.
+    def _make_condition_dfs(self, conditions):
+        """Transform `conditions` into a list of dataframes.
 
         Args:
             conditions (list[sdv.sampling.Condition]):
@@ -328,18 +329,25 @@ class BaseTabularModel:
                 to generate for that condition.
 
         Returns:
-            pandas.DataFrame:
-                `conditions` as a dataframe.
+            list[pandas.DataFrame]:
+                A list of `conditions` as dataframes.
         """
-        condition_dataframes = []
+        condition_dataframes = defaultdict(list)
         for condition in conditions:
-            condition_dataframes.append(
+            column_values = condition.get_column_values()
+            condition_dataframes[tuple(column_values.keys())].append(
                 pd.DataFrame(
                     condition.get_column_values(),
                     index=range(condition.get_num_rows())
                 )
             )
-        return pd.concat(condition_dataframes, ignore_index=True)
+
+        return [
+            pd.concat(
+                condition_list,
+                ignore_index=True,
+            ) for condition_list in condition_dataframes.values()
+        ]
 
     def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
                                    max_tries=None, batch_size_per_try=None, float_rtol=None,
@@ -439,7 +447,7 @@ class BaseTabularModel:
         try:
             transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         except ConstraintsNotMetError as cnme:
-            cnme.message = 'Passed conditions are not valid for the given constraints'
+            cnme.message = 'Provided conditions are not valid for the given constraints'
             raise
 
         condition_columns = list(conditions.columns)
@@ -523,8 +531,15 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        conditions = self._make_conditions_df(conditions)
-        return self._sample_with_conditions(conditions, max_tries, batch_size_per_try)
+        conditions = self._make_condition_dfs(conditions)
+
+        sampled = pd.DataFrame()
+        for condition_dataframe in conditions:
+            sampled_for_condition = self._sample_with_conditions(
+                condition_dataframe, max_tries, batch_size_per_try)
+            sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+
+        return sampled
 
     def _get_parameters(self):
         raise NonParametricError()

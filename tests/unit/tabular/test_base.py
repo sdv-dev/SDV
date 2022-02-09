@@ -21,14 +21,14 @@ MODELS = [
 
 class TestBaseTabularModel:
 
-    def test_sample_no_transformed_columns(self):
+    def test__sample_with_conditions_no_transformed_columns(self):
         """Test the ``BaseTabularModel.sample`` method with no transformed columns.
 
         When the transformed conditions DataFrame has no columns, expect that sample
         does not pass through any conditions when conditionally sampling.
 
         Setup:
-            - Mock the ``_make_conditions_df`` method to return a dataframe representing
+            - Mock the ``_make_condition_dfs`` method to return a dataframe representing
               the expected conditions, and the ``get_fields`` method to return metadata
               fields containing the expected conditioned column.
             - Mock the ``_metadata.transform`` method to return an empty transformed
@@ -50,7 +50,7 @@ class TestBaseTabularModel:
         expected = pd.DataFrame(['a', 'a', 'a'])
 
         condition_dataframe = pd.DataFrame({'a': ['a', 'a', 'a']})
-        gaussian_copula._make_conditions_df.return_value = condition_dataframe
+        gaussian_copula._make_condition_dfs.return_value = condition_dataframe
         gaussian_copula._metadata.get_fields.return_value = ['a']
         gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
         gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
@@ -171,6 +171,52 @@ class TestBaseTabularModel:
                 match=r'You must specify the number of rows to sample \(e.g. num_rows=100\)'):
             model.sample(num_rows)
 
+    def test_sample_conditions_with_multiple_conditions(self):
+        """Test the `BaseTabularModel.sample_conditions` method with multiple condtions.
+
+        When multiple condition dataframes are returned by `_make_condition_dfs`,
+        expect `_sample_with_conditions` is called for each condition dataframe.
+
+        Input:
+            - 2 conditions with different columns
+        Output:
+            - The expected sampled rows
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+
+        condition_values1 = {'cola': 'a'}
+        condition1 = Condition(condition_values1, num_rows=2)
+        sampled1 = pd.DataFrame({'a': ['a', 'a'], 'b': [1, 2]})
+
+        condition_values2 = {'colb': 1}
+        condition2 = Condition(condition_values2, num_rows=3)
+        sampled2 = pd.DataFrame({'a': ['b', 'c', 'a'], 'b': [1, 1, 1]})
+
+        expected = pd.DataFrame({
+            'a': ['a', 'a', 'b', 'c', 'a'],
+            'b': [1, 2, 1, 1, 1],
+        })
+
+        gaussian_copula._make_condition_dfs.return_value = [
+            pd.DataFrame([condition_values1]*2),
+            pd.DataFrame([condition_values2]*3),
+        ]
+        gaussian_copula._sample_with_conditions.side_effect = [
+            sampled1,
+            sampled2,
+        ]
+
+        # Run
+        out = GaussianCopula.sample_conditions(gaussian_copula, [condition1, condition2])
+
+        # Asserts
+        gaussian_copula._sample_with_conditions.assert_has_calls([
+            call(DataFrameMatcher(pd.DataFrame([condition_values1]*2)), 100, None),
+            call(DataFrameMatcher(pd.DataFrame([condition_values2]*3)), 100, None),
+        ])
+        pd.testing.assert_frame_equal(out, expected)
+
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
 def test__init__passes_correct_parameters(metadata_mock):
@@ -213,7 +259,7 @@ def test__init__passes_correct_parameters(metadata_mock):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling(model):
+def test_sample_conditions_graceful_reject_sampling(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -284,7 +330,7 @@ def test__sample_rows_previous_rows_appended_correctly():
     pd.testing.assert_frame_equal(sampled, expected)
 
 
-def test_sample_empty_transformed_conditions():
+def test__sample_with_conditions_empty_transformed_conditions():
     """Test that None is passed to ``_sample_batch`` if transformed conditions are empty.
 
     The ``Sample`` method is expected to:
@@ -340,7 +386,7 @@ def test_sample_empty_transformed_conditions():
     pd.testing.assert_frame_equal(output, expected_output)
 
 
-def test_sample_batches_transform_conditions_correctly():
+def test__sample_with_conditions_transform_conditions_correctly():
     """Test that transformed conditions are batched correctly.
 
     The ``Sample`` method is expected to:
@@ -440,17 +486,17 @@ def test_fit_sets_num_rows(model):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test__make_conditions_df_without_num_rows(model):
-    """Test ``_make_conditions_df`` works correctly when ``num_rows`` is not passed.
+def test__make_condition_dfs_without_num_rows(model):
+    """Test ``_make_condition_dfs`` works correctly when ``num_rows`` is not passed.
 
-    The ``_make_conditions_df`` method is expected to:
+    The ``_make_condition_dfs`` method is expected to:
         - Return conditions as a ``DataFrame`` for one row.
 
     Input:
         - Conditions
 
     Output:
-        - Conditions as ``DataFrame``
+        - Conditions as ``[DataFrame]``
     """
     # Setup
     column_values = {'column2': 'M'}
@@ -458,19 +504,21 @@ def test__make_conditions_df_without_num_rows(model):
     expected_conditions = pd.DataFrame([column_values])
 
     # Run
-    result_conditions = model._make_conditions_df(conditions=conditions)
+    result_conditions_list = model._make_condition_dfs(conditions=conditions)
 
     # Assert
+    assert len(result_conditions_list) == 1
+    result_conditions = result_conditions_list[0]
     assert isinstance(result_conditions, pd.DataFrame)
     assert len(result_conditions) == 1
     assert all(result_conditions == expected_conditions)
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test__make_conditions_df_specifying_num_rows(model):
-    """Test ``_make_conditions_df`` works correctly when ``num_rows`` is passed.
+def test__make_condition_dfs_specifying_num_rows(model):
+    """Test ``_make_condition_dfs`` works correctly when ``num_rows`` is passed.
 
-    The ``_make_conditions_df`` method is expected to:
+    The ``_make_condition_dfs`` method is expected to:
     - Return as many condition rows as specified with ``num_rows`` as a ``DataFrame``.
 
     Input:
@@ -478,7 +526,7 @@ def test__make_conditions_df_specifying_num_rows(model):
         - Num_rows
 
     Output:
-        - Conditions as ``DataFrame``
+        - Conditions as ``[DataFrame]``
     """
     # Setup
     _NUM_ROWS = 10
@@ -487,9 +535,84 @@ def test__make_conditions_df_specifying_num_rows(model):
     expected_conditions = pd.DataFrame([column_values] * _NUM_ROWS)
 
     # Run
-    result_conditions = model._make_conditions_df(conditions=conditions)
+    result_conditions_list = model._make_condition_dfs(conditions=conditions)
 
     # Assert
+    assert len(result_conditions_list) == 1
+    result_conditions = result_conditions_list[0]
     assert isinstance(result_conditions, pd.DataFrame)
     assert len(result_conditions) == _NUM_ROWS
     assert all(result_conditions == expected_conditions)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test__make_condition_dfs_with_multiple_conditions_same_column(model):
+    """Test ``_make_condition_dfs`` works correctly with multiple conditions.
+
+    The ``_make_condition_dfs`` method is expected to:
+        - Combine conditions for conditions with the same columns.
+
+    Input:
+        - Conditions
+
+    Output:
+        - Conditions as ``[DataFrame]``
+    """
+    # Setup
+    column_values1 = {'column2': 'M'}
+    column_values2 = {'column2': 'N'}
+    conditions = [
+        Condition(column_values=column_values1, num_rows=2),
+        Condition(column_values=column_values2, num_rows=3),
+    ]
+    expected_conditions = pd.DataFrame([column_values1]*2 + [column_values2]*3)
+
+    # Run
+    result_conditions_list = model._make_condition_dfs(conditions=conditions)
+
+    # Assert
+    assert len(result_conditions_list) == 1
+    result_conditions = result_conditions_list[0]
+    assert isinstance(result_conditions, pd.DataFrame)
+    assert len(result_conditions) == 5
+    assert all(result_conditions == expected_conditions)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test__make_condition_dfs_with_multiple_conditions_different_columns(model):
+    """Test ``_make_condition_dfs`` works correctly with multiple conditions.
+
+    The ``_make_condition_dfs`` method is expected to:
+        - Return multiple DataFrames if conditions are not able to be combined.
+
+    Input:
+        - Conditions
+
+    Output:
+        - Conditions as ``[DataFrame]``
+    """
+    # Setup
+    column_values1 = {'column2': 'M'}
+    column_values2 = {'column3': 'N'}
+    conditions = [
+        Condition(column_values=column_values1, num_rows=2),
+        Condition(column_values=column_values2, num_rows=3),
+    ]
+    expected_conditions1 = pd.DataFrame([column_values1]*2)
+    expected_conditions2 = pd.DataFrame([column_values2]*3)
+
+    # Run
+    result_conditions_list = model._make_condition_dfs(conditions=conditions)
+
+    # Assert
+    assert len(result_conditions_list) == 2
+
+    result_conditions1 = result_conditions_list[0]
+    assert isinstance(result_conditions1, pd.DataFrame)
+    assert len(result_conditions1) == 2
+    assert all(result_conditions1 == expected_conditions1)
+
+    result_conditions2 = result_conditions_list[1]
+    assert isinstance(result_conditions2, pd.DataFrame)
+    assert len(result_conditions2) == 3
+    assert all(result_conditions2 == expected_conditions2)
