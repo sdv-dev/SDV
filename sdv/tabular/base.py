@@ -13,6 +13,7 @@ from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
+FIXED_SEED = 21321
 
 
 class NonParametricError(Exception):
@@ -390,6 +391,11 @@ class BaseTabularModel:
 
         return sampled_rows
 
+    def _set_fixed_seed(randomize_samples):
+        if randomize_samples:
+            # TODO: set random state on copulas.
+            return
+
     def sample(self, num_rows, randomize_samples=True):
         """Sample rows from this table.
 
@@ -404,6 +410,12 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
+        if not num_rows:
+            raise ValueError(
+                'Error: You must specify the number of rows to sample (eg. num_rows=100).')
+
+        self._set_fixed_seed(randomize_samples)
+
         return self._sample_batch(num_rows)
 
     def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try):
@@ -433,7 +445,6 @@ class BaseTabularModel:
                     * no rows could be generated.
         """
         if conditions is None:
-            num_rows = num_rows or self._num_rows
             return self._sample_batch(num_rows, max_retries, max_rows_multiplier)
 
         # convert conditions to dataframe
