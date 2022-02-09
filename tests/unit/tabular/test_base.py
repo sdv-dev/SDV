@@ -4,10 +4,12 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.table import Table
-from sdv.tabular.base import BaseTabularModel
+from sdv.sampling import Condition
+from sdv.tabular.base import BaseTabularModel, COND_IDX
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
+from tests.utils import DataFrameMatcher
 
 MODELS = [
     CTGAN(epochs=1),
@@ -18,6 +20,57 @@ MODELS = [
 
 
 class TestBaseTabularModel:
+
+    def test_sample_no_transformed_columns(self):
+        """Test the ``BaseTabularModel.sample`` method with no transformed columns.
+
+        When the transformed conditions DataFrame has no columns, expect that sample
+        does not pass through any conditions when conditionally sampling.
+
+        Setup:
+            - Mock the ``_make_conditions_df`` method to return a dataframe representing
+              the expected conditions, and the ``get_fields`` method to return metadata
+              fields containing the expected conditioned column.
+            - Mock the ``_metadata.transform`` method to return an empty transformed
+              conditions dataframe.
+            - Mock the ``_conditionally_sample_rows`` method to return the expected
+              sampled rows.
+            - Mock the `make_ids_unique` to return the expected sampled rows.
+        Input:
+            - number of rows
+            - one set of conditions
+        Output:
+            - the expected sampled rows
+        Side Effects:
+            - Expect ``_conditionally_sample_rows`` to be called with the given condition
+              and a transformed_condition of None.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        expected = pd.DataFrame(['a', 'a', 'a'])
+
+        condition_dataframe = pd.DataFrame({'a': ['a', 'a', 'a']})
+        gaussian_copula._make_conditions_df.return_value = condition_dataframe
+        gaussian_copula._metadata.get_fields.return_value = ['a']
+        gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
+            'a': ['a', 'a', 'a'],
+            COND_IDX: [0, 1, 2]})
+        gaussian_copula._metadata.make_ids_unique.return_value = expected
+
+        # Run
+        out = GaussianCopula._sample_with_conditions(
+            gaussian_copula, condition_dataframe, 100, None)
+
+        # Asserts
+        gaussian_copula._conditionally_sample_rows.assert_called_once_with(
+            DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
+            {'a': 'a'},
+            None,
+            100,
+            None,
+        )
+        pd.testing.assert_frame_equal(out, expected)
 
     def test__sample_batch_zero_valid(self):
         """Test the `BaseTabularModel._sample_batch` method with zero valid rows.
@@ -159,6 +212,33 @@ def test__init__passes_correct_parameters(metadata_mock):
     metadata_mock.assert_has_calls(expected_calls, any_order=True)
 
 
+@pytest.mark.parametrize('model', MODELS)
+def test_conditional_sampling_graceful_reject_sampling(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    conditions = [
+        Condition({
+            'column1': "this is not used"
+        },
+        num_rows=5)
+    ]
+
+    model._sample_batch = Mock()
+    model._sample_batch.return_value = pd.DataFrame({
+        "column1": [28, 28],
+        "column2": [37, 37],
+        "column3": [93, 93],
+    })
+
+    model.fit(data)
+    output = model.sample_conditions(conditions)
+    assert len(output) == 2, "Only expected 2 valid rows."
+
+
 def test__sample_rows_previous_rows_appended_correctly():
     """Test the ``BaseTabularModel._sample_rows`` method.
 
@@ -204,6 +284,133 @@ def test__sample_rows_previous_rows_appended_correctly():
     pd.testing.assert_frame_equal(sampled, expected)
 
 
+def test_sample_empty_transformed_conditions():
+    """Test that None is passed to ``_sample_batch`` if transformed conditions are empty.
+
+    The ``Sample`` method is expected to:
+    - Return sampled data and pass None to ``sample_batch`` as the
+    ``transformed_conditions``.
+
+    Input:
+    - Number of rows to sample
+    - Conditions
+
+    Output:
+    - Sampled data
+    """
+    # Setup
+    model = GaussianCopula()
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    conditions = {
+        'column1': 25
+    }
+    conditions_series = pd.Series([25, 25, 25, 25, 25], name='column1')
+    model._sample_batch = Mock()
+    sampled = pd.DataFrame({
+        'column1': [28, 28],
+        'column2': [37, 37],
+        'column3': [93, 93],
+    })
+    model._sample_batch.return_value = sampled
+    model.fit(data)
+    model._metadata = Mock()
+    model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
+    model._metadata.transform.return_value = pd.DataFrame()
+    model._metadata.make_ids_unique.side_effect = lambda x: x
+
+    # Run
+    output = model._sample_with_conditions(pd.DataFrame([conditions] * 5), 100, None)
+
+    # Assert
+    expected_output = pd.DataFrame({
+        'column1': [28, 28],
+        'column2': [37, 37],
+        'column3': [93, 93],
+    })
+    _, args, kwargs = model._metadata.transform.mock_calls[0]
+    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
+    assert kwargs['on_missing_column'] == 'drop'
+    model._metadata.transform.assert_called_once()
+    model._sample_batch.assert_called_with(5, 100, None, conditions, None, None)
+    pd.testing.assert_frame_equal(output, expected_output)
+
+
+def test_sample_batches_transform_conditions_correctly():
+    """Test that transformed conditions are batched correctly.
+
+    The ``Sample`` method is expected to:
+    - Return sampled data and call ``_sample_batch`` for every unique transformed
+    condition group.
+
+    Input:
+    - Number of rows to sample
+    - Conditions
+
+    Output:
+    - Sampled data
+    """
+    # Setup
+    model = GaussianCopula()
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    condition_values = [25, 25, 25, 30, 30]
+    conditions = {
+        'column1': condition_values,
+    }
+    conditions_series = pd.Series([25, 25, 25, 30, 30], name='column1')
+    model._sample_batch = Mock()
+    expected_outputs = [
+        pd.DataFrame({
+            'column1': [25, 25, 25],
+            'column2': [37, 37, 37],
+            'column3': [93, 93, 93],
+        }), pd.DataFrame({
+            'column1': [30],
+            'column2': [37],
+            'column3': [93],
+        }), pd.DataFrame({
+            'column1': [30],
+            'column2': [37],
+            'column3': [93],
+        })
+    ]
+    model._sample_batch.side_effect = expected_outputs
+    model.fit(data)
+    model._metadata = Mock()
+    model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
+    model._metadata.transform.return_value = pd.DataFrame([
+        [50], [50], [50], [60], [70]
+    ], columns=['transformed_column'])
+
+    # Run
+    model._sample_with_conditions(
+        pd.DataFrame({'column1': condition_values}), 100, None)
+
+    # Assert
+    _, args, kwargs = model._metadata.transform.mock_calls[0]
+    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
+    assert kwargs['on_missing_column'] == 'drop'
+    model._metadata.transform.assert_called_once()
+    model._sample_batch.assert_any_call(
+        3, 100, None, {'column1': 25}, {'transformed_column': 50}, None
+    )
+    model._sample_batch.assert_any_call(
+        1, 100, None, {'column1': 30}, {'transformed_column': 60}, None
+    )
+    model._sample_batch.assert_any_call(
+        1, 100, None, {'column1': 30}, {'transformed_column': 70}, None
+    )
+
+
 @pytest.mark.parametrize('model', MODELS)
 def test_fit_sets_num_rows(model):
     """Test ``fit`` sets ``_num_rows`` to the length of the data passed.
@@ -237,7 +444,7 @@ def test__make_conditions_df_without_num_rows(model):
     """Test ``_make_conditions_df`` works correctly when ``num_rows`` is not passed.
 
     The ``_make_conditions_df`` method is expected to:
-        - Return conditions as a ``DataFrame`` for every row in the data.
+        - Return conditions as a ``DataFrame`` for one row.
 
     Input:
         - Conditions
@@ -246,18 +453,16 @@ def test__make_conditions_df_without_num_rows(model):
         - Conditions as ``DataFrame``
     """
     # Setup
-    _N_DATA_ROWS = 100
-    conditions = {'column2': 'M'}
-    expected_conditions = pd.DataFrame([conditions] * _N_DATA_ROWS)
-
-    model._num_rows = _N_DATA_ROWS
+    column_values = {'column2': 'M'}
+    conditions = [Condition(column_values=column_values)]
+    expected_conditions = pd.DataFrame([column_values])
 
     # Run
-    result_conditions = model._make_conditions_df(conditions=conditions, num_rows=None)
+    result_conditions = model._make_conditions_df(conditions=conditions)
 
     # Assert
     assert isinstance(result_conditions, pd.DataFrame)
-    assert len(result_conditions) == _N_DATA_ROWS
+    assert len(result_conditions) == 1
     assert all(result_conditions == expected_conditions)
 
 
@@ -276,16 +481,13 @@ def test__make_conditions_df_specifying_num_rows(model):
         - Conditions as ``DataFrame``
     """
     # Setup
-    _N_DATA_ROWS = 100
     _NUM_ROWS = 10
-
-    conditions = {'column2': 'M'}
-    expected_conditions = pd.DataFrame([conditions] * _NUM_ROWS)
-
-    model._num_rows = _N_DATA_ROWS
+    column_values = {'column2': 'M'}
+    conditions = [Condition(column_values=column_values, num_rows=_NUM_ROWS)]
+    expected_conditions = pd.DataFrame([column_values] * _NUM_ROWS)
 
     # Run
-    result_conditions = model._make_conditions_df(conditions=conditions, num_rows=_NUM_ROWS)
+    result_conditions = model._make_conditions_df(conditions=conditions)
 
     # Assert
     assert isinstance(result_conditions, pd.DataFrame)
