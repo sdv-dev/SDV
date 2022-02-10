@@ -9,8 +9,8 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
-from sdv.sampling import Condition
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -456,7 +456,7 @@ class BaseTabularModel:
         for column in conditions.columns:
             if column not in self._metadata.get_fields():
                 raise ValueError(f'Error: Unexpected column name `{column}`. '
-                    f'Use a column name that was present in the original data.')
+                                 f'Use a column name that was present in the original data.')
 
         try:
             transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
@@ -516,7 +516,7 @@ class BaseTabularModel:
         return all_sampled_rows
 
     def sample_conditions(self, conditions, max_tries=100, batch_size_per_try=None,
-            randomize_samples=True):
+                          randomize_samples=True):
         """Sample rows from this table with the given conditions.
 
         Args:
