@@ -15,6 +15,27 @@ COND_IDX = str(uuid.uuid4())
 FIXED_SEED = 21321
 
 
+def validate_sample_args(function):
+    """Validate the args and kwargs passed to sample.
+
+    Set more informative error messages for specific unsupported arguments.
+
+    Args:
+        function (Callable):
+            The function to wrap around.
+    """
+    def wrapper(*args, **kwargs):
+        if 'condition' in kwargs or 'conditions' in kwargs:
+            raise TypeError('This method does not support the conditions parameter. '
+                            'Please create `sdv.sampling.Condition` objects and pass them '
+                            'into the `sample_conditions` method. '
+                            'See User Guide or API for more details.')
+
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
 class NonParametricError(Exception):
     """Exception to indicate that a model is not parametric."""
 
@@ -390,11 +411,12 @@ class BaseTabularModel:
 
         return sampled_rows
 
-    def _set_fixed_seed(randomize_samples):
+    def _set_fixed_seed(self, randomize_samples):
         if randomize_samples:
             # TODO: set random state on copulas.
             return
 
+    @validate_sample_args
     def sample(self, num_rows, randomize_samples=True):
         """Sample rows from this table.
 
