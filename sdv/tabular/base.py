@@ -347,7 +347,9 @@ class BaseTabularModel:
                 batch_size_per_try, conditions, transformed_conditions, float_rtol, sampled,
             )
 
-            progress_bar.update(min(num_valid - prev_num_valid, remaining))
+            if num_valid > 0:
+                progress_bar.update(min(num_valid - prev_num_valid, remaining))
+
             remaining = num_rows - num_valid
             if remaining > 0:
                 LOGGER.info(
@@ -439,15 +441,15 @@ class BaseTabularModel:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
-        progress_bar = tqdm(total=num_rows)
-        progress_bar.set_description(
-            f'Sampling {num_rows} rows of data in batches of size {batch_size}')
 
         sampled = []
-        for step in range(math.ceil(num_rows / batch_size)):
-            sampled_rows = self._sample_batch(
-                batch_size, batch_size_per_try=batch_size, progress_bar=progress_bar)
-            sampled.append(sampled_rows)
+        with tqdm(total=num_rows) as progress_bar:
+            progress_bar.set_description(
+                f'Sampling {num_rows} rows of data in batches of size {batch_size}')
+            for step in range(math.ceil(num_rows / batch_size)):
+                sampled_rows = self._sample_batch(
+                    batch_size, batch_size_per_try=batch_size, progress_bar=progress_bar)
+                sampled.append(sampled_rows)
 
         return pd.concat(sampled, ignore_index=True)
 
@@ -574,14 +576,14 @@ class BaseTabularModel:
         """
         num_rows = functools.reduce(
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
-        progress_bar = tqdm(total=num_rows)
         conditions = self._make_condition_dfs(conditions)
 
-        sampled = pd.DataFrame()
-        for condition_dataframe in conditions:
-            sampled_for_condition = self._sample_with_conditions(
-                condition_dataframe, max_tries, batch_size_per_try, progress_bar)
-            sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+        with tqdm(total=num_rows) as progress_bar:
+            sampled = pd.DataFrame()
+            for condition_dataframe in conditions:
+                sampled_for_condition = self._sample_with_conditions(
+                    condition_dataframe, max_tries, batch_size_per_try, progress_bar)
+                sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
         return sampled
 
@@ -615,8 +617,11 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        return self._sample_with_conditions(
-            known_columns, max_tries, batch_size_per_try, tqdm(total=len(known_columns)))
+        with tqdm(total=len(known_columns)) as progress_bar:
+            sampled = self._sample_with_conditions(
+                known_columns, max_tries, batch_size_per_try, progress_bar)
+
+        return sampled
 
     def _get_parameters(self):
         raise NonParametricError()
