@@ -5,7 +5,7 @@ import pytest
 
 from sdv.metadata.table import Table
 from sdv.sampling import Condition
-from sdv.tabular.base import BaseTabularModel, COND_IDX
+from sdv.tabular.base import COND_IDX, BaseTabularModel
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
@@ -199,8 +199,8 @@ class TestBaseTabularModel:
         })
 
         gaussian_copula._make_condition_dfs.return_value = [
-            pd.DataFrame([condition_values1]*2),
-            pd.DataFrame([condition_values2]*3),
+            pd.DataFrame([condition_values1] * 2),
+            pd.DataFrame([condition_values2] * 3),
         ]
         gaussian_copula._sample_with_conditions.side_effect = [
             sampled1,
@@ -212,8 +212,8 @@ class TestBaseTabularModel:
 
         # Asserts
         gaussian_copula._sample_with_conditions.assert_has_calls([
-            call(DataFrameMatcher(pd.DataFrame([condition_values1]*2)), 100, None),
-            call(DataFrameMatcher(pd.DataFrame([condition_values2]*3)), 100, None),
+            call(DataFrameMatcher(pd.DataFrame([condition_values1] * 2)), 100, None),
+            call(DataFrameMatcher(pd.DataFrame([condition_values2] * 3)), 100, None),
         ])
         pd.testing.assert_frame_equal(out, expected)
 
@@ -267,10 +267,10 @@ def test_sample_conditions_graceful_reject_sampling(model):
     })
 
     conditions = [
-        Condition({
-            'column1': "this is not used"
-        },
-        num_rows=5)
+        Condition(
+            {'column1': "this is not used"},
+            num_rows=5,
+        )
     ]
 
     model._sample_batch = Mock()
@@ -409,9 +409,6 @@ def test__sample_with_conditions_transform_conditions_correctly():
     })
 
     condition_values = [25, 25, 25, 30, 30]
-    conditions = {
-        'column1': condition_values,
-    }
     conditions_series = pd.Series([25, 25, 25, 30, 30], name='column1')
     model._sample_batch = Mock()
     expected_outputs = [
@@ -565,7 +562,7 @@ def test__make_condition_dfs_with_multiple_conditions_same_column(model):
         Condition(column_values=column_values1, num_rows=2),
         Condition(column_values=column_values2, num_rows=3),
     ]
-    expected_conditions = pd.DataFrame([column_values1]*2 + [column_values2]*3)
+    expected_conditions = pd.DataFrame([column_values1] * 2 + [column_values2] * 3)
 
     # Run
     result_conditions_list = model._make_condition_dfs(conditions=conditions)
@@ -598,8 +595,8 @@ def test__make_condition_dfs_with_multiple_conditions_different_columns(model):
         Condition(column_values=column_values1, num_rows=2),
         Condition(column_values=column_values2, num_rows=3),
     ]
-    expected_conditions1 = pd.DataFrame([column_values1]*2)
-    expected_conditions2 = pd.DataFrame([column_values2]*3)
+    expected_conditions1 = pd.DataFrame([column_values1] * 2)
+    expected_conditions2 = pd.DataFrame([column_values2] * 3)
 
     # Run
     result_conditions_list = model._make_condition_dfs(conditions=conditions)
