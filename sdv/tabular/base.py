@@ -8,7 +8,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
@@ -417,104 +416,6 @@ class BaseTabularModel:
         self._set_fixed_seed(randomize_samples)
 
         return self._sample_batch(num_rows)
-
-    def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try):
-        """Sample rows with conditions.
-
-        Args:
-            conditions (pandas.DataFrame):
-                A DataFrame representing the conditions to be sampled.
-            max_tries (int):
-                Number of times to try sampling discarded rows. Defaults to 100.
-            batch_size_per_try (int):
-                The batch size to use per attempt at sampling. Defaults to 10 times
-                the number of rows.
-
-        Returns:
-            pandas.DataFrame:
-                Sampled data.
-
-        Raises:
-            ConstraintsNotMetError:
-                If the conditions are not valid for the given constraints.
-            ValueError:
-                If any of the following happens:
-                    * any of the conditions' columns are not valid.
-                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
-                      sampled within `max_retries` trials.
-                    * no rows could be generated.
-        """
-        if conditions is None:
-            return self._sample_batch(num_rows, max_retries, max_rows_multiplier)
-
-        # convert conditions to dataframe
-        conditions = self._make_conditions_df(conditions, num_rows)
-
-        # validate columns
-        for column in conditions.columns:
-            if column not in self._metadata.get_fields():
-                raise ValueError(f'Invalid column name `{column}`')
-
-        try:
-            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
-        except ConstraintsNotMetError as cnme:
-            cnme.message = 'Passed conditions are not valid for the given constraints'
-            raise
-
-        condition_columns = list(conditions.columns)
-        transformed_columns = list(transformed_conditions.columns)
-        conditions.index.name = COND_IDX
-        conditions.reset_index(inplace=True)
-        transformed_conditions.index.name = COND_IDX
-        transformed_conditions.reset_index(inplace=True)
-        grouped_conditions = conditions.groupby(condition_columns)
-
-        # sample
-        all_sampled_rows = list()
-
-        for group, dataframe in grouped_conditions:
-            if not isinstance(group, tuple):
-                group = [group]
-
-            condition_indices = dataframe[COND_IDX]
-            condition = dict(zip(condition_columns, group))
-            if len(transformed_columns) == 0:
-                sampled_rows = self._conditionally_sample_rows(
-                    dataframe,
-                    max_retries,
-                    max_rows_multiplier,
-                    condition,
-                    None,
-                    float_rtol,
-                    graceful_reject_sampling
-                )
-                all_sampled_rows.append(sampled_rows)
-            else:
-                transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
-                transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
-                for transformed_group, transformed_dataframe in transformed_groups:
-                    if not isinstance(transformed_group, tuple):
-                        transformed_group = [transformed_group]
-
-                    transformed_condition = dict(zip(transformed_columns, transformed_group))
-                    sampled_rows = self._conditionally_sample_rows(
-                        transformed_dataframe,
-                        max_retries,
-                        max_rows_multiplier,
-                        condition,
-                        transformed_condition,
-                        float_rtol,
-                        graceful_reject_sampling
-                    )
-                    all_sampled_rows.append(sampled_rows)
-
-        all_sampled_rows = pd.concat(all_sampled_rows)
-        all_sampled_rows = all_sampled_rows.set_index(COND_IDX)
-        all_sampled_rows.index.name = conditions.index.name
-        all_sampled_rows = all_sampled_rows.sort_index()
-        all_sampled_rows = self._metadata.make_ids_unique(all_sampled_rows)
-
-        return all_sampled_rows
 
     def _get_parameters(self):
         raise NonParametricError()

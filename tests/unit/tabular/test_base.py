@@ -4,11 +4,10 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.table import Table
-from sdv.tabular.base import BaseTabularModel, COND_IDX
+from sdv.tabular.base import BaseTabularModel
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
-from tests.utils import DataFrameMatcher
 
 MODELS = [
     CTGAN(epochs=1),
