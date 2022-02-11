@@ -431,7 +431,7 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
-        if not num_rows:
+        if num_rows is None:
             raise ValueError(
                 'Error: You must specify the number of rows to sample (eg. num_rows=100).')
 
