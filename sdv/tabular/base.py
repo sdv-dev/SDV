@@ -303,7 +303,7 @@ class BaseTabularModel:
                 will generate as many rows as there were in the
                 data passed to the ``fit`` method.
             max_tries (int):
-                Number of times to try sampling rows.
+                Number of times to try sampling discarded rows.
                 Defaults to 100.
             batch_size_per_try (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
@@ -358,21 +358,15 @@ class BaseTabularModel:
         for condition in conditions:
             column_values = condition.get_column_values()
             condition_dataframes[tuple(column_values.keys())].append(
-                pd.DataFrame(
-                    condition.get_column_values(),
-                    index=range(condition.get_num_rows())
-                )
-            )
+                pd.DataFrame(column_values, index=range(condition.get_num_rows())))
 
         return [
-            pd.concat(
-                condition_list,
-                ignore_index=True,
-            ) for condition_list in condition_dataframes.values()
+            pd.concat(condition_list, ignore_index=True)
+            for condition_list in condition_dataframes.values()
         ]
 
     def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
-                                   max_tries=None, batch_size_per_try=None, float_rtol=None,
+                                   max_tries=None, batch_size_per_try=None, float_rtol=0.01,
                                    graceful_reject_sampling=True):
         num_rows = len(dataframe)
         sampled_rows = self._sample_batch(
@@ -396,8 +390,8 @@ class BaseTabularModel:
                 raise ValueError(error)
 
             else:
-                warn(f'Warning: Only able to sample {len(sampled_rows)} rows for the given '
-                     f'conditions. To sample more rows, try increasing `max_retrues '
+                warn(f'Only able to sample {len(sampled_rows)} rows for the given '
+                     f'conditions. To sample more rows, try increasing `max_tries '
                      f'(currently: {max_tries}) or increasing `batch_size_per_try` '
                      f'(currently: {batch_size_per_try}. Note that increasing these values '
                      f'will also increase the sampling time.')
