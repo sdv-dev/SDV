@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call, patch
+from unittest.mock import ANY, Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -69,6 +69,8 @@ class TestBaseTabularModel:
             None,
             100,
             None,
+            progress_bar=None,
+            output_file_path=None,
         )
         pd.testing.assert_frame_equal(out, expected)
 
@@ -212,8 +214,10 @@ class TestBaseTabularModel:
 
         # Asserts
         gaussian_copula._sample_with_conditions.assert_has_calls([
-            call(DataFrameMatcher(pd.DataFrame([condition_values1] * 2)), 100, None),
-            call(DataFrameMatcher(pd.DataFrame([condition_values2] * 3)), 100, None),
+            call(DataFrameMatcher(pd.DataFrame([condition_values1] * 2)), 100,
+                 None, ANY, None),
+            call(DataFrameMatcher(pd.DataFrame([condition_values2] * 3)), 100,
+                 None, ANY, None),
         ])
         pd.testing.assert_frame_equal(out, expected)
 
@@ -440,7 +444,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(5, 100, None, conditions, None, 0.01)
+    model._sample_batch.assert_called_with(5, 100, None, conditions, None, 0.01, None, None)
     pd.testing.assert_frame_equal(output, expected_output)
 
 
@@ -502,13 +506,13 @@ def test__sample_with_conditions_transform_conditions_correctly():
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
-        3, 100, None, {'column1': 25}, {'transformed_column': 50}, 0.01
+        3, 100, None, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 60}, 0.01
+        1, 100, None, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 70}, 0.01
+        1, 100, None, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
     )
 
 
