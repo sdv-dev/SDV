@@ -382,7 +382,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(5, 100, None, conditions, None, None)
+    model._sample_batch.assert_called_with(5, 100, None, conditions, None, 0.01)
     pd.testing.assert_frame_equal(output, expected_output)
 
 
@@ -444,13 +444,13 @@ def test__sample_with_conditions_transform_conditions_correctly():
     assert kwargs['on_missing_column'] == 'drop'
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
-        3, 100, None, {'column1': 25}, {'transformed_column': 50}, None
+        3, 100, None, {'column1': 25}, {'transformed_column': 50}, 0.01
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 60}, None
+        1, 100, None, {'column1': 30}, {'transformed_column': 60}, 0.01
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 70}, None
+        1, 100, None, {'column1': 30}, {'transformed_column': 70}, 0.01
     )
 
 
