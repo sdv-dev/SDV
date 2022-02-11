@@ -217,6 +217,62 @@ class TestBaseTabularModel:
         ])
         pd.testing.assert_frame_equal(out, expected)
 
+    def test_sample_remaining_columns(self):
+        """Test the `BaseTabularModel.sample_remaining_colmns` method.
+
+        When a valid DataFrame is give, expect `_sample_with_conditions to be called
+        with the input DataFrame.
+
+        Input:
+            - DataFrame with condition column values populated.
+        Output:
+            - The expected sampled rows.
+        Side Effects:
+            - `_sample_with_conditions` is called once.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+
+        sampled = pd.DataFrame({
+            'cola': ['a', 'a', 'a', 'a', 'a'],
+            'colb': [1, 2, 1, 1, 1],
+        })
+        gaussian_copula._sample_with_conditions.return_value = sampled
+
+        # Run
+        out = GaussianCopula.sample_remaining_columns(gaussian_copula, conditions)
+
+        # Asserts
+        gaussian_copula._sample_with_conditions.assert_called_once_with(
+            DataFrameMatcher(conditions), 100, None)
+        pd.testing.assert_frame_equal(out, sampled)
+
+    def test__sample_with_conditions_invalid_column(self):
+        """Test the `BaseTabularModel._sample_with_conditions` method with an invalid column.
+
+        When a condition has an invalid column, expect a ValueError.
+
+        Setup:
+            - Conditions DataFrame contains `colb` which is not present in the metadata.
+        Input:
+            - Conditions DataFrame with an invalid column.
+        Side Effects:
+            - A ValueError is thrown.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        metadata_mock = Mock()
+        metadata_mock.get_fields.return_value = {'cola': {}}
+        gaussian_copula._metadata = metadata_mock
+
+        conditions = pd.DataFrame([{'colb': 'a'}] * 5)
+
+        # Run and Assert
+        with pytest.raises(ValueError):
+            GaussianCopula._sample_with_conditions(gaussian_copula, conditions, 100, None)
+
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
 def test__init__passes_correct_parameters(metadata_mock):
