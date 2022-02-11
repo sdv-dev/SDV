@@ -103,23 +103,23 @@ def test_conditional_sampling_dict():
     assert set(sampled["column2"].unique()) == set(["b"])
 
 
-#def test_conditional_sampling_dataframe():
-#    data = pd.DataFrame({
-#        "column1": [1.0, 0.5, 2.5] * 10,
-#        "column2": ["a", "b", "c"] * 10
-#    })
-#
-#    model = TVAE(epochs=1)
-#    model.fit(data)
-#    conditions = pd.DataFrame({
-#        "column2": ["b", "b", "b", "c", "c"]
-#    })
-#    sampled = model.sample(conditions=conditions)
-#
-#    assert sampled.shape[0] == len(conditions["column2"])
-#    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
-#
-#
+def test_conditional_sampling_dataframe():
+    data = pd.DataFrame({
+        "column1": [1.0, 0.5, 2.5] * 10,
+        "column2": ["a", "b", "c"] * 10
+    })
+
+    model = TVAE(epochs=1)
+    model.fit(data)
+    conditions = pd.DataFrame({
+        "column2": ["b", "b", "b", "c", "c"]
+    })
+    sampled = model.sample_remaining_columns(conditions)
+
+    assert sampled.shape[0] == len(conditions["column2"])
+    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
+
+
 def test_conditional_sampling_two_conditions():
     data = pd.DataFrame({
         "column1": [1.0, 0.5, 2.5] * 10,
