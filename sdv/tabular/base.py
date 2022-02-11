@@ -471,6 +471,9 @@ class BaseTabularModel:
         if num_rows is None:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
+        if num_rows == 0:
+            return pd.DataFrame()
+
         output_file_path = self._validate_file_path(output_file_path)
 
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
@@ -640,7 +643,7 @@ class BaseTabularModel:
         return sampled
 
     def sample_remaining_columns(self, known_columns, max_tries=100, batch_size_per_try=None,
-                                 randomize_samples=True, outout_file_path=None):
+                                 randomize_samples=True, output_file_path=None):
         """Sample rows from this table.
 
         Args:

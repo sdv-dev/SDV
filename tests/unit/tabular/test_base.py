@@ -173,6 +173,73 @@ class TestBaseTabularModel:
                 match=r'You must specify the number of rows to sample \(e.g. num_rows=100\)'):
             model.sample(num_rows)
 
+    def test_sample_batch_size(self):
+        """Test the `BaseTabularModel.sample` method with a valid `batch_size` argument.
+
+        Expect that the expected calls to `_sample_batch` are made.
+
+        Input:
+            - num_rows = 10
+            - batch_size = 5
+        Output:
+            - The requested number of sampled rows.
+        Side Effect:
+            - Call `_sample_batch` method twice with the expected number of rows.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        sampled_data = pd.DataFrame({
+            "column1": [28, 28, 21, 1, 2],
+            "column2": [37, 37, 1, 4, 5],
+            "column3": [93, 93, 6, 4, 12],
+        })
+        gaussian_copula._sample_batch.side_effect = [sampled_data, sampled_data]
+
+        # Run
+        output = BaseTabularModel.sample(gaussian_copula, 10, batch_size=5)
+
+        # Assert
+        assert gaussian_copula._sample_batch.has_calls([
+            call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
+            call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
+        ])
+        assert len(output) == 10
+
+    def test__sample_batch_with_batch_size_per_try(self):
+        """Test the `BaseTabularModel._sample_batch` method with `batch_size_per_try`.
+
+        Expect that the expected calls to `_sample_rows` are made.
+
+        Input:
+            - num_rows = 10
+            - batch_size_per_try = 5
+        Output:
+            - The requested number of sampled rows.
+        Side Effect:
+            - Call `_sample_rows` method twice with the expected number of rows.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        sampled_data = pd.DataFrame({
+            "column1": [28, 28, 21, 1, 2],
+            "column2": [37, 37, 1, 4, 5],
+            "column3": [93, 93, 6, 4, 12],
+        })
+        gaussian_copula._sample_rows.side_effect = [
+            (sampled_data, 5),
+            (sampled_data.append(sampled_data, ignore_index=False), 10),
+        ]
+
+        # Run
+        output = BaseTabularModel._sample_batch(gaussian_copula, num_rows=10, batch_size_per_try=5)
+
+        # Assert
+        assert gaussian_copula._sample_rows.has_calls([
+            call(5, None, None, 0.01, DataFrameMatcher(pd.DataFrame())),
+            call(5, None, None, 0.01, DataFrameMatcher(sampled_data)),
+        ])
+        assert len(output) == 10
+
     def test_sample_conditions_with_multiple_conditions(self):
         """Test the `BaseTabularModel.sample_conditions` method with multiple condtions.
 
@@ -186,6 +253,7 @@ class TestBaseTabularModel:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._validate_file_path.return_value = None
 
         condition_values1 = {'cola': 'a'}
         condition1 = Condition(condition_values1, num_rows=2)
@@ -236,6 +304,7 @@ class TestBaseTabularModel:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._validate_file_path.return_value = None
 
         conditions = pd.DataFrame([{'cola': 'a'}] * 5)
 
@@ -250,7 +319,7 @@ class TestBaseTabularModel:
 
         # Asserts
         gaussian_copula._sample_with_conditions.assert_called_once_with(
-            DataFrameMatcher(conditions), 100, None)
+            DataFrameMatcher(conditions), 100, None, ANY, None)
         pd.testing.assert_frame_equal(out, sampled)
 
     def test__sample_with_conditions_invalid_column(self):
@@ -278,6 +347,25 @@ class TestBaseTabularModel:
                 'Unexpected column name `colb`. '
                 'Use a column name that was present in the original data.')):
             GaussianCopula._sample_with_conditions(gaussian_copula, conditions, 100, None)
+
+    @patch('sdv.tabular.base.os.path')
+    def test__validate_file_path(self, path_mock):
+        """Test the `BaseTabularModel._validate_file_path` method.
+
+        Expect that an error is thrown if the file path already exists.
+
+        Input:
+            - A file path that already exists.
+        Side Effects:
+            - An AssertionError.
+        """
+        # Setup
+        path_mock.exists.return_value = True
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+
+        # Run and Assert
+        with pytest.raises(AssertionError):
+            BaseTabularModel._validate_file_path(gaussian_copula, 'file_path')
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
