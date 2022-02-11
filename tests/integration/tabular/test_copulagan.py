@@ -92,50 +92,50 @@ def test_recreate():
 
 def test_conditional_sampling_dict():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10
     })
 
     model = CopulaGAN(epochs=1)
     model.fit(data)
     conditions = [Condition({
-        "column2": "b"
+        'column2': 'b'
     }, num_rows=30)]
     sampled = model.sample_conditions(conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert set(sampled["column2"].unique()) == set(["b"])
+    assert set(sampled['column2'].unique()) == set(['b'])
 
 
 def test_conditional_sampling_dataframe():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10
     })
 
     model = CopulaGAN(epochs=1)
     model.fit(data)
     conditions = pd.DataFrame({
-        "column2": ["b", "b", "b", "c", "c"]
+        'column2': ['b', 'b', 'b', 'c', 'c']
     })
     sampled = model.sample_remaining_columns(conditions)
 
-    assert sampled.shape[0] == len(conditions["column2"])
-    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
+    assert sampled.shape[0] == len(conditions['column2'])
+    assert (sampled['column2'] == np.array(['b', 'b', 'b', 'c', 'c'])).all()
 
 
 def test_conditional_sampling_two_conditions():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10,
-        "column3": ["d", "e", "f"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10,
+        'column3': ['d', 'e', 'f'] * 10
     })
 
     model = CopulaGAN(epochs=1)
     model.fit(data)
     conditions = [Condition({
-        "column2": "b",
-        "column3": "f"
+        'column2': 'b',
+        'column3': 'f'
     }, num_rows=5)]
     samples = model.sample_conditions(conditions=conditions)
     assert list(samples.column2) == ['b'] * 5
@@ -144,15 +144,15 @@ def test_conditional_sampling_two_conditions():
 
 def test_conditional_sampling_numerical():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10,
-        "column3": ["d", "e", "f"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10,
+        'column3': ['d', 'e', 'f'] * 10
     })
 
     model = CopulaGAN(epochs=1)
     model.fit(data)
     conditions = [Condition({
-        "column1": 1.0,
+        'column1': 1.0,
     }, num_rows=5)]
     sampled = model.sample_conditions(conditions=conditions)
 

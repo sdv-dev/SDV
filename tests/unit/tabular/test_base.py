@@ -220,7 +220,7 @@ class TestBaseTabularModel:
     def test_sample_remaining_columns(self):
         """Test the `BaseTabularModel.sample_remaining_colmns` method.
 
-        When a valid DataFrame is give, expect `_sample_with_conditions to be called
+        When a valid DataFrame is given, expect `_sample_with_conditions` to be called
         with the input DataFrame.
 
         Input:
@@ -270,7 +270,9 @@ class TestBaseTabularModel:
         conditions = pd.DataFrame([{'colb': 'a'}] * 5)
 
         # Run and Assert
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=(
+                'Unexpected column name `colb`. '
+                'Use a column name that was present in the original data.')):
             GaussianCopula._sample_with_conditions(gaussian_copula, conditions, 100, None)
 
 

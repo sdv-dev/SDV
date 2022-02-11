@@ -409,7 +409,7 @@ class BaseTabularModel:
             num_rows (int):
                 Number of rows to sample. This parameter is required.
             randomize_samples (bool):
-                Whether or not to use a a fixed seed when sampling. Defaults
+                Whether or not to use a fixed seed when sampling. Defaults
                 to True.
 
         Returns:
@@ -443,13 +443,11 @@ class BaseTabularModel:
             ValueError:
                 If any of the following happens:
                     * any of the conditions' columns are not valid.
-                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
-                      sampled within `max_tries` trials.
                     * no rows could be generated.
         """
         for column in conditions.columns:
             if column not in self._metadata.get_fields():
-                raise ValueError(f'Error: Unexpected column name `{column}`. '
+                raise ValueError(f'Unexpected column name `{column}`. '
                                  f'Use a column name that was present in the original data.')
 
         try:
@@ -524,7 +522,7 @@ class BaseTabularModel:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
-                Whether or not to use a a fixed seed when sampling. Defaults
+                Whether or not to use a fixed seed when sampling. Defaults
                 to True.
 
         Returns:
@@ -564,7 +562,7 @@ class BaseTabularModel:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
-                Whether or not to use a a fixed seed when sampling. Defaults
+                Whether or not to use a fixed seed when sampling. Defaults
                 to True.
 
         Returns:
