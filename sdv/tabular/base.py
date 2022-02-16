@@ -12,28 +12,6 @@ from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
-FIXED_SEED = 21321
-
-
-def validate_sample_args(function):
-    """Validate the args and kwargs passed to sample.
-
-    Set more informative error messages for specific unsupported arguments.
-
-    Args:
-        function (Callable):
-            The function to wrap around.
-    """
-    def wrapper(*args, **kwargs):
-        if 'condition' in kwargs or 'conditions' in kwargs:
-            raise TypeError('This method does not support the conditions parameter. '
-                            'Please create `sdv.sampling.Condition` objects and pass them '
-                            'into the `sample_conditions` method. '
-                            'See User Guide or API for more details.')
-
-        return function(*args, **kwargs)
-
-    return wrapper
 
 
 class NonParametricError(Exception):
@@ -411,13 +389,7 @@ class BaseTabularModel:
 
         return sampled_rows
 
-    def _set_fixed_seed(self, randomize_samples):
-        if randomize_samples:
-            # TODO: set random state on copulas.
-            return
-
-    @validate_sample_args
-    def sample(self, num_rows, randomize_samples=True):
+    def sample(self, num_rows, randomize_samples=True, conditions=None):
         """Sample rows from this table.
 
         Args:
@@ -426,16 +398,22 @@ class BaseTabularModel:
             randomize_samples (bool):
                 Whether or not to use a a fixed seed when sampling. Defaults
                 to True.
+            conditions:
+                Deprecated argument. Use the `sample_conditions` method with
+                `sdv.sampling.Condition` objects instead.
 
         Returns:
             pandas.DataFrame:
                 Sampled data.
         """
-        if num_rows is None:
-            raise ValueError(
-                'Error: You must specify the number of rows to sample (eg. num_rows=100).')
+        if conditions is not None:
+            raise TypeError('This method does not support the conditions parameter. '
+                            'Please create `sdv.sampling.Condition` objects and pass them '
+                            'into the `sample_conditions` method. '
+                            'See User Guide or API for more details.')
 
-        self._set_fixed_seed(randomize_samples)
+        if num_rows is None:
+            raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
         return self._sample_batch(num_rows)
 
