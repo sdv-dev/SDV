@@ -438,15 +438,12 @@ class BaseTabularModel:
 
     def _validate_file_path(self, output_file_path):
         output_path = None
-
         if output_file_path:
             output_path = os.path.abspath(output_file_path)
-
             if os.path.exists(output_path):
                 raise AssertionError(f'{output_path} already exists.')
 
         return output_path
-
 
     @validate_sample_args
     def sample(self, num_rows, randomize_samples=True, batch_size=None, output_file_path=None):

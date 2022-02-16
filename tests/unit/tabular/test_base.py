@@ -189,9 +189,9 @@ class TestBaseTabularModel:
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
         sampled_data = pd.DataFrame({
-            "column1": [28, 28, 21, 1, 2],
-            "column2": [37, 37, 1, 4, 5],
-            "column3": [93, 93, 6, 4, 12],
+            'column1': [28, 28, 21, 1, 2],
+            'column2': [37, 37, 1, 4, 5],
+            'column3': [93, 93, 6, 4, 12],
         })
         gaussian_copula._sample_batch.side_effect = [sampled_data, sampled_data]
 
@@ -221,9 +221,9 @@ class TestBaseTabularModel:
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
         sampled_data = pd.DataFrame({
-            "column1": [28, 28, 21, 1, 2],
-            "column2": [37, 37, 1, 4, 5],
-            "column3": [93, 93, 6, 4, 12],
+            'column1': [28, 28, 21, 1, 2],
+            'column2': [37, 37, 1, 4, 5],
+            'column3': [93, 93, 6, 4, 12],
         })
         gaussian_copula._sample_rows.side_effect = [
             (sampled_data, 5),
@@ -361,10 +361,11 @@ class TestBaseTabularModel:
         """
         # Setup
         path_mock.exists.return_value = True
+        path_mock.abspath.return_value = 'path/to/file'
         gaussian_copula = Mock(spec_set=GaussianCopula)
 
         # Run and Assert
-        with pytest.raises(AssertionError):
+        with pytest.raises(AssertionError, match='path/to/file already exists'):
             BaseTabularModel._validate_file_path(gaussian_copula, 'file_path')
 
 
