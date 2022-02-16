@@ -71,9 +71,9 @@ class TestBaseTabularModel:
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
         valid_sampled_data = pd.DataFrame({
-            "column1": [28, 28, 21, 1, 2],
-            "column2": [37, 37, 1, 4, 5],
-            "column3": [93, 93, 6, 4, 12],
+            'column1': [28, 28, 21, 1, 2],
+            'column2': [37, 37, 1, 4, 5],
+            'column3': [93, 93, 6, 4, 12],
         })
         gaussian_copula._sample_batch.return_value = valid_sampled_data
 
@@ -93,7 +93,9 @@ class TestBaseTabularModel:
         model = BaseTabularModel()
 
         # Run and assert
-        with pytest.raises(TypeError):
+        with pytest.raises(
+                TypeError,
+                match=r'sample\(\) missing 1 required positional argument: \'num_rows\''):
             model.sample()
 
     def test_sample_num_rows_none(self):
@@ -111,32 +113,10 @@ class TestBaseTabularModel:
         num_rows = None
 
         # Run and assert
-        with pytest.raises(ValueError):
+        with pytest.raises(
+                ValueError,
+                match=r'You must specify the number of rows to sample \(e.g. num_rows=100\)'):
             model.sample(num_rows)
-
-    def test_sample_randomize_samples_true(self):
-        """Test the `BaseTabularModel.sample` method with `randomize_samples` set to True.
-
-        Expect that sequential calls return different sampled rows.
-
-        Input:
-            - num_rows = None
-        Output:
-            - randomized rows
-        """
-        pass
-
-    def test_sample_randomize_samples_false(self):
-        """Test the `BaseTabularModel.sample` method with `randomize_samples` set to False.
-
-        Expect that sequential calls return the same sampled rows.
-
-        Input:
-            - num_rows = 5
-        Output:
-            - deterministic rows
-        """
-        pass
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)

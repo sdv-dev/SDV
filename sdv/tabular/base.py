@@ -411,11 +411,6 @@ class BaseTabularModel:
 
         return sampled_rows
 
-    def _set_fixed_seed(self, randomize_samples):
-        if randomize_samples:
-            # TODO: set random state on copulas.
-            return
-
     @validate_sample_args
     def sample(self, num_rows, randomize_samples=True):
         """Sample rows from this table.
@@ -432,10 +427,7 @@ class BaseTabularModel:
                 Sampled data.
         """
         if num_rows is None:
-            raise ValueError(
-                'Error: You must specify the number of rows to sample (eg. num_rows=100).')
-
-        self._set_fixed_seed(randomize_samples)
+            raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
         return self._sample_batch(num_rows)
 
