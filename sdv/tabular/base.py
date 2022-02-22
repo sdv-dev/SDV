@@ -1,6 +1,9 @@
 """Base Class for tabular models."""
 
+import functools
 import logging
+import math
+import os
 import pickle
 import uuid
 from collections import defaultdict
@@ -8,6 +11,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
@@ -256,7 +260,8 @@ class BaseTabularModel:
             return sampled, num_rows
 
     def _sample_batch(self, num_rows=None, max_tries=100, batch_size_per_try=None,
-                      conditions=None, transformed_conditions=None, float_rtol=0.01):
+                      conditions=None, transformed_conditions=None, float_rtol=0.01,
+                      progress_bar=None, output_file_path=None):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -292,6 +297,12 @@ class BaseTabularModel:
                 The dictionary of conditioning values transformed to the model format.
             float_rtol (float):
                 Maximum tolerance when considering a float match.
+            progress_bar (tqdm.tqdm or None):
+                The progress bar to update when sampling. If None, a new tqdm progress
+                bar will be created.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. If None, does not write
+                rows anywhere.
 
         Returns:
             pandas.DataFrame:
@@ -300,20 +311,41 @@ class BaseTabularModel:
         if not batch_size_per_try:
             batch_size_per_try = num_rows * 10
 
-        sampled, num_valid = self._sample_rows(
-            num_rows, conditions, transformed_conditions, float_rtol)
+        if not progress_bar:
+            progress_bar = tqdm(total=num_rows)
 
-        counter = 1
+        counter = 0
+        num_valid = 0
+        prev_num_valid = None
+        remaining = num_rows
+        sampled = pd.DataFrame()
+
         while num_valid < num_rows:
             if counter >= max_tries:
                 break
 
-            remaining = num_rows - num_valid
-
-            LOGGER.info(f'{remaining} valid rows remaining. Resampling {batch_size_per_try} rows')
+            prev_num_valid = num_valid
             sampled, num_valid = self._sample_rows(
                 batch_size_per_try, conditions, transformed_conditions, float_rtol, sampled,
             )
+
+            num_increase = min(num_valid - prev_num_valid, remaining)
+            if num_increase > 0:
+                if output_file_path:
+                    append_kwargs = {'mode': 'a', 'header': False} if os.path.exists(
+                        output_file_path) else {}
+                    sampled.head(min(len(sampled), num_rows)).tail(num_increase).to_csv(
+                        output_file_path,
+                        index=False,
+                        **append_kwargs,
+                    )
+
+                progress_bar.update(num_increase)
+
+            remaining = num_rows - num_valid
+            if remaining > 0:
+                LOGGER.info(
+                    f'{remaining} valid rows remaining. Resampling {batch_size_per_try} rows')
 
             counter += 1
 
@@ -345,7 +377,8 @@ class BaseTabularModel:
 
     def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
                                    max_tries=None, batch_size_per_try=None, float_rtol=0.01,
-                                   graceful_reject_sampling=True):
+                                   graceful_reject_sampling=True, progress_bar=None,
+                                   output_file_path=None):
         num_rows = len(dataframe)
         sampled_rows = self._sample_batch(
             num_rows,
@@ -354,6 +387,8 @@ class BaseTabularModel:
             condition,
             transformed_condition,
             float_rtol,
+            progress_bar,
+            output_file_path,
         )
         num_sampled_rows = len(sampled_rows)
 
@@ -379,15 +414,30 @@ class BaseTabularModel:
 
         return sampled_rows
 
-    def sample(self, num_rows, randomize_samples=True, conditions=None):
+    def _validate_file_path(self, output_file_path):
+        output_path = None
+        if output_file_path:
+            output_path = os.path.abspath(output_file_path)
+            if os.path.exists(output_path):
+                raise AssertionError(f'{output_path} already exists.')
+
+        return output_path
+
+    def sample(self, num_rows, randomize_samples=True, batch_size=None, output_file_path=None,
+               conditions=None):
         """Sample rows from this table.
 
         Args:
             num_rows (int):
                 Number of rows to sample. This parameter is required.
             randomize_samples (bool):
-                Whether or not to use a a fixed seed when sampling. Defaults
+                Whether or not to use a fixed seed when sampling. Defaults
                 to True.
+            batch_size (int or None):
+                The batch size to sample. Defaults to `num_rows`, if None.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. If None, does not
+                write rows anywhere.
             conditions:
                 Deprecated argument. Use the `sample_conditions` method with
                 `sdv.sampling.Condition` objects instead.
@@ -405,9 +455,30 @@ class BaseTabularModel:
         if num_rows is None:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
-        return self._sample_batch(num_rows)
+        if num_rows == 0:
+            return pd.DataFrame()
 
-    def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try):
+        output_file_path = self._validate_file_path(output_file_path)
+
+        batch_size = min(batch_size, num_rows) if batch_size else num_rows
+
+        sampled = []
+        with tqdm(total=num_rows) as progress_bar:
+            progress_bar.set_description(
+                f'Sampling {num_rows} rows of data in batches of size {batch_size}')
+            for step in range(math.ceil(num_rows / batch_size)):
+                sampled_rows = self._sample_batch(
+                    batch_size,
+                    batch_size_per_try=batch_size,
+                    progress_bar=progress_bar,
+                    output_file_path=output_file_path,
+                )
+                sampled.append(sampled_rows)
+
+        return pd.concat(sampled, ignore_index=True)
+
+    def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try,
+                                progress_bar=None, output_file_path=None):
         """Sample rows with conditions.
 
         Args:
@@ -418,6 +489,11 @@ class BaseTabularModel:
             batch_size_per_try (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
+            progress_bar (tqdm.tqdm or None):
+                The progress bar to update.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
 
         Returns:
             pandas.DataFrame:
@@ -429,13 +505,11 @@ class BaseTabularModel:
             ValueError:
                 If any of the following happens:
                     * any of the conditions' columns are not valid.
-                    * `graceful_reject_sampling` is `False` and not enough valid rows could be
-                      sampled within `max_tries` trials.
                     * no rows could be generated.
         """
         for column in conditions.columns:
             if column not in self._metadata.get_fields():
-                raise ValueError(f'Error: Unexpected column name `{column}`. '
+                raise ValueError(f'Unexpected column name `{column}`. '
                                  f'Use a column name that was present in the original data.')
 
         try:
@@ -468,6 +542,8 @@ class BaseTabularModel:
                     None,
                     max_tries,
                     batch_size_per_try,
+                    progress_bar=progress_bar,
+                    output_file_path=output_file_path,
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
@@ -484,6 +560,8 @@ class BaseTabularModel:
                         transformed_condition,
                         max_tries,
                         batch_size_per_try,
+                        progress_bar=progress_bar,
+                        output_file_path=output_file_path,
                     )
                     all_sampled_rows.append(sampled_rows)
 
@@ -496,7 +574,7 @@ class BaseTabularModel:
         return all_sampled_rows
 
     def sample_conditions(self, conditions, max_tries=100, batch_size_per_try=None,
-                          randomize_samples=True):
+                          randomize_samples=True, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -510,8 +588,11 @@ class BaseTabularModel:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
-                Whether or not to use a a fixed seed when sampling. Defaults
+                Whether or not to use a fixed seed when sampling. Defaults
                 to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
 
         Returns:
             pandas.DataFrame:
@@ -525,13 +606,64 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
+        output_file_path = self._validate_file_path(output_file_path)
+
+        num_rows = functools.reduce(
+            lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
         conditions = self._make_condition_dfs(conditions)
 
-        sampled = pd.DataFrame()
-        for condition_dataframe in conditions:
-            sampled_for_condition = self._sample_with_conditions(
-                condition_dataframe, max_tries, batch_size_per_try)
-            sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+        with tqdm(total=num_rows) as progress_bar:
+            sampled = pd.DataFrame()
+            for condition_dataframe in conditions:
+                sampled_for_condition = self._sample_with_conditions(
+                    condition_dataframe,
+                    max_tries,
+                    batch_size_per_try,
+                    progress_bar,
+                    output_file_path,
+                )
+                sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+
+        return sampled
+
+    def sample_remaining_columns(self, known_columns, max_tries=100, batch_size_per_try=None,
+                                 randomize_samples=True, output_file_path=None):
+        """Sample rows from this table.
+
+        Args:
+            known_columns (pandas.DataFrame):
+                A pandas.DataFrame with the columns that are already known. The output
+                is a DataFrame such that each row in the output is sampled
+                conditionally on the corresponding row in the input.
+            max_tries (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
+            batch_size_per_try (int):
+                The batch size to use per attempt at sampling. Defaults to 10 times
+                the number of rows.
+            randomize_samples (bool):
+                Whether or not to use a fixed seed when sampling. Defaults
+                to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        output_file_path = self._validate_file_path(output_file_path)
+
+        with tqdm(total=len(known_columns)) as progress_bar:
+            sampled = self._sample_with_conditions(
+                known_columns, max_tries, batch_size_per_try, progress_bar, output_file_path)
 
         return sampled
 

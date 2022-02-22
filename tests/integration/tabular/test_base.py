@@ -38,23 +38,23 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
         model.sample_conditions(conditions=conditions)
 
 
-#@pytest.mark.parametrize('model', MODELS)
-#def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
-#    data = pd.DataFrame({
-#        'column1': list(range(100)),
-#        'column2': list(range(100)),
-#        'column3': list(range(100))
-#    })
-#
-#    model.fit(data)
-#    conditions = pd.DataFrame({
-#        'column1': [28],
-#        'column2': [37],
-#        'column3': [93]
-#    })
-#
-#    with pytest.raises(ValueError):
-#        model.sample(conditions=conditions, graceful_reject_sampling=True)
+@pytest.mark.parametrize('model', MODELS)
+def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+    conditions = pd.DataFrame({
+        'column1': [28],
+        'column2': [37],
+        'column3': [93]
+    })
+
+    with pytest.raises(ValueError):
+        model.sample_remaining_columns(conditions)
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -265,7 +265,6 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     })
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) == 2
-    model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
     model._model.sample.assert_any_call(50, conditions=expected_transformed_conditions)
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
