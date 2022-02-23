@@ -499,19 +499,23 @@ Conditional Sampling
 
 As the name implies, conditional sampling allows us to sample from a conditional
 distribution using the ``CTGAN`` model, which means we can generate only values that
-satisfy certain conditions. These conditional values can be passed to the ``conditions``
-parameter in the ``sample`` method either as a dataframe or a dictionary.
+satisfy certain conditions. These conditional values can be passed to the ``sample_conditions``
+method as a list of ``sdv.sampling.Condition`` objects or to the ``sample_remaining_columns``
+method as a dataframe.
 
-In case a dictionary is passed, the model will generate as many rows as requested,
-all of which will satisfy the specified conditions, such as ``gender = M``.
+When specifying a ``sdv.sampling.Condition`` object, we can pass in the desired conditions
+as a dictionary, as well as specify the number of desired rows for that condition.
 
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    from sdv.sampling import Condition
+
+    condition = Condition({
         'gender': 'M'
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
 It's also possible to condition on multiple columns, such as
@@ -520,14 +524,16 @@ It's also possible to condition on multiple columns, such as
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    condition = Condition({
         'gender': 'M',
         'experience_years': 0
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
-The ``conditions`` can also be passed as a dataframe. In that case, the model
+In the ``sample_remaining_columns`` method, ``conditions`` is
+passed as a dataframe. In that case, the model
 will generate one sample for each row of the dataframe, sorted in the same
 order. Since the model already knows how many samples to generate, passing
 it as a parameter is unnecessary. For example, if we want to generate three
@@ -542,7 +548,7 @@ following:
     conditions = pd.DataFrame({
         'gender': ['M', 'M', 'M', 'F', 'F', 'F'],
     })
-    model.sample(conditions=conditions)
+    model.sample_remaining_columns(conditions)
 
 
 ``CTGAN`` also supports conditioning on continuous values, as long as the values
@@ -552,10 +558,11 @@ dataset are within 0 and 1, ``CTGAN`` will not be able to set this value to 1000
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    condition = Condition({
         'degree_perc': 70.0
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
 .. note::

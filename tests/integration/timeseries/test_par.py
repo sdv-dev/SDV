@@ -18,7 +18,7 @@ def test_par():
     )
     model.fit(data)
 
-    sampled = model.sample()
+    sampled = model.sample(100)
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -31,7 +31,7 @@ def test_par():
     )
     model_meta.fit(data)
 
-    sampled = model_meta.sample()
+    sampled = model_meta.sample(100)
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -44,7 +44,7 @@ def test_par():
     )
     model_meta_dict.fit(data)
 
-    sampled = model_meta_dict.sample()
+    sampled = model_meta_dict.sample(100)
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -62,7 +62,7 @@ def test_column_after_date_simple():
 
     model = PAR(entity_columns=['col'], sequence_index='date', epochs=1)
     model.fit(data)
-    sampled = model.sample()
+    sampled = model.sample(1)
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -83,7 +83,7 @@ def test_column_after_date_complex():
     model = PAR(entity_columns=['entity'], context_columns=['context'], sequence_index='date',
                 epochs=1)
     model.fit(data)
-    sampled = model.sample()
+    sampled = model.sample(2)
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
