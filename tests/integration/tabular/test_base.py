@@ -400,3 +400,56 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
         sampled_data[['age_joined', 'age']],
         expected_result[['age_joined', 'age']],
     )
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_sampling_with_randomize_samples_True(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+
+    sampled1 = model.sample(10, randomize_samples=True)
+    sampled2 = model.sample(10, randomize_samples=True)
+
+    assert not sampled1.equals(sampled2)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_sampling_with_randomize_samples_False(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+
+    sampled1 = model.sample(10, randomize_samples=False)
+    sampled2 = model.sample(10, randomize_samples=False)
+
+    pd.testing.assert_frame_equal(sampled1, sampled2)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_sampling_with_randomize_samples_alternating(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+
+    sampled_fixed1 = model.sample(10, randomize_samples=False)
+    sampled_random1 = model.sample(10, randomize_samples=True)
+    sampled_fixed2 = model.sample(10, randomize_samples=False)
+    sampled_random2 = model.sample(10, randomize_samples=True)
+
+    pd.testing.assert_frame_equal(sampled_fixed1, sampled_fixed2)
+    assert not sampled_random1.equals(sampled_fixed1)
+    assert not sampled_random1.equals(sampled_random2)
+    assert not sampled_random2.equals(sampled_fixed1)

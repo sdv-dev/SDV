@@ -5,7 +5,7 @@ import pytest
 
 from sdv.metadata.table import Table
 from sdv.sampling import Condition
-from sdv.tabular.base import COND_IDX, BaseTabularModel
+from sdv.tabular.base import COND_IDX, FIXED_RNG_SEED, BaseTabularModel
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
@@ -764,3 +764,40 @@ def test__make_condition_dfs_with_multiple_conditions_different_columns(model):
     assert isinstance(result_conditions2, pd.DataFrame)
     assert len(result_conditions2) == 3
     assert all(result_conditions2 == expected_conditions2)
+
+
+def test__randomize_samples_true():
+    """Test that ``_randomize_samples`` sets the random state correctly.
+
+    Input:
+        - randomize_samples as True
+
+    Side Effect:
+        - random state is set
+    """
+    # Setup
+    instance = Mock()
+    randomize_samples = True
+
+    # Run
+    BaseTabularModel._randomize_samples(instance, randomize_samples)
+
+    # Assert
+    assert instance._set_random_state.called_once_with(FIXED_RNG_SEED)
+
+
+def test__randomize_samples_false():
+    """Test that ``_randomize_samples`` is a no-op when user wants random samples.
+
+    Input:
+        - randomize_samples as False
+    """
+    # Setup
+    instance = Mock()
+    randomize_samples = False
+
+    # Run
+    BaseTabularModel._randomize_samples(instance, randomize_samples)
+
+    # Assert
+    assert instance._set_random_state.called_once_with(None)
