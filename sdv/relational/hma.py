@@ -361,6 +361,7 @@ class HMA1(BaseRelationalModel):
             pandas.DataFrame:
                 Sampled rows, shape (, num_rows)
         """
+        num_rows = num_rows or model._num_rows
         sampled = model.sample(num_rows)
 
         primary_key_name = self.metadata.get_primary_key(table_name)

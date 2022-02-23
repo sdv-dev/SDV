@@ -6,6 +6,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
+from sdv.sampling import Condition
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
@@ -27,14 +28,14 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
     })
 
     model.fit(data)
-    conditions = {
+    conditions = [Condition({
         'column1': 28,
         'column2': 37,
         'column3': 93
-    }
+    })]
 
     with pytest.raises(ValueError):
-        model.sample(1, conditions=conditions, graceful_reject_sampling=True)
+        model.sample_conditions(conditions=conditions)
 
 
 @pytest.mark.parametrize('model', MODELS)
@@ -53,45 +54,7 @@ def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
     })
 
     with pytest.raises(ValueError):
-        model.sample(conditions=conditions, graceful_reject_sampling=True)
-
-
-@pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_False_dict(model):
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
-
-    model.fit(data)
-    conditions = {
-        'column1': 28,
-        'column2': 37,
-        'column3': 93
-    }
-
-    with pytest.raises(ValueError):
-        model.sample(1, conditions=conditions)
-
-
-@pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_False_dataframe(model):
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
-
-    model.fit(data)
-    conditions = pd.DataFrame({
-        'column1': [28],
-        'column2': [37],
-        'column3': [93]
-    })
-
-    with pytest.raises(ValueError):
-        model.sample(conditions=conditions)
+        model.sample_remaining_columns(conditions)
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -290,8 +253,8 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     model.fit(data)
 
     # Run
-    conditions = {'age': 30, 'state': 'CA'}
-    sampled_data = model.sample(5, conditions=conditions)
+    conditions = [Condition({'age': 30, 'state': 'CA'}, num_rows=5)]
+    sampled_data = model.sample_conditions(conditions=conditions)
 
     # Assert
     expected_transformed_conditions = {'age.value': 30}
@@ -302,8 +265,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     })
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) == 2
-    model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
-    model._model.sample.assert_any_call(1, conditions=expected_transformed_conditions)
+    model._model.sample.assert_any_call(50, conditions=expected_transformed_conditions)
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
@@ -354,8 +316,8 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     model.fit(data)
 
     # Run
-    conditions = {'age': 30, 'state': 'CA'}
-    sampled_data = model.sample(5, conditions=conditions)
+    conditions = [Condition({'age': 30, 'state': 'CA'}, num_rows=5)]
+    sampled_data = model.sample_conditions(conditions=conditions)
 
     # Assert
     expected_states = pd.Series(['CA', 'CA', 'CA', 'CA', 'CA'], name='state')
@@ -424,8 +386,8 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     model.fit(data)
 
     # Run
-    conditions = {'age': 30.0}
-    sampled_data = model.sample(5, conditions=conditions)
+    conditions = [Condition({'age': 30.0}, num_rows=5)]
+    sampled_data = model.sample_conditions(conditions=conditions)
 
     # Assert
     assert len(column_model_mock.return_value.sample.mock_calls) == 3
