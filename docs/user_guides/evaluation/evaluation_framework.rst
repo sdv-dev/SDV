@@ -27,7 +27,7 @@ it using the ``GaussianCopula`` model.
 
     model = GaussianCopula()
     model.fit(real_data)
-    synthetic_data = model.sample()
+    synthetic_data = model.sample(len(real_data))
 
 After the previous steps we will have two tables:
 
