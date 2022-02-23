@@ -318,6 +318,15 @@ class GaussianCopula(BaseTabularModel):
         """
         return self._model.sample(num_rows, conditions=conditions)
 
+    def _set_random_state(self, random_state):
+        """Set the random state of the model's random number generator.
+
+        Args:
+            random_state (int, np.random.RandomState, or None):
+                Seed or RandomState to use.
+        """
+        self._model.set_random_state(random_state)
+
     def get_likelihood(self, table_data):
         """Get the likelihood of each row belonging to this table."""
         transformed = self._metadata.transform(table_data)
