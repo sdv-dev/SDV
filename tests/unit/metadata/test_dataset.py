@@ -2,6 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -38,15 +39,200 @@ def test__read_csv_dtypes():
     assert result == {'d_field': str}
 
 
-def test__parse_dtypes():
-    """Test parse data types"""
+def test__parse_dtypes_boolean():
+    """Test parse data type boolean"""
+    # Setup
+    data = pd.DataFrame({
+        'bool_field_1': [-1, 0, -3, 1],
+        'bool_field_2': [True, False, True, False],
+        'bool_field_3': [None, np.nan, None, np.nan],
+        'bool_field_4': [1, True, None, np.nan],
+    })
+
+    table_meta = {
+        'fields': {
+            'bool_field_1': {
+                'type': 'boolean',
+            },
+            'bool_field_2': {
+                'type': 'boolean',
+            },
+            'bool_field_3': {
+                'type': 'boolean',
+            },
+            'bool_field_4': {
+                'type': 'boolean',
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'bool_field_1': [True, False, True, True],
+        'bool_field_2': [True, False, True, False],
+        'bool_field_3': [True, True, True, True],
+        'bool_field_4': [True, True, False, True],
+    })
+    expected.bool_field_1 = expected.bool_field_1.astype(bool)
+    expected.bool_field_2 = expected.bool_field_2.astype(bool)
+    expected.bool_field_3 = expected.bool_field_3.astype(bool)
+    expected.bool_field_4 = expected.bool_field_4.astype(bool)
     # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_datetime():
+    """Test parse data type datetime"""
+    # Setup
+    data = pd.DataFrame({
+        'a_field': ['1996-10-17', '1965-05-23'],
+    })
+
+    table_meta = {
+        'fields': {
+            'a_field': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
+    })
+    expected.a_field = expected.a_field.astype('datetime64[ns]')
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_integer():
+    """Test parse data type integer"""
+    # Setup
+    data = pd.DataFrame({
+        'b_field': ['7', '14']
+    })
+
+    table_meta = {
+        'fields': {
+            'b_field': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'b_field': [7, 14]
+    })
+    expected.b_field = expected.b_field.astype(np.int64)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_id():
+    """Test parse data type id"""
+    # Setup
+    data = pd.DataFrame({
+        'c_field': ['1', '2'],
+    })
+
+    table_meta = {
+        'fields': {
+            'c_field': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'c_field': [1, 2],
+    })
+    expected.c_field = expected.c_field.astype(np.int64)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_other():
+    """Test parse data type other"""
+    # Setup
+    data = pd.DataFrame({
+        'd_field': ['other', 'data'],
+    })
+
+    table_meta = {
+        'fields': {
+            'd_field': {
+                'type': 'other'
+            },
+        }
+    }
+
+    expected = pd.DataFrame({
+        'd_field': ['other', 'data'],
+    })
+    expected.d_field = expected.d_field.astype(object)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_categorical():
+    """Test parse data type categorical"""
+    # Setup
+    data = pd.DataFrame({
+        'cat_field': [1, 2]
+    })
+
+    table_meta = {
+        'fields': {
+            'cat_field': {
+                'type': 'categorical'
+            }
+        }
+    }
+
+    expected = pd.DataFrame({
+        'cat_field': [1, 2],
+    })
+    expected.cat_field = expected.cat_field.astype(object)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test__parse_dtypes_combinations():
+    """Test parse data type combinations"""
+    # Setup
     data = pd.DataFrame({
         'a_field': ['1996-10-17', '1965-05-23'],
         'b_field': ['7', '14'],
         'c_field': ['1', '2'],
-        'd_field': ['other', 'data']
+        'd_field': ['other', 'data'],
+        'cat_field': [1, 2],
+        'bool_field': [1, 0],
     })
+
     table_meta = {
         'fields': {
             'a_field': {
@@ -63,18 +249,35 @@ def test__parse_dtypes():
             },
             'd_field': {
                 'type': 'other'
-            }
+            },
+            'cat_field': {
+                'type': 'categorical'
+            },
+            'bool_field': {
+                'type': 'boolean'
+            },
         }
     }
-    result = _parse_dtypes(data, table_meta)
 
-    # Asserts
     expected = pd.DataFrame({
         'a_field': pd.to_datetime(['1996-10-17', '1965-05-23'], format='%Y-%m-%d'),
         'b_field': [7, 14],
         'c_field': [1, 2],
-        'd_field': ['other', 'data']
+        'd_field': ['other', 'data'],
+        'cat_field': [1, 2],
+        'bool_field': [True, False],
     })
+    expected.a_field = expected.a_field.astype('datetime64[ns]')
+    expected.b_field = expected.b_field.astype(np.int64)
+    expected.c_field = expected.c_field.astype(np.int64)
+    expected.d_field = expected.d_field.astype(object)
+    expected.cat_field = expected.cat_field.astype(object)
+    expected.bool_field = expected.bool_field.astype(bool)
+
+    # Run
+    result = _parse_dtypes(data, table_meta)
+
+    # Asserts
     pd.testing.assert_frame_equal(result, expected)
 
 
