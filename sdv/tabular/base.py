@@ -18,6 +18,7 @@ from sdv.metadata import Table
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
+FIXED_RNG_SEED = 73251
 
 
 class NonParametricError(Exception):
@@ -423,6 +424,24 @@ class BaseTabularModel:
 
         return output_path
 
+    def _randomize_samples(self, randomize_samples):
+        """Randomize the samples according to user input.
+
+        If ``randomize_samples`` is false, fix the seed that the random number generator
+        uses in the underlying models.
+
+        Args:
+            randomize_samples (bool):
+                Whether or not to randomize the generated samples.
+        """
+        if self._model is None:
+            return
+
+        if randomize_samples:
+            self._set_random_state(None)
+        else:
+            self._set_random_state(FIXED_RNG_SEED)
+
     def sample(self, num_rows, randomize_samples=True, batch_size=None, output_file_path=None,
                conditions=None):
         """Sample rows from this table.
@@ -457,6 +476,8 @@ class BaseTabularModel:
 
         if num_rows == 0:
             return pd.DataFrame()
+
+        self._randomize_samples(randomize_samples)
 
         output_file_path = self._validate_file_path(output_file_path)
 
@@ -612,6 +633,8 @@ class BaseTabularModel:
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
         conditions = self._make_condition_dfs(conditions)
 
+        self._randomize_samples(randomize_samples)
+
         with tqdm(total=num_rows) as progress_bar:
             sampled = pd.DataFrame()
             for condition_dataframe in conditions:
@@ -660,6 +683,8 @@ class BaseTabularModel:
                     * no rows could be generated.
         """
         output_file_path = self._validate_file_path(output_file_path)
+
+        self._randomize_samples(randomize_samples)
 
         with tqdm(total=len(known_columns)) as progress_bar:
             sampled = self._sample_with_conditions(
