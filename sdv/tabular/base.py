@@ -7,6 +7,7 @@ import os
 import pickle
 import uuid
 from collections import defaultdict
+import warnings
 
 import copulas
 import numpy as np
@@ -15,6 +16,7 @@ import pandas as pd
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 from sdv.tabular.utils import check_num_rows, handle_sampling_error, progress_bar_wrapper
+from sdv.utils import compare_package_versions, get_package_versions
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -857,6 +859,8 @@ class BaseTabularModel:
             path (str):
                 Path where the SDV instance will be serialized.
         """
+        self._package_versions = get_package_versions(self._model)
+
         with open(path, 'wb') as output:
             pickle.dump(self, output)
 
@@ -873,4 +877,20 @@ class BaseTabularModel:
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            model = pickle.load(f)
+            warning_str = ('The libraries used to create the model have older versions '
+                           'than your current setup. This may cause errors when sampling.')
+
+            if hasattr(model, '_package_versions'):
+                mismatched = compare_package_versions(model._package_versions)
+                if len(mismatched) > 0:
+                    mismatched_details = '\n'.join(
+                        [f'{lib} used version {version[0]}; current version is {version[1]}'
+                         for lib, version in mismatched.items()],
+                    )
+                    warnings.warn(f'{warning_str}\n\n{mismatched_details}')
+
+            else:
+                warnings.warn(warning_str)
+
+            return model
