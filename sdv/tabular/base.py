@@ -422,6 +422,7 @@ class BaseTabularModel:
             output_path = os.path.abspath(output_file_path)
             if os.path.exists(output_path):
                 raise AssertionError(f'{output_path} already exists.')
+
         else:
             output_path = TMP_FILE_NAME
 
@@ -499,11 +500,13 @@ class BaseTabularModel:
                         output_file_path=output_file_path,
                     )
                     sampled.append(sampled_rows)
+
         except (Exception, KeyboardInterrupt) as e:
             print('Error: Sampling terminated. Partial results are stored in a temporary file: '
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
+
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
@@ -659,11 +662,13 @@ class BaseTabularModel:
                         output_file_path,
                     )
                     sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+
         except (Exception, KeyboardInterrupt) as e:
             print('Error: Sampling terminated. Partial results are stored in a temporary file: '
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
+
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
@@ -711,11 +716,13 @@ class BaseTabularModel:
             with tqdm(total=len(known_columns)) as progress_bar:
                 sampled = self._sample_with_conditions(
                     known_columns, max_tries, batch_size_per_try, progress_bar, output_file_path)
+
         except (Exception, KeyboardInterrupt) as e:
             print('Error: Sampling terminated. Partial results are stored in a temporary file: '
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
+
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
