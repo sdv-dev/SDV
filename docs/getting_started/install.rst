@@ -9,7 +9,7 @@ Requirements
 ------------
 
 **SDV** has been tested and is supported on **GNU/Linux**, **macOS** and **Windows** systems running
-`Python 3.6, 3.7 and 3.8`_ installed.
+`Python 3.7, 3.8, and 3.9`_ installed.
 
 Also, although it is not strictly required, the usage of a `virtualenv`_ is highly recommended in
 order to avoid having conflicts with other software installed in the system where **SDV** is run.
@@ -56,7 +56,7 @@ from its sources, in the editable mode, and also including some additional depen
 order to be able to run the tests and build the documentation. Instructions about this process
 can be found in the :ref:`contributing` guide.
 
-.. _Python 3.6, 3.7 and 3.8: https://docs.python-guide.org/starting/installation/
+.. _Python 3.7, 3.8, and 3.9: https://docs.python-guide.org/starting/installation/
 .. _WSL: https://docs.microsoft.com/en-us/windows/wsl/install-win10
 .. _virtualenv: https://virtualenv.pypa.io/en/latest/
 .. _pip: https://pip.pypa.io
