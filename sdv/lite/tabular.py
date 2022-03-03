@@ -1,6 +1,7 @@
 """Base class for tabular model presets."""
 
 import logging
+import warnings
 
 import copulas
 import rdt
@@ -34,21 +35,21 @@ class TabularPreset:
         if optimize_for not in PRESETS:
             raise ValueError(f'`optimize_for` must be one of {PRESETS}.')
         if metadata is None:
-            LOGGER.info('Warning: No metadata provided. Metadata will be automatically '
-                        'detected from your data. This process may not be accurate. '
-                        'We recommend writing metadata to ensure correct data handling.')
+            warnings.warn('No metadata provided. Metadata will be automatically '
+                          'detected from your data. This process may not be accurate. '
+                          'We recommend writing metadata to ensure correct data handling.')
 
         if optimize_for == SPEED_PRESET:
             self._model = GaussianCopula(
                 table_metadata=metadata,
                 field_transformers={'categorical': rdt.transformers.CategoricalTransformer},
-                model_kwargs={'default_distribution': copulas.univariate.GaussianUnivariate},
+                default_distribution=copulas.univariate.GaussianUnivariate,
                 rounding=None,
             )
-            LOGGER.info('This config optimizes the modeling speed above all else.\n\n'
-                        'Your exact runtime is dependent on the data. Benchmarks:\n'
-                        '100K rows and 100 columns may take around 1 minute.\n'
-                        '1M rows and 250 columns may take around 30 minutes.')
+            print('This config optimizes the modeling speed above all else.\n\n'
+                  'Your exact runtime is dependent on the data. Benchmarks:\n'
+                  '100K rows and 100 columns may take around 1 minute.\n'
+                  '1M rows and 250 columns may take around 30 minutes.')
 
     def fit(self, data):
         """Fit this model to the data."""
@@ -56,12 +57,12 @@ class TabularPreset:
 
     def sample(self, num_rows):
         """Sample rows from this table."""
-        self._model.sample(data)
+        return self._model.sample(num_rows)
 
     @classmethod
     def list_available_presets(cls):
         """List the available presets and their descriptions."""
-        LOGGER.info('Available presets:\n{PRESETS}\n'
-                    'Supply the desired preset using the `opimize_for` parameter.\n\n'
-                    'Have any requests for custom presets? Contact the SDV team to learn '
-                    'more an SDV Premium license.')
+        print(f'Available presets:\n{PRESETS}\n\n'
+              'Supply the desired preset using the `opimize_for` parameter.\n\n'
+              'Have any requests for custom presets? Contact the SDV team to learn '
+              'more an SDV Premium license.')
