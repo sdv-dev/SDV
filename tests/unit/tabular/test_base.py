@@ -5,7 +5,7 @@ import pytest
 
 from sdv.metadata.table import Table
 from sdv.sampling import Condition
-from sdv.tabular.base import COND_IDX, FIXED_RNG_SEED, BaseTabularModel
+from sdv.tabular.base import COND_IDX, FIXED_RNG_SEED, TMP_FILE_NAME, BaseTabularModel
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
 from sdv.tabular.ctgan import CTGAN, TVAE
@@ -367,6 +367,80 @@ class TestBaseTabularModel:
         # Run and Assert
         with pytest.raises(AssertionError, match='path/to/file already exists'):
             BaseTabularModel._validate_file_path(gaussian_copula, 'file_path')
+
+    @patch('sdv.tabular.base.os')
+    def test_sample_with_default_file_path(self, os_mock):
+        """Test the `BaseTabularModel.sample` method with the default file path.
+
+        Expect that the file is removed after successfully sampling.
+
+        Input:
+            - output_file_path=None.
+        Side Effects:
+            - The file is removed.
+        """
+        # Setup
+        model = Mock()
+        model._validate_file_path.return_value = TMP_FILE_NAME
+        model._sample_batch.return_value = pd.DataFrame({'test': [1]})
+        os_mock.path.exists.return_value = True
+
+        # Run
+        BaseTabularModel.sample(model, 1, output_file_path=None)
+
+        # Assert
+        model._sample_batch.called_once_with(
+            1, batch_size_per_try=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
+        os_mock.remove.called_once_with(TMP_FILE_NAME)
+
+    @patch('sdv.tabular.base.os')
+    def test_sample_with_default_file_path_error(self, os_mock):
+        """Test the `BaseTabularModel.sample` method with the default file path.
+
+        Expect that the file is not removed if there is an error with sampling.
+
+        Input:
+            - output_file_path=None.
+        Side Effects:
+            - ValueError is thrown.
+        """
+        # Setup
+        model = Mock()
+        model._validate_file_path.return_value = TMP_FILE_NAME
+        model._sample_batch.side_effect = ValueError('test error')
+
+        # Run
+        with pytest.raises(ValueError, match='test error'):
+            BaseTabularModel.sample(model, 1, output_file_path=None)
+
+        # Assert
+        model._sample_batch.called_once_with(
+            1, batch_size_per_try=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
+        assert os_mock.remove.call_count == 0
+
+    @patch('sdv.tabular.base.os')
+    def test_sample_with_custom_file_path(self, os_mock):
+        """Test the `BaseTabularModel.sample` method with a custom file path.
+
+        Expect that the file is not removed if a custom file path is given.
+
+        Input:
+            - output_file_path='temp.csv'.
+        Side Effects:
+            - None
+        """
+        # Setup
+        model = Mock()
+        model._validate_file_path.return_value = 'temp.csv'
+        model._sample_batch.return_value = pd.DataFrame({'test': [1]})
+
+        # Run
+        BaseTabularModel.sample(model, 1, output_file_path='temp.csv')
+
+        # Assert
+        model._sample_batch.called_once_with(
+            1, batch_size_per_try=1, progress_bar=ANY, output_file_path='temp.csv')
+        assert os_mock.remove.call_count == 0
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)

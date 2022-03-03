@@ -504,7 +504,7 @@ class BaseTabularModel:
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
-        finally:
+        else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
 
@@ -664,7 +664,7 @@ class BaseTabularModel:
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
-        finally:
+        else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
 
@@ -716,7 +716,7 @@ class BaseTabularModel:
                   f'{output_file_path}. This file will be overridden the next time you sample. '
                   'Please rename the file if you wish to save these results.')
             raise e
-        finally:
+        else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
 
