@@ -4,12 +4,14 @@ import copy
 import logging
 import pickle
 import uuid
+import warnings
 
 import pandas as pd
 import rdt
 
 from sdv.metadata import Table
 from sdv.tabular.copulas import GaussianCopula
+from sdv.utils import generate_version_mismatch_warning, get_package_versions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -272,6 +274,8 @@ class BaseTimeseriesModel:
             path (str):
                 Path where the SDV instance will be serialized.
         """
+        self._package_versions = get_package_versions(getattr(self, '_model', None))
+
         with open(path, 'wb') as output:
             pickle.dump(self, output)
 
@@ -288,4 +292,10 @@ class BaseTimeseriesModel:
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            model = pickle.load(f)
+            warning_str = generate_version_mismatch_warning(
+                getattr(model, '_package_versions', None))
+            if warning_str:
+                warnings.warn(warning_str)
+
+            return model

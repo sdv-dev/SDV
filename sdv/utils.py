@@ -53,31 +53,54 @@ def get_package_versions(model=None):
         dict:
             A mapping of library to current version.
     """
-    versions = {
-        'sdv': pkg_resources.get_distribution('sdv').version,
-        'rdt': pkg_resources.get_distribution('rdt').version,
-    }
+    versions = {}
+    try:
+        versions['sdv'] = pkg_resources.get_distribution('sdv').version
+        versions['rdt'] = pkg_resources.get_distribution('rdt').version
+    except pkg_resources.ResolutionError:
+        pass
+
     if model is not None:
-        lib = model.__class__.__module__.split('.')[0]
-        versions[lib] = pkg_resources.get_distribution(lib).version
+        if not isinstance(model, type):
+            model = model.__class__
+
+        model_name = model.__module__ + model.__name__
+
+        for lib in ['copulas', 'ctgan', 'deepecho']:
+            if lib in model_name or ('hma' in model_name and lib == 'copulas'):
+                try:
+                    versions[lib] = pkg_resources.get_distribution(lib).version
+                except pkg_resources.ResolutionError:
+                    pass
 
     return versions
 
 
-def compare_package_versions(package_versions):
-    """Compare the given package versions to the current package versions.
+def generate_version_mismatch_warning(package_versions):
+    """Generate mismatch warning to comparing package versions to the current package versions.
 
     Args:
         package_versions (dict[str, str]):
             A mapping from library to expected version.
     Returns:
-        dict:
-            A mapping of mismatched package versions.
+        str:
+            A string containing the user warning with the mismatched package versions details.
     """
-    mismatched_versions = {}
-    for lib, version in package_versions.items():
-        current_version = pkg_resources.get_distribution(lib).version
-        if current_version != version:
-            mismatched_versions[lib] = (version, current_version)
+    warning_str = ('The libraries used to create the model have older versions '
+                   'than your current setup. This may cause errors when sampling.')
 
-    return mismatched_versions
+    if package_versions is None:
+        return warning_str
+
+    mismatched_details = ''
+    for lib, version in package_versions.items():
+        try:
+            current_version = pkg_resources.get_distribution(lib).version
+        except pkg_resources.ResolutionError:
+            current_version = ''
+
+        if current_version != version:
+            mismatched_details += (f'\n{lib} used version `{version}`; '
+                                   f'current version is `{current_version}`')
+
+    return f'{warning_str}{mismatched_details}' if mismatched_details else None

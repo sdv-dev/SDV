@@ -3,12 +3,14 @@
 import itertools
 import logging
 import pickle
+import warnings
 
 import numpy as np
 import pandas as pd
 
 from sdv.errors import NotFittedError
 from sdv.metadata import Metadata, utils
+from sdv.utils import generate_version_mismatch_warning, get_package_versions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -190,6 +192,8 @@ class BaseRelationalModel:
             path (str):
                 Path where the instance will be serialized.
         """
+        self._package_versions = get_package_versions(getattr(self, '_model', None))
+
         with open(path, 'wb') as output:
             pickle.dump(self, output)
 
@@ -202,4 +206,10 @@ class BaseRelationalModel:
                 Path from which to load the instance.
         """
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            model = pickle.load(f)
+            warning_str = generate_version_mismatch_warning(
+                getattr(model, '_package_versions', None))
+            if warning_str:
+                warnings.warn(warning_str)
+
+            return model
