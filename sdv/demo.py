@@ -136,14 +136,14 @@ def _get_dataset_path(dataset_name, data_path):
 
 def _load_relational_dummy():
     users = pd.DataFrame({
-        'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'country': ['US', 'UK', 'ES', 'UK', 'US', 'DE', 'BG', 'ES', 'FR', 'UK'],
-        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F', None, 'F', None],
-        'age': [34, 23, 44, 22, 54, 57, 45, 41, 23, 30]
+        'user_id': [0, 1, 2, 3, 4, 5, 6],
+        'country': ['US', 'UK', 'ES', 'UK', 'US', 'DE', 'BG'],
+        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F'],
+        'age': [34, 23, 44, 22, 54, 57, 45]
     })
     sessions = pd.DataFrame({
         'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'user_id': [0, 1, 1, 2, 4, 5, 6, 6, 6, 8],
+        'user_id': [0, 1, 1, 2, 3, 4, 5, 5, 5, 6],
         'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
                    'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
         'os': ['android', 'ios', 'android', 'android', 'ios',
@@ -152,7 +152,7 @@ def _load_relational_dummy():
     })
     transactions = pd.DataFrame({
         'transaction_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'session_id': [0, 0, 1, 3, 5, 5, 7, 8, 9, 9],
+        'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'timestamp': ['2019-01-01T12:34:32', '2019-01-01T12:42:21', '2019-01-07T17:23:11',
                       '2019-01-10T11:08:57', '2019-01-10T21:54:08', '2019-01-11T11:21:20',
                       '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
@@ -419,7 +419,7 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 },
                 {
                     'constraint': 'Positive',
-                    'high': 'prior_years_experience'
+                    'columns': 'prior_years_experience'
                 },
                 {
                     'constraint': 'Rounding',
