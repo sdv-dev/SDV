@@ -19,6 +19,7 @@ from sdv.metadata import Table
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
+TMP_FILE_NAME = '.sample.csv.temp'
 
 
 class NonParametricError(Exception):
@@ -422,6 +423,9 @@ class BaseTabularModel:
             if os.path.exists(output_path):
                 raise AssertionError(f'{output_path} already exists.')
 
+        else:
+            output_path = TMP_FILE_NAME
+
         return output_path
 
     def _randomize_samples(self, randomize_samples):
@@ -484,17 +488,28 @@ class BaseTabularModel:
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
 
         sampled = []
-        with tqdm(total=num_rows) as progress_bar:
-            progress_bar.set_description(
-                f'Sampling {num_rows} rows of data in batches of size {batch_size}')
-            for step in range(math.ceil(num_rows / batch_size)):
-                sampled_rows = self._sample_batch(
-                    batch_size,
-                    batch_size_per_try=batch_size,
-                    progress_bar=progress_bar,
-                    output_file_path=output_file_path,
-                )
-                sampled.append(sampled_rows)
+        try:
+            with tqdm(total=num_rows) as progress_bar:
+                progress_bar.set_description(
+                    f'Sampling {num_rows} rows of data in batches of size {batch_size}')
+                for step in range(math.ceil(num_rows / batch_size)):
+                    sampled_rows = self._sample_batch(
+                        batch_size,
+                        batch_size_per_try=batch_size,
+                        progress_bar=progress_bar,
+                        output_file_path=output_file_path,
+                    )
+                    sampled.append(sampled_rows)
+
+        except (Exception, KeyboardInterrupt) as e:
+            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
+                  f'{output_file_path}. This file will be overridden the next time you sample. '
+                  'Please rename the file if you wish to save these results.')
+            raise e
+
+        else:
+            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
+                os.remove(output_file_path)
 
         return pd.concat(sampled, ignore_index=True)
 
@@ -635,17 +650,28 @@ class BaseTabularModel:
 
         self._randomize_samples(randomize_samples)
 
-        with tqdm(total=num_rows) as progress_bar:
-            sampled = pd.DataFrame()
-            for condition_dataframe in conditions:
-                sampled_for_condition = self._sample_with_conditions(
-                    condition_dataframe,
-                    max_tries,
-                    batch_size_per_try,
-                    progress_bar,
-                    output_file_path,
-                )
-                sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+        try:
+            with tqdm(total=num_rows) as progress_bar:
+                sampled = pd.DataFrame()
+                for condition_dataframe in conditions:
+                    sampled_for_condition = self._sample_with_conditions(
+                        condition_dataframe,
+                        max_tries,
+                        batch_size_per_try,
+                        progress_bar,
+                        output_file_path,
+                    )
+                    sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
+
+        except (Exception, KeyboardInterrupt) as e:
+            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
+                  f'{output_file_path}. This file will be overridden the next time you sample. '
+                  'Please rename the file if you wish to save these results.')
+            raise e
+
+        else:
+            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
+                os.remove(output_file_path)
 
         return sampled
 
@@ -686,9 +712,20 @@ class BaseTabularModel:
 
         self._randomize_samples(randomize_samples)
 
-        with tqdm(total=len(known_columns)) as progress_bar:
-            sampled = self._sample_with_conditions(
-                known_columns, max_tries, batch_size_per_try, progress_bar, output_file_path)
+        try:
+            with tqdm(total=len(known_columns)) as progress_bar:
+                sampled = self._sample_with_conditions(
+                    known_columns, max_tries, batch_size_per_try, progress_bar, output_file_path)
+
+        except (Exception, KeyboardInterrupt) as e:
+            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
+                  f'{output_file_path}. This file will be overridden the next time you sample. '
+                  'Please rename the file if you wish to save these results.')
+            raise e
+
+        else:
+            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
+                os.remove(output_file_path)
 
         return sampled
 
