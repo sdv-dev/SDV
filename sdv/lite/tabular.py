@@ -5,6 +5,7 @@ import warnings
 
 import copulas
 import rdt
+
 from sdv.tabular import GaussianCopula
 
 LOGGER = logging.getLogger(__name__)
