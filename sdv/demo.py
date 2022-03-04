@@ -136,14 +136,14 @@ def _get_dataset_path(dataset_name, data_path):
 
 def _load_relational_dummy():
     users = pd.DataFrame({
-        'user_id': [0, 1, 2, 3, 4, 5, 6],
-        'country': ['US', 'UK', 'ES', 'UK', 'US', 'DE', 'BG'],
-        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F'],
-        'age': [34, 23, 44, 22, 54, 57, 45]
+        'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        'country': ['US', 'UK', 'ES', 'UK', 'US', 'DE', 'BG', 'ES', 'FR', 'UK'],
+        'gender': ['M', 'F', None, 'M', 'F', 'M', 'F', None, 'F', None],
+        'age': [34, 23, 44, 22, 54, 57, 45, 41, 23, 30]
     })
     sessions = pd.DataFrame({
         'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'user_id': [0, 1, 1, 2, 3, 4, 5, 5, 5, 6],
+        'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
                    'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
         'os': ['android', 'ios', 'android', 'android', 'ios',
