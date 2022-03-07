@@ -362,7 +362,7 @@ class HMA1(BaseRelationalModel):
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or model._num_rows
-        sampled = model.sample(num_rows)
+        sampled = model.sample(num_rows, output_file_path='disable')
 
         primary_key_name = self.metadata.get_primary_key(table_name)
         if primary_key_name:

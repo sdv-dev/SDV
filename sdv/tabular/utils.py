@@ -1,6 +1,7 @@
 """Utility functions for tabular models."""
 
 import numpy as np
+import tqdm
 
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
@@ -133,3 +134,47 @@ def unflatten_dict(flat):
             unflattened[key] = value
 
     return unflattened
+
+
+def progress_bar_wrapper(function, pb_total, pb_description):
+    """Enclose given function with a progress bar.
+
+    Args:
+        function (function):
+            The function to execute.
+        pb_total (int):
+            The total to use in the progress bar.
+        pb_description (str):
+            The description of the progress bar.
+
+    Returns:
+        The function return value.
+    """
+    with tqdm.tqdm(total=pb_total) as progress_bar:
+        progress_bar.set_description(pb_description)
+        return function(progress_bar)
+
+
+def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
+    """Handle sampling errors by printing a user-legible error and then raising.
+
+    Args:
+        is_tmp_file (bool):
+            Whether or not the output file is a temp file.
+        output_file_path (str):
+            The output file path.
+        sampling_error:
+            The error to raise.
+
+    Side Effects:
+        The error will be raised.
+    """
+    if is_tmp_file:
+        print('Error: Sampling terminated. Partial results are stored in a temporary file: '
+              f'{output_file_path}. This file will be overridden the next time you sample. '
+              'Please rename the file if you wish to save these results.')
+    else:
+        print('Error: Sampling terminated. '
+              f'Partial results are stored in {output_file_path}.')
+
+    raise sampling_error
