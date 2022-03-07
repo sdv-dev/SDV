@@ -5,13 +5,13 @@ import logging
 import math
 import os
 import pickle
-import tqdm
 import uuid
 import warnings
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import tqdm
 
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
@@ -396,7 +396,8 @@ class BaseTabularModel:
         if num_sampled_rows < num_rows:
             # Didn't get enough rows.
             if len(sampled_rows) == 0:
-                error = ('Unable to sample any rows for the given conditions. '
+                error = ('Unable to sample any rows for the given conditions: '
+                         f'`{transformed_condition}`. '
                          f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
                          f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
                          'increasing these values will also increase the sampling time.')
@@ -535,6 +536,13 @@ class BaseTabularModel:
 
         return pd.concat(sampled, ignore_index=True) if len(sampled) > 0 else pd.DataFrame()
 
+    def _validate_conditions(self, conditions):
+        """Validate the user-passed conditions."""
+        for column in conditions.columns:
+            if column not in self._metadata.get_fields():
+                raise ValueError(f'Unexpected column name `{column}`. '
+                                 f'Use a column name that was present in the original data.')
+
     def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try,
                                 progress_bar=None, output_file_path=None):
         """Sample rows with conditions.
@@ -565,11 +573,6 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        for column in conditions.columns:
-            if column not in self._metadata.get_fields():
-                raise ValueError(f'Unexpected column name `{column}`. '
-                                 f'Use a column name that was present in the original data.')
-
         try:
             transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         except ConstraintsNotMetError as cnme:
@@ -668,7 +671,10 @@ class BaseTabularModel:
 
         num_rows = functools.reduce(
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
+
         conditions = self._make_condition_dfs(conditions)
+        for condition_dataframe in conditions:
+            self._validate_conditions(condition_dataframe)
 
         self._randomize_samples(randomize_samples)
 
@@ -740,6 +746,7 @@ class BaseTabularModel:
         self._randomize_samples(randomize_samples)
 
         known_columns = known_columns.copy()
+        self._validate_conditions(known_columns)
         sampled = pd.DataFrame()
         try:
             def _sample_function(progress_bar=None):
