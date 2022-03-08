@@ -680,7 +680,7 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        self._sample_conditions(
+        return self._sample_conditions(
             conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
     def _sample_conditions(self, conditions, max_tries, batch_size_per_try, randomize_samples,
@@ -763,7 +763,7 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        self._sample_remaining_columns(
+        return self._sample_remaining_columns(
             known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
     def _sample_remaining_columns(self, known_columns, max_tries, batch_size_per_try,

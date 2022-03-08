@@ -331,7 +331,8 @@ class GaussianCopula(BaseTabularModel):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        self._sample_conditions(conditions, 100, batch_size, randomize_samples, output_file_path)
+        return self._sample_conditions(
+            conditions, 100, batch_size, randomize_samples, output_file_path)
 
     def sample_remaining_columns(self, known_columns, batch_size=None, randomize_samples=True,
                                  output_file_path=None):
@@ -363,7 +364,7 @@ class GaussianCopula(BaseTabularModel):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        self._sample_remaining_columns(
+        return self._sample_remaining_columns(
             known_columns, 100, batch_size, randomize_samples, output_file_path)
 
     def _sample(self, num_rows, conditions=None):

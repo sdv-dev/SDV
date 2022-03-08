@@ -47,24 +47,23 @@ class TestBaseTabularModel:
               and a transformed_condition of None.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         expected = pd.DataFrame(['a', 'a', 'a'])
 
         condition_dataframe = pd.DataFrame({'a': ['a', 'a', 'a']})
-        gaussian_copula._make_condition_dfs.return_value = condition_dataframe
-        gaussian_copula._metadata.get_fields.return_value = ['a']
-        gaussian_copula._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
-        gaussian_copula._conditionally_sample_rows.return_value = pd.DataFrame({
+        model._make_condition_dfs.return_value = condition_dataframe
+        model._metadata.get_fields.return_value = ['a']
+        model._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        model._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
             COND_IDX: [0, 1, 2]})
-        gaussian_copula._metadata.make_ids_unique.return_value = expected
+        model._metadata.make_ids_unique.return_value = expected
 
         # Run
-        out = GaussianCopula._sample_with_conditions(
-            gaussian_copula, condition_dataframe, 100, None)
+        out = BaseTabularModel._sample_with_conditions(model, condition_dataframe, 100, None)
 
         # Asserts
-        gaussian_copula._conditionally_sample_rows.assert_called_once_with(
+        model._conditionally_sample_rows.assert_called_once_with(
             DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
             {'a': 'a'},
             None,
@@ -89,13 +88,13 @@ class TestBaseTabularModel:
             - The requested number of sampled rows (5).
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         valid_sampled_data = pd.DataFrame({
             "column1": [28, 28, 21, 1, 2],
             "column2": [37, 37, 1, 4, 5],
             "column3": [93, 93, 6, 4, 12],
         })
-        gaussian_copula._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
+        model._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
 
         conditions = {
             'column1': 2,
@@ -106,10 +105,10 @@ class TestBaseTabularModel:
         }
 
         # Run
-        output = GaussianCopula._sample_batch(gaussian_copula, num_rows=5, conditions=conditions)
+        output = BaseTabularModel._sample_batch(model, num_rows=5, conditions=conditions)
 
         # Assert
-        assert gaussian_copula._sample_rows.call_count == 2
+        assert model._sample_rows.call_count == 2
         assert len(output) == 5
 
     @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
@@ -126,19 +125,19 @@ class TestBaseTabularModel:
             - Call `_sample_batch` method with the expected number of rows.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         valid_sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
-        gaussian_copula._sample_batch.return_value = valid_sampled_data
+        model._sample_batch.return_value = valid_sampled_data
 
         # Run
-        output = BaseTabularModel.sample(gaussian_copula, 5)
+        output = BaseTabularModel.sample(model, 5)
 
         # Assert
-        assert gaussian_copula._sample_batch.called_once_with(5)
+        assert model._sample_batch.called_once_with(5)
         assert tqdm_mock.call_count == 0
         assert len(output) == 5
 
@@ -191,19 +190,19 @@ class TestBaseTabularModel:
             - Call `_sample_batch` method twice with the expected number of rows.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
-        gaussian_copula._sample_batch.side_effect = [sampled_data, sampled_data]
+        model._sample_batch.side_effect = [sampled_data, sampled_data]
 
         # Run
-        output = BaseTabularModel.sample(gaussian_copula, 10, batch_size=5)
+        output = BaseTabularModel.sample(model, 10, batch_size=5)
 
         # Assert
-        assert gaussian_copula._sample_batch.has_calls([
+        assert model._sample_batch.has_calls([
             call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
             call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
         ])
@@ -224,29 +223,29 @@ class TestBaseTabularModel:
             - Call `_sample_rows` method twice with the expected number of rows.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
-        gaussian_copula._sample_rows.side_effect = [
+        model._sample_rows.side_effect = [
             (sampled_data, 5),
             (sampled_data.append(sampled_data, ignore_index=False), 10),
         ]
 
         # Run
-        output = BaseTabularModel._sample_batch(gaussian_copula, num_rows=10, batch_size_per_try=5)
+        output = BaseTabularModel._sample_batch(model, num_rows=10, batch_size_per_try=5)
 
         # Assert
-        assert gaussian_copula._sample_rows.has_calls([
+        assert model._sample_rows.has_calls([
             call(5, None, None, 0.01, DataFrameMatcher(pd.DataFrame())),
             call(5, None, None, 0.01, DataFrameMatcher(sampled_data)),
         ])
         assert len(output) == 10
 
-    def test_sample_conditions_with_multiple_conditions(self):
-        """Test the `BaseTabularModel.sample_conditions` method with multiple condtions.
+    def test__sample_conditions_with_multiple_conditions(self):
+        """Test the `BaseTabularModel._sample_conditions` method with multiple condtions.
 
         When multiple condition dataframes are returned by `_make_condition_dfs`,
         expect `_sample_with_conditions` is called for each condition dataframe.
@@ -257,8 +256,8 @@ class TestBaseTabularModel:
             - The expected sampled rows
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._validate_file_path.return_value = None
+        model = Mock(spec_set=CTGAN)
+        model._validate_file_path.return_value = None
 
         condition_values1 = {'cola': 'a'}
         condition1 = Condition(condition_values1, num_rows=2)
@@ -273,20 +272,21 @@ class TestBaseTabularModel:
             'b': [1, 2, 1, 1, 1],
         })
 
-        gaussian_copula._make_condition_dfs.return_value = [
+        model._make_condition_dfs.return_value = [
             pd.DataFrame([condition_values1] * 2),
             pd.DataFrame([condition_values2] * 3),
         ]
-        gaussian_copula._sample_with_conditions.side_effect = [
+        model._sample_with_conditions.side_effect = [
             sampled1,
             sampled2,
         ]
 
         # Run
-        out = GaussianCopula.sample_conditions(gaussian_copula, [condition1, condition2])
+        out = BaseTabularModel._sample_conditions(
+            model, [condition1, condition2], 100, None, True, None)
 
         # Asserts
-        gaussian_copula._sample_with_conditions.assert_has_calls([
+        model._sample_with_conditions.assert_has_calls([
             call(DataFrameMatcher(pd.DataFrame([condition_values1] * 2)), 100,
                  None, ANY, None),
             call(DataFrameMatcher(pd.DataFrame([condition_values2] * 3)), 100,
@@ -294,8 +294,8 @@ class TestBaseTabularModel:
         ])
         pd.testing.assert_frame_equal(out, expected)
 
-    def test_sample_conditions_no_rows(self):
-        """Test `BaseTabularModel.sample_conditions` with invalid condition.
+    def test__sample_conditions_no_rows(self):
+        """Test `BaseTabularModel._sample_conditions` with invalid condition.
 
         If no valid rows are returned for any condition, expect a ValueError.
 
@@ -305,7 +305,7 @@ class TestBaseTabularModel:
             - ValueError is thrown
         """
         # Setup
-        model = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         condition = Condition(
             {'column1': 'b'},
             num_rows=5,
@@ -316,7 +316,31 @@ class TestBaseTabularModel:
         # Run and assert
         with pytest.raises(ValueError,
                            match='Unable to sample any rows for the given conditions.'):
-            BaseTabularModel.sample_conditions(model, [condition])
+            BaseTabularModel._sample_conditions(model, [condition], 100, None, True, None)
+
+    def test_sample_conditions(self):
+        """Test `BaseTabularModel.sample_conditions` method.
+
+        Expect the correct args to be passed to `_sample_conditions`.
+
+        Input:
+            - valid conditions
+        Side Effects:
+            - The expected `_sample_conditions` call.
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        condition = Condition(
+            {'column1': 'b'},
+            num_rows=5,
+        )
+
+        # Run
+        out = BaseTabularModel.sample_conditions(model, [condition])
+
+        # Assert
+        model._sample_conditions.assert_called_once_with([condition], 100, None, True, None)
+        assert out == model._sample_conditions.return_value
 
     def test__conditionally_sample_rows_graceful_reject_sampling_true(self):
         """Test the `BaseTabularModel._conditionally_sample_rows` method.
@@ -330,18 +354,18 @@ class TestBaseTabularModel:
             - Empty DataFrame
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._validate_file_path.return_value = None
+        model = Mock(spec_set=CTGAN)
+        model._validate_file_path.return_value = None
 
         condition_values = {'cola': 'c'}
         transformed_conditions = pd.DataFrame([condition_values] * 2)
         condition = Condition(condition_values, num_rows=2)
 
-        gaussian_copula._sample_batch.return_value = pd.DataFrame()
+        model._sample_batch.return_value = pd.DataFrame()
 
         # Run
-        sampled = GaussianCopula._conditionally_sample_rows(
-            gaussian_copula,
+        sampled = BaseTabularModel._conditionally_sample_rows(
+            model,
             pd.DataFrame([condition_values] * 2),
             condition,
             transformed_conditions,
@@ -350,7 +374,7 @@ class TestBaseTabularModel:
 
         # Assert
         assert len(sampled) == 0
-        gaussian_copula._sample_batch.assert_called_once_with(
+        model._sample_batch.assert_called_once_with(
             2, None, None, condition, transformed_conditions, 0.01, None, None)
 
     def test__conditionally_sample_rows_graceful_reject_sampling_false(self):
@@ -365,31 +389,31 @@ class TestBaseTabularModel:
             - A ValueError is thrown
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._validate_file_path.return_value = None
+        model = Mock(spec_set=CTGAN)
+        model._validate_file_path.return_value = None
 
         condition_values = {'cola': 'c'}
         transformed_conditions = pd.DataFrame([condition_values] * 2)
         condition = Condition(condition_values, num_rows=2)
 
-        gaussian_copula._sample_batch.return_value = pd.DataFrame()
+        model._sample_batch.return_value = pd.DataFrame()
 
         # Run and assert
         with pytest.raises(ValueError,
                            match='Unable to sample any rows for the given conditions'):
-            GaussianCopula._conditionally_sample_rows(
-                gaussian_copula,
+            BaseTabularModel._conditionally_sample_rows(
+                model,
                 pd.DataFrame([condition_values] * 2),
                 condition,
                 transformed_conditions,
                 graceful_reject_sampling=False,
             )
 
-        gaussian_copula._sample_batch.assert_called_once_with(
+        model._sample_batch.assert_called_once_with(
             2, None, None, condition, transformed_conditions, 0.01, None, None)
 
-    def test_sample_remaining_columns(self):
-        """Test the `BaseTabularModel.sample_remaining_colmns` method.
+    def test__sample_remaining_columns(self):
+        """Test the `BaseTabularModel._sample_remaining_colmns` method.
 
         When a valid DataFrame is given, expect `_sample_with_conditions` to be called
         with the input DataFrame.
@@ -402,8 +426,8 @@ class TestBaseTabularModel:
             - `_sample_with_conditions` is called once.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._validate_file_path.return_value = None
+        model = Mock(spec_set=CTGAN)
+        model._validate_file_path.return_value = None
 
         conditions = pd.DataFrame([{'cola': 'a'}] * 5)
 
@@ -411,18 +435,18 @@ class TestBaseTabularModel:
             'cola': ['a', 'a', 'a', 'a', 'a'],
             'colb': [1, 2, 1, 1, 1],
         })
-        gaussian_copula._sample_with_conditions.return_value = sampled
+        model._sample_with_conditions.return_value = sampled
 
         # Run
-        out = GaussianCopula.sample_remaining_columns(gaussian_copula, conditions)
+        out = BaseTabularModel._sample_remaining_columns(model, conditions, 100, None, True, None)
 
         # Asserts
-        gaussian_copula._sample_with_conditions.assert_called_once_with(
+        model._sample_with_conditions.assert_called_once_with(
             DataFrameMatcher(conditions), 100, None, ANY, None)
         pd.testing.assert_frame_equal(out, sampled)
 
-    def test_sample_remaining_columns_no_rows(self):
-        """Test `BaseTabularModel.sample_remaining_columns` with invalid condition.
+    def test__sample_remaining_columns_no_rows(self):
+        """Test `BaseTabularModel._sample_remaining_columns` with invalid condition.
 
         If no valid rows are returned for any condition, expect a ValueError.
 
@@ -432,13 +456,34 @@ class TestBaseTabularModel:
             - ValueError is thrown
         """
         # Setup
-        model = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         conditions = pd.DataFrame([{'cola': 'a'}] * 5)
         model._sample_with_conditions.return_value = pd.DataFrame()
 
         # Run and assert
         with pytest.raises(ValueError, match='Unable to sample any rows for the given columns.'):
-            BaseTabularModel.sample_remaining_columns(model, conditions)
+            BaseTabularModel._sample_remaining_columns(model, conditions, 100, None, True, None)
+
+    def test_sample_remaining_columns(self):
+        """Test `BaseTabularModel.sample_remaining_columns` method.
+
+        Expect the correct args to be passed to `_sample_remaining_columns`.
+
+        Input:
+            - valid DataFrame
+        Side Effects:
+            - The expected `_sample_remaining_columns` call.
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+
+        # Run
+        out = BaseTabularModel.sample_remaining_columns(model, conditions)
+
+        # Assert
+        model._sample_remaining_columns.assert_called_once_with(conditions, 100, None, True, None)
+        assert out == model._sample_remaining_columns.return_value
 
     def test__validate_conditions_with_conditions_valid_columns(self):
         """Test the `BaseTabularModel._validate_conditions` method with valid columns.
@@ -449,15 +494,15 @@ class TestBaseTabularModel:
             - Conditions DataFrame contains only valid columns.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         metadata_mock = Mock()
         metadata_mock.get_fields.return_value = {'cola': {}}
-        gaussian_copula._metadata = metadata_mock
+        model._metadata = metadata_mock
 
         conditions = pd.DataFrame([{'cola': 'a'}] * 5)
 
         # Run and Assert
-        GaussianCopula._validate_conditions(gaussian_copula, conditions)
+        BaseTabularModel._validate_conditions(model, conditions)
 
     def test__validate_conditions_with_conditions_invalid_column(self):
         """Test the `BaseTabularModel._validate_conditions` method with an invalid column.
@@ -470,10 +515,10 @@ class TestBaseTabularModel:
             - A ValueError is thrown.
         """
         # Setup
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
         metadata_mock = Mock()
         metadata_mock.get_fields.return_value = {'cola': {}}
-        gaussian_copula._metadata = metadata_mock
+        model._metadata = metadata_mock
 
         conditions = pd.DataFrame([{'colb': 'a'}] * 5)
 
@@ -481,7 +526,7 @@ class TestBaseTabularModel:
         with pytest.raises(ValueError, match=(
                 'Unexpected column name `colb`. '
                 'Use a column name that was present in the original data.')):
-            GaussianCopula._validate_conditions(gaussian_copula, conditions)
+            BaseTabularModel._validate_conditions(model, conditions)
 
     @patch('sdv.tabular.base.os.path')
     def test__validate_file_path(self, path_mock):
@@ -497,11 +542,11 @@ class TestBaseTabularModel:
         # Setup
         path_mock.exists.return_value = True
         path_mock.abspath.return_value = 'path/to/file'
-        gaussian_copula = Mock(spec_set=GaussianCopula)
+        model = Mock(spec_set=CTGAN)
 
         # Run and Assert
         with pytest.raises(AssertionError, match='path/to/file already exists'):
-            BaseTabularModel._validate_file_path(gaussian_copula, 'file_path')
+            BaseTabularModel._validate_file_path(model, 'file_path')
 
     @patch('sdv.tabular.base.os')
     def test_sample_with_default_file_path(self, os_mock):
@@ -619,7 +664,7 @@ def test__init__passes_correct_parameters(metadata_mock):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sample_conditions_graceful_reject_sampling(model):
+def test__sample_conditions_graceful_reject_sampling(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -641,7 +686,7 @@ def test_sample_conditions_graceful_reject_sampling(model):
     })
 
     model.fit(data)
-    output = model.sample_conditions(conditions)
+    output = model._sample_conditions(conditions, 100, None, True, None)
     assert len(output) == 2, 'Only expected 2 valid rows.'
 
 
