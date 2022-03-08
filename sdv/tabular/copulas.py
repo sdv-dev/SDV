@@ -301,6 +301,71 @@ class GaussianCopula(BaseTabularModel):
         self._model.fit(table_data)
         self._update_metadata()
 
+    def sample_conditions(self, conditions, batch_size=None, randomize_samples=True,
+                          output_file_path=None):
+        """Sample rows from this table with the given conditions.
+
+        Args:
+            conditions (list[sdv.sampling.Condition]):
+                A list of sdv.sampling.Condition objects, which specify the column
+                values in a condition, along with the number of rows for that
+                condition.
+            batch_size (int or None):
+                The batch size to sample. Defaults to `num_rows`, if None.
+            randomize_samples (bool):
+                Whether or not to use a fixed seed when sampling. Defaults
+                to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        self._sample_conditions(conditions, 100, batch_size, randomize_samples, output_file_path)
+
+    def sample_remaining_columns(self, known_columns, batch_size=None, randomize_samples=True,
+                                 output_file_path=None):
+        """Sample rows from this table.
+
+        Args:
+            known_columns (pandas.DataFrame):
+                A pandas.DataFrame with the columns that are already known. The output
+                is a DataFrame such that each row in the output is sampled
+                conditionally on the corresponding row in the input.
+            batch_size (int or None):
+                The batch size to sample. Defaults to `num_rows`, if None.
+            randomize_samples (bool):
+                Whether or not to use a fixed seed when sampling. Defaults
+                to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        self._sample_remaining_columns(
+            known_columns, 100, batch_size, randomize_samples, output_file_path)
+
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 

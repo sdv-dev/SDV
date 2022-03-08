@@ -9,6 +9,7 @@ import uuid
 import warnings
 from collections import defaultdict
 
+import copulas
 import numpy as np
 import pandas as pd
 import tqdm
@@ -397,10 +398,20 @@ class BaseTabularModel:
             # Didn't get enough rows.
             if len(sampled_rows) == 0:
                 user_msg = ('Unable to sample any rows for the given conditions: '
-                            f'`{transformed_condition}`. '
-                            f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
-                            f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
-                            'increasing these values will also increase the sampling time.')
+                            f'`{transformed_condition}`. ')
+                if hasattr(self, '_model') and isinstance(
+                        self._model, copulas.multivariate.GaussianMultivariate):
+                    user_msg = user_msg + (
+                        'This may be because the provided values are out-of-bounds in the '
+                        'current model. \nPlease try again with a different set of values.'
+                    )
+                else:
+                    user_msg = user_msg + (
+                        f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
+                        f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
+                        'increasing these values will also increase the sampling time.'
+                    )
+
                 if not graceful_reject_sampling:
                     raise ValueError(user_msg)
 
@@ -669,6 +680,12 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
+        self._sample_conditions(
+            conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+
+    def _sample_conditions(self, conditions, max_tries, batch_size_per_try, randomize_samples,
+                           output_file_path):
+        """Sample rows from this table with the given conditions."""
         output_file_path = self._validate_file_path(output_file_path)
 
         num_rows = functools.reduce(
@@ -746,6 +763,12 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
+        self._sample_remaining_columns(
+            known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+
+    def _sample_remaining_columns(self, known_columns, max_tries, batch_size_per_try,
+                                  randomize_samples, output_file_path):
+        """Sample the remaining columns of a given DataFrame."""
         output_file_path = self._validate_file_path(output_file_path)
 
         self._randomize_samples(randomize_samples)
