@@ -2,7 +2,7 @@
 
 .. currentmodule:: sdv.tabular.copulagan
 
-CouplaGAN
+CopulaGAN
 =========
 
 .. autosummary::
