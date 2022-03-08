@@ -294,6 +294,100 @@ class TestBaseTabularModel:
         ])
         pd.testing.assert_frame_equal(out, expected)
 
+    def test_sample_conditions_no_rows(self):
+        """Test `BaseTabularModel.sample_conditions` with invalid condition.
+
+        If no valid rows are returned for any condition, expect a ValueError.
+
+        Input:
+            - condition that is impossible to satisfy
+        Side Effects:
+            - ValueError is thrown
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        condition = Condition(
+            {'column1': 'b'},
+            num_rows=5,
+        )
+        model._make_condition_dfs.return_value = pd.DataFrame([{'column1': 'b'}] * 5)
+        model._sample_with_conditions.return_value = pd.DataFrame()
+
+        # Run and assert
+        with pytest.raises(ValueError,
+                           match='Unable to sample any rows for the given conditions.'):
+            BaseTabularModel.sample_conditions(model, [condition])
+
+    def test__conditionally_sample_rows_graceful_reject_sampling_true(self):
+        """Test the `BaseTabularModel._conditionally_sample_rows` method.
+
+        When `_sample_with_conditions` is called with `graceful_reject_sampling` as True,
+        expect that there are no errors if no valid rows are generated.
+
+        Input:
+            - An impossible condition
+        Returns:
+            - Empty DataFrame
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._validate_file_path.return_value = None
+
+        condition_values = {'cola': 'c'}
+        transformed_conditions = pd.DataFrame([condition_values] * 2)
+        condition = Condition(condition_values, num_rows=2)
+
+        gaussian_copula._sample_batch.return_value = pd.DataFrame()
+
+        # Run
+        sampled = GaussianCopula._conditionally_sample_rows(
+            gaussian_copula,
+            pd.DataFrame([condition_values] * 2),
+            condition,
+            transformed_conditions,
+            graceful_reject_sampling=True,
+        )
+
+        # Assert
+        assert len(sampled) == 0
+        gaussian_copula._sample_batch.assert_called_once_with(
+            2, None, None, condition, transformed_conditions, 0.01, None, None)
+
+    def test__conditionally_sample_rows_graceful_reject_sampling_false(self):
+        """Test the `BaseTabularModel._conditionally_sample_rows` method.
+
+        When `_sample_with_conditions` is called with `graceful_reject_sampling` as False,
+        expect that an error is thrown if no valid rows are generated.
+
+        Input:
+            - An impossible condition
+        Side Effect:
+            - A ValueError is thrown
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._validate_file_path.return_value = None
+
+        condition_values = {'cola': 'c'}
+        transformed_conditions = pd.DataFrame([condition_values] * 2)
+        condition = Condition(condition_values, num_rows=2)
+
+        gaussian_copula._sample_batch.return_value = pd.DataFrame()
+
+        # Run and assert
+        with pytest.raises(ValueError,
+                           match='Unable to sample any rows for the given conditions'):
+            GaussianCopula._conditionally_sample_rows(
+                gaussian_copula,
+                pd.DataFrame([condition_values] * 2),
+                condition,
+                transformed_conditions,
+                graceful_reject_sampling=False,
+            )
+
+        gaussian_copula._sample_batch.assert_called_once_with(
+            2, None, None, condition, transformed_conditions, 0.01, None, None)
+
     def test_sample_remaining_columns(self):
         """Test the `BaseTabularModel.sample_remaining_colmns` method.
 
@@ -326,6 +420,25 @@ class TestBaseTabularModel:
         gaussian_copula._sample_with_conditions.assert_called_once_with(
             DataFrameMatcher(conditions), 100, None, ANY, None)
         pd.testing.assert_frame_equal(out, sampled)
+
+    def test_sample_remaining_columns_no_rows(self):
+        """Test `BaseTabularModel.sample_remaining_columns` with invalid condition.
+
+        If no valid rows are returned for any condition, expect a ValueError.
+
+        Input:
+            - condition that is impossible to satisfy
+        Side Effects:
+            - ValueError is thrown
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+        model._sample_with_conditions.return_value = pd.DataFrame()
+
+        # Run and assert
+        with pytest.raises(ValueError, match='Unable to sample any rows for the given columns.'):
+            BaseTabularModel.sample_remaining_columns(model, conditions)
 
     def test__validate_conditions_with_conditions_valid_columns(self):
         """Test the `BaseTabularModel._validate_conditions` method with valid columns.
@@ -515,21 +628,21 @@ def test_sample_conditions_graceful_reject_sampling(model):
 
     conditions = [
         Condition(
-            {'column1': "this is not used"},
+            {'column1': 'this is not used'},
             num_rows=5,
         )
     ]
 
     model._sample_batch = Mock()
     model._sample_batch.return_value = pd.DataFrame({
-        "column1": [28, 28],
-        "column2": [37, 37],
-        "column3": [93, 93],
+        'column1': [28, 28],
+        'column2': [37, 37],
+        'column3': [93, 93],
     })
 
     model.fit(data)
     output = model.sample_conditions(conditions)
-    assert len(output) == 2, "Only expected 2 valid rows."
+    assert len(output) == 2, 'Only expected 2 valid rows.'
 
 
 def test__sample_rows_previous_rows_appended_correctly():

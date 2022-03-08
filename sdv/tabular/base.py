@@ -396,29 +396,28 @@ class BaseTabularModel:
         if num_sampled_rows < num_rows:
             # Didn't get enough rows.
             if len(sampled_rows) == 0:
-                error = ('Unable to sample any rows for the given conditions: '
-                         f'`{transformed_condition}`. '
-                         f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
-                         f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
-                         'increasing these values will also increase the sampling time.')
-                raise ValueError(error)
-
-            elif not graceful_reject_sampling:
-                error = f'Could not get enough valid rows within {max_tries} trials.'
-                raise ValueError(error)
+                user_msg = ('Unable to sample any rows for the given conditions: '
+                            f'`{transformed_condition}`. '
+                            f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
+                            f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
+                            'increasing these values will also increase the sampling time.')
+                if not graceful_reject_sampling:
+                    raise ValueError(user_msg)
 
             else:
-                warning_msg = (
+                user_msg = (
                     f'Only able to sample {len(sampled_rows)} rows for the given '
-                    f'conditions. To sample more rows, try increasing `max_tries` '
+                    f'conditions: `{transformed_condition}`. '
+                    'To sample more rows, try increasing `max_tries` '
                     f'(currently: {max_tries}) or increasing `batch_size_per_try` '
                     f'(currently: {batch_size_per_try}. Note that increasing these values '
                     f'will also increase the sampling time.'
                 )
-                if progress_bar:
-                    tqdm.tqdm.write(f'UserWarning: {warning_msg}')
-                else:
-                    warnings.warn(warning_msg)
+
+            if progress_bar:
+                tqdm.tqdm.write(f'UserWarning: {user_msg}')
+            else:
+                warnings.warn(user_msg)
 
         if len(sampled_rows) > 0:
             sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
@@ -627,6 +626,9 @@ class BaseTabularModel:
                     all_sampled_rows.append(sampled_rows)
 
         all_sampled_rows = pd.concat(all_sampled_rows)
+        if len(all_sampled_rows) == 0:
+            return all_sampled_rows
+
         all_sampled_rows = all_sampled_rows.set_index(COND_IDX)
         all_sampled_rows.index.name = conditions.index.name
         all_sampled_rows = all_sampled_rows.sort_index()
@@ -699,6 +701,9 @@ class BaseTabularModel:
             else:
                 sampled = progress_bar_wrapper(_sample_function, num_rows, 'Sampling conditions')
 
+            if len(sampled) == 0:
+                raise ValueError('Unable to sample any rows for the given conditions.')
+
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
 
@@ -758,6 +763,9 @@ class BaseTabularModel:
             else:
                 sampled = progress_bar_wrapper(
                     _sample_function, len(known_columns), 'Sampling remaining columns')
+
+            if len(sampled) == 0:
+                raise ValueError('Unable to sample any rows for the given columns.')
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
