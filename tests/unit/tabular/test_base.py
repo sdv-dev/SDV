@@ -2,6 +2,7 @@ from unittest.mock import ANY, Mock, call, patch
 
 import pandas as pd
 import pytest
+import tqdm
 
 from sdv.metadata.table import Table
 from sdv.sampling import Condition
@@ -111,7 +112,8 @@ class TestBaseTabularModel:
         assert gaussian_copula._sample_rows.call_count == 2
         assert len(output) == 5
 
-    def test_sample_valid_num_rows(self):
+    @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
+    def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the `BaseTabularModel.sample` method with a valid `num_rows` argument.
 
         Expect that the expected call to `_sample_batch` is made.
@@ -137,6 +139,7 @@ class TestBaseTabularModel:
 
         # Assert
         assert gaussian_copula._sample_batch.called_once_with(5)
+        assert tqdm_mock.call_count == 0
         assert len(output) == 5
 
     def test_sample_no_num_rows(self):
@@ -173,7 +176,8 @@ class TestBaseTabularModel:
                 match=r'You must specify the number of rows to sample \(e.g. num_rows=100\)'):
             model.sample(num_rows)
 
-    def test_sample_batch_size(self):
+    @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
+    def test_sample_batch_size(self, tqdm_mock):
         """Test the `BaseTabularModel.sample` method with a valid `batch_size` argument.
 
         Expect that the expected calls to `_sample_batch` are made.
@@ -203,6 +207,7 @@ class TestBaseTabularModel:
             call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
             call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
         ])
+        tqdm_mock.assert_has_calls([call(total=10)])
         assert len(output) == 10
 
     def test__sample_batch_with_batch_size_per_try(self):
@@ -322,13 +327,30 @@ class TestBaseTabularModel:
             DataFrameMatcher(conditions), 100, None, ANY, None)
         pd.testing.assert_frame_equal(out, sampled)
 
-    def test__sample_with_conditions_invalid_column(self):
-        """Test the `BaseTabularModel._sample_with_conditions` method with an invalid column.
+    def test__validate_conditions_with_conditions_valid_columns(self):
+        """Test the `BaseTabularModel._validate_conditions` method with valid columns.
+
+        Expect no error to be thrown.
+
+        Input:
+            - Conditions DataFrame contains only valid columns.
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        metadata_mock = Mock()
+        metadata_mock.get_fields.return_value = {'cola': {}}
+        gaussian_copula._metadata = metadata_mock
+
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+
+        # Run and Assert
+        GaussianCopula._validate_conditions(gaussian_copula, conditions)
+
+    def test__validate_conditions_with_conditions_invalid_column(self):
+        """Test the `BaseTabularModel._validate_conditions` method with an invalid column.
 
         When a condition has an invalid column, expect a ValueError.
 
-        Setup:
-            - Conditions DataFrame contains `colb` which is not present in the metadata.
         Input:
             - Conditions DataFrame with an invalid column.
         Side Effects:
@@ -346,7 +368,7 @@ class TestBaseTabularModel:
         with pytest.raises(ValueError, match=(
                 'Unexpected column name `colb`. '
                 'Use a column name that was present in the original data.')):
-            GaussianCopula._sample_with_conditions(gaussian_copula, conditions, 100, None)
+            GaussianCopula._validate_conditions(gaussian_copula, conditions)
 
     @patch('sdv.tabular.base.os.path')
     def test__validate_file_path(self, path_mock):

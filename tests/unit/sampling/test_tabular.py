@@ -1,5 +1,5 @@
-"""Tests for the sdv.sampling.condition module."""
-from sdv.sampling.condition import Condition
+"""Tests for the sdv.sampling.tabular module."""
+from sdv.sampling.tabular import Condition
 
 
 class TestCondition():

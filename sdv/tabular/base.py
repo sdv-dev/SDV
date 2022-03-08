@@ -6,20 +6,22 @@ import math
 import os
 import pickle
 import uuid
+import warnings
 from collections import defaultdict
-from warnings import warn
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+import tqdm
 
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
+from sdv.tabular.utils import handle_sampling_error, progress_bar_wrapper
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
 TMP_FILE_NAME = '.sample.csv.temp'
+DISABLE_TMP_FILE = 'disable'
 
 
 class NonParametricError(Exception):
@@ -313,9 +315,6 @@ class BaseTabularModel:
         if not batch_size_per_try:
             batch_size_per_try = num_rows * 10
 
-        if not progress_bar:
-            progress_bar = tqdm(total=num_rows)
-
         counter = 0
         num_valid = 0
         prev_num_valid = None
@@ -334,15 +333,15 @@ class BaseTabularModel:
             num_increase = min(num_valid - prev_num_valid, remaining)
             if num_increase > 0:
                 if output_file_path:
-                    append_kwargs = {'mode': 'a', 'header': False} if os.path.exists(
-                        output_file_path) else {}
+                    append_kwargs = {'mode': 'a', 'header': False} if os.path.getsize(
+                        output_file_path) == 0 else {}
                     sampled.head(min(len(sampled), num_rows)).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
                         **append_kwargs,
                     )
-
-                progress_bar.update(num_increase)
+                if progress_bar:
+                    progress_bar.update(num_increase)
 
             remaining = num_rows - num_valid
             if remaining > 0:
@@ -397,7 +396,11 @@ class BaseTabularModel:
         if num_sampled_rows < num_rows:
             # Didn't get enough rows.
             if len(sampled_rows) == 0:
-                error = 'No valid rows could be generated with the given conditions.'
+                error = ('Unable to sample any rows for the given conditions: '
+                         f'`{transformed_condition}`. '
+                         f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
+                         f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
+                         'increasing these values will also increase the sampling time.')
                 raise ValueError(error)
 
             elif not graceful_reject_sampling:
@@ -405,11 +408,17 @@ class BaseTabularModel:
                 raise ValueError(error)
 
             else:
-                warn(f'Only able to sample {len(sampled_rows)} rows for the given '
-                     f'conditions. To sample more rows, try increasing `max_tries '
-                     f'(currently: {max_tries}) or increasing `batch_size_per_try` '
-                     f'(currently: {batch_size_per_try}. Note that increasing these values '
-                     f'will also increase the sampling time.')
+                warning_msg = (
+                    f'Only able to sample {len(sampled_rows)} rows for the given '
+                    f'conditions. To sample more rows, try increasing `max_tries` '
+                    f'(currently: {max_tries}) or increasing `batch_size_per_try` '
+                    f'(currently: {batch_size_per_try}. Note that increasing these values '
+                    f'will also increase the sampling time.'
+                )
+                if progress_bar:
+                    tqdm.tqdm.write(f'UserWarning: {warning_msg}')
+                else:
+                    warnings.warn(warning_msg)
 
         if len(sampled_rows) > 0:
             sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
@@ -417,14 +426,26 @@ class BaseTabularModel:
         return sampled_rows
 
     def _validate_file_path(self, output_file_path):
+        """Validate the user-passed output file arg, and create the file."""
         output_path = None
-        if output_file_path:
+        if output_file_path == DISABLE_TMP_FILE:
+            # Temporary way of disabling the output file feature, used by HMA1.
+            return output_path
+
+        elif output_file_path:
             output_path = os.path.abspath(output_file_path)
             if os.path.exists(output_path):
                 raise AssertionError(f'{output_path} already exists.')
 
         else:
+            if os.path.exists(TMP_FILE_NAME):
+                os.remove(TMP_FILE_NAME)
+
             output_path = TMP_FILE_NAME
+
+        # Create the file.
+        with open(output_path, 'w+'):
+            pass
 
         return output_path
 
@@ -489,9 +510,7 @@ class BaseTabularModel:
 
         sampled = []
         try:
-            with tqdm(total=num_rows) as progress_bar:
-                progress_bar.set_description(
-                    f'Sampling {num_rows} rows of data in batches of size {batch_size}')
+            def _sample_function(progress_bar=None):
                 for step in range(math.ceil(num_rows / batch_size)):
                     sampled_rows = self._sample_batch(
                         batch_size,
@@ -501,17 +520,28 @@ class BaseTabularModel:
                     )
                     sampled.append(sampled_rows)
 
-        except (Exception, KeyboardInterrupt) as e:
-            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
-                  f'{output_file_path}. This file will be overridden the next time you sample. '
-                  'Please rename the file if you wish to save these results.')
-            raise e
+                return sampled
+
+            if batch_size == num_rows:
+                sampled = _sample_function()
+            else:
+                sampled = progress_bar_wrapper(_sample_function, num_rows, 'Sampling rows')
+
+        except (Exception, KeyboardInterrupt) as error:
+            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
 
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
 
-        return pd.concat(sampled, ignore_index=True)
+        return pd.concat(sampled, ignore_index=True) if len(sampled) > 0 else pd.DataFrame()
+
+    def _validate_conditions(self, conditions):
+        """Validate the user-passed conditions."""
+        for column in conditions.columns:
+            if column not in self._metadata.get_fields():
+                raise ValueError(f'Unexpected column name `{column}`. '
+                                 f'Use a column name that was present in the original data.')
 
     def _sample_with_conditions(self, conditions, max_tries, batch_size_per_try,
                                 progress_bar=None, output_file_path=None):
@@ -543,11 +573,6 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        for column in conditions.columns:
-            if column not in self._metadata.get_fields():
-                raise ValueError(f'Unexpected column name `{column}`. '
-                                 f'Use a column name that was present in the original data.')
-
         try:
             transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
         except ConstraintsNotMetError as cnme:
@@ -646,12 +671,16 @@ class BaseTabularModel:
 
         num_rows = functools.reduce(
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
+
         conditions = self._make_condition_dfs(conditions)
+        for condition_dataframe in conditions:
+            self._validate_conditions(condition_dataframe)
 
         self._randomize_samples(randomize_samples)
 
+        sampled = pd.DataFrame()
         try:
-            with tqdm(total=num_rows) as progress_bar:
+            def _sample_function(progress_bar=None):
                 sampled = pd.DataFrame()
                 for condition_dataframe in conditions:
                     sampled_for_condition = self._sample_with_conditions(
@@ -663,11 +692,15 @@ class BaseTabularModel:
                     )
                     sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
-        except (Exception, KeyboardInterrupt) as e:
-            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
-                  f'{output_file_path}. This file will be overridden the next time you sample. '
-                  'Please rename the file if you wish to save these results.')
-            raise e
+                return sampled
+
+            if len(conditions) == 1 and max_tries == 1:
+                sampled = _sample_function()
+            else:
+                sampled = progress_bar_wrapper(_sample_function, num_rows, 'Sampling conditions')
+
+        except (Exception, KeyboardInterrupt) as error:
+            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
 
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
@@ -712,16 +745,22 @@ class BaseTabularModel:
 
         self._randomize_samples(randomize_samples)
 
+        known_columns = known_columns.copy()
+        self._validate_conditions(known_columns)
+        sampled = pd.DataFrame()
         try:
-            with tqdm(total=len(known_columns)) as progress_bar:
-                sampled = self._sample_with_conditions(
+            def _sample_function(progress_bar=None):
+                return self._sample_with_conditions(
                     known_columns, max_tries, batch_size_per_try, progress_bar, output_file_path)
 
-        except (Exception, KeyboardInterrupt) as e:
-            print('Error: Sampling terminated. Partial results are stored in a temporary file: '
-                  f'{output_file_path}. This file will be overridden the next time you sample. '
-                  'Please rename the file if you wish to save these results.')
-            raise e
+            if len(known_columns) == 1 and max_tries == 1:
+                sampled = _sample_function()
+            else:
+                sampled = progress_bar_wrapper(
+                    _sample_function, len(known_columns), 'Sampling remaining columns')
+
+        except (Exception, KeyboardInterrupt) as error:
+            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
 
         else:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
