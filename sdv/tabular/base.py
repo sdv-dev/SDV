@@ -335,7 +335,7 @@ class BaseTabularModel:
             if num_increase > 0:
                 if output_file_path:
                     append_kwargs = {'mode': 'a', 'header': False} if os.path.getsize(
-                        output_file_path) == 0 else {}
+                        output_file_path) > 0 else {}
                     sampled.head(min(len(sampled), num_rows)).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
