@@ -173,7 +173,7 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
         print('Error: Sampling terminated. Partial results are stored in a temporary file: '
               f'{output_file_path}. This file will be overridden the next time you sample. '
               'Please rename the file if you wish to save these results.')
-    else:
+    elif output_file_path is not None:
         print('Error: Sampling terminated. '
               f'Partial results are stored in {output_file_path}.')
 

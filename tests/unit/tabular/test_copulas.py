@@ -8,6 +8,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.constraints import CustomConstraint
+from sdv.sampling.tabular import Condition
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
 
@@ -644,3 +645,68 @@ class TestGaussianCopula:
         out = GaussianCopula._validate_distribution('copulas.univariate.GaussianUnivariate')
 
         assert out == 'copulas.univariate.GaussianUnivariate'
+
+    def test_sample_conditions(self):
+        """Test ``sample_conditions`` method.
+
+        Expect the correct args to be passed to ``_sample_conditions``.
+
+        Input:
+            - valid conditions
+        Side Effects:
+            - The expected ``_sample_conditions`` call.
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        condition = Condition(
+            {'column1': 'b'},
+            num_rows=5,
+        )
+        batch_size = 1
+        randomize_samples = False
+        output_file_path = 'test.csv'
+
+        # Run
+        out = GaussianCopula.sample_conditions(
+            model,
+            [condition],
+            batch_size=batch_size,
+            randomize_samples=False,
+            output_file_path=output_file_path,
+        )
+
+        # Assert
+        model._sample_conditions.assert_called_once_with(
+            [condition], 100, batch_size, randomize_samples, output_file_path)
+        assert out == model._sample_conditions.return_value
+
+    def test_sample_remaining_columns(self):
+        """Test ``sample_remaining_columns`` method.
+
+        Expect the correct args to be passed to ``_sample_remaining_columns``
+
+        Input:
+            - valid DataFrame
+        Side Effects:
+            - The expected ``_sample_remaining_columns`` call.
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+        batch_size = 1
+        randomize_samples = False
+        output_file_path = 'test.csv'
+
+        # Run
+        out = GaussianCopula.sample_remaining_columns(
+            model,
+            conditions,
+            batch_size=batch_size,
+            randomize_samples=randomize_samples,
+            output_file_path=output_file_path,
+        )
+
+        # Assert
+        model._sample_remaining_columns.assert_called_once_with(
+            conditions, 100, batch_size, randomize_samples, output_file_path)
+        assert out == model._sample_remaining_columns.return_value
