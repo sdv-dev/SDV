@@ -19,6 +19,13 @@ MODELS = [
 ]
 
 
+def _isinstance_side_effect(*args, **kwargs):
+    if isinstance(args[0], GaussianMultivariate):
+        return True
+    else:
+        return isinstance(args[0], args[1])
+
+
 @pytest.mark.parametrize('model', MODELS)
 def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
     data = pd.DataFrame({
@@ -208,9 +215,10 @@ def test_fit_with_unique_constraint_on_data_subset():
     assert samples["test_column"].is_unique
 
 
+@patch('sdv.tabular.base.isinstance')
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
        spec_set=GaussianMultivariate)
-def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
+def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstance_mock):
     """Test that the ``sample`` method handles constraints with conditions.
 
     The ``sample`` method is expected to properly apply constraint
@@ -231,6 +239,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     - Correct columns to condition on are passed to underlying sample method
     """
     # Setup
+    isinstance_mock.side_effect = _isinstance_side_effect
     constraint = UniqueCombinations(
         columns=['city', 'state'],
         handling_strategy='transform',
@@ -269,9 +278,10 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock):
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
+@patch('sdv.tabular.base.isinstance')
 @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
        spec_set=GaussianMultivariate)
-def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
+def test_conditional_sampling_constraint_uses_columns_model(gm_mock, isinstance_mock):
     """Test that the ``sample`` method handles constraints with conditions.
 
     The ``sample`` method is expected to properly apply constraint
@@ -291,6 +301,7 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock):
     - Correct columns to condition on are passed to underlying sample method
     """
     # Setup
+    isinstance_mock.side_effect = _isinstance_side_effect
     constraint = UniqueCombinations(
         columns=['city', 'state'],
         handling_strategy='transform',

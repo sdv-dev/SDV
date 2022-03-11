@@ -6,8 +6,8 @@ import pytest
 import tqdm
 
 from sdv.tabular.utils import (
-    _key_order, flatten_array, flatten_dict, handle_sampling_error, progress_bar_wrapper,
-    unflatten_dict)
+    _key_order, check_num_rows, flatten_array, flatten_dict, handle_sampling_error,
+    progress_bar_wrapper, unflatten_dict)
 
 
 def test_flatten_array_default():
@@ -188,3 +188,142 @@ def test_handle_sampling_error():
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error(True, 'test.csv', ValueError(error_msg))
+
+
+def test_handle_sampling_error_ignore():
+    """Test the ``handle_sampling_error`` function.
+
+    Expect that the error is raised if the error is the no rows error.
+
+    Input:
+        - a temp file
+        - the sampling error
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    error_msg = 'Unable to sample any rows for the given conditions.'
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        handle_sampling_error(True, 'test.csv', ValueError(error_msg))
+
+
+def test_check_num_rows_reject_sampling_error():
+    """Test the ``check_num_rows`` function.
+
+    Expect that the error for reject sampling is raised if there are no sampled rows.
+
+    Input:
+        - no sampled rows
+        - is_reject_sampling is True
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    num_rows = 0
+    expected_num_rows = 5
+    is_reject_sampling = True
+    max_tries = 1
+    batch_size_per_try = 5
+    error_msg = (
+        'Unable to sample any rows for the given conditions. '
+        r'Try increasing `max_tries` \(currently: 1\) or increasing '
+        r'`batch_size_per_try` \(currently: 5\)')
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        check_num_rows(
+            num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+
+
+def test_check_num_rows_non_reject_sampling_error():
+    """Test the ``check_num_rows`` function.
+
+    Expect that the error for non reject sampling is raised if there are no sampled rows.
+
+    Input:
+        - no sampled rows
+        - is_reject_sampling is False
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    num_rows = 0
+    expected_num_rows = 5
+    is_reject_sampling = False
+    max_tries = 1
+    batch_size_per_try = 5
+    error_msg = (
+        r'Unable to sample any rows for the given conditions. '
+        'This may be because the provided values are out-of-bounds in the current model.')
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        check_num_rows(
+            num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+
+
+@patch('sdv.tabular.utils.warnings')
+def test_check_num_rows_non_reject_sampling_warning(warning_mock):
+    """Test the ``check_num_rows`` function.
+
+    Expect that no error is raised if there are valid sampled rows.
+    Expect that a warning is raised if there are fewer than the expected number of rows.
+
+    Input:
+        - no sampled rows
+        - is_reject_sampling is False
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    num_rows = 2
+    expected_num_rows = 5
+    is_reject_sampling = True
+    max_tries = 1
+    batch_size_per_try = 5
+    error_msg = (
+        'Unable to sample any rows for the given conditions. '
+        'Try increasing `max_tries` (currently: 1) or increasing '
+        '`batch_size_per_try` (currently: 5)')
+
+    # Run
+    check_num_rows(
+        num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+
+    # Assert
+    warning_mock.warn.called_once_with(error_msg)
+
+
+@patch('sdv.tabular.utils.warnings')
+def test_check_num_rows_valid(warning_mock):
+    """Test the ``check_num_rows`` function.
+
+    Expect that no error is raised if there are valid sampled rows.
+    Expect that a warning is raised if there are fewer than the expected number of rows.
+
+    Input:
+        - no sampled rows
+        - is_reject_sampling is False
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    num_rows = 5
+    expected_num_rows = 5
+    is_reject_sampling = True
+    max_tries = 1
+    batch_size_per_try = 5
+
+    # Run
+    check_num_rows(
+        num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+
+    # Assert
+    assert warning_mock.warn.call_count == 0

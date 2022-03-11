@@ -494,7 +494,10 @@ class TestBaseTabularModel:
         model._sample_with_conditions.return_value = pd.DataFrame()
 
         # Run and assert
-        with pytest.raises(ValueError, match='Unable to sample any rows for the given columns.'):
+        with pytest.raises(
+            ValueError,
+            match='Unable to sample any rows for the given conditions.'
+        ):
             BaseTabularModel._sample_remaining_columns(model, conditions, 100, None, True, None)
 
     def test_sample_remaining_columns(self):
