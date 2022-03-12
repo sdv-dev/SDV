@@ -1,4 +1,5 @@
-from unittest.mock import ANY, Mock, call, patch
+import os
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -110,6 +111,38 @@ class TestBaseTabularModel:
         # Assert
         assert model._sample_rows.call_count == 2
         assert len(output) == 5
+
+    @patch('sdv.tabular.base.os.path', spec=os.path)
+    def test__sample_batch_output_file_path(self, path_mock):
+        """Test the `BaseTabularModel._sample_batch` method with a valid output file path.
+
+        Expect that if the output file is empty, the sampled rows are written to the file
+        with the header included in the first batch write.
+
+        Input:
+            - num_rows = 4
+            - output_file_path = temp file
+        Output:
+            - The requested number of sampled rows (4).
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        sampled_mock = MagicMock()
+        sampled_mock.__len__.return_value = 4
+        model._sample_rows.return_value = (sampled_mock, 4)
+        output_file_path = 'test.csv'
+        path_mock.getsize.return_value = 0
+
+        # Run
+        output = BaseTabularModel._sample_batch(
+            model, num_rows=4, output_file_path=output_file_path)
+
+        # Assert
+        assert model._sample_rows.call_count == 1
+        assert output == sampled_mock.head.return_value
+        assert sampled_mock.head.return_value.tail.return_value.to_csv.called_once_with(
+            call(2).tail(2).to_csv(output_file_path, index=False),
+        )
 
     @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
@@ -461,7 +494,10 @@ class TestBaseTabularModel:
         model._sample_with_conditions.return_value = pd.DataFrame()
 
         # Run and assert
-        with pytest.raises(ValueError, match='Unable to sample any rows for the given columns.'):
+        with pytest.raises(
+            ValueError,
+            match='Unable to sample any rows for the given conditions.'
+        ):
             BaseTabularModel._sample_remaining_columns(model, conditions, 100, None, True, None)
 
     def test_sample_remaining_columns(self):

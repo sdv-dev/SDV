@@ -6,17 +6,15 @@ import math
 import os
 import pickle
 import uuid
-import warnings
 from collections import defaultdict
 
 import copulas
 import numpy as np
 import pandas as pd
-import tqdm
 
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
-from sdv.tabular.utils import handle_sampling_error, progress_bar_wrapper
+from sdv.tabular.utils import check_num_rows, handle_sampling_error, progress_bar_wrapper
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -335,7 +333,7 @@ class BaseTabularModel:
             if num_increase > 0:
                 if output_file_path:
                     append_kwargs = {'mode': 'a', 'header': False} if os.path.getsize(
-                        output_file_path) == 0 else {}
+                        output_file_path) > 0 else {}
                     sampled.head(min(len(sampled), num_rows)).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
@@ -392,12 +390,14 @@ class BaseTabularModel:
             progress_bar,
             output_file_path,
         )
-        num_sampled_rows = len(sampled_rows)
 
-        if num_sampled_rows < num_rows:
-            # Didn't get enough rows.
-            if len(sampled_rows) == 0:
-                user_msg = ('Unable to sample any rows for the given conditions: '
+        if len(sampled_rows) > 0:
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+
+        else:
+            # Didn't get any rows.
+            if not graceful_reject_sampling:
+                user_msg = ('Unable to sample any rows for the given conditions '
                             f'`{transformed_condition}`. ')
                 if hasattr(self, '_model') and isinstance(
                         self._model, copulas.multivariate.GaussianMultivariate):
@@ -412,26 +412,7 @@ class BaseTabularModel:
                         'increasing these values will also increase the sampling time.'
                     )
 
-                if not graceful_reject_sampling:
-                    raise ValueError(user_msg)
-
-            else:
-                user_msg = (
-                    f'Only able to sample {len(sampled_rows)} rows for the given '
-                    f'conditions: `{transformed_condition}`. '
-                    'To sample more rows, try increasing `max_tries` '
-                    f'(currently: {max_tries}) or increasing `batch_size_per_try` '
-                    f'(currently: {batch_size_per_try}. Note that increasing these values '
-                    f'will also increase the sampling time.'
-                )
-
-            if progress_bar:
-                tqdm.tqdm.write(f'UserWarning: {user_msg}')
-            else:
-                warnings.warn(user_msg)
-
-        if len(sampled_rows) > 0:
-            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+                raise ValueError(user_msg)
 
         return sampled_rows
 
@@ -718,8 +699,14 @@ class BaseTabularModel:
             else:
                 sampled = progress_bar_wrapper(_sample_function, num_rows, 'Sampling conditions')
 
-            if len(sampled) == 0:
-                raise ValueError('Unable to sample any rows for the given conditions.')
+            check_num_rows(
+                len(sampled),
+                num_rows,
+                (hasattr(self, '_model') and not isinstance(
+                    self._model, copulas.multivariate.GaussianMultivariate)),
+                max_tries,
+                batch_size_per_try,
+            )
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
@@ -787,8 +774,14 @@ class BaseTabularModel:
                 sampled = progress_bar_wrapper(
                     _sample_function, len(known_columns), 'Sampling remaining columns')
 
-            if len(sampled) == 0:
-                raise ValueError('Unable to sample any rows for the given columns.')
+            check_num_rows(
+                len(sampled),
+                len(known_columns),
+                (hasattr(self, '_model') and isinstance(
+                    self._model, copulas.multivariate.GaussianMultivariate)),
+                max_tries,
+                batch_size_per_try,
+            )
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)

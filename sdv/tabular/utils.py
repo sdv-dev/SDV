@@ -1,5 +1,7 @@
 """Utility functions for tabular models."""
 
+import warnings
+
 import numpy as np
 import tqdm
 
@@ -169,6 +171,9 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
     Side Effects:
         The error will be raised.
     """
+    if 'Unable to sample any rows for the given conditions' in str(sampling_error):
+        raise sampling_error
+
     if is_tmp_file:
         print('Error: Sampling terminated. Partial results are stored in a temporary file: '
               f'{output_file_path}. This file will be overridden the next time you sample. '
@@ -178,3 +183,53 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
               f'Partial results are stored in {output_file_path}.')
 
     raise sampling_error
+
+
+def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try):
+    """Check the number of sampled rows against the expected number of rows.
+
+    If the number of sampled rows is zero, throw a ValueError.
+    If the number of sampled rows is less than the expected number of rows,
+    raise a warning.
+
+    Args:
+        num_rows (int):
+            The number of sampled rows.
+        expected_num_rows (int):
+            The expected number of rows.
+        is_reject_sampling (bool):
+            If reject sampling is used or not.
+        max_tries (int):
+            The maximum number of tries in reject sampling.
+        batch_size_per_try (int):
+            The batch size per try in reject sampling.
+
+    Side Effects:
+        ValueError or warning.
+    """
+    if num_rows < expected_num_rows:
+        if num_rows == 0:
+            user_msg = ('Unable to sample any rows for the given conditions. ')
+            if is_reject_sampling:
+                user_msg = user_msg + (
+                    f'Try increasing `max_tries` (currently: {max_tries}) or increasing '
+                    f'`batch_size_per_try` (currently: {batch_size_per_try}). Note that '
+                    'increasing these values will also increase the sampling time.'
+                )
+            else:
+                user_msg = user_msg + (
+                    'This may be because the provided values are out-of-bounds in the '
+                    'current model. \nPlease try again with a different set of values.'
+                )
+            raise ValueError(user_msg)
+
+        else:
+            # This case should only happen with reject sampling.
+            user_msg = (
+                f'Only able to sample {num_rows} rows for the given conditions. '
+                'To sample more rows, try increasing `max_tries` '
+                f'(currently: {max_tries}) or increasing `batch_size_per_try` '
+                f'(currently: {batch_size_per_try}. Note that increasing these values '
+                f'will also increase the sampling time.'
+            )
+            warnings.warn(user_msg)
