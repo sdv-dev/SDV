@@ -4,7 +4,7 @@
 
 This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,
 and `sample_remaining_columns`. We also add support for sampling in batches, displaying a progress bar when sampling with more than one batch,
-sampling deterministically, and writing the sampled results to an output file. Finally, we include a couple fixes for sampling with conditions
+sampling deterministically, and writing the sampled results to an output file. Finally, we include fixes for sampling with conditions
 and updates to the documentation.
 
 ### Bugs Fixed
