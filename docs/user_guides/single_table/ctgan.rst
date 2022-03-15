@@ -580,9 +580,9 @@ dataset are within 0 and 1, ``CTGAN`` will not be able to set this value to 1000
     sample_conditions.html>`__
 
     If you have many conditions that cannot easily be satisified, consider switching
-    to the `GaussianCopula model <https://sdv.dev/SDV/api_reference/tabular/api/sdv.
-    tabular.copulas.GaussianCopula.html>`__, which is able to handle conditional
-    sampling more efficiently.
+    to the `GaussianCopula model
+    <https://sdv.dev/SDV/user_guides/single_table/gaussian_copula.html>`__,
+    which is able to handle conditional sampling more efficiently.
 
 
 How do I specify constraints?
