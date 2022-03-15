@@ -3,9 +3,9 @@
 ## 0.14.0 - 2022-03-17
 
 This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,
-and `sample_remaining_columns`. We also add support for a progress bar when sampling with a batch size, and writing
-the sampled results to an output file. Finally, we include a couple fixes for sampling with conditions and updates to the
-documentation.
+and `sample_remaining_columns`. We also add support for sampling in batches, displaying a progress bar when sampling with more than one batch,
+sampling deterministically, and writing the sampled results to an output file. Finally, we include a couple fixes for sampling with conditions
+and updates to the documentation.
 
 ### Bugs Fixed
 * Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/issues/732) by @katxiao
