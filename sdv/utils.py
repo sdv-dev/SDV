@@ -49,6 +49,7 @@ def get_package_versions(model=None):
     Args:
         model (object or None):
             If model is not None, also store the SDV library versions relevant to this model.
+
     Returns:
         dict:
             A mapping of library to current version.
@@ -82,6 +83,7 @@ def generate_version_mismatch_warning(package_versions):
     Args:
         package_versions (dict[str, str]):
             A mapping from library to expected version.
+
     Returns:
         str:
             A string containing the user warning with the mismatched package versions details.
