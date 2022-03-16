@@ -1,5 +1,28 @@
 # Release Notes
 
+## 0.14.0 - 2022-03-17
+
+This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,
+and `sample_remaining_columns`. We also add support for sampling in batches, displaying a progress bar when sampling with more than one batch,
+sampling deterministically, and writing the sampled results to an output file. Finally, we include fixes for sampling with conditions
+and updates to the documentation.
+
+### Bugs Fixed
+* Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/issues/732) by @katxiao
+* Conditional sampling doesn't work if the model has a CustomConstraint - Issue [#696](https://github.com/sdv-dev/SDV/issues/696) by @katxiao
+
+### New Features
+* Updates to GaussianCopula conditional sampling methods - Issue [#729](https://github.com/sdv-dev/SDV/issues/729) by @katxiao
+* Update conditional sampling errors - Issue [#730](https://github.com/sdv-dev/SDV/issues/730) by @katxiao
+* Enable Batch Sampling + Progress Bar - Issue [#693](https://github.com/sdv-dev/SDV/issues/693) by @katxiao
+* Create sample_remaining_columns() method - Issue [#692](https://github.com/sdv-dev/SDV/issues/692) by @katxiao
+* Create sample_conditions() method - Issue [#691](https://github.com/sdv-dev/SDV/issues/691) by @katxiao
+* Improve sample() method - Issue [#690](https://github.com/sdv-dev/SDV/issues/690) by @katxiao
+* Create Condition object - Issue [#689](https://github.com/sdv-dev/SDV/issues/689) by @katxiao
+
+### Documentation Changes
+* Typo in the document documentation - Issue [#680](https://github.com/sdv-dev/SDV/issues/680) by @katxiao
+
 ## 0.13.1 - 2021-12-22
 
 This release adds support for passing tabular constraints to the HMA1 model, and adds more explicit error handling for
