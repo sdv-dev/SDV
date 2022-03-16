@@ -1,9 +1,8 @@
+import io
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-from copulas.univariate import GaussianUnivariate
-from rdt.transformers import CategoricalTransformer
 
 from sdv.lite import TabularPreset
 from sdv.tabular import GaussianCopula
@@ -55,16 +54,14 @@ class TestTabularPreset:
         # Assert
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
-            field_transformers={'categorical': CategoricalTransformer},
-            default_distribution=GaussianUnivariate,
+            categorical_transformer='categorical',
+            default_distribution='gaussian',
             rounding=None,
         )
 
     def test_fit(self):
         """Test the ``TabularPreset.fit`` method.
-
         Expect that the model's fit method is called with the expected args.
-
         Input:
         - fit data
         Side Effects:
@@ -83,9 +80,7 @@ class TestTabularPreset:
 
     def test_sample(self):
         """Test the ``TabularPreset.sample`` method.
-
         Expect that the model's sample method is called with the expected args.
-
         Input:
         - num_rows=5
         Side Effects:
@@ -101,3 +96,24 @@ class TestTabularPreset:
 
         # Assert
         model.sample.assert_called_once_with(5)
+
+    def test_list_available_presets(self):
+        """Tests the ``TabularPreset.list_available_presets`` method.
+
+        This method should print all the available presets.
+
+        Side Effects:
+        - The available presets should be printed.
+        """
+        # Setup
+        out = io.StringIO()
+        expected = ('Available presets:\n{\'SPEED\': \'Use this preset to minimize the time '
+                    'needed to create a synthetic data model.\'}\n\nSupply the desired '
+                    'preset using the `opimize_for` parameter.\n\nHave any requests for '
+                    'custom presets? Contact the SDV team to learn more an SDV Premium license.')
+
+        # Run
+        TabularPreset(optimize_for='SPEED').list_available_presets(out)
+
+        # Assert
+        assert out.getvalue().strip() == expected

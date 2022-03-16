@@ -1,12 +1,11 @@
 """Base class for tabular model presets."""
 
 import logging
+import sys
 import warnings
 
-import copulas
-import rdt
-
 from sdv.tabular import GaussianCopula
+from sdv.tabular.base import BaseTabularModel
 
 LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ PRESETS = {
 }
 
 
-class TabularPreset:
+class TabularPreset(BaseTabularModel):
     """Class for all tabular model presets.
 
     Args:
@@ -43,8 +42,8 @@ class TabularPreset:
         if optimize_for == SPEED_PRESET:
             self._model = GaussianCopula(
                 table_metadata=metadata,
-                field_transformers={'categorical': rdt.transformers.CategoricalTransformer},
-                default_distribution=copulas.univariate.GaussianUnivariate,
+                categorical_transformer='categorical',
+                default_distribution='gaussian',
                 rounding=None,
             )
             print('This config optimizes the modeling speed above all else.\n\n'
@@ -61,9 +60,9 @@ class TabularPreset:
         return self._model.sample(num_rows)
 
     @classmethod
-    def list_available_presets(cls):
+    def list_available_presets(cls, out=sys.stdout):
         """List the available presets and their descriptions."""
-        print(f'Available presets:\n{PRESETS}\n\n'
-              'Supply the desired preset using the `opimize_for` parameter.\n\n'
-              'Have any requests for custom presets? Contact the SDV team to learn '
-              'more an SDV Premium license.')
+        out.write(f'Available presets:\n{PRESETS}\n\n'
+                  'Supply the desired preset using the `opimize_for` parameter.\n\n'
+                  'Have any requests for custom presets? Contact the SDV team to learn '
+                  'more an SDV Premium license.\n')
