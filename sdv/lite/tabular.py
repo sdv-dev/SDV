@@ -6,8 +6,8 @@ import sys
 import warnings
 
 import numpy as np
-
 import rdt
+
 from sdv.tabular import GaussianCopula
 from sdv.tabular.base import BaseTabularModel
 
@@ -62,7 +62,7 @@ class TabularPreset(BaseTabularModel):
                 'boolean': rdt.transformers.BooleanTransformer(null_column=False),
                 'datetime': rdt.transformers.DatetimeTransformer(null_column=False),
             }
-            self._model._metadata._dtype_transformers.update({dtype_transformers})
+            self._model._metadata._dtype_transformers.update(dtype_transformers)
 
             print('This config optimizes the modeling speed above all else.\n\n'
                   'Your exact runtime is dependent on the data. Benchmarks:\n'
@@ -74,7 +74,7 @@ class TabularPreset(BaseTabularModel):
         self._null_percentages = {}
         table_meta = self._model._metadata.to_dict()
 
-        for field, field_meta in table_meta['fields'].items():
+        for field in table_meta['fields']:
             num_nulls = data[field].isna().sum()
             if num_nulls > 0:
                 # Store null percentage for future reference.
@@ -85,10 +85,13 @@ class TabularPreset(BaseTabularModel):
     def sample(self, num_rows):
         """Sample rows from this table."""
         sampled = self._model.sample(num_rows)
+
         if self._null_percentages:
             for field, percentage in self._null_percentages.items():
                 sampled[field] = sampled[field].apply(
                     lambda x: np.nan if random.random() < percentage else x)
+
+        return sampled
 
     @classmethod
     def list_available_presets(cls, out=sys.stdout):

@@ -1,6 +1,7 @@
 import io
 from unittest.mock import Mock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -30,6 +31,7 @@ class TestTabularPreset:
 
         Input:
         - optimize_for = invalid parameter
+
         Side Effects:
         - ValueError should be thrown
         """
@@ -58,31 +60,74 @@ class TestTabularPreset:
             default_distribution='gaussian',
             rounding=None,
         )
+        metadata = gaussian_copula_mock.return_value._metadata
+        assert metadata._dtype_transformers.update.call_count == 1
 
     def test_fit(self):
         """Test the ``TabularPreset.fit`` method.
+
         Expect that the model's fit method is called with the expected args.
+
         Input:
         - fit data
+
         Side Effects:
         - The model's fit method is called with the same data.
         """
         # Setup
+        metadata = Mock()
+        metadata.to_dict.return_value = {'fields': {}}
         model = Mock()
+        model._metadata = metadata
         preset = Mock()
         preset._model = model
+        preset._null_percentages = None
 
         # Run
         TabularPreset.fit(preset, pd.DataFrame())
 
         # Assert
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
+        assert preset._null_percentages == {}
+
+    def test_fit_with_null_values(self):
+        """Test the ``TabularPreset.fit`` method with null values.
+
+        Expect that the model's fit method is called with the expected args, and that
+        the null percentage is calculated correctly.
+
+        Input:
+        - fit data
+
+        Side Effects:
+        - The model's fit method is called with the same data.
+        """
+        # Setup
+        metadata = Mock()
+        metadata.to_dict.return_value = {'fields': {'a': {}}}
+        model = Mock()
+        model._metadata = metadata
+        preset = Mock()
+        preset._model = model
+        preset._null_percentages = None
+
+        data = {'a': [1, 2, np.nan]}
+
+        # Run
+        TabularPreset.fit(preset, pd.DataFrame(data))
+
+        # Assert
+        model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame(data)))
+        assert preset._null_percentages == {'a': 1.0 / 3}
 
     def test_sample(self):
         """Test the ``TabularPreset.sample`` method.
+
         Expect that the model's sample method is called with the expected args.
+
         Input:
         - num_rows=5
+
         Side Effects:
         - The model's sample method is called with the same data.
         """
@@ -90,12 +135,40 @@ class TestTabularPreset:
         model = Mock()
         preset = Mock()
         preset._model = model
+        preset._null_percentages = None
 
         # Run
         TabularPreset.sample(preset, 5)
 
         # Assert
         model.sample.assert_called_once_with(5)
+
+    def test_sample_with_null_values(self):
+        """Test the ``TabularPreset.sample`` method with null percentages.
+
+        Expect that the model's sample method is called with the expected args, and that
+        null values are inserted back into the sampled data.
+
+        Input:
+        - num_rows=5
+
+        Side Effects:
+        - The model's sample method is called with the expected number of rows.
+        """
+        # Setup
+        model = Mock()
+        model.sample.return_value = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
+        preset = Mock()
+        preset._model = model
+        # Convoluted example - 100% percent chance of nulls to make test deterministic.
+        preset._null_percentages = {'a': 1}
+
+        # Run
+        sampled = TabularPreset.sample(preset, 5)
+
+        # Assert
+        model.sample.assert_called_once_with(5)
+        assert sampled['a'].isna().sum() == 5
 
     def test_list_available_presets(self):
         """Tests the ``TabularPreset.list_available_presets`` method.
