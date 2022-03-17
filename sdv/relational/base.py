@@ -3,14 +3,13 @@
 import itertools
 import logging
 import pickle
-import warnings
 
 import numpy as np
 import pandas as pd
 
 from sdv.errors import NotFittedError
 from sdv.metadata import Metadata, utils
-from sdv.utils import generate_version_mismatch_warning, get_package_versions
+from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 LOGGER = logging.getLogger(__name__)
 
@@ -207,9 +206,6 @@ class BaseRelationalModel:
         """
         with open(path, 'rb') as f:
             model = pickle.load(f)
-            warning_str = generate_version_mismatch_warning(
-                getattr(model, '_package_versions', None))
-            if warning_str:
-                warnings.warn(warning_str)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model

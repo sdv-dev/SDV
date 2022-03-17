@@ -6,7 +6,6 @@ import math
 import os
 import pickle
 import uuid
-import warnings
 from collections import defaultdict
 
 import copulas
@@ -16,7 +15,7 @@ import pandas as pd
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata import Table
 from sdv.tabular.utils import check_num_rows, handle_sampling_error, progress_bar_wrapper
-from sdv.utils import generate_version_mismatch_warning, get_package_versions
+from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -878,9 +877,6 @@ class BaseTabularModel:
         """
         with open(path, 'rb') as f:
             model = pickle.load(f)
-            warning_str = generate_version_mismatch_warning(
-                getattr(model, '_package_versions', None))
-            if warning_str:
-                warnings.warn(warning_str)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model

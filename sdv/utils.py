@@ -1,4 +1,6 @@
 """Miscellaneous utility functions."""
+import warnings
+
 import pkg_resources
 
 
@@ -77,22 +79,24 @@ def get_package_versions(model=None):
     return versions
 
 
-def generate_version_mismatch_warning(package_versions):
-    """Generate mismatch warning to comparing package versions to the current package versions.
+def throw_version_mismatch_warning(package_versions):
+    """Throw mismatch warning if the given package versions don't match current package versions.
+
+    If there is no mismatch, no warning is thrown.
 
     Args:
         package_versions (dict[str, str]):
             A mapping from library to expected version.
 
-    Returns:
-        str:
-            A string containing the user warning with the mismatched package versions details.
+    Side Effects:
+        A warning is thrown if there is a mismatch.
     """
     warning_str = ('The libraries used to create the model have older versions '
                    'than your current setup. This may cause errors when sampling.')
 
     if package_versions is None:
-        return warning_str
+        warnings.warn(warning_str)
+        return
 
     mismatched_details = ''
     for lib, version in package_versions.items():
@@ -105,4 +109,5 @@ def generate_version_mismatch_warning(package_versions):
             mismatched_details += (f'\n{lib} used version `{version}`; '
                                    f'current version is `{current_version}`')
 
-    return f'{warning_str}{mismatched_details}' if mismatched_details else None
+    if len(mismatched_details) > 0:
+        warnings.warn(f'{warning_str}{mismatched_details}')

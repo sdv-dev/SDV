@@ -8,7 +8,7 @@ import warnings
 from sdv.errors import NotFittedError
 from sdv.relational.hma import HMA1
 from sdv.tabular.copulas import GaussianCopula
-from sdv.utils import generate_version_mismatch_warning, get_package_versions
+from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 
 class SDV:
@@ -163,9 +163,6 @@ class SDV:
         """
         with open(path, 'rb') as f:
             model = pickle.load(f)
-            warning_str = generate_version_mismatch_warning(
-                getattr(model, '_package_versions', None))
-            if warning_str:
-                warnings.warn(warning_str)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model
