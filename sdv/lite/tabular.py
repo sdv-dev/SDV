@@ -1,9 +1,13 @@
 """Base class for tabular model presets."""
 
 import logging
+import random
 import sys
 import warnings
 
+import numpy as np
+
+import rdt
 from sdv.tabular import GaussianCopula
 from sdv.tabular.base import BaseTabularModel
 
@@ -26,6 +30,7 @@ class TabularPreset(BaseTabularModel):
     """
 
     _model = None
+    _null_percentages = None
 
     def __init__(self, optimize_for=None, metadata=None):
         if optimize_for is None:
@@ -46,6 +51,19 @@ class TabularPreset(BaseTabularModel):
                 default_distribution='gaussian',
                 rounding=None,
             )
+
+            dtype_transformers = {
+                'numerical': rdt.transformers.NumericalTransformer(null_column=False),
+                'integer': rdt.transformers.NumericalTransformer(
+                    dtype=np.int64, null_column=False),
+                'float': rdt.transformers.NumericalTransformer(
+                    dtype=np.float64, null_column=False),
+                'categorical': rdt.transformers.CategoricalTransformer(fuzzy=True),
+                'boolean': rdt.transformers.BooleanTransformer(null_column=False),
+                'datetime': rdt.transformers.DatetimeTransformer(null_column=False),
+            }
+            self._model._metadata._dtype_transformers.update({dtype_transformers})
+
             print('This config optimizes the modeling speed above all else.\n\n'
                   'Your exact runtime is dependent on the data. Benchmarks:\n'
                   '100K rows and 100 columns may take around 1 minute.\n'
@@ -53,11 +71,24 @@ class TabularPreset(BaseTabularModel):
 
     def fit(self, data):
         """Fit this model to the data."""
+        self._null_percentages = {}
+        table_meta = self._model._metadata.to_dict()
+
+        for field, field_meta in table_meta['fields'].items():
+            num_nulls = data[field].isna().sum()
+            if num_nulls > 0:
+                # Store null percentage for future reference.
+                self._null_percentages[field] = num_nulls / len(data)
+
         self._model.fit(data)
 
     def sample(self, num_rows):
         """Sample rows from this table."""
-        return self._model.sample(num_rows)
+        sampled = self._model.sample(num_rows)
+        if self._null_percentages:
+            for field, percentage in self._null_percentages.items():
+                sampled[field] = sampled[field].apply(
+                    lambda x: np.nan if random.random() < percentage else x)
 
     @classmethod
     def list_available_presets(cls, out=sys.stdout):
