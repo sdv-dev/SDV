@@ -92,12 +92,13 @@ Generate synthetic data from the model
 
 Once the modeling has finished you are ready to generate new synthetic
 data by calling the ``sample`` method from your model passing the number
-of rows that we want to generate.
+of rows that we want to generate. The number of rows (``num_rows``)
+is a required parameter.
 
 .. ipython:: python
     :okwarning:
 
-    new_data = model.sample(200)
+    new_data = model.sample(num_rows=200)
 
 This will return a table identical to the one which the model was fitted
 on, but filled with new data which resembles the original one.
@@ -110,10 +111,13 @@ on, but filled with new data which resembles the original one.
 
 .. note::
 
-    You can control the number of rows by specifying the number of
-    ``samples`` in the ``model.sample(<num_rows>)``. To test, try
-    ``model.sample(10000)``. Note that the original table only had ~200
-    rows.
+    There are a number of other parameters in this method that you can use to
+    optimize the process of generating synthetic data. Use ``output_file_path``
+    to directly write results to a CSV file, ``batch_size`` to break up sampling
+    into smaller pieces & track their progress and ``randomize_samples`` to
+    determine whether to generate the same synthetic data every time.
+    See the `API section https://sdv.dev/SDV/api_reference/tabular/api/sdv.
+    tabular.ctgan.TVAE.sample>`__ for more details.
 
 Save and Load the model
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,7 +174,7 @@ data from the loaded instance:
     :okwarning:
 
     loaded = TVAE.load('my_model.pkl')
-    new_data = loaded.sample(200)
+    new_data = loaded.sample(num_rows=200)
 
 .. warning::
 
@@ -551,14 +555,18 @@ dataset are within 0 and 1, ``TVAE`` will not be able to set this value to 1000.
 
 .. note::
 
-    Currently, conditional sampling works through a rejection sampling process,
-    where rows are sampled repeatedly until one that satisfies the conditions is
-    found. In case you are running into a ``Could not get enough valid rows within
-    x trials`` or simply wish to optimize the results, there are three parameters
-    that can be fine-tuned: ``max_rows_multiplier``, ``max_retries`` and ``float_rtol``.
-    More information about these parameters can be found in the `API section
-    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.ctgan.TVAE.sample.
-    html>`__.
+    Conditional sampling works through a rejection sampling process, where
+    rows are sampled repeatedly until one that satisfies the conditions is found.
+    In case you are not able to sample enough valid rows, update the related parameters:
+    increasing ``max_tries`` or increasing ``batch_size_per_try``.
+    More information about these paramters can be found in the `API section
+    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.ctgan.TVAE.
+    sample_conditions.html>`__
+
+    If you have many conditions that cannot easily be satisified, consider switching
+    to the `GaussianCopula model
+    <https://sdv.dev/SDV/user_guides/single_table/gaussian_copula.html>`__,
+    which is able to handle conditional sampling more efficiently.
 
 
 How do I specify constraints?

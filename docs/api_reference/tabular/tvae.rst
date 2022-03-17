@@ -11,6 +11,8 @@ TVAE
    TVAE
    TVAE.fit
    TVAE.sample
+   TVAE.sample_conditions
+   TVAE.sample_remaining_columns
    TVAE.get_metadata
    TVAE.save
    TVAE.load
