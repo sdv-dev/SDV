@@ -54,6 +54,7 @@ development_requires = [
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme<0.5',
+    'markupsafe<2.1.0',
 
     # Jinja2>=3 makes the sphinx theme fail
     'Jinja2>=2,<3',
@@ -112,6 +113,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.14.0',
+    version='0.14.1.dev0',
     zip_safe=False,
 )
