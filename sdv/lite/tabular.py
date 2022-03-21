@@ -47,20 +47,19 @@ class TabularPreset(BaseTabularModel):
         if optimize_for == SPEED_PRESET:
             self._model = GaussianCopula(
                 table_metadata=metadata,
-                categorical_transformer='categorical',
+                categorical_transformer='label_encoding',
                 default_distribution='gaussian',
                 rounding=None,
             )
 
             dtype_transformers = {
-                'numerical': rdt.transformers.NumericalTransformer(null_column=False),
-                'integer': rdt.transformers.NumericalTransformer(
+                'i': rdt.transformers.NumericalTransformer(
                     dtype=np.int64, null_column=False),
-                'float': rdt.transformers.NumericalTransformer(
+                'f': rdt.transformers.NumericalTransformer(
                     dtype=np.float64, null_column=False),
-                'categorical': rdt.transformers.CategoricalTransformer(fuzzy=True),
-                'boolean': rdt.transformers.BooleanTransformer(null_column=False),
-                'datetime': rdt.transformers.DatetimeTransformer(null_column=False),
+                'O': rdt.transformers.CategoricalTransformer(fuzzy=True),
+                'b': rdt.transformers.BooleanTransformer(null_column=False),
+                'M': rdt.transformers.DatetimeTransformer(null_column=False),
             }
             self._model._metadata._dtype_transformers.update(dtype_transformers)
 
