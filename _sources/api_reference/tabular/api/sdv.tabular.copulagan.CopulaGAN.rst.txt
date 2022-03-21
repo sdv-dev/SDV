@@ -20,6 +20,8 @@
       ~CopulaGAN.get_parameters
       ~CopulaGAN.load
       ~CopulaGAN.sample
+      ~CopulaGAN.sample_conditions
+      ~CopulaGAN.sample_remaining_columns
       ~CopulaGAN.save
       ~CopulaGAN.set_parameters
    

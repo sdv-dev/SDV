@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Handling Constraints &#8212; SDV 0.13.1 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.14.1.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -40,7 +40,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="shortcut icon" href="../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Defining Custom Constraints" href="custom_constraints.html" />
@@ -54,7 +54,7 @@
 
     <a class="navbar-brand" href="../../index.html">
     
-      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+      <img src="../../_static/SDV.png" class="logo" alt="logo" />
     
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -331,19 +331,21 @@ constraints:</p>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   38               31                     7  106000.00      10500.00                       5        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   43               42                     1  116795.09       8716.07                       4        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   30               25                     5  126000.00       6500.00                       5        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   35               33                     2  142943.59      18714.76                       1        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   33               27                     6   99500.00      19500.00                       3        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   32               25                     7   75000.00       9000.00                       3        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   35               30                     5   86000.00      10500.00                       4        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   40               36                     4  117628.93       9354.15                       5        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   45               38                     7   51000.00       5500.00                       3        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   34               29                     5   96187.40      11136.82                       1        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   43               40                     3  117000.00      11000.00                       3        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   49               45                     4  110500.00      14500.00                       3        0.0        1.0         0.0</span>
+<span class="go">     company     department  employee_id  ...  full_time  part_time  contractor</span>
+<span class="go">0       Pear          Sales            1  ...        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5  ...        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1  ...        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7  ...        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6  ...        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11  ...        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28  ...        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75  ...        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33  ...        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56  ...        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42  ...        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80  ...        0.0        1.0         0.0</span>
+
+<span class="go">[12 rows x 12 columns]</span>
 </pre></div>
 </div>
 <p>This step loaded a simple table that gives us some basic details about
@@ -677,17 +679,19 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [28]: </span><span class="n">sampled</span>
 <span class="gh">Out[28]: </span><span class="go"></span>
-<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0      Pear          Sales            1   30               25                     5   74826.72       7419.05                       4        1.0        0.0         0.0</span>
-<span class="go">1  Cheerper        BigData            5   33               30                     3  114588.04      12075.25                       4        1.0        0.0         0.0</span>
-<span class="go">2   Glasses  Search Engine           57   38               36                     2  120251.83      14581.35                       2        0.0        0.0         1.0</span>
-<span class="go">3   Glasses             AI           23   34               32                     2   83220.41       5635.81                       3        0.0        0.0         1.0</span>
-<span class="go">4  Cheerper        BigData           73   42               41                     1  119494.15      16516.25                       3        0.0        1.0         0.0</span>
-<span class="go">5      Pear         Design           18   42               40                     2  108257.33       9164.30                       5        1.0        0.0         0.0</span>
-<span class="go">6      Pear          Sales            2   35               29                     6   86879.66       8903.66                       3        1.0        0.0         0.0</span>
-<span class="go">7  Cheerper        Support           34   41               37                     4  111361.52       8680.69                       4        0.0        0.0         1.0</span>
-<span class="go">8   Glasses             AI            9   32               28                     4  110259.77       9253.84                       5        1.0        0.0         0.0</span>
-<span class="go">9      Pear         Design           36   38               36                     2  136022.88      13081.29                       4        0.0        0.0         1.0</span>
+<span class="go">    company     department  employee_id  ...  full_time  part_time  contractor</span>
+<span class="go">0  Cheerper        BigData           43  ...        0.0        1.0         0.0</span>
+<span class="go">1   Glasses             AI            1  ...        1.0        0.0         0.0</span>
+<span class="go">2   Glasses  Search Engine            3  ...        0.0        0.0         1.0</span>
+<span class="go">3   Glasses             AI            2  ...        1.0        0.0         0.0</span>
+<span class="go">4      Pear          Sales            1  ...        1.0        0.0         0.0</span>
+<span class="go">5  Cheerper        Support           38  ...        0.0        0.0         1.0</span>
+<span class="go">6      Pear         Design           79  ...        0.0        0.0         1.0</span>
+<span class="go">7   Glasses             AI            4  ...        1.0        0.0         0.0</span>
+<span class="go">8  Cheerper        Support           33  ...        0.0        1.0         0.0</span>
+<span class="go">9  Cheerper        Support           25  ...        1.0        0.0         0.0</span>
+
+<span class="go">[10 rows x 12 columns]</span>
 </pre></div>
 </div>
 </section>

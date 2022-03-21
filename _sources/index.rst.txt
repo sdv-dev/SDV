@@ -1,24 +1,17 @@
-.. raw:: html
-
-   <p align="left">
-   <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
-   <i>An open source project from Data to AI Lab at MIT.</i>
-   </p>
-
 |Development Status| |PyPi Shield| |Run Tests| |Coverage Status|
 |Downloads| |Binder| |Slack|
 
-SDV - The Synthetic Data Vault
-==============================
+.. raw:: html
+
+    <p align="center">
+    <a href="https://github.com/sdv-dev/SDV">
+    <img align="center" width=40% src="_static/SDV-DataCebo.png"></img>
+    </a>
+    </p>
+
+========================
 
 **Date**: |today| **Version**: |version|
-
-- Website: https://sdv.dev
-- Documentation: https://sdv.dev/SDV
-- Github: https://github.com/sdv-dev/SDV
-- License: `MIT <https://github.com/sdv-dev/SDV/blob/master/LICENSE>`__
-- Development Status:
-  `Pre-Alpha <https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha>`__
 
 Overview
 --------
@@ -78,7 +71,6 @@ Current functionality and features:
    -  Distributed computing to reduce computing times.
    -  Comprehensive results presented in multiple leaderboard formats.
 
-
 Try it out now!
 ---------------
 
@@ -104,6 +96,32 @@ Explore SDV
 * `API Reference <api_reference/index.html>`_
 * `Developer Guides <developer_guides/index.html>`_
 * `Release Notes <history.html>`_
+
+--------------
+
+.. raw:: html
+
+    <div align="center">
+    <a href="https://datacebo.com"><img align="center" width=40% src="_static/DataCebo.png"></img></a>
+    </div>
+    <br/>
+    <br/>
+
+`The Synthetic Data Vault Project <https://sdv.dev>`_  was first created at MIT's `Data to AI Lab
+<https://dai.lids.mit.edu/>`_ in 2016. After 4 years of research and traction with enterprise, we
+created `DataCebo <https://datacebo.com>`_ in 2020 with the goal of growing the project.
+Today, DataCebo is the proud developer of SDV, the largest ecosystem for synthetic data generation
+& evaluation. It is home to multiple libraries that support synthetic data, including:
+
+* 🔄 Data discovery & transformation. Reverse the transforms to reproduce realistic data.
+* 🧠 Multiple machine learning models -- ranging from Copulas to Deep Learning -- to create tabular,
+  multi table and time series data.
+* 📊 Measuring quality and privacy of synthetic data, and comparing different synthetic data
+  generation models.
+
+`Get started using the SDV package <https://sdv.dev/SDV/getting_started/install.html>`_ -- a fully
+integrated solution and your one-stop shop for synthetic data. Or, use the standalone libraries
+for specific needs.
 
 --------------
 

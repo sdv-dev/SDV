@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.13.1 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.14.1.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -39,7 +39,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    <link rel="shortcut icon" href="../../../_static/SDV-Logo-Black.ico"/>
+    <link rel="shortcut icon" href="../../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -51,7 +51,7 @@
 
     <a class="navbar-brand" href="../../../index.html">
     
-      <img src="../../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+      <img src="../../../_static/SDV.png" class="logo" alt="logo" />
     
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -197,6 +197,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdv.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">import_object</span>
+<span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="n">MissingConstraintColumnError</span>
 <span class="kn">from</span> <span class="nn">sdv.constraints.utils</span> <span class="kn">import</span> <span class="n">is_datetime_type</span>
 
 
@@ -236,6 +237,10 @@
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">_run_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">MissingConstraintColumnError</span><span class="p">()</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">,</span> <span class="n">table_data</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_run_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>

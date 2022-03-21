@@ -19,6 +19,8 @@
       ~CTGAN.get_parameters
       ~CTGAN.load
       ~CTGAN.sample
+      ~CTGAN.sample_conditions
+      ~CTGAN.sample_remaining_columns
       ~CTGAN.save
       ~CTGAN.set_parameters
    

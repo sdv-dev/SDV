@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.demo &#8212; SDV 0.13.1 documentation</title>
+    <title>sdv.demo &#8212; SDV 0.14.1.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -39,7 +39,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="shortcut icon" href="../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -51,7 +51,7 @@
 
     <a class="navbar-brand" href="../../index.html">
     
-      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+      <img src="../../_static/SDV.png" class="logo" alt="logo" />
     
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -311,7 +311,7 @@
     <span class="p">})</span>
     <span class="n">sessions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
-        <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+        <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
         <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span>
                    <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">,</span> <span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="s1">&#39;tablet&#39;</span><span class="p">],</span>
         <span class="s1">&#39;os&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span> <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;android&#39;</span><span class="p">,</span> <span class="s1">&#39;ios&#39;</span><span class="p">,</span>
@@ -320,7 +320,7 @@
     <span class="p">})</span>
     <span class="n">transactions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;transaction_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
-        <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+        <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
         <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;2019-01-01T12:34:32&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-01T12:42:21&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-07T17:23:11&#39;</span><span class="p">,</span>
                       <span class="s1">&#39;2019-01-10T11:08:57&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-10T21:54:08&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-11T11:21:20&#39;</span><span class="p">,</span>
                       <span class="s1">&#39;2019-01-22T14:44:10&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-23T10:14:09&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-01-27T16:09:17&#39;</span><span class="p">,</span>
@@ -587,7 +587,7 @@
                 <span class="p">},</span>
                 <span class="p">{</span>
                     <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;Positive&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="s1">&#39;prior_years_experience&#39;</span>
+                    <span class="s1">&#39;columns&#39;</span><span class="p">:</span> <span class="s1">&#39;prior_years_experience&#39;</span>
                 <span class="p">},</span>
                 <span class="p">{</span>
                     <span class="s1">&#39;constraint&#39;</span><span class="p">:</span> <span class="s1">&#39;Rounding&#39;</span><span class="p">,</span>

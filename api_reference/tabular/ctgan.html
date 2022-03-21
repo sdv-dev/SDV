@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>CTGAN &#8212; SDV 0.13.1 documentation</title>
+    <title>CTGAN &#8212; SDV 0.14.1.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -40,7 +40,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    <link rel="shortcut icon" href="../../_static/SDV-Logo-Black.ico"/>
+    <link rel="shortcut icon" href="../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="sdv.tabular.ctgan.CTGAN" href="api/sdv.tabular.ctgan.CTGAN.html" />
@@ -54,7 +54,7 @@
 
     <a class="navbar-brand" href="../../index.html">
     
-      <img src="../../_static/SDV-Logo-Color.png" class="logo" alt="logo" />
+      <img src="../../_static/SDV.png" class="logo" alt="logo" />
     
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -158,7 +158,7 @@
                     
                         
                             <li class="">
-                                <a href="copulagan.html">CouplaGAN</a>
+                                <a href="copulagan.html">CopulaGAN</a>
                             </li>
                         
 
@@ -178,6 +178,14 @@
                                 
                                     <li class="">
                                         <a href="api/sdv.tabular.ctgan.CTGAN.sample.html">sdv.tabular.ctgan.CTGAN.sample</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.tabular.ctgan.CTGAN.sample_conditions.html">sdv.tabular.ctgan.CTGAN.sample_conditions</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="api/sdv.tabular.ctgan.CTGAN.sample_remaining_columns.html">sdv.tabular.ctgan.CTGAN.sample_remaining_columns</a>
                                     </li>
                                 
                                     <li class="">
@@ -296,7 +304,13 @@
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.fit.html#sdv.tabular.ctgan.CTGAN.fit" title="sdv.tabular.ctgan.CTGAN.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.fit</span></code></a>(data)</p></td>
 <td><p>Fit this model to the data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.sample.html#sdv.tabular.ctgan.CTGAN.sample" title="sdv.tabular.ctgan.CTGAN.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.sample</span></code></a>([num_rows, max_retries, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.sample.html#sdv.tabular.ctgan.CTGAN.sample" title="sdv.tabular.ctgan.CTGAN.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.sample</span></code></a>(num_rows[, randomize_samples, …])</p></td>
+<td><p>Sample rows from this table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.sample_conditions.html#sdv.tabular.ctgan.CTGAN.sample_conditions" title="sdv.tabular.ctgan.CTGAN.sample_conditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.sample_conditions</span></code></a>(conditions[, …])</p></td>
+<td><p>Sample rows from this table with the given conditions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.sample_remaining_columns.html#sdv.tabular.ctgan.CTGAN.sample_remaining_columns" title="sdv.tabular.ctgan.CTGAN.sample_remaining_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.sample_remaining_columns</span></code></a>(known_columns)</p></td>
 <td><p>Sample rows from this table.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.tabular.ctgan.CTGAN.get_metadata.html#sdv.tabular.ctgan.CTGAN.get_metadata" title="sdv.tabular.ctgan.CTGAN.get_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CTGAN.get_metadata</span></code></a>()</p></td>

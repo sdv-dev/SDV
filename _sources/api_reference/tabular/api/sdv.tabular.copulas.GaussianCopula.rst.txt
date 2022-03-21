@@ -21,6 +21,8 @@
       ~GaussianCopula.get_parameters
       ~GaussianCopula.load
       ~GaussianCopula.sample
+      ~GaussianCopula.sample_conditions
+      ~GaussianCopula.sample_remaining_columns
       ~GaussianCopula.save
       ~GaussianCopula.set_parameters
    

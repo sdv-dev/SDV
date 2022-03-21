@@ -19,6 +19,8 @@
       ~TVAE.get_parameters
       ~TVAE.load
       ~TVAE.sample
+      ~TVAE.sample_conditions
+      ~TVAE.sample_remaining_columns
       ~TVAE.save
       ~TVAE.set_parameters
    
