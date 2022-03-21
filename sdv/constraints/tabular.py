@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type
 
 
@@ -68,6 +69,10 @@ class CustomConstraint(Constraint):
         return table_data
 
     def _run_transform(self, table_data):
+        if self._columns:
+            if any(column not in table_data.columns for column in self._columns):
+                raise MissingConstraintColumnError()
+
         return self._run(self._transform, table_data)
 
     def _run_reverse_transform(self, table_data):

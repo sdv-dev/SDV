@@ -18,10 +18,10 @@ install_requires = [
     "numpy>=1.20.0,<2;python_version>='3.7'",
     'pandas>=1.1.3,<2',
     'tqdm>=4.15,<5',
-    'copulas>=0.6.0,<0.7',
-    'ctgan>=0.5.0,<0.6',
+    'copulas>=0.6.1,<0.7',
+    'ctgan>=0.5.1,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=0.6.1,<0.7',
+    'rdt>=0.6.2,<0.7',
     'sdmetrics>=0.4.1,<0.5',
 ]
 
@@ -37,7 +37,7 @@ setup_requires = [
 tests_require = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
-    'pytest-rerunfailures>=9.1.1,<10',
+    'pytest-rerunfailures>10',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
 ]
@@ -46,7 +46,7 @@ development_requires = [
     # general
     'bumpversion>=0.5.3,<0.6',
     'pip>=9.0.1',
-    'watchdog>=0.8.3,<0.11',
+    'watchdog>=0.8.3,<0.9',
 
     # docs
     'docutils>=0.12,<0.18',
@@ -112,6 +112,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.13.1',
+    version='0.14.0.dev3',
     zip_safe=False,
 )

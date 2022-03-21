@@ -11,6 +11,8 @@ GaussianCopula
    GaussianCopula
    GaussianCopula.fit
    GaussianCopula.sample
+   GaussianCopula.sample_conditions
+   GaussianCopula.sample_remaining_columns
    GaussianCopula.get_metadata
    GaussianCopula.get_parameters
    GaussianCopula.set_parameters
