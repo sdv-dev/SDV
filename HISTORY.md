@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.14.0 - 2022-03-17
+## 0.14.0 - 2022-03-21
 
 This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,
 and `sample_remaining_columns`. We also add support for sampling in batches, displaying a progress bar when sampling with more than one batch,
@@ -19,6 +19,10 @@ and updates to the documentation.
 * Create sample_conditions() method - Issue [#691](https://github.com/sdv-dev/SDV/issues/691) by @katxiao
 * Improve sample() method - Issue [#690](https://github.com/sdv-dev/SDV/issues/690) by @katxiao
 * Create Condition object - Issue [#689](https://github.com/sdv-dev/SDV/issues/689) by @katxiao
+* Is it possible to generate data with new set of primary keys? - Issue [#686](https://github.com/sdv-dev/SDV/issues/686) by @katxiao
+* No way to fix the random seed? - Issue [#157](https://github.com/sdv-dev/SDV/issues/157) by @katxiao
+* Can you set a random state for the sdv.tabular.ctgan.CTGAN.sample method? - Issue [#515](https://github.com/sdv-dev/SDV/issues/515) by @katxiao
+* generating different synthetic data while training the model multiple times. - Issue [#299](https://github.com/sdv-dev/SDV/issues/299) by @katxiao
 
 ### Documentation Changes
 * Typo in the document documentation - Issue [#680](https://github.com/sdv-dev/SDV/issues/680) by @katxiao
