@@ -54,6 +54,7 @@ development_requires = [
     'nbsphinx>=0.5.0,<0.7',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme<0.5',
+    'markupsafe<2.1.0',
 
     # Jinja2>=3 makes the sphinx theme fail
     'Jinja2>=2,<3',
