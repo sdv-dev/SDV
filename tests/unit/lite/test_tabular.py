@@ -56,7 +56,7 @@ class TestTabularPreset:
         # Assert
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
-            categorical_transformer='categorical',
+            categorical_transformer='label_encoding',
             default_distribution='gaussian',
             rounding=None,
         )

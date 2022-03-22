@@ -1,7 +1,6 @@
 """Base class for tabular model presets."""
 
 import logging
-import random
 import sys
 import warnings
 
@@ -71,13 +70,12 @@ class TabularPreset(BaseTabularModel):
     def fit(self, data):
         """Fit this model to the data."""
         self._null_percentages = {}
-        table_meta = self._model._metadata.to_dict()
 
-        for field in table_meta['fields']:
-            num_nulls = data[field].isna().sum()
+        for column, column_data in data.iteritems():
+            num_nulls = column_data.isna().sum()
             if num_nulls > 0:
                 # Store null percentage for future reference.
-                self._null_percentages[field] = num_nulls / len(data)
+                self._null_percentages[column] = num_nulls / len(column_data)
 
         self._model.fit(data)
 
@@ -86,9 +84,9 @@ class TabularPreset(BaseTabularModel):
         sampled = self._model.sample(num_rows)
 
         if self._null_percentages:
-            for field, percentage in self._null_percentages.items():
-                sampled[field] = sampled[field].apply(
-                    lambda x: np.nan if random.random() < percentage else x)
+            for column, percentage in self._null_percentages.items():
+                sampled[column] = sampled[column].mask(
+                    np.random.random((len(sampled), )) < percentage)
 
         return sampled
 
