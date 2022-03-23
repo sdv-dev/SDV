@@ -241,6 +241,62 @@ class TestGaussianCopula:
         pd.testing.assert_frame_equal(expected_data, passed_table_data)
         gaussian_copula._update_metadata.assert_called_once_with()
 
+    @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+           spec_set=GaussianMultivariate)
+    def test__fit_with_transformed_columns(self, gm_mock):
+        """Test the ``GaussianCopula._fit`` method with transformed columns.
+
+        The ``_fit`` method is expected to:
+        - Call the _get_distribution method to build the distributions dict.
+        - Set the output from _get_distribution method as self._distribution.
+        - Create a GaussianMultivriate object with the self._distribution value.
+        - Store the GaussianMultivariate instance in the self._model attribute.
+        - Fit the GaussianMultivariate instance with the given table data, unmodified.
+        - Call the _update_metadata method.
+
+        Setup:
+            - mock _get_distribution to return a distribution dict
+
+        Input:
+            - pandas.DataFrame
+
+        Expected Output:
+            - None
+
+        Side Effects:
+            - self._distribution is set to the output from _get_distribution
+            - GaussianMultivariate is called with self._distribution as input
+            - GaussianMultivariate output is stored as self._model
+            - self._model.fit is called with the input dataframe
+            - self._update_metadata is called without arguments
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._field_distributions = {'a': 'a_distribution'}
+
+        # Run
+        data = pd.DataFrame({
+            'a.value': [1, 2, 3]
+        })
+        out = GaussianCopula._fit(gaussian_copula, data)
+
+        # asserts
+        assert out is None
+        assert gaussian_copula._field_distributions == {
+            'a': 'a_distribution', 'a.value': 'a_distribution'}
+        gm_mock.assert_called_once_with(
+            distribution={'a': 'a_distribution', 'a.value': 'a_distribution'})
+
+        assert gaussian_copula._model == gm_mock.return_value
+        expected_data = pd.DataFrame({
+            'a.value': [1, 2, 3]
+        })
+        call_args = gaussian_copula._model.fit.call_args_list
+        passed_table_data = call_args[0][0][0]
+
+        pd.testing.assert_frame_equal(expected_data, passed_table_data)
+        gaussian_copula._update_metadata.assert_called_once_with()
+
     def test__sample(self):
         """Test the ``GaussianCopula._sample`` method.
 
