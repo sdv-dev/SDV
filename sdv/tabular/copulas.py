@@ -291,7 +291,7 @@ class GaussianCopula(BaseTabularModel):
         for column in table_data.columns:
             if column not in self._field_distributions:
                 # Check if the column is a derived column.
-                column_name = column.replace('.value', '').replace('.is_null', '')
+                column_name = column.replace('.value', '')
                 self._field_distributions[column] = self._field_distributions.get(
                     column_name, self._default_distribution)
 
