@@ -15,6 +15,7 @@ and classes in SDV.
    timeseries/index
    metadata/index
    constraints/index
+   sampling/index
    metrics/index
    evaluation
    demo
