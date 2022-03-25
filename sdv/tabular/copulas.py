@@ -289,9 +289,11 @@ class GaussianCopula(BaseTabularModel):
                 Data to be fitted.
         """
         for column in table_data.columns:
-            distribution = self._field_distributions.get(column)
-            if not distribution:
-                self._field_distributions[column] = self._default_distribution
+            if column not in self._field_distributions:
+                # Check if the column is a derived column.
+                column_name = column.replace('.value', '')
+                self._field_distributions[column] = self._field_distributions.get(
+                    column_name, self._default_distribution)
 
         self._model = copulas.multivariate.GaussianMultivariate(
             distribution=self._field_distributions)
