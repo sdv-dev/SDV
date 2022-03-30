@@ -12,7 +12,7 @@ from tests.utils import DataFrameMatcher
 
 class TestTabularPreset:
 
-    def test___init__missing_optimize_for(self):
+    def test___init__missing_name(self):
         """Test the ``TabularPreset.__init__`` method with no parameters.
 
         Side Effects:
@@ -21,23 +21,23 @@ class TestTabularPreset:
         # Run and Assert
         with pytest.raises(
             ValueError,
-            match=('You must provide the name of a preset using the `optimize_for` parameter. '
+            match=('You must provide the name of a preset using the `name` parameter. '
                    r'Use `TabularPreset.list_available_presets\(\)` to browse through '
                    'the options.')):
             TabularPreset()
 
-    def test___init__invalid_optimize_for(self):
+    def test___init__invalid_name(self):
         """Test the ``TabularPreset.__init__`` method with an invalid arg value.
 
         Input:
-        - optimize_for = invalid parameter
+        - name = invalid parameter
 
         Side Effects:
         - ValueError should be thrown
         """
         # Run and Assert
-        with pytest.raises(ValueError, match=r'`optimize_for` must be one of *'):
-            TabularPreset(optimize_for='invalid')
+        with pytest.raises(ValueError, match=r'`name` must be one of *'):
+            TabularPreset(name='invalid')
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
     def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock):
@@ -46,12 +46,12 @@ class TestTabularPreset:
         The method should pass the parameters to the ``GaussianCopula`` class.
 
         Input:
-        - optimize_for = speed
+        - name of the speed preset
         Side Effects:
         - GaussianCopula should receive the correct parameters
         """
         # Run
-        TabularPreset(optimize_for='SPEED')
+        TabularPreset(name='SPEED')
 
         # Assert
         gaussian_copula_mock.assert_called_once_with(
@@ -186,7 +186,7 @@ class TestTabularPreset:
                     'custom presets? Contact the SDV team to learn more an SDV Premium license.')
 
         # Run
-        TabularPreset(optimize_for='SPEED').list_available_presets(out)
+        TabularPreset(name='SPEED').list_available_presets(out)
 
         # Assert
         assert out.getvalue().strip() == expected

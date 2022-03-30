@@ -22,7 +22,7 @@ class TabularPreset(BaseTabularModel):
     """Class for all tabular model presets.
 
     Args:
-        optimize_for (str):
+        name (str):
             The preset to use.
         metadata (dict or metadata.Table):
             Table metadata instance or dict representation.
@@ -31,19 +31,19 @@ class TabularPreset(BaseTabularModel):
     _model = None
     _null_percentages = None
 
-    def __init__(self, optimize_for=None, metadata=None):
-        if optimize_for is None:
-            raise ValueError('You must provide the name of a preset using the `optimize_for` '
+    def __init__(self, name=None, metadata=None):
+        if name is None:
+            raise ValueError('You must provide the name of a preset using the `name` '
                              'parameter. Use `TabularPreset.list_available_presets()` to browse '
                              'through the options.')
-        if optimize_for not in PRESETS:
-            raise ValueError(f'`optimize_for` must be one of {PRESETS}.')
+        if name not in PRESETS:
+            raise ValueError(f'`name` must be one of {PRESETS}.')
         if metadata is None:
             warnings.warn('No metadata provided. Metadata will be automatically '
                           'detected from your data. This process may not be accurate. '
                           'We recommend writing metadata to ensure correct data handling.')
 
-        if optimize_for == SPEED_PRESET:
+        if name == SPEED_PRESET:
             self._model = GaussianCopula(
                 table_metadata=metadata,
                 categorical_transformer='label_encoding',
