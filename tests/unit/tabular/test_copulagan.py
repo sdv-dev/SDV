@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 from rdt import HyperTransformer
@@ -18,7 +18,8 @@ class TestCopulaGAN:
         """Test the ``CopulaGAN._fit`` method.
 
         The ``_fit`` method is expected to:
-        - Build transformers for all the data columns based on the field distributions.
+        - Build transformers for all the non-categorical data columns based on the
+          field distributions.
         - Create a HyperTransformer with all the transformers.
         - Fit and transform the data with the HyperTransformer.
         - Call CTGAN fit.
@@ -43,18 +44,24 @@ class TestCopulaGAN:
         model = Mock(spec_set=CopulaGAN)
         model._field_distributions = {'a': 'a_distribution'}
         model._default_distribution = 'default_distribution'
-        model._metadata.get_fields.return_value = {'a': {}}
+        model._metadata.get_fields.return_value = {'a': {}, 'b': {}, 'c': {'type': 'categorical'}}
 
         # Run
         data = pd.DataFrame({
-            'a': [1, 2, 3]
+            'a': [1, 2, 3],
+            'b': [5, 6, 7],
+            'c': ['c', 'c', 'c'],
         })
         out = CopulaGAN._fit(model, data)
 
         # asserts
         assert out is None
         assert model._field_distributions == {'a': 'a_distribution'}
-        gct_mock.assert_called_once_with(distribution='a_distribution')
+        gct_mock.assert_has_calls([
+            call(distribution='a_distribution'),
+            call(distribution='default_distribution'),
+        ])
+        assert gct_mock.call_count == 2
 
         assert model._ht == ht_mock.return_value
         ht_mock.return_value.fit_transform.called_once_with(DataFrameMatcher(data))

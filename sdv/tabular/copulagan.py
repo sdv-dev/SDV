@@ -208,18 +208,20 @@ class CopulaGAN(CTGAN):
                 Data to be learned.
         """
         distributions = self._field_distributions
-        default = self._default_distribution
         fields = self._metadata.get_fields()
-        transformers = {
-            field: GaussianCopulaTransformer(
-                distribution=distributions.get(field.replace('.value', ''), default)
-            )
-            for field in table_data
-            if field.replace('.value', '') in fields and fields.get(
-                field.replace('.value', ''),
+
+        transformers = {}
+        for field in table_data:
+            field_name = field.replace('.value', '')
+
+            if field_name in fields and fields.get(
+                field_name,
                 dict(),
-            ).get('type') != 'categorical'
-        }
+            ).get('type') != 'categorical':
+                transformers[field] = GaussianCopulaTransformer(
+                    distribution=distributions.get(field_name, self._default_distribution)
+                )
+
         self._ht = HyperTransformer(field_transformers=transformers)
         table_data = self._ht.fit_transform(table_data)
 
