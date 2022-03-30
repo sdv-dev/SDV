@@ -146,6 +146,9 @@ class CopulaGAN(CTGAN):
     """
 
     DEFAULT_DISTRIBUTION = 'parametric'
+    _field_distributions = None
+    _default_distribution = None
+    _ht = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
@@ -205,16 +208,20 @@ class CopulaGAN(CTGAN):
                 Data to be learned.
         """
         distributions = self._field_distributions
-        default = self._default_distribution
         fields = self._metadata.get_fields()
-        transformers = {
-            field: GaussianCopulaTransformer(
-                distribution=distributions.get(field, default)
-            )
-            for field in table_data
-            if field.replace('.value', '')
-            in fields and fields.get(field, dict()).get('type') != 'categorical'
-        }
+
+        transformers = {}
+        for field in table_data:
+            field_name = field.replace('.value', '')
+
+            if field_name in fields and fields.get(
+                field_name,
+                dict(),
+            ).get('type') != 'categorical':
+                transformers[field] = GaussianCopulaTransformer(
+                    distribution=distributions.get(field_name, self._default_distribution)
+                )
+
         self._ht = HyperTransformer(field_transformers=transformers)
         table_data = self._ht.fit_transform(table_data)
 
