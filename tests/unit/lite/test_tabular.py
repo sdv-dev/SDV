@@ -56,7 +56,71 @@ class TestTabularPreset:
         # Assert
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
-            categorical_transformer='label_encoding',
+            constraints=None,
+            categorical_transformer='categorical_fuzzy',
+            default_distribution='gaussian',
+            rounding=None,
+        )
+        metadata = gaussian_copula_mock.return_value._metadata
+        assert metadata._dtype_transformers.update.call_count == 1
+
+    @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
+    def test__init__with_constraints(self, gaussian_copula_mock):
+        """Tests the ``TabularPreset.__init__`` method with constraints.
+
+        The constraints should be added to the metadata.
+
+        Input:
+        - constraints
+
+        Side Effects:
+        - GaussianCopula should receive args, including the constraints.
+        """
+        # Setup
+        constraint = Mock()
+
+        # Run
+        TabularPreset(name='SPEED', metadata=None, constraints=[constraint])
+
+        # Assert
+        gaussian_copula_mock.assert_called_once_with(
+            table_metadata=None,
+            constraints=[constraint],
+            categorical_transformer='categorical_fuzzy',
+            default_distribution='gaussian',
+            rounding=None,
+        )
+        metadata = gaussian_copula_mock.return_value._metadata
+        assert metadata._dtype_transformers.update.call_count == 1
+
+    @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
+    def test__init__with_constraints_and_metadata(self, gaussian_copula_mock):
+        """Tests the ``TabularPreset.__init__`` method with constraints and metadata.
+
+        The constraints should be added to the metadata.
+
+        Input:
+        - constraints
+        - metadata
+
+        Side Effects:
+        - GaussianCopula should receive metadata with the constraints added.
+        """
+        # Setup
+        metadata = {'name': 'test_table', 'fields': []}
+        constraint = Mock()
+
+        # Run
+        TabularPreset(name='SPEED', metadata=metadata, constraints=[constraint])
+
+        # Assert
+        expected_metadata = metadata.copy()
+        expected_metadata['constraints'] = [constraint.to_dict.return_value]
+
+        gaussian_copula_mock.assert_called_once_with(
+            table_metadata=expected_metadata,
+            constraints=None,
+            categorical_transformer='categorical_fuzzy',
             default_distribution='gaussian',
             rounding=None,
         )
@@ -72,7 +136,7 @@ class TestTabularPreset:
         - fit data
 
         Side Effects:
-        - The model's fit method is called with the same data.
+        - The model's ``fit`` method is called with the same data.
         """
         # Setup
         metadata = Mock()
@@ -100,7 +164,7 @@ class TestTabularPreset:
         - fit data
 
         Side Effects:
-        - The model's fit method is called with the same data.
+        - The model's ``fit`` method is called with the same data.
         """
         # Setup
         metadata = Mock()
@@ -120,6 +184,32 @@ class TestTabularPreset:
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame(data)))
         assert preset._null_percentages == {'a': 1.0 / 3}
 
+    def test__postprocess_sampled_with_null_values(self):
+        """Test the ``TabularPreset._postprocess_sampled`` method with null percentages.
+
+        Expect that null values are inserted back into the sampled data.
+
+        Setup:
+        - _null_percentages has a valid entry
+
+        Input:
+        - sampled data
+
+        Output:
+        - sampled data with nulls that represents the expected null percentages.
+        """
+        # Setup
+        sampled = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
+        preset = Mock()
+        # Convoluted example - 100% percent chance of nulls to make test deterministic.
+        preset._null_percentages = {'a': 1}
+
+        # Run
+        sampled_with_nulls = TabularPreset._postprocess_sampled(preset, sampled)
+
+        # Assert
+        assert sampled_with_nulls['a'].isna().sum() == 5
+
     def test_sample(self):
         """Test the ``TabularPreset.sample`` method.
 
@@ -129,7 +219,7 @@ class TestTabularPreset:
         - num_rows=5
 
         Side Effects:
-        - The model's sample method is called with the same data.
+        - The model's ``sample`` method is called with the same data.
         """
         # Setup
         model = Mock()
@@ -141,34 +231,55 @@ class TestTabularPreset:
         TabularPreset.sample(preset, 5)
 
         # Assert
-        model.sample.assert_called_once_with(5)
+        model.sample.assert_called_once_with(5, True, None, None, None)
 
-    def test_sample_with_null_values(self):
-        """Test the ``TabularPreset.sample`` method with null percentages.
+    def test_sample_conditions(self):
+        """Test the ``TabularPreset.sample_conditions`` method.
 
-        Expect that the model's sample method is called with the expected args, and that
-        null values are inserted back into the sampled data.
+        Expect that the model's sample_conditions method is called with the expected args.
 
         Input:
         - num_rows=5
 
         Side Effects:
-        - The model's sample method is called with the expected number of rows.
+        - The model's ``sample_conditions`` method is called with the same data.
         """
         # Setup
         model = Mock()
-        model.sample.return_value = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
         preset = Mock()
         preset._model = model
-        # Convoluted example - 100% percent chance of nulls to make test deterministic.
-        preset._null_percentages = {'a': 1}
+        preset._null_percentages = None
+        conditions = [Mock()]
 
         # Run
-        sampled = TabularPreset.sample(preset, 5)
+        TabularPreset.sample_conditions(preset, conditions)
 
         # Assert
-        model.sample.assert_called_once_with(5)
-        assert sampled['a'].isna().sum() == 5
+        model.sample_conditions.assert_called_once_with(conditions, 100, None, True, None)
+
+    def test_sample_remaining_columns(self):
+        """Test the ``TabularPreset.sample_remaining_columns`` method.
+
+        Expect that the model's sample_remaining_columns method is called with the expected args.
+
+        Input:
+        - num_rows=5
+
+        Side Effects:
+        - The model's ``sample_remaining_columns`` method is called with the same data.
+        """
+        # Setup
+        model = Mock()
+        preset = Mock()
+        preset._model = model
+        preset._null_percentages = None
+        conditions = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        TabularPreset.sample_remaining_columns(preset, conditions)
+
+        # Assert
+        model.sample_remaining_columns.assert_called_once_with(conditions, 100, None, True, None)
 
     def test_list_available_presets(self):
         """Tests the ``TabularPreset.list_available_presets`` method.
@@ -182,7 +293,7 @@ class TestTabularPreset:
         out = io.StringIO()
         expected = ('Available presets:\n{\'SPEED\': \'Use this preset to minimize the time '
                     'needed to create a synthetic data model.\'}\n\nSupply the desired '
-                    'preset using the `opimize_for` parameter.\n\nHave any requests for '
+                    'preset using the `name` parameter.\n\nHave any requests for '
                     'custom presets? Contact the SDV team to learn more an SDV Premium license.')
 
         # Run
@@ -190,3 +301,61 @@ class TestTabularPreset:
 
         # Assert
         assert out.getvalue().strip() == expected
+
+    def test_save(self):
+        """Test the ``TabularPreset.save`` method.
+
+        Expect that the model's save method is called with the expected args.
+
+        Input:
+        - path
+
+        Side Effects:
+        - The model's ``save`` method is called with the same argument.
+        """
+        # Setup
+        model = Mock()
+        preset = Mock()
+        preset._model = model
+
+        # Run
+        TabularPreset.save(preset, 'test-path')
+
+        # Assert
+        model.save.assert_called_once_with('test-path')
+
+    def test_load(self):
+        """Test the ``TabularPreset.load`` method.
+
+        Expect that the model's load method is called with the expected args.
+
+        Input:
+        - path
+
+        Side Effects:
+        - The default model's ``load`` method is called with the same argument.
+        """
+        # Setup
+        default_model = Mock()
+        TabularPreset._default_model = default_model
+
+        # Run
+        TabularPreset.load('test-file.pkl')
+
+        # Assert
+        default_model.load.called_once_with('test-file.pkl')
+
+    def test___repr__(self):
+        """Test the ``TabularPreset.__repr__`` method.
+
+        Output:
+        - Expect a string 'TabularPreset(name=<name>)'
+        """
+        # Setup
+        instance = TabularPreset('SPEED')
+
+        # Run
+        res = repr(instance)
+
+        # Assert
+        assert res == 'TabularPreset(name=SPEED)'
