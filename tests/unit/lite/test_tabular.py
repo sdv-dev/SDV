@@ -324,8 +324,7 @@ class TestTabularPreset:
         # Assert
         model.save.assert_called_once_with('test-path')
 
-    @patch('sdv.lite.tabular.GaussianCopula')
-    def test_load(self, gaussian_copula_mock):
+    def test_load(self):
         """Test the ``TabularPreset.load`` method.
 
         Expect that the model's load method is called with the expected args.
