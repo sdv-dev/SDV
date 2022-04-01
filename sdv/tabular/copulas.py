@@ -202,6 +202,8 @@ class GaussianCopula(BaseTabularModel):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
+        elif isinstance(table_metadata, Table):
+            table_metadata = Table.from_dict(table_metadata.to_dict())
 
         if table_metadata:
             model_kwargs = table_metadata.get_model_kwargs(self.__class__.__name__)
