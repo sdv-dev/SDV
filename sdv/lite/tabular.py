@@ -41,6 +41,9 @@ class TabularPreset():
                              'through the options.')
         if name not in PRESETS:
             raise ValueError(f'`name` must be one of {PRESETS}.')
+
+        self.name = name
+
         if metadata is None:
             warnings.warn('No metadata provided. Metadata will be automatically '
                           'detected from your data. This process may not be accurate. '
@@ -230,3 +233,11 @@ class TabularPreset():
                   'Supply the desired preset using the `name` parameter.\n\n'
                   'Have any requests for custom presets? Contact the SDV team to learn '
                   'more an SDV Premium license.\n')
+
+    def __repr__(self):
+        """Represent tabular preset instance as text.
+
+        Returns:
+            str
+        """
+        return f'TabularPreset(name={self.name})'

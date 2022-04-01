@@ -344,3 +344,18 @@ class TestTabularPreset:
 
         # Assert
         default_model.load.called_once_with('test-file.pkl')
+
+    def test___repr__(self):
+        """Test the ``TabularPreset.__repr__`` method.
+
+        Output:
+        - Expect a string 'TabularPreset(name=<name>)'
+        """
+        # Setup
+        instance = TabularPreset('SPEED')
+
+        # Run
+        res = repr(instance)
+
+        # Assert
+        assert res == 'TabularPreset(name=SPEED)'
