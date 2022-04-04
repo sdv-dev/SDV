@@ -49,15 +49,16 @@ class TabularPreset():
                           'detected from your data. This process may not be accurate. '
                           'We recommend writing metadata to ensure correct data handling.')
 
-        if metadata is not None and constraints is not None:
+        else:
             if isinstance(metadata, Table):
                 metadata = metadata.to_dict()
 
-            metadata['constraints'] = []
-            for constraint in constraints:
-                metadata['constraints'].append(constraint.to_dict())
+            if constraints is not None:
+                metadata['constraints'] = []
+                for constraint in constraints:
+                    metadata['constraints'].append(constraint.to_dict())
 
-            constraints = None
+                constraints = None
 
         if name == SPEED_PRESET:
             self._model = GaussianCopula(

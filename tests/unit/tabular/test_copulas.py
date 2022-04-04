@@ -8,7 +8,6 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.constraints import CustomConstraint
-from sdv.metadata.table import Table
 from sdv.sampling.tabular import Condition
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
@@ -147,53 +146,6 @@ class TestGaussianCopula:
             'entity_columns': [],
             'context_columns': [],
         }
-
-    def test___init__metadata_object(self):
-        """Test ``__init__`` passing a ``Table`` object.
-
-        In this case, the metadata object should be copied and stored as
-        ``instance.table_metadata``.
-
-        Input:
-            - table_metadata
-            - field_distributions
-            - default_distribution
-            - categorical_transformer
-
-        Side Effects
-            - attributes are set to the right values
-            - metadata is created with the right values
-            - ``instance.metadata`` is different than the object provided
-        """
-        metadata_dict = {
-            'name': 'test',
-            'fields': {
-                'a_field': {
-                    'type': 'categorical'
-                },
-            },
-            'model_kwargs': {
-                'GaussianCopula': {
-                    'field_distributions': {
-                        'a_field': 'gaussian',
-                    },
-                    'categorical_transformer': 'categorical_fuzzy',
-                }
-            }
-        }
-        table_metadata = Table.from_dict(metadata_dict)
-        gc = GaussianCopula(
-            default_distribution='bounded',
-            table_metadata=table_metadata,
-        )
-
-        assert gc._metadata.get_fields() == table_metadata.get_fields()
-        kwargs = gc._metadata.get_model_kwargs('GaussianCopula')
-        provided_kwargs = table_metadata.get_model_kwargs('GaussianCopula')
-        assert kwargs['field_distributions'] == provided_kwargs['field_distributions']
-        assert kwargs['categorical_transformer'] == provided_kwargs['categorical_transformer']
-        assert 'default_distribution' not in provided_kwargs
-        assert gc._metadata != table_metadata
 
     def test__update_metadata(self):
         """Test ``_update_metadata`` if metadata has no model_kwargs.
