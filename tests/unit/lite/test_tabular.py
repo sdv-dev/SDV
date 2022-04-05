@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from sdv.lite import TabularPreset
-from sdv.metadata.table import Table
 from sdv.tabular import GaussianCopula
 from tests.utils import DataFrameMatcher
 
@@ -127,69 +126,6 @@ class TestTabularPreset:
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1
-
-    @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
-    def test___init__metadata_object(self, gaussian_copula_mock):
-        """Test ``__init__`` passing the metadata as a ``Table`` object.
-
-        In this case, the metadata object should be converted to a dict
-        and the original object should not be modifed.
-
-        Input:
-            - table_metadata
-
-        Side Effects
-            - GaussianCopula should receive metadata as a dict.
-        """
-        # Setup
-        metadata_dict = {
-            'name': 'test',
-            'fields': {
-                'a_field': {
-                    'type': 'categorical'
-                },
-            },
-            'model_kwargs': {
-                'GaussianCopula': {
-                    'field_distributions': {
-                        'a_field': 'gaussian',
-                    }
-                }
-            }
-        }
-        table_metadata = Table.from_dict(metadata_dict)
-
-        # Run
-        TabularPreset(name='SPEED', metadata=table_metadata)
-
-        # Assert
-        expected_metadata = {
-            'name': 'test',
-            'fields': {
-                'a_field': {
-                    'type': 'categorical'
-                },
-            },
-            'model_kwargs': {
-                'GaussianCopula': {
-                    'field_distributions': {
-                        'a_field': 'gaussian',
-                    }
-                }
-            },
-            'primary_key': None,
-            'sequence_index': None,
-            'entity_columns': [],
-            'context_columns': [],
-            'constraints': []
-        }
-        gaussian_copula_mock.assert_called_once_with(
-            table_metadata=expected_metadata,
-            constraints=None,
-            categorical_transformer='categorical_fuzzy',
-            default_distribution='gaussian',
-            rounding=None,
-        )
 
     def test_fit(self):
         """Test the ``TabularPreset.fit`` method.

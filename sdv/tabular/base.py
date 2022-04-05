@@ -7,6 +7,7 @@ import os
 import pickle
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 
 import copulas
 import numpy as np
@@ -110,6 +111,7 @@ class BaseTabularModel:
             )
             self._metadata_fitted = False
         else:
+            table_metadata = deepcopy(table_metadata)
             for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
                     raise ValueError(
