@@ -56,6 +56,10 @@ def test___init___copies_metadata():
     assert model._metadata != metadata
     assert model._metadata != model2._metadata
     assert model2._metadata != metadata
+    gamma = 'copulas.univariate.gamma.GammaUnivariate'
+    beta = 'copulas.univariate.beta.BetaUnivariate'
+    assert all(distribution == gamma for distribution in model.get_distributions().values())
+    assert all(distribution == beta for distribution in model2.get_distributions().values())
 
 
 @pytest.mark.parametrize('model', MODELS)
