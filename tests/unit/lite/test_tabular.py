@@ -51,7 +51,7 @@ class TestTabularPreset:
         - GaussianCopula should receive the correct parameters
         """
         # Run
-        TabularPreset(name='SPEED')
+        TabularPreset(name='FAST_ML')
 
         # Assert
         gaussian_copula_mock.assert_called_once_with(
@@ -80,7 +80,7 @@ class TestTabularPreset:
         constraint = Mock()
 
         # Run
-        TabularPreset(name='SPEED', metadata=None, constraints=[constraint])
+        preset = TabularPreset(name='FAST_ML', metadata=None, constraints=[constraint])
 
         # Assert
         gaussian_copula_mock.assert_called_once_with(
@@ -92,6 +92,7 @@ class TestTabularPreset:
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1
+        assert preset._null_column is True
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
     def test__init__with_constraints_and_metadata(self, gaussian_copula_mock):
@@ -111,7 +112,7 @@ class TestTabularPreset:
         constraint = Mock()
 
         # Run
-        TabularPreset(name='SPEED', metadata=metadata, constraints=[constraint])
+        preset = TabularPreset(name='FAST_ML', metadata=metadata, constraints=[constraint])
 
         # Assert
         expected_metadata = metadata.copy()
@@ -126,6 +127,7 @@ class TestTabularPreset:
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1
+        assert preset._null_column is True
 
     def test_fit(self):
         """Test the ``TabularPreset.fit`` method.
@@ -152,7 +154,7 @@ class TestTabularPreset:
 
         # Assert
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
-        assert preset._null_percentages == {}
+        assert preset._null_percentages is None
 
     def test_fit_with_null_values(self):
         """Test the ``TabularPreset.fit`` method with null values.
@@ -173,6 +175,7 @@ class TestTabularPreset:
         model._metadata = metadata
         preset = Mock()
         preset._model = model
+        preset._null_column = False
         preset._null_percentages = None
 
         data = {'a': [1, 2, np.nan]}
@@ -291,13 +294,13 @@ class TestTabularPreset:
         """
         # Setup
         out = io.StringIO()
-        expected = ('Available presets:\n{\'SPEED\': \'Use this preset to minimize the time '
+        expected = ('Available presets:\n{\'FAST_ML\': \'Use this preset to minimize the time '
                     'needed to create a synthetic data model.\'}\n\nSupply the desired '
                     'preset using the `name` parameter.\n\nHave any requests for '
                     'custom presets? Contact the SDV team to learn more an SDV Premium license.')
 
         # Run
-        TabularPreset(name='SPEED').list_available_presets(out)
+        TabularPreset.list_available_presets(out)
 
         # Assert
         assert out.getvalue().strip() == expected
@@ -352,10 +355,10 @@ class TestTabularPreset:
         - Expect a string 'TabularPreset(name=<name>)'
         """
         # Setup
-        instance = TabularPreset('SPEED')
+        instance = TabularPreset('FAST_ML')
 
         # Run
         res = repr(instance)
 
         # Assert
-        assert res == 'TabularPreset(name=SPEED)'
+        assert res == 'TabularPreset(name=FAST_ML)'
