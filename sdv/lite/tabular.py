@@ -12,9 +12,9 @@ from sdv.tabular import GaussianCopula
 
 LOGGER = logging.getLogger(__name__)
 
-SPEED_PRESET = 'SPEED'
+FAST_ML_PRESET = 'FAST_ML'
 PRESETS = {
-    SPEED_PRESET: 'Use this preset to minimize the time needed to create a synthetic data model.',
+    FAST_ML_PRESET: 'Use this preset to minimize the time needed to create a synthetic data model.'
 }
 
 
@@ -32,6 +32,7 @@ class TabularPreset():
 
     _model = None
     _null_percentages = None
+    _null_column = False
     _default_model = GaussianCopula
 
     def __init__(self, name=None, metadata=None, constraints=None):
@@ -59,7 +60,7 @@ class TabularPreset():
 
             constraints = None
 
-        if name == SPEED_PRESET:
+        if name == FAST_ML_PRESET:
             self._model = GaussianCopula(
                 table_metadata=metadata,
                 constraints=constraints,
@@ -68,14 +69,18 @@ class TabularPreset():
                 rounding=None,
             )
 
+            self._null_column = constraints is not None
+            if metadata is not None:
+                self._null_column = len(metadata.get('constraints', [])) > 0
+
             dtype_transformers = {
                 'i': rdt.transformers.NumericalTransformer(
-                    dtype=np.int64, null_column=False),
+                    dtype=np.int64, null_column=self._null_column),
                 'f': rdt.transformers.NumericalTransformer(
-                    dtype=np.float64, null_column=False),
-                'O': rdt.transformers.CategoricalTransformer(fuzzy=True),
-                'b': rdt.transformers.BooleanTransformer(null_column=False),
-                'M': rdt.transformers.DatetimeTransformer(null_column=False),
+                    dtype=np.float64, null_column=self._null_column),
+                'O': rdt.transformers.CategoricalTransformer(fuzzy=self._null_column),
+                'b': rdt.transformers.BooleanTransformer(null_column=self._null_column),
+                'M': rdt.transformers.DatetimeTransformer(null_column=self._null_column),
             }
             self._model._metadata._dtype_transformers.update(dtype_transformers)
 
@@ -86,13 +91,14 @@ class TabularPreset():
             data (pandas.DataFrame):
                 Data to fit the model to.
         """
-        self._null_percentages = {}
+        if not self._null_column:
+            self._null_percentages = {}
 
-        for column, column_data in data.iteritems():
-            num_nulls = column_data.isna().sum()
-            if num_nulls > 0:
-                # Store null percentage for future reference.
-                self._null_percentages[column] = num_nulls / len(column_data)
+            for column, column_data in data.iteritems():
+                num_nulls = column_data.isna().sum()
+                if num_nulls > 0:
+                    # Store null percentage for future reference.
+                    self._null_percentages[column] = num_nulls / len(column_data)
 
         self._model.fit(data)
 
