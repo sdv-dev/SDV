@@ -156,6 +156,39 @@ class TestTabularPreset:
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
         assert preset._null_percentages is None
 
+    def test_fit_null_column_True(self):
+        """Test the ``TabularPreset.fit`` method with modeling null columns.
+
+        Expect that the model's fit method is called with the expected args when
+        ``_null_column`` is set to ``True``.
+
+        Setup:
+        - _null_column is True
+
+        Input:
+        - fit data
+
+        Side Effects:
+        - The model's ``fit`` method is called with the same data.
+        - ``_null_percentages`` is ``None``
+        """
+        # Setup
+        metadata = Mock()
+        metadata.to_dict.return_value = {'fields': {}}
+        model = Mock()
+        model._metadata = metadata
+        preset = Mock()
+        preset._model = model
+        preset._null_column = True
+        preset._null_percentages = None
+
+        # Run
+        TabularPreset.fit(preset, pd.DataFrame())
+
+        # Assert
+        model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
+        assert preset._null_percentages is None
+
     def test_fit_with_null_values(self):
         """Test the ``TabularPreset.fit`` method with null values.
 
