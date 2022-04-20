@@ -1,11 +1,12 @@
 import io
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from sdv.lite import TabularPreset
+from sdv.metadata import Table
 from sdv.tabular import GaussianCopula
 from tests.utils import DataFrameMatcher
 
@@ -63,6 +64,32 @@ class TestTabularPreset:
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1
+
+    @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
+    def test__init__with_metadata(self, gaussian_copula_mock):
+        """Tests the ``TabularPreset.__init__`` method with the speed preset.
+
+        The method should pass the parameters to the ``GaussianCopula`` class.
+
+        Input:
+        - name of the speed preset
+        Side Effects:
+        - GaussianCopula should receive the correct parameters
+        """
+        # Setup
+        metadata = MagicMock(spec_set=Table)
+
+        # Run
+        TabularPreset(name='FAST_ML', metadata=metadata)
+
+        # Assert
+        gaussian_copula_mock.assert_called_once_with(
+            table_metadata=metadata.to_dict(),
+            constraints=None,
+            categorical_transformer='categorical_fuzzy',
+            default_distribution='gaussian',
+            rounding=None,
+        )
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
     def test__init__with_constraints(self, gaussian_copula_mock):

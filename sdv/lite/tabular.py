@@ -50,10 +50,10 @@ class TabularPreset():
                           'detected from your data. This process may not be accurate. '
                           'We recommend writing metadata to ensure correct data handling.')
 
-        if metadata is not None and constraints is not None:
-            if isinstance(metadata, Table):
-                metadata = metadata.to_dict()
+        if metadata is not None and isinstance(metadata, Table):
+            metadata = metadata.to_dict()
 
+        if metadata is not None and constraints is not None:
             metadata['constraints'] = []
             for constraint in constraints:
                 metadata['constraints'].append(constraint.to_dict())
