@@ -735,7 +735,7 @@ def test__init__passes_correct_parameters(metadata_mock):
     assert len(metadata_mock.mock_calls) == 5
     expected_calls = [
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'one_hot_encoding'},
+             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'categorical_fuzzy'},
              rounding=-1, max_value=100, min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
