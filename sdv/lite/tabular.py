@@ -69,18 +69,39 @@ class TabularPreset():
                 rounding=None,
             )
 
+            # Decide if transformers should model the null column or not.
             self._null_column = constraints is not None
             if metadata is not None:
                 self._null_column = len(metadata.get('constraints', [])) > 0
 
+            # If transformers should model the null column, pass None to let each transformer
+            # decide if it's necessary or not.
+            transformer_null_column = None if self._null_column else False
+
             dtype_transformers = {
                 'i': rdt.transformers.NumericalTransformer(
-                    dtype=np.int64, null_column=self._null_column),
+                    dtype=np.int64,
+                    nan='mean' if transformer_null_column else None,
+                    null_column=transformer_null_column,
+                    min_value='auto',
+                    max_value='auto',
+                ),
                 'f': rdt.transformers.NumericalTransformer(
-                    dtype=np.float64, null_column=self._null_column),
-                'O': rdt.transformers.CategoricalTransformer(fuzzy=self._null_column),
-                'b': rdt.transformers.BooleanTransformer(null_column=self._null_column),
-                'M': rdt.transformers.DatetimeTransformer(null_column=self._null_column),
+                    dtype=np.float64,
+                    nan='mean' if transformer_null_column else None,
+                    null_column=transformer_null_column,
+                    min_value='auto',
+                    max_value='auto',
+                ),
+                'O': rdt.transformers.CategoricalTransformer(fuzzy=True),
+                'b': rdt.transformers.BooleanTransformer(
+                    nan=-1 if transformer_null_column else None,
+                    null_column=transformer_null_column,
+                ),
+                'M': rdt.transformers.DatetimeTransformer(
+                    nan='mean' if transformer_null_column else None,
+                    null_column=transformer_null_column,
+                ),
             }
             self._model._metadata._dtype_transformers.update(dtype_transformers)
 

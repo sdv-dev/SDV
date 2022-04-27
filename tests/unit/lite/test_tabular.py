@@ -40,8 +40,9 @@ class TestTabularPreset:
         with pytest.raises(ValueError, match=r'`name` must be one of *'):
             TabularPreset(name='invalid')
 
+    @patch('sdv.lite.tabular.rdt.transformers')
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
-    def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock):
+    def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock, transformers_mock):
         """Tests the ``TabularPreset.__init__`` method with the speed preset.
 
         The method should pass the parameters to the ``GaussianCopula`` class.
@@ -63,7 +64,25 @@ class TestTabularPreset:
             rounding=None,
         )
         metadata = gaussian_copula_mock.return_value._metadata
-        assert metadata._dtype_transformers.update.call_count == 1
+        metadata._dtype_transformers.update.assert_called_once_with({
+            'i': transformers_mock.NumericalTransformer(
+                dtype=np.int64,
+                nan=None,
+                null_column=False,
+                min_value='auto',
+                max_value='auto',
+            ),
+            'f': transformers_mock.NumericalTransformer(
+                dtype=np.float64,
+                nan=None,
+                null_column=False,
+                min_value='auto',
+                max_value='auto',
+            ),
+            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
+            'b': transformers_mock.BooleanTransformer(nan=None, null_column=False),
+            'M': transformers_mock.DatetimeTransformer(nan=None, null_column=False),
+        })
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
     def test__init__with_metadata(self, gaussian_copula_mock):
@@ -91,8 +110,9 @@ class TestTabularPreset:
             rounding=None,
         )
 
+    @patch('sdv.lite.tabular.rdt.transformers')
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
-    def test__init__with_constraints(self, gaussian_copula_mock):
+    def test__init__with_constraints(self, gaussian_copula_mock, transformers_mock):
         """Tests the ``TabularPreset.__init__`` method with constraints.
 
         The constraints should be added to the metadata.
@@ -118,7 +138,25 @@ class TestTabularPreset:
             rounding=None,
         )
         metadata = gaussian_copula_mock.return_value._metadata
-        assert metadata._dtype_transformers.update.call_count == 1
+        metadata._dtype_transformers.update.assert_called_once_with({
+            'i': transformers_mock.NumericalTransformer(
+                dtype=np.int64,
+                nan='mean',
+                null_column=None,
+                min_value='auto',
+                max_value='auto',
+            ),
+            'f': transformers_mock.NumericalTransformer(
+                dtype=np.float64,
+                nan='mean',
+                null_column=None,
+                min_value='auto',
+                max_value='auto',
+            ),
+            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
+            'b': transformers_mock.BooleanTransformer(nan=-1, null_column=None),
+            'M': transformers_mock.DatetimeTransformer(nan='mean', null_column=None),
+        })
         assert preset._null_column is True
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
