@@ -61,7 +61,7 @@ class TestBaseTabularModel:
 
         # Run
         gc = GaussianCopula(
-            default_distribution='bounded',
+            default_distribution='gamma',
             table_metadata=table_metadata,
         )
 
@@ -711,7 +711,7 @@ class TestBaseTabularModel:
 
 
 @patch('sdv.tabular.base.Table', spec_set=Table)
-def test__init__passes_correct_parameters(metadata_mock):
+def test___init__passes_correct_parameters(metadata_mock):
     """
     Tests the ``BaseTabularModel.__init__`` method.
 
