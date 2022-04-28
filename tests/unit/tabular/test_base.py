@@ -777,6 +777,31 @@ def test__sample_conditions_graceful_reject_sampling(model):
     assert len(output) == 2, 'Only expected 2 valid rows.'
 
 
+@pytest.mark.parametrize('model', MODELS)
+def test__sample_conditions_with_value_zero(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+    data = data.astype(float)
+
+    conditions = [
+        Condition(
+            {'column1': 0},
+            num_rows=1,
+        ),
+        Condition(
+            {'column1': 0.0},
+            num_rows=1,
+        )
+    ]
+
+    model.fit(data)
+    output = model._sample_conditions(conditions, 100, None, True, None)
+    assert len(output) == 2, 'Expected 2 valid rows.'
+
+
 def test__sample_rows_previous_rows_appended_correctly():
     """Test the ``BaseTabularModel._sample_rows`` method.
 
