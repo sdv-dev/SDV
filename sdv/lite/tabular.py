@@ -81,25 +81,25 @@ class TabularPreset():
             dtype_transformers = {
                 'i': rdt.transformers.NumericalTransformer(
                     dtype=np.int64,
-                    nan='mean' if transformer_null_column else None,
+                    nan='mean' if self._null_column else None,
                     null_column=transformer_null_column,
                     min_value='auto',
                     max_value='auto',
                 ),
                 'f': rdt.transformers.NumericalTransformer(
                     dtype=np.float64,
-                    nan='mean' if transformer_null_column else None,
+                    nan='mean' if self._null_column else None,
                     null_column=transformer_null_column,
                     min_value='auto',
                     max_value='auto',
                 ),
                 'O': rdt.transformers.CategoricalTransformer(fuzzy=True),
                 'b': rdt.transformers.BooleanTransformer(
-                    nan=-1 if transformer_null_column else None,
+                    nan=-1 if self._null_column else None,
                     null_column=transformer_null_column,
                 ),
                 'M': rdt.transformers.DatetimeTransformer(
-                    nan='mean' if transformer_null_column else None,
+                    nan='mean' if self._null_column else None,
                     null_column=transformer_null_column,
                 ),
             }
