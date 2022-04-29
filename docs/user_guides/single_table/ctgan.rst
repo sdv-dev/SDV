@@ -10,7 +10,6 @@ discover functionalities of the ``CTGAN`` model, including how to:
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
 -  Use ``CTGAN`` to anonymize PII information.
--  Customize the data transformations to improve the learning process.
 -  Specify hyperparameters to improve the output quality.
 
 What is CTGAN?

@@ -104,6 +104,7 @@ class GaussianCopula(BaseTabularModel):
                 * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
                   ``fuzzy`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
+            Defaults to ``categorical_fuzzy``.
         rounding (int, str or None):
             Define rounding scheme for ``NumericalTransformer``. If set to an int, values
             will be rounded to that number of decimal places. If ``None``, values will not
@@ -150,35 +151,7 @@ class GaussianCopula(BaseTabularModel):
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
     _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['parametric']
-
-    _HYPERPARAMETERS = {
-        'distribution': {
-            'type': 'str or copulas.univariate.Univariate',
-            'default': 'Univariate',
-            'description': 'Univariate distribution to use to model each column',
-            'choices': [
-                'Univariate',
-                'Gaussian',
-                'Gamma',
-                'Beta',
-                'StudentT',
-                'GaussianKDE',
-                'TruncatedGaussian',
-            ]
-        },
-        'categorical_transformer': {
-            'type': 'str',
-            'default': 'one_hot_encoding',
-            'description': 'Type of transformer to use for the categorical variables',
-            'choices': [
-                'categorical',
-                'categorical_fuzzy',
-                'one_hot_encoding',
-                'label_encoding'
-            ]
-        }
-    }
-    _DEFAULT_TRANSFORMER = 'one_hot_encoding'
+    _DEFAULT_TRANSFORMER = 'categorical_fuzzy'
 
     @classmethod
     def _validate_distribution(cls, distribution):

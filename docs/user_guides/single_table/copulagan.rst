@@ -10,7 +10,6 @@ discover functionalities of the ``CopulaGAN`` model, including how to:
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
 -  Use ``CopulaGAN`` to anonymize PII information.
--  Customize the data transformations to improve the learning process.
 -  Specify the column distributions to improve the output quality.
 -  Specify hyperparameters to improve the output quality.
 
