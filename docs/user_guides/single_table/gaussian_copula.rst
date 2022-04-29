@@ -573,24 +573,6 @@ that indicates the distribution that we want to use for each column.
 
 Possible values for the distribution argument are:
 
--  ``univariate``: Let ``copulas`` select the optimal univariate
-   distribution. This may result in non-parametric models being used.
--  ``parametric``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to parametric distributions
-   only.
--  ``bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to bounded distributions
-   only. This may result in non-parametric models being used.
--  ``semi_bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to semi-bounded
-   distributions only. This may result in non-parametric models being
-   used.
--  ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to parametric and bounded
-   distributions only.
--  ``parametric_semi_bounded``: Let ``copulas`` select the optimal
-   univariate distribution, but restrict the selection to parametric and
-   semi-bounded distributions only.
 -  ``gaussian``: Use a Gaussian distribution.
 -  ``gamma``: Use a Gamma distribution.
 -  ``beta``: Use a Beta distribution.
