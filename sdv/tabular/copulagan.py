@@ -129,7 +129,7 @@ class CopulaGAN(CTGAN):
             is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
-    DEFAULT_DISTRIBUTION = 'truncated_gaussian'
+    DEFAULT_DISTRIBUTION = 'gaussian'
     _field_distributions = None
     _default_distribution = None
     _ht = None
