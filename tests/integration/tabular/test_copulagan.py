@@ -16,7 +16,7 @@ def test_copulagan():
         field_distributions={
             'age': 'beta'
         },
-        default_distribution='gamma'
+        default_distribution='bounded'
     )
     model.fit(users)
 
