@@ -118,7 +118,7 @@ class GaussianCopula(BaseTabularModel):
         'gaussian_kde': copulas.univariate.GaussianKDE,
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
-    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['gaussian']
+    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['truncated_gaussian']
 
     _DEFAULT_TRANSFORMER = 'one_hot_encoding'
 
