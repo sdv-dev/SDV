@@ -11,7 +11,6 @@ to:
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
 -  Use ``GaussianCopula`` to anonymize PII information.
--  Customize the data transformations to improve the learning process.
 -  Specify the column distributions to improve the output quality.
 
 What is GaussianCopula?
@@ -350,73 +349,6 @@ Advanced Usage
 Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our ``GaussianCopula`` Model in order to customize it to our needs.
-
-How to set transforms to use?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-One thing that you may have noticed when executing the previous steps is
-that the fitting process took much longer on the
-``student_placements_pii`` dataset than it took on the previous version
-that did not contain the student ``address``. This happens because the
-``address`` field is interpreted as a categorical variable, which the
-``GaussianCopula`` `one-hot
-encoded <https://en.wikipedia.org/wiki/One-hot>`__ generating 215 new
-columns that it had to learn afterwards.
-
-This transformation, which in this case was very inefficient, happens
-because the Tabular Models apply `Reversible Data
-Transforms <https://github.com/sdv-dev/RDT>`__ under the hood to
-transform all the non-numerical variables, which the underlying models
-cannot handle, into numerical representations which they can properly
-work with. In the case of the ``GaussianCopula``, the default
-transformation is a One-Hot encoding, which can work very well with
-variables that have a small number of different values, but which is
-very inefficient in cases where there is a large number of values.
-
-For this reason, the Tabular Models have an additional argument called
-``field_transformers`` that let you select which transformer to apply to
-each column. This ``field_transformers`` argument must be passed as a
-``dict`` which contains the name of the fields for which we want to use
-a transformer different than the default, and the name of the
-transformer that we want to use.
-
-Possible transformer names are:
-
--  ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
--  ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
--  ``categorical``: Uses a ``CategoricalTransformer`` without gaussian
-   noise.
--  ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding
-   gaussian noise.
--  ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
--  ``label_encoding``: Uses a ``LabelEncodingTransformer``.
--  ``boolean``: Uses a ``BooleanTransformer``.
--  ``datetime``: Uses a ``DatetimeTransformer``.
-
-**NOTE**: For additional details about each one of the transformers,
-please visit `RDT <https://github.com/sdv-dev/RDT>`__
-
-Let's now try to improve the previous fitting process by changing the
-transformer that we use for the ``address`` field to something other
-than the default. As an example, we will use the ``label_encoding``
-transformer, which instead of generating one column for each possible
-value, it just replaces each value with a unique integer value.
-
-.. ipython:: python
-    :okwarning:
-
-    model = GaussianCopula(
-        primary_key='student_id',
-        anonymize_fields={
-            'address': 'address'
-        },
-        field_transformers={
-            'address': 'label_encoding'
-        }
-    )
-    model.fit(data_pii)
-    new_data_pii = model.sample(200)
-    new_data_pii.head()
 
 Setting Bounds and Specifying Rounding for Numerical Columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

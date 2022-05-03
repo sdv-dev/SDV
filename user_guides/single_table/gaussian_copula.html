@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>GaussianCopula Model &#8212; SDV 0.14.1.dev0 documentation</title>
+    <title>GaussianCopula Model &#8212; SDV 0.14.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -44,7 +44,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="CTGAN Model" href="ctgan.html" />
-    <link rel="prev" title="Models" href="models.html" />
+    <link rel="prev" title="Tabular Preset" href="tabular_preset.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -152,6 +152,10 @@
                             <li class="active">
                                 <a href="models.html">Models</a>
                                 <ul>
+                                
+                                    <li class="">
+                                        <a href="tabular_preset.html">Tabular Preset</a>
+                                    </li>
                                 
                                     <li class="active">
                                         <a href="">GaussianCopula Model</a>
@@ -273,10 +277,6 @@
             <a href="#advanced-usage" class="nav-link">Advanced Usage</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#how-to-set-transforms-to-use" class="nav-link">How to set transforms to use?</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
             <a href="#setting-bounds-and-specifying-rounding-for-numerical-columns" class="nav-link">Setting Bounds and Specifying Rounding for Numerical Columns</a>
         </li>
     
@@ -326,7 +326,6 @@ to:</p>
 <li><p>Fit the instance to your data.</p></li>
 <li><p>Generate synthetic versions of your data.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> to anonymize PII information.</p></li>
-<li><p>Customize the data transformations to improve the learning process.</p></li>
 <li><p>Specify the column distributions to improve the output quality.</p></li>
 </ul>
 <section id="what-is-gaussiancopula">
@@ -420,11 +419,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0       17315      F        70.65  ...         NaT        NaT       NaN</span>
-<span class="go">1       17319      F        85.16  ...  2020-01-17 2020-07-01       5.0</span>
-<span class="go">2       17348      F        59.41  ...  2020-03-11 2021-02-12      10.0</span>
-<span class="go">3       17426      F        66.01  ...         NaT        NaT       NaN</span>
-<span class="go">4       17402      M        55.46  ...  2020-01-29 2020-12-18       8.0</span>
+<span class="go">0       17369      M        70.78  ...  2020-03-03 2020-05-14       3.0</span>
+<span class="go">1       17468      M        72.06  ...  2020-03-21 2020-07-23       3.0</span>
+<span class="go">2       17371      M        53.71  ...  2020-03-04 2020-08-10       3.0</span>
+<span class="go">3       17343      M        64.29  ...  2020-01-03 2020-09-01       9.0</span>
+<span class="go">4       17285      M        83.83  ...  2020-07-26 2020-12-11       4.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -510,13 +509,12 @@ that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">     student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">27        17344      M        79.69  ...  2020-02-25 2021-01-08       8.0</span>
-<span class="go">54        17344      M        71.99  ...  2020-02-20 2020-06-09       4.0</span>
-<span class="go">96        17344      F        58.58  ...         NaT        NaT       NaN</span>
-<span class="go">129       17344      M        83.67  ...  2020-07-09 2020-08-03       3.0</span>
-<span class="go">132       17344      M        59.22  ...         NaT        NaT       NaN</span>
+<span class="go">43        17359      M        60.93  ...         NaT        NaT       NaN</span>
+<span class="go">66        17359      F        59.21  ...         NaT        NaT       NaN</span>
+<span class="go">75        17359      M        58.82  ...         NaT        NaT       NaN</span>
+<span class="go">166       17359      F        75.07  ...  2020-01-02 2020-05-22       6.0</span>
 
-<span class="go">[5 rows x 17 columns]</span>
+<span class="go">[4 rows x 17 columns]</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -536,11 +534,11 @@ indicating the name of the column that is the index of the table.</p>
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        83.31  ...  2020-07-31 2020-09-30       3.0</span>
-<span class="go">1           1      M        62.29  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        57.15  ...         NaT        NaT       NaN</span>
-<span class="go">3           3      F        63.53  ...         NaT        NaT       NaN</span>
-<span class="go">4           4      F        84.73  ...  2020-02-09 2020-06-08       3.0</span>
+<span class="go">0           0      M        51.72  ...         NaT        NaT       NaN</span>
+<span class="go">1           1      F        56.09  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        60.42  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      M        82.52  ...  2020-04-23 2020-09-04       3.0</span>
+<span class="go">4           4      M        71.76  ...  2020-05-16 2020-11-15       7.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -599,11 +597,11 @@ students:</p>
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
 <span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...      NaN</span>
-<span class="go">1           1  ...      4.0</span>
+<span class="go">0           0  ...      4.0</span>
+<span class="go">1           1  ...      8.0</span>
 <span class="go">2           2  ...      4.0</span>
 <span class="go">3           3  ...      NaN</span>
-<span class="go">4           4  ...      NaN</span>
+<span class="go">4           4  ...      3.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 </pre></div>
@@ -661,9 +659,9 @@ replaced by other fake addresses:</p>
 <span class="go">   student_id  ... duration</span>
 <span class="go">0           0  ...      NaN</span>
 <span class="go">1           1  ...      4.0</span>
-<span class="go">2           2  ...      7.0</span>
-<span class="go">3           3  ...      NaN</span>
-<span class="go">4           4  ...      NaN</span>
+<span class="go">2           2  ...      NaN</span>
+<span class="go">3           3  ...      7.0</span>
+<span class="go">4           4  ...      3.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 </pre></div>
@@ -681,79 +679,6 @@ data:</p>
 <p>Now that we have discovered the basics, let’s go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> Model in order to customize it to our needs.</p>
-<section id="how-to-set-transforms-to-use">
-<h3>How to set transforms to use?<a class="headerlink" href="#how-to-set-transforms-to-use" title="Permalink to this headline">¶</a></h3>
-<p>One thing that you may have noticed when executing the previous steps is
-that the fitting process took much longer on the
-<code class="docutils literal notranslate"><span class="pre">student_placements_pii</span></code> dataset than it took on the previous version
-that did not contain the student <code class="docutils literal notranslate"><span class="pre">address</span></code>. This happens because the
-<code class="docutils literal notranslate"><span class="pre">address</span></code> field is interpreted as a categorical variable, which the
-<code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> <a class="reference external" href="https://en.wikipedia.org/wiki/One-hot">one-hot
-encoded</a> generating 215 new
-columns that it had to learn afterwards.</p>
-<p>This transformation, which in this case was very inefficient, happens
-because the Tabular Models apply <a class="reference external" href="https://github.com/sdv-dev/RDT">Reversible Data
-Transforms</a> under the hood to
-transform all the non-numerical variables, which the underlying models
-cannot handle, into numerical representations which they can properly
-work with. In the case of the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code>, the default
-transformation is a One-Hot encoding, which can work very well with
-variables that have a small number of different values, but which is
-very inefficient in cases where there is a large number of values.</p>
-<p>For this reason, the Tabular Models have an additional argument called
-<code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> that let you select which transformer to apply to
-each column. This <code class="docutils literal notranslate"><span class="pre">field_transformers</span></code> argument must be passed as a
-<code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the fields for which we want to use
-a transformer different than the default, and the name of the
-transformer that we want to use.</p>
-<p>Possible transformer names are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">integer</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">float</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code> of dtype <code class="docutils literal notranslate"><span class="pre">float</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">categorical</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> without gaussian
-noise.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">CategoricalTransformer</span></code> adding
-gaussian noise.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">one_hot_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">OneHotEncodingTransformer</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">label_encoding</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">LabelEncodingTransformer</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">boolean</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">BooleanTransformer</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">datetime</span></code>: Uses a <code class="docutils literal notranslate"><span class="pre">DatetimeTransformer</span></code>.</p></li>
-</ul>
-<p><strong>NOTE</strong>: For additional details about each one of the transformers,
-please visit <a class="reference external" href="https://github.com/sdv-dev/RDT">RDT</a></p>
-<p>Let’s now try to improve the previous fitting process by changing the
-transformer that we use for the <code class="docutils literal notranslate"><span class="pre">address</span></code> field to something other
-than the default. As an example, we will use the <code class="docutils literal notranslate"><span class="pre">label_encoding</span></code>
-transformer, which instead of generating one column for each possible
-value, it just replaces each value with a unique integer value.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [31]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">anonymize_fields</span><span class="o">=</span><span class="p">{</span>
-<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;address&#39;</span>
-<span class="gp">   ....: </span>    <span class="p">},</span>
-<span class="gp">   ....: </span>    <span class="n">field_transformers</span><span class="o">=</span><span class="p">{</span>
-<span class="gp">   ....: </span>        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;label_encoding&#39;</span>
-<span class="gp">   ....: </span>    <span class="p">}</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-
-<span class="gp">In [32]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_pii</span><span class="p">)</span>
-
-<span class="gp">In [33]: </span><span class="n">new_data_pii</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-
-<span class="gp">In [34]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-<span class="gh">Out[34]: </span><span class="go"></span>
-<span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...      NaN</span>
-<span class="go">1           1  ...      NaN</span>
-<span class="go">2           2  ...      NaN</span>
-<span class="go">3           3  ...      4.0</span>
-<span class="go">4           4  ...      8.0</span>
-
-<span class="go">[5 rows x 18 columns]</span>
-</pre></div>
-</div>
-</section>
 <section id="setting-bounds-and-specifying-rounding-for-numerical-columns">
 <h3>Setting Bounds and Specifying Rounding for Numerical Columns<a class="headerlink" href="#setting-bounds-and-specifying-rounding-for-numerical-columns" title="Permalink to this headline">¶</a></h3>
 <p>By default, the model will learn the upper and lower bounds of the
@@ -771,7 +696,7 @@ the default setting, or <code class="docutils literal notranslate"><span class="
 let’s pass the <code class="docutils literal notranslate"><span class="pre">min_value</span></code> and <code class="docutils literal notranslate"><span class="pre">max_value</span></code> arguments as <cite>None</cite> to the model.
 To keep the number of decimals consistent across columns, we can set <code class="docutils literal notranslate"><span class="pre">rounding</span></code>
 to be 2.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [35]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [31]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -779,23 +704,23 @@ to be 2.</p>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [36]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">In [32]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-<span class="gp">In [37]: </span><span class="n">unbounded_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">In [33]: </span><span class="n">unbounded_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 
-<span class="gp">In [38]: </span><span class="n">unbounded_data</span>
-<span class="gh">Out[38]: </span><span class="go"></span>
+<span class="gp">In [34]: </span><span class="n">unbounded_data</span>
+<span class="gh">Out[34]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        54.97  ...         NaT        NaT       NaN</span>
-<span class="go">1           1      M        73.51  ...  2020-03-08 2020-06-02      3.13</span>
-<span class="go">2           2      F        63.36  ...         NaT        NaT       NaN</span>
-<span class="go">3           3      M        65.18  ...         NaT        NaT       NaN</span>
-<span class="go">4           4      M        61.15  ...  2020-03-29 2020-07-30      2.20</span>
-<span class="go">5           5      F        68.94  ...  2020-01-16 2020-07-04      4.47</span>
-<span class="go">6           6      F        72.39  ...  2020-01-20 2020-07-26      6.02</span>
-<span class="go">7           7      F        66.59  ...  2020-01-04 2020-06-30      6.59</span>
-<span class="go">8           8      M        71.58  ...  2020-01-27 2020-06-26      4.71</span>
-<span class="go">9           9      M        80.72  ...  2020-01-04 2020-07-27      8.19</span>
+<span class="go">0           0      F        86.83  ...  2020-01-14 2020-08-17      9.06</span>
+<span class="go">1           1      M        48.55  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        74.44  ...  2020-01-18 2020-08-16      6.32</span>
+<span class="go">3           3      M        60.98  ...  2020-01-15 2020-09-30      7.88</span>
+<span class="go">4           4      M        65.90  ...         NaT        NaT       NaN</span>
+<span class="go">5           5      F        43.89  ...         NaT        NaT       NaN</span>
+<span class="go">6           6      F        85.66  ...  2020-03-01 2020-07-08      3.07</span>
+<span class="go">7           7      F        82.46  ...  2020-02-02 2020-05-03      1.91</span>
+<span class="go">8           8      F        50.91  ...         NaT        NaT       NaN</span>
+<span class="go">9           9      F        50.70  ...  2020-04-12 2020-10-28      4.80</span>
 
 <span class="go">[10 rows x 17 columns]</span>
 </pre></div>
@@ -835,38 +760,32 @@ had to learn and reproduce the individual distributions of each column
 in our table. We can explore the distributions which the
 <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used to model each column using its
 <code class="docutils literal notranslate"><span class="pre">get_distributions</span></code> method:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [39]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [35]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [40]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">In [36]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-<span class="gp">In [41]: </span><span class="n">distributions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
+<span class="gp">In [37]: </span><span class="n">distributions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This will return us a <code class="docutils literal notranslate"><span class="pre">dict</span></code> which contains the name of the
 distribution class used for each column:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [42]: </span><span class="n">distributions</span>
-<span class="gh">Out[42]: </span><span class="go"></span>
-<span class="go">{&#39;gender.value1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;gender.value0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [38]: </span><span class="n">distributions</span>
+<span class="gh">Out[38]: </span><span class="go"></span>
+<span class="go">{&#39;gender.value&#39;: &#39;copulas.univariate.uniform.UniformUnivariate&#39;,</span>
 <span class="go"> &#39;second_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;high_perc.value&#39;: &#39;copulas.univariate.log_laplace.LogLaplace&#39;,</span>
-<span class="go"> &#39;high_spec.value2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;high_spec.value1&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;high_spec.value0&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
+<span class="go"> &#39;high_spec.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;degree_perc.value&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
-<span class="go"> &#39;degree_type.value2&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;degree_type.value1&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
-<span class="go"> &#39;degree_type.value0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;degree_type.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;work_experience.value&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
 <span class="go"> &#39;experience_years.value&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
 <span class="go"> &#39;employability_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
-<span class="go"> &#39;mba_spec.value1&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;mba_spec.value0&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;mba_spec.value&#39;: &#39;copulas.univariate.uniform.UniformUnivariate&#39;,</span>
 <span class="go"> &#39;mba_perc.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
 <span class="go"> &#39;salary.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
 <span class="go"> &#39;salary.is_null&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
@@ -891,15 +810,15 @@ data to better understand how the <code class="docutils literal notranslate"><sp
 see if we can improve the results by manually specifying a different
 distribution. For example, let’s explore the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column
 by looking at the frequency of its values within the original data:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [43]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-<span class="gh">Out[43]: </span><span class="go"></span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [39]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[39]: </span><span class="go"></span>
 <span class="go">0    141</span>
 <span class="go">1     65</span>
 <span class="go">2      8</span>
 <span class="go">3      1</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
-<span class="gp">In [44]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+<span class="gp">In [40]: </span><span class="n">data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../../_images/experience_years_1.png"><img alt="../../_images/experience_years_1.png" src="../../_images/experience_years_1.png" style="width: 4in;" /></a>
@@ -908,22 +827,22 @@ column is very similar to a Gamma or even some types of Beta
 distribution, where the majority of the values are 0 and the frequency
 decreases as the values increase.</p>
 <p>Was the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> able to capture this distribution on its own?</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [45]: </span><span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;experience_years.value&#39;</span><span class="p">]</span>
-<span class="gh">Out[45]: </span><span class="go">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [41]: </span><span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;experience_years.value&#39;</span><span class="p">]</span>
+<span class="gh">Out[41]: </span><span class="go">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
 </pre></div>
 </div>
 <p>It seems that it was not, as it rather thought that the behavior was
 closer to a Gaussian distribution. And, as a result, we can see how the
 generated values now contain negative values which are invalid for this
 column:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [46]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-<span class="gh">Out[46]: </span><span class="go"></span>
-<span class="go">0    129</span>
-<span class="go">1     69</span>
-<span class="go">2      2</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [42]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[42]: </span><span class="go"></span>
+<span class="go">0    100</span>
+<span class="go">1     92</span>
+<span class="go">2      8</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
-<span class="gp">In [47]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+<span class="gp">In [43]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../../_images/experience_years_2.png"><img alt="../../_images/experience_years_2.png" src="../../_images/experience_years_2.png" style="width: 4in;" /></a>
@@ -968,9 +887,9 @@ non-parametric, so using this will make <code class="docutils literal notranslat
 </ul>
 <p>Let’s see what happens if we make the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> use the
 <code class="docutils literal notranslate"><span class="pre">gamma</span></code> distribution for our column.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [48]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [44]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
-<span class="gp">In [49]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
+<span class="gp">In [45]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">field_distributions</span><span class="o">=</span><span class="p">{</span>
 <span class="gp">   ....: </span>        <span class="s1">&#39;experience_years&#39;</span><span class="p">:</span> <span class="s1">&#39;gamma&#39;</span>
@@ -980,29 +899,28 @@ non-parametric, so using this will make <code class="docutils literal notranslat
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [50]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">In [46]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>After this, we can see how the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> used the indicated
 distribution for the <code class="docutils literal notranslate"><span class="pre">experience_years</span></code> column</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [51]: </span><span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()[</span><span class="s1">&#39;experience_years.value&#39;</span><span class="p">]</span>
-<span class="gh">Out[51]: </span><span class="go">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [47]: </span><span class="n">model</span><span class="o">.</span><span class="n">get_distributions</span><span class="p">()[</span><span class="s1">&#39;experience_years.value&#39;</span><span class="p">]</span>
+<span class="gh">Out[47]: </span><span class="go">&#39;copulas.univariate.gamma.GammaUnivariate&#39;</span>
 </pre></div>
 </div>
 <p>And, as a result, we can see how the generated data now have a
 behavior which is closer to the original data and always stays within
 the valid values range.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [52]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [48]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
-<span class="gp">In [53]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-<span class="gh">Out[53]: </span><span class="go"></span>
-<span class="go"> 0    98</span>
-<span class="go"> 1    98</span>
-<span class="go">-1    15</span>
-<span class="go"> 2     4</span>
+<span class="gp">In [49]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="gh">Out[49]: </span><span class="go"></span>
+<span class="go">0    201</span>
+<span class="go">1     13</span>
+<span class="go">2      1</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
-<span class="gp">In [54]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
+<span class="gp">In [50]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../../_images/experience_years_3.png"><img alt="../../_images/experience_years_3.png" src="../../_images/experience_years_3.png" style="width: 4in;" /></a>
@@ -1024,41 +942,41 @@ method as a list of <code class="docutils literal notranslate"><span class="pre"
 method as a dataframe.</p>
 <p>When specifying a <code class="docutils literal notranslate"><span class="pre">sdv.sampling.Condition</span></code> object, we can pass in the desired conditions
 as a dictionary, as well as specify the number of desired rows for that condition.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [55]: </span><span class="kn">from</span> <span class="nn">sdv.sampling</span> <span class="kn">import</span> <span class="n">Condition</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [51]: </span><span class="kn">from</span> <span class="nn">sdv.sampling</span> <span class="kn">import</span> <span class="n">Condition</span>
 
-<span class="gp">In [56]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<span class="gp">In [52]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [57]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[57]: </span><span class="go"></span>
+<span class="gp">In [53]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[53]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        51.43  ...  2020-01-03 2020-08-06       8.0</span>
-<span class="go">1           1      M        61.75  ...  2020-01-23 2020-08-24       7.0</span>
-<span class="go">2           2      M        64.27  ...  2020-01-15 2020-11-05      11.0</span>
-<span class="go">3           3      M        53.99  ...  2020-04-14 2020-12-06       7.0</span>
-<span class="go">4           4      M        72.66  ...  2020-01-30 2020-07-05       5.0</span>
+<span class="go">0           0      M        75.04  ...         NaT        NaT       NaN</span>
+<span class="go">1           1      M        78.98  ...  2020-01-19 2020-03-03      -1.0</span>
+<span class="go">2           2      M        59.79  ...  2020-03-14 2020-09-24       6.0</span>
+<span class="go">3           3      M        61.57  ...  2020-01-08 2020-07-21       9.0</span>
+<span class="go">4           4      M        63.47  ...         NaT        NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
 </div>
 <p>It’s also possible to condition on multiple columns, such as
 <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">M,</span> <span class="pre">'experience_years':</span> <span class="pre">0</span></code>.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [58]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [54]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;experience_years&#39;</span><span class="p">:</span> <span class="mi">0</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [59]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[59]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        82.20  ...  2020-02-01 2020-09-16       7.0</span>
-<span class="go">1           1      M        72.44  ...  2020-05-25 2020-10-31       5.0</span>
-<span class="go">2           2      M        56.76  ...  2020-01-07 2020-08-17       7.0</span>
-<span class="go">3           3      M        84.13  ...  2020-01-02 2020-04-16       7.0</span>
-<span class="go">4           4      M        65.45  ...  2020-01-20 2020-12-02      11.0</span>
+<span class="gp">In [55]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[55]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  ...  start_date end_date  duration</span>
+<span class="go">0           0      M        50.86  ...         NaT      NaT       NaN</span>
+<span class="go">1           1      M        41.31  ...         NaT      NaT       NaN</span>
+<span class="go">2           2      M        47.73  ...         NaT      NaT       NaN</span>
+<span class="go">3           3      M        66.62  ...         NaT      NaT       NaN</span>
+<span class="go">4           4      M        56.13  ...         NaT      NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -1070,22 +988,22 @@ order. Since the model already knows how many samples to generate, passing
 it as a parameter is unnecessary. For example, if we want to generate three
 samples where <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">M</span></code> and three samples with <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">F</span></code>, we can do the
 following:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [60]: </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [56]: </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="gp">In [61]: </span><span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<span class="gp">In [57]: </span><span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">],</span>
 <span class="gp">   ....: </span><span class="p">})</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [62]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
-<span class="gh">Out[62]: </span><span class="go"></span>
+<span class="gp">In [58]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+<span class="gh">Out[58]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        63.11  ...  2020-03-31 2020-04-10      -2.0</span>
-<span class="go">1           1      M        56.30  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        78.45  ...  2020-07-16 2020-09-19       4.0</span>
-<span class="go">3           3      F        63.23  ...         NaT        NaT       NaN</span>
-<span class="go">4           4      F        67.59  ...  2020-01-04 2020-05-21       6.0</span>
-<span class="go">5           5      F        69.87  ...  2020-01-02 2020-03-25       5.0</span>
+<span class="go">0           0      M        69.56  ...  2020-01-15 2020-09-17       7.0</span>
+<span class="go">1           1      M        74.84  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        70.04  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      F        65.95  ...  2020-01-28 2020-08-22       6.0</span>
+<span class="go">4           4      F        88.86  ...  2020-03-30 2020-05-17       0.0</span>
+<span class="go">5           5      F        66.33  ...  2020-02-16 2020-09-12       5.0</span>
 
 <span class="go">[6 rows x 17 columns]</span>
 </pre></div>
@@ -1093,19 +1011,19 @@ following:</p>
 <p><code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> also supports conditioning on continuous values, as long as the values
 are within the range of seen numbers. For example, if all the values of the
 dataset are within 0 and 1, <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> will not be able to set this value to 1000.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [63]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [59]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;degree_perc&#39;</span><span class="p">:</span> <span class="mf">70.0</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [64]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[64]: </span><span class="go"></span>
+<span class="gp">In [60]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[60]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      F        74.42  ...  2020-01-21 2020-08-01       5.0</span>
-<span class="go">1           1      M        60.32  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      F        86.08  ...  2020-03-23 2020-11-26       7.0</span>
-<span class="go">3           3      M        76.38  ...  2020-02-12 2020-11-13       7.0</span>
-<span class="go">4           4      F        67.58  ...         NaT        NaT       NaN</span>
+<span class="go">0           0      F        80.25  ...  2020-04-16 2020-07-22       5.0</span>
+<span class="go">1           1      F        60.91  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      F        67.57  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      M        79.51  ...  2020-01-28 2020-08-10       5.0</span>
+<span class="go">4           4      M        44.35  ...         NaT        NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -1139,7 +1057,7 @@ and tools that allow you to compare the <em>real</em> that you provided and the
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="models.html" title="previous page">Models</a>
+    <a class='left-prev' id="prev-link" href="tabular_preset.html" title="previous page">Tabular Preset</a>
     <a class='right-next' id="next-link" href="ctgan.html" title="next page">CTGAN Model</a>
 
               </div>

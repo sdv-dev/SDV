@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.14.1.dev0 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.14.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -272,6 +272,7 @@
 <span class="sd">                * ``categorical_fuzzy``: Apply a CategoricalTransformer with the</span>
 <span class="sd">                  ``fuzzy`` argument set to ``True``, which makes it add gaussian</span>
 <span class="sd">                  noise around each value.</span>
+<span class="sd">            Defaults to ``categorical_fuzzy``.</span>
 <span class="sd">        rounding (int, str or None):</span>
 <span class="sd">            Define rounding scheme for ``NumericalTransformer``. If set to an int, values</span>
 <span class="sd">            will be rounded to that number of decimal places. If ``None``, values will not</span>
@@ -318,35 +319,7 @@
         <span class="s1">&#39;truncated_gaussian&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">TruncatedGaussian</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">_DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="n">_DISTRIBUTIONS</span><span class="p">[</span><span class="s1">&#39;parametric&#39;</span><span class="p">]</span>
-
-    <span class="n">_HYPERPARAMETERS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;str or copulas.univariate.Univariate&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;Univariate&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;Univariate distribution to use to model each column&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;choices&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="s1">&#39;Univariate&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;Gamma&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;Beta&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;StudentT&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;GaussianKDE&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;TruncatedGaussian&#39;</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;categorical_transformer&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;Type of transformer to use for the categorical variables&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;choices&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;categorical_fuzzy&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;one_hot_encoding&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;label_encoding&#39;</span>
-            <span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="n">_DEFAULT_TRANSFORMER</span> <span class="o">=</span> <span class="s1">&#39;one_hot_encoding&#39;</span>
+    <span class="n">_DEFAULT_TRANSFORMER</span> <span class="o">=</span> <span class="s1">&#39;categorical_fuzzy&#39;</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_validate_distribution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">distribution</span><span class="p">):</span>
@@ -457,9 +430,11 @@
 <span class="sd">                Data to be fitted.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">distribution</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">:</span>
+                <span class="c1"># Check if the column is a derived column.</span>
+                <span class="n">column_name</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.value&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span>
             <span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">)</span>

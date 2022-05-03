@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulagan &#8212; SDV 0.14.1.dev0 documentation</title>
+    <title>sdv.tabular.copulagan &#8212; SDV 0.14.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -314,6 +314,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="s1">&#39;parametric&#39;</span>
+    <span class="n">_field_distributions</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_default_distribution</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_ht</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="CopulaGAN.__init__"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.html#sdv.tabular.copulagan.CopulaGAN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -373,16 +376,20 @@
 <span class="sd">                Data to be learned.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">distributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span>
-        <span class="n">default</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
-        <span class="n">transformers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">field</span><span class="p">:</span> <span class="n">GaussianCopulaTransformer</span><span class="p">(</span>
-                <span class="n">distribution</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_data</span>
-            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.value&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="ow">in</span> <span class="n">fields</span> <span class="ow">and</span> <span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;categorical&#39;</span>
-        <span class="p">}</span>
+
+        <span class="n">transformers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
+            <span class="n">field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.value&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">and</span> <span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">field_name</span><span class="p">,</span>
+                <span class="nb">dict</span><span class="p">(),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
+                <span class="n">transformers</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussianCopulaTransformer</span><span class="p">(</span>
+                    <span class="n">distribution</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
+                <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_ht</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">field_transformers</span><span class="o">=</span><span class="n">transformers</span><span class="p">)</span>
         <span class="n">table_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ht</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 

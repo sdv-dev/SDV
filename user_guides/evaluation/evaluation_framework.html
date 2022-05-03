@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Evaluation Framework &#8212; SDV 0.14.1.dev0 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.14.1 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -287,11 +287,11 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0       17276      F        74.55  ...  2020-01-18 2020-08-25       7.0</span>
-<span class="go">1       17471      F        72.29  ...  2020-02-10 2020-07-25       6.0</span>
-<span class="go">2       17327      F        81.02  ...  2020-01-25 2020-09-30       7.0</span>
-<span class="go">3       17380      M        62.38  ...  2020-10-27 2020-07-24       3.0</span>
-<span class="go">4       17387      F        53.65  ...         NaT        NaT       NaN</span>
+<span class="go">0       17299      M        57.58  ...  2020-02-18 2020-10-05       5.0</span>
+<span class="go">1       17431      M        67.12  ...  2020-07-26 2020-05-21       3.0</span>
+<span class="go">2       17434      M        52.04  ...         NaT        NaT       NaN</span>
+<span class="go">3       17379      M        69.70  ...  2020-03-30 2021-01-24       9.0</span>
+<span class="go">4       17341      F        66.39  ...  2020-05-02 2020-08-19       4.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -308,7 +308,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.7211496459504819</span>
+<span class="gh">Out[10]: </span><span class="go">0.6665438839987646</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -372,7 +372,7 @@ names of the metrics that you want to apply.</p>
 <p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and
 <code class="docutils literal notranslate"><span class="pre">KSTest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.8947104070754424</span>
+<span class="gh">Out[12]: </span><span class="go">0.8755855296329238</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
