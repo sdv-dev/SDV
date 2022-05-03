@@ -339,6 +339,31 @@ the ``Metadata`` field specification.
 For this case in particular, we will indicate that the ``Symbol`` field
 needs to be generated using the regular expression ``[A-Z]{2,4}``.
 
+.. ipython:: python
+    :okwarning:
+
+    field_types = {
+        'Symbol': {
+            'type': 'id',
+            'subtype': 'string',
+            'regex': '[A-Z]{2,4}'
+        }
+    }
+    model = PAR(
+        entity_columns=entity_columns,
+        context_columns=context_columns,
+        sequence_index=sequence_index,
+        field_types=field_types
+    )
+    model.fit(data)
+
+After this, we can observe how the new ``Symbols`` are generated as
+indicated.
+
+.. ipython:: python
+    :okwarning:
+
+    model.sample(num_sequences=1).head()
 
 .. note::
 

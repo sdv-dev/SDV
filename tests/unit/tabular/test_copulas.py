@@ -48,12 +48,12 @@ class TestGaussianCopula:
             primary_key=['a_field'],
             constraints=[CustomConstraint()],
             field_distributions={'a_field': 'gaussian'},
-            default_distribution='beta',
+            default_distribution='bounded',
             categorical_transformer='categorical_fuzzy'
         )
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
-        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['beta']
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -70,7 +70,7 @@ class TestGaussianCopula:
                     'field_distributions': {
                         'a_field': 'gaussian'
                     },
-                    'default_distribution': 'beta',
+                    'default_distribution': 'bounded',
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
@@ -114,12 +114,12 @@ class TestGaussianCopula:
             }
         }
         gc = GaussianCopula(
-            default_distribution='gamma',
+            default_distribution='bounded',
             table_metadata=table_metadata,
         )
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
-        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['gamma']
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -137,7 +137,7 @@ class TestGaussianCopula:
                     'field_distributions': {
                         'a_field': 'gaussian'
                     },
-                    'default_distribution': 'gamma',
+                    'default_distribution': 'bounded',
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
