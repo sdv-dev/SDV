@@ -1,5 +1,30 @@
 # Release Notes
 
+## 0.14.1 - 2022-05-03
+
+This release adds a `TabularPreset`, available in the `sdv.lite` module, which allows users to easily optimize a tabular model for speed.
+In this release, we also include bug fixes for sampling with conditions, an unresolved warning, and setting field distributions. Finally,
+we include documentation updates for sampling and the new `TabularPreset`.
+
+### Bugs Fixed
+* Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/issues/732) by @katxiao
+* Sampling with conditions={column: 0.0} for float columns doesn't work - Issue [#525](https://github.com/sdv-dev/SDV/issues/525) by @shlomihod and @tssbas
+* resolved FutureWarning with Pandas replaced append by concat - Issue [#759](https://github.com/sdv-dev/SDV/issues/759) by @Deathn0t
+* Field distributions bug in CopulaGAN - Issue [#747](https://github.com/sdv-dev/SDV/issues/747) by @katxiao
+* Field distributions bug in GaussianCopula - Issue [#746](https://github.com/sdv-dev/SDV/issues/746) by @katxiao
+
+### New Features
+* Set default transformer to categorical_fuzzy - Issue [#768](https://github.com/sdv-dev/SDV/issues/768) by @amontanez24
+* Model nulls normally when tabular preset has constraints - Issue [#764](https://github.com/sdv-dev/SDV/issues/764) by @katxiao
+* Don't modify my metadata object - Issue [#754](https://github.com/sdv-dev/SDV/issues/754) by @amontanez24
+* Presets should be able to handle constraints - Issue [#753](https://github.com/sdv-dev/SDV/issues/753) by @katxiao
+* Change preset optimize_for --> name - Issue [#749](https://github.com/sdv-dev/SDV/issues/749) by @katxiao
+* Create a speed optimized Preset - Issue [#716](https://github.com/sdv-dev/SDV/issues/716) by @katxiao
+
+### Documentation Changes
+* Add tabular preset docs - Issue [#777](https://github.com/sdv-dev/SDV/issues/777) by @katxiao
+* sdv.sampling module is missing from the API - Issue [#740](https://github.com/sdv-dev/SDV/issues/740) by @katxiao
+
 ## 0.14.0 - 2022-03-21
 
 This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,

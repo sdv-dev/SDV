@@ -7,6 +7,7 @@ import os
 import pickle
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 
 import copulas
 import numpy as np
@@ -110,6 +111,7 @@ class BaseTabularModel:
             )
             self._metadata_fitted = False
         else:
+            table_metadata = deepcopy(table_metadata)
             for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
                     raise ValueError(
@@ -194,7 +196,7 @@ class BaseTabularModel:
             column_values = sampled[column]
             if column_values.dtype.kind == 'f':
                 distance = value * float_rtol
-                sampled = sampled[np.abs(column_values - value) < distance]
+                sampled = sampled[np.abs(column_values - value) <= distance]
                 sampled[column] = value
             else:
                 sampled = sampled[column_values == value]
@@ -247,7 +249,7 @@ class BaseTabularModel:
             sampled = self._metadata.reverse_transform(sampled)
 
             if previous_rows is not None:
-                sampled = previous_rows.append(sampled, ignore_index=True)
+                sampled = pd.concat([previous_rows, sampled], ignore_index=True)
 
             sampled = self._metadata.filter_valid(sampled)
 

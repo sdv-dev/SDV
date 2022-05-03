@@ -23,6 +23,57 @@ MODELS = [
 
 class TestBaseTabularModel:
 
+    def test___init__metadata_object(self):
+        """Test ``__init__`` passing a ``Table`` object.
+
+        In this case, the metadata object should be copied and stored as
+        ``instance.table_metadata``.
+
+        Input:
+            - table_metadata
+            - field_distributions
+            - default_distribution
+            - categorical_transformer
+
+        Side Effects
+            - attributes are set to the right values
+            - metadata is created with the right values
+            - ``instance.metadata`` is different than the object provided
+        """
+        # Setup
+        metadata_dict = {
+            'name': 'test',
+            'fields': {
+                'a_field': {
+                    'type': 'categorical'
+                },
+            },
+            'model_kwargs': {
+                'GaussianCopula': {
+                    'field_distributions': {
+                        'a_field': 'gaussian',
+                    },
+                    'categorical_transformer': 'categorical_fuzzy',
+                }
+            }
+        }
+        table_metadata = Table.from_dict(metadata_dict)
+
+        # Run
+        gc = GaussianCopula(
+            default_distribution='bounded',
+            table_metadata=table_metadata,
+        )
+
+        # Assert
+        assert gc._metadata.get_fields() == table_metadata.get_fields()
+        kwargs = gc._metadata.get_model_kwargs('GaussianCopula')
+        provided_kwargs = table_metadata.get_model_kwargs('GaussianCopula')
+        assert kwargs['field_distributions'] == provided_kwargs['field_distributions']
+        assert kwargs['categorical_transformer'] == provided_kwargs['categorical_transformer']
+        assert 'default_distribution' not in provided_kwargs
+        assert gc._metadata != table_metadata
+
     def test__sample_with_conditions_no_transformed_columns(self):
         """Test the ``BaseTabularModel.sample`` method with no transformed columns.
 
@@ -684,8 +735,9 @@ def test__init__passes_correct_parameters(metadata_mock):
     assert len(metadata_mock.mock_calls) == 5
     expected_calls = [
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
-             anonymize_fields=None, constraints=None, dtype_transformers={'O': 'one_hot_encoding'},
-             rounding=-1, max_value=100, min_value=-50),
+             anonymize_fields=None, constraints=None,
+             dtype_transformers={'O': 'categorical_fuzzy'}, rounding=-1, max_value=100,
+             min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
              rounding=-1, max_value=100, min_value=-50),
@@ -724,6 +776,31 @@ def test__sample_conditions_graceful_reject_sampling(model):
     model.fit(data)
     output = model._sample_conditions(conditions, 100, None, True, None)
     assert len(output) == 2, 'Only expected 2 valid rows.'
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test__sample_conditions_with_value_zero(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+    data = data.astype(float)
+
+    conditions = [
+        Condition(
+            {'column1': 0},
+            num_rows=1,
+        ),
+        Condition(
+            {'column1': 0.0},
+            num_rows=1,
+        )
+    ]
+
+    model.fit(data)
+    output = model._sample_conditions(conditions, 100, None, True, None)
+    assert len(output) == 2, 'Expected 2 valid rows.'
 
 
 def test__sample_rows_previous_rows_appended_correctly():

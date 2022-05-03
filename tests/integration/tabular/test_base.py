@@ -6,6 +6,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import Unique, UniqueCombinations
 from sdv.constraints.tabular import GreaterThan
+from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular.copulagan import CopulaGAN
 from sdv.tabular.copulas import GaussianCopula
@@ -24,6 +25,41 @@ def _isinstance_side_effect(*args, **kwargs):
         return True
     else:
         return isinstance(args[0], args[1])
+
+
+def test___init___copies_metadata():
+    """Test the ``__init__`` method.
+
+    This test assures that the metadata provided to the model is copied,
+    so that any modifications don't change the input.
+
+    Setup:
+        - Initialize two models with the same metadata and data.
+
+    Expected behavior:
+        - The metadata for each model and the provided metadata should all be different.
+    """
+    # Setup
+    metadata, data = load_tabular_demo('student_placements', metadata=True)
+
+    # Run
+    model = GaussianCopula(table_metadata=metadata,
+                           categorical_transformer='label_encoding',
+                           default_distribution='gamma')
+    model.fit(data)
+    model2 = GaussianCopula(table_metadata=metadata,
+                            categorical_transformer='label_encoding',
+                            default_distribution='beta')
+    model2.fit(data)
+
+    # Assert
+    assert model._metadata != metadata
+    assert model._metadata != model2._metadata
+    assert model2._metadata != metadata
+    gamma = 'copulas.univariate.gamma.GammaUnivariate'
+    beta = 'copulas.univariate.beta.BetaUnivariate'
+    assert all(distribution == gamma for distribution in model.get_distributions().values())
+    assert all(distribution == beta for distribution in model2.get_distributions().values())
 
 
 @pytest.mark.parametrize('model', MODELS)
