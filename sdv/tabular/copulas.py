@@ -1,6 +1,7 @@
 """Wrappers around copulas models."""
 
 import logging
+import warnings
 
 import copulas
 import copulas.multivariate
@@ -273,7 +274,11 @@ class GaussianCopula(BaseTabularModel):
 
         LOGGER.debug('Fitting %s to table %s; shape: %s', self._model.__class__.__name__,
                      self._metadata.name, table_data.shape)
-        self._model.fit(table_data)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self._model.fit(table_data)
+
         self._update_metadata()
 
     def sample_conditions(self, conditions, batch_size=None, randomize_samples=True,
