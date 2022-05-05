@@ -7,7 +7,6 @@ In this release, we also include bug fixes for sampling with conditions, an unre
 we include documentation updates for sampling and the new `TabularPreset`.
 
 ### Bugs Fixed
-* Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/issues/732) by @katxiao
 * Sampling with conditions={column: 0.0} for float columns doesn't work - Issue [#525](https://github.com/sdv-dev/SDV/issues/525) by @shlomihod and @tssbas
 * resolved FutureWarning with Pandas replaced append by concat - Issue [#759](https://github.com/sdv-dev/SDV/issues/759) by @Deathn0t
 * Field distributions bug in CopulaGAN - Issue [#747](https://github.com/sdv-dev/SDV/issues/747) by @katxiao
