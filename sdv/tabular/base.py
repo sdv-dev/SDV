@@ -43,11 +43,11 @@ class BaseTabularModel:
             included in the generated output.
             If ``None``, all the fields found in the data are used.
         field_types (dict[str, dict]):
-            Dictinary specifying the data types and subtypes
+            Dictionary specifying the data types and subtypes
             of the fields that will be modeled. Field types and subtypes
             combinations must be compatible with the SDV Metadata Schema.
         field_transformers (dict[str, str]):
-            Dictinary specifying which transformers to use for each field.
+            Dictionary specifying which transformers to use for each field.
             Available transformers are:
 
                 * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
