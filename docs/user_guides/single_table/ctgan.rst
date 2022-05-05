@@ -440,7 +440,7 @@ generated data and computational time.
 -   ``verbose``: Whether to print fit progress on stdout. Defaults to ``False``.
 
 -   ``cuda`` (bool or str): If ``True``, use CUDA. If a ``str``, use the
-    indicated device. If ``False``, do not use cuda at all.
+    indicated device. If ``False``, do not use cuda at all. Defaults to ``True``.
 
 .. warning::
 

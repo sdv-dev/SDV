@@ -146,7 +146,7 @@ class CTGAN(CTGANModel):
         discriminator_decay (float):
             Discriminator weight decay for the Adam Optimizer. Defaults to 1e-6.
         batch_size (int):
-            Number of data samples to process in each step.
+            Number of data samples to process in each step. Defaults to 500.
         discriminator_steps (int):
             Number of discriminator updates to do for each generator update.
             From the WGAN paper: https://arxiv.org/abs/1701.07875. WGAN paper
@@ -163,7 +163,7 @@ class CTGAN(CTGANModel):
             Defaults to 10.
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
+            If ``False``, do not use cuda at all. Defaults to ``True``.
         rounding (int, str or None):
             Define rounding scheme for ``NumericalTransformer``. If set to an int, values
             will be rounded to that number of decimal places. If ``None``, values will not
@@ -270,14 +270,14 @@ class TVAE(CTGANModel):
         l2scale (int):
             Regularization term. Defaults to 1e-5.
         batch_size (int):
-            Number of data samples to process in each step.
+            Number of data samples to process in each step. Defaults to 500.
         epochs (int):
             Number of training epochs. Defaults to 300.
         loss_factor (int):
             Multiplier for the reconstruction error. Defaults to 2.
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
+            If ``False``, do not use cuda at all. Defaults to ``True``.
         rounding (int, str or None):
             Define rounding scheme for ``NumericalTransformer``. If set to an int, values
             will be rounded to that number of decimal places. If ``None``, values will not

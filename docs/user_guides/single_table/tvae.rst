@@ -421,12 +421,10 @@ generated data and computational time.
 
 -   ``l2scale`` (int): Regularization term. Defaults to 1e-5.
 
--   ``batch_size`` (int): Number of data samples to process in each step.
-
 -   ``loss_factor`` (int): Multiplier for the reconstruction error. Defaults to 2.
 
 -   ``cuda`` (bool or str): If ``True``, use CUDA. If a ``str``, use the
-    indicated device. If ``False``, do not use cuda at all.
+    indicated device. If ``False``, do not use cuda at all. Defaults to ``True``.
 
 .. warning::
 
