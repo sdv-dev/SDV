@@ -419,7 +419,7 @@ generated data and computational time.
 -   ``decompress_dims`` (tuple or list of ints): Size of each hidden layer
     in the decoder. Defaults to (128, 128).
 
--   ``l2scale`` (int): Regularization term. Defaults to 1e-5.
+-   ``l2scale`` (float): Regularization term. Defaults to 1e-5.
 
 -   ``loss_factor`` (int): Multiplier for the reconstruction error. Defaults to 2.
 

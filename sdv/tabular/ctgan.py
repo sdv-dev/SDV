@@ -267,7 +267,7 @@ class TVAE(CTGANModel):
             Size of each hidden layer in the encoder. Defaults to (128, 128).
         decompress_dims (tuple or list of ints):
            Size of each hidden layer in the decoder. Defaults to (128, 128).
-        l2scale (int):
+        l2scale (float):
             Regularization term. Defaults to 1e-5.
         batch_size (int):
             Number of data samples to process in each step. Defaults to 500.
