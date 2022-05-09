@@ -243,7 +243,7 @@ class TestGaussianCopula:
         pd.testing.assert_frame_equal(expected_data, passed_table_data)
         gaussian_copula._update_metadata.assert_called_once_with()
         mock_warnings.catch_warnings.assert_called_once()
-        mock_warnings.simplefilter.assert_called_once_with('ignore')
+        mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)

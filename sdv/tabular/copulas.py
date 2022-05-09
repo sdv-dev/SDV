@@ -276,7 +276,7 @@ class GaussianCopula(BaseTabularModel):
                      self._metadata.name, table_data.shape)
 
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+            warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(table_data)
 
         self._update_metadata()
