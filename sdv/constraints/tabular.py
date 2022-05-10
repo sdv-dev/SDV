@@ -621,7 +621,7 @@ class ColumnFormula(Constraint):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
         drop_column (bool):
-            Whether or not to drop the constraint column.
+            Whether to drop the constraint column.
     """
 
     def __init__(self, column, formula, handling_strategy='transform', drop_column=True):
@@ -717,11 +717,11 @@ class Between(Constraint):
             Otherwise, a model will be trained and used to sample other columns
             based on the conditioned column. Defaults to False.
         high_is_scalar(bool or None):
-            Whether or not the value for high is a scalar or a column name.
+            Whether the value for high is a scalar or a column name.
             If ``None``, this will be determined during the ``fit`` method
             by checking if the value provided is a column name.
         low_is_scalar(bool or None):
-            Whether or not the value for low is a scalar or a column name.
+            Whether the value for low is a scalar or a column name.
             If ``None``, this will be determined during the ``fit`` method
             by checking if the value provided is a column name.
     """

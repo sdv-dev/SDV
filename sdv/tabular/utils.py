@@ -162,7 +162,7 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
 
     Args:
         is_tmp_file (bool):
-            Whether or not the output file is a temp file.
+            Whether the output file is a temp file.
         output_file_path (str):
             The output file path.
         sampling_error:

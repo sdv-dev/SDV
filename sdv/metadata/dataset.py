@@ -366,7 +366,7 @@ class Metadata:
             table_name (str):
                 Table name for which to retrive the ``dtypes``.
             ids (bool):
-                Whether or not include the id fields. Defaults to ``False``.
+                Whether include the id fields. Defaults to ``False``.
 
         Returns:
             dict:

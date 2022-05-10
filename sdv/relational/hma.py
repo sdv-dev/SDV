@@ -569,7 +569,7 @@ class HMA1(BaseRelationalModel):
                 Number of rows to be sampled on the first parent tables. If ``None``,
                 sample the same number of rows as in the original tables.
             reset_primary_keys (bool):
-                Whether or not reset the primary key generators.
+                Whether reset the primary key generators.
 
         Returns:
             dict:

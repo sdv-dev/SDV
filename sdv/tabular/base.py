@@ -451,7 +451,7 @@ class BaseTabularModel:
 
         Args:
             randomize_samples (bool):
-                Whether or not to randomize the generated samples.
+                Whether to randomize the generated samples.
         """
         if self._model is None:
             return
@@ -469,7 +469,7 @@ class BaseTabularModel:
             num_rows (int):
                 Number of rows to sample. This parameter is required.
             randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
+                Whether to use a fixed seed when sampling. Defaults
                 to True.
             batch_size (int or None):
                 The batch size to sample. Defaults to `num_rows`, if None.
@@ -646,7 +646,7 @@ class BaseTabularModel:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
+                Either or not to use a fixed seed when sampling. Defaults
                 to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to
@@ -735,7 +735,7 @@ class BaseTabularModel:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
+                Whether to use a fixed seed when sampling. Defaults
                 to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to

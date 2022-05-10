@@ -91,10 +91,10 @@ class SDV:
                 Amount of rows to sample. If ``None``, sample the same number of rows
                 as there were in the original table.
             sample_children (bool):
-                Whether or not sample child tables. Used only if ``table_name`` is
+                Whether sample child tables. Used only if ``table_name`` is
                 given. Defaults to ``True``.
             reset_primary_keys (bool):
-                Whether or not reset the primary keys generators. Defaults to ``False``.
+                Whether reset the primary keys generators. Defaults to ``False``.
 
         Returns:
             dict or pandas.DataFrame:

@@ -343,7 +343,7 @@ class Table:
 
         Args:
             ids (bool):
-                Whether or not to include the id fields. Defaults to ``False``.
+                Whether to include the id fields. Defaults to ``False``.
 
         Returns:
             dict:
