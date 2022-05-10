@@ -422,7 +422,7 @@ class BaseTabularModel:
     def _validate_file_path(self, output_file_path):
         """Validate the user-passed output file arg, and create the file."""
         output_path = None
-        if output_file_path == DISABLE_TMP_FILE:
+        if output_file_path == DISABLE_TMP_FILE or output_file_path is None:
             # Temporary way of disabling the output file feature, used by HMA1.
             return output_path
 

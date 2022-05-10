@@ -635,6 +635,13 @@ class TestBaseTabularModel:
         with pytest.raises(AssertionError, match='path/to/file already exists'):
             BaseTabularModel._validate_file_path(model, 'file_path')
 
+    def test_given_none_output_file_path_when_validate_file_path_then_return_none(self):
+        model = Mock(spec_set=CTGAN)
+        expected = None
+
+        actual = BaseTabularModel._validate_file_path(model, output_file_path=None)
+        assert actual is expected
+
     @patch('sdv.tabular.base.os')
     def test_sample_with_default_file_path(self, os_mock):
         """Test the `BaseTabularModel.sample` method with the default file path.
