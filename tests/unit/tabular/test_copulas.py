@@ -189,7 +189,8 @@ class TestGaussianCopula:
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)
-    def test__fit(self, gm_mock):
+    @patch('sdv.tabular.copulas.warnings')
+    def test__fit(self, mock_warnings, gm_mock):
         """Test the ``GaussianCopula._fit`` method.
 
         The ``_fit`` method is expected to:
@@ -202,6 +203,7 @@ class TestGaussianCopula:
 
         Setup:
             - mock _get_distribution to return a distribution dict
+            - mock warnings to ensure that during the model fit those are being ignored.
 
         Input:
             - pandas.DataFrame
@@ -240,6 +242,8 @@ class TestGaussianCopula:
 
         pd.testing.assert_frame_equal(expected_data, passed_table_data)
         gaussian_copula._update_metadata.assert_called_once_with()
+        mock_warnings.catch_warnings.assert_called_once()
+        mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)
