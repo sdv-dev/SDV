@@ -1,4 +1,4 @@
-from sdv.constraints import ColumnFormula, GreaterThan, FixedCombinations
+from sdv.constraints import ColumnFormula, FixedCombinations, GreaterThan
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 

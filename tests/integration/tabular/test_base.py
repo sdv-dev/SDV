@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import Unique, FixedCombinations
+from sdv.constraints import FixedCombinations, Unique
 from sdv.constraints.tabular import GreaterThan
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition

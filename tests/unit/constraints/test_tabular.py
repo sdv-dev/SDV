@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique, FixedCombinations)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative,
+    OneHotEncoding, Positive, Rounding, Unique)
 
 
 def dummy_transform_table(table_data):
