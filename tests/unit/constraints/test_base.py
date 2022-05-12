@@ -709,7 +709,7 @@ class TestConstraint():
         # Setup
         constraint_dict = {
             'constraint': 'sdv.constraints.tabular.FixedCombinations',
-            'columns': ['a', 'b'],
+            'column_names': ['a', 'b'],
         }
 
         # Run
@@ -733,7 +733,7 @@ class TestConstraint():
         # Setup
         constraint_dict = {
             'constraint': 'FixedCombinations',
-            'columns': ['a', 'b'],
+            'column_names': ['a', 'b'],
         }
 
         # Run
@@ -754,14 +754,14 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        instance = FixedCombinations(columns=['a', 'b'], handling_strategy='transform')
+        instance = FixedCombinations(column_names=['a', 'b'], handling_strategy='transform')
         constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
             'constraint': 'sdv.constraints.tabular.FixedCombinations',
             'handling_strategy': 'transform',
-            'columns': ['a', 'b'],
+            'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict
 

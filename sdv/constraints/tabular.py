@@ -123,7 +123,7 @@ class FixedCombinations(Constraint):
     seen during training.
 
     Args:
-        columns (list[str]):
+        column_names (list[str]):
             Names of the columns that need to produce unique combinations. Must
             contain at least two columns.
         handling_strategy (str):
@@ -140,13 +140,13 @@ class FixedCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
-    def __init__(self, columns, handling_strategy='transform', fit_columns_model=False):
-        if len(columns) < 2:
+    def __init__(self, column_names, handling_strategy='transform', fit_columns_model=False):
+        if len(column_names) < 2:
             raise ValueError('FixedCombinations requires at least two constraint columns.')
 
-        self._columns = columns
-        self.constraint_columns = tuple(columns)
-        self.rebuild_columns = tuple(columns)
+        self._columns = column_names
+        self.constraint_columns = tuple(column_names)
+        self.rebuild_columns = tuple(column_names)
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 

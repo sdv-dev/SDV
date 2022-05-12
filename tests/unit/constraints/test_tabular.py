@@ -393,7 +393,7 @@ class TestFixedCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
 
         # Assert
         assert instance._columns == columns
@@ -411,7 +411,7 @@ class TestFixedCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = FixedCombinations(columns=columns, handling_strategy='transform')
+        instance = FixedCombinations(column_names=columns, handling_strategy='transform')
 
         # Assert
         assert instance.rebuild_columns == tuple(columns)
@@ -429,7 +429,7 @@ class TestFixedCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = FixedCombinations(columns=columns, handling_strategy='reject_sampling')
+        instance = FixedCombinations(column_names=columns, handling_strategy='reject_sampling')
 
         # Assert
         assert instance.rebuild_columns == ()
@@ -448,7 +448,7 @@ class TestFixedCombinations():
 
         # Run and assert
         with pytest.raises(ValueError):
-            FixedCombinations(columns=columns)
+            FixedCombinations(column_names=columns)
 
     def test_fit(self):
         """Test the ``FixedCombinations.fit`` method.
@@ -462,7 +462,7 @@ class TestFixedCombinations():
         """
         # Setup
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
 
         # Run
         table_data = pd.DataFrame({
@@ -501,7 +501,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -530,7 +530,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -566,7 +566,7 @@ class TestFixedCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -596,7 +596,7 @@ class TestFixedCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -632,7 +632,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -669,7 +669,7 @@ class TestFixedCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -703,7 +703,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns, fit_columns_model=False)
+        instance = FixedCombinations(column_names=columns, fit_columns_model=False)
         instance.fit(table_data)
 
         # Run/Assert
@@ -730,7 +730,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -768,7 +768,7 @@ class TestFixedCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = FixedCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run

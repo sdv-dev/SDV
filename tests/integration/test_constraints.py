@@ -12,7 +12,7 @@ def test_constraints(tmpdir):
     employees = load_tabular_demo()
 
     unique_company_department_constraint = FixedCombinations(
-        columns=['company', 'department'],
+        column_names=['company', 'department'],
         handling_strategy='transform',
         fit_columns_model=False
     )

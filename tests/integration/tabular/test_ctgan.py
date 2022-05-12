@@ -160,7 +160,7 @@ def test_unique_combination_constraint():
     employees = load_tabular_demo()
 
     unique_company_department_constraint = FixedCombinations(
-        columns=['company', 'department'],
+        column_names=['company', 'department'],
         handling_strategy='transform'
     )
 

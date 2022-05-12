@@ -277,7 +277,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
     constraint = FixedCombinations(
-        columns=['city', 'state'],
+        column_names=['city', 'state'],
         handling_strategy='transform',
         fit_columns_model=False
     )
@@ -339,7 +339,7 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock, isinstance_
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
     constraint = FixedCombinations(
-        columns=['city', 'state'],
+        column_names=['city', 'state'],
         handling_strategy='transform',
         fit_columns_model=True,
     )
