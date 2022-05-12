@@ -11,7 +11,7 @@ import pytest
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique, UniqueCombinations)
+    Rounding, Unique, FixedCombinations)
 
 
 def dummy_transform_table(table_data):
@@ -378,10 +378,10 @@ class TestCustomConstraint():
         np.testing.assert_array_equal(is_valid, expected_out)
 
 
-class TestUniqueCombinations():
+class TestFixedCombinations():
 
     def test___init__(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         It is expected to create a new Constraint instance and receiving the names of
         the columns that need to produce unique combinations.
@@ -393,13 +393,13 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
 
         # Assert
         assert instance._columns == columns
 
     def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         The rebuild columns should only be set if the ``handling_strategy``
         is not ``reject_sampling``.
@@ -411,13 +411,13 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns, handling_strategy='transform')
+        instance = FixedCombinations(columns=columns, handling_strategy='transform')
 
         # Assert
         assert instance.rebuild_columns == tuple(columns)
 
     def test___init__does_not_set_rebuild_columns_reject_sampling(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         The rebuild columns should not be set if the ``handling_strategy``
         is ``reject_sampling``.
@@ -429,15 +429,15 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns, handling_strategy='reject_sampling')
+        instance = FixedCombinations(columns=columns, handling_strategy='reject_sampling')
 
         # Assert
         assert instance.rebuild_columns == ()
 
     def test___init__with_one_column(self):
-        """Test the ``UniqueCombinations.__init__`` method with only one constraint column.
+        """Test the ``FixedCombinations.__init__`` method with only one constraint column.
 
-        Expect a ``ValueError`` because UniqueCombinations requires at least two
+        Expect a ``ValueError`` because FixedCombinations requires at least two
         constraint columns.
 
         Side effects:
@@ -448,13 +448,13 @@ class TestUniqueCombinations():
 
         # Run and assert
         with pytest.raises(ValueError):
-            UniqueCombinations(columns=columns)
+            FixedCombinations(columns=columns)
 
     def test_fit(self):
-        """Test the ``UniqueCombinations.fit`` method.
+        """Test the ``FixedCombinations.fit`` method.
 
-        The ``UniqueCombinations.fit`` method is expected to:
-        - Call ``UniqueCombinations._valid_separator``.
+        The ``FixedCombinations.fit`` method is expected to:
+        - Call ``FixedCombinations._valid_separator``.
         - Find a valid separator for the data and generate the joint column name.
 
         Input:
@@ -462,7 +462,7 @@ class TestUniqueCombinations():
         """
         # Setup
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
 
         # Run
         table_data = pd.DataFrame({
@@ -482,7 +482,7 @@ class TestUniqueCombinations():
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
 
     def test_is_valid_true(self):
-        """Test the ``UniqueCombinations.is_valid`` method.
+        """Test the ``FixedCombinations.is_valid`` method.
 
         If the input data satisfies the constraint, result is a series of ``True`` values.
 
@@ -501,7 +501,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -511,7 +511,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_false(self):
-        """Test the ``UniqueCombinations.is_valid`` method.
+        """Test the ``FixedCombinations.is_valid`` method.
 
         If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
 
@@ -530,7 +530,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -546,7 +546,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_non_string_true(self):
-        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+        """Test the ``FixedCombinations.is_valid`` method with non string columns.
 
         If the input data satisfies the constraint, result is a series of ``True`` values.
 
@@ -566,7 +566,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -576,7 +576,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_non_string_false(self):
-        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+        """Test the ``FixedCombinations.is_valid`` method with non string columns.
 
         If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
 
@@ -596,7 +596,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -613,7 +613,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_transform(self):
-        """Test the ``UniqueCombinations.transform`` method.
+        """Test the ``FixedCombinations.transform`` method.
 
         It is expected to return a Table data with the columns concatenated by the separator.
 
@@ -632,7 +632,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -649,7 +649,7 @@ class TestUniqueCombinations():
             assert False
 
     def test_transform_non_string(self):
-        """Test the ``UniqueCombinations.transform`` method with non strings.
+        """Test the ``FixedCombinations.transform`` method with non strings.
 
         It is expected to return a Table data with the columns concatenated by the separator.
 
@@ -669,7 +669,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -686,7 +686,7 @@ class TestUniqueCombinations():
             assert False
 
     def test_transform_not_all_columns_provided(self):
-        """Test the ``UniqueCombinations.transform`` method.
+        """Test the ``FixedCombinations.transform`` method.
 
         If some of the columns needed for the transform are missing, and
         ``fit_columns_model`` is False, it will raise a ``MissingConstraintColumnError``.
@@ -703,7 +703,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns, fit_columns_model=False)
+        instance = FixedCombinations(columns=columns, fit_columns_model=False)
         instance.fit(table_data)
 
         # Run/Assert
@@ -711,7 +711,7 @@ class TestUniqueCombinations():
             instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
     def test_reverse_transform(self):
-        """Test the ``UniqueCombinations.reverse_transform`` method.
+        """Test the ``FixedCombinations.reverse_transform`` method.
 
         It is expected to return the original data separating the concatenated columns.
 
@@ -730,7 +730,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run
@@ -748,7 +748,7 @@ class TestUniqueCombinations():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_non_string(self):
-        """Test the ``UniqueCombinations.reverse_transform`` method with a non string column.
+        """Test the ``FixedCombinations.reverse_transform`` method with a non string column.
 
         It is expected to return the original data separating the concatenated columns.
 
@@ -768,7 +768,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(columns=columns)
         instance.fit(table_data)
 
         # Run

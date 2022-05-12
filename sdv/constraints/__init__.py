@@ -3,14 +3,14 @@
 from sdv.constraints.base import Constraint
 from sdv.constraints.tabular import (
     Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique, UniqueCombinations)
+    Rounding, Unique, FixedCombinations)
 
 __all__ = [
     'Constraint',
     'ColumnFormula',
     'CustomConstraint',
     'GreaterThan',
-    'UniqueCombinations',
+    'FixedCombinations',
     'Between',
     'Negative',
     'Positive',

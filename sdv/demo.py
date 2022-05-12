@@ -404,7 +404,7 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
             },
             'constraints': [
                 {
-                    'constraint': 'UniqueCombinations',
+                    'constraint': 'FixedCombinations',
                     'columns': ['company', 'department'],
                 },
                 {

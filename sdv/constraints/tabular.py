@@ -9,7 +9,7 @@ Currently implemented constraints are:
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
       and validation.
-    * UniqueCombinations: Ensure that the combinations of values
+    * FixedCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
@@ -109,7 +109,7 @@ class CustomConstraint(Constraint):
             self.is_valid = self._run_is_valid
 
 
-class UniqueCombinations(Constraint):
+class FixedCombinations(Constraint):
     """Ensure that the combinations across multiple colums stay unique.
 
     One simple example of this constraint can be found in a table that
@@ -142,7 +142,7 @@ class UniqueCombinations(Constraint):
 
     def __init__(self, columns, handling_strategy='transform', fit_columns_model=False):
         if len(columns) < 2:
-            raise ValueError('UniqueCombinations requires at least two constraint columns.')
+            raise ValueError('FixedCombinations requires at least two constraint columns.')
 
         self._columns = columns
         self.constraint_columns = tuple(columns)

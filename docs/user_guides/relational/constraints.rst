@@ -10,7 +10,7 @@ In order to use single-table constraints within a relational model, you can pass
 in a list of applicable constraints when adding a table to your relational ``Metadata``.
 (See :ref:`relational_metadata` for more information on constructing a ``Metadata`` object.)
 
-In this example, we wish to add a ``UniqueCombinations`` constraint to our ``sessions`` table,
+In this example, we wish to add a ``FixedCombinations`` constraint to our ``sessions`` table,
 which is a child table of ``users``. First, we will create a ``Metadata`` object and add the
 ``users`` table.
 
@@ -43,9 +43,9 @@ appear in the original data.
 .. ipython:: python
     :okwarning:
 
-    from sdv.constraints import UniqueCombinations
+    from sdv.constraints import FixedCombinations
 
-    constraint = UniqueCombinations(columns=['device', 'os'])
+    constraint = FixedCombinations(columns=['device', 'os'])
 
     metadata.add_table(
         name='sessions',
