@@ -162,11 +162,11 @@ def test_conditional_sampling_numerical():
 def test_unique_combination_constraint():
     employees = load_tabular_demo()
 
-    unique_company_department_constraint = FixedCombinations(
+    fixed_company_department_constraint = FixedCombinations(
         column_names=['company', 'department'],
         handling_strategy='transform'
     )
 
-    model = CopulaGAN(constraints=[unique_company_department_constraint])
+    model = CopulaGAN(constraints=[fixed_company_department_constraint])
     model.fit(employees)
     model.sample(10)

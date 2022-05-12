@@ -11,7 +11,7 @@ def test_constraints(tmpdir):
 
     employees = load_tabular_demo()
 
-    unique_company_department_constraint = FixedCombinations(
+    fixed_company_department_constraint = FixedCombinations(
         column_names=['company', 'department'],
         handling_strategy='transform',
         fit_columns_model=False
@@ -31,7 +31,7 @@ def test_constraints(tmpdir):
     )
 
     constraints = [
-        unique_company_department_constraint,
+        fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint
     ]

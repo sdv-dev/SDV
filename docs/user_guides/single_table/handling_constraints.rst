@@ -376,7 +376,7 @@ constraints that we just defined as a ``list``:
 
     constraints = [
         unique_employee_id_company_constraint,
-        unique_company_department_constraint,
+        fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
         salary_gt_30000_constraint,
         experience_years_gt_one_constraint,	
