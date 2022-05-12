@@ -1,8 +1,0 @@
-digraph Metadata {
-	node [fillcolor=lightgoldenrod1 shape=Mrecord style=filled]
-	users [label="{users|user_id : id - integer\lcountry : categorical\lgender : categorical\lage : numerical - integer\l|Primary key: user_id\l}"]
-	sessions [label="{sessions|session_id : id - integer\luser_id : id - integer\ldevice : categorical\los : categorical\lminutes : numerical - integer\l|Primary key: session_id\lForeign key (users): user_id\l}"]
-	transactions [label="{transactions|transaction_id : id - integer\lsession_id : id - integer\ltimestamp : datetime\lamount : numerical - float\lcancelled : boolean\l|Primary key: transaction_id\lForeign key (sessions): session_id\l}"]
-	users -> sessions [label="   sessions.user_id > users.user_id" arrowhead=oinv]
-	sessions -> transactions [label="   transactions.session_id > sessions.session_id" arrowhead=oinv]
-}
