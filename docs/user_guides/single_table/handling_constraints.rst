@@ -157,8 +157,8 @@ order to use this constraint we will need to import it from the
 
     from sdv.constraints import FixedCombinations
 
-    unique_company_department_constraint = FixedCombinations(
-        columns=['company', 'department'],
+    fixed_company_department_constraint = FixedCombinations(
+        column_names=['company', 'department'],
         handling_strategy='transform'
     )
 

@@ -45,7 +45,7 @@ appear in the original data.
 
     from sdv.constraints import FixedCombinations
 
-    constraint = FixedCombinations(columns=['device', 'os'])
+    constraint = FixedCombinations(column_names=['device', 'os'])
 
     metadata.add_table(
         name='sessions',
