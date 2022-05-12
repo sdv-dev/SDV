@@ -61,22 +61,6 @@ class GaussianCopula(BaseTabularModel):
             the distribution that needs to be used. The distributions can be passed as either
             a ``copulas.univariate`` instance or as one of the following values:
 
-                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
-                  This may result in non-parametric models being used.
-                * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to parametric distributions only.
-                * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to semi-bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and bounded distributions
-                  only.
-                * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and semi-bounded
-                  distributions only.
                 * ``gaussian``: Use a Gaussian distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
@@ -87,7 +71,8 @@ class GaussianCopula(BaseTabularModel):
 
         default_distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use by default. To choose from the list
-            of possible ``field_distribution`` values. Defaults to ``parametric``.
+            of possible ``field_distribution`` values.
+            Defaults to ``truncated_gaussian``.
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, which must be one of the
             following values:
@@ -129,21 +114,6 @@ class GaussianCopula(BaseTabularModel):
     _model = None
 
     _DISTRIBUTIONS = {
-        'univariate': copulas.univariate.Univariate,
-        'parametric': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC),
-        'bounded': copulas.univariate.Univariate(
-            bounded=copulas.univariate.BoundedType.BOUNDED),
-        'semi_bounded': copulas.univariate.Univariate(
-            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED),
-        'parametric_bounded': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC,
-            bounded=copulas.univariate.BoundedType.BOUNDED,
-        ),
-        'parametric_semi_bounded': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC,
-            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED,
-        ),
         'gaussian': copulas.univariate.GaussianUnivariate,
         'gamma': copulas.univariate.GammaUnivariate,
         'beta': copulas.univariate.BetaUnivariate,
@@ -151,7 +121,7 @@ class GaussianCopula(BaseTabularModel):
         'gaussian_kde': copulas.univariate.GaussianKDE,
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
-    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['parametric']
+    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['truncated_gaussian']
     _DEFAULT_TRANSFORMER = 'categorical_fuzzy'
 
     @classmethod
