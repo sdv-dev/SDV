@@ -110,7 +110,7 @@ class CustomConstraint(Constraint):
 
 
 class FixedCombinations(Constraint):
-    """Ensure that the combinations across multiple colums stay unique.
+    """Ensure that the combinations across multiple colums are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can
@@ -124,7 +124,7 @@ class FixedCombinations(Constraint):
 
     Args:
         column_names (list[str]):
-            Names of the columns that need to produce unique combinations. Must
+            Names of the columns that need to produce fixed combinations. Must
             contain at least two columns.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
@@ -159,7 +159,7 @@ class FixedCombinations(Constraint):
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.
-            - Generating a mapping of the unique combinations
+            - Generating a mapping of the fixed combinations
               to a unique identifier.
 
         Args:

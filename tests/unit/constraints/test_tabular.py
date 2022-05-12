@@ -384,7 +384,7 @@ class TestFixedCombinations():
         """Test the ``FixedCombinations.__init__`` method.
 
         It is expected to create a new Constraint instance and receiving the names of
-        the columns that need to produce unique combinations.
+        the columns that need to produce fixed combinations.
 
         Side effects:
         - instance._colums == columns
