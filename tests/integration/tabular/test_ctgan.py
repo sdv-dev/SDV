@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import UniqueCombinations
+from sdv.constraints import FixedCombinations
 from sdv.demo import load_demo, load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular.ctgan import CTGAN
@@ -159,11 +159,11 @@ def test_conditional_sampling_numerical():
 def test_unique_combination_constraint():
     employees = load_tabular_demo()
 
-    unique_company_department_constraint = UniqueCombinations(
-        columns=['company', 'department'],
+    fixed_company_department_constraint = FixedCombinations(
+        column_names=['company', 'department'],
         handling_strategy='transform'
     )
 
-    model = CTGAN(constraints=[unique_company_department_constraint])
+    model = CTGAN(constraints=[fixed_company_department_constraint])
     model.fit(employees)
     model.sample(10)

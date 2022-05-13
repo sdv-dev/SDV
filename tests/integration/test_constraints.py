@@ -1,4 +1,4 @@
-from sdv.constraints import ColumnFormula, GreaterThan, UniqueCombinations
+from sdv.constraints import ColumnFormula, FixedCombinations, GreaterThan
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 
@@ -11,8 +11,8 @@ def test_constraints(tmpdir):
 
     employees = load_tabular_demo()
 
-    unique_company_department_constraint = UniqueCombinations(
-        columns=['company', 'department'],
+    fixed_company_department_constraint = FixedCombinations(
+        column_names=['company', 'department'],
         handling_strategy='transform',
         fit_columns_model=False
     )
@@ -31,7 +31,7 @@ def test_constraints(tmpdir):
     )
 
     constraints = [
-        unique_company_department_constraint,
+        fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
         years_in_the_company_constraint
     ]

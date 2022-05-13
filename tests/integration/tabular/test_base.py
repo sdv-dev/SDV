@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import Unique, UniqueCombinations
+from sdv.constraints import FixedCombinations, Unique
 from sdv.constraints.tabular import GreaterThan
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
@@ -276,8 +276,8 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     """
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
-    constraint = UniqueCombinations(
-        columns=['city', 'state'],
+    constraint = FixedCombinations(
+        column_names=['city', 'state'],
         handling_strategy='transform',
         fit_columns_model=False
     )
@@ -338,8 +338,8 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock, isinstance_
     """
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
-    constraint = UniqueCombinations(
-        columns=['city', 'state'],
+    constraint = FixedCombinations(
+        column_names=['city', 'state'],
         handling_strategy='transform',
         fit_columns_model=True,
     )
