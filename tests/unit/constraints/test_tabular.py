@@ -5585,7 +5585,7 @@ class TestUnique():
         valid = instance.is_valid(data)
 
         # Assert
-        expected = pd.Series([True, True, False, False, False])
+        expected = pd.Series([True, True, True, False, False, False])
         pd.testing.assert_series_equal(valid, expected)
 
     def test_is_valid_multiple_columns_nans(self):
