@@ -5560,3 +5560,57 @@ class TestUnique():
         # Assert
         expected = pd.Series([True, False, False, True, True, False])
         pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_nans(self):
+        """Test the ``Unique.is_valid`` method for one column with nans.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+        ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
+
+        Input:
+        - DataFrame with some repeated values, some of which are nan's.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns=['a'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, None, 2, np.nan, float('nan'), 1],
+            'b': [np.nan, 1, None, float('nan'), float('nan'), 1],
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, False, False, False])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_multiple_columns_nans(self):
+        """Test the ``Unique.is_valid`` method for multiple columns with nans.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+        ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns, some of which are nan's.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, None, 1, np.nan, float('nan'), 1],
+            'b': [np.nan, 1, None, float('nan'), float('nan'), 1],
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, False, True, False, True])
+        pd.testing.assert_series_equal(valid, expected)
