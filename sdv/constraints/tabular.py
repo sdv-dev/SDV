@@ -17,9 +17,11 @@ Currently implemented constraints are:
     * Negative: Ensure that the values in given columns are always negative.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
+    * Rounding: Round a column based on the specified number of digits.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
+    * Unique: Ensure that each value for a specified column/group of columns is unique.
 """
 
 import operator
