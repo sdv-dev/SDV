@@ -1150,4 +1150,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return table_data.groupby(self.columns).cumcount() == 0
+        return table_data.groupby(self.columns, dropna=False).cumcount() == 0
