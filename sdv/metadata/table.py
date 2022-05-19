@@ -10,7 +10,7 @@ import rdt
 from faker import Faker
 
 from sdv.constraints.base import Constraint
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintErrors
 from sdv.errors import ConstraintsNotMetError
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
@@ -443,10 +443,17 @@ class Table:
         return transformers
 
     def _fit_transform_constraints(self, data):
+        errors = []
         for constraint in self._constraints:
+            #try:
             data = constraint.fit_transform(data)
+        #    except (Exception, ConstraintsNotMetError) as e:
+        #        errors.append(e)
 
+        #if errors:
+        #    raise MultipleConstraintErrors(errors)
         return data
+        
 
     def _fit_hyper_transformer(self, data, extra_columns):
         """Create and return a new ``rdt.HyperTransformer`` instance.
@@ -585,6 +592,7 @@ class Table:
         data = self._anonymize(data)
 
         LOGGER.info('Fitting constraints for table %s', self.name)
+        print('no?')
         constrained = self._fit_transform_constraints(data)
         extra_columns = set(constrained.columns) - set(data.columns)
 
@@ -609,25 +617,6 @@ class Table:
                     raise ValueError('on_missing_column must be \'drop\' or \'error\'')
 
         return data
-
-    def _validate_data_on_constraints(self, data):
-        """Make sure the given data is valid for the given constraints.
-
-        Args:
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            None
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
-        """
-        for constraint in self._constraints:
-            if set(constraint.constraint_columns).issubset(data.columns.values):
-                if not constraint.is_valid(data).all():
-                    raise ConstraintsNotMetError('Data is not valid for the given constraints')
 
     def transform(self, data, on_missing_column='error'):
         """Transform the given data.
@@ -654,8 +643,6 @@ class Table:
         fields = [field for field in self.get_dtypes(ids=False) if field in data.columns]
         LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
-
-        self._validate_data_on_constraints(data)
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
         data = self._transform_constraints(data, on_missing_column)

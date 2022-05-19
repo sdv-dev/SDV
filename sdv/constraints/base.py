@@ -278,7 +278,26 @@ class Constraint(metaclass=ConstraintMeta):
                 Input data unmodified.
         """
         table_data = self._validate_constraint_columns(table_data)
+        self._validate_data_on_constraint(table_data)
         return self._transform(table_data)
+
+    def _validate_data_on_constraint(self, table_data):
+        """Make sure the given data is valid for the given constraints.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            None
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
+        if constraint.constraint_columns.issubset(data.columns.values):
+            if not constraint.is_valid(data).all():
+                raise ConstraintsNotMetError('Data is not valid for the given constraints')
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
