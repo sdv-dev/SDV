@@ -1154,4 +1154,7 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return table_data.groupby(self.columns, dropna=False).cumcount() == 0
+        print('table_data')
+        data = table_data.groupby(self.columns, dropna=False).cumcount() == 0
+        print(data)
+        return data

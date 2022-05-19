@@ -12,6 +12,7 @@ from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -259,6 +260,24 @@ class Constraint(metaclass=ConstraintMeta):
 
         return table_data
 
+    def _validate_data_on_constraint(self, table_data):
+        """Make sure the given data is valid for the given constraints.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            None
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
+        if set(self.constraint_columns).issubset(table_data.columns.values):
+            if not self.is_valid(table_data).all():
+                raise ConstraintsNotMetError('Data is not valid for the given constraints')
+
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
 
@@ -277,27 +296,9 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        table_data = self._validate_constraint_columns(table_data)
         self._validate_data_on_constraint(table_data)
+        table_data = self._validate_constraint_columns(table_data)
         return self._transform(table_data)
-
-    def _validate_data_on_constraint(self, table_data):
-        """Make sure the given data is valid for the given constraints.
-
-        Args:
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            None
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
-        """
-        if constraint.constraint_columns.issubset(data.columns.values):
-            if not constraint.is_valid(data).all():
-                raise ConstraintsNotMetError('Data is not valid for the given constraints')
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.

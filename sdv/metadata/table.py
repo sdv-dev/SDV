@@ -445,15 +445,14 @@ class Table:
     def _fit_transform_constraints(self, data):
         errors = []
         for constraint in self._constraints:
-            #try:
-            data = constraint.fit_transform(data)
-        #    except (Exception, ConstraintsNotMetError) as e:
-        #        errors.append(e)
+            try:
+                data = constraint.fit_transform(data)
+            except (Exception, ConstraintsNotMetError) as e:
+                errors.append(e)
 
-        #if errors:
-        #    raise MultipleConstraintErrors(errors)
+        if errors:
+            raise MultipleConstraintErrors(errors)
         return data
-        
 
     def _fit_hyper_transformer(self, data, extra_columns):
         """Create and return a new ``rdt.HyperTransformer`` instance.
@@ -592,7 +591,6 @@ class Table:
         data = self._anonymize(data)
 
         LOGGER.info('Fitting constraints for table %s', self.name)
-        print('no?')
         constrained = self._fit_transform_constraints(data)
         extra_columns = set(constrained.columns) - set(data.columns)
 

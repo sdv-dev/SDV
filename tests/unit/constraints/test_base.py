@@ -302,21 +302,21 @@ class TestConstraint():
         """Test the ``Constraint.transform`` method.
 
         It is an identity method for completion, to be optionally
-        overwritten by subclasses.
+        overwritten by subclasses. #TODO: this description seems wrong
 
         The ``Constraint.transform`` method is expected to:
         - Return the input data unmodified.
         Input:
-        - Anything
+        - a DataFrame
         Output:
         - Input
         """
         # Run
         instance = Constraint(handling_strategy='transform')
-        output = instance.transform('input')
+        output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
-        assert output == 'input'
+        pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
 
     def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
