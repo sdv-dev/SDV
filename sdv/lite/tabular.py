@@ -276,7 +276,7 @@ class TabularPreset():
             model = pickle.load(f)
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
-            return
+            return model
 
     @classmethod
     def list_available_presets(cls, out=sys.stdout):

@@ -487,7 +487,8 @@ class TestTabularPreset:
         open_mock.assert_called_once_with('test-path', 'wb')
         pickle_mock.dump.assert_called_once_with(preset, open_mock())
 
-    def test_load(self):
+    @patch('sdv.lite.tabular.pickle')
+    def test_load(self, pickle_mock):
         """Test the ``TabularPreset.load`` method.
 
         Expect that the model's load method is called with the expected args.
@@ -505,10 +506,11 @@ class TestTabularPreset:
 
         # Run
         with patch('sdv.lite.tabular.open', open_mock):
-            TabularPreset.load('test-file.pkl')
+            loaded = TabularPreset.load('test-file.pkl')
 
         # Assert
         open_mock.assert_called_once_with('test-file.pkl', 'rb')
+        assert loaded == pickle_mock.load.return_value
 
     def test___repr__(self):
         """Test the ``TabularPreset.__repr__`` method.
