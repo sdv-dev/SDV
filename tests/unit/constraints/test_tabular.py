@@ -4967,7 +4967,9 @@ class TestOneHotEncoding():
         ``True`` when for the rows where the data is one hot, ``False`` otherwise.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data (pandas.DataFrame) containing one valid column, one column with a sum less
+        than 1, one column with a sum greater than 1, one column with halves adding to one and one
+        column with nans.
         Output:
         - Series of ``True`` and ``False`` values (pandas.Series)
         """
@@ -4976,15 +4978,15 @@ class TestOneHotEncoding():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1.0, 1.0, 0.0, 1.0],
-            'b': [0.0, 1.0, 0.0, 0.5],
-            'c': [0.0, 2.0, 0.0, 0.0],
-            'd': [1, 2, 3, 4]
+            'a': [1.0, 1.0, 0.0, 0.5, 1.0],
+            'b': [0.0, 1.0, 0.0, 0.5, 0.0],
+            'c': [0.0, 2.0, 0.0, 0.0, np.nan],
+            'd': [1, 2, 3, 4, 5]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = pd.Series([True, False, False, False])
+        expected_out = pd.Series([True, False, False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test__sample_constraint_columns_proper(self):
