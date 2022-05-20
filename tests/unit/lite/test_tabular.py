@@ -1,5 +1,6 @@
 import io
-from unittest.mock import MagicMock, Mock, patch
+import pickle
+from unittest.mock import MagicMock, Mock, mock_open, patch
 
 import numpy as np
 import pandas as pd
@@ -358,6 +359,34 @@ class TestTabularPreset:
         # Assert
         model.sample_conditions.assert_called_once_with(conditions, 100, None, True, None)
 
+    def test_sample_conditions_with_max_tries(self):
+        """Test the ``TabularPreset.sample_conditions`` method with max tries.
+
+        Expect that the model's sample_conditions method is called with the expected args.
+        If the model is an instance of ``GaussianCopula``, ``max_tries`` is not passed
+        through.
+
+        Input:
+        - num_rows=5
+        - max_retries=2
+
+        Side Effects:
+        - The model's ``sample_conditions`` method is called without ``max_tries``.
+        """
+        # Setup
+        model = MagicMock(spec=GaussianCopula)
+        preset = Mock()
+        preset._model = model
+        preset._null_percentages = None
+        conditions = [Mock()]
+
+        # Run
+        TabularPreset.sample_conditions(preset, conditions, max_tries=2, batch_size_per_try=5)
+
+        # Assert
+        model.sample_conditions.assert_called_once_with(
+            conditions, batch_size=5, randomize_samples=True, output_file_path=None)
+
     def test_sample_remaining_columns(self):
         """Test the ``TabularPreset.sample_remaining_columns`` method.
 
@@ -382,6 +411,35 @@ class TestTabularPreset:
         # Assert
         model.sample_remaining_columns.assert_called_once_with(conditions, 100, None, True, None)
 
+    def test_sample_remaining_columns_with_max_tries(self):
+        """Test the ``TabularPreset.sample_remaining_columns`` method with max tries.
+
+        Expect that the model's sample_remaining_columns method is called with the expected args.
+        If the model is an instance of ``GaussianCopula``, ``max_tries`` is not passed
+        through.
+
+        Input:
+        - num_rows=5
+        - max_retries=2
+
+        Side Effects:
+        - The model's ``sample_conditions`` method is called without ``max_tries``.
+        """
+        # Setup
+        model = MagicMock(spec=GaussianCopula)
+        preset = Mock()
+        preset._model = model
+        preset._null_percentages = None
+        conditions = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        TabularPreset.sample_remaining_columns(
+            preset, conditions, max_tries=2, batch_size_per_try=5)
+
+        # Assert
+        model.sample_remaining_columns.assert_called_once_with(
+            conditions, batch_size=5, randomize_samples=True, output_file_path=None)
+
     def test_list_available_presets(self):
         """Tests the ``TabularPreset.list_available_presets`` method.
 
@@ -403,7 +461,8 @@ class TestTabularPreset:
         # Assert
         assert out.getvalue().strip() == expected
 
-    def test_save(self):
+    @patch('sdv.lite.tabular.pickle')
+    def test_save(self, pickle_mock):
         """Test the ``TabularPreset.save`` method.
 
         Expect that the model's save method is called with the expected args.
@@ -418,14 +477,18 @@ class TestTabularPreset:
         model = Mock()
         preset = Mock()
         preset._model = model
+        open_mock = mock_open(read_data=pickle.dumps('test'))
 
         # Run
-        TabularPreset.save(preset, 'test-path')
+        with patch('sdv.lite.tabular.open', open_mock):
+            TabularPreset.save(preset, 'test-path')
 
         # Assert
-        model.save.assert_called_once_with('test-path')
+        open_mock.assert_called_once_with('test-path', 'wb')
+        pickle_mock.dump.assert_called_once_with(preset, open_mock())
 
-    def test_load(self):
+    @patch('sdv.lite.tabular.pickle')
+    def test_load(self, pickle_mock):
         """Test the ``TabularPreset.load`` method.
 
         Expect that the model's load method is called with the expected args.
@@ -439,12 +502,15 @@ class TestTabularPreset:
         # Setup
         default_model = Mock()
         TabularPreset._default_model = default_model
+        open_mock = mock_open(read_data=pickle.dumps('test'))
 
         # Run
-        TabularPreset.load('test-file.pkl')
+        with patch('sdv.lite.tabular.open', open_mock):
+            loaded = TabularPreset.load('test-file.pkl')
 
         # Assert
-        default_model.load.called_once_with('test-file.pkl')
+        open_mock.assert_called_once_with('test-file.pkl', 'rb')
+        assert loaded == pickle_mock.load.return_value
 
     def test___repr__(self):
         """Test the ``TabularPreset.__repr__`` method.

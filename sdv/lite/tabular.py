@@ -1,6 +1,7 @@
 """Base class for tabular model presets."""
 
 import logging
+import pickle
 import sys
 import warnings
 
@@ -9,6 +10,7 @@ import rdt
 
 from sdv.metadata import Table
 from sdv.tabular import GaussianCopula
+from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 LOGGER = logging.getLogger(__name__)
 
@@ -195,8 +197,16 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        sampled = self._model.sample_conditions(
-            conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        if isinstance(self._model, GaussianCopula):
+            sampled = self._model.sample_conditions(
+                conditions,
+                batch_size=batch_size_per_try,
+                randomize_samples=randomize_samples,
+                output_file_path=output_file_path,
+            )
+        else:
+            sampled = self._model.sample_conditions(
+                conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
@@ -225,8 +235,16 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        sampled = self._model.sample_remaining_columns(
-            known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        if isinstance(self._model, GaussianCopula):
+            sampled = self._model.sample_remaining_columns(
+                known_columns,
+                batch_size=batch_size_per_try,
+                randomize_samples=randomize_samples,
+                output_file_path=output_file_path,
+            )
+        else:
+            sampled = self._model.sample_remaining_columns(
+                known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
@@ -237,7 +255,10 @@ class TabularPreset():
             path (str):
                 Path where the SDV instance will be serialized.
         """
-        self._model.save(path)
+        self._package_versions = get_package_versions(getattr(self, '_model', None))
+
+        with open(path, 'wb') as output:
+            pickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -251,7 +272,11 @@ class TabularPreset():
             TabularModel:
                 The loaded tabular model.
         """
-        return cls._default_model.load(path)
+        with open(path, 'rb') as f:
+            model = pickle.load(f)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
+
+            return model
 
     @classmethod
     def list_available_presets(cls, out=sys.stdout):
