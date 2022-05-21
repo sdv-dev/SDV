@@ -275,8 +275,17 @@ class Constraint(metaclass=ConstraintMeta):
                 If the table data is not valid for the provided constraints.
         """
         if set(self.constraint_columns).issubset(table_data.columns.values):
-            if not self.is_valid(table_data).all():
-                raise ConstraintsNotMetError('Data is not valid for the given constraints')
+            is_valid = self.is_valid(table_data)
+            if not is_valid.all():
+                invalid_rows = table_data[~is_valid]
+                err_msg = [
+                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n",
+                    f'{invalid_rows[:5]}\n'
+                ]
+                if len(invalid_rows) > 5:
+                    err_msg.append(f'+{len(invalid_rows) - 5} more')
+
+                raise ConstraintsNotMetError(err_msg)
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.

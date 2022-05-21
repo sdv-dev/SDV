@@ -10,8 +10,7 @@ import rdt
 from faker import Faker
 
 from sdv.constraints.base import Constraint
-from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintErrors
-from sdv.errors import ConstraintsNotMetError
+from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -447,11 +446,11 @@ class Table:
         for constraint in self._constraints:
             try:
                 data = constraint.fit_transform(data)
-            except (Exception, ConstraintsNotMetError) as e:
+            except Exception as e:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintErrors(errors)
+            raise MultipleConstraintsErrors(errors)
         return data
 
     def _fit_hyper_transformer(self, data, extra_columns):
@@ -630,10 +629,6 @@ class Table:
         Returns:
             pandas.DataFrame:
                 Transformed data.
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
         """
         if not self.fitted:
             raise MetadataNotFittedError()
