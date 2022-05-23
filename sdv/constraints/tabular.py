@@ -1094,8 +1094,9 @@ class OneHotEncoding(Constraint):
         sum_one = one_hot_data.sum(axis=1) == 1.0
         max_one = one_hot_data.max(axis=1) == 1.0
         min_zero = one_hot_data.min(axis=1) == 0.0
+        no_nans = ~one_hot_data.isna().any(axis=1)
 
-        return sum_one & max_one & min_zero
+        return sum_one & max_one & min_zero & no_nans
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
