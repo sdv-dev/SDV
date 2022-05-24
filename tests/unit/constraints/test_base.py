@@ -301,8 +301,8 @@ class TestConstraint():
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
 
-        It is an identity method for completion, to be optionally
-        overwritten by subclasses. #TODO: this description seems wrong
+        When no constraints are passed, it behaves like an identity method,
+        to be optionally overwritten by subclasses.
 
         The ``Constraint.transform`` method is expected to:
         - Return the input data unmodified.

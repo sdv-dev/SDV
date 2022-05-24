@@ -221,6 +221,31 @@ class Constraint(metaclass=ConstraintMeta):
         sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
         return sampled_data
 
+    def _validate_data_on_constraint(self, table_data):
+        """Make sure the given data is valid for the given constraints.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
+        if set(self.constraint_columns).issubset(table_data.columns.values):
+            is_valid_data = self.is_valid(table_data)
+            if not is_valid_data.all():
+                constraint_data = table_data[list(self.constraint_columns)]
+                invalid_rows = constraint_data[~is_valid_data]
+                err_msg = (
+                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
+                    f'{invalid_rows[:5]}'
+                )
+                if len(invalid_rows) > 5:
+                    err_msg += f'\n+{len(invalid_rows) - 5} more'
+
+                raise ConstraintsNotMetError(err_msg)
+
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
@@ -237,6 +262,8 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
+        self._validate_data_on_constraint(table_data)
+
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
             if not self._columns_model:
@@ -260,34 +287,6 @@ class Constraint(metaclass=ConstraintMeta):
 
         return table_data
 
-    def _validate_data_on_constraint(self, table_data):
-        """Make sure the given data is valid for the given constraints.
-
-        Args:
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            None
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
-        """
-        if set(self.constraint_columns).issubset(table_data.columns.values):
-            is_valid = self.is_valid(table_data)
-            if not is_valid.all():
-                constraint_data = table_data[list(self.constraint_columns)]
-                invalid_rows = constraint_data[~is_valid]
-                err_msg = (
-                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
-                    f'{invalid_rows[:5]}'
-                )
-                if len(invalid_rows) > 5:
-                    err_msg += f'\n+{len(invalid_rows) - 5} more'
-
-                raise ConstraintsNotMetError(err_msg)
-
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
 
@@ -306,7 +305,6 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._validate_data_on_constraint(table_data)
         table_data = self._validate_constraint_columns(table_data)
         return self._transform(table_data)
 
