@@ -5,7 +5,7 @@ import pytest
 
 from sdv.constraints import (
     Between, ColumnFormula, FixedCombinations, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding)
+    Rounding, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -60,6 +60,7 @@ def test_failing_constraints():
         'f': [1, 1, 2, 2, 3, 3, -1],
         'g': [1, 0, 1, 0, 0, 1, 0],
         'h': [1, 1, 1, 0, 0, 10, 0],
+        'i': [1, 1, 1, 1, 1, 1, 1]
     })
 
     constraints = [
@@ -69,6 +70,7 @@ def test_failing_constraints():
         Rounding('e', 2),
         Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
+        Unique('i')
     ]
     gc = GaussianCopula(constraints=constraints)
 
@@ -82,6 +84,15 @@ def test_failing_constraints():
         '\n3  0   0'
         '\n4  0   0'
         '\n5  1  10'
+        '\n+1 more'
+        '\n'
+        "\nData is not valid for the 'Unique' constraint:"
+        '\n   i'
+        '\n1  1'
+        '\n2  1'
+        '\n3  1'
+        '\n4  1'
+        '\n5  1'
         '\n+1 more'
         '\n'
         "\nData is not valid for the 'GreaterThan' constraint:"

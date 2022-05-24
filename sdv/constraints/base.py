@@ -121,13 +121,17 @@ class Constraint(metaclass=ConstraintMeta):
     def _identity(self, table_data):
         return table_data
 
+    def _identity_transform(self, table_data):
+        self._validate_data_on_constraint(table_data)
+        return table_data
+
     def __init__(self, handling_strategy, fit_columns_model=False):
         self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
             self.rebuild_columns = ()
-            self.transform = self._identity
+            self.transform = self._identity_transform
             self.reverse_transform = self._identity
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))

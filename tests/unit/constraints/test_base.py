@@ -182,7 +182,7 @@ class TestConstraint():
 
         # Asserts
         assert instance.filter_valid != instance._identity
-        assert instance.transform == instance._identity
+        assert instance.transform == instance._identity_transform
         assert instance.reverse_transform == instance._identity
 
     def test___init___all(self):
@@ -415,7 +415,7 @@ class TestConstraint():
         transformed_data = instance.transform(data)
 
         # Assert
-        expected_tranformed_data = pd.DataFrame([[1, 2, 3]], columns=['b', 'c', 'a'])
+        expected_transformed_data = pd.DataFrame([[1, 2, 3]], columns=['b', 'c', 'a'])
         expected_result = pd.DataFrame([
             [5, 1, 2],
             [6, 3, 4]
@@ -425,8 +425,8 @@ class TestConstraint():
         instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 1})
         instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 3})
         reverse_transform_calls = instance._hyper_transformer.reverse_transform.mock_calls
-        pd.testing.assert_frame_equal(reverse_transform_calls[0][1][0], expected_tranformed_data)
-        pd.testing.assert_frame_equal(reverse_transform_calls[1][1][0], expected_tranformed_data)
+        pd.testing.assert_frame_equal(reverse_transform_calls[0][1][0], expected_transformed_data)
+        pd.testing.assert_frame_equal(reverse_transform_calls[1][1][0], expected_transformed_data)
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 
     def test_transform_model_enabled_reject_sampling(self):
