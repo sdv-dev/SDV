@@ -5366,7 +5366,7 @@ class TestUnique():
         # Assert
         assert instance.columns == ['a', 'b']
         assert instance.fit_columns_model is False
-        assert instance.transform == instance._identity_transform
+        assert instance.transform == instance._identity_with_validation
         assert instance.reverse_transform == instance._identity
 
     def test___init__one_column(self):

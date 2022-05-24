@@ -121,7 +121,7 @@ class Constraint(metaclass=ConstraintMeta):
     def _identity(self, table_data):
         return table_data
 
-    def _identity_transform(self, table_data):
+    def _identity_with_validation(self, table_data):
         self._validate_data_on_constraint(table_data)
         return table_data
 
@@ -131,7 +131,7 @@ class Constraint(metaclass=ConstraintMeta):
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
             self.rebuild_columns = ()
-            self.transform = self._identity_transform
+            self.transform = self._identity_with_validation
             self.reverse_transform = self._identity
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
@@ -266,8 +266,6 @@ class Constraint(metaclass=ConstraintMeta):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        self._validate_data_on_constraint(table_data)
-
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
             if not self._columns_model:
@@ -309,6 +307,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
+        self._validate_data_on_constraint(table_data)
         table_data = self._validate_constraint_columns(table_data)
         return self._transform(table_data)
 

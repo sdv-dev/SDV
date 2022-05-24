@@ -182,7 +182,7 @@ class TestConstraint():
 
         # Asserts
         assert instance.filter_valid != instance._identity
-        assert instance.transform == instance._identity_transform
+        assert instance.transform == instance._identity_with_validation
         assert instance.reverse_transform == instance._identity
 
     def test___init___all(self):
