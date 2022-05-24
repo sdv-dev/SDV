@@ -450,7 +450,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
         return data
 
     def _fit_hyper_transformer(self, data, extra_columns):

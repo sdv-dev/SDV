@@ -277,13 +277,14 @@ class Constraint(metaclass=ConstraintMeta):
         if set(self.constraint_columns).issubset(table_data.columns.values):
             is_valid = self.is_valid(table_data)
             if not is_valid.all():
-                invalid_rows = table_data[~is_valid]
-                err_msg = [
-                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n",
-                    f'{invalid_rows[:5]}\n'
-                ]
+                constraint_data = table_data[list(self.constraint_columns)]
+                invalid_rows = constraint_data[~is_valid]
+                err_msg = (
+                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
+                    f'{invalid_rows[:5]}'
+                )
                 if len(invalid_rows) > 5:
-                    err_msg.append(f'+{len(invalid_rows) - 5} more')
+                    err_msg += f'\n+{len(invalid_rows) - 5} more'
 
                 raise ConstraintsNotMetError(err_msg)
 

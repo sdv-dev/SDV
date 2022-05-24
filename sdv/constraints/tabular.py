@@ -17,9 +17,9 @@ Currently implemented constraints are:
     * Negative: Ensure that the values in given columns are always negative.
     * ColumnFormula: Compute the value of a column based on applying a formula
       on the other columns of the table.
-    * Rounding: Round a column based on the specified number of digits.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
+    * Rounding: Round a column based on the specified number of digits.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
     * Unique: Ensure that each value for a specified column/group of columns is unique.
 """
@@ -1154,7 +1154,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        print('table_data')
-        data = table_data.groupby(self.columns, dropna=False).cumcount() == 0
-        print(data)
-        return data
+        return table_data.groupby(self.columns, dropna=False).cumcount() == 0
