@@ -11,6 +11,7 @@ from rdt.hyper_transformer import HyperTransformer
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import ColumnFormula, FixedCombinations
+from sdv.errors import ConstraintsNotMetError
 
 
 def test__get_qualified_name_class():
@@ -297,6 +298,87 @@ class TestConstraint():
         args = calls[0][1]
         assert len(calls) == 1
         pd.testing.assert_frame_equal(args[0], table_data)
+
+    def test__validate_data_on_constraints(self):
+        """Test the ``_validate_data_on_constraint`` method.
+
+        Expect that the method calls ``is_valid`` when the constraint columns
+        are in the given data.
+
+        Input:
+        - Table data
+        Output:
+        - None
+        Side Effects:
+        - No error
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0, 1, 2],
+            'b': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint = Constraint(handling_strategy='transform')
+        constraint.constraint_columns = ['a', 'b']
+        constraint.is_valid = Mock()
+
+        # Run
+        constraint._validate_data_on_constraint(data)
+
+        # Assert
+        constraint.is_valid.assert_called_once_with(data)
+
+    def test__validate_data_on_constraints_invalid_input(self):
+        """Test the ``_validate_data_on_constraint`` method.
+
+        Expect that the method raises an error when the constraint columns
+        are in the given data and the ``is_valid`` returns False for any row.
+
+        Input:
+        - Table data contains an invalid row
+        Output:
+        - None
+        Side Effects:
+        - A ``ConstraintsNotMetError`` is thrown
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0, 1, 2],
+            'b': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint = Constraint(handling_strategy='transform')
+        constraint.constraint_columns = ['a', 'b']
+        constraint.is_valid = Mock(return_value=pd.Series([True, False, True]))
+
+        # Run / Assert
+        with pytest.raises(ConstraintsNotMetError):
+            constraint._validate_data_on_constraint(data)
+
+    def test__validate_data_on_constraints_missing_cols(self):
+        """Test the ``_validate_data_on_constraint`` method.
+
+        Expect that the method doesn't do anything when the columns are not in the given data.
+
+        Input:
+        - Table data that is missing a constraint column
+        Output:
+        - None
+        Side Effects:
+        - No error
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0, 1, 2],
+            'b': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint = Constraint(handling_strategy='transform')
+        constraint.constraint_columns = ['a', 'b', 'c']
+        constraint.is_valid = Mock()
+
+        # Run
+        constraint._validate_data_on_constraint(data)
+
+        # Assert
+        assert not constraint.is_valid.called
 
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
