@@ -106,10 +106,11 @@ ENV/
 # Vim
 .*.swp
 
+# other
+.DS_Store
 sdv/data/
 docs/**/*.pkl
 docs/**/*metadata.json
-docs/images
 docs/savefig
 tutorials/**/*.pkl
 tutorials/**/*metadata.json

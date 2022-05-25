@@ -1,5 +1,97 @@
 # Release Notes
 
+## 0.15.0 - 2022-05-25
+
+This release improves the speed of the `GaussianCopula` model by removing logic that previously searched for the appropriate distribution to
+use. It also fixes a bug that was happening when conditional sampling was used with the `TabularPreset`.
+
+The rest of the release focuses on making changes to improve constraints including changing the `UniqueCombinations` constraint to `FixedCombinations`,
+making the `Unique` constraint work with missing values and erroring when null values are seen in the `OneHotEncoding` constraint.
+
+### New Features
+* Silence warnings coming from univariate fit in copulas - Issue [#769](https://github.com/sdv-dev/SDV/issues/769) by @pvk-developer
+* Remove parameters related to distribution search and change default - Issue [#767](https://github.com/sdv-dev/SDV/issues/767) by @fealho
+* Update the UniqueCombinations constraint - Issue [#793](https://github.com/sdv-dev/SDV/issues/793) by @fealho
+* Make Unique constraint works with nans - Issue [#797](https://github.com/sdv-dev/SDV/issues/797) by @fealho
+* Error out if nans in OneHotEncoding - Issue [#800](https://github.com/sdv-dev/SDV/issues/800) by @amontanez24
+
+### Bugs Fixed
+* Unable to sample conditionally in Tabular_Preset model - Issue [#796](https://github.com/sdv-dev/SDV/issues/796) by @katxiao
+
+### Documentation Changes
+* Support GPU computing and progress track? - Issue [#478](https://github.com/sdv-dev/SDV/issues/478) by @fealho
+
+## 0.14.1 - 2022-05-03
+
+This release adds a `TabularPreset`, available in the `sdv.lite` module, which allows users to easily optimize a tabular model for speed.
+In this release, we also include bug fixes for sampling with conditions, an unresolved warning, and setting field distributions. Finally,
+we include documentation updates for sampling and the new `TabularPreset`.
+
+### Bugs Fixed
+* Sampling with conditions={column: 0.0} for float columns doesn't work - Issue [#525](https://github.com/sdv-dev/SDV/issues/525) by @shlomihod and @tssbas
+* resolved FutureWarning with Pandas replaced append by concat - Issue [#759](https://github.com/sdv-dev/SDV/issues/759) by @Deathn0t
+* Field distributions bug in CopulaGAN - Issue [#747](https://github.com/sdv-dev/SDV/issues/747) by @katxiao
+* Field distributions bug in GaussianCopula - Issue [#746](https://github.com/sdv-dev/SDV/issues/746) by @katxiao
+
+### New Features
+* Set default transformer to categorical_fuzzy - Issue [#768](https://github.com/sdv-dev/SDV/issues/768) by @amontanez24
+* Model nulls normally when tabular preset has constraints - Issue [#764](https://github.com/sdv-dev/SDV/issues/764) by @katxiao
+* Don't modify my metadata object - Issue [#754](https://github.com/sdv-dev/SDV/issues/754) by @amontanez24
+* Presets should be able to handle constraints - Issue [#753](https://github.com/sdv-dev/SDV/issues/753) by @katxiao
+* Change preset optimize_for --> name - Issue [#749](https://github.com/sdv-dev/SDV/issues/749) by @katxiao
+* Create a speed optimized Preset - Issue [#716](https://github.com/sdv-dev/SDV/issues/716) by @katxiao
+
+### Documentation Changes
+* Add tabular preset docs - Issue [#777](https://github.com/sdv-dev/SDV/issues/777) by @katxiao
+* sdv.sampling module is missing from the API - Issue [#740](https://github.com/sdv-dev/SDV/issues/740) by @katxiao
+
+## 0.14.0 - 2022-03-21
+
+This release updates the sampling API and splits the existing functionality into three methods - `sample`, `sample_conditions`,
+and `sample_remaining_columns`. We also add support for sampling in batches, displaying a progress bar when sampling with more than one batch,
+sampling deterministically, and writing the sampled results to an output file. Finally, we include fixes for sampling with conditions
+and updates to the documentation.
+
+### Bugs Fixed
+* Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/issues/732) by @katxiao
+* Conditional sampling doesn't work if the model has a CustomConstraint - Issue [#696](https://github.com/sdv-dev/SDV/issues/696) by @katxiao
+
+### New Features
+* Updates to GaussianCopula conditional sampling methods - Issue [#729](https://github.com/sdv-dev/SDV/issues/729) by @katxiao
+* Update conditional sampling errors - Issue [#730](https://github.com/sdv-dev/SDV/issues/730) by @katxiao
+* Enable Batch Sampling + Progress Bar - Issue [#693](https://github.com/sdv-dev/SDV/issues/693) by @katxiao
+* Create sample_remaining_columns() method - Issue [#692](https://github.com/sdv-dev/SDV/issues/692) by @katxiao
+* Create sample_conditions() method - Issue [#691](https://github.com/sdv-dev/SDV/issues/691) by @katxiao
+* Improve sample() method - Issue [#690](https://github.com/sdv-dev/SDV/issues/690) by @katxiao
+* Create Condition object - Issue [#689](https://github.com/sdv-dev/SDV/issues/689) by @katxiao
+* Is it possible to generate data with new set of primary keys? - Issue [#686](https://github.com/sdv-dev/SDV/issues/686) by @katxiao
+* No way to fix the random seed? - Issue [#157](https://github.com/sdv-dev/SDV/issues/157) by @katxiao
+* Can you set a random state for the sdv.tabular.ctgan.CTGAN.sample method? - Issue [#515](https://github.com/sdv-dev/SDV/issues/515) by @katxiao
+* generating different synthetic data while training the model multiple times. - Issue [#299](https://github.com/sdv-dev/SDV/issues/299) by @katxiao
+
+### Documentation Changes
+* Typo in the document documentation - Issue [#680](https://github.com/sdv-dev/SDV/issues/680) by @katxiao
+
+## 0.13.1 - 2021-12-22
+
+This release adds support for passing tabular constraints to the HMA1 model, and adds more explicit error handling for
+metric evaluation. It also includes a fix for using categorical columns in the PAR model and documentation updates
+for metadata and HMA1.
+
+### Bugs Fixed
+
+* Categorical column after sequence_index column - Issue [#314](https://github.com/sdv-dev/SDV/issues/314) by @fealho
+
+### New Features
+
+* Support passing tabular constraints to the HMA1 model - Issue [#296](https://github.com/sdv-dev/SDV/issues/296) by @katxiao
+* Metric evaluation error handling metrics - Issue [#638](https://github.com/sdv-dev/SDV/issues/638) by @katxiao
+
+### Documentation Changes
+
+* Make true/false values lowercase in Metadata Schema specification - Issue [#664](https://github.com/sdv-dev/SDV/issues/664) by @katxiao
+* Update docstrings for hma1 methods - Issue [#642](https://github.com/sdv-dev/SDV/issues/642) by @katxiao
+
 ## 0.13.0 - 2021-11-22
 
 This release makes multiple improvements to different `Constraint` classes. The `Unique` constraint can now

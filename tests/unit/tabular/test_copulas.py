@@ -8,6 +8,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
 from sdv.constraints import CustomConstraint
+from sdv.sampling.tabular import Condition
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
 
@@ -47,12 +48,12 @@ class TestGaussianCopula:
             primary_key=['a_field'],
             constraints=[CustomConstraint()],
             field_distributions={'a_field': 'gaussian'},
-            default_distribution='bounded',
+            default_distribution='beta',
             categorical_transformer='categorical_fuzzy'
         )
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
-        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['beta']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -69,7 +70,7 @@ class TestGaussianCopula:
                     'field_distributions': {
                         'a_field': 'gaussian'
                     },
-                    'default_distribution': 'bounded',
+                    'default_distribution': 'beta',
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
@@ -113,12 +114,12 @@ class TestGaussianCopula:
             }
         }
         gc = GaussianCopula(
-            default_distribution='bounded',
+            default_distribution='gamma',
             table_metadata=table_metadata,
         )
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
-        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['bounded']
+        assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['gamma']
         assert gc._categorical_transformer == 'categorical_fuzzy'
         assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_fuzzy'}
 
@@ -136,7 +137,7 @@ class TestGaussianCopula:
                     'field_distributions': {
                         'a_field': 'gaussian'
                     },
-                    'default_distribution': 'bounded',
+                    'default_distribution': 'gamma',
                     'categorical_transformer': 'categorical_fuzzy'
                 }
             },
@@ -188,7 +189,8 @@ class TestGaussianCopula:
 
     @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
            spec_set=GaussianMultivariate)
-    def test__fit(self, gm_mock):
+    @patch('sdv.tabular.copulas.warnings')
+    def test__fit(self, mock_warnings, gm_mock):
         """Test the ``GaussianCopula._fit`` method.
 
         The ``_fit`` method is expected to:
@@ -201,6 +203,7 @@ class TestGaussianCopula:
 
         Setup:
             - mock _get_distribution to return a distribution dict
+            - mock warnings to ensure that during the model fit those are being ignored.
 
         Input:
             - pandas.DataFrame
@@ -233,6 +236,64 @@ class TestGaussianCopula:
         assert gaussian_copula._model == gm_mock.return_value
         expected_data = pd.DataFrame({
             'a': [1, 2, 3]
+        })
+        call_args = gaussian_copula._model.fit.call_args_list
+        passed_table_data = call_args[0][0][0]
+
+        pd.testing.assert_frame_equal(expected_data, passed_table_data)
+        gaussian_copula._update_metadata.assert_called_once_with()
+        mock_warnings.catch_warnings.assert_called_once()
+        mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
+
+    @patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+           spec_set=GaussianMultivariate)
+    def test__fit_with_transformed_columns(self, gm_mock):
+        """Test the ``GaussianCopula._fit`` method with transformed columns.
+
+        The ``_fit`` method is expected to:
+        - Call the _get_distribution method to build the distributions dict.
+        - Set the output from _get_distribution method as self._distribution.
+        - Create a GaussianMultivriate object with the self._distribution value.
+        - Store the GaussianMultivariate instance in the self._model attribute.
+        - Fit the GaussianMultivariate instance with the given table data, unmodified.
+        - Call the _update_metadata method.
+
+        Setup:
+            - mock _get_distribution to return a distribution dict
+
+        Input:
+            - pandas.DataFrame
+
+        Expected Output:
+            - None
+
+        Side Effects:
+            - self._distribution is set to the output from _get_distribution
+            - GaussianMultivariate is called with self._distribution as input
+            - GaussianMultivariate output is stored as self._model
+            - self._model.fit is called with the input dataframe
+            - self._update_metadata is called without arguments
+        """
+        # Setup
+        gaussian_copula = Mock(spec_set=GaussianCopula)
+        gaussian_copula._field_distributions = {'a': 'a_distribution'}
+
+        # Run
+        data = pd.DataFrame({
+            'a.value': [1, 2, 3]
+        })
+        out = GaussianCopula._fit(gaussian_copula, data)
+
+        # asserts
+        assert out is None
+        assert gaussian_copula._field_distributions == {
+            'a': 'a_distribution', 'a.value': 'a_distribution'}
+        gm_mock.assert_called_once_with(
+            distribution={'a': 'a_distribution', 'a.value': 'a_distribution'})
+
+        assert gaussian_copula._model == gm_mock.return_value
+        expected_data = pd.DataFrame({
+            'a.value': [1, 2, 3]
         })
         call_args = gaussian_copula._model.fit.call_args_list
         passed_table_data = call_args[0][0][0]
@@ -644,3 +705,68 @@ class TestGaussianCopula:
         out = GaussianCopula._validate_distribution('copulas.univariate.GaussianUnivariate')
 
         assert out == 'copulas.univariate.GaussianUnivariate'
+
+    def test_sample_conditions(self):
+        """Test ``sample_conditions`` method.
+
+        Expect the correct args to be passed to ``_sample_conditions``.
+
+        Input:
+            - valid conditions
+        Side Effects:
+            - The expected ``_sample_conditions`` call.
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        condition = Condition(
+            {'column1': 'b'},
+            num_rows=5,
+        )
+        batch_size = 1
+        randomize_samples = False
+        output_file_path = 'test.csv'
+
+        # Run
+        out = GaussianCopula.sample_conditions(
+            model,
+            [condition],
+            batch_size=batch_size,
+            randomize_samples=False,
+            output_file_path=output_file_path,
+        )
+
+        # Assert
+        model._sample_conditions.assert_called_once_with(
+            [condition], 100, batch_size, randomize_samples, output_file_path)
+        assert out == model._sample_conditions.return_value
+
+    def test_sample_remaining_columns(self):
+        """Test ``sample_remaining_columns`` method.
+
+        Expect the correct args to be passed to ``_sample_remaining_columns``
+
+        Input:
+            - valid DataFrame
+        Side Effects:
+            - The expected ``_sample_remaining_columns`` call.
+        """
+        # Setup
+        model = Mock(spec_set=GaussianCopula)
+        conditions = pd.DataFrame([{'cola': 'a'}] * 5)
+        batch_size = 1
+        randomize_samples = False
+        output_file_path = 'test.csv'
+
+        # Run
+        out = GaussianCopula.sample_remaining_columns(
+            model,
+            conditions,
+            batch_size=batch_size,
+            randomize_samples=randomize_samples,
+            output_file_path=output_file_path,
+        )
+
+        # Assert
+        model._sample_remaining_columns.assert_called_once_with(
+            conditions, 100, batch_size, randomize_samples, output_file_path)
+        assert out == model._sample_remaining_columns.return_value

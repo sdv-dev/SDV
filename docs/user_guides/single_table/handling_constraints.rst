@@ -137,10 +137,10 @@ To use this constraint, we must make an instance and provide:
         columns=['employee_id', 'company']
     )
 
-UniqueCombinations Constraint
+FixedCombinations Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The next constraint that we will explore is the ``UniqueCombinations``
+The next constraint that we will explore is the ``FixedCombinations``
 constraint.
 
 This Constraint class can handle the situation number 1 indicated above,
@@ -155,10 +155,10 @@ order to use this constraint we will need to import it from the
 .. ipython:: python
     :okwarning:
 
-    from sdv.constraints import UniqueCombinations
+    from sdv.constraints import FixedCombinations
 
-    unique_company_department_constraint = UniqueCombinations(
-        columns=['company', 'department'],
+    fixed_company_department_constraint = FixedCombinations(
+        column_names=['company', 'department'],
         handling_strategy='transform'
     )
 
@@ -376,7 +376,7 @@ constraints that we just defined as a ``list``:
 
     constraints = [
         unique_employee_id_company_constraint,
-        unique_company_department_constraint,
+        fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
         salary_gt_30000_constraint,
         experience_years_gt_one_constraint,	

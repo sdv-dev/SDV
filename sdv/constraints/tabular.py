@@ -9,7 +9,7 @@ Currently implemented constraints are:
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
       and validation.
-    * UniqueCombinations: Ensure that the combinations of values
+    * FixedCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * GreaterThan: Ensure that the value in one column is always greater than
       the value in another column.
@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type
 
 
@@ -68,6 +69,10 @@ class CustomConstraint(Constraint):
         return table_data
 
     def _run_transform(self, table_data):
+        if self._columns:
+            if any(column not in table_data.columns for column in self._columns):
+                raise MissingConstraintColumnError()
+
         return self._run(self._transform, table_data)
 
     def _run_reverse_transform(self, table_data):
@@ -104,8 +109,8 @@ class CustomConstraint(Constraint):
             self.is_valid = self._run_is_valid
 
 
-class UniqueCombinations(Constraint):
-    """Ensure that the combinations across multiple colums stay unique.
+class FixedCombinations(Constraint):
+    """Ensure that the combinations across multiple colums are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can
@@ -118,8 +123,8 @@ class UniqueCombinations(Constraint):
     seen during training.
 
     Args:
-        columns (list[str]):
-            Names of the columns that need to produce unique combinations. Must
+        column_names (list[str]):
+            Names of the columns that need to produce fixed combinations. Must
             contain at least two columns.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
@@ -135,13 +140,13 @@ class UniqueCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
-    def __init__(self, columns, handling_strategy='transform', fit_columns_model=False):
-        if len(columns) < 2:
-            raise ValueError('UniqueCombinations requires at least two constraint columns.')
+    def __init__(self, column_names, handling_strategy='transform', fit_columns_model=False):
+        if len(column_names) < 2:
+            raise ValueError('FixedCombinations requires at least two constraint columns.')
 
-        self._columns = columns
-        self.constraint_columns = tuple(columns)
-        self.rebuild_columns = tuple(columns)
+        self._columns = column_names
+        self.constraint_columns = tuple(column_names)
+        self.rebuild_columns = tuple(column_names)
         super().__init__(handling_strategy=handling_strategy,
                          fit_columns_model=fit_columns_model)
 
@@ -154,7 +159,7 @@ class UniqueCombinations(Constraint):
               current data by iteratively adding `#` to it.
             - Generating the joint column name by concatenating
               the names of ``self._columns`` with the separator.
-            - Generating a mapping of the unique combinations
+            - Generating a mapping of the fixed combinations
               to a unique identifier.
 
         Args:
@@ -1089,8 +1094,9 @@ class OneHotEncoding(Constraint):
         sum_one = one_hot_data.sum(axis=1) == 1.0
         max_one = one_hot_data.max(axis=1) == 1.0
         min_zero = one_hot_data.min(axis=1) == 0.0
+        no_nans = ~one_hot_data.isna().any(axis=1)
 
-        return sum_one & max_one & min_zero
+        return sum_one & max_one & min_zero & no_nans
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -1145,4 +1151,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return table_data.groupby(self.columns).cumcount() == 0
+        return table_data.groupby(self.columns, dropna=False).cumcount() == 0

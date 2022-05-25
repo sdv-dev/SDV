@@ -40,22 +40,6 @@ class CopulaGAN(CTGAN):
     Distributions can be passed as a ``copulas`` univariate instance or as one
     of the following string values:
 
-    * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
-      This may result in non-parametric models being used.
-    * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
-      but restrict the selection to parametric distributions only.
-    * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
-      but restrict the selection to bounded distributions only.
-      This may result in non-parametric models being used.
-    * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
-      but restrict the selection to semi-bounded distributions only.
-      This may result in non-parametric models being used.
-    * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-      distribution, but restrict the selection to parametric and bounded distributions
-      only.
-    * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
-      distribution, but restrict the selection to parametric and semi-bounded
-      distributions only.
     * ``gaussian``: Use a Gaussian distribution.
     * ``gamma``: Use a Gamma distribution.
     * ``beta``: Use a Beta distribution.
@@ -127,7 +111,7 @@ class CopulaGAN(CTGAN):
             be modeled using the default distribution. Defaults to ``None``.
         default_distribution (copulas.univariate.Univariate or str):
             Distribution to use on the fields for which no specific distribution has been given.
-            Defaults to ``parametric``.
+            Defaults to ``truncated_gaussian``.
         rounding (int, str or None):
             Define rounding scheme for ``NumericalTransformer``. If set to an int, values
             will be rounded to that number of decimal places. If ``None``, values will not
@@ -145,7 +129,10 @@ class CopulaGAN(CTGAN):
             is given, there won't be a maximum. Defaults to ``'auto'``.
     """
 
-    DEFAULT_DISTRIBUTION = 'parametric'
+    DEFAULT_DISTRIBUTION = 'truncated_gaussian'
+    _field_distributions = None
+    _default_distribution = None
+    _ht = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
@@ -205,16 +192,20 @@ class CopulaGAN(CTGAN):
                 Data to be learned.
         """
         distributions = self._field_distributions
-        default = self._default_distribution
         fields = self._metadata.get_fields()
-        transformers = {
-            field: GaussianCopulaTransformer(
-                distribution=distributions.get(field, default)
-            )
-            for field in table_data
-            if field.replace('.value', '')
-            in fields and fields.get(field, dict()).get('type') != 'categorical'
-        }
+
+        transformers = {}
+        for field in table_data:
+            field_name = field.replace('.value', '')
+
+            if field_name in fields and fields.get(
+                field_name,
+                dict(),
+            ).get('type') != 'categorical':
+                transformers[field] = GaussianCopulaTransformer(
+                    distribution=distributions.get(field_name, self._default_distribution)
+                )
+
         self._ht = HyperTransformer(field_transformers=transformers)
         table_data = self._ht.fit_transform(table_data)
 

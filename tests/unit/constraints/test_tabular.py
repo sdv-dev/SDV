@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique, UniqueCombinations)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative,
+    OneHotEncoding, Positive, Rounding, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -195,6 +195,27 @@ class TestCustomConstraint():
         pd.testing.assert_frame_equal(called[0][0], table_data)
         pd.testing.assert_frame_equal(transformed, dummy_transform_mock.return_value)
 
+    def test__run_transform_missing_column(self):
+        """Test the ``CustomConstraint._run`` method.
+
+        The ``_run`` method excutes ``transform`` and ``reverse_transform``
+        based on the signature of the functions. In this test, we evaluate
+        the execution of "table" that is missing the constraint column.
+
+        Setup:
+        - Pass dummy transform function with ``table_data`` and ``column`` arguments.
+        Side Effects:
+        - MissingConstraintColumnError is thrown.
+        """
+        # Setup
+        table_data = pd.DataFrame({'b': [1, 2, 3]})
+        dummy_transform_mock = Mock(side_effect=dummy_transform_table_column,
+                                    return_value=table_data)
+        # Run and assert
+        instance = CustomConstraint(columns='a', transform=dummy_transform_mock)
+        with pytest.raises(MissingConstraintColumnError):
+            instance.transform(table_data)
+
     def test__run_reverse_transform_table_column(self):
         """Test the ``CustomConstraint._run`` method.
 
@@ -357,13 +378,13 @@ class TestCustomConstraint():
         np.testing.assert_array_equal(is_valid, expected_out)
 
 
-class TestUniqueCombinations():
+class TestFixedCombinations():
 
     def test___init__(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         It is expected to create a new Constraint instance and receiving the names of
-        the columns that need to produce unique combinations.
+        the columns that need to produce fixed combinations.
 
         Side effects:
         - instance._colums == columns
@@ -372,13 +393,13 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
 
         # Assert
         assert instance._columns == columns
 
     def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         The rebuild columns should only be set if the ``handling_strategy``
         is not ``reject_sampling``.
@@ -390,13 +411,13 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns, handling_strategy='transform')
+        instance = FixedCombinations(column_names=columns, handling_strategy='transform')
 
         # Assert
         assert instance.rebuild_columns == tuple(columns)
 
     def test___init__does_not_set_rebuild_columns_reject_sampling(self):
-        """Test the ``UniqueCombinations.__init__`` method.
+        """Test the ``FixedCombinations.__init__`` method.
 
         The rebuild columns should not be set if the ``handling_strategy``
         is ``reject_sampling``.
@@ -408,15 +429,15 @@ class TestUniqueCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = UniqueCombinations(columns=columns, handling_strategy='reject_sampling')
+        instance = FixedCombinations(column_names=columns, handling_strategy='reject_sampling')
 
         # Assert
         assert instance.rebuild_columns == ()
 
     def test___init__with_one_column(self):
-        """Test the ``UniqueCombinations.__init__`` method with only one constraint column.
+        """Test the ``FixedCombinations.__init__`` method with only one constraint column.
 
-        Expect a ``ValueError`` because UniqueCombinations requires at least two
+        Expect a ``ValueError`` because FixedCombinations requires at least two
         constraint columns.
 
         Side effects:
@@ -427,13 +448,13 @@ class TestUniqueCombinations():
 
         # Run and assert
         with pytest.raises(ValueError):
-            UniqueCombinations(columns=columns)
+            FixedCombinations(column_names=columns)
 
     def test_fit(self):
-        """Test the ``UniqueCombinations.fit`` method.
+        """Test the ``FixedCombinations.fit`` method.
 
-        The ``UniqueCombinations.fit`` method is expected to:
-        - Call ``UniqueCombinations._valid_separator``.
+        The ``FixedCombinations.fit`` method is expected to:
+        - Call ``FixedCombinations._valid_separator``.
         - Find a valid separator for the data and generate the joint column name.
 
         Input:
@@ -441,7 +462,7 @@ class TestUniqueCombinations():
         """
         # Setup
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
 
         # Run
         table_data = pd.DataFrame({
@@ -461,7 +482,7 @@ class TestUniqueCombinations():
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
 
     def test_is_valid_true(self):
-        """Test the ``UniqueCombinations.is_valid`` method.
+        """Test the ``FixedCombinations.is_valid`` method.
 
         If the input data satisfies the constraint, result is a series of ``True`` values.
 
@@ -480,7 +501,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -490,7 +511,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_false(self):
-        """Test the ``UniqueCombinations.is_valid`` method.
+        """Test the ``FixedCombinations.is_valid`` method.
 
         If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
 
@@ -509,7 +530,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -525,7 +546,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_non_string_true(self):
-        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+        """Test the ``FixedCombinations.is_valid`` method with non string columns.
 
         If the input data satisfies the constraint, result is a series of ``True`` values.
 
@@ -545,7 +566,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -555,7 +576,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_is_valid_non_string_false(self):
-        """Test the ``UniqueCombinations.is_valid`` method with non string columns.
+        """Test the ``FixedCombinations.is_valid`` method with non string columns.
 
         If the input data doesn't satisfy the constraint, result is a series of ``False`` values.
 
@@ -575,7 +596,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -592,7 +613,7 @@ class TestUniqueCombinations():
         pd.testing.assert_series_equal(expected_out, out)
 
     def test_transform(self):
-        """Test the ``UniqueCombinations.transform`` method.
+        """Test the ``FixedCombinations.transform`` method.
 
         It is expected to return a Table data with the columns concatenated by the separator.
 
@@ -611,7 +632,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -628,7 +649,7 @@ class TestUniqueCombinations():
             assert False
 
     def test_transform_non_string(self):
-        """Test the ``UniqueCombinations.transform`` method with non strings.
+        """Test the ``FixedCombinations.transform`` method with non strings.
 
         It is expected to return a Table data with the columns concatenated by the separator.
 
@@ -648,7 +669,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -665,7 +686,7 @@ class TestUniqueCombinations():
             assert False
 
     def test_transform_not_all_columns_provided(self):
-        """Test the ``UniqueCombinations.transform`` method.
+        """Test the ``FixedCombinations.transform`` method.
 
         If some of the columns needed for the transform are missing, and
         ``fit_columns_model`` is False, it will raise a ``MissingConstraintColumnError``.
@@ -682,7 +703,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns, fit_columns_model=False)
+        instance = FixedCombinations(column_names=columns, fit_columns_model=False)
         instance.fit(table_data)
 
         # Run/Assert
@@ -690,7 +711,7 @@ class TestUniqueCombinations():
             instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
 
     def test_reverse_transform(self):
-        """Test the ``UniqueCombinations.reverse_transform`` method.
+        """Test the ``FixedCombinations.reverse_transform`` method.
 
         It is expected to return the original data separating the concatenated columns.
 
@@ -709,7 +730,7 @@ class TestUniqueCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -727,7 +748,7 @@ class TestUniqueCombinations():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_non_string(self):
-        """Test the ``UniqueCombinations.reverse_transform`` method with a non string column.
+        """Test the ``FixedCombinations.reverse_transform`` method with a non string column.
 
         It is expected to return the original data separating the concatenated columns.
 
@@ -747,7 +768,7 @@ class TestUniqueCombinations():
             'd': [2.4, 1.23, 5.6]
         })
         columns = ['b', 'c', 'd']
-        instance = UniqueCombinations(columns=columns)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run
@@ -4946,7 +4967,9 @@ class TestOneHotEncoding():
         ``True`` when for the rows where the data is one hot, ``False`` otherwise.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data (pandas.DataFrame) containing one valid column, one column with a sum less
+        than 1, one column with a sum greater than 1, one column with halves adding to one and one
+        column with nans.
         Output:
         - Series of ``True`` and ``False`` values (pandas.Series)
         """
@@ -4955,15 +4978,15 @@ class TestOneHotEncoding():
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1.0, 1.0, 0.0, 1.0],
-            'b': [0.0, 1.0, 0.0, 0.5],
-            'c': [0.0, 2.0, 0.0, 0.0],
-            'd': [1, 2, 3, 4]
+            'a': [1.0, 1.0, 0.0, 0.5, 1.0],
+            'b': [0.0, 1.0, 0.0, 0.5, 0.0],
+            'c': [0.0, 2.0, 0.0, 0.0, np.nan],
+            'd': [1, 2, 3, 4, 5]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = pd.Series([True, False, False, False])
+        expected_out = pd.Series([True, False, False, False, False])
         pd.testing.assert_series_equal(expected_out, out)
 
     def test__sample_constraint_columns_proper(self):
@@ -5538,4 +5561,58 @@ class TestUnique():
 
         # Assert
         expected = pd.Series([True, False, False, True, True, False])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_one_column_nans(self):
+        """Test the ``Unique.is_valid`` method for one column with nans.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique value of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+        ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
+
+        Input:
+        - DataFrame with some repeated values, some of which are nan's.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns=['a'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, None, 2, np.nan, float('nan'), 1],
+            'b': [np.nan, 1, None, float('nan'), float('nan'), 1],
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, True, False, False, False])
+        pd.testing.assert_series_equal(valid, expected)
+
+    def test_is_valid_multiple_columns_nans(self):
+        """Test the ``Unique.is_valid`` method for multiple columns with nans.
+
+        This method should return a pd.Series where the index
+        of the first occurence of a unique combination of ``instance.columns``
+        is set to ``True``, and every other occurence is set to ``False``.
+        ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
+
+        Input:
+        - DataFrame with multiple of the same combinations of columns, some of which are nan's.
+        Output:
+        - Series with the index of the first occurences set to ``True``.
+        """
+        # Setup
+        instance = Unique(columns=['a', 'b'])
+
+        # Run
+        data = pd.DataFrame({
+            'a': [1, None, 1, np.nan, float('nan'), 1],
+            'b': [np.nan, 1, None, float('nan'), float('nan'), 1],
+        })
+        valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, False, True, False, True])
         pd.testing.assert_series_equal(valid, expected)

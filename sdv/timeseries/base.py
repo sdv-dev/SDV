@@ -10,6 +10,7 @@ import rdt
 
 from sdv.metadata import Table
 from sdv.tabular.copulas import GaussianCopula
+from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 LOGGER = logging.getLogger(__name__)
 
@@ -257,7 +258,7 @@ class BaseTimeseriesModel:
 
             context = pd.DataFrame(index=range(num_sequences or 1))
         elif context is None:
-            context = self._context_model.sample(num_sequences)
+            context = self._context_model.sample(num_sequences, output_file_path='disable')
             for column in self._entity_columns or []:
                 if column not in context:
                     context[column] = range(len(context))
@@ -272,6 +273,8 @@ class BaseTimeseriesModel:
             path (str):
                 Path where the SDV instance will be serialized.
         """
+        self._package_versions = get_package_versions(getattr(self, '_model', None))
+
         with open(path, 'wb') as output:
             pickle.dump(self, output)
 
@@ -288,4 +291,7 @@ class BaseTimeseriesModel:
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            model = pickle.load(f)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
+
+            return model

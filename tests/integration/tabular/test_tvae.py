@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.demo import load_demo
+from sdv.sampling import Condition
 from sdv.tabular.ctgan import TVAE
 
 
@@ -14,7 +15,7 @@ def test_tvae():
     )
     tvae.fit(users)
 
-    sampled = tvae.sample()
+    sampled = tvae.sample(len(users))
 
     # test shape is right
     assert sampled.shape == users.shape
@@ -60,7 +61,7 @@ def test_recreate():
     # If distribution is non parametric, get_parameters fails
     model = TVAE(epochs=1)
     model.fit(data)
-    sampled = model.sample()
+    sampled = model.sample(len(data))
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -69,7 +70,7 @@ def test_recreate():
     # Metadata
     model_meta = TVAE(epochs=1, table_metadata=model.get_metadata())
     model_meta.fit(data)
-    sampled = model_meta.sample()
+    sampled = model_meta.sample(len(data))
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -78,7 +79,7 @@ def test_recreate():
     # Metadata dict
     model_meta_dict = TVAE(epochs=1, table_metadata=model.get_metadata().to_dict())
     model_meta_dict.fit(data)
-    sampled = model_meta_dict.sample()
+    sampled = model_meta_dict.sample(len(data))
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
@@ -87,68 +88,68 @@ def test_recreate():
 
 def test_conditional_sampling_dict():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10
     })
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = {
-        "column2": "b"
-    }
-    sampled = model.sample(30, conditions=conditions)
+    conditions = [Condition({
+        'column2': 'b'
+    }, num_rows=30)]
+    sampled = model.sample_conditions(conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert set(sampled["column2"].unique()) == set(["b"])
+    assert set(sampled['column2'].unique()) == set(['b'])
 
 
 def test_conditional_sampling_dataframe():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10
     })
 
     model = TVAE(epochs=1)
     model.fit(data)
     conditions = pd.DataFrame({
-        "column2": ["b", "b", "b", "c", "c"]
+        'column2': ['b', 'b', 'b', 'c', 'c']
     })
-    sampled = model.sample(conditions=conditions)
+    sampled = model.sample_remaining_columns(conditions)
 
-    assert sampled.shape[0] == len(conditions["column2"])
-    assert (sampled["column2"] == np.array(["b", "b", "b", "c", "c"])).all()
+    assert sampled.shape[0] == len(conditions['column2'])
+    assert (sampled['column2'] == np.array(['b', 'b', 'b', 'c', 'c'])).all()
 
 
 def test_conditional_sampling_two_conditions():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10,
-        "column3": ["d", "e", "f"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10,
+        'column3': ['d', 'e', 'f'] * 10
     })
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = {
-        "column2": "b",
-        "column3": "f"
-    }
-    samples = model.sample(5, conditions=conditions)
+    conditions = [Condition({
+        'column2': 'b',
+        'column3': 'f'
+    }, num_rows=5)]
+    samples = model.sample_conditions(conditions=conditions)
     assert list(samples.column2) == ['b'] * 5
     assert list(samples.column3) == ['f'] * 5
 
 
 def test_conditional_sampling_numerical():
     data = pd.DataFrame({
-        "column1": [1.0, 0.5, 2.5] * 10,
-        "column2": ["a", "b", "c"] * 10,
-        "column3": ["d", "e", "f"] * 10
+        'column1': [1.0, 0.5, 2.5] * 10,
+        'column2': ['a', 'b', 'c'] * 10,
+        'column3': ['d', 'e', 'f'] * 10
     })
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = {
-        "column1": 1.0,
-    }
-    sampled = model.sample(5, conditions=conditions)
+    conditions = [Condition({
+        'column1': 1.0,
+    }, num_rows=5)]
+    sampled = model.sample_conditions(conditions=conditions)
 
     assert list(sampled.column1) == [1.0] * 5

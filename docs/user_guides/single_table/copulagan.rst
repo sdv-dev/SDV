@@ -10,7 +10,6 @@ discover functionalities of the ``CopulaGAN`` model, including how to:
 -  Fit the instance to your data.
 -  Generate synthetic versions of your data.
 -  Use ``CopulaGAN`` to anonymize PII information.
--  Customize the data transformations to improve the learning process.
 -  Specify the column distributions to improve the output quality.
 -  Specify hyperparameters to improve the output quality.
 
@@ -91,12 +90,13 @@ Generate synthetic data from the model
 
 Once the modeling has finished you are ready to generate new synthetic
 data by calling the ``sample`` method from your model passing the number
-of rows that we want to generate.
+of rows that we want to generate. The number of rows (``num_rows``)
+is a required parameter.
 
 .. ipython:: python
     :okwarning:
 
-    new_data = model.sample(200)
+    new_data = model.sample(num_rows=200)
 
 This will return a table identical to the one which the model was fitted
 on, but filled with new data which resembles the original one.
@@ -109,10 +109,13 @@ on, but filled with new data which resembles the original one.
 
 .. note::
 
-    You can control the number of rows by specifying the number of
-    ``samples`` in the ``model.sample(<num_rows>)``. To test, try
-    ``model.sample(10000)``. Note that the original table only had ~200
-    rows.
+    There are a number of other parameters in this method that you can use to
+    optimize the process of generating synthetic data. Use ``output_file_path``
+    to directly write results to a CSV file, ``batch_size`` to break up sampling
+    into smaller pieces & track their progress and ``randomize_samples`` to
+    determine whether to generate the same synthetic data every time.
+    See the `API section <https://sdv.dev/SDV/api_reference/tabular/api/sdv.
+    tabular.copulagan.CopulaGAN.sample>`__ for more details.
 
 Save and Load the model
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,7 +172,7 @@ data from the loaded instance:
     :okwarning:
 
     loaded = CopulaGAN.load('my_model.pkl')
-    new_data = loaded.sample(200)
+    new_data = loaded.sample(num_rows=200)
 
 .. warning::
 
@@ -498,24 +501,6 @@ indicates, the distribution that we want to use for each column.
 
 Possible values for the distribution argument are:
 
--  ``univariate``: Let ``copulas`` select the optimal univariate
-   distribution. This may result in non-parametric models being used.
--  ``parametric``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to parametric distributions
-   only.
--  ``bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to bounded distributions
-   only. This may result in non-parametric models being used.
--  ``semi_bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to semi-bounded
-   distributions only. This may result in non-parametric models being
-   used.
--  ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-   distribution, but restrict the selection to parametric and bounded
-   distributions only.
--  ``parametric_semi_bounded``: Let ``copulas`` select the optimal
-   univariate distribution, but restrict the selection to parametric and
-   semi-bounded distributions only.
 -  ``gaussian``: Use a Gaussian distribution.
 -  ``gamma``: Use a Gamma distribution.
 -  ``beta``: Use a Beta distribution.
@@ -688,19 +673,23 @@ Conditional Sampling
 
 As the name implies, conditional sampling allows us to sample from a conditional
 distribution using the ``CopulaGAN`` model, which means we can generate only values that
-satisfy certain conditions. These conditional values can be passed to the ``conditions``
-parameter in the ``sample`` method either as a dataframe or a dictionary.
+satisfy certain conditions. These conditional values can be passed to the ``sample_conditions``
+method as a list of ``sdv.sampling.Condition`` objects or to the ``sample_remaining_columns`` method
+as a dataframe.
 
-In case a dictionary is passed, the model will generate as many rows as requested,
-all of which will satisfy the specified conditions, such as ``gender = M``.
+When specifying a ``sdv.sampling.Condition`` object, we can pass in the desired conditions
+as a dictionary, as well as specify the number of desired rows for that condition.
 
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    from sdv.sampling import Condition
+
+    condition = Condition({
         'gender': 'M'
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
 It's also possible to condition on multiple columns, such as
@@ -709,14 +698,16 @@ It's also possible to condition on multiple columns, such as
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    condition = Condition({
         'gender': 'M',
         'experience_years': 0
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
-The ``conditions`` can also be passed as a dataframe. In that case, the model
+In the ``sample_remaining_columns`` method, ``conditions`` is
+passed as a dataframe. In that case, the model
 will generate one sample for each row of the dataframe, sorted in the same
 order. Since the model already knows how many samples to generate, passing
 it as a parameter is unnecessary. For example, if we want to generate three
@@ -731,7 +722,7 @@ following:
     conditions = pd.DataFrame({
         'gender': ['M', 'M', 'M', 'F', 'F', 'F'],
     })
-    model.sample(conditions=conditions)
+    model.sample_remaining_columns(conditions)
 
 
 ``CopulaGAN`` also supports conditioning on continuous values, as long as the values
@@ -741,22 +732,27 @@ dataset are within 0 and 1, ``CopulaGAN`` will not be able to set this value to 
 .. ipython:: python
     :okwarning:
 
-    conditions = {
+    condition = Condition({
         'degree_perc': 70.0
-    }
-    model.sample(5, conditions=conditions)
+    }, num_rows=5)
+
+    model.sample_conditions(conditions=[condition])
 
 
 .. note::
 
-    Currently, conditional sampling works through a rejection sampling process,
-    where rows are sampled repeatedly until one that satisfies the conditions is
-    found. In case you are running into a ``Could not get enough valid rows within
-    x trials`` or simply wish to optimize the results, there are three parameters
-    that can be fine-tuned: ``max_rows_multiplier``, ``max_retries`` and ``float_rtol``.
-    More information about these parameters can be found in the `API section
-    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.sample.
-    html>`__.
+    Conditional sampling works through a rejection sampling process, where
+    rows are sampled repeatedly until one that satisfies the conditions is found.
+    In case you are not able to sample enough valid rows, update the related parameters:
+    increasing ``max_tries`` or increasing ``batch_size_per_try``.
+    More information about these paramters can be found in the `API section
+    <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.
+    sample_conditions.html>`__
+
+    If you have many conditions that cannot easily be satisified, consider switching
+    to the `GaussianCopula model
+    <https://sdv.dev/SDV/user_guides/single_table/gaussian_copula.html>`__,
+    which is able to handle conditional sampling more efficiently.
 
 
 How do I specify constraints?

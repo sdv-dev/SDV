@@ -10,7 +10,7 @@ from rdt.hyper_transformer import HyperTransformer
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.tabular import ColumnFormula, UniqueCombinations
+from sdv.constraints.tabular import ColumnFormula, FixedCombinations
 
 
 def test__get_qualified_name_class():
@@ -708,15 +708,15 @@ class TestConstraint():
         """
         # Setup
         constraint_dict = {
-            'constraint': 'sdv.constraints.tabular.UniqueCombinations',
-            'columns': ['a', 'b'],
+            'constraint': 'sdv.constraints.tabular.FixedCombinations',
+            'column_names': ['a', 'b'],
         }
 
         # Run
         instance = Constraint.from_dict(constraint_dict)
 
         # Assert
-        assert isinstance(instance, UniqueCombinations)
+        assert isinstance(instance, FixedCombinations)
         assert instance._columns == ['a', 'b']
 
     def test_from_dict_subclass(self):
@@ -732,15 +732,15 @@ class TestConstraint():
         """
         # Setup
         constraint_dict = {
-            'constraint': 'UniqueCombinations',
-            'columns': ['a', 'b'],
+            'constraint': 'FixedCombinations',
+            'column_names': ['a', 'b'],
         }
 
         # Run
         instance = Constraint.from_dict(constraint_dict)
 
         # Assert
-        assert isinstance(instance, UniqueCombinations)
+        assert isinstance(instance, FixedCombinations)
         assert instance._columns == ['a', 'b']
 
     def test_to_dict(self):
@@ -754,14 +754,14 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        instance = UniqueCombinations(columns=['a', 'b'], handling_strategy='transform')
+        instance = FixedCombinations(column_names=['a', 'b'], handling_strategy='transform')
         constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
-            'constraint': 'sdv.constraints.tabular.UniqueCombinations',
+            'constraint': 'sdv.constraints.tabular.FixedCombinations',
             'handling_strategy': 'transform',
-            'columns': ['a', 'b'],
+            'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict
 

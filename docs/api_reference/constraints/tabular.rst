@@ -21,21 +21,21 @@ CustomConstraint
    CustomConstraint.from_dict
    CustomConstraint.to_dict
 
-UniqueCombinations
+FixedCombinations
 ~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   UniqueCombinations
-   UniqueCombinations.fit
-   UniqueCombinations.transform
-   UniqueCombinations.fit_transform
-   UniqueCombinations.reverse_transform
-   UniqueCombinations.is_valid
-   UniqueCombinations.filter_valid
-   UniqueCombinations.from_dict
-   UniqueCombinations.to_dict
+   FixedCombinations
+   FixedCombinations.fit
+   FixedCombinations.transform
+   FixedCombinations.fit_transform
+   FixedCombinations.reverse_transform
+   FixedCombinations.is_valid
+   FixedCombinations.filter_valid
+   FixedCombinations.from_dict
+   FixedCombinations.to_dict
 
 GreaterThan
 ~~~~~~~~~~~~~~~~

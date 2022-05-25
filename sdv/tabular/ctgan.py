@@ -79,6 +79,15 @@ class CTGANModel(BaseTabularModel):
 
         raise NotImplementedError(f"{self._MODEL_CLASS} doesn't support conditional sampling.")
 
+    def _set_random_state(self, random_state):
+        """Set the random state of the model's random number generator.
+
+        Args:
+            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):
+                Seed or tuple of random states to use.
+        """
+        self._model.set_random_state(random_state)
+
 
 class CTGAN(CTGANModel):
     """Model wrapping ``CTGANSynthesizer`` model.

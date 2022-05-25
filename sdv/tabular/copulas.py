@@ -1,6 +1,7 @@
 """Wrappers around copulas models."""
 
 import logging
+import warnings
 
 import copulas
 import copulas.multivariate
@@ -60,22 +61,6 @@ class GaussianCopula(BaseTabularModel):
             the distribution that needs to be used. The distributions can be passed as either
             a ``copulas.univariate`` instance or as one of the following values:
 
-                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
-                  This may result in non-parametric models being used.
-                * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to parametric distributions only.
-                * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to semi-bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and bounded distributions
-                  only.
-                * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and semi-bounded
-                  distributions only.
                 * ``gaussian``: Use a Gaussian distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
@@ -86,7 +71,8 @@ class GaussianCopula(BaseTabularModel):
 
         default_distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use by default. To choose from the list
-            of possible ``field_distribution`` values. Defaults to ``parametric``.
+            of possible ``field_distribution`` values.
+            Defaults to ``truncated_gaussian``.
         categorical_transformer (str):
             Type of transformer to use for the categorical variables, which must be one of the
             following values:
@@ -104,6 +90,7 @@ class GaussianCopula(BaseTabularModel):
                 * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
                   ``fuzzy`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
+            Defaults to ``categorical_fuzzy``.
         rounding (int, str or None):
             Define rounding scheme for ``NumericalTransformer``. If set to an int, values
             will be rounded to that number of decimal places. If ``None``, values will not
@@ -127,21 +114,6 @@ class GaussianCopula(BaseTabularModel):
     _model = None
 
     _DISTRIBUTIONS = {
-        'univariate': copulas.univariate.Univariate,
-        'parametric': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC),
-        'bounded': copulas.univariate.Univariate(
-            bounded=copulas.univariate.BoundedType.BOUNDED),
-        'semi_bounded': copulas.univariate.Univariate(
-            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED),
-        'parametric_bounded': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC,
-            bounded=copulas.univariate.BoundedType.BOUNDED,
-        ),
-        'parametric_semi_bounded': copulas.univariate.Univariate(
-            parametric=copulas.univariate.ParametricType.PARAMETRIC,
-            bounded=copulas.univariate.BoundedType.SEMI_BOUNDED,
-        ),
         'gaussian': copulas.univariate.GaussianUnivariate,
         'gamma': copulas.univariate.GammaUnivariate,
         'beta': copulas.univariate.BetaUnivariate,
@@ -149,36 +121,8 @@ class GaussianCopula(BaseTabularModel):
         'gaussian_kde': copulas.univariate.GaussianKDE,
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
-    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['parametric']
-
-    _HYPERPARAMETERS = {
-        'distribution': {
-            'type': 'str or copulas.univariate.Univariate',
-            'default': 'Univariate',
-            'description': 'Univariate distribution to use to model each column',
-            'choices': [
-                'Univariate',
-                'Gaussian',
-                'Gamma',
-                'Beta',
-                'StudentT',
-                'GaussianKDE',
-                'TruncatedGaussian',
-            ]
-        },
-        'categorical_transformer': {
-            'type': 'str',
-            'default': 'one_hot_encoding',
-            'description': 'Type of transformer to use for the categorical variables',
-            'choices': [
-                'categorical',
-                'categorical_fuzzy',
-                'one_hot_encoding',
-                'label_encoding'
-            ]
-        }
-    }
-    _DEFAULT_TRANSFORMER = 'one_hot_encoding'
+    _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['truncated_gaussian']
+    _DEFAULT_TRANSFORMER = 'categorical_fuzzy'
 
     @classmethod
     def _validate_distribution(cls, distribution):
@@ -289,17 +233,89 @@ class GaussianCopula(BaseTabularModel):
                 Data to be fitted.
         """
         for column in table_data.columns:
-            distribution = self._field_distributions.get(column)
-            if not distribution:
-                self._field_distributions[column] = self._default_distribution
+            if column not in self._field_distributions:
+                # Check if the column is a derived column.
+                column_name = column.replace('.value', '')
+                self._field_distributions[column] = self._field_distributions.get(
+                    column_name, self._default_distribution)
 
         self._model = copulas.multivariate.GaussianMultivariate(
             distribution=self._field_distributions)
 
         LOGGER.debug('Fitting %s to table %s; shape: %s', self._model.__class__.__name__,
                      self._metadata.name, table_data.shape)
-        self._model.fit(table_data)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module='scipy')
+            self._model.fit(table_data)
+
         self._update_metadata()
+
+    def sample_conditions(self, conditions, batch_size=None, randomize_samples=True,
+                          output_file_path=None):
+        """Sample rows from this table with the given conditions.
+
+        Args:
+            conditions (list[sdv.sampling.Condition]):
+                A list of sdv.sampling.Condition objects, which specify the column
+                values in a condition, along with the number of rows for that
+                condition.
+            batch_size (int or None):
+                The batch size to sample. Defaults to `num_rows`, if None.
+            randomize_samples (bool):
+                Whether or not to use a fixed seed when sampling. Defaults
+                to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        return self._sample_conditions(
+            conditions, 100, batch_size, randomize_samples, output_file_path)
+
+    def sample_remaining_columns(self, known_columns, batch_size=None, randomize_samples=True,
+                                 output_file_path=None):
+        """Sample rows from this table.
+
+        Args:
+            known_columns (pandas.DataFrame):
+                A pandas.DataFrame with the columns that are already known. The output
+                is a DataFrame such that each row in the output is sampled
+                conditionally on the corresponding row in the input.
+            batch_size (int or None):
+                The batch size to sample. Defaults to `num_rows`, if None.
+            randomize_samples (bool):
+                Whether or not to use a fixed seed when sampling. Defaults
+                to True.
+            output_file_path (str or None):
+                The file to periodically write sampled rows to. Defaults to
+                a temporary file, if None.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
+            ValueError:
+                If any of the following happens:
+                    * any of the conditions' columns are not valid.
+                    * no rows could be generated.
+        """
+        return self._sample_remaining_columns(
+            known_columns, 100, batch_size, randomize_samples, output_file_path)
 
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
@@ -317,6 +333,15 @@ class GaussianCopula(BaseTabularModel):
                 Sampled data.
         """
         return self._model.sample(num_rows, conditions=conditions)
+
+    def _set_random_state(self, random_state):
+        """Set the random state of the model's random number generator.
+
+        Args:
+            random_state (int, np.random.RandomState, or None):
+                Seed or RandomState to use.
+        """
+        self._model.set_random_state(random_state)
 
     def get_likelihood(self, table_data):
         """Get the likelihood of each row belonging to this table."""
