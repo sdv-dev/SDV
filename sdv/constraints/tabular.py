@@ -583,14 +583,10 @@ class Inequality(Constraint):
         self._strict = strict_boundaries
         self.rebuild_columns = high_column_name
         self._operator = np.greater_equal if self._strict else np.greater
+        self._dtype = None
+        self._diff_columns = None
+        self._is_datetime = None
         super().__init__(handling_strategy='transform', fit_columns_model=False)
-
-    def _get_value(self, table_data, field):
-        variable = getattr(self, f'_{field}')
-        if self._scalar == field:
-            return variable
-
-        return table_data[variable].values
 
     def _get_diff_columns_name(self, table_data):
         names = []
@@ -612,8 +608,8 @@ class Inequality(Constraint):
         return names
 
     def _get_is_datetime(self, table_data):
-        low = self._get_value(table_data, 'low')
-        high = self._get_value(table_data, 'high')
+        low = table_data[self._low_column_name].to_numpy()
+        high = table_data[self._high_column_name].to_numpy()
 
         is_low_datetime = is_datetime_type(low)
         is_high_datetime = is_datetime_type(high)
@@ -624,13 +620,13 @@ class Inequality(Constraint):
 
         return is_datetime
 
-    def _check_columns_exist(self, table_data, field):
-        values = getattr(self, f'_{field}')
-        missing = set(values) - set(table_data.columns)
+    def _validate_data(self,  table_data):
+        # Validate columns exist.
+        missing = set([self._low_column_name, self._high_column_name]) - set(table_data.columns)
         if missing:
-            raise KeyError(f'The `{field}` columns {missing} '
-                           f'were not found in table_data. If `{field}` is a scalar, '
-                           f'set `scalar="{field}"`.')
+            raise KeyError(f'The columns {missing} were not found in table_data.')
+    
+        # Validate columns are datetime.
 
     def _fit(self, table_data):
         """Learn the dtype of the high column.
@@ -639,12 +635,8 @@ class Inequality(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        if self._scalar != 'high':
-            self._check_columns_exist(table_data, 'high')
-        if self._scalar != 'low':
-            self._check_columns_exist(table_data, 'low')
-
-        self._dtype = table_data[self._columns_to_reconstruct].dtypes
+        self._validate_data(table_data)
+        self._dtype = table_data[self._high_column_name].dtypes
         self._diff_columns = self._get_diff_columns_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
@@ -659,8 +651,8 @@ class Inequality(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        low = self._get_value(table_data, 'low')
-        high = self._get_value(table_data, 'high')
+        low = table_data[self._low_column_name].to_numpy()
+        high = table_data[self._high_column_name].to_numpy()
         isnull = np.logical_or(np.isnan(low), np.isnan(high))
 
         valid = np.logical_or(self.operator(high, low), isnull)
@@ -685,7 +677,7 @@ class Inequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = self._get_value(table_data, 'high') - self._get_value(table_data, 'low')
+        diff = table_data[self._low_column_name].to_numpy() - table_data[self._high_column_name].to_numpy()
 
         if self._is_datetime:
             diff = diff.astype(np.float64)
@@ -726,14 +718,14 @@ class Inequality(Constraint):
             diff = diff.astype('timedelta64[ns]')
 
         if self._drop == 'high':
-            low = self._get_value(table_data, 'low')
+            low = table_data[self._low_column_name].to_numpy()
             table_data[self._high] = self._construct_columns(diff, low, self._high)
         elif self._drop == 'low':
-            high = self._get_value(table_data, 'high')
+            high = table_data[self._high_column_name].to_numpy()
             table_data[self._low] = self._construct_columns(-diff, high, self._low)
         else:
-            low = self._get_value(table_data, 'low')
-            high = self._get_value(table_data, 'high')
+            low = table_data[self._low_column_name].to_numpy()
+            high = table_data[self._high_column_name].to_numpy()
             invalid = ~self.is_valid(table_data)
             if self._scalar == 'high':
                 new_values = high - diff[invalid]
