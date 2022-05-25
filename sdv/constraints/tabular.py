@@ -561,81 +561,29 @@ class Inequality(Constraint):
     _columns_to_reconstruct = None
 
 
-    @staticmethod
-    def _validate_scalar(scalar_column, column_names, scalar):
-        """Validate scalar comparison inputs.
-
-        - Make sure that the scalar column is not a list and raise the proper error if it is.
-        - If the `column_names` is not a list it would make it a list.
-        - Return both the scalar column and column names with the right format
-        """
-        if isinstance(scalar_column, list):
-            raise TypeError(f'`{scalar}` cannot be a list when scalar="{scalar}".')
-
-        return column_names
-
-    @staticmethod
-    def _validate_drop(scalar, drop):
-        if drop == scalar:
-            raise ValueError(f"Invalid `drop` value: f`{drop}`. Cannot drop a scalar.")
-
     @classmethod
-    def _validate_inputs(cls, low, high, scalar, drop):
-        if scalar is None:
-            if len(low) > 1 and len(high) > 1:
-                raise ValueError('either `high` or `low` must contain only one column.')
+    def _validate_inputs(cls, low_column_name, high_column_name, strict_boundaries):
+        if not (isinstance(low_column_name, str) and isinstance(high_column_name, str)):
+            raise ValueError('`low_column_name` and `high_column_name` must be strings.')
 
-            constraint_columns = tuple(low + high)
+        if not isinstance(strict_boundaries, bool):
+            raise ValueError('`strict_boundaries` must be a boolean.')
 
-        elif scalar == 'low':
-            cls._validate_drop(scalar, drop)
-            high = cls._validate_scalar(scalar_column=low, column_names=high, scalar=scalar)
-            constraint_columns = tuple(high)
-            if isinstance(low, pd.Timestamp):
-                low = low.to_datetime64()
-
-        elif scalar == 'high':
-            cls._validate_drop(scalar, drop)
-            low = cls._validate_scalar(scalar_column=high, column_names=low, scalar=scalar)
-            constraint_columns = tuple(low)
-            if isinstance(high, pd.Timestamp):
+        if isinstance(low, pd.Timestamp):
+            low = low.to_datetime64()
+        
+        if isinstance(high, pd.Timestamp):
                 high = high.to_datetime64()
 
-        else:
-            raise ValueError(f"Invalad `scalar` value: `{scalar}`. "
-                             "Use either: 'high', 'low', or None.")
 
-        return low, high, constraint_columns
-
-    def _get_columns_to_reconstruct(self):
-        if self._drop == 'high':
-            column = self._high
-        elif self._drop == 'low':
-            column = self._low
-        elif self._scalar == 'high':
-            column = self._low
-        else:
-            column = self._high
-
-        return column
-
-    def __init__(self, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=False, drop=None, scalar=None):
-        self._strict = strict
-        self._drop = drop
-        self._scalar = scalar
-        self._low, self._high, self.constraint_columns = self._validate_inputs(
-            low=low, high=high, scalar=scalar, drop=drop)
-        self._columns_to_reconstruct = self._get_columns_to_reconstruct()
-        self.rebuild_columns = self._columns_to_reconstruct.copy()
-
-        if strict:
-            self.operator = np.greater
-        else:
-            self.operator = np.greater_equal
-
-        super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
+    def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
+        self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
+        self._low_column_name = low_column_name
+        self._high_column_name = high_column_name
+        self._strict = strict_boundaries
+        self.rebuild_columns = high_column_name
+        self._operator = np.greater_equal if self._strict else np.greater
+        super().__init__(handling_strategy='transform', fit_columns_model=False)
 
     def _get_value(self, table_data, field):
         variable = getattr(self, f'_{field}')
