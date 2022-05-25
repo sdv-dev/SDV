@@ -100,7 +100,7 @@ class Constraint(metaclass=ConstraintMeta):
     Attributes:
         constraint_columns (tuple[str]):
             The names of the columns used by this constraint.
-        rebuild_columns (typle[str]):
+        rebuild_columns (tuple[str]):
             The names of the columns that this constraint will rebuild during
             ``reverse_transform``.
     Args:

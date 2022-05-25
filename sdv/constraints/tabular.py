@@ -542,7 +542,7 @@ class Inequality(Constraint):
 
     The transformation works by creating a column with the difference between the
     ``high_column_name`` and ``low_column_name`` columns and storing it in the
-    ``high_column_name`` place. The reverse transform adds the difference column
+    ``high_column_name``'s place. The reverse transform adds the difference column
     and the ``low_column_name`` to reconstruct the ``high_column_name``.
 
     Args:
@@ -552,65 +552,37 @@ class Inequality(Constraint):
             Name of the column that contains the high values.
         strict_boundaries (bool):
             Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
+            not ``>``. Currently, this is only respected if ``reject_sampling``
+            or ``all`` handling strategies are used.
     """
 
-    _diff_columns = None
-    _is_datetime = None
-    _columns_to_reconstruct = None
-
-
-    @classmethod
-    def _validate_inputs(cls, low_column_name, high_column_name, strict_boundaries):
+    @staticmethod
+    def _validate_inputs(low_column_name, high_column_name, strict_boundaries):
         if not (isinstance(low_column_name, str) and isinstance(high_column_name, str)):
             raise ValueError('`low_column_name` and `high_column_name` must be strings.')
 
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
-        if isinstance(low, pd.Timestamp):
-            low = low.to_datetime64()
-        
-        if isinstance(high, pd.Timestamp):
-                high = high.to_datetime64()
-
-
     def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
         self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
-        self._strict = strict_boundaries
-        self.rebuild_columns = high_column_name
-        self._operator = np.greater_equal if self._strict else np.greater
+        self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
+        self._operator = np.greater_equal if strict_boundaries else np.greater
+        self.rebuild_columns = tuple(high_column_name)
         self._dtype = None
-        self._diff_columns = None
         self._is_datetime = None
         super().__init__(handling_strategy='transform', fit_columns_model=False)
 
-    def _get_diff_columns_name(self, table_data):
-        names = []
-        base = ''
-        column_names = list(self.constraint_columns)
-        if self._scalar is None:
-            base = self._low if len(self._low) == 1 else self._high
-            column_names.remove(base[0])
-            base = str(base[0])
-
-        for column in list(map(str, column_names)):
-            token = '#'
-            name = token.join((column, base))
-            while name in table_data.columns:
-                token += '#'
-
-            names.append(name)
-
-        return names
-
-    def _get_is_datetime(self, table_data):
+    def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
         high = table_data[self._high_column_name].to_numpy()
 
+        return low, high
+
+    def _get_is_datetime(self, table_data):
+        low, high = self._get_data(table_data)
         is_low_datetime = is_datetime_type(low)
         is_high_datetime = is_datetime_type(high)
         is_datetime = is_low_datetime and is_high_datetime
@@ -620,25 +592,21 @@ class Inequality(Constraint):
 
         return is_datetime
 
-    def _validate_data(self,  table_data):
-        # Validate columns exist.
+    def _validate_columns_exist(self, table_data):
         missing = set([self._low_column_name, self._high_column_name]) - set(table_data.columns)
         if missing:
             raise KeyError(f'The columns {missing} were not found in table_data.')
-    
-        # Validate columns are datetime.
 
     def _fit(self, table_data):
-        """Learn the dtype of the high column.
+        """Learn the ``dtype`` of ``_high_column_name`` and whether the data is datetime.
 
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        self._validate_data(table_data)
-        self._dtype = table_data[self._high_column_name].dtypes
-        self._diff_columns = self._get_diff_columns_name(table_data)
+        self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
+        self._dtype = table_data[self._high_column_name].dtypes
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -651,22 +619,19 @@ class Inequality(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        low = table_data[self._low_column_name].to_numpy()
-        high = table_data[self._high_column_name].to_numpy()
-        isnull = np.logical_or(np.isnan(low), np.isnan(high))
+        low, high = self._get_data(table_data)
+        valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
 
-        valid = np.logical_or(self.operator(high, low), isnull)
-
-        return valid.all(axis=1)
+        return valid
 
     def _transform(self, table_data):
         """Transform the table data.
 
-        The transformation consist on replacing the ``high`` value with difference
-        between it and the ``low`` value.
+        The transformation consists on replacing the ``high_column_name`` values with the
+        difference between it and the ``low_column_name`` values.
 
-        Afterwards, a logarithm is applied to the difference + 1 to be able to ensure
-        that the value stays positive when reverted afterwards using an exponential.
+        Afterwards, a logarithm is applied to the difference + 1 to ensure that the
+        value stays positive when reverted afterwards using an exponential.
 
         Args:
             table_data (pandas.DataFrame):
@@ -677,32 +642,23 @@ class Inequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = table_data[self._low_column_name].to_numpy() - table_data[self._high_column_name].to_numpy()
+        low, high = self._get_data(table_data)
+        diff_column = low - high
 
         if self._is_datetime:
-            diff = diff.astype(np.float64)
+            diff_column = diff_column.astype(np.float64)
 
-        table_data[self._diff_columns] = np.log(diff + 1)
-        if self._drop == 'high':
-            table_data = table_data.drop(self._high, axis=1)
-        elif self._drop == 'low':
-            table_data = table_data.drop(self._low, axis=1)
+        table_data[self._diff_column_name] = np.log(diff_column + 1)
 
         return table_data
-
-    def _construct_columns(self, diff, column_values, columns):
-        new_values = pd.DataFrame(diff + column_values, columns=columns)
-        return new_values.astype(dict(zip(columns, self._dtype)))
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
 
-        The transformation is reversed by computing an exponential of the given
-        value, converting it to the original dtype, subtracting 1 and finally
-        clipping the value to 0 on the low end to ensure the value is positive.
-
-        Finally, the obtained value is added to the ``low`` column to get the final
-        ``high`` value.
+        The transformation is reversed by computing an exponential of the difference value,
+        subtracting 1, clipping it to 0 to ensure the value is positive and converting it
+        to the original dtype. Finally, the obtained column is added to the ``low_column_name``
+        column to get back the original ``high_column_name`` value.
 
         Args:
             table_data (pandas.DataFrame):
@@ -713,33 +669,14 @@ class Inequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff = (np.exp(table_data[self._diff_columns].values).round() - 1).clip(0)
+        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()).round() - 1).clip(0)
         if self._is_datetime:
-            diff = diff.astype('timedelta64[ns]')
+            diff_column = diff_column.astype('timedelta64[ns]')
 
-        if self._drop == 'high':
-            low = table_data[self._low_column_name].to_numpy()
-            table_data[self._high] = self._construct_columns(diff, low, self._high)
-        elif self._drop == 'low':
-            high = table_data[self._high_column_name].to_numpy()
-            table_data[self._low] = self._construct_columns(-diff, high, self._low)
-        else:
-            low = table_data[self._low_column_name].to_numpy()
-            high = table_data[self._high_column_name].to_numpy()
-            invalid = ~self.is_valid(table_data)
-            if self._scalar == 'high':
-                new_values = high - diff[invalid]
-            elif self._scalar == 'low':
-                new_values = low + diff[invalid]
-            else:
-                new_values = low[invalid] + diff[invalid]
+        low = table_data[self._low_column_name].to_numpy()
+        table_data[self._high_column_name] = pd.Series(diff_column + low, name=self._high_column_name)
 
-            for i, column in enumerate(self._columns_to_reconstruct):
-                table_data.loc[invalid, column] = new_values[:, i].astype(self._dtype[i])
-
-        table_data = table_data.drop(self._diff_columns, axis=1)
-
-        return table_data
+        return table_data.drop(self._diff_column, axis=1)
 
 
 class Positive(GreaterThan):
