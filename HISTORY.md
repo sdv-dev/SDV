@@ -1,5 +1,26 @@
 # Release Notes
 
+## 0.15.0 - 2022-05-25
+
+This release improves the speed of the `GaussianCopula` model by removing logic that previously searched for the appropriate distribution to
+use. It also fixes a bug that was happening when conditional sampling was used with the `TabularPreset`.
+
+The rest of the release focuses on making changes to improve constraints including changing the `UniqueCombinations` constraint to `FixedCombinations`,
+making the `Unique` constraint work with missing values and erroring when null values are seen in the `OneHotEncoding` constraint.
+
+### New Features
+* Silence warnings coming from univariate fit in copulas - Issue [#769](https://github.com/sdv-dev/SDV/issues/769) by @pvk-developer
+* Remove parameters related to distribution search and change default - Issue [#767](https://github.com/sdv-dev/SDV/issues/767) by @fealho
+* Update the UniqueCombinations constraint - Issue [#793](https://github.com/sdv-dev/SDV/issues/793) by @fealho
+* Make Unique constraint works with nans - Issue [#797](https://github.com/sdv-dev/SDV/issues/797) by @fealho
+* Error out if nans in OneHotEncoding - Issue [#800](https://github.com/sdv-dev/SDV/issues/800) by @amontanez24
+
+### Bugs Fixed
+* Unable to sample conditionally in Tabular_Preset model - Issue [#796](https://github.com/sdv-dev/SDV/issues/796) by @katxiao
+
+### Documentation Changes
+* Support GPU computing and progress track? - Issue [#478](https://github.com/sdv-dev/SDV/issues/478) by @fealho
+
 ## 0.14.1 - 2022-05-03
 
 This release adds a `TabularPreset`, available in the `sdv.lite` module, which allows users to easily optimize a tabular model for speed.
