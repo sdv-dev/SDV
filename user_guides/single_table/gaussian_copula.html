@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>GaussianCopula Model &#8212; SDV 0.14.1 documentation</title>
+    <title>GaussianCopula Model &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -419,11 +419,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0       17369      M        70.78  ...  2020-03-03 2020-05-14       3.0</span>
-<span class="go">1       17468      M        72.06  ...  2020-03-21 2020-07-23       3.0</span>
-<span class="go">2       17371      M        53.71  ...  2020-03-04 2020-08-10       3.0</span>
-<span class="go">3       17343      M        64.29  ...  2020-01-03 2020-09-01       9.0</span>
-<span class="go">4       17285      M        83.83  ...  2020-07-26 2020-12-11       4.0</span>
+<span class="go">0       17445      M        69.39  ...  2020-02-28 2020-06-12       5.0</span>
+<span class="go">1       17266      F        52.11  ...  2020-01-18 2020-07-27       7.0</span>
+<span class="go">2       17472      M        67.68  ...         NaT        NaT       NaN</span>
+<span class="go">3       17450      F        76.51  ...  2020-05-22 2020-10-03       6.0</span>
+<span class="go">4       17473      F        47.88  ...         NaT        NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -509,12 +509,13 @@ that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">     student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">43        17359      M        60.93  ...         NaT        NaT       NaN</span>
-<span class="go">66        17359      F        59.21  ...         NaT        NaT       NaN</span>
-<span class="go">75        17359      M        58.82  ...         NaT        NaT       NaN</span>
-<span class="go">166       17359      F        75.07  ...  2020-01-02 2020-05-22       6.0</span>
+<span class="go">33        17385      M        60.70  ...         NaT        NaT       NaN</span>
+<span class="go">37        17385      M        79.41  ...         NaT        NaT       NaN</span>
+<span class="go">101       17385      M        66.15  ...  2020-03-11 2020-10-18       8.0</span>
+<span class="go">107       17385      M        62.37  ...  2020-01-10 2020-05-02       5.0</span>
+<span class="go">191       17385      M        64.42  ...  2020-04-23 2020-09-10       5.0</span>
 
-<span class="go">[4 rows x 17 columns]</span>
+<span class="go">[5 rows x 17 columns]</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -534,11 +535,11 @@ indicating the name of the column that is the index of the table.</p>
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        51.72  ...         NaT        NaT       NaN</span>
-<span class="go">1           1      F        56.09  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        60.42  ...         NaT        NaT       NaN</span>
-<span class="go">3           3      M        82.52  ...  2020-04-23 2020-09-04       3.0</span>
-<span class="go">4           4      M        71.76  ...  2020-05-16 2020-11-15       7.0</span>
+<span class="go">0           0      M        64.18  ...         NaT        NaT       NaN</span>
+<span class="go">1           1      F        42.29  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        63.02  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      M        74.51  ...  2020-07-19 2020-10-06       3.0</span>
+<span class="go">4           4      F        53.03  ...  2020-01-05 2020-07-11       8.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -597,11 +598,11 @@ students:</p>
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
 <span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...      4.0</span>
-<span class="go">1           1  ...      8.0</span>
-<span class="go">2           2  ...      4.0</span>
-<span class="go">3           3  ...      NaN</span>
-<span class="go">4           4  ...      3.0</span>
+<span class="go">0           0  ...      NaN</span>
+<span class="go">1           1  ...      4.0</span>
+<span class="go">2           2  ...      NaN</span>
+<span class="go">3           3  ...      5.0</span>
+<span class="go">4           4  ...      NaN</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 </pre></div>
@@ -659,9 +660,9 @@ replaced by other fake addresses:</p>
 <span class="go">   student_id  ... duration</span>
 <span class="go">0           0  ...      NaN</span>
 <span class="go">1           1  ...      4.0</span>
-<span class="go">2           2  ...      NaN</span>
-<span class="go">3           3  ...      7.0</span>
-<span class="go">4           4  ...      3.0</span>
+<span class="go">2           2  ...      6.0</span>
+<span class="go">3           3  ...      NaN</span>
+<span class="go">4           4  ...      4.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 </pre></div>
@@ -711,16 +712,16 @@ to be 2.</p>
 <span class="gp">In [34]: </span><span class="n">unbounded_data</span>
 <span class="gh">Out[34]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      F        86.83  ...  2020-01-14 2020-08-17      9.06</span>
-<span class="go">1           1      M        48.55  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        74.44  ...  2020-01-18 2020-08-16      6.32</span>
-<span class="go">3           3      M        60.98  ...  2020-01-15 2020-09-30      7.88</span>
-<span class="go">4           4      M        65.90  ...         NaT        NaT       NaN</span>
-<span class="go">5           5      F        43.89  ...         NaT        NaT       NaN</span>
-<span class="go">6           6      F        85.66  ...  2020-03-01 2020-07-08      3.07</span>
-<span class="go">7           7      F        82.46  ...  2020-02-02 2020-05-03      1.91</span>
-<span class="go">8           8      F        50.91  ...         NaT        NaT       NaN</span>
-<span class="go">9           9      F        50.70  ...  2020-04-12 2020-10-28      4.80</span>
+<span class="go">0           0      M        56.73  ...         NaT        NaT       NaN</span>
+<span class="go">1           1      M        74.53  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      F        55.98  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      M        83.89  ...  2020-02-02 2020-06-06      4.98</span>
+<span class="go">4           4      M        53.05  ...         NaT        NaT       NaN</span>
+<span class="go">5           5      M        68.47  ...  2020-02-27 2020-08-28      6.41</span>
+<span class="go">6           6      M        66.70  ...         NaT        NaT       NaN</span>
+<span class="go">7           7      M        81.67  ...  2020-04-13 2020-06-18      3.42</span>
+<span class="go">8           8      M        76.52  ...         NaT        NaT       NaN</span>
+<span class="go">9           9      F        60.78  ...         NaT        NaT       NaN</span>
 
 <span class="go">[10 rows x 17 columns]</span>
 </pre></div>
@@ -776,26 +777,26 @@ in our table. We can explore the distributions which the
 distribution class used for each column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [38]: </span><span class="n">distributions</span>
 <span class="gh">Out[38]: </span><span class="go"></span>
-<span class="go">{&#39;gender.value&#39;: &#39;copulas.univariate.uniform.UniformUnivariate&#39;,</span>
+<span class="go">{&#39;gender.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;second_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
-<span class="go"> &#39;high_perc.value&#39;: &#39;copulas.univariate.log_laplace.LogLaplace&#39;,</span>
+<span class="go"> &#39;high_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;high_spec.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
-<span class="go"> &#39;degree_perc.value&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
+<span class="go"> &#39;degree_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;degree_type.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
-<span class="go"> &#39;work_experience.value&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
-<span class="go"> &#39;experience_years.value&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
+<span class="go"> &#39;work_experience.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;experience_years.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
 <span class="go"> &#39;employability_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
-<span class="go"> &#39;mba_spec.value&#39;: &#39;copulas.univariate.uniform.UniformUnivariate&#39;,</span>
-<span class="go"> &#39;mba_perc.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;salary.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;salary.is_null&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;placed.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;start_date.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;start_date.is_null&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;end_date.value&#39;: &#39;copulas.univariate.gamma.GammaUnivariate&#39;,</span>
-<span class="go"> &#39;end_date.is_null&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;,</span>
-<span class="go"> &#39;duration.value&#39;: &#39;copulas.univariate.student_t.StudentTUnivariate&#39;,</span>
-<span class="go"> &#39;duration.is_null&#39;: &#39;copulas.univariate.gaussian.GaussianUnivariate&#39;}</span>
+<span class="go"> &#39;mba_spec.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;mba_perc.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;salary.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;salary.is_null&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;placed.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;start_date.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;start_date.is_null&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;end_date.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;end_date.is_null&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;duration.value&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;,</span>
+<span class="go"> &#39;duration.is_null&#39;: &#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;}</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -828,7 +829,7 @@ distribution, where the majority of the values are 0 and the frequency
 decreases as the values increase.</p>
 <p>Was the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> able to capture this distribution on its own?</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [41]: </span><span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;experience_years.value&#39;</span><span class="p">]</span>
-<span class="gh">Out[41]: </span><span class="go">&#39;copulas.univariate.gaussian.GaussianUnivariate&#39;</span>
+<span class="gh">Out[41]: </span><span class="go">&#39;copulas.univariate.truncated_gaussian.TruncatedGaussian&#39;</span>
 </pre></div>
 </div>
 <p>It seems that it was not, as it rather thought that the behavior was
@@ -837,9 +838,9 @@ generated values now contain negative values which are invalid for this
 column:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [42]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[42]: </span><span class="go"></span>
-<span class="go">0    100</span>
-<span class="go">1     92</span>
-<span class="go">2      8</span>
+<span class="go">1    102</span>
+<span class="go">0     88</span>
+<span class="go">2     10</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [43]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -859,24 +860,6 @@ this, we need to pass a <code class="docutils literal notranslate"><span class="
 that indicates the distribution that we want to use for each column.</p>
 <p>Possible values for the distribution argument are:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution. This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric distributions
-only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to bounded distributions
-only. This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to semi-bounded
-distributions only. This may result in non-parametric models being
-used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric and bounded
-distributions only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal
-univariate distribution, but restrict the selection to parametric and
-semi-bounded distributions only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian</span></code>: Use a Gaussian distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
@@ -915,9 +898,8 @@ the valid values range.</p>
 
 <span class="gp">In [49]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 <span class="gh">Out[49]: </span><span class="go"></span>
-<span class="go">0    201</span>
-<span class="go">1     13</span>
-<span class="go">2      1</span>
+<span class="go">0    195</span>
+<span class="go">1     20</span>
 <span class="go">Name: experience_years, dtype: int64</span>
 
 <span class="gp">In [50]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">experience_years</span><span class="o">.</span><span class="n">hist</span><span class="p">();</span>
@@ -952,11 +934,11 @@ as a dictionary, as well as specify the number of desired rows for that conditio
 <span class="gp">In [53]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[53]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        75.04  ...         NaT        NaT       NaN</span>
-<span class="go">1           1      M        78.98  ...  2020-01-19 2020-03-03      -1.0</span>
-<span class="go">2           2      M        59.79  ...  2020-03-14 2020-09-24       6.0</span>
-<span class="go">3           3      M        61.57  ...  2020-01-08 2020-07-21       9.0</span>
-<span class="go">4           4      M        63.47  ...         NaT        NaT       NaN</span>
+<span class="go">0           0      M        65.82  ...  2020-02-05 2020-12-30      11.0</span>
+<span class="go">1           1      M        82.33  ...  2020-01-28 2020-10-24       8.0</span>
+<span class="go">2           2      M        58.57  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      M        49.26  ...  2020-03-21 2020-08-30       4.0</span>
+<span class="go">4           4      M        69.43  ...  2020-02-23 2020-10-14       8.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -971,12 +953,12 @@ as a dictionary, as well as specify the number of desired rows for that conditio
 
 <span class="gp">In [55]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[55]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  ...  start_date end_date  duration</span>
-<span class="go">0           0      M        50.86  ...         NaT      NaT       NaN</span>
-<span class="go">1           1      M        41.31  ...         NaT      NaT       NaN</span>
-<span class="go">2           2      M        47.73  ...         NaT      NaT       NaN</span>
-<span class="go">3           3      M        66.62  ...         NaT      NaT       NaN</span>
-<span class="go">4           4      M        56.13  ...         NaT      NaT       NaN</span>
+<span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
+<span class="go">0           0      M        53.32  ...         NaT        NaT       NaN</span>
+<span class="go">1           1      M        46.80  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        70.73  ...  2020-01-22 2020-07-14       6.0</span>
+<span class="go">3           3      M        56.15  ...         NaT        NaT       NaN</span>
+<span class="go">4           4      M        65.37  ...         NaT        NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -998,12 +980,12 @@ following:</p>
 <span class="gp">In [58]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[58]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        69.56  ...  2020-01-15 2020-09-17       7.0</span>
-<span class="go">1           1      M        74.84  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        70.04  ...         NaT        NaT       NaN</span>
-<span class="go">3           3      F        65.95  ...  2020-01-28 2020-08-22       6.0</span>
-<span class="go">4           4      F        88.86  ...  2020-03-30 2020-05-17       0.0</span>
-<span class="go">5           5      F        66.33  ...  2020-02-16 2020-09-12       5.0</span>
+<span class="go">0           0      M        50.84  ...  2020-04-11 2020-08-17       5.0</span>
+<span class="go">1           1      M        58.97  ...         NaT        NaT       NaN</span>
+<span class="go">2           2      M        61.29  ...  2020-01-05 2020-05-02       7.0</span>
+<span class="go">3           3      F        68.56  ...  2020-03-20 2020-06-14       4.0</span>
+<span class="go">4           4      F        75.00  ...  2020-01-30 2020-09-06       8.0</span>
+<span class="go">5           5      F        80.58  ...  2020-04-06 2020-05-16       3.0</span>
 
 <span class="go">[6 rows x 17 columns]</span>
 </pre></div>
@@ -1019,11 +1001,11 @@ dataset are within 0 and 1, <code class="docutils literal notranslate"><span cla
 <span class="gp">In [60]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[60]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      F        80.25  ...  2020-04-16 2020-07-22       5.0</span>
-<span class="go">1           1      F        60.91  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      F        67.57  ...         NaT        NaT       NaN</span>
-<span class="go">3           3      M        79.51  ...  2020-01-28 2020-08-10       5.0</span>
-<span class="go">4           4      M        44.35  ...         NaT        NaT       NaN</span>
+<span class="go">0           0      F        77.45  ...  2020-05-09 2020-08-05       4.0</span>
+<span class="go">1           1      M        81.49  ...  2020-01-13 2020-07-25       6.0</span>
+<span class="go">2           2      F        82.86  ...         NaT        NaT       NaN</span>
+<span class="go">3           3      F        81.54  ...         NaT        NaT       NaN</span>
+<span class="go">4           4      M        82.19  ...  2020-07-14 2020-12-19       5.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.14.1 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -169,6 +169,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;Wrappers around copulas models.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">copulas</span>
 <span class="kn">import</span> <span class="nn">copulas.multivariate</span>
@@ -228,22 +229,6 @@
 <span class="sd">            the distribution that needs to be used. The distributions can be passed as either</span>
 <span class="sd">            a ``copulas.univariate`` instance or as one of the following values:</span>
 
-<span class="sd">                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.</span>
-<span class="sd">                  This may result in non-parametric models being used.</span>
-<span class="sd">                * ``parametric``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">                  but restrict the selection to parametric distributions only.</span>
-<span class="sd">                * ``bounded``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">                  but restrict the selection to bounded distributions only.</span>
-<span class="sd">                  This may result in non-parametric models being used.</span>
-<span class="sd">                * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">                  but restrict the selection to semi-bounded distributions only.</span>
-<span class="sd">                  This may result in non-parametric models being used.</span>
-<span class="sd">                * ``parametric_bounded``: Let ``copulas`` select the optimal univariate</span>
-<span class="sd">                  distribution, but restrict the selection to parametric and bounded distributions</span>
-<span class="sd">                  only.</span>
-<span class="sd">                * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate</span>
-<span class="sd">                  distribution, but restrict the selection to parametric and semi-bounded</span>
-<span class="sd">                  distributions only.</span>
 <span class="sd">                * ``gaussian``: Use a Gaussian distribution.</span>
 <span class="sd">                * ``gamma``: Use a Gamma distribution.</span>
 <span class="sd">                * ``beta``: Use a Beta distribution.</span>
@@ -254,7 +239,8 @@
 
 <span class="sd">        default_distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Copulas univariate distribution to use by default. To choose from the list</span>
-<span class="sd">            of possible ``field_distribution`` values. Defaults to ``parametric``.</span>
+<span class="sd">            of possible ``field_distribution`` values.</span>
+<span class="sd">            Defaults to ``truncated_gaussian``.</span>
 <span class="sd">        categorical_transformer (str):</span>
 <span class="sd">            Type of transformer to use for the categorical variables, which must be one of the</span>
 <span class="sd">            following values:</span>
@@ -296,21 +282,6 @@
     <span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">_DISTRIBUTIONS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;univariate&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">,</span>
-        <span class="s1">&#39;parametric&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">(</span>
-            <span class="n">parametric</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">ParametricType</span><span class="o">.</span><span class="n">PARAMETRIC</span><span class="p">),</span>
-        <span class="s1">&#39;bounded&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">(</span>
-            <span class="n">bounded</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">BoundedType</span><span class="o">.</span><span class="n">BOUNDED</span><span class="p">),</span>
-        <span class="s1">&#39;semi_bounded&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">(</span>
-            <span class="n">bounded</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">BoundedType</span><span class="o">.</span><span class="n">SEMI_BOUNDED</span><span class="p">),</span>
-        <span class="s1">&#39;parametric_bounded&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">(</span>
-            <span class="n">parametric</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">ParametricType</span><span class="o">.</span><span class="n">PARAMETRIC</span><span class="p">,</span>
-            <span class="n">bounded</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">BoundedType</span><span class="o">.</span><span class="n">BOUNDED</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="s1">&#39;parametric_semi_bounded&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">Univariate</span><span class="p">(</span>
-            <span class="n">parametric</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">ParametricType</span><span class="o">.</span><span class="n">PARAMETRIC</span><span class="p">,</span>
-            <span class="n">bounded</span><span class="o">=</span><span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">BoundedType</span><span class="o">.</span><span class="n">SEMI_BOUNDED</span><span class="p">,</span>
-        <span class="p">),</span>
         <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">GaussianUnivariate</span><span class="p">,</span>
         <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">GammaUnivariate</span><span class="p">,</span>
         <span class="s1">&#39;beta&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">BetaUnivariate</span><span class="p">,</span>
@@ -318,7 +289,7 @@
         <span class="s1">&#39;gaussian_kde&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">GaussianKDE</span><span class="p">,</span>
         <span class="s1">&#39;truncated_gaussian&#39;</span><span class="p">:</span> <span class="n">copulas</span><span class="o">.</span><span class="n">univariate</span><span class="o">.</span><span class="n">TruncatedGaussian</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="n">_DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="n">_DISTRIBUTIONS</span><span class="p">[</span><span class="s1">&#39;parametric&#39;</span><span class="p">]</span>
+    <span class="n">_DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="n">_DISTRIBUTIONS</span><span class="p">[</span><span class="s1">&#39;truncated_gaussian&#39;</span><span class="p">]</span>
     <span class="n">_DEFAULT_TRANSFORMER</span> <span class="o">=</span> <span class="s1">&#39;categorical_fuzzy&#39;</span>
 
     <span class="nd">@classmethod</span>
@@ -441,7 +412,11 @@
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Fitting </span><span class="si">%s</span><span class="s1"> to table </span><span class="si">%s</span><span class="s1">; shape: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                      <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">table_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="s1">&#39;scipy&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
 
 <div class="viewcode-block" id="GaussianCopula.sample_conditions"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.sample_conditions.html#sdv.tabular.copulas.GaussianCopula.sample_conditions">[docs]</a>    <span class="k">def</span> <span class="nf">sample_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

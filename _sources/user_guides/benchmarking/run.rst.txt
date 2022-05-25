@@ -15,7 +15,7 @@ of the :class:`sdv.relational.HMA1` with some specific arguments we could do:
    In [1]: from sdv.relational import HMA1
 
    In [2]: def my_synthesizer_function(real_data, metadata):
-      ...:     model = HMA1(metadata=metadata, model_kwargs={'default_distribution': 'bounded'})
+      ...:     model = HMA1(metadata=metadata, model_kwargs={'default_distribution': 'gamma'})
       ...:     model.fit(real_data)
       ...:     return model.sample()
 

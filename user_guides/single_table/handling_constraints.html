@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Handling Constraints &#8212; SDV 0.14.1 documentation</title>
+    <title>Handling Constraints &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -251,7 +251,7 @@
         </li>
     
         <li class="nav-item toc-entry toc-h3">
-            <a href="#uniquecombinations-constraint" class="nav-link">UniqueCombinations Constraint</a>
+            <a href="#fixedcombinations-constraint" class="nav-link">FixedCombinations Constraint</a>
         </li>
     
         <li class="nav-item toc-entry toc-h3">
@@ -433,9 +433,9 @@ columns, since the <code class="docutils literal notranslate"><span class="pre">
 </pre></div>
 </div>
 </section>
-<section id="uniquecombinations-constraint">
-<h3>UniqueCombinations Constraint<a class="headerlink" href="#uniquecombinations-constraint" title="Permalink to this headline">¶</a></h3>
-<p>The next constraint that we will explore is the <code class="docutils literal notranslate"><span class="pre">UniqueCombinations</span></code>
+<section id="fixedcombinations-constraint">
+<h3>FixedCombinations Constraint<a class="headerlink" href="#fixedcombinations-constraint" title="Permalink to this headline">¶</a></h3>
+<p>The next constraint that we will explore is the <code class="docutils literal notranslate"><span class="pre">FixedCombinations</span></code>
 constraint.</p>
 <p>This Constraint class can handle the situation number 1 indicated above,
 in which the values of a set of columns can only be combined exactly as
@@ -446,10 +446,10 @@ order to use this constraint we will need to import it from the
 <li><p>the names of the affected columns</p></li>
 <li><p>which strategy we want to use: <code class="docutils literal notranslate"><span class="pre">transform</span></code> or <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code></p></li>
 </ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">UniqueCombinations</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">FixedCombinations</span>
 
-<span class="gp">In [7]: </span><span class="n">unique_company_department_constraint</span> <span class="o">=</span> <span class="n">UniqueCombinations</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;company&#39;</span><span class="p">,</span> <span class="s1">&#39;department&#39;</span><span class="p">],</span>
+<span class="gp">In [7]: </span><span class="n">fixed_company_department_constraint</span> <span class="o">=</span> <span class="n">FixedCombinations</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">column_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;company&#39;</span><span class="p">,</span> <span class="s1">&#39;department&#39;</span><span class="p">],</span>
 <span class="gp">   ...: </span>    <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span>
 <span class="gp">   ...: </span><span class="p">)</span>
 <span class="gp">   ...: </span>
@@ -654,7 +654,7 @@ constraints that we just defined as a <code class="docutils literal notranslate"
 
 <span class="gp">In [24]: </span><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
 <span class="gp">   ....: </span>    <span class="n">unique_employee_id_company_constraint</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">unique_company_department_constraint</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">fixed_company_department_constraint</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">age_gt_age_when_joined_constraint</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">salary_gt_30000_constraint</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">experience_years_gt_one_constraint</span><span class="p">,</span>
@@ -680,16 +680,16 @@ we defined:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [28]: </span><span class="n">sampled</span>
 <span class="gh">Out[28]: </span><span class="go"></span>
 <span class="go">    company     department  employee_id  ...  full_time  part_time  contractor</span>
-<span class="go">0  Cheerper        BigData           37  ...        0.0        1.0         0.0</span>
-<span class="go">1      Pear         Design            1  ...        1.0        0.0         0.0</span>
-<span class="go">2  Cheerper        BigData           64  ...        0.0        1.0         0.0</span>
-<span class="go">3   Glasses  Search Engine            4  ...        0.0        0.0         1.0</span>
-<span class="go">4  Cheerper        BigData           31  ...        1.0        0.0         0.0</span>
-<span class="go">5   Glasses  Search Engine           26  ...        0.0        1.0         0.0</span>
-<span class="go">6      Pear         Design           28  ...        1.0        0.0         0.0</span>
-<span class="go">7      Pear          Sales           34  ...        0.0        0.0         1.0</span>
-<span class="go">8   Glasses  Search Engine           75  ...        0.0        0.0         1.0</span>
-<span class="go">9   Glasses  Search Engine           66  ...        0.0        1.0         0.0</span>
+<span class="go">0  Cheerper        Support           67  ...        0.0        1.0         0.0</span>
+<span class="go">1   Glasses             AI           36  ...        1.0        0.0         0.0</span>
+<span class="go">2  Cheerper        BigData           41  ...        0.0        1.0         0.0</span>
+<span class="go">3      Pear          Sales           64  ...        1.0        0.0         0.0</span>
+<span class="go">4   Glasses  Search Engine           35  ...        1.0        0.0         0.0</span>
+<span class="go">5  Cheerper        BigData           52  ...        0.0        1.0         0.0</span>
+<span class="go">6  Cheerper        BigData           34  ...        0.0        1.0         0.0</span>
+<span class="go">7   Glasses             AI           49  ...        0.0        1.0         0.0</span>
+<span class="go">8      Pear          Sales           24  ...        1.0        0.0         0.0</span>
+<span class="go">9   Glasses  Search Engine           12  ...        0.0        0.0         1.0</span>
 
 <span class="go">[10 rows x 12 columns]</span>
 </pre></div>

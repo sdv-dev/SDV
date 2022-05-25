@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulagan &#8212; SDV 0.14.1 documentation</title>
+    <title>sdv.tabular.copulagan &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -208,22 +208,6 @@
 <span class="sd">    Distributions can be passed as a ``copulas`` univariate instance or as one</span>
 <span class="sd">    of the following string values:</span>
 
-<span class="sd">    * ``univariate``: Let ``copulas`` select the optimal univariate distribution.</span>
-<span class="sd">      This may result in non-parametric models being used.</span>
-<span class="sd">    * ``parametric``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">      but restrict the selection to parametric distributions only.</span>
-<span class="sd">    * ``bounded``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">      but restrict the selection to bounded distributions only.</span>
-<span class="sd">      This may result in non-parametric models being used.</span>
-<span class="sd">    * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,</span>
-<span class="sd">      but restrict the selection to semi-bounded distributions only.</span>
-<span class="sd">      This may result in non-parametric models being used.</span>
-<span class="sd">    * ``parametric_bounded``: Let ``copulas`` select the optimal univariate</span>
-<span class="sd">      distribution, but restrict the selection to parametric and bounded distributions</span>
-<span class="sd">      only.</span>
-<span class="sd">    * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate</span>
-<span class="sd">      distribution, but restrict the selection to parametric and semi-bounded</span>
-<span class="sd">      distributions only.</span>
 <span class="sd">    * ``gaussian``: Use a Gaussian distribution.</span>
 <span class="sd">    * ``gamma``: Use a Gamma distribution.</span>
 <span class="sd">    * ``beta``: Use a Beta distribution.</span>
@@ -295,7 +279,7 @@
 <span class="sd">            be modeled using the default distribution. Defaults to ``None``.</span>
 <span class="sd">        default_distribution (copulas.univariate.Univariate or str):</span>
 <span class="sd">            Distribution to use on the fields for which no specific distribution has been given.</span>
-<span class="sd">            Defaults to ``parametric``.</span>
+<span class="sd">            Defaults to ``truncated_gaussian``.</span>
 <span class="sd">        rounding (int, str or None):</span>
 <span class="sd">            Define rounding scheme for ``NumericalTransformer``. If set to an int, values</span>
 <span class="sd">            will be rounded to that number of decimal places. If ``None``, values will not</span>
@@ -313,7 +297,7 @@
 <span class="sd">            is given, there won&#39;t be a maximum. Defaults to ``&#39;auto&#39;``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="s1">&#39;parametric&#39;</span>
+    <span class="n">DEFAULT_DISTRIBUTION</span> <span class="o">=</span> <span class="s1">&#39;truncated_gaussian&#39;</span>
     <span class="n">_field_distributions</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_default_distribution</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_ht</span> <span class="o">=</span> <span class="kc">None</span>

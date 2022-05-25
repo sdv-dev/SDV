@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>CTGAN Model &#8212; SDV 0.14.1 documentation</title>
+    <title>CTGAN Model &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -413,11 +413,11 @@ on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0       17269      F        89.40  ...  2020-02-24 2020-09-02       4.0</span>
-<span class="go">1       17478      M        83.18  ...  2020-02-22        NaT       3.0</span>
-<span class="go">2       17293      M        82.88  ...  2020-02-29        NaT       3.0</span>
-<span class="go">3       17478      M        74.87  ...         NaT 2020-10-04       NaN</span>
-<span class="go">4       17372      M        56.63  ...         NaT        NaT       6.0</span>
+<span class="go">0       17411      M        55.67  ...  2020-09-24        NaT       5.0</span>
+<span class="go">1       17397      M        55.15  ...  2020-02-11 2020-08-17       NaN</span>
+<span class="go">2       17478      M        61.54  ...         NaT        NaT       NaN</span>
+<span class="go">3       17409      M        47.60  ...         NaT        NaT      11.0</span>
+<span class="go">4       17364      M        49.55  ...         NaT 2020-06-23       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -503,37 +503,28 @@ that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">     student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">3         17478      F        89.40  ...  2020-01-28        NaT       5.0</span>
-<span class="go">9         17478      F        74.10  ...  2020-03-12 2021-03-04       NaN</span>
-<span class="go">19        17478      M        89.40  ...  2020-02-17        NaT       5.0</span>
-<span class="go">33        17478      M        69.77  ...  2020-03-04 2020-08-05       NaN</span>
-<span class="go">39        17478      F        69.69  ...         NaT 2020-09-06       4.0</span>
-<span class="go">42        17478      F        70.82  ...  2020-02-15 2021-05-05       9.0</span>
-<span class="go">47        17478      M        59.34  ...         NaT 2020-08-10       5.0</span>
-<span class="go">68        17478      M        63.29  ...         NaT        NaT       8.0</span>
-<span class="go">71        17478      F        79.75  ...         NaT        NaT       NaN</span>
-<span class="go">77        17478      M        64.76  ...  2020-03-15 2020-07-09       NaN</span>
-<span class="go">90        17478      M        71.69  ...  2020-01-19        NaT       NaN</span>
-<span class="go">99        17478      M        69.13  ...  2019-12-10 2020-07-06       6.0</span>
-<span class="go">102       17478      M        79.31  ...  2020-08-01        NaT       5.0</span>
-<span class="go">110       17478      F        79.55  ...         NaT        NaT       5.0</span>
-<span class="go">113       17478      M        43.21  ...  2020-02-08 2020-07-25       5.0</span>
-<span class="go">118       17478      M        79.95  ...  2020-02-29 2021-02-19       4.0</span>
-<span class="go">127       17478      M        59.68  ...  2020-06-13 2020-09-08       NaN</span>
-<span class="go">138       17478      M        83.84  ...  2020-01-11        NaT       NaN</span>
-<span class="go">140       17478      F        56.22  ...         NaT        NaT       5.0</span>
-<span class="go">157       17478      F        89.40  ...  2020-06-22 2020-10-22       8.0</span>
-<span class="go">160       17478      F        58.77  ...  2020-03-04        NaT       3.0</span>
-<span class="go">165       17478      F        77.74  ...         NaT        NaT       NaN</span>
-<span class="go">172       17478      M        60.97  ...  2020-01-14 2021-03-12       NaN</span>
-<span class="go">175       17478      F        58.62  ...         NaT 2020-07-11       3.0</span>
-<span class="go">183       17478      M        48.30  ...  2020-06-03 2020-09-24       5.0</span>
-<span class="go">185       17478      F        66.22  ...  2020-08-10 2020-09-26       4.0</span>
-<span class="go">193       17478      M        78.27  ...  2020-03-11 2020-10-01       5.0</span>
-<span class="go">195       17478      M        56.14  ...  2020-05-24 2020-07-17       NaN</span>
-<span class="go">196       17478      M        89.40  ...  2020-07-13        NaT       6.0</span>
+<span class="go">9         17478      F        58.62  ...         NaT        NaT       6.0</span>
+<span class="go">13        17478      M        47.09  ...         NaT 2020-07-16       4.0</span>
+<span class="go">33        17478      M        42.60  ...         NaT 2020-08-23       NaN</span>
+<span class="go">38        17478      M        52.41  ...  2020-03-23 2020-08-02       NaN</span>
+<span class="go">56        17478      M        45.83  ...         NaT 2020-12-21      12.0</span>
+<span class="go">58        17478      M        68.76  ...         NaT 2020-11-14       NaN</span>
+<span class="go">98        17478      F        63.39  ...  2020-03-20 2020-08-08       NaN</span>
+<span class="go">113       17478      M        57.11  ...  2020-08-26 2020-08-30       NaN</span>
+<span class="go">123       17478      M        44.97  ...         NaT        NaT       6.0</span>
+<span class="go">138       17478      M        40.89  ...  2020-01-10 2020-08-04       5.0</span>
+<span class="go">143       17478      M        48.86  ...  2020-03-08 2020-08-29       NaN</span>
+<span class="go">145       17478      M        66.12  ...         NaT 2020-08-08       4.0</span>
+<span class="go">148       17478      F        54.20  ...         NaT 2021-03-02      12.0</span>
+<span class="go">156       17478      M        49.41  ...         NaT 2021-01-06       7.0</span>
+<span class="go">159       17478      M        64.20  ...  2020-01-12 2020-08-06       NaN</span>
+<span class="go">172       17478      F        40.89  ...  2020-08-23        NaT       6.0</span>
+<span class="go">175       17478      M        64.05  ...  2020-02-03        NaT       5.0</span>
+<span class="go">188       17478      M        51.86  ...  2020-03-21        NaT       6.0</span>
+<span class="go">195       17478      M        65.28  ...  2020-01-19 2020-08-24       NaN</span>
+<span class="go">199       17478      M        54.67  ...  2020-01-01 2020-12-01       NaN</span>
 
-<span class="go">[29 rows x 17 columns]</span>
+<span class="go">[20 rows x 17 columns]</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -553,11 +544,11 @@ indicating the name of the column that is the index of the table.</p>
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        87.97  ...  2020-01-13 2020-12-26       6.0</span>
-<span class="go">1           1      M        85.10  ...  2020-03-02 2020-11-14       NaN</span>
-<span class="go">2           2      F        85.40  ...         NaT 2020-10-14      11.0</span>
-<span class="go">3           3      F        74.41  ...  2020-01-26        NaT       NaN</span>
-<span class="go">4           4      M        52.62  ...         NaT 2020-09-03       NaN</span>
+<span class="go">0           0      M        60.20  ...  2020-03-02        NaT       6.0</span>
+<span class="go">1           1      M        79.40  ...         NaT 2020-07-09       3.0</span>
+<span class="go">2           2      M        45.56  ...  2020-03-25        NaT       NaN</span>
+<span class="go">3           3      F        40.89  ...  2020-08-08        NaT       5.0</span>
+<span class="go">4           4      M        76.72  ...  2020-03-17        NaT       4.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -616,10 +607,10 @@ students:</p>
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
 <span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...      9.0</span>
-<span class="go">1           1  ...      NaN</span>
-<span class="go">2           2  ...      NaN</span>
-<span class="go">3           3  ...      4.0</span>
+<span class="go">0           0  ...      5.0</span>
+<span class="go">1           1  ...      5.0</span>
+<span class="go">2           2  ...      6.0</span>
+<span class="go">3           3  ...      NaN</span>
 <span class="go">4           4  ...      NaN</span>
 
 <span class="go">[5 rows x 18 columns]</span>
@@ -676,11 +667,11 @@ replaced by other fake addresses:</p>
 <span class="gp">In [29]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[29]: </span><span class="go"></span>
 <span class="go">   student_id  ... duration</span>
-<span class="go">0           0  ...      NaN</span>
-<span class="go">1           1  ...     12.0</span>
+<span class="go">0           0  ...      3.0</span>
+<span class="go">1           1  ...      4.0</span>
 <span class="go">2           2  ...      6.0</span>
-<span class="go">3           3  ...      6.0</span>
-<span class="go">4           4  ...      NaN</span>
+<span class="go">3           3  ...      NaN</span>
+<span class="go">4           4  ...      6.0</span>
 
 <span class="go">[5 rows x 18 columns]</span>
 </pre></div>
@@ -730,16 +721,16 @@ to be 2.</p>
 <span class="gp">In [34]: </span><span class="n">unbounded_data</span>
 <span class="gh">Out[34]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      F        76.40  ...  2020-03-21 2020-09-25      2.34</span>
-<span class="go">1           1      F       101.87  ...  2020-03-09        NaT       NaN</span>
-<span class="go">2           2      F        80.05  ...  2020-02-24 2020-08-08      2.14</span>
-<span class="go">3           3      F        84.62  ...  2020-03-12 2020-09-20      4.13</span>
-<span class="go">4           4      M        79.04  ...         NaT        NaT       NaN</span>
-<span class="go">5           5      M        71.99  ...  2020-04-04 2020-07-26      5.18</span>
-<span class="go">6           6      M        80.67  ...         NaT 2020-07-27      5.39</span>
-<span class="go">7           7      M        88.13  ...  2020-01-23 2020-09-21      5.62</span>
-<span class="go">8           8      M        80.97  ...  2020-03-30 2020-09-03       NaN</span>
-<span class="go">9           9      M        75.62  ...         NaT 2020-07-25       NaN</span>
+<span class="go">0           0      M        52.48  ...         NaT 2020-07-18       NaN</span>
+<span class="go">1           1      F        35.84  ...  2019-12-20 2020-08-04      5.78</span>
+<span class="go">2           2      M        74.03  ...  2020-02-03 2020-07-28      6.46</span>
+<span class="go">3           3      M        73.36  ...  2020-01-14 2020-07-29      6.72</span>
+<span class="go">4           4      M        39.92  ...         NaT 2020-09-05       NaN</span>
+<span class="go">5           5      M        50.21  ...         NaT 2020-03-19       NaN</span>
+<span class="go">6           6      M        54.30  ...  2020-08-20        NaT       NaN</span>
+<span class="go">7           7      M        91.89  ...         NaT 2020-07-26      6.30</span>
+<span class="go">8           8      F        59.69  ...         NaT 2020-07-19      5.26</span>
+<span class="go">9           9      F        55.75  ...         NaT 2020-05-07      2.52</span>
 
 <span class="go">[10 rows x 17 columns]</span>
 </pre></div>
@@ -808,7 +799,7 @@ generated data using the <code class="docutils literal notranslate"><span class=
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [35]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [36]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[36]: </span><span class="go">0.44238057851250134</span>
+<span class="gh">Out[36]: </span><span class="go">0.4685678149375716</span>
 </pre></div>
 </div>
 <p>Afterwards, we create a new instance of the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> model with the
@@ -831,7 +822,7 @@ hyperparameter values that we want to use</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [39]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
 <span class="gp">In [40]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[40]: </span><span class="go">0.44951083520322377</span>
+<span class="gh">Out[40]: </span><span class="go">0.42504941285091624</span>
 </pre></div>
 </div>
 <p>As we can see, in this case these modifications changed the obtained
@@ -857,11 +848,11 @@ as a dictionary, as well as specify the number of desired rows for that conditio
 <span class="gp">In [43]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[43]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           3      M        89.40  ...  2020-02-03 2020-06-16       7.0</span>
-<span class="go">1           4      M        89.40  ...  2020-08-03 2020-01-15       4.0</span>
-<span class="go">2           6      M        48.79  ...  2020-08-09 2020-08-12       NaN</span>
-<span class="go">3           8      M        49.32  ...  2020-04-06 2020-06-17       NaN</span>
-<span class="go">4          10      M        63.37  ...  2020-03-20        NaT       4.0</span>
+<span class="go">0           2      M        76.00  ...  2020-02-17 2020-09-10       3.0</span>
+<span class="go">1           7      M        86.67  ...  2020-03-15        NaT       5.0</span>
+<span class="go">2          10      M        64.77  ...         NaT        NaT       NaN</span>
+<span class="go">3          13      M        42.96  ...         NaT        NaT       NaN</span>
+<span class="go">4          15      M        89.40  ...  2019-12-27 2020-11-24       4.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -877,11 +868,11 @@ as a dictionary, as well as specify the number of desired rows for that conditio
 <span class="gp">In [45]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[45]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        62.95  ...  2020-08-28 2020-07-01      12.0</span>
-<span class="go">1           1      M        48.79  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        69.31  ...  2020-01-25        NaT       6.0</span>
-<span class="go">3           4      M        89.40  ...         NaT        NaT      11.0</span>
-<span class="go">4           6      M        89.40  ...  2020-09-30 2020-09-21       NaN</span>
+<span class="go">0           0      M        60.45  ...  2020-01-09 2021-04-17       NaN</span>
+<span class="go">1           2      M        62.61  ...  2020-03-01        NaT       NaN</span>
+<span class="go">2           5      M        51.81  ...         NaT        NaT       NaN</span>
+<span class="go">3           9      M        89.40  ...  2020-06-17 2021-04-15       4.0</span>
+<span class="go">4          11      M        89.40  ...  2019-12-30 2021-02-15       7.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -903,12 +894,12 @@ following:</p>
 <span class="gp">In [48]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
 <span class="gh">Out[48]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0           0      M        46.91  ...         NaT        NaT       NaN</span>
-<span class="go">1           1      M        70.42  ...         NaT        NaT       NaN</span>
-<span class="go">2           2      M        89.40  ...         NaT 2020-12-19       3.0</span>
-<span class="go">3           3      F        62.13  ...         NaT        NaT       NaN</span>
-<span class="go">4           4      F        40.89  ...         NaT        NaT       NaN</span>
-<span class="go">5           5      F        89.40  ...  2020-02-19 2020-09-13       5.0</span>
+<span class="go">0           0      M        89.06  ...  2019-12-23 2021-05-04       6.0</span>
+<span class="go">1           1      M        89.40  ...  2020-02-08        NaT       4.0</span>
+<span class="go">2           2      M        89.40  ...  2020-02-03 2020-10-28       4.0</span>
+<span class="go">3           3      F        72.44  ...         NaT        NaT       NaN</span>
+<span class="go">4           4      F        76.14  ...         NaT        NaT       6.0</span>
+<span class="go">5           5      F        40.89  ...         NaT        NaT       NaN</span>
 
 <span class="go">[6 rows x 17 columns]</span>
 </pre></div>
@@ -923,12 +914,12 @@ dataset are within 0 and 1, <code class="docutils literal notranslate"><span cla
 
 <span class="gp">In [50]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
 <span class="gh">Out[50]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0          18      M        80.61  ...         NaT 2020-07-07       7.0</span>
-<span class="go">1          24      M        89.40  ...  2020-03-30 2020-08-08       3.0</span>
-<span class="go">2          16      F        56.39  ...         NaT 2020-06-19       5.0</span>
-<span class="go">3          31      M        60.52  ...         NaT 2020-07-04       7.0</span>
-<span class="go">4          34      F        89.40  ...  2020-02-08 2020-07-26      12.0</span>
+<span class="go">   student_id gender  second_perc  ...  start_date end_date  duration</span>
+<span class="go">0          36      F        76.99  ...         NaT      NaT       NaN</span>
+<span class="go">1          20      F        88.83  ...         NaT      NaT       NaN</span>
+<span class="go">2           3      M        60.77  ...         NaT      NaT       NaN</span>
+<span class="go">3          24      F        72.99  ...         NaT      NaT       5.0</span>
+<span class="go">4          11      M        56.64  ...  2020-02-14      NaT       NaN</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>

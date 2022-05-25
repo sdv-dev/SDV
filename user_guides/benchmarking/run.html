@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Running SDGym &#8212; SDV 0.14.1 documentation</title>
+    <title>Running SDGym &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -287,7 +287,7 @@ of the <code class="xref py py-class docutils literal notranslate"><span class="
 <div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">sdv.relational</span> <span class="kn">import</span> <span class="n">HMA1</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="k">def</span> <span class="nf">my_synthesizer_function</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
-   <span class="o">...</span><span class="p">:</span>     <span class="n">model</span> <span class="o">=</span> <span class="n">HMA1</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;bounded&#39;</span><span class="p">})</span>
+   <span class="o">...</span><span class="p">:</span>     <span class="n">model</span> <span class="o">=</span> <span class="n">HMA1</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;default_distribution&#39;</span><span class="p">:</span> <span class="s1">&#39;gamma&#39;</span><span class="p">})</span>
    <span class="o">...</span><span class="p">:</span>     <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span>
    <span class="o">...</span><span class="p">:</span>     <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
 

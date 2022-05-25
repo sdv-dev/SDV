@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.tabular.copulas.GaussianCopula &#8212; SDV 0.14.1 documentation</title>
+    <title>sdv.tabular.copulas.GaussianCopula &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -358,22 +358,6 @@ the distribution that needs to be used. The distributions can be passed as eithe
 a <code class="docutils literal notranslate"><span class="pre">copulas.univariate</span></code> instance or as one of the following values:</p>
 <blockquote>
 <div><ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to parametric distributions only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to bounded distributions only.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to semi-bounded distributions only.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric and bounded distributions
-only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric and semi-bounded
-distributions only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian</span></code>: Use a Gaussian distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
@@ -385,7 +369,8 @@ so using this will make <code class="docutils literal notranslate"><span class="
 </div></blockquote>
 </p></li>
 <li><p><strong>default_distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – Copulas univariate distribution to use by default. To choose from the list
-of possible <code class="docutils literal notranslate"><span class="pre">field_distribution</span></code> values. Defaults to <code class="docutils literal notranslate"><span class="pre">parametric</span></code>.</p></li>
+of possible <code class="docutils literal notranslate"><span class="pre">field_distribution</span></code> values.
+Defaults to <code class="docutils literal notranslate"><span class="pre">truncated_gaussian</span></code>.</p></li>
 <li><p><strong>categorical_transformer</strong> (<em>str</em>) – <p>Type of transformer to use for the categorical variables, which must be one of the
 following values:</p>
 <blockquote>

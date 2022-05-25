@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Tabular Preset &#8212; SDV 0.14.1 documentation</title>
+    <title>Tabular Preset &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -425,11 +425,11 @@ pass in the number of rows you want to synthesize.</p>
 <span class="gp">In [10]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ... 2020-05-25 08:11:03.131837952       NaN</span>
-<span class="go">1           1      M  ... 2020-05-26 22:48:16.816478720       3.0</span>
-<span class="go">2           2      M  ... 2020-11-20 21:01:06.605947648       NaN</span>
-<span class="go">3           3      M  ... 2020-09-30 04:52:16.600910848       NaN</span>
-<span class="go">4           4      M  ... 2020-05-02 10:16:53.647229184       3.0</span>
+<span class="go">0           0      F  ...                           NaT       NaN</span>
+<span class="go">1           1      F  ... 2020-08-21 16:48:26.298002176       NaN</span>
+<span class="go">2           2      F  ... 2020-10-21 11:20:34.264411136       NaN</span>
+<span class="go">3           3      F  ...                           NaT       6.0</span>
+<span class="go">4           4      M  ... 2020-08-02 21:05:52.004792832       3.0</span>
 
 <span class="go">[5 rows x 17 columns]</span>
 </pre></div>
@@ -440,17 +440,17 @@ results to a file.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="s1">&#39;synthetic_data.csv&#39;</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
 <span class="go">        student_id gender  ...                      end_date  duration</span>
-<span class="go">0                0      F  ... 2020-09-28 06:00:35.767487232       6.0</span>
-<span class="go">1                1      F  ... 2020-08-04 02:09:49.188106496      12.0</span>
-<span class="go">2                2      F  ... 2020-01-10 09:50:03.823845120       3.0</span>
-<span class="go">3                3      M  ... 2020-07-31 22:59:17.288699648       6.0</span>
-<span class="go">4                4      M  ... 2020-09-24 07:53:49.809438976      12.0</span>
+<span class="go">0                0      M  ...                           NaT      12.0</span>
+<span class="go">1                1      M  ... 2020-07-27 23:51:23.136863744       6.0</span>
+<span class="go">2                2      M  ... 2020-11-23 00:18:03.228760064       3.0</span>
+<span class="go">3                3      M  ...                           NaT       3.0</span>
+<span class="go">4                4      M  ...                           NaT       6.0</span>
 <span class="go">...            ...    ...  ...                           ...       ...</span>
-<span class="go">999995        9995      M  ... 2020-09-04 11:04:19.524022528       NaN</span>
-<span class="go">999996        9996      M  ... 2020-05-24 20:36:11.549620736       6.0</span>
-<span class="go">999997        9997      F  ... 2020-06-24 07:56:11.324212992       NaN</span>
-<span class="go">999998        9998      F  ... 2020-06-03 04:41:23.668805120       NaN</span>
-<span class="go">999999        9999      F  ... 2020-07-09 05:54:55.287372544       NaN</span>
+<span class="go">999995        9995      M  ...                           NaT       NaN</span>
+<span class="go">999996        9996      M  ... 2020-10-21 17:21:25.821657344      12.0</span>
+<span class="go">999997        9997      F  ...                           NaT       6.0</span>
+<span class="go">999998        9998      F  ... 2020-07-19 18:00:02.299542784       NaN</span>
+<span class="go">999999        9999      M  ...                           NaT       NaN</span>
 
 <span class="go">[1000000 rows x 17 columns]</span>
 </pre></div>
@@ -484,19 +484,19 @@ of column names and the exact value you want, along with the number of rows to s
 <span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="n">all_conditions</span><span class="p">)</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
 <span class="go">     student_id gender  ...                      end_date  duration</span>
-<span class="go">0             0      F  ... 2020-08-18 01:45:17.568081920       3.0</span>
-<span class="go">1             1      M  ... 2020-06-21 09:31:41.899007488       3.0</span>
-<span class="go">2             2      F  ... 2020-07-22 02:49:27.246074880       3.0</span>
-<span class="go">3             3      F  ... 2020-05-01 03:56:09.602238464       NaN</span>
-<span class="go">4             4      M  ... 2020-08-11 16:28:47.772785664       6.0</span>
+<span class="go">0             0      M  ...                           NaT       3.0</span>
+<span class="go">1             1      F  ...                           NaT       3.0</span>
+<span class="go">2             2      M  ... 2020-07-17 02:35:37.029714688       NaN</span>
+<span class="go">3             3      F  ... 2020-03-02 23:12:10.715367424       NaN</span>
+<span class="go">4             4      M  ...                           NaT      12.0</span>
 <span class="go">..          ...    ...  ...                           ...       ...</span>
-<span class="go">287         287      M  ... 2020-09-26 07:30:52.057294080       6.0</span>
-<span class="go">288         288      M  ... 2020-09-10 19:03:31.139140608       NaN</span>
-<span class="go">289         289      M  ... 2020-10-02 09:04:02.526315008       3.0</span>
-<span class="go">290         290      F  ... 2020-11-05 09:16:55.837354496       6.0</span>
-<span class="go">291         291      M  ... 2020-06-04 04:09:55.104769792       6.0</span>
+<span class="go">291         291      F  ... 2020-09-16 08:49:52.684590848       3.0</span>
+<span class="go">292         292      M  ... 2021-02-26 12:01:38.025448960       NaN</span>
+<span class="go">293         293      M  ...                           NaT       NaN</span>
+<span class="go">294         294      M  ... 2020-12-27 00:10:25.697350656       6.0</span>
+<span class="go">295         295      F  ... 2020-09-12 08:23:07.567118592       NaN</span>
 
-<span class="go">[292 rows x 17 columns]</span>
+<span class="go">[296 rows x 17 columns]</span>
 </pre></div>
 </div>
 </section>
@@ -544,16 +544,16 @@ Otherwise, work_experience=True. We can describe this using a
 <span class="gp">In [23]: </span><span class="n">constrained_synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 <span class="gh">Out[23]: </span><span class="go"></span>
 <span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ...                           NaT       NaN</span>
-<span class="go">1           1      M  ... 2020-07-22 01:38:00.864056064       6.0</span>
+<span class="go">0           0      F  ...                           NaT       3.0</span>
+<span class="go">1           1      M  ... 2020-06-30 10:35:05.327057152      12.0</span>
 <span class="go">2           2      F  ...                           NaT       NaN</span>
-<span class="go">3           3      M  ... 2020-07-08 20:08:11.094893824       3.0</span>
-<span class="go">4           4      M  ...                           NaT       NaN</span>
-<span class="go">5           5      F  ... 2020-04-07 21:53:34.982767360       NaN</span>
-<span class="go">6           6      F  ... 2020-09-12 19:01:11.606419200       NaN</span>
-<span class="go">7           7      F  ...                           NaT       3.0</span>
-<span class="go">8           8      M  ...                           NaT       NaN</span>
-<span class="go">9           9      M  ...                           NaT      12.0</span>
+<span class="go">3           3      F  ...                           NaT       6.0</span>
+<span class="go">4           4      F  ... 2020-05-01 16:10:38.467646464       3.0</span>
+<span class="go">5           5      F  ...                           NaT       NaN</span>
+<span class="go">6           6      M  ...                           NaT       NaN</span>
+<span class="go">7           7      M  ...                           NaT       NaN</span>
+<span class="go">8           8      F  ... 2020-08-25 05:55:29.006303488       6.0</span>
+<span class="go">9           9      M  ... 2020-04-12 09:09:57.670391296       6.0</span>
 
 <span class="go">[10 rows x 17 columns]</span>
 </pre></div>

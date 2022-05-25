@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Installation &#8212; SDV 0.14.1 documentation</title>
+    <title>Installation &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -219,6 +219,9 @@ order to avoid having conflicts with other software installed in the system wher
 find a valid version for <code class="docutils literal notranslate"><span class="pre">PyTorch</span></code>. In this case, please install <code class="docutils literal notranslate"><span class="pre">PyTorch</span></code> manually
 following the <a class="reference external" href="https://pytorch.org/get-started/locally/">PyTorch installation instructions</a> and retry installing <code class="docutils literal notranslate"><span class="pre">sdv</span></code> again
 afterwards.</p>
+<p>This is also the case if you plan on using a GPU. Since the <code class="docutils literal notranslate"><span class="pre">CUDA</span></code> version requirements
+depend on the what <code class="docutils literal notranslate"><span class="pre">PyTorch</span></code> version you have, you should first install <code class="docutils literal notranslate"><span class="pre">PyTorch</span></code> using
+their website and only then install <code class="docutils literal notranslate"><span class="pre">sdv</span></code>.</p>
 </div>
 </section>
 <section id="install-from-source">

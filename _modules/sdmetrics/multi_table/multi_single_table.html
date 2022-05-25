@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.14.1 documentation</title>
+    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -173,6 +173,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics</span> <span class="kn">import</span> <span class="n">single_table</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.errors</span> <span class="kn">import</span> <span class="n">IncomputableMetricError</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.multi_table.base</span> <span class="kn">import</span> <span class="n">MultiTableMetric</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">nested_attrs_meta</span>
 
@@ -235,12 +236,19 @@
             <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
         <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">real_table</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">synthetic_table</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
             <span class="n">table_meta</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">table_name</span><span class="p">]</span>
 
-            <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_table</span><span class="p">,</span> <span class="n">synthetic_table</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_table</span><span class="p">,</span> <span class="n">synthetic_table</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">IncomputableMetricError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">errors</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IncomputableMetricError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Encountered the following errors: </span><span class="si">{</span><span class="n">errors</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 

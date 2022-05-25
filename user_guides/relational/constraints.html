@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Constraints &#8212; SDV 0.14.1 documentation</title>
+    <title>Constraints &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -231,7 +231,7 @@ for more information about the available single table constraints.</p>
 <p>In order to use single-table constraints within a relational model, you can pass
 in a list of applicable constraints when adding a table to your relational <code class="docutils literal notranslate"><span class="pre">Metadata</span></code>.
 (See <a class="reference internal" href="relational_metadata.html#relational-metadata"><span class="std std-ref">Relational Metadata</span></a> for more information on constructing a <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object.)</p>
-<p>In this example, we wish to add a <code class="docutils literal notranslate"><span class="pre">UniqueCombinations</span></code> constraint to our <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table,
+<p>In this example, we wish to add a <code class="docutils literal notranslate"><span class="pre">FixedCombinations</span></code> constraint to our <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table,
 which is a child table of <code class="docutils literal notranslate"><span class="pre">users</span></code>. First, we will create a <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> object and add the
 <code class="docutils literal notranslate"><span class="pre">users</span></code> table.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv</span> <span class="kn">import</span> <span class="n">load_demo</span><span class="p">,</span> <span class="n">Metadata</span>
@@ -260,9 +260,9 @@ which is a child table of <code class="docutils literal notranslate"><span class
 <p>Now, we want to add a child table <code class="docutils literal notranslate"><span class="pre">sessions</span></code> which contains a single table constraint.
 In the <code class="docutils literal notranslate"><span class="pre">sessions</span></code> table, we wish to only have combinations of <code class="docutils literal notranslate"><span class="pre">(device,</span> <span class="pre">os)</span></code> that
 appear in the original data.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">UniqueCombinations</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">FixedCombinations</span>
 
-<span class="gp">In [7]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">UniqueCombinations</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;device&#39;</span><span class="p">,</span> <span class="s1">&#39;os&#39;</span><span class="p">])</span>
+<span class="gp">In [7]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">FixedCombinations</span><span class="p">(</span><span class="n">column_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;device&#39;</span><span class="p">,</span> <span class="s1">&#39;os&#39;</span><span class="p">])</span>
 
 <span class="gp">In [8]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
 <span class="gp">   ...: </span>    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sessions&#39;</span><span class="p">,</span>
@@ -285,8 +285,8 @@ appear in the original data.</p>
 <span class="go">  &#39;device&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
 <span class="go">  &#39;os&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
 <span class="go">  &#39;minutes&#39;: {&#39;type&#39;: &#39;numerical&#39;, &#39;subtype&#39;: &#39;integer&#39;}},</span>
-<span class="go"> &#39;constraints&#39;: [{&#39;constraint&#39;: &#39;sdv.constraints.tabular.UniqueCombinations&#39;,</span>
-<span class="go">   &#39;columns&#39;: [&#39;device&#39;, &#39;os&#39;]}],</span>
+<span class="go"> &#39;constraints&#39;: [{&#39;constraint&#39;: &#39;sdv.constraints.tabular.FixedCombinations&#39;,</span>
+<span class="go">   &#39;column_names&#39;: [&#39;device&#39;, &#39;os&#39;]}],</span>
 <span class="go"> &#39;primary_key&#39;: &#39;session_id&#39;}</span>
 </pre></div>
 </div>
@@ -304,27 +304,27 @@ appear in the original data.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="n">new_data</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      US      M   34</span>
-<span class="go"> 1        1      UK      M   36</span>
-<span class="go"> 2        2      UK    NaN   22</span>
-<span class="go"> 3        3      US    NaN   22</span>
-<span class="go"> 4        4      ES      M   30</span>
-<span class="go"> 5        5      UK      M   30</span>
-<span class="go"> 6        6      ES      F   39</span>
-<span class="go"> 7        7      US    NaN   57</span>
-<span class="go"> 8        8      UK      M   57</span>
-<span class="go"> 9        9      ES      M   47,</span>
+<span class="go"> 0        0      BG      F   36</span>
+<span class="go"> 1        1      BG      F   54</span>
+<span class="go"> 2        2      ES      M   35</span>
+<span class="go"> 3        3      ES      F   22</span>
+<span class="go"> 4        4      ES      F   24</span>
+<span class="go"> 5        5      ES      M   36</span>
+<span class="go"> 6        6      ES      F   45</span>
+<span class="go"> 7        7      DE    NaN   44</span>
+<span class="go"> 8        8      US      M   34</span>
+<span class="go"> 9        9      UK    NaN   45,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0           0        0  mobile  android       34</span>
-<span class="go"> 1           1        1  tablet      ios       34</span>
-<span class="go"> 2           2        2  tablet      ios       24</span>
-<span class="go"> 3           3        3  mobile      ios       19</span>
-<span class="go"> 4           4        4  mobile  android       24</span>
-<span class="go"> 5           5        5  tablet      ios        9</span>
-<span class="go"> 6           6        6  mobile  android       34</span>
+<span class="go"> 0           0        0  tablet      ios       27</span>
+<span class="go"> 1           1        1  mobile      ios       17</span>
+<span class="go"> 2           2        2  tablet      ios       23</span>
+<span class="go"> 3           3        3  mobile  android       33</span>
+<span class="go"> 4           4        4  mobile      ios       22</span>
+<span class="go"> 5           5        5  mobile  android       29</span>
+<span class="go"> 6           6        6  mobile  android       25</span>
 <span class="go"> 7           7        7  tablet      ios       34</span>
-<span class="go"> 8           8        8  tablet      ios        9</span>
-<span class="go"> 9           9        9  mobile      ios       16}</span>
+<span class="go"> 8           8        8  tablet      ios       24</span>
+<span class="go"> 9           9        9  tablet      ios        9}</span>
 </pre></div>
 </div>
 </section>

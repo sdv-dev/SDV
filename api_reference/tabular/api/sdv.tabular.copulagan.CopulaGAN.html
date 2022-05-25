@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>sdv.tabular.copulagan.CopulaGAN &#8212; SDV 0.14.1 documentation</title>
+    <title>sdv.tabular.copulagan.CopulaGAN &#8212; SDV 0.15.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -336,22 +336,6 @@ which distribution to use by default if no specific distribution has been select
 <p>Distributions can be passed as a <code class="docutils literal notranslate"><span class="pre">copulas</span></code> univariate instance or as one
 of the following string values:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">univariate</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to parametric distributions only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to bounded distributions only.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate distribution,
-but restrict the selection to semi-bounded distributions only.
-This may result in non-parametric models being used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric and bounded distributions
-only.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">parametric_semi_bounded</span></code>: Let <code class="docutils literal notranslate"><span class="pre">copulas</span></code> select the optimal univariate
-distribution, but restrict the selection to parametric and semi-bounded
-distributions only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian</span></code>: Use a Gaussian distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: Use a Gamma distribution.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: Use a Beta distribution.</p></li>
@@ -411,7 +395,7 @@ If <code class="docutils literal notranslate"><span class="pre">False</span></co
 that must be used in it. Fields that are not specified in the input <code class="docutils literal notranslate"><span class="pre">dict</span></code> will
 be modeled using the default distribution. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>default_distribution</strong> (<em>copulas.univariate.Univariate</em><em> or </em><em>str</em>) – Distribution to use on the fields for which no specific distribution has been given.
-Defaults to <code class="docutils literal notranslate"><span class="pre">parametric</span></code>.</p></li>
+Defaults to <code class="docutils literal notranslate"><span class="pre">truncated_gaussian</span></code>.</p></li>
 <li><p><strong>rounding</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>None</em>) – Define rounding scheme for <code class="docutils literal notranslate"><span class="pre">NumericalTransformer</span></code>. If set to an int, values
 will be rounded to that number of decimal places. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, values will not
 be rounded. If set to <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>, the transformer will round to the maximum number
