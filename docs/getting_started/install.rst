@@ -32,7 +32,7 @@ This will pull and install the latest stable release from `PyPI`_.
 
    This is also the case if you plan on using a GPU. Since the ``CUDA`` version requirements
    depend on the what ``PyTorch`` version you have, you should first install ``PyTorch`` using
-   their website and only then install``sdv``.
+   their website and only then install ``sdv``.
 
 Install from source
 -------------------
