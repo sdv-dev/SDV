@@ -292,7 +292,6 @@ class Inequality(Constraint):
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
         high = table_data[self._high_column_name].to_numpy()
-
         return low, high
 
     def _get_is_datetime(self, table_data):
@@ -323,7 +322,7 @@ class Inequality(Constraint):
         self._dtype = table_data[self._high_column_name].dtypes
 
     def is_valid(self, table_data):
-        """Say whether ``high`` is greater than ``low`` in each row.
+        """Check whether ``high`` is greater than ``low`` in each row.
 
         Args:
             table_data (pandas.DataFrame):
@@ -335,7 +334,6 @@ class Inequality(Constraint):
         """
         low, high = self._get_data(table_data)
         valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
-
         return valid
 
     def _transform(self, table_data):
@@ -358,12 +356,10 @@ class Inequality(Constraint):
         table_data = table_data.copy()
         low, high = self._get_data(table_data)
         diff_column = high - low
-
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
-
         return table_data.drop(self._high_column_name, axis=1)
 
     def reverse_transform(self, table_data):
@@ -389,17 +385,15 @@ class Inequality(Constraint):
 
         low = table_data[self._low_column_name].to_numpy()
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
-
         return table_data.drop(self._diff_column_name, axis=1)
 
 
 class ScalarInequality(Constraint):
     """Ensure an inequality between the ``column_name`` column and a scalar ``value``.
 
-    The transformation works by creating a column with the difference between the
-    ``column_name`` and ``value`` and storing it in the ``column_name``'s place.
-    The reverse transform adds the difference column and the ``value``
-    to reconstruct the ``column_name``.
+    The transformation works by creating a column with the difference between the ``column_name``
+    and ``value`` and storing it in the ``column_name``'s place. The reverse transform adds the
+    difference column and the ``value`` to reconstruct the ``column_name``.
 
     Args:
         column_name (str):
@@ -408,7 +402,7 @@ class ScalarInequality(Constraint):
             Scalar value to compare.
         relation (str):
             Describes the relation between ``column_name`` and ``value``.
-            Choose one among ``>``, ``>=``, ``<``, ``<=``.
+            Choose one among ``'>'``, ``'>='``, ``'<'``, ``'<='``.
     """
 
     @staticmethod
@@ -473,7 +467,6 @@ class ScalarInequality(Constraint):
         """
         column = table_data[self._column_name].to_numpy()
         valid = np.isnan(column) | self._operator(column, self._value)
-
         return valid
 
     def _transform(self, table_data):
@@ -496,12 +489,10 @@ class ScalarInequality(Constraint):
         table_data = table_data.copy()
         column = table_data[self._column_name].to_numpy()
         diff_column = abs(column - self._value)
-
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
-
         return table_data.drop(self._column_name, axis=1)
 
     def reverse_transform(self, table_data):
@@ -526,7 +517,6 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.astype('timedelta64[ns]')
 
         table_data[self._column_name] = pd.Series(diff_column + self._value).astype(self._dtype)
-
         return table_data.drop(self._diff_column_name, axis=1)
 
 

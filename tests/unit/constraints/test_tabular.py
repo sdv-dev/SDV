@@ -927,7 +927,7 @@ class TestInequality():
     def test__fit_floats(self):
         """Test the ``Inequality._fit`` method.
 
-        The method should learn the ``dtype`` to be float when ``high_column_name`` contains floats.
+        The attribute ``_dtype`` should be float when ``high_column_name`` contains floats.
 
         Input:
         - Table data with floats.
@@ -950,7 +950,7 @@ class TestInequality():
     def test__fit_datetime(self):
         """Test the ``Inequality._fit`` method.
 
-        The method should learn the ``dtype`` to be datetime when ``high_column_name`` contains datetimes.
+        The attribute ``_dtype`` should be datetime when ``high_column_name`` contains datetimes.
 
         Input:
         - Table data with datetimes.
@@ -973,11 +973,13 @@ class TestInequality():
     def test_is_valid(self):
         """Test the ``Inequality.is_valid`` method.
 
+        The method should return True when ``high_column_name`` column is greater or equal to
+        ``low_column_name`` or the row contains nan, otherwise return False.
+
         Input:
         - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -997,11 +999,13 @@ class TestInequality():
     def test_is_valid_strict_boundaries_True(self):
         """Test the ``Inequality.is_valid`` method with ``strict_boundaries = True``.
 
+        The method should return True when ``high_column_name`` column is greater than
+        ``low_column_name`` or the row contains nan, otherwise return False.
+
         Input:
         - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - False should be returned for the non-strictly invalid rows and True
-          for the rest.
+        - False should be returned for the non-strictly invalid rows and True for the rest.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
@@ -1021,11 +1025,13 @@ class TestInequality():
     def test_is_valid_datetimes(self):
         """Test the ``Inequality.is_valid`` method with datetimes.
 
+        The method should return True when ``high_column_name`` column is greater or equal to
+        ``low_column_name`` or the row contains nan, otherwise return False.
+
         Input:
         - Table with datetimes and np.nans.
         Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1053,8 +1059,7 @@ class TestInequality():
         Input:
         - Table with two columns at a constant distance of 3 and one additional dummy column.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
+        - Same table with a diff column of the log of distances + 1, which is np.log(4).
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1087,8 +1092,7 @@ class TestInequality():
         Input:
         - Table with two datetime columns at a distance of 3 and one additional dummy column.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
+        - Same table with a diff column of the log of distances + 1, which is np.log(4).
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1127,8 +1131,7 @@ class TestInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 3 with diff column dropped.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1167,8 +1170,7 @@ class TestInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 3 with diff column dropped.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1207,8 +1209,7 @@ class TestInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 1sec with diff column dropped.
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1368,7 +1369,7 @@ class TestScalarInequality():
     def test__fit_floats(self):
         """Test the ``ScalarInequality._fit`` method.
 
-        The method should learn the ``dtype`` to be float when ``column_name`` contains floats.
+        The attribute ``_dtype`` should be float when ``column_name`` contains floats.
 
         Input:
         - Table data with floats.
@@ -1391,7 +1392,7 @@ class TestScalarInequality():
     def test__fit_datetime(self):
         """Test the ``ScalarInequality._fit`` method.
 
-        The method should learn the ``dtype`` to be datetime when ``column_name`` contains datetimes.
+        The attribute ``_dtype`` should be datetime when ``column_name`` contains datetimes.
 
         Input:
         - Table data with datetimes.
@@ -1413,14 +1414,16 @@ class TestScalarInequality():
         # Assert
         assert instance._dtype == np.dtype('<M8[ns]')
 
-    def test_is_valid_greater(self):
+    def test_is_valid(self):
         """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
+
+        The method should return True when ``column_name`` is greater than
+        ``value`` or the row contains nan, otherwise return False.
 
         Input:
         - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
         instance = ScalarInequality(column_name='b', value=2, relation='>')
@@ -1439,11 +1442,13 @@ class TestScalarInequality():
     def test_is_valid_datetimes(self):
         """Test the ``ScalarInequality.is_valid`` method with datetimes and ``relation = '<='``.
 
+        The method should return True when ``column_name`` is greater or equal to
+        ``value`` or the row contains nan, otherwise return False.
+
         Input:
         - Table with datetimes and np.nans.
         Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
         instance = ScalarInequality(
@@ -1473,7 +1478,8 @@ class TestScalarInequality():
         Input:
         - Table data.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
+        - Same table with a diff column of the log of the distances + 1
+          in the ``column_name``'s place.
         """
         # Setup
         instance = ScalarInequality(column_name='a', value=1, relation='>=')
@@ -1504,7 +1510,8 @@ class TestScalarInequality():
         Input:
         - Table data with datetimes.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
+        - Same table with a diff column of the logarithms of the distances + 1
+          in the ``column_name``'s place.
         """
         # Setup
         instance = ScalarInequality(
