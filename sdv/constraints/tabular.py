@@ -379,7 +379,10 @@ class Inequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()) - 1).clip(0)
+        diff_column = np.exp(table_data[self._diff_column_name]) - 1
+        if self._dtype != np.dtype('float'):
+            diff_column = diff_column.round()
+
         if self._is_datetime:
             diff_column = diff_column.astype('timedelta64[ns]')
 
@@ -512,7 +515,10 @@ class ScalarInequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()) - 1).clip(0)
+        diff_column = np.exp(table_data[self._diff_column_name]) - 1
+        if self._dtype != np.dtype('float'):
+            diff_column = diff_column.round()
+
         if self._is_datetime:
             diff_column = diff_column.astype('timedelta64[ns]')
 
