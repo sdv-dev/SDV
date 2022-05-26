@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+from pyrsistent import v
 import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
@@ -963,6 +964,53 @@ class TestScalarInequality():
         # Assert
         assert all([dtype.kind == 'M' for dtype in instance._dtype])
 
+    def test_is_valid_greater(self):
+        """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
+
+        Input:
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='b', value=2, relation='>')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
+            'b': [4, 2, np.nan, -6, None],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_datetimes(self):
+        """Test the ``ScalarInequality.is_valid`` method with datetimes and ``relation = '<='``.
+
+        Input:
+        - Table with datetimes and np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
+        """
+        # Setup
+        value = pd.to_datetime('8/31/2021')
+        instance = ScalarInequality(column_name='b', value=value)
+
+        # Run
+        table_data = pd.DataFrame({
+            'b': [datetime(2021, 8, 30), datetime(2021, 8, 30), datetime(2021, 9, 2), np.nan],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
 
 class TestInequality():
 
@@ -1147,301 +1195,76 @@ class TestInequality():
         # Assert
         assert all([dtype.kind == 'M' for dtype in instance._dtype])
 
-    def test_is_valid_strict_false(self):
-        """Test the ``GreaterThan.is_valid`` method with strict False.
-
-        If strict is False, equal values should count as valid.
+    def test_is_valid(self):
+        """Test the ``Inequality.is_valid`` method.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - False should be returned for the strictly invalid row and True
-          for the other two.
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=False)
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
+            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
+            'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
+            'c': [7, 8, 9 ,10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, True, False]
+        expected_out = [True, True, False, False, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_strict_true(self):
-        """Test the ``GreaterThan.is_valid`` method with strict True.
-
-        If strict is True, equal values should count as invalid.
+    def test_is_valid_strict_boundaries_True(self):
+        """Test the ``Inequality.is_valid`` method with ``strict_boundaries = True``.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - False should be returned for the non-strictly invalid rows and True
+          for the rest.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
+            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
+            'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
+            'c': [7, 8, 9 ,10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, False, False]
+        expected_out = [True, True, False, True, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_low_is_scalar_high_is_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If low is a scalar, and high is a column name, then
-        the values in that column should all be higher than
-        ``instance._low``.
+    def test_is_valid_datetimes(self):
+        """Test the ``Inequality.is_valid`` method with datetimes.
 
         Input:
-        - Table with values above and below low.
+        - Table with datetimes and np.nans.
         Output:
-        - True should be returned for the rows where the high
-        column is above low.
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
         """
         # Setup
-        instance = GreaterThan(low=3, high='b', strict=False, scalar='low')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
+            'a': [datetime(2020, 5, 17), datetime(2021, 9, 1), np.nan],
+            'b': [datetime(2020, 5, 18), datetime(2020, 9, 2), datetime(2020, 9, 2)],
             'c': [7, 8, 9]
         })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, False, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_scalar_low_is_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a scalar, and low is a column name, then
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below high.
-        Output:
-        - True should be returned for the rows where the low
-        column is below high.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=2, strict=False, scalar='high')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a scalar, and low is multi column, then
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below high.
-        Output:
-        - True should be returned for the rows where the low
-        column is below high.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=2, strict=False, scalar='high')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_low_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If low is a scalar, and high is multi column, then
-        the values in that column should all be higher than
-        ``instance._low``.
-
-        Input:
-        - Table with values above and below low.
-        Output:
-        - True should be returned for the rows where the high
-        column is above low.
-        """
-        # Setup
-        instance = GreaterThan(low=2, high=['a', 'b'], strict=False, scalar='low')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_scalar_is_none_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If scalar is none, and high is multi column, then
-        the values in that column should all be higher than
-        in the low column.
-
-        Input:
-        - Table with values above and below low.
-        Output:
-        - True should be returned for the rows where the high
-        column is above low.
-        """
-        # Setup
-        instance = GreaterThan(low='b', high=['a', 'c'], strict=False)
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-
-        # Run
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_datetime(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a datetime and low is a column,
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below `high`.
-        Output:
-        - True should be returned for the rows where the low
-        column is below `high`.
-        """
-        # Setup
-        high_dt = pd.to_datetime('8/31/2021')
-        instance = GreaterThan(low='a', high=high_dt, strict=False, scalar='high')
-        table_data = pd.DataFrame({
-            'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
-            'b': [4, 2, 2],
-        })
-
-        # Run
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_low_is_datetime(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If low is a datetime and high is a column,
-        the values in that column should all be higher than
-        ``instance._low``.
-
-        Input:
-        - Table with values above and below `low`.
-        Output:
-        - True should be returned for the rows where the high
-        column is above `low`.
-        """
-        # Setup
-        low_dt = pd.to_datetime('8/31/2021')
-        instance = GreaterThan(low=low_dt, high='a', strict=False, scalar='low')
-        table_data = pd.DataFrame({
-            'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
-            'b': [4, 2, 2],
-        })
-
-        # Run
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = [True, False, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_two_cols_with_nans(self):
-        """Test the ``GreaterThan.is_valid`` method with nan values.
-
-        If there is a NaN row, expect that `is_valid` returns True.
-
-        Input:
-        - Table with a NaN row
-        Output:
-        - True should be returned for the NaN row.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, None, 3],
-            'b': [4, None, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_two_cols_with_one_nan(self):
-        """Test the ``GreaterThan.is_valid`` method with nan values.
-
-        If there is a row in which we compare one NaN value with one
-        non-NaN value, expect that `is_valid` returns True.
-
-        Input:
-        - Table with a row that contains only one NaN value.
-        Output:
-        - True should be returned for the row with the NaN value.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, None, 3],
-            'b': [4, 5, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
         np.testing.assert_array_equal(expected_out, out)
 
     def test__transform_int_drop_none(self):
