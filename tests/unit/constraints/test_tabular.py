@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -787,405 +787,6 @@ class TestFixedCombinations():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-class TestScalarInequality():
-
-    def test__validate_inputs_incorrect_column(self):
-        """Test the ``_validate_inputs`` method.
-
-        Ensure the method crashes when the column name is not a string.
-
-        Input:
-        - a non-string
-        - a number
-        - an inequality
-        Side effect:
-        - Raise ``ValueError`` because the column name must be a string
-        """
-        # Run / Assert
-        with pytest.raises(ValueError):
-            Inequality._validate_inputs(column_name=['a'], value=1, relation='>')
-
-    def test__validate_inputs_incorrect_value(self):
-        """Test the ``_validate_inputs`` method.
-
-        Ensure the method crashes when the value is not numerical.
-
-        Input:
-        - a string
-        - a non-number
-        - an inequality
-        Side effect:
-        - Raise ``ValueError`` because the value must be a numerical
-        """
-        # Run / Assert
-        with pytest.raises(ValueError):
-            Inequality._validate_inputs(column_name='a', value='b', relation='>')
-
-    def test__validate_inputs_incorrect_relation(self):
-        """Test the ``_validate_inputs`` method.
-
-        Ensure the method crashes when the column name is not a string.
-
-        Input:
-        - a string
-        - a number
-        - a non-inequality
-        Side effect:
-        - Raise ``ValueError`` because the relation must be an inequality
-        """
-        # Run / Assert
-        with pytest.raises(ValueError):
-            Inequality._validate_inputs(column_name='a', value=['b', 'c'], relation='=')
-
-    def test___init___(self):
-        """Test the ``ScalarInequality.__init__`` method.
-
-        The passed arguments should be stored as attributes.
-
-        Input:
-        - low_column_name = 'a'
-        - high_column_name = 'b'
-        - relation = '>'
-        Side effects:
-        - instance._column_name = 'a'
-        - instance._value = 1
-        - instance._diff_column_name = 'a#'
-        - instance._operator = np.greater
-        - instance._dtype = None
-        - instance._is_datetime = None
-        - _validate_inputs is called once
-        """
-        # Run
-        instance = ScalarInequality(column_name='a', value=1, relation='>')
-        instance._validate_inputs = Mock()
-
-        # Asserts
-        assert instance._column_name == 'a'
-        assert instance._value == 1
-        assert instance._diff_column_name == 'a#'
-        assert instance._operator == np.greater
-        assert instance._dtype is None
-        assert instance._is_datetime is None
-        instance._validate_inputs.assert_called_once_with('a', 'b', '>')
-
-    def test__validate_columns_exist_incorrect_columns(self):
-        """Test the ``ScalarInequality._validate_columns_exist`` method.
-
-        This method raises an error if ``column_name`` does not exist.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
-        instance = Inequality(column_name='c', value=5)
-
-        # Run / Assert
-        with pytest.raises(KeyError):
-            instance._validate_columns_exist(table_data)
-
-    def test__fit(self):
-        """Test the ``ScalarInequality._fit`` method.
-
-        The method should learn the ``dtype`` of ``column_name`` and ``is_datetime``.
-
-        Input:
-        - Table data with integers.
-        Side Effect:
-        - _validate_columns_exist should be called once
-        - _get_is_datetime should be called once
-        - _is_datetime should receive the output of _get_is_datetime
-        - _dtype should be a list of integer dtypes.
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
-        instance = Inequality(column_name='b', value=3)
-        instance._validate_columns_exist = Mock()
-        instance._get_is_datetime = Mock(return_value='abc')
-
-        # Run
-        instance._fit(table_data)
-
-        # Assert
-        instance._validate_columns_exist.assert_called_once_with(table_data)
-        instance._get_is_datetime.assert_called_once_with(table_data)
-        assert instance._is_datetime == 'abc'
-        assert all([dtype.kind == 'i' for dtype in instance._dtype])
-
-    def test__fit_floats(self):
-        """Test the ``ScalarInequality._fit`` method.
-
-        The method should learn the ``dtype`` to be float when ``column_name`` contains floats.
-
-        Input:
-        - Table data with floats.
-        Side Effect:
-        - _dtype should be a list of float dtypes.
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4., 5., 6.]
-        })
-        instance = Inequality(high_column_name='b', value=10)
-
-        # Run
-        instance._fit(table_data)
-
-        # Assert
-        assert all([dtype.kind == 'f' for dtype in instance._dtype])
-
-    def test__fit_datetime(self):
-        """Test the ``ScalarInequality._fit`` method.
-
-        The method should learn the ``dtype`` to be datetime when ``column_name`` contains datetimes.
-
-        Input:
-        - Table data with datetimes.
-        Side Effect:
-        - _dtype should be a list of datetime dtypes.
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01']),
-            'b': pd.to_datetime(['2020-01-02'])
-        })
-        instance = Inequality(high_column_name='b', value=pd.to_datetime(['2020-01-01']))
-
-        # Run
-        instance._fit(table_data)
-
-        # Assert
-        assert all([dtype.kind == 'M' for dtype in instance._dtype])
-
-    def test_is_valid_greater(self):
-        """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
-
-        Input:
-        - Table with a mixture of valid and invalid rows, as well as np.nans.
-        Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='b', value=2, relation='>')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
-            'b': [4, 2, np.nan, -6, None],
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, False, True, True, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_datetimes(self):
-        """Test the ``ScalarInequality.is_valid`` method with datetimes and ``relation = '<='``.
-
-        Input:
-        - Table with datetimes and np.nans.
-        Output:
-        - False should be returned for the strictly invalid rows and True
-          for the rest.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='b', value=pd.to_datetime('8/31/2021'), relation='>')
-
-        # Run
-        table_data = pd.DataFrame({
-            'b': [datetime(2021, 8, 30), datetime(2021, 8, 31), datetime(2021, 9, 2), np.nan],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test__transform(self):
-        """Test the ``ScalarInequality._transform`` method.
-
-        The method is expected to compute the distance between the ``column_name`` and ``value``
-        and create a diff column with the logarithm of the distance + 1.
-
-        Setup:
-        - ``_diff_column_name`` is set to ``'a#'``.
-        Input:
-        - Table data.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='a', value=1, relation='>=')
-        instance._diff_column_name = 'a#'
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a#': [np.log(1), np.log(2), np.log(3)],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_datetime(self):
-        """Test the ``ScalarInequality._transform`` method.
-
-        The method is expected to compute the distance between the ``column_name`` and ``value``
-        and create a diff column with the logarithm of the distance + 1.
-
-        Setup:
-        - ``_diff_column_name`` is set to ``'a#'``.
-        Input:
-        - Table data with datetimes.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>')
-        instance._diff_column_name = 'a#'
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
-            'c': [1, 2],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
-            'c': [1, 2],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform(self):
-        """Test the ``ScalarInequality.reverse_transform`` method.
-
-        The method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the ``column_name``
-            - convert the output to integers
-            - add back the dropped column
-
-        Setup:
-        - ``_diff_column_name = 'a#'``
-        - ``_dtype`` as integer
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='a', value=1, relation='>=')
-        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
-        instance._diff_column_name = 'a#'
-
-        # Run
-        transformed = pd.DataFrame({
-            'a#': [np.log(1), np.log(2), np.log(3)],
-            'c': [7, 8, 9],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_floats(self):
-        """Test the ``ScalarInequality.reverse_transform`` method.
-
-        The method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the ``column_name``
-            - convert the output to float
-            - add back the dropped column
-
-        Setup:
-        - ``_diff_column_name = 'a#'``
-        - ``_dtype`` as float
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        Output:
-        - Same table with the high column replaced by the low one + 3, as float
-        and the diff column dropped.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='a', value=1, relation='>=')
-        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
-        instance._diff_column_name = 'a#'
-
-        # Run
-        transformed = pd.DataFrame({
-            'a#': [np.log(1.1), np.log(2.1), np.log(3.3)],
-            'c': [7, 8, 9],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1.1, 2.1, 3.3],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_datetime(self):
-        """Test the ``ScalarInequality.reverse_transform`` method.
-
-        The method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the ``column_name``
-            - convert the output to datetime
-            - add back the dropped column
-
-        Setup:
-        - ``_diff_column_name = 'a#'``
-        - ``_dtype`` as datetime
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        Output:
-        - Same table with the high column replaced by the low one + 3, as datetime
-        and the diff column dropped.
-        """
-        # Setup
-        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>=')
-        instance._dtype = np.dtype('<M8[ns]')
-        instance._diff_column_name = 'a#'
-
-        # Run
-        transformed = pd.DataFrame({
-            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
-            'c': [1, 2],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
-            'c': [1, 2],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
 
 class TestInequality():
 
@@ -1225,7 +826,8 @@ class TestInequality():
                 low_column_name='a', high_column_name='b', strict_boundaries=None
             )
 
-    def test___init___(self):
+    @patch('sdv.constraints.tabular.Inequality._validate_inputs')
+    def test___init___(self, mock_validate):
         """Test the ``Inequality.__init__`` method.
 
         The passed arguments should be stored as attributes.
@@ -1245,17 +847,16 @@ class TestInequality():
         """
         # Run
         instance = Inequality(low_column_name='a', high_column_name='b')
-        instance._validate_inputs = Mock()
 
         # Asserts
         assert instance._low_column_name == 'a'
         assert instance._high_column_name == 'b'
         assert instance._diff_column_name == 'a#b'
         assert instance._operator == np.greater_equal
-        assert instance.rebuild_columns == 'b'
+        assert instance.rebuild_columns == tuple('b')
         assert instance._dtype is None
         assert instance._is_datetime is None
-        instance._validate_inputs.assert_called_once_with('a', 'b', False)
+        mock_validate.assert_called_once_with('a', 'b', False)
 
     def test___init___strict_boundaries_true(self):
         """Test the ``Inequality.__init__`` method.
@@ -1322,7 +923,7 @@ class TestInequality():
         instance._validate_columns_exist.assert_called_once_with(table_data)
         instance._get_is_datetime.assert_called_once_with(table_data)
         assert instance._is_datetime == 'abc'
-        assert all([dtype.kind == 'i' for dtype in instance._dtype])
+        assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
     def test__fit_floats(self):
         """Test the ``Inequality._fit`` method.
@@ -1345,7 +946,7 @@ class TestInequality():
         instance._fit(table_data)
 
         # Assert
-        assert all([dtype.kind == 'f' for dtype in instance._dtype])
+        assert instance._dtype == np.dtype('float')
 
     def test__fit_datetime(self):
         """Test the ``Inequality._fit`` method.
@@ -1368,7 +969,7 @@ class TestInequality():
         instance._fit(table_data)
 
         # Assert
-        assert all([dtype.kind == 'M' for dtype in instance._dtype])
+        assert instance._dtype == np.dtype('<M8[ns]')
 
     def test_is_valid(self):
         """Test the ``Inequality.is_valid`` method.
@@ -1391,7 +992,7 @@ class TestInequality():
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, True, False, False, True, False, True, True]
+        expected_out = [True, True, False, True, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
     def test_is_valid_strict_boundaries_True(self):
@@ -1404,7 +1005,7 @@ class TestInequality():
           for the rest.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
 
         # Run
         table_data = pd.DataFrame({
@@ -1415,7 +1016,7 @@ class TestInequality():
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, True, False, True, True, False, True, True]
+        expected_out = [True, True, False, False, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
     def test_is_valid_datetimes(self):
@@ -1630,6 +1231,406 @@ class TestInequality():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
+class TestScalarInequality():
+
+    def test__validate_inputs_incorrect_column(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the column name is not a string.
+
+        Input:
+        - a non-string
+        - a number
+        - an inequality
+        Side effect:
+        - Raise ``ValueError`` because the column name must be a string
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            ScalarInequality._validate_inputs(column_name=['a'], value=1, relation='>')
+
+    def test__validate_inputs_incorrect_value(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the value is not numerical.
+
+        Input:
+        - a string
+        - a non-number
+        - an inequality
+        Side effect:
+        - Raise ``ValueError`` because the value must be a numerical
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            ScalarInequality._validate_inputs(column_name='a', value='b', relation='>')
+
+    def test__validate_inputs_incorrect_relation(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the column name is not a string.
+
+        Input:
+        - a string
+        - a number
+        - a non-inequality
+        Side effect:
+        - Raise ``ValueError`` because the relation must be an inequality
+        """
+        # Run / Assert
+        with pytest.raises(ValueError):
+            ScalarInequality._validate_inputs(column_name='a', value=['b', 'c'], relation='=')
+
+    @patch('sdv.constraints.tabular.ScalarInequality._validate_inputs')
+    def test___init___(self, mock_validate):
+        """Test the ``ScalarInequality.__init__`` method.
+
+        The passed arguments should be stored as attributes.
+
+        Input:
+        - low_column_name = 'a'
+        - high_column_name = 'b'
+        - relation = '>'
+        Side effects:
+        - instance._column_name = 'a'
+        - instance._value = 1
+        - instance._diff_column_name = 'a#'
+        - instance._operator = np.greater
+        - instance._dtype = None
+        - instance._is_datetime = None
+        - _validate_inputs is called once
+        """
+        # Run
+        instance = ScalarInequality(column_name='a', value=1, relation='>')
+        instance._validate_inputs = Mock()
+
+        # Asserts
+        assert instance._column_name == 'a'
+        assert instance._value == 1
+        assert instance._diff_column_name == 'a#'
+        assert instance._operator == np.greater
+        assert instance._dtype is None
+        assert instance._is_datetime is None
+        mock_validate.assert_called_once_with('a', 1, '>')
+
+    def test__validate_columns_exist_incorrect_columns(self):
+        """Test the ``ScalarInequality._validate_columns_exist`` method.
+
+        This method raises an error if ``column_name`` does not exist.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        instance = ScalarInequality(column_name='c', value=5, relation='>')
+
+        # Run / Assert
+        with pytest.raises(KeyError):
+            instance._validate_columns_exist(table_data)
+
+    def test__fit(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The method should learn the ``dtype`` of ``column_name`` and ``is_datetime``.
+
+        Input:
+        - Table data with integers.
+        Side Effect:
+        - _validate_columns_exist should be called once
+        - _get_is_datetime should be called once
+        - _is_datetime should receive the output of _get_is_datetime
+        - _dtype should be a list of integer dtypes.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        instance = ScalarInequality(column_name='b', value=3, relation='>')
+        instance._validate_columns_exist = Mock()
+        instance._get_is_datetime = Mock(return_value='abc')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        instance._validate_columns_exist.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once_with(table_data)
+        assert instance._is_datetime == 'abc'
+        assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+
+    def test__fit_floats(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The method should learn the ``dtype`` to be float when ``column_name`` contains floats.
+
+        Input:
+        - Table data with floats.
+        Side Effect:
+        - _dtype should be a list of float dtypes.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4., 5., 6.]
+        })
+        instance = ScalarInequality(column_name='b', value=10, relation='>')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._dtype == np.dtype('float')
+
+    def test__fit_datetime(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The method should learn the ``dtype`` to be datetime when ``column_name`` contains datetimes.
+
+        Input:
+        - Table data with datetimes.
+        Side Effect:
+        - _dtype should be a list of datetime dtypes.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+            'b': pd.to_datetime(['2020-01-02'])
+        })
+        instance = ScalarInequality(column_name='b', value=pd.to_datetime(['2020-01-01']), relation='>')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._dtype == np.dtype('<M8[ns]')
+
+    def test_is_valid_greater(self):
+        """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
+
+        Input:
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='b', value=2, relation='>')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, np.nan, 3, 4, None],
+            'b': [4, 2, np.nan, -6, None],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_datetimes(self):
+        """Test the ``ScalarInequality.is_valid`` method with datetimes and ``relation = '<='``.
+
+        Input:
+        - Table with datetimes and np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True
+          for the rest.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='b', value=pd.to_datetime('8/31/2021'), relation='>=')
+
+        # Run
+        table_data = pd.DataFrame({
+            'b': [datetime(2021, 8, 30), datetime(2021, 8, 31), datetime(2021, 9, 2), np.nan],
+            'c': [7, 8, 9, 10]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [False, True, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test__transform(self):
+        """Test the ``ScalarInequality._transform`` method.
+
+        The method is expected to compute the distance between the ``column_name`` and ``value``
+        and create a diff column with the logarithm of the distance + 1.
+
+        Setup:
+        - ``_diff_column_name`` is set to ``'a#'``.
+        Input:
+        - Table data.
+        Output:
+        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a#': [np.log(1), np.log(2), np.log(3)],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test__transform_datetime(self):
+        """Test the ``ScalarInequality._transform`` method.
+
+        The method is expected to compute the distance between the ``column_name`` and ``value``
+        and create a diff column with the logarithm of the distance + 1.
+
+        Setup:
+        - ``_diff_column_name`` is set to ``'a#'``.
+        Input:
+        - Table data with datetimes.
+        Output:
+        - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2],
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'c': [1, 2],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the ``column_name``
+            - convert the output to integers
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as integer
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as int
+        and the diff column dropped.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1), np.log(2), np.log(3)],
+            'c': [7, 8, 9],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_floats(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the ``column_name``
+            - convert the output to float
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as float
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as float
+        and the diff column dropped.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1.1), np.log(2.1), np.log(3.3)],
+            'c': [7, 8, 9],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1.1, 2.1, 3.3],
+            'c': [7, 8, 9],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the ``column_name``
+            - convert the output to datetime
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as datetime
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as datetime
+        and the diff column dropped.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>=')
+        instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'c': [1, 2],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': [1, 2],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
 
 class TestPositive():
 
@@ -1644,7 +1645,7 @@ class TestPositive():
         # Asserts
         assert instance._value == 0
         assert instance._column_name == 'abc'
-        assert instance._operator == np.greater
+        assert instance._operator == np.greater_equal
 
     def test__init__strict_True(self):
         """Test the ``Positive.__init__`` method.
@@ -1657,7 +1658,7 @@ class TestPositive():
         # Asserts
         assert instance._value == 0
         assert instance._column_name == 'abc'
-        assert instance._operator == np.greater_equal
+        assert instance._operator == np.greater
 
 
 class TestNegative():
@@ -1673,7 +1674,7 @@ class TestNegative():
         # Asserts
         assert instance._value == 0
         assert instance._column_name == 'abc'
-        assert instance._operator == np.less
+        assert instance._operator == np.less_equal
 
     def test__init__strict_True(self):
         """Test the ``Negative.__init__`` method.
@@ -1686,7 +1687,7 @@ class TestNegative():
         # Asserts
         assert instance._value == 0
         assert instance._column_name == 'abc'
-        assert instance._operator == np.less_equal
+        assert instance._operator == np.less
 
 
 def new_column(data):

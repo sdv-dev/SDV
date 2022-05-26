@@ -26,6 +26,7 @@ Currently implemented constraints are:
     * FixedIncrements: Ensure that every value is a multiple of a specified increment.
 """
 
+import datetime
 import operator
 import uuid
 
@@ -281,7 +282,7 @@ class Inequality(Constraint):
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
-        self._operator = np.greater_equal if strict_boundaries else np.greater
+        self._operator = np.greater if strict_boundaries else np.greater_equal
         self.rebuild_columns = tuple(high_column_name)
         self._dtype = None
         self._is_datetime = None
@@ -332,7 +333,7 @@ class Inequality(Constraint):
                 Whether each row is valid.
         """
         low, high = self._get_data(table_data)
-        valid = np.isnan(low) | np.isnan(high) | self._operator(low, high)
+        valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
 
         return valid
 
@@ -401,7 +402,7 @@ class ScalarInequality(Constraint):
     Args:
         column_name (str):
             Name of the column to compare.
-        value (float):
+        value (float or datetime):
             Scalar value to compare.
         relation (str):
             Describes the relation between ``column_name`` and ``value``.
@@ -413,8 +414,8 @@ class ScalarInequality(Constraint):
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
 
-        if not isinstance(value, (int, float)):
-            raise ValueError('`value` must be a number.')
+        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
+            raise ValueError('`value` must be a number or datetime.')
 
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, ``<`, `<=`')
@@ -542,7 +543,7 @@ class Positive(ScalarInequality):
     """
 
     def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, value=0, relation='>=' if strict else '>')
+        super().__init__(column_name=column_name, value=0, relation='>' if strict else '>=')
 
 
 class Negative(ScalarInequality):
@@ -561,7 +562,7 @@ class Negative(ScalarInequality):
     """
 
     def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, value=0, relation='<=' if strict else '<')
+        super().__init__(column_name=column_name, value=0, relation='<' if strict else '<=')
 
 
 class ColumnFormula(Constraint):
