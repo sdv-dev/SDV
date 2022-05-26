@@ -537,6 +537,141 @@ class GreaterThan(Constraint):
 
         return table_data
 
+class ScalarInequality(Constraint):
+    """Ensure that the ``high_column_name`` column is greater than the ``low_column_name`` one.
+
+    The transformation works by creating a column with the difference between the
+    ``high_column_name`` and ``low_column_name`` columns and storing it in the
+    ``high_column_name``'s place. The reverse transform adds the difference column
+    and the ``low_column_name`` to reconstruct the ``high_column_name``.
+
+    Args:
+        column_name (str):
+            Name of the column to compare.
+        value (float):
+            Scalar value to compare.
+        relation (str):
+            Describes the relation between ``column_name`` and ``value``.
+            Choose one among ``>``, ``>=``, ``<``, ``<=``.
+    """
+
+    @staticmethod
+    def _validate_inputs(column_name, value, relation):
+        if not isinstance(column_name, str):
+            raise ValueError('`column_name` must be a string.')
+        
+        if not isinstance(value, (int, float)):
+            raise ValueError('`value` must be a number.')
+
+        if relation not in ['>', '>=', '<', '<=']:
+            raise ValueError('`relation` must be one of the following: `>`, `>=`, ``<`, `<=`')
+
+    def __init__(self, column_name, value, relation):
+        self._validate_inputs(column_name, value, relation)
+        self._column_name = column_name
+        self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
+        self._diff_column_name = f'{self._column_name}#'
+        self._is_datetime = None
+        self._dtype = None
+        str_to_op = {'>': np.greater, '>=': np.greater_equal, '<': np.less, '<=': np.less_equal}
+        self._operator = str_to_op[relation]
+        super().__init__(handling_strategy='transform', fit_columns_model=False)
+
+    def _get_is_datetime(self, table_data):
+        column = table_data[self._column_name].to_numpy()
+        is_column_datetime = is_datetime_type(column)
+        is_value_datetime = is_datetime_type(self._value)
+        is_datetime = is_column_datetime and is_value_datetime
+
+        if not is_datetime and any([is_value_datetime, is_column_datetime]):
+            raise ValueError('Both column and value must be datetime.')
+
+        return is_datetime
+
+    def _validate_columns_exist(self, table_data):
+        if self._column_name not in table_data.columns:
+            raise KeyError(f'The column {self._column_name} was not found in table_data.')
+
+    def _fit(self, table_data):
+        """Learn the ``dtype`` of ``_column_name`` and whether the data is datetime.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        self._validate_columns_exist(table_data)
+        self._is_datetime = self._get_is_datetime(table_data)
+        self._dtype = table_data[self._high_column_name].dtypes
+
+    def is_valid(self, table_data):
+        """Say whether ``high`` is greater than ``low`` in each row.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        column = table_data[self._column_name].to_numpy()
+        valid = np.isnan(column) | self._operator(column, self._value)
+
+        return valid
+
+    def _transform(self, table_data):
+        """Transform the table data.
+
+        The transformation consists on replacing the ``column_name`` values with the
+        difference between it and the ``value`` values.
+
+        Afterwards, a logarithm is applied to the difference + 1 to ensure that the
+        value stays positive when reverted afterwards using an exponential.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+        column = table_data[self._column_name].to_numpy()
+        diff_column = abs(column - self._value)
+
+        if self._is_datetime:
+            diff_column = diff_column.astype(np.float64)
+
+        table_data[self._diff_column_name] = np.log(diff_column + 1)
+
+        return table_data.drop(self._column_name, axis=1)
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        The transformation is reversed by computing an exponential of the difference value,
+        subtracting 1, clipping it to 0 to ensure the value is positive and converting it
+        to the original dtype. Finally, the obtained column is added to the ``low_column_name``
+        column to get back the original ``high_column_name`` value.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()).round() - 1).clip(0)
+        if self._is_datetime:
+            diff_column = diff_column.astype('timedelta64[ns]')
+
+        table_data[self._column_name] = pd.Series(diff_column + self._scalar).astype(self._dtype)
+
+        return table_data.drop(self._diff_column, axis=1)
+
 class Inequality(Constraint):
     """Ensure that the ``high_column_name`` column is greater than the ``low_column_name`` one.
 
@@ -620,7 +755,7 @@ class Inequality(Constraint):
                 Whether each row is valid.
         """
         low, high = self._get_data(table_data)
-        valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
+        valid = np.isnan(low) | np.isnan(high) | self._operator(low, high)
 
         return valid
 
@@ -643,14 +778,14 @@ class Inequality(Constraint):
         """
         table_data = table_data.copy()
         low, high = self._get_data(table_data)
-        diff_column = low - high
+        diff_column = high - low
 
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
 
-        return table_data
+        return table_data.drop(self._high_column_name, axis=1)
 
     def reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -674,7 +809,7 @@ class Inequality(Constraint):
             diff_column = diff_column.astype('timedelta64[ns]')
 
         low = table_data[self._low_column_name].to_numpy()
-        table_data[self._high_column_name] = pd.Series(diff_column + low, name=self._high_column_name)
+        table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
         return table_data.drop(self._diff_column, axis=1)
 
