@@ -19,7 +19,9 @@ Currently implemented constraints are:
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
+    * Rounding: Round a column based on the specified number of digits.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
+    * Unique: Ensure that each value for a specified column/group of columns is unique.
 """
 
 import operator
@@ -1135,6 +1137,7 @@ class Unique(Constraint):
 
     def __init__(self, columns):
         self.columns = columns if isinstance(columns, list) else [columns]
+        self.constraint_columns = tuple(self.columns)
         super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
 
     def is_valid(self, table_data):

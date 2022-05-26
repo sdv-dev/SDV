@@ -12,6 +12,7 @@ from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -120,13 +121,17 @@ class Constraint(metaclass=ConstraintMeta):
     def _identity(self, table_data):
         return table_data
 
+    def _identity_with_validation(self, table_data):
+        self._validate_data_on_constraint(table_data)
+        return table_data
+
     def __init__(self, handling_strategy, fit_columns_model=False):
         self.fit_columns_model = fit_columns_model
         if handling_strategy == 'transform':
             self.filter_valid = self._identity
         elif handling_strategy == 'reject_sampling':
             self.rebuild_columns = ()
-            self.transform = self._identity
+            self.transform = self._identity_with_validation
             self.reverse_transform = self._identity
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
@@ -220,6 +225,31 @@ class Constraint(metaclass=ConstraintMeta):
         sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
         return sampled_data
 
+    def _validate_data_on_constraint(self, table_data):
+        """Make sure the given data is valid for the given constraints.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
+        if set(self.constraint_columns).issubset(table_data.columns.values):
+            is_valid_data = self.is_valid(table_data)
+            if not is_valid_data.all():
+                constraint_data = table_data[list(self.constraint_columns)]
+                invalid_rows = constraint_data[~is_valid_data]
+                err_msg = (
+                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
+                    f'{invalid_rows[:5]}'
+                )
+                if len(invalid_rows) > 5:
+                    err_msg += f'\n+{len(invalid_rows) - 5} more'
+
+                raise ConstraintsNotMetError(err_msg)
+
     def _validate_constraint_columns(self, table_data):
         """Validate the columns in ``table_data``.
 
@@ -277,6 +307,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
+        self._validate_data_on_constraint(table_data)
         table_data = self._validate_constraint_columns(table_data)
         return self._transform(table_data)
 
