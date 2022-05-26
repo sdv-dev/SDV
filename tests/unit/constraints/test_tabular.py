@@ -1072,8 +1072,8 @@ class TestInequality():
         # Assert
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
-            'a#b': [np.log(4)] * 3,
             'c': [7, 8, 9],
+            'a#b': [np.log(4)] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1094,6 +1094,7 @@ class TestInequality():
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._diff_column_name = 'a#b'
+        instance._is_datetime = True
 
         # Run
         table_data = pd.DataFrame({
@@ -1106,8 +1107,8 @@ class TestInequality():
         # Assert
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'c': [1, 2],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1481,8 +1482,8 @@ class TestScalarInequality():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a#': [np.log(1), np.log(2), np.log(3)],
             'c': [7, 8, 9],
+            'a#': [np.log(1), np.log(2), np.log(3)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1502,18 +1503,19 @@ class TestScalarInequality():
         # Setup
         instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>')
         instance._diff_column_name = 'a#'
+        instance._is_datetime = True
 
         # Run
         table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
             'c': [1, 2],
         })
         out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
-            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'c': [1, 2],
+            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1550,8 +1552,8 @@ class TestScalarInequality():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
             'c': [7, 8, 9],
+            'a': [1, 2, 3],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1561,7 +1563,7 @@ class TestScalarInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
-            - add the ``column_name``
+            - add the ``value``
             - convert the output to float
             - add back the dropped column
 
@@ -1571,12 +1573,12 @@ class TestScalarInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as float
+        - Same table with the high column replaced by the low one + 1, as float
         and the diff column dropped.
         """
         # Setup
         instance = ScalarInequality(column_name='a', value=1, relation='>=')
-        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._dtype = np.dtype('float')
         instance._diff_column_name = 'a#'
 
         # Run
@@ -1588,8 +1590,8 @@ class TestScalarInequality():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a': [1.1, 2.1, 3.3],
             'c': [7, 8, 9],
+            'a': [1.1, 2.1, 3.3],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1626,8 +1628,8 @@ class TestScalarInequality():
 
         # Assert
         expected_out = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
         })
         pd.testing.assert_frame_equal(out, expected_out)
 

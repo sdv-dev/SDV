@@ -382,14 +382,14 @@ class Inequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()).round() - 1).clip(0)
+        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()) - 1).clip(0)
         if self._is_datetime:
             diff_column = diff_column.astype('timedelta64[ns]')
 
         low = table_data[self._low_column_name].to_numpy()
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
-        return table_data.drop(self._diff_column, axis=1)
+        return table_data.drop(self._diff_column_name, axis=1)
 
 class ScalarInequality(Constraint):
     """Ensure an inequality between the ``column_name`` column and a scalar ``value``.
@@ -518,13 +518,13 @@ class ScalarInequality(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()).round() - 1).clip(0)
+        diff_column = (np.exp(table_data[self._diff_column_name].to_numpy()) - 1).clip(0)
         if self._is_datetime:
             diff_column = diff_column.astype('timedelta64[ns]')
 
-        table_data[self._column_name] = pd.Series(diff_column + self._scalar).astype(self._dtype)
+        table_data[self._column_name] = pd.Series(diff_column + self._value).astype(self._dtype)
 
-        return table_data.drop(self._diff_column, axis=1)
+        return table_data.drop(self._diff_column_name, axis=1)
 
 
 class Positive(ScalarInequality):
