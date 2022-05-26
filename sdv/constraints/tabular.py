@@ -529,14 +529,12 @@ class ScalarInequality(Constraint):
 class Positive(ScalarInequality):
     """Ensure the ``column_name`` column is greater than zero.
 
-    TODO: Rewrite this. The transformation works by creating a column with the difference between the
-    ``column_name`` and ``value`` and storing it in the ``column_name``'s place.
-    The reverse transform adds the difference column and the ``value``
-    to reconstruct the ``column_name``.
+    The transformation works by applying a logarithm to the ``column_name`` + 1
+    to ensure that the value stays positive when reverted afterwards using an exponential.
 
     Args:
         column_name (str):
-            The name of the column(s) that are constrained to be positive.
+            The name of the column that is constrained to be positive.
         strict (bool):
             Whether the comparison of the values should be strict; disclude
             zero ``>`` or include it ``>=``. Currently, this is only respected
@@ -550,13 +548,12 @@ class Positive(ScalarInequality):
 class Negative(ScalarInequality):
     """Ensure that the given columns are always negative.
 
-    TODO: Rewrite this. The transformation strategy works by creating columns with the
-    difference between zero and given columns then computing back the
-    necessary columns using the difference.
+    The transformation works by applying a logarithm to the negative of ``column_name`` + 1
+    to ensure that the value stays positive when reverted afterwards using an exponential.
 
     Args:
         column_name (str):
-            The name of the column(s) that are constrained to be negative.
+            The name of the column that is constrained to be negative.
         strict (bool):
             Whether the comparison of the values should be strict, disclude
             zero ``<`` or include it ``<=``. Currently, this is only respected

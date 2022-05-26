@@ -1634,121 +1634,59 @@ class TestInequality():
 class TestPositive():
 
     def test__init__(self):
-        """
-        Test the ``Positive.__init__`` method.
+        """Test the ``Positive.__init__`` method.
 
-        The method is expected to set the ``_low`` instance variable
-        to 0, the ``_scalar`` variable to ``'low'``. The rest of the
-        parameters should be passed. Check that ``_drop`` is set to
-        ``None`` when ``drop`` is ``False``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = False
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar == 'low'
-        - instance._drop = None
+        Ensure the attributes are correctly set.
         """
         # Run
-        instance = Positive(columns='a', strict=True, drop=False)
+        instance = Positive(column_name='abc')
 
         # Asserts
-        assert instance._low == 0
-        assert instance._high == ['a']
-        assert instance._strict is True
-        assert instance._scalar == 'low'
-        assert instance._drop is None
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.greater
 
-    def test__init__drop_true(self):
-        """
-        Test the ``Positive.__init__`` method with drop is ``True``.
+    def test__init__strict_True(self):
+        """Test the ``Positive.__init__`` method.
 
-        Check that ``_drop`` is set to 'high' when ``drop`` is ``True``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = True
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar == 'low'
-        - instance._drop = 'high'
+        Ensure the attributes are correctly set when ``strict`` is True.
         """
         # Run
-        instance = Positive(columns='a', strict=True, drop=True)
+        instance = Positive(column_name='abc', strict=True)
 
         # Asserts
-        assert instance._low == 0
-        assert instance._high == ['a']
-        assert instance._strict is True
-        assert instance._scalar == 'low'
-        assert instance._drop == 'high'
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.greater_equal
 
 
 class TestNegative():
 
     def test__init__(self):
-        """
-        Test the ``Negative.__init__`` method.
+        """Test the ``Negative.__init__`` method.
 
-        The method is expected to set the ``_high`` instance variable
-        to 0, the ``_scalar`` variable to ``'high'``. The rest of the
-        parameters should be passed. Check that ``_drop`` is set to
-        ``None`` when ``drop`` is ``False``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = False
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar = 'high'
-        - instance._drop = None
+        Ensure the attributes are correctly set.
         """
         # Run
-        instance = Negative(columns='a', strict=True, drop=False)
+        instance = Negative(column_name='abc')
 
         # Asserts
-        assert instance._low == ['a']
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._scalar == 'high'
-        assert instance._drop is None
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.less
 
-    def test__init__drop_true(self):
-        """
-        Test the ``Negative.__init__`` method with drop is ``True``.
+    def test__init__strict_True(self):
+        """Test the ``Negative.__init__`` method.
 
-        Check that ``_drop`` is set to 'low' when ``drop`` is ``True``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = True
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar = 'high'
-        - instance._drop = 'low'
+        Ensure the attributes are correctly set when ``strict`` is True.
         """
         # Run
-        instance = Negative(columns='a', strict=True, drop=True)
+        instance = Negative(column_name='abc', strict=True)
 
         # Asserts
-        assert instance._low == ['a']
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._scalar == 'high'
-        assert instance._drop == 'low'
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.less_equal
 
 
 def new_column(data):
