@@ -985,6 +985,86 @@ class Rounding(Constraint):
         return table_data.round(self._round_config)
 
 
+class FixedIncrements(Constraint):
+    """Ensure every value in a column is a multiple of the specified increment.
+
+    Args:
+        column_name (str or list[str]):
+            Name of the column.
+        increment_value (int):
+            The increment that each value in the column must be a multiple of. Must be greater
+            than 0.
+        handling_strategy (str):
+            How this Constraint should be handled, which can be ``transform``
+            or ``reject_sampling``. Defaults to ``transform``.
+    """
+
+    _dtype = None
+
+    def __init__(self, column_name, increment_value, handling_strategy):
+        if increment_value <= 0:
+            raise ValueError('The increment_value must be greater than 0.')
+
+        if increment_value % 1 != 0:
+            raise ValueError('The increment_value must be a whole number.')
+
+        self.increment_value = increment_value
+        self.column_name = column_name
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
+
+    def is_valid(self, table_data):
+        """Determine if the data is evenly divisible by the increment.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        return table_data[self.column_name] % self.increment_value == 0
+
+    def _fit(self, table_data):
+        """Learn the dtype of the column.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        self._dtype = table_data[self.column_name].dtype
+
+    def _transform(self, table_data):
+        """Transform the table_data.
+
+        The transformation works by dividing each value by the increment.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Data divided by increment.
+        """
+        table_data[self.column_name] = table_data[self.column_name] / self.increment_value
+
+    def reverse_transform(self, table_data):
+        """Convert column to multiples of the increment.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Data as multiples of the increment.
+        """
+        column = table_data[self.column_name].as_type(int)
+        table_data[self.column_name] = (column * self.increment_value).astype(self._dtype)
+        return table_data
+
+
 class OneHotEncoding(Constraint):
     """Ensure the appropriate columns are one hot encoded.
 
