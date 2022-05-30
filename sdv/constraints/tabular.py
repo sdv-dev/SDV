@@ -691,139 +691,44 @@ class ColumnFormula(Constraint):
         return table_data
 
 
-class Between(Constraint):
-    """Ensure that the ``constraint_column`` is always between ``high`` and ``low``.
+class Range(Constraint):
+    """Ensure that the ``middle_column_name`` is between the range of ``low`` and ``high``."""
 
-    The transformation strategy works by replacing the ``constraint_column`` with a
-    scaled version and then applying a logit function. The reverse transform
-    applies a sigmoid to the data and then scales it back to the original space.
+    def __init__(self, low_column_name, middle_column_name, high_column_name,
+                 strict_boundaries=True):
 
-    Args:
-        constraint_column (str):
-            Name of the column to which the constraint will be applied.
-        low (float or str):
-            If float, lower bound on the values of the ``constraint_column``.
-            If string, name of the column which will be the lower bound.
-        high (float or str):
-            If float, upper bound on the values of the ``constraint_column``.
-            If string, name of the column which will be the upper bound.
-        strict (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``
-            or ``reject_sampling``. Defaults to ``transform``.
-        fit_columns_model (bool):
-            If False, reject sampling will be used to handle conditional sampling.
-            Otherwise, a model will be trained and used to sample other columns
-            based on the conditioned column. Defaults to False.
-        high_is_scalar(bool or None):
-            Whether or not the value for high is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
-        low_is_scalar(bool or None):
-            Whether or not the value for low is a scalar or a column name.
-            If ``None``, this will be determined during the ``fit`` method
-            by checking if the value provided is a column name.
-    """
-
-    _transformed_column = None
-
-    def __init__(self, column, low, high, strict=False, handling_strategy='transform',
-                 fit_columns_model=False, high_is_scalar=None, low_is_scalar=None):
-        self.constraint_column = column
-        self.constraint_columns = (column,)
-        self.rebuild_columns = (column,)
-        self._strict = strict
-        self._high_is_scalar = high_is_scalar
-        self._low_is_scalar = low_is_scalar
-        self._lt = operator.lt if strict else operator.le
-
-        self._low = low
-        if self._low_is_scalar and isinstance(low, pd.Timestamp):
-            self._low = low.to_datetime64()
-
-        self._high = high
-        if self._high_is_scalar and isinstance(high, pd.Timestamp):
-            self._high = high.to_datetime64()
-
-        super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
-
-    def _get_low_value(self, table_data):
-        """Return the appropriate lower bound.
-
-        Returns the lower bound either as a column or a scalar, depending on the
-        value of ``self._low_is_scalar``. If the lower bound column doesn't exist, returns
-        ``None`` instead.
-
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-
-        Returns:
-            pandas.DataFrame, float or None:
-                Either the lower bound or None if the column doesn't exist.
-        """
-        if self._low_is_scalar:
-            return self._low
-        elif self._low in table_data.columns:
-            return table_data[self._low]
-
-        return None
-
-    def _get_high_value(self, table_data):
-        """Return the appropriate upper bound.
-
-        Returns the upper bound either as a column or a scalar, depending on the
-        value of ``self._high_is_scalar``. If the upper bound column doesn't exist, returns
-        ``None`` instead.
-
-        Args:
-            table_data (pandas.DataFrame):
-                The Table data.
-
-        Returns:
-            pandas.DataFrame, float or None:
-                Either the upper bound or None if the column doesn't exist.
-        """
-        if self._high_is_scalar:
-            return self._high
-        elif self._high in table_data.columns:
-            return table_data[self._high]
-
-        return None
+        self.low_column_name = low_column_name
+        self.middle_column_name = middle_column_name
+        self.high_column_name = high_column_name
+        self.fit_columns_model = False
+        self._operator = operator.lt if strict_boundaries else operator.le
+        super().__init__(handling_strategy='transform', fit_columns_model=False)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
-        components = list(map(str, [self.constraint_column, self._low, self._high]))
+        columns = [self.middle_column_name, self.low_column_name, self.high_column_name]
+        components = list(map(str, columns))
         while token.join(components) in table_data.columns:
             token += '#'
 
         return token.join(components)
 
     def _get_is_datetime(self, table_data):
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
-        column = table_data[self.constraint_column]
+        low = table_data[self.low_column_name]
+        middle = table_data[self.middle_column_name]
+        high = table_data[self.high_column_name]
 
         is_low_datetime = is_datetime_type(low)
+        is_middle_datetime = is_datetime_type(middle)
         is_high_datetime = is_datetime_type(high)
-        is_column_datetime = is_datetime_type(column)
-        is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
+        is_datetime = is_low_datetime and is_high_datetime and is_middle_datetime
 
-        if not is_datetime and any([is_low_datetime, is_high_datetime, is_column_datetime]):
+        if not is_datetime and any([is_low_datetime, is_middle_datetime, is_high_datetime]):
             raise ValueError('The constraint column and bounds must all be datetime.')
 
         return is_datetime
 
     def _fit(self, table_data):
-        if self._high_is_scalar is None:
-            self._high_is_scalar = self._high not in table_data.columns
-        if self._low_is_scalar is None:
-            self._low_is_scalar = self._low not in table_data.columns
-
         self._transformed_column = self._get_diff_column_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
@@ -838,21 +743,22 @@ class Between(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = table_data[self.low_column_name]
+        middle = table_data[self.middle_column_name]
+        high = table_data[self.high_column_name]
 
         satisfy_low_bound = np.logical_or(
-            self._lt(low, table_data[self.constraint_column]),
+            self._operator(low, middle),
             np.isnan(low),
         )
         satisfy_high_bound = np.logical_or(
-            self._lt(table_data[self.constraint_column], high),
+            self._operator(middle, high),
             np.isnan(high),
         )
 
         return np.logical_or(
             np.logical_and(satisfy_low_bound, satisfy_high_bound),
-            np.isnan(table_data[self.constraint_column]),
+            np.isnan(middle),
         )
 
     def _transform(self, table_data):
@@ -871,15 +777,15 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = table_data[self.low_column_name]
+        high = table_data[self.high_column_name]
 
-        data = (table_data[self.constraint_column] - low) / (high - low)
+        data = (table_data[self.middle_column_name] - low) / (high - low)
         data = data * 0.95 + 0.025
         data = np.log(data / (1.0 - data))
 
         table_data[self._transformed_column] = data
-        table_data = table_data.drop(self.constraint_column, axis=1)
+        table_data = table_data.drop(self.middle_column_name, axis=1)
 
         return table_data
 
@@ -899,8 +805,8 @@ class Between(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        low = self._get_low_value(table_data)
-        high = self._get_high_value(table_data)
+        low = table_data[self.low_column_name]
+        high = table_data[self.high_column_name]
         data = table_data[self._transformed_column]
 
         data = 1 / (1 + np.exp(-data))
@@ -909,9 +815,131 @@ class Between(Constraint):
         data = data.clip(low, high)
 
         if self._is_datetime:
-            table_data[self.constraint_column] = pd.to_datetime(data)
+            table_data[self.middle_column_name] = pd.to_datetime(data)
         else:
-            table_data[self.constraint_column] = data
+            table_data[self.middle_column_name] = data
+
+        table_data = table_data.drop(self._transformed_column, axis=1)
+
+        return table_data
+
+
+class ScalarRange(Constraint):
+    """Ensure that the ``column_name`` is between the range of ``low`` and ``high``."""
+
+    def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
+        self.column_name = column_name
+        self.low_value = low_value
+        self.high_value = high_value
+        self._operator = operator.lt if strict_boundaries else operator.le
+
+        super().__init__(handling_strategy='transform', fit_columns_model=False)
+
+    def _get_diff_column_name(self, table_data):
+        token = '#'
+        columns = [self.middle_column_name, self.low_column_name, self.high_column_name]
+        components = list(map(str, columns))
+        while token.join(components) in table_data.columns:
+            token += '#'
+
+        return token.join(components)
+
+    def _get_is_datetime(self, table_data):
+        data = table_data[self.column_name]
+
+        is_low_datetime = is_datetime_type(self.low_value)
+        is_column_datetime = is_datetime_type(data)
+        is_high_datetime = is_datetime_type(self.high_value)
+        is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
+
+        if not is_datetime and any([is_low_datetime, is_column_datetime, is_high_datetime]):
+            raise ValueError('The constraint column and bounds must all be datetime.')
+
+        return is_datetime
+
+    def _fit(self, table_data):
+        self._transformed_column = self._get_diff_column_name(table_data)
+        self._is_datetime = self._get_is_datetime(table_data)
+
+    def is_valid(self, table_data):
+        """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Whether each row is valid.
+        """
+        data = table_data[self.middle_column_name]
+
+        satisfy_low_bound = np.logical_or(
+            self._operator(self.low_value, data),
+            np.isnan(self.low_value),
+        )
+        satisfy_high_bound = np.logical_or(
+            self._operator(data, self.high_value),
+            np.isnan(self.high_value),
+        )
+
+        return np.logical_or(
+            np.logical_and(satisfy_low_bound, satisfy_high_bound),
+            np.isnan(data),
+        )
+
+    def _transform(self, table_data):
+        """Transform the table data.
+
+        The transformation consists of scaling the ``constraint_column``
+        (``(column-low)/(high-low) * cnt + small_cnt``) and then applying
+        a logit function to the scaled version of the column.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+        data = (table_data[self.column_name] - self.low_value) / (self.high_value - self.low_value)
+        data = data * 0.95 + 0.025
+        data = np.log(data / (1.0 - data))
+
+        table_data[self._transformed_column] = data
+        table_data = table_data.drop(self.column_name, axis=1)
+
+        return table_data
+
+    def reverse_transform(self, table_data):
+        """Reverse transform the table data.
+
+        The reverse transform consists of applying a sigmoid to the transformed
+        ``constraint_column`` and then scaling it back to the original space
+        ( ``(column - cnt) * (high - low) / cnt + low`` ).
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        table_data = table_data.copy()
+        data = table_data[self._transformed_column]
+
+        data = 1 / (1 + np.exp(-data))
+        data = (data - 0.025) / 0.95
+        data = data * (self.high_value - self.low_value) + self.low_value
+        data = data.clip(self.low_value, self.high_value)
+
+        if self._is_datetime:
+            table_data[self.column_name] = pd.to_datetime(data)
+        else:
+            table_data[self.column_name] = data
 
         table_data = table_data.drop(self._transformed_column, axis=1)
 
