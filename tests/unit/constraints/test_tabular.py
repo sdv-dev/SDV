@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative,
-    OneHotEncoding, Positive, Rounding, Unique)
+    ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative, OneHotEncoding,
+    Positive, Rounding, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -1486,7 +1486,7 @@ class TestGreaterThan():
             instance._check_columns_exist(table_data, 'high')
 
     def test__fit_only_one_datetime_arg(self):
-        """Test the ``Between._fit`` method by passing in only one arg as datetime.
+        """Test the ``GreaterThan._fit`` method by passing in only one arg as datetime.
 
         If only one of the high / low args is a datetime type, expect a ValueError.
 

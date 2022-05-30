@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    Between, ColumnFormula, FixedCombinations, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique)
+    ColumnFormula, FixedCombinations, GreaterThan, Negative, OneHotEncoding, Positive, Rounding,
+    Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -68,7 +68,6 @@ def test_failing_constraints():
         Positive('c'),
         Negative('d'),
         Rounding('e', 2),
-        Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
         Unique('i')
     ]
@@ -117,9 +116,6 @@ def test_failing_constraints():
         '\n4  3'
         '\n6  5'
         '\n'
-        "\nData is not valid for the 'Between' constraint:"
-        '\n   f'
-        '\n6 -1'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
