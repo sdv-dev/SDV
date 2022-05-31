@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative,
-    OneHotEncoding, Positive, Rounding, Unique)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, GreaterThan,
+    Negative, OneHotEncoding, Positive, Rounding, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -5616,3 +5616,184 @@ class TestUnique():
         # Assert
         expected = pd.Series([True, True, False, True, False, True])
         pd.testing.assert_series_equal(valid, expected)
+
+
+class TestFixedIncrements():
+
+    def test___init__(self):
+        """Test the ``FixedIncrements.__init__`` method.
+
+        The ``column_name`` and ``increment_value`` instance variables should be set.
+
+        Input:
+            - column name as a string.
+            - increment_value as an int.
+
+        Expected behavior:
+            - Instance with ``column_name`` and ``increment_value`` set.
+        """
+        # Run
+        instance = FixedIncrements(column_name='column', increment_value=5)
+
+        # Assert
+        assert instance.column_name == 'column'
+        assert instance.increment_value == 5
+
+    def test___init___increment_value_is_negative_number(self):
+        """Test the ``FixedIncrements.__init__ method with a negative increment.
+
+        If the ``increment_value`` is less than or equal to 0, then an error should be raised.
+
+        Input:
+            - column name as a string.
+            - increment_value as -1
+
+        Expected behavior:
+            - ``ValueError`` should be raised.
+        """
+        # Run / Assert
+        error_message = "The increment_value must be greater than 0."
+        with pytest.raises(ValueError, match=error_message):
+            FixedIncrements(column_name='column', increment_value=-1)
+
+    def test___init___increment_value_is_decimal(self):
+        """Test the ``FixedIncrements.__init__ method with a decimal as an increment.
+
+        If the ``increment_value`` is not a whole number, then an error should be raised.
+
+        Input:
+            - column name as a string.
+            - increment_value as 1.5
+
+        Expected behavior:
+            - ``ValueError`` should be raised.
+        """
+        # Run / Assert
+        error_message = "The increment_value must be a whole number."
+        with pytest.raises(ValueError, match=error_message):
+            FixedIncrements(column_name='column', increment_value=1.5)
+
+    def test__fit(self):
+        """Test the ``FixedIncrements._fit`` method.
+
+        The ``fit`` method should store the dtype of the DataFrame.
+
+        Input:
+            - A ``pandas.DataFrame`` with a float dtype.
+
+        Expected behavior:
+            - The ``instance._dtype`` should be set to float.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, 21]}, dtype=float)
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        instance._fit(data)
+
+        # Assert
+        instance._dtype == float
+
+    def test_is_valid(self):
+        """Test the ``FixedIncrements.is_valid`` method.
+
+        The ``is_valid`` method should return ``True`` for rows that are NaN or evenly divisible
+        by the increment.
+
+        Input:
+            - A ``pandas.DataFrame`` with one column containing some NaNs, some numbers that are
+            divisible by the increment and some numbers that are not.
+
+        Output:
+            - A ``pandas.Series`` where all the rows that are NaN or divisible by the increment are
+            ``True``.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, np.nan, 20, 8, 35]}, dtype=float)
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        is_valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, True, False, False, True], name='column')
+        pd.testing.assert_series_equal(is_valid, expected)
+
+    def test__transform(self):
+        """Test the ``FixedIncrements._transform`` method.
+
+        The ``_transform`` method should divide all values in the data by the ``increment_value``.
+
+        Input:
+            - A ``pd.DataFrame`` with one column containing NaNs and values divisible by the
+            ``increment_value``.
+
+        Output:
+            - A ``pd.DataFrame`` with all the values in that column divided by the
+            ``increment_value`` and the NaNs left alone.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, np.nan, 35]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        transformed = instance._transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [1, 2, np.nan, 5]})
+        pd.testing.assert_frame_equal(transformed, expected)
+
+    def test_reverse_transform(self):
+        """Test the ``FixedIncrements.reverse_transform`` method.
+
+        The ``reverse_transform`` method should round all sampled values to the nearest int,
+        and then multiply them by the ``increment_value`` and convert them to the ``_dtype``.
+
+        Setup:
+            - Set the ``_dtype`` to int64.
+
+        Input:
+            - A ``pandas.DataFrame`` with floats.
+
+        Output:
+            - A ``pandas.DataFrame`` with the values multiplied by the ``increment_value`` and
+            converted to ints.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [1.3, 3.5, 4.2, 2.1]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+        instance._dtype = np.int64
+
+        # Run
+        reverse_transformed = instance.reverse_transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [7, 28, 28, 14]})
+        pd.testing.assert_frame_equal(expected, reverse_transformed)
+
+    def test_reverse_transform_nans(self):
+        """Test the ``FixedIncrements.reverse_transform`` method with NaNs.
+
+        The ``reverse_transform`` method should ignore the NaN values.
+
+        Setup:
+            - Set the ``_dtype`` to float64.
+
+        Input:
+            - A ``pandas.DataFrame`` with floats.
+
+        Output:
+            - A ``pandas.DataFrame`` with the values multiplied by the ``increment_value`` and
+            the NaNs ignored.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [1.3, 3.5, np.nan, 4.2, np.nan, 2.1]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+        instance._dtype = np.float64
+
+        # Run
+        reverse_transformed = instance.reverse_transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [7, 28, np.nan, 28, np.nan, 14]})
+        pd.testing.assert_frame_equal(expected, reverse_transformed)

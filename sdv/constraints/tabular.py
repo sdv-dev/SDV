@@ -1001,7 +1001,7 @@ class FixedIncrements(Constraint):
 
     _dtype = None
 
-    def __init__(self, column_name, increment_value, handling_strategy):
+    def __init__(self, column_name, increment_value, handling_strategy='transform'):
         if increment_value <= 0:
             raise ValueError('The increment_value must be greater than 0.')
 
@@ -1023,7 +1023,9 @@ class FixedIncrements(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return table_data[self.column_name] % self.increment_value == 0
+        isnan = pd.isnull(table_data[self.column_name])
+        is_divisible = table_data[self.column_name] % self.increment_value == 0
+        return is_divisible | isnan
 
     def _fit(self, table_data):
         """Learn the dtype of the column.
@@ -1047,7 +1049,9 @@ class FixedIncrements(Constraint):
             pandas.DataFrame:
                 Data divided by increment.
         """
+        table_data = table_data.copy()
         table_data[self.column_name] = table_data[self.column_name] / self.increment_value
+        return table_data
 
     def reverse_transform(self, table_data):
         """Convert column to multiples of the increment.
@@ -1060,7 +1064,7 @@ class FixedIncrements(Constraint):
             pandas.DataFrame:
                 Data as multiples of the increment.
         """
-        column = table_data[self.column_name].as_type(int)
+        column = table_data[self.column_name].round()
         table_data[self.column_name] = (column * self.increment_value).astype(self._dtype)
         return table_data
 
