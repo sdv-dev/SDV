@@ -11,7 +11,7 @@ __all__ = [
     'CustomConstraint',
     'GreaterThan',
     'FixedCombinations',
-    'FixedIncrements'
+    'FixedIncrements',
     'Between',
     'Negative',
     'Positive',
