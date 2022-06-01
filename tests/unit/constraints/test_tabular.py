@@ -4943,7 +4943,7 @@ class TestOneHotEncoding():
         - Table data where the appropriate rows are one hot (pandas.DataFrame)
         """
         # Setup
-        instance = OneHotEncoding(columns=['a', 'b'])
+        instance = OneHotEncoding(column_names=['a', 'b'])
 
         # Run
         table_data = pd.DataFrame({
@@ -4974,7 +4974,7 @@ class TestOneHotEncoding():
         - Series of ``True`` and ``False`` values (pandas.Series)
         """
         # Setup
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
 
         # Run
         table_data = pd.DataFrame({
@@ -5006,7 +5006,7 @@ class TestOneHotEncoding():
             'a': [1.0, 0.0] * 5,
             'b': [0.0, 1.0] * 5,
         })
-        instance = OneHotEncoding(columns=['a', 'b'])
+        instance = OneHotEncoding(column_names=['a', 'b'])
         instance.fit(data)
 
         # Run
@@ -5039,7 +5039,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5073,7 +5073,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5103,7 +5103,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5131,7 +5131,7 @@ class TestOneHotEncoding():
             'b': [0, 1] * 5,
             'c': [0, 0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5161,7 +5161,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5198,7 +5198,7 @@ class TestOneHotEncoding():
             'b': [1.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5232,7 +5232,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5261,7 +5261,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5296,7 +5296,7 @@ class TestOneHotEncoding():
             'b': [-1.0] * 10,
             'c': [1.0] * 10
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5327,7 +5327,7 @@ class TestOneHotEncoding():
             'b': [0.0, 1.0] * 5,
             'c': [0.0, 0.0] * 5
         })
-        instance = OneHotEncoding(columns=['a', 'b', 'c'])
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
         instance.fit(data)
 
         # Run
@@ -5351,20 +5351,20 @@ class TestUnique():
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
 
-        The ``columns`` should be set to those provided and the
+        The ``column_names`` should be set to those provided and the
         ``handling_strategy`` should be set to ``'reject_sampling'``.
 
         Input:
         - column names to keep unique.
         Output:
-        - Instance with ``columns`` set and ``transform``
+        - Instance with ``column_names`` set and ``transform``
         and ``reverse_transform`` methods set to ``instance._identity``.
         """
         # Run
-        instance = Unique(columns=['a', 'b'])
+        instance = Unique(column_names=['a', 'b'])
 
         # Assert
-        assert instance.columns == ['a', 'b']
+        assert instance.column_names == ['a', 'b']
         assert instance.fit_columns_model is False
         assert instance.transform == instance._identity_with_validation
         assert instance.reverse_transform == instance._identity
@@ -5372,25 +5372,25 @@ class TestUnique():
     def test___init__one_column(self):
         """Test the ``Unique.__init__`` method.
 
-        The ``columns`` should be set to a list even if a string is
+        The ``column_names`` should be set to a list even if a string is
         provided.
 
         Input:
         - string that is the name of a column.
         Output:
-        - Instance with ``columns`` set to list of one element.
+        - Instance with ``column_names`` set to list of one element.
         """
         # Run
-        instance = Unique(columns='a')
+        instance = Unique(column_names='a')
 
         # Assert
-        assert instance.columns == ['a']
+        assert instance.column_names == ['a']
 
     def test_is_valid(self):
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique combination of ``instance.columns``
+        of the first occurence of a unique combination of ``instance.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5399,7 +5399,7 @@ class TestUnique():
         - Series with the index of the first occurences set to ``True``.
         """
         # Setup
-        instance = Unique(columns=['a', 'b', 'c'])
+        instance = Unique(column_names=['a', 'b', 'c'])
 
         # Run
         data = pd.DataFrame({
@@ -5417,7 +5417,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique combination of ``instance.columns``
+        of the first occurence of a unique combination of ``instance.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5429,7 +5429,7 @@ class TestUnique():
         - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
         """
         # Setup
-        instance = Unique(columns=['a', 'b', 'c'])
+        instance = Unique(column_names=['a', 'b', 'c'])
 
         # Run
         data = pd.DataFrame({
@@ -5447,7 +5447,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique combination of ``instance.columns``
+        of the first occurence of a unique combination of ``instance.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5459,7 +5459,7 @@ class TestUnique():
         - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
         """
         # Setup
-        instance = Unique(columns=['a', 'b', 'c'])
+        instance = Unique(column_names=['a', 'b', 'c'])
 
         # Run
         data = pd.DataFrame({
@@ -5477,7 +5477,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique value of ``self.columns``
+        of the first occurence of a unique value of ``self.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5490,7 +5490,7 @@ class TestUnique():
         - Problem is described in: https://github.com/sdv-dev/SDV/issues/617
         """
         # Setup
-        instance = Unique(columns='a')
+        instance = Unique(column_names='a')
 
         # Run
         data = pd.DataFrame({
@@ -5508,7 +5508,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique value of ``self.columns``
+        of the first occurence of a unique value of ``self.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5521,7 +5521,7 @@ class TestUnique():
         - Problem is described in: https://github.com/sdv-dev/SDV/issues/616
         """
         # Setup
-        instance = Unique(columns='a')
+        instance = Unique(column_names='a')
 
         # Run
         data = pd.DataFrame({
@@ -5539,7 +5539,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique value of ``self.columns``
+        of the first occurence of a unique value of ``self.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
 
         Input:
@@ -5549,7 +5549,7 @@ class TestUnique():
         - Series with the index of the first occurences set to ``True``.
         """
         # Setup
-        instance = Unique(columns='a')
+        instance = Unique(column_names='a')
 
         # Run
         data = pd.DataFrame({
@@ -5567,7 +5567,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method for one column with nans.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique value of ``instance.columns``
+        of the first occurence of a unique value of ``instance.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
         ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
 
@@ -5577,7 +5577,7 @@ class TestUnique():
         - Series with the index of the first occurences set to ``True``.
         """
         # Setup
-        instance = Unique(columns=['a'])
+        instance = Unique(column_names=['a'])
 
         # Run
         data = pd.DataFrame({
@@ -5594,7 +5594,7 @@ class TestUnique():
         """Test the ``Unique.is_valid`` method for multiple columns with nans.
 
         This method should return a pd.Series where the index
-        of the first occurence of a unique combination of ``instance.columns``
+        of the first occurence of a unique combination of ``instance.column_names``
         is set to ``True``, and every other occurence is set to ``False``.
         ``None``, ``np.nan`` and ``float('nan')`` should be treated as the same category.
 
@@ -5604,7 +5604,7 @@ class TestUnique():
         - Series with the index of the first occurences set to ``True``.
         """
         # Setup
-        instance = Unique(columns=['a', 'b'])
+        instance = Unique(column_names=['a', 'b'])
 
         # Run
         data = pd.DataFrame({

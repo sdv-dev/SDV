@@ -134,7 +134,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
             "E",
         ]
     })
-    unique = Unique(columns=["index"])
+    unique = Unique(column_names=["index"])
     model = GaussianCopula(primary_key="key", constraints=[unique])
 
     # Run
@@ -188,7 +188,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
             "E5",
         ]
     })
-    unique = Unique(columns=["test_column"])
+    unique = Unique(column_names=["test_column"])
     model = GaussianCopula(primary_key="key", constraints=[unique])
 
     # Run
@@ -236,7 +236,7 @@ def test_fit_with_unique_constraint_on_data_subset():
         ]
     })
     unique = Unique(
-        columns=["test_column"]
+        column_names=["test_column"]
     )
 
     test_df = test_df.iloc[[1, 3, 4]]
