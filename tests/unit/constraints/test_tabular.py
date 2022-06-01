@@ -5369,23 +5369,6 @@ class TestUnique():
         assert instance.transform == instance._identity_with_validation
         assert instance.reverse_transform == instance._identity
 
-    def test___init__one_column(self):
-        """Test the ``Unique.__init__`` method.
-
-        The ``column_names`` should be set to a list even if a string is
-        provided.
-
-        Input:
-        - string that is the name of a column.
-        Output:
-        - Instance with ``column_names`` set to list of one element.
-        """
-        # Run
-        instance = Unique(column_names='a')
-
-        # Assert
-        assert instance.column_names == ['a']
-
     def test_is_valid(self):
         """Test the ``Unique.is_valid`` method.
 

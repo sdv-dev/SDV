@@ -70,7 +70,7 @@ def test_failing_constraints():
         Rounding('e', 2),
         Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
-        Unique('i')
+        Unique(['i'])
     ]
     gc = GaussianCopula(constraints=constraints)
 

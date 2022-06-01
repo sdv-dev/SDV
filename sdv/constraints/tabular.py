@@ -1131,12 +1131,12 @@ class Unique(Constraint):
     data.
 
     Args:
-        column_names (str or list[str]):
-            Name of the column(s) to keep unique.
+        column_names (list[str]):
+            List of name(s) of the column(s) to keep unique.
     """
 
     def __init__(self, column_names):
-        self.column_names = column_names if isinstance(column_names, list) else [column_names]
+        self.column_names = column_names
         self.constraint_columns = tuple(self.column_names)
         super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
 
