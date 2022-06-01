@@ -6,6 +6,7 @@ from sdv.tabular import GaussianCopula
 
 
 def test_FixedIncrements():
+    """Test the ``FixedIncrements`` constraint end to end."""
     # Setup
     values = np.random.randint(1, 10, size=20) * 5
     data = pd.DataFrame({'column': values})
@@ -15,4 +16,6 @@ def test_FixedIncrements():
 
     # Run
     sampled = gc.sample(10)
+
+    # Assert
     assert all(sampled % 5 == 0)
