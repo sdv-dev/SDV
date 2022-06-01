@@ -117,22 +117,6 @@ Between
    Between.from_dict
    Between.to_dict
 
-Rounding
-~~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   Rounding
-   Rounding.fit
-   Rounding.transform
-   Rounding.fit_transform
-   Rounding.reverse_transform
-   Rounding.is_valid
-   Rounding.filter_valid
-   Rounding.from_dict
-   Rounding.to_dict
-
 OneHotEncoding
 ~~~~~~~~~~~~~~~~
 

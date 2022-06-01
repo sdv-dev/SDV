@@ -19,9 +19,9 @@ Currently implemented constraints are:
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
-    * Rounding: Round a column based on the specified number of digits.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
     * Unique: Ensure that each value for a specified column/group of columns is unique.
+    * FixedIncrements: Ensure that every value is a multiple of a specified increment.
 """
 
 import operator
@@ -916,73 +916,6 @@ class Between(Constraint):
         table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
-
-
-class Rounding(Constraint):
-    """Round a column based on the specified number of digits.
-
-    Args:
-        columns (str or list[str]):
-            Name of the column(s) to round.
-        digits (int):
-            How much to round each column. All columns will be rounded to this
-            number of digits.
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``
-            or ``reject_sampling``. Defaults to ``transform``.
-        tolerance (int):
-            When reject sampling, the sample data must be within this distance
-            of the desired rounded values.
-    """
-
-    def __init__(self, columns, digits, handling_strategy='transform', tolerance=None):
-        if digits > 15:
-            raise ValueError('The value of digits cannot exceed 15')
-
-        if tolerance is not None and tolerance >= 10**(-1 * digits):
-            raise ValueError('Tolerance must be less than the rounding level')
-
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
-
-        self._digits = digits
-        self._round_config = {column: self._digits for column in self._columns}
-        self._tolerance = tolerance if tolerance else 10**(-1 * (digits + 1))
-        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
-
-    def is_valid(self, table_data):
-        """Determine if the data satisfies the rounding constraint.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.Series:
-                Whether each row is valid.
-        """
-        columns = table_data[self._columns]
-        rounded = columns.round(self._digits)
-        valid = (columns - rounded).abs() <= self._tolerance
-
-        return valid.all(1)
-
-    def reverse_transform(self, table_data):
-        """Reverse transform the table data.
-
-        Round the columns to the desired digits.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        return table_data.round(self._round_config)
 
 
 class FixedIncrements(Constraint):
