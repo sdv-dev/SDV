@@ -690,17 +690,32 @@ class ColumnFormula(Constraint):
 
 
 class Range(Constraint):
-    """Ensure that the ``middle_column_name`` is between the range of ``low`` and ``high``."""
+    """Ensure that the ``middle_column_name`` is between ``low`` and ``high`` columns.
+
+    The transformation strategy works by replacing the ``middle_column_name`` with a
+    scaled version and then applying a logit function. The reverse transform
+    applies a sigmoid to the data and then scales it back to the original space.
+
+    Args:
+        low_column_name (str):
+            Name of the column which will be the lower bound.
+        middle_column_name (str):
+            Name of the column that has to be between the lower bound and upper bound.
+        high_column_name (str):
+            Name of the column which will be the higher bound.
+        strict_boundaries (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them.
+    """
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
-                 strict_boundaries=True):
-
+                 handling_strategy='transform', strict_boundaries=True):
         self.low_column_name = low_column_name
         self.middle_column_name = middle_column_name
         self.high_column_name = high_column_name
-        self.fit_columns_model = False
+        self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
-        super().__init__(handling_strategy='transform', fit_columns_model=False)
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=True)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
@@ -727,6 +742,16 @@ class Range(Constraint):
         return is_datetime
 
     def _fit(self, table_data):
+        """Fit the constraint.
+
+        The fit process consists in generating the `transformed_column` name and determine
+        whether or not the data is `datetime`.
+
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        self._dtype = table_data[self.middle_column_name].dtypes
         self._transformed_column = self._get_diff_column_name(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
 
@@ -762,9 +787,9 @@ class Range(Constraint):
     def _transform(self, table_data):
         """Transform the table data.
 
-        The transformation consists of scaling the ``constraint_column``
-        (``(column-low)/(high-low) * cnt + small_cnt``) and then applying
-        a logit function to the scaled version of the column.
+        The transformation consists of scaling the ``middle_column_name``
+        (``(middle_column-low)/(high-low) * cnt + small_cnt``) and then applying
+        a ``logit`` function to the scaled version of the column.
 
         Args:
             table_data (pandas.DataFrame):
@@ -791,8 +816,8 @@ class Range(Constraint):
         """Reverse transform the table data.
 
         The reverse transform consists of applying a sigmoid to the transformed
-        ``constraint_column`` and then scaling it back to the original space
-        ( ``(column - cnt) * (high - low) / cnt + low`` ).
+        ``middle_column_name`` and then scaling it back to the original space
+        ( ``(middle_column - cnt) * (high - low) / cnt + low`` ).
 
         Args:
             table_data (pandas.DataFrame):
@@ -815,7 +840,7 @@ class Range(Constraint):
         if self._is_datetime:
             table_data[self.middle_column_name] = pd.to_datetime(data)
         else:
-            table_data[self.middle_column_name] = data
+            table_data[self.middle_column_name] = data.astype(self._dtype)
 
         table_data = table_data.drop(self._transformed_column, axis=1)
 
@@ -823,30 +848,38 @@ class Range(Constraint):
 
 
 class ScalarRange(Constraint):
-    """Ensure that the ``column_name`` is between the range of ``low`` and ``high``."""
+    """Ensure that the ``column_name`` is between the range of ``low`` and ``high``.
 
-    def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
+    The transformation strategy works by replacing the ``column_name`` with a
+    scaled version and then applying a logit function. The reverse transform
+    applies a sigmoid to the data and then scales it back to the original space.
+
+    Args:
+        column_name (str):
+            Name of the column that has to be between the lower bound and upper bound.
+        low_value (int or float):
+            Lower bound on the values of the ``column_name``.
+        high_value (int or float):
+            Higher bound on the values of the ``column_name``.
+        strict_boundaries (bool):
+            Whether the comparison of the values should be strict ``>=`` or
+            not ``>`` when comparing them.
+    """
+
+    def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
+                 strict_boundaries=True):
         self.column_name = column_name
         self.low_value = low_value
         self.high_value = high_value
         self._operator = operator.lt if strict_boundaries else operator.le
 
-        super().__init__(handling_strategy='transform', fit_columns_model=False)
-
-    def _get_diff_column_name(self, table_data):
-        token = '#'
-        columns = [self.middle_column_name, self.low_column_name, self.high_column_name]
-        components = list(map(str, columns))
-        while token.join(components) in table_data.columns:
-            token += '#'
-
-        return token.join(components)
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
     def _get_is_datetime(self, table_data):
         data = table_data[self.column_name]
 
-        is_low_datetime = is_datetime_type(self.low_value)
         is_column_datetime = is_datetime_type(data)
+        is_low_datetime = is_datetime_type(self.low_value)
         is_high_datetime = is_datetime_type(self.high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
@@ -856,11 +889,17 @@ class ScalarRange(Constraint):
         return is_datetime
 
     def _fit(self, table_data):
-        self._transformed_column = self._get_diff_column_name(table_data)
+        """Learn whether or not the ``column_name`` is ``datetime``.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        self._dtype = table_data[self.column_name].dtypes
         self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
-        """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
+        """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
 
         Args:
             table_data (pandas.DataFrame):
@@ -870,7 +909,7 @@ class ScalarRange(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        data = table_data[self.middle_column_name]
+        data = table_data[self.column_name]
 
         satisfy_low_bound = np.logical_or(
             self._operator(self.low_value, data),
@@ -889,7 +928,7 @@ class ScalarRange(Constraint):
     def _transform(self, table_data):
         """Transform the table data.
 
-        The transformation consists of scaling the ``constraint_column``
+        The transformation consists of scaling the ``column_name``
         (``(column-low)/(high-low) * cnt + small_cnt``) and then applying
         a logit function to the scaled version of the column.
 
@@ -906,8 +945,7 @@ class ScalarRange(Constraint):
         data = data * 0.95 + 0.025
         data = np.log(data / (1.0 - data))
 
-        table_data[self._transformed_column] = data
-        table_data = table_data.drop(self.column_name, axis=1)
+        table_data[self.column_name] = data
 
         return table_data
 
@@ -915,7 +953,7 @@ class ScalarRange(Constraint):
         """Reverse transform the table data.
 
         The reverse transform consists of applying a sigmoid to the transformed
-        ``constraint_column`` and then scaling it back to the original space
+        ``column_name`` and then scaling it back to the original space
         ( ``(column - cnt) * (high - low) / cnt + low`` ).
 
         Args:
@@ -927,7 +965,7 @@ class ScalarRange(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        data = table_data[self._transformed_column]
+        data = table_data[self.column_name]
 
         data = 1 / (1 + np.exp(-data))
         data = (data - 0.025) / 0.95
@@ -937,9 +975,7 @@ class ScalarRange(Constraint):
         if self._is_datetime:
             table_data[self.column_name] = pd.to_datetime(data)
         else:
-            table_data[self.column_name] = data
-
-        table_data = table_data.drop(self._transformed_column, axis=1)
+            table_data[self.column_name] = data.astype(self._dtype)
 
         return table_data
 

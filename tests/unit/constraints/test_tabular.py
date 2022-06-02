@@ -1,5 +1,6 @@
 """Tests for the sdv.constraints.tabular module."""
 
+import operator
 import uuid
 from datetime import datetime
 from unittest.mock import Mock
@@ -11,7 +12,7 @@ import pytest
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
     ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative, OneHotEncoding,
-    Positive, Rounding, Unique)
+    Positive, Range, Rounding, ScalarRange, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -3602,6 +3603,814 @@ class TestColumnFormula():
             'c': [5, 7, 9]
         })
         pd.testing.assert_frame_equal(expected_out, out)
+
+
+class TestRange():
+
+    def test___init__(self):
+        """Test the ``Range.__init__`` method.
+
+        The instance should contain the name of the three passed columns and also
+        use an operator ``lower than`` if ``strict_boundaries`` is ``True`` by default.
+        Input:
+            - Three column names.
+        """
+        # Run
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Assert
+        assert instance.low_column_name == 'age_when_joined'
+        assert instance.middle_column_name == 'current_age'
+        assert instance.high_column_name == 'retirement_age'
+        assert instance._operator == operator.lt
+
+    def test___init__strict_boundaries_false(self):
+        """Test the ``Range.__init__`` method.
+
+        Test the ``__init__`` method when ``strict_boundaries`` is ``False``.
+
+        Input:
+            - Three column names.
+            - ``strict_boundaries=False``.
+
+        Side Effect:
+            - ``instance._operator`` should be ``operator.le``
+        """
+        # Run
+        instance = Range(
+            'age_when_joined',
+            'current_age',
+            'retirement_age',
+            strict_boundaries=False
+        )
+
+        # Assert
+        assert instance.low_column_name == 'age_when_joined'
+        assert instance.middle_column_name == 'current_age'
+        assert instance.high_column_name == 'retirement_age'
+        assert instance._operator == operator.le
+
+    def test__get_diff_column_name(self):
+        """Test the ``Range._get_diff_column_name`` method.
+
+        This method should return the name for the new ``transform_column``.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+
+        Output:
+            - The column names concatenated with ``#`` where the order is
+              the ``middle_column_name`` followed by ``lower_column_name`` and ends with the
+              ``higher_column_name``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        transformed_column_name = instance._get_diff_column_name(table_data)
+
+        # Assert
+        assert transformed_column_name == 'current_age#age_when_joined#retirement_age'
+
+    def test__get_is_datetime(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with three columns that are datetime data.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``join_date``, ``promotion_date``, ``retirement_date`` columns.
+
+        Output:
+            - The output should be True.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14'])
+        })
+        instance = Range('join_date', 'promotion_date', 'retirement_date')
+
+        # Run
+        is_datetime = instance._get_is_datetime(table_data)
+
+        # Assert
+        assert is_datetime
+
+    def test__get_is_datetime_no_datetimes(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with three columns that do not contain datetime data.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+
+        Output:
+            - The output should be false since all the data is ``int``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        is_datetime = instance._get_is_datetime(table_data)
+
+        # Assert
+        assert not is_datetime
+
+    def test__get_is_datetime_raises_an_error(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with three columns that contain both datetime and non
+              datetime data.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``join_date``, ``promotion_date``, ``current_age`` columns.
+
+        Side Effect:
+            - Value error with the expected message should be raised.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+            'current_age': [21, 22, 25],
+        })
+        instance = Range('join_date', 'promotion_date', 'current_age')
+        expected_text = 'The constraint column and bounds must all be datetime.'
+
+        # Run
+        with pytest.raises(ValueError, match=expected_text):
+            instance._get_is_datetime(table_data)
+
+    def test__fit(self):
+        """Test the ``_fit`` method of ``Range``.
+
+        Test that the ``_fit`` method stores the proper transformation column name and
+        learns whether the data is ``datetime``or not and it's ``dtype``.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``join_date``, ``promotion_date``, ``current_age`` columns.
+
+        Side Effect:
+            - instance has ``_transformed_column`` and ``_is_datetime`` and ``_dtype``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._transformed_column == 'current_age#age_when_joined#retirement_age'
+        assert not instance._is_datetime
+        assert instance._dtype == np.int
+
+    def test_is_valid_lt(self):
+        """Test the ``Range.is_valid``.
+
+        This test ensures that the ``is_valid`` method works with the operator ``lower than``
+        (``<``) and validates that the ``middle_column_name`` is between ``low_column_name`` and
+        ``high_column_name``.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
+    def test_is_valid_le(self):
+        """Test the ``Range.is_valid``.
+
+        This test ensures that the ``is_valid`` method works with the operator
+        ``lower than or equal`` (``=<``) and validates that the ``middle_column_name`` is
+        between ``low_column_name`` and ``high_column_name``.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [21, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range(
+            'age_when_joined',
+            'current_age',
+            'retirement_age',
+            strict_boundaries=False
+        )
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
+    def test_is_valid_invalid(self):
+        """Test the ``Range.is_valid``.
+
+        This test ensures that the ``is_valid`` fails when the data is not in the range.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``Range`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [70, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range(
+            'age_when_joined',
+            'current_age',
+            'retirement_age',
+            strict_boundaries=False
+        )
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert not all(result)
+
+    def test__transform(self):
+        """Test the ``Range._transform`` method.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
+
+        Output:
+            - pd.DataFrame with an extra column containing the transformed ``column``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'current_age': [21, 22, 25],
+            'retirement_age': [65, 68, 75]
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_transform = transform(
+            table_data['current_age'],
+            table_data['age_when_joined'],
+            table_data['retirement_age']
+        )
+        expected_out = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': expected_transform
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_datetime_data(self):
+        """Test the ``Range._transform`` method with ``datetime`` data.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+            - pd.DataFrame with ``join_date``, ``promotion_date``, ``current_age`` columns.
+
+        Output:
+            - pd.DataFrame with an extra column containing the transformed ``column``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14'])
+        })
+        instance = Range('join_date', 'promotion_date', 'retirement_date')
+
+        # Run
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_transform = transform(
+            table_data['promotion_date'],
+            table_data['join_date'],
+            table_data['retirement_date']
+        )
+        expected_out = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
+            'promotion_date#join_date#retirement_date': expected_transform
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_numerical_data(self):
+        """"Test the ``reverse_transform`` method for ``Range``.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data with the expected column name.
+            - Instance of Range constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+        """
+
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age': [21, 22, 25],
+        })
+        expected_transform = transform(
+            table_data['current_age'],
+            table_data['age_when_joined'],
+            table_data['retirement_age']
+        )
+        transformed_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': expected_transform
+        })
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+
+    def test_reverse_transform_datetime_data(self):
+        """Test the ``Range.reverse_transform`` method with datetime data.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data with the expected column name.
+            - Instance of Range constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+        """
+        table_data = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
+            'promotion_date': pd.to_datetime(['2022-04-11', '2022-06-10', '2022-11-17']),
+        })
+        expected_transform = transform(
+            table_data['promotion_date'],
+            table_data['join_date'],
+            table_data['retirement_date']
+        )
+        transformed_data = pd.DataFrame({
+            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
+            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
+            'promotion_date#join_date#retirement_date': expected_transform
+        })
+        instance = Range('join_date', 'promotion_date', 'retirement_date')
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+
+
+class TestScalarRange():
+
+    def test___init__(self):
+        """Test the ``ScalarRange.__init__`` method.
+
+        The instance should contain the name of the three passed columns and also
+        use an operator ``lower than`` if ``strict_boundaries`` is ``True`` by default.
+        Input:
+            - Column name.
+            - Lower value.
+            - High value.
+        """
+        # Run
+        instance = ScalarRange(column_name='age_when_joined', low_value=18, high_value=28)
+
+        # Assert
+        assert instance.column_name == 'age_when_joined'
+        assert instance.low_value == 18
+        assert instance.high_value == 28
+        assert instance._operator == operator.lt
+
+    def test___init__strict_boundaries_false(self):
+        """Test the ``ScalarRange.__init__`` method.
+
+        Test the ``__init__`` method when ``strict_boundaries`` is ``False``.
+
+        Input:
+            - Three column names.
+            - ``strict_boundaries=False``.
+
+        Side Effect:
+            - ``instance._operator`` should be ``operator.le``
+        """
+        # Run
+        instance = ScalarRange('age_when_joined', 18, 28, strict_boundaries=False)
+
+        # Assert
+        assert instance.column_name == 'age_when_joined'
+        assert instance.low_value == 18
+        assert instance.high_value == 28
+        assert instance._operator == operator.le
+
+    def test__get_is_datetime(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with a column that contains datetime data.
+            - Instance of ``ScalarRange`` constraint with low and high as datetime (timestamps).
+
+        Input:
+            - pd.DataFrame with ``promotion_date`` column.
+
+        Output:
+            - The output should be True.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+        })
+        instance = ScalarRange(
+            'promotion_date',
+            pd.to_datetime('2021-02-10'),
+            pd.to_datetime('2050-10-11')
+        )
+
+        # Run
+        is_datetime = instance._get_is_datetime(table_data)
+
+        # Assert
+        assert is_datetime
+
+    def test__get_is_datetime_no_datetimes(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with a column that is not datatime.
+            - Instance of ``ScalarRange`` constraint with low and high as integers.
+
+        Input:
+            - pd.DataFrame with ``current_age``
+
+        Output:
+            - The output should be false since all the data is ``int``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 21, 30)
+
+        # Run
+        is_datetime = instance._get_is_datetime(table_data)
+
+        # Assert
+        assert not is_datetime
+
+    def test__get_is_datetime_raises_an_error(self):
+        """Test that the method detects whether or not the ``data`` is ``datetime``.
+
+        This method should detect whether or not the data is ``datetime`` and if in case some is
+        but other is not, raises an error.
+
+        Setup:
+            - Create a pd.DataFrame with a column that contains datetime data.
+            - Instance of ``ScalarRange`` constraint with low and high as integers.
+
+        Input:
+            - pd.DataFrame with  ``promotion_date``.
+
+        Output:
+            - The output should be false since all the data is ``int``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+        })
+        instance = ScalarRange('promotion_date', 18, 25)
+        expected_text = 'The constraint column and bounds must all be datetime.'
+
+        # Run
+        with pytest.raises(ValueError, match=expected_text):
+            instance._get_is_datetime(table_data)
+
+    def test__fit(self):
+        """Test the ``_fit`` method of ``Range``.
+
+        Test that the ``_fit`` method stores the proper transformation column name and
+        learns whether the data is ``datetime``or not and it's ``dtype``.
+
+        Setup:
+            - Create a pd.DataFrame with three columns.
+            - Instance of ``ScalarRange`` constraint with those three column names.
+
+        Input:
+            - pd.DataFrame with ``current_age`` columns.
+
+        Side Effect:
+            - instance has ``_transformed_column`` and ``_is_datetime`` and ``_dtype``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 18, 20)
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert not instance._is_datetime
+        assert instance._dtype == np.int
+
+    def test_is_valid_lt(self):
+        """Test the ``ScalarRange.is_valid``.
+
+        This test ensures that the ``is_valid`` method works with the operator ``lower than``
+        (``<``) and validates that the ``column_name`` is between ``low_value`` and
+        ``high_value``.
+
+        Setup:
+            - Create a pd.DataFrame.
+            - Instance of ``ScalarRange`` constraint with low and high values that are within the
+              expected range.
+
+        Input:
+            - pd.DataFrame with ``current_age`` column.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 20, 26)
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
+    def test_is_valid_le(self):
+        """Test the ``ScalarRange.is_valid``.
+
+        This test ensures that the ``is_valid`` method works with the operator
+        ``lower than or equal`` (``=<``) and validates that the ``column_name`` is
+        between ``low_value`` and ``high_value``.
+
+        Setup:
+            - Create a pd.DataFrame.
+            - Instance of ``ScalarRange`` constraint with low and high values that are within the
+              expected range and using ``strict_boundaries`` as ``False``.
+
+        Input:
+            - pd.DataFrame with ``current_age`` column.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 21, 25, strict_boundaries=False)
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
+    def test_is_valid_invalid(self):
+        """Test the ``ScalarRange.is_valid``.
+
+        This test ensures that the ``is_valid`` fails when the data is not in the range.
+
+        Setup:
+            - Create a pd.DataFrame with ``current_age`` column.
+            - Instance of ``ScalarRange`` constraint with ``low_value`` higher than the
+              low value in ``current_age`` and high value lower than the higher value in the
+              ``current_age``.
+
+        Input:
+            - pd.DataFrame with ``current_age`` column.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 28, 18, strict_boundaries=False)
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert not all(result)
+
+    def test__transform(self):
+        """Test the ``ScalarRange._transform`` method.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+            - pd.DataFrame with ``current_age`` column.
+
+        Output:
+            - pd.DataFrame with the transformed ``current_age``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 20, 28)
+
+        # Run
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_transform = transform(table_data['current_age'], 20, 28)
+        expected_out = pd.DataFrame({'current_age': expected_transform})
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test__transform_datetime_data(self):
+        """Test the ``ScalarRange._transform`` method with ``datetime`` data.
+
+        It is expected to create a new column similar to the constraint ``column``, and then
+        scale and apply a logit function to that column.
+
+        Input:
+            - pd.DataFrame with ``promotion_date``.
+
+        Output:
+            - pd.DataFrame with ``promotion_date`` transformed.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
+        })
+        instance = ScalarRange(
+            'promotion_date',
+            pd.to_datetime('2021-02-10'),
+            pd.to_datetime('2050-10-11')
+        )
+
+        # Run
+        instance.fit(table_data)
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_transform = transform(
+            table_data['promotion_date'],
+            pd.to_datetime('2021-02-10'),
+            pd.to_datetime('2050-10-11')
+        )
+        expected_out = pd.DataFrame({
+            'promotion_date': expected_transform
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
+
+    def test_reverse_transform_numerical_data(self):
+        """"Test the ``reverse_transform`` method for ``ScalarRange``.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data.
+            - Instance of ScalarRange constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+        """
+
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        expected_transform = transform(table_data['current_age'], 20, 28)
+        transformed_data = pd.DataFrame({'current_age': expected_transform})
+        instance = ScalarRange('current_age', 20, 28)
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+
+    def test_reverse_transform_datetime_data(self):
+        """Test the ``ScalarRange.reverse_transform`` method with datetime data.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data with the expected column name.
+            - Instance of Range constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+        """
+        table_data = pd.DataFrame({
+            'promotion_date': pd.to_datetime(['2022-04-12', '2022-08-11', '2022-10-23']),
+        })
+        expected_transform = transform(
+            table_data['promotion_date'],
+            pd.to_datetime('2021-02-10'),
+            pd.to_datetime('2050-10-11')
+        )
+        transformed_data = pd.DataFrame({
+            'promotion_date': expected_transform
+        })
+        instance = ScalarRange(
+            'promotion_date',
+            pd.to_datetime('2021-02-10'),
+            pd.to_datetime('2050-10-11')
+        )
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
 
 
 class TestRounding():
