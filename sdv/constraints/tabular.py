@@ -19,9 +19,9 @@ Currently implemented constraints are:
       on the other columns of the table.
     * Between: Ensure that the value in one column is always between the values
       of two other columns/scalars.
-    * Rounding: Round a column based on the specified number of digits.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
     * Unique: Ensure that each value for a specified column/group of columns is unique.
+    * FixedIncrements: Ensure that every value is a multiple of a specified increment.
 """
 
 import operator
@@ -918,42 +918,35 @@ class Between(Constraint):
         return table_data
 
 
-class Rounding(Constraint):
-    """Round a column based on the specified number of digits.
+class FixedIncrements(Constraint):
+    """Ensure every value in a column is a multiple of the specified increment.
 
     Args:
-        columns (str or list[str]):
-            Name of the column(s) to round.
-        digits (int):
-            How much to round each column. All columns will be rounded to this
-            number of digits.
+        column_name (str or list[str]):
+            Name of the column.
+        increment_value (int):
+            The increment that each value in the column must be a multiple of. Must be greater
+            than 0.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling``. Defaults to ``transform``.
-        tolerance (int):
-            When reject sampling, the sample data must be within this distance
-            of the desired rounded values.
     """
 
-    def __init__(self, columns, digits, handling_strategy='transform', tolerance=None):
-        if digits > 15:
-            raise ValueError('The value of digits cannot exceed 15')
+    _dtype = None
 
-        if tolerance is not None and tolerance >= 10**(-1 * digits):
-            raise ValueError('Tolerance must be less than the rounding level')
+    def __init__(self, column_name, increment_value, handling_strategy='transform'):
+        if increment_value <= 0:
+            raise ValueError('The increment_value must be greater than 0.')
 
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
+        if increment_value % 1 != 0:
+            raise ValueError('The increment_value must be a whole number.')
 
-        self._digits = digits
-        self._round_config = {column: self._digits for column in self._columns}
-        self._tolerance = tolerance if tolerance else 10**(-1 * (digits + 1))
+        self.increment_value = increment_value
+        self.column_name = column_name
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
     def is_valid(self, table_data):
-        """Determine if the data satisfies the rounding constraint.
+        """Determine if the data is evenly divisible by the increment.
 
         Args:
             table_data (pandas.DataFrame):
@@ -963,16 +956,23 @@ class Rounding(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        columns = table_data[self._columns]
-        rounded = columns.round(self._digits)
-        valid = (columns - rounded).abs() <= self._tolerance
+        isnan = pd.isnull(table_data[self.column_name])
+        is_divisible = table_data[self.column_name] % self.increment_value == 0
+        return is_divisible | isnan
 
-        return valid.all(1)
+    def _fit(self, table_data):
+        """Learn the dtype of the column.
 
-    def reverse_transform(self, table_data):
-        """Reverse transform the table data.
+        Args:
+            table_data (pandas.DataFrame):
+                The Table data.
+        """
+        self._dtype = table_data[self.column_name].dtype
 
-        Round the columns to the desired digits.
+    def _transform(self, table_data):
+        """Transform the table_data.
+
+        The transformation works by dividing each value by the increment.
 
         Args:
             table_data (pandas.DataFrame):
@@ -980,9 +980,26 @@ class Rounding(Constraint):
 
         Returns:
             pandas.DataFrame:
-                Transformed data.
+                Data divided by increment.
         """
-        return table_data.round(self._round_config)
+        table_data = table_data.copy()
+        table_data[self.column_name] = table_data[self.column_name] / self.increment_value
+        return table_data
+
+    def reverse_transform(self, table_data):
+        """Convert column to multiples of the increment.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Data as multiples of the increment.
+        """
+        column = table_data[self.column_name].round()
+        table_data[self.column_name] = (column * self.increment_value).astype(self._dtype)
+        return table_data
 
 
 class OneHotEncoding(Constraint):

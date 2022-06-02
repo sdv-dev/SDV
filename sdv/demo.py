@@ -420,11 +420,6 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 {
                     'constraint': 'Positive',
                     'columns': 'prior_years_experience'
-                },
-                {
-                    'constraint': 'Rounding',
-                    'columns': 'salary',
-                    'digits': 2
                 }
             ],
             'model_kwargs': {}

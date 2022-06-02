@@ -5,7 +5,7 @@ import pytest
 
 from sdv.constraints import (
     Between, ColumnFormula, FixedCombinations, GreaterThan, Negative, OneHotEncoding, Positive,
-    Rounding, Unique)
+    Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -67,7 +67,6 @@ def test_failing_constraints():
         GreaterThan('a', 'b'),
         Positive('c'),
         Negative('d'),
-        Rounding('e', 2),
         Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
         Unique('i')
@@ -75,8 +74,6 @@ def test_failing_constraints():
     gc = GaussianCopula(constraints=constraints)
 
     err_msg = re.escape(
-        "\nunsupported operand type(s) for -: 'str' and 'str'"
-        '\n'
         "\nData is not valid for the 'OneHotEncoding' constraint:"
         '\n   g   h'
         '\n0  1   1'

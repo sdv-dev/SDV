@@ -289,30 +289,6 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
-Rounding Constraint
-~~~~~~~~~~~~~~~~~~~
-
-In order for data to be realistic, we also might want to round data
-to a certain number of digits. To do this, we can use the Rounding
-Constraint. We will pass this constraint:
-
--  the name of the column(s) that should be rounded.
--  the number of digits each column should be rounded to.
--  the handling strategy that we want to use
--  (optional) if reject sampling, we can customize the threshold of
-   the sampled values.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Rounding
-
-    salary_rounding_constraint = Rounding(
-        columns='salary',
-        digits=2,
-        handling_strategy='transform'
-    )
-
 Between Constraint
 ~~~~~~~~~~~~~~~~~~
 

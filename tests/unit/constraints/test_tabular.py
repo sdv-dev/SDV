@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, GreaterThan, Negative,
-    OneHotEncoding, Positive, Rounding, Unique)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, GreaterThan,
+    Negative, OneHotEncoding, Positive, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -3604,248 +3604,6 @@ class TestColumnFormula():
         pd.testing.assert_frame_equal(expected_out, out)
 
 
-class TestRounding():
-
-    def test___init__(self):
-        """Test the ``Rounding.__init__`` method.
-
-        It is expected to create a new Constraint instance
-        and set the rounding args.
-
-        Input:
-        - columns = ['b', 'c']
-        - digits = 2
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 2
-
-        # Run
-        instance = Rounding(columns=columns, digits=digits)
-
-        # Assert
-        assert instance._columns == columns
-        assert instance._digits == digits
-
-    def test___init__invalid_digits(self):
-        """Test the ``Rounding.__init__`` method with an invalid argument.
-
-        Pass in an invalid ``digits`` argument, and expect a ValueError.
-
-        Input:
-        - columns = ['b', 'c']
-        - digits = 20
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 20
-
-        # Run
-        with pytest.raises(ValueError):
-            Rounding(columns=columns, digits=digits)
-
-    def test___init__invalid_tolerance(self):
-        """Test the ``Rounding.__init__`` method with an invalid argument.
-
-        Pass in an invalid ``tolerance`` argument, and expect a ValueError.
-
-        Input:
-        - columns = ['b', 'c']
-        - digits = 2
-        - tolerance = 0.1
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 2
-        tolerance = 0.1
-
-        # Run
-        with pytest.raises(ValueError):
-            Rounding(columns=columns, digits=digits, tolerance=tolerance)
-
-    def test_is_valid_positive_digits(self):
-        """Test the ``Rounding.is_valid`` method for a positive digits argument.
-
-        Input:
-        - Table data with desired decimal places (pandas.DataFrame)
-        Output:
-        - Series of ``True`` values (pandas.Series)
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 2
-        tolerance = 1e-3
-        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [4.12, 5.51, None, 6.941, 1.129],
-            'c': [5.315, 7.12, 1.12, 9.131, 12.329],
-            'd': ['a', 'b', 'd', 'e', None],
-            'e': [123.31598, -1.12001, 1.12453, 8.12129, 1.32923]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([False, True, False, True, True])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_negative_digits(self):
-        """Test the ``Rounding.is_valid`` method for a negative digits argument.
-
-        Input:
-        - Table data with desired decimal places (pandas.DataFrame)
-        Output:
-        - Series of ``True`` values (pandas.Series)
-        """
-        # Setup
-        columns = ['b']
-        digits = -2
-        tolerance = 1
-        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [401, 500, 6921, 799, None],
-            'c': [5.3134, 7.1212, 9.1209, 101.1234, None],
-            'd': ['a', 'b', 'd', 'e', 'f']
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([True, True, False, True, False])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_is_valid_zero_digits(self):
-        """Test the ``Rounding.is_valid`` method for a zero digits argument.
-
-        Input:
-        - Table data not with the desired decimal places (pandas.DataFrame)
-        Output:
-        - Series of ``False`` values (pandas.Series)
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 0
-        tolerance = 1e-4
-        instance = Rounding(columns=columns, digits=digits, tolerance=tolerance)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, None, 3, 4],
-            'b': [4, 5.5, 1.2, 6.0001, 5.99999],
-            'c': [5, 7.12, 1.31, 9.00001, 4.9999],
-            'd': ['a', 'b', None, 'd', 'e'],
-            'e': [2.1254, 17.12123, 124.12, 123.0112, -9.129434]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = pd.Series([True, False, False, True, True])
-        pd.testing.assert_series_equal(expected_out, out)
-
-    def test_reverse_transform_positive_digits(self):
-        """Test the ``Rounding.reverse_transform`` method with positive digits.
-
-        Expect that the columns are rounded to the specified integer digit.
-
-        Input:
-        - Table data with the column with incorrect values (pandas.DataFrame)
-        Output:
-        - Table data with the computed column (pandas.DataFrame)
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 3
-        instance = Rounding(columns=columns, digits=digits)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3, None, 4],
-            'b': [4.12345, None, 5.100, 6.0001, 1.7999],
-            'c': [1.1, 1.234, 9.13459, 4.3248, 6.1312],
-            'd': ['a', 'b', 'd', 'e', None]
-        })
-        out = instance.reverse_transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3, None, 4],
-            'b': [4.123, None, 5.100, 6.000, 1.800],
-            'c': [1.100, 1.234, 9.135, 4.325, 6.131],
-            'd': ['a', 'b', 'd', 'e', None]
-        })
-        pd.testing.assert_frame_equal(expected_out, out)
-
-    def test_reverse_transform_negative_digits(self):
-        """Test the ``Rounding.reverse_transform`` method with negative digits.
-
-        Expect that the columns are rounded to the specified integer digit.
-
-        Input:
-        - Table data with the column with incorrect values (pandas.DataFrame)
-        Output:
-        - Table data with the computed column (pandas.DataFrame)
-        """
-        # Setup
-        columns = ['b']
-        digits = -3
-        instance = Rounding(columns=columns, digits=digits)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [41234.5, None, 5000, 6001, 5928],
-            'c': [1.1, 1.23423, 9.13459, 12.12125, 18.12152],
-            'd': ['a', 'b', 'd', 'e', 'f']
-        })
-        out = instance.reverse_transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [41000.0, None, 5000.0, 6000.0, 6000.0],
-            'c': [1.1, 1.23423, 9.13459, 12.12125, 18.12152],
-            'd': ['a', 'b', 'd', 'e', 'f']
-        })
-        pd.testing.assert_frame_equal(expected_out, out)
-
-    def test_reverse_transform_zero_digits(self):
-        """Test the ``Rounding.reverse_transform`` method with zero digits.
-
-        Expect that the columns are rounded to the specified integer digit.
-
-        Input:
-        - Table data with the column with incorrect values (pandas.DataFrame)
-        Output:
-        - Table data with the computed column (pandas.DataFrame)
-        """
-        # Setup
-        columns = ['b', 'c']
-        digits = 0
-        instance = Rounding(columns=columns, digits=digits)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [4.12345, None, 5.0, 6.01, 7.9],
-            'c': [1.1, 1.0, 9.13459, None, 8.89],
-            'd': ['a', 'b', 'd', 'e', 'f']
-        })
-        out = instance.reverse_transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3, 4, 5],
-            'b': [4.0, None, 5.0, 6.0, 8.0],
-            'c': [1.0, 1.0, 9.0, None, 9.0],
-            'd': ['a', 'b', 'd', 'e', 'f']
-        })
-        pd.testing.assert_frame_equal(expected_out, out)
-
-
 def transform(data, low, high):
     """Transform to be used for the TestBetween class."""
     data = (data - low) / (high - low) * 0.95 + 0.025
@@ -5616,3 +5374,184 @@ class TestUnique():
         # Assert
         expected = pd.Series([True, True, False, True, False, True])
         pd.testing.assert_series_equal(valid, expected)
+
+
+class TestFixedIncrements():
+
+    def test___init__(self):
+        """Test the ``FixedIncrements.__init__`` method.
+
+        The ``column_name`` and ``increment_value`` instance variables should be set.
+
+        Input:
+            - column name as a string.
+            - increment_value as an int.
+
+        Expected behavior:
+            - Instance with ``column_name`` and ``increment_value`` set.
+        """
+        # Run
+        instance = FixedIncrements(column_name='column', increment_value=5)
+
+        # Assert
+        assert instance.column_name == 'column'
+        assert instance.increment_value == 5
+
+    def test___init___increment_value_is_negative_number(self):
+        """Test the ``FixedIncrements.__init__ method with a negative increment.
+
+        If the ``increment_value`` is less than or equal to 0, then an error should be raised.
+
+        Input:
+            - column name as a string.
+            - increment_value as -1
+
+        Expected behavior:
+            - ``ValueError`` should be raised.
+        """
+        # Run / Assert
+        error_message = "The increment_value must be greater than 0."
+        with pytest.raises(ValueError, match=error_message):
+            FixedIncrements(column_name='column', increment_value=-1)
+
+    def test___init___increment_value_is_decimal(self):
+        """Test the ``FixedIncrements.__init__ method with a decimal as an increment.
+
+        If the ``increment_value`` is not a whole number, then an error should be raised.
+
+        Input:
+            - column name as a string.
+            - increment_value as 1.5
+
+        Expected behavior:
+            - ``ValueError`` should be raised.
+        """
+        # Run / Assert
+        error_message = "The increment_value must be a whole number."
+        with pytest.raises(ValueError, match=error_message):
+            FixedIncrements(column_name='column', increment_value=1.5)
+
+    def test__fit(self):
+        """Test the ``FixedIncrements._fit`` method.
+
+        The ``fit`` method should store the dtype of the DataFrame.
+
+        Input:
+            - A ``pandas.DataFrame`` with a float dtype.
+
+        Expected behavior:
+            - The ``instance._dtype`` should be set to float.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, 21]}, dtype=float)
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        instance._fit(data)
+
+        # Assert
+        instance._dtype == float
+
+    def test_is_valid(self):
+        """Test the ``FixedIncrements.is_valid`` method.
+
+        The ``is_valid`` method should return ``True`` for rows that are NaN or evenly divisible
+        by the increment.
+
+        Input:
+            - A ``pandas.DataFrame`` with one column containing some NaNs, some numbers that are
+            divisible by the increment and some numbers that are not.
+
+        Output:
+            - A ``pandas.Series`` where all the rows that are NaN or divisible by the increment are
+            ``True``.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, np.nan, 20, 8, 35]}, dtype=float)
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        is_valid = instance.is_valid(data)
+
+        # Assert
+        expected = pd.Series([True, True, True, False, False, True], name='column')
+        pd.testing.assert_series_equal(is_valid, expected)
+
+    def test__transform(self):
+        """Test the ``FixedIncrements._transform`` method.
+
+        The ``_transform`` method should divide all values in the data by the ``increment_value``.
+
+        Input:
+            - A ``pd.DataFrame`` with one column containing NaNs and values divisible by the
+            ``increment_value``.
+
+        Output:
+            - A ``pd.DataFrame`` with all the values in that column divided by the
+            ``increment_value`` and the NaNs left alone.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [7, 14, np.nan, 35]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+
+        # Run
+        transformed = instance._transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [1, 2, np.nan, 5]})
+        pd.testing.assert_frame_equal(transformed, expected)
+
+    def test_reverse_transform(self):
+        """Test the ``FixedIncrements.reverse_transform`` method.
+
+        The ``reverse_transform`` method should round all sampled values to the nearest int,
+        and then multiply them by the ``increment_value`` and convert them to the ``_dtype``.
+
+        Setup:
+            - Set the ``_dtype`` to int64.
+
+        Input:
+            - A ``pandas.DataFrame`` with floats.
+
+        Output:
+            - A ``pandas.DataFrame`` with the values multiplied by the ``increment_value`` and
+            converted to ints.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [1.3, 3.5, 4.2, 2.1]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+        instance._dtype = np.int64
+
+        # Run
+        reverse_transformed = instance.reverse_transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [7, 28, 28, 14]})
+        pd.testing.assert_frame_equal(expected, reverse_transformed)
+
+    def test_reverse_transform_nans(self):
+        """Test the ``FixedIncrements.reverse_transform`` method with NaNs.
+
+        The ``reverse_transform`` method should ignore the NaN values.
+
+        Setup:
+            - Set the ``_dtype`` to float64.
+
+        Input:
+            - A ``pandas.DataFrame`` with floats.
+
+        Output:
+            - A ``pandas.DataFrame`` with the values multiplied by the ``increment_value`` and
+            the NaNs ignored.
+        """
+        # Setup
+        data = pd.DataFrame({'column': [1.3, 3.5, np.nan, 4.2, np.nan, 2.1]})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+        instance._dtype = np.float64
+
+        # Run
+        reverse_transformed = instance.reverse_transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': [7, 28, np.nan, 28, np.nan, 14]})
+        pd.testing.assert_frame_equal(expected, reverse_transformed)
