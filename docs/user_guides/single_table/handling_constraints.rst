@@ -289,6 +289,58 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
+Range Constraint
+~~~~~~~~~~~~~~~~
+Another posibility is the ``Range`` constraint. It guarantees that one column is always
+between two other columns. For example the if we have an ``age`` column, ``age_when_joined``
+and ``retirement_age`` we can specify that ``age`` has to bigger than ``age_when_joined``
+but lower than ``retirement_age``.
+
+In order to use it, we need to create an instance passing:
+
+- the name of the lower bound column (``low_column_name``).
+- the name of the middle column (``middle_column_name``).
+- the name of the higher bound column (``high_column_name``).
+- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
+  whether the ecomparison of the values should be strict or not.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import Range
+
+    current_age = Range(
+        low_column_name='age_when_joined',
+        middle_column_name='age',
+        high_column_name='retirement_age'
+    )
+
+ScalarRange Constraint
+~~~~~~~~~~~~~~~~~~~~~~
+If we need to ensure that a column is between two numerical values, we can use the ``ScalarRange``
+constraint. It guarantees that one column is always between a ``low_value`` and a ``high_value``.
+For example, the age column in our demo data is realistically bounded to the ages of 15 and 90
+since acual employees won't be too young or too old.
+
+In order to use it, we need to create an instance passing:
+
+- the name of the column (``column_name``).
+- the ``low_value`` value.
+- the ``high_value`` value.
+- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
+  whether the ecomparison of the values should be strict or not.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import ScalarRange
+
+    reasonable_age_constraint = ScalarRange(
+        column_name='age',
+        low_value=15,
+        high_value=90
+    )
+
 Rounding Constraint
 ~~~~~~~~~~~~~~~~~~~
 
@@ -317,7 +369,7 @@ OneHotEncoding Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Another constraint available is the ``OneHotEncoding`` constraint.
-This constraint allows the user to specify a list of columns where each row 
+This constraint allows the user to specify a list of columns where each row
 is a one hot vector. Then, the constraint will make sure that the output
 of the model is transformed so that the column with the largest value is
 set to 1 while all other columns are set to 0. To apply the constraint we

@@ -115,7 +115,6 @@ def test_failing_constraints():
         '\n2  2'
         '\n4  3'
         '\n6  5'
-        '\n'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
