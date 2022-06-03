@@ -101,6 +101,38 @@ ColumnFormula
    ColumnFormula.from_dict
    ColumnFormula.to_dict
 
+Range
+~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Range
+   Range.fit
+   Range.transform
+   Range.fit_transform
+   Range.reverse_transform
+   Range.is_valid
+   Range.filter_valid
+   Range.from_dict
+   Range.to_dict
+
+ScalarRange
+~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   ScalarRange
+   ScalarRange.fit
+   ScalarRange.transform
+   ScalarRange.fit_transform
+   ScalarRange.reverse_transform
+   ScalarRange.is_valid
+   ScalarRange.filter_valid
+   ScalarRange.from_dict
+   ScalarRange.to_dict
+
 Rounding
 ~~~~~~~~
 
