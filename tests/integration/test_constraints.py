@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    Between, ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive,
-    ScalarInequality, Unique)
+    ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality, Negative,
+    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -67,7 +67,6 @@ def test_failing_constraints():
         Inequality('a', 'b'),
         Positive('c'),
         Negative('d'),
-        Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
         Unique(['i']),
         ScalarInequality('j', 5.5, '>=')
@@ -122,9 +121,21 @@ def test_failing_constraints():
         '\n3  0 -2'
         '\n5  0 -3'
         '\n'
-        "\nData is not valid for the 'Between' constraint:"
-        '\n   f'
-        '\n6 -1'
+        "\nData is not valid for the 'Positive' constraint:"
+        '\n   c'
+        '\n0 -1'
+        '\n1 -1'
+        '\n2 -1'
+        '\n3 -1'
+        '\n4 -1'
+        '\n+2 more'
+        '\n'
+        "\nData is not valid for the 'Negative' constraint:"
+        '\n   d'
+        '\n0  1'
+        '\n2  2'
+        '\n4  3'
+        '\n6  5'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
