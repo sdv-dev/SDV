@@ -2,8 +2,8 @@
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality,
-    Negative, OneHotEncoding, Positive, ScalarInequality, Unique)
+    ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality, Negative,
+    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique)
 
 __all__ = [
     'Constraint',
@@ -13,7 +13,8 @@ __all__ = [
     'ScalarInequality',
     'FixedCombinations',
     'FixedIncrements',
-    'Between',
+    'Range',
+    'ScalarRange',
     'Negative',
     'Positive',
     'OneHotEncoding',
