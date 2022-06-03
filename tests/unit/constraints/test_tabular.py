@@ -2456,7 +2456,7 @@ class TestRange():
         table_data = pd.DataFrame({
             'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
             'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
-            'promotion_date': pd.to_datetime(['2022-04-11', '2022-06-10', '2022-11-17']),
+            'promotion_date': pd.to_datetime(['2023-04-11', '2023-06-10', '2023-11-17']),
         })
         expected_transform = transform(
             table_data['promotion_date'],

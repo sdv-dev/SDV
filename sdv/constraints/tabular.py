@@ -812,7 +812,7 @@ class Range(Constraint):
         data = data.clip(low, high)
 
         if self._is_datetime:
-            table_data[self.middle_column_name] = pd.to_datetime(data)
+            table_data[self.middle_column_name] = pd.to_datetime(data.round('100ms'))
         else:
             table_data[self.middle_column_name] = data.astype(self._dtype)
 
@@ -917,10 +917,8 @@ class ScalarRange(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        data = table_data[self.column_name]
-        data = np.divide((data - self.low_value), (self.high_value - self.low_value))
-        data = np.multiply(data, 0.95)
-        data = np.add(data, 0.025)
+        data = (table_data[self.column_name] - self.low_value) / (self.high_value - self.low_value)
+        data = data * 0.95 + 0.025
         data = np.log(data / (1.0 - data))
 
         table_data[self.column_name] = data
@@ -946,13 +944,12 @@ class ScalarRange(Constraint):
         data = table_data[self.column_name]
 
         data = 1 / (1 + np.exp(-data))
-        data = np.divide((data - 0.025), 0.95)
-        data = np.multiply(data, (self.high_value - self.low_value))
-        data = np.add(data, self.low_value)
+        data = (data - 0.025) / 0.95
+        data = data * (self.high_value - self.low_value) + self.low_value
         data = data.clip(self.low_value, self.high_value)
 
         if self._is_datetime:
-            table_data[self.column_name] = pd.to_datetime(data)
+            table_data[self.column_name] = pd.to_datetime(data.round('100ms'))
         else:
             table_data[self.column_name] = data.astype(self._dtype)
 
