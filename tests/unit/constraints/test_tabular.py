@@ -1,5 +1,6 @@
 """Tests for the sdv.constraints.tabular module."""
 
+import operator
 import uuid
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -10,8 +11,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality,
-    Negative, OneHotEncoding, Positive, ScalarInequality, Unique)
+    ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality, Negative,
+    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique)
 
 
 def dummy_transform_table(table_data):
