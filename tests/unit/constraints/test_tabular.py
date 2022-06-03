@@ -2227,7 +2227,7 @@ class TestRange():
         # Assert
         assert instance._transformed_column == 'current_age#age_when_joined#retirement_age'
         assert not instance._is_datetime
-        assert instance._dtype == np.int
+        assert instance._dtype == int
 
     def test_is_valid_lt(self):
         """Test the ``Range.is_valid``.
@@ -2630,7 +2630,7 @@ class TestScalarRange():
 
         # Assert
         assert not instance._is_datetime
-        assert instance._dtype == np.int
+        assert instance._dtype == int
 
     def test_is_valid_lt(self):
         """Test the ``ScalarRange.is_valid``.
