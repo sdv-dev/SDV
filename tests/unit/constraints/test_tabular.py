@@ -2227,7 +2227,6 @@ class TestRange():
         # Assert
         assert instance._transformed_column == 'current_age#age_when_joined#retirement_age'
         assert not instance._is_datetime
-        assert instance._dtype == int
 
     def test_is_valid_lt(self):
         """Test the ``Range.is_valid``.
@@ -2630,7 +2629,6 @@ class TestScalarRange():
 
         # Assert
         assert not instance._is_datetime
-        assert instance._dtype == int
 
     def test_is_valid_lt(self):
         """Test the ``ScalarRange.is_valid``.
@@ -3585,7 +3583,7 @@ class TestFixedIncrements():
         instance._fit(data)
 
         # Assert
-        instance._dtype == float
+        assert instance._dtype == float
 
     def test_is_valid(self):
         """Test the ``FixedIncrements.is_valid`` method.
