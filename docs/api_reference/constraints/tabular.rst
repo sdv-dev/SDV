@@ -22,7 +22,7 @@ CustomConstraint
    CustomConstraint.to_dict
 
 FixedCombinations
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -38,7 +38,7 @@ FixedCombinations
    FixedCombinations.to_dict
 
 Inequality
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -70,7 +70,7 @@ ScalarInequality
    ScalarInequality.to_dict
 
 Positive
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -86,7 +86,7 @@ Positive
    Positive.to_dict
 
 Negative
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -102,7 +102,7 @@ Negative
    Negative.to_dict
 
 ColumnFormula
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -134,7 +134,7 @@ Between
    Between.to_dict
 
 OneHotEncoding
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -150,7 +150,7 @@ OneHotEncoding
    OneHotEncoding.to_dict
 
 Unique
-~~~~~~~~~~~~~~~~
+~~~~~~
 
 .. autosummary::
    :toctree: api/

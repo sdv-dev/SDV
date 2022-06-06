@@ -138,7 +138,7 @@ To use this constraint, we must make an instance and provide:
     )
 
 FixedCombinations Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The next constraint that we will explore is the ``FixedCombinations``
 constraint.
@@ -163,7 +163,7 @@ order to use this constraint we will need to import it from the
     )
 
 Inequality and ScalarInequality Constraints
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Another constraint that we need for our data is the ``Inequality``
 constraint. This constraint guarantees that one column is always greater
