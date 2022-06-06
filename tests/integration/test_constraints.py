@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    Between, ColumnFormula, FixedCombinations, Negative, OneHotEncoding, Positive, Inequality,
+    Between, ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive,
     Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.constraints.tabular import ScalarInequality
@@ -29,6 +29,7 @@ def test_constraints(tmpdir):
     age_gt_age_when_joined_constraint = Inequality(
         low_column_name='age_when_joined',
         high_column_name='age',
+        handling_strategy='reject_sampling'
     )
 
     years_in_the_company_constraint = ColumnFormula(
@@ -39,8 +40,8 @@ def test_constraints(tmpdir):
 
     constraints = [
         fixed_company_department_constraint,
-        years_in_the_company_constraint,
         age_gt_age_when_joined_constraint,
+        years_in_the_company_constraint,
     ]
     gc = GaussianCopula(constraints=constraints)
     gc.fit(employees)

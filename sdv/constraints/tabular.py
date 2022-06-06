@@ -276,7 +276,8 @@ class Inequality(Constraint):
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
-    def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
+    def __init__(self, low_column_name, high_column_name, strict_boundaries=False,
+                 handling_strategy='transform', fit_columns_model=False):
         self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
@@ -286,7 +287,7 @@ class Inequality(Constraint):
         self.constraint_columns = tuple([low_column_name, high_column_name])
         self._dtype = None
         self._is_datetime = None
-        super().__init__(handling_strategy='transform', fit_columns_model=False)
+        super().__init__(handling_strategy=handling_strategy, fit_columns_model=fit_columns_model)
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
