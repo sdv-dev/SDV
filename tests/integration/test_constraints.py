@@ -7,7 +7,7 @@ from sdv.constraints import (
     Between, ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive,
     Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
-from sdv.constraints.tabular import ScalarInequality
+from sdv.constraints import ScalarInequality
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 

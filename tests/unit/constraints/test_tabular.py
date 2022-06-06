@@ -1310,7 +1310,7 @@ class TestScalarInequality():
         # Asserts
         assert instance._column_name == 'a'
         assert instance._value == 1
-        assert instance._diff_column_name == 'a#'
+        assert instance._diff_column_name == 'a#diff'
         assert instance._operator == np.greater
         assert instance._dtype is None
         assert instance._is_datetime is None

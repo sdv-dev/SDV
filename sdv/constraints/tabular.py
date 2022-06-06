@@ -36,6 +36,8 @@ from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type
 
+INEQUALITY_TO_OPERATION = {'>': np.greater, '>=': np.greater_equal, '<': np.less, '<=': np.less_equal}
+
 
 class CustomConstraint(Constraint):
     """Custom Constraint Class.
@@ -423,12 +425,11 @@ class ScalarInequality(Constraint):
         self._validate_inputs(column_name, value, relation)
         self._column_name = column_name
         self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
-        self._diff_column_name = f'{self._column_name}#'
+        self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = tuple(column_name)
         self._is_datetime = None
         self._dtype = None
-        str_to_op = {'>': np.greater, '>=': np.greater_equal, '<': np.less, '<=': np.less_equal}
-        self._operator = str_to_op[relation]
+        self._operator = INEQUALITY_TO_OPERATION[relation]
         super().__init__(handling_strategy='transform', fit_columns_model=False)
 
     def _get_is_datetime(self, table_data):
