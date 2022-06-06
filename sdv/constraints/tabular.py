@@ -454,7 +454,7 @@ class ScalarInequality(Constraint):
         """
         self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
-        self._dtype = table_data[self._high_column_name].dtypes
+        self._dtype = table_data[self._column_name].dtypes
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
