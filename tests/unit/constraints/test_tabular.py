@@ -3655,7 +3655,7 @@ class TestFixedIncrements():
         # Setup
         data = pd.DataFrame({'column': [1.3, 3.5, 4.2, 2.1]})
         instance = FixedIncrements(column_name='column', increment_value=7)
-        instance._dtype = np.int64
+        instance._dtype = int
 
         # Run
         reverse_transformed = instance.reverse_transform(data)
