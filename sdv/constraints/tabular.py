@@ -1011,16 +1011,16 @@ class OneHotEncoding(Constraint):
     all other columns are set to 0.
 
     Args:
-        columns (list[str]):
+        column_names (list[str]):
             Names of the columns containing one hot rows.
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``
             or ``reject_sampling`` (not recommended). Defaults to ``transform``.
     """
 
-    def __init__(self, columns, handling_strategy='transform'):
-        self._columns = columns
-        self.constraint_columns = tuple(columns)
+    def __init__(self, column_names, handling_strategy='transform'):
+        self._column_names = column_names
+        self.constraint_columns = tuple(column_names)
         super().__init__(handling_strategy, fit_columns_model=True)
 
     def _sample_constraint_columns(self, table_data):
@@ -1049,7 +1049,7 @@ class OneHotEncoding(Constraint):
         """
         table_data = table_data.copy()
 
-        condition_columns = [col for col in self._columns if col in table_data.columns]
+        condition_columns = [col for col in self._column_names if col in table_data.columns]
         conditions_data = table_data[condition_columns]
         conditions_data_sum = conditions_data.sum(axis=1)
         if not conditions_data.isin([0.0, 1.0]).all(axis=1).all():
@@ -1063,9 +1063,9 @@ class OneHotEncoding(Constraint):
             sub_table_data = table_data.loc[~has_one, condition_columns]
             should_transform = False
 
-            if len(condition_columns) == len(self._columns) - 1:
+            if len(condition_columns) == len(self._column_names) - 1:
                 proposed_table_data = sub_table_data.copy()
-                for column in self._columns:
+                for column in self._column_names:
                     if column not in condition_columns:
                         proposed_table_data[column] = 1.0
 
@@ -1082,16 +1082,16 @@ class OneHotEncoding(Constraint):
                 proposed_table_data = self._hyper_transformer.reverse_transform(
                     proposed_table_data)
 
-            for column in self._columns:
+            for column in self._column_names:
                 if column not in condition_columns:
                     sub_table_data[column] = proposed_table_data[column].values
                 else:
                     sub_table_data[column] = float('-inf')
 
-            table_data.loc[~has_one, self._columns] = self.reverse_transform(sub_table_data)
+            table_data.loc[~has_one, self._column_names] = self.reverse_transform(sub_table_data)
 
         if has_one.sum() > 0:
-            for column in self._columns:
+            for column in self._column_names:
                 if column not in condition_columns:
                     table_data.loc[has_one, column] = 0
 
@@ -1108,7 +1108,7 @@ class OneHotEncoding(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        one_hot_data = table_data[self._columns]
+        one_hot_data = table_data[self._column_names]
 
         sum_one = one_hot_data.sum(axis=1) == 1.0
         max_one = one_hot_data.max(axis=1) == 1.0
@@ -1132,10 +1132,10 @@ class OneHotEncoding(Constraint):
         """
         table_data = table_data.copy()
 
-        one_hot_data = table_data[self._columns]
+        one_hot_data = table_data[self._column_names]
         transformed_data = np.zeros_like(one_hot_data.values)
         transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1
-        table_data[self._columns] = transformed_data
+        table_data[self._column_names] = transformed_data
 
         return table_data
 
@@ -1148,13 +1148,13 @@ class Unique(Constraint):
     data.
 
     Args:
-        columns (str or list[str]):
-            Name of the column(s) to keep unique.
+        column_names (list[str]):
+            List of name(s) of the column(s) to keep unique.
     """
 
-    def __init__(self, columns):
-        self.columns = columns if isinstance(columns, list) else [columns]
-        self.constraint_columns = tuple(self.columns)
+    def __init__(self, column_names):
+        self.column_names = column_names
+        self.constraint_columns = tuple(self.column_names)
         super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
 
     def is_valid(self, table_data):
@@ -1171,4 +1171,4 @@ class Unique(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        return table_data.groupby(self.columns, dropna=False).cumcount() == 0
+        return table_data.groupby(self.column_names, dropna=False).cumcount() == 0

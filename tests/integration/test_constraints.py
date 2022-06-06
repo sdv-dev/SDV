@@ -69,7 +69,7 @@ def test_failing_constraints():
         Negative('d'),
         Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
-        Unique('i')
+        Unique(['i'])
     ]
     gc = GaussianCopula(constraints=constraints)
 

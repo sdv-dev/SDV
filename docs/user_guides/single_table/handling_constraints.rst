@@ -126,7 +126,7 @@ columns, since the ``employee_id`` should be unique for each ``company``.
 
 To use this constraint, we must make an instance and provide:
 
-- The name of the column or a list of names of columns that need to have unique values
+- A list of names of columns that need to have unique values
 
 .. ipython:: python
     :okwarning:
@@ -134,7 +134,7 @@ To use this constraint, we must make an instance and provide:
     from sdv.constraints import Unique
 
     unique_employee_id_company_constraint = Unique(
-        columns=['employee_id', 'company']
+        column_names=['employee_id', 'company']
     )
 
 FixedCombinations Constraint
@@ -334,7 +334,7 @@ need to create an instance passing:
     from sdv.constraints import OneHotEncoding
 
     one_hot_constraint = OneHotEncoding(
-        columns=['full_time', 'part_time', 'contractor']
+        column_names=['full_time', 'part_time', 'contractor']
     )
 
 Using the Constraints
