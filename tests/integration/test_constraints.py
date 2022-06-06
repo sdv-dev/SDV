@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    Between, ColumnFormula, FixedCombinations, GreaterThan, Negative, OneHotEncoding, Positive,
+    Between, ColumnFormula, FixedCombinations, Negative, OneHotEncoding, Positive, Inequality,
     Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
@@ -25,11 +25,9 @@ def test_constraints(tmpdir):
         fit_columns_model=False
     )
 
-    age_gt_age_when_joined_constraint = GreaterThan(
-        low='age_when_joined',
-        high='age',
-        handling_strategy='reject_sampling',
-        fit_columns_model=False
+    age_gt_age_when_joined_constraint = Inequality(
+        low_column_name='age_when_joined',
+        high_column_name='age',
     )
 
     years_in_the_company_constraint = ColumnFormula(

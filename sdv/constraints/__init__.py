@@ -2,14 +2,20 @@
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.tabular import (
+<<<<<<< HEAD
     Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, GreaterThan,
     Negative, OneHotEncoding, Positive, Unique)
+=======
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, Inequality, ScalarInequality, Negative,
+    OneHotEncoding, Positive, Rounding, Unique)
+>>>>>>> 2f195c52 (Update all occurances of GreaterThan, except the boss file...)
 
 __all__ = [
     'Constraint',
     'ColumnFormula',
     'CustomConstraint',
-    'GreaterThan',
+    'Inequality',
+    'ScalarInequality',
     'FixedCombinations',
     'FixedIncrements',
     'Between',

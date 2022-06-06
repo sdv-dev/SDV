@@ -37,21 +37,37 @@ FixedCombinations
    FixedCombinations.from_dict
    FixedCombinations.to_dict
 
-GreaterThan
+Inequality
 ~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   GreaterThan
-   GreaterThan.fit
-   GreaterThan.transform
-   GreaterThan.fit_transform
-   GreaterThan.reverse_transform
-   GreaterThan.is_valid
-   GreaterThan.filter_valid
-   GreaterThan.from_dict
-   GreaterThan.to_dict
+   Inequality
+   Inequality.fit
+   Inequality.transform
+   Inequality.fit_transform
+   Inequality.reverse_transform
+   Inequality.is_valid
+   Inequality.filter_valid
+   Inequality.from_dict
+   Inequality.to_dict
+
+ScalarInequality
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   ScalarInequality
+   ScalarInequality.fit
+   ScalarInequality.transform
+   ScalarInequality.fit_transform
+   ScalarInequality.reverse_transform
+   ScalarInequality.is_valid
+   ScalarInequality.filter_valid
+   ScalarInequality.from_dict
+   ScalarInequality.to_dict
 
 Positive
 ~~~~~~~~~~~~~~~~

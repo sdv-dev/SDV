@@ -906,7 +906,7 @@ class TestMetadata(TestCase):
         }
         constraints = [
             {
-                'constraint': 'sdv.constraints.tabular.GreaterThan',
+                'constraint': 'sdv.constraints.tabular.Inequality',
                 'columns': [
                     'a_field',
                     'b_field',
@@ -930,7 +930,7 @@ class TestMetadata(TestCase):
             },
             'constraints': [
                 {
-                    'constraint': 'sdv.constraints.tabular.GreaterThan',
+                    'constraint': 'sdv.constraints.tabular.Inequality',
                     'columns': [
                         'a_field',
                         'b_field',

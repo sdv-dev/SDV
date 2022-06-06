@@ -5,7 +5,7 @@ import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import FixedCombinations, Unique
-from sdv.constraints.tabular import GreaterThan
+from sdv.constraints.tabular import Inequality
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular.copulagan import CopulaGAN
@@ -389,7 +389,7 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     model should be valid because reject sampling is used on any that aren't.
 
     Setup:
-    - The model is being passed a ``GreaterThan`` constraint and then
+    - The model is being passed an ``Inequality`` constraint and then
     asked to sample with one condition. One of the constraint columns is
     the conditioned column. The ``GaussianMultivariate`` class is mocked
     so that the constraint's ``_column_model`` returns some invalid rows
@@ -401,12 +401,9 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     - Correct columns to condition on are passed to underlying sample method
     """
     # Setup
-    constraint = GreaterThan(
-        low='age_joined',
-        high='age',
-        handling_strategy='transform',
-        fit_columns_model=True,
-        drop='high'
+    constraint = Inequality(
+        low_column_name='age_joined',
+        high_column_name='age',
     )
     data = pd.DataFrame({
         'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
