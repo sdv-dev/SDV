@@ -26,7 +26,6 @@ Currently implemented constraints are:
     * FixedIncrements: Ensure that every value is a multiple of a specified increment.
 """
 
-import datetime
 import operator
 import uuid
 
@@ -390,6 +389,7 @@ class Inequality(Constraint):
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
         return table_data.drop(self._diff_column_name, axis=1)
+
 
 class ScalarInequality(Constraint):
     """Ensure an inequality between the ``column_name`` column and a scalar ``value``.

@@ -6,13 +6,12 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-from pyrsistent import v
 import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, ScalarInequality, Inequality, Negative,
-    OneHotEncoding, Positive, Unique)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, Inequality, Negative,
+    OneHotEncoding, Positive, ScalarInequality, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -987,7 +986,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': [1, np.nan, 3, 4, None, 6, 8, 0],
             'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
-            'c': [7, 8, 9 ,10, 11, 12, 13, 14]
+            'c': [7, 8, 9, 10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
@@ -1011,7 +1010,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': [1, np.nan, 3, 4, None, 6, 8, 0],
             'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
-            'c': [7, 8, 9 ,10, 11, 12, 13, 14]
+            'c': [7, 8, 9, 10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
@@ -1215,6 +1214,7 @@ class TestInequality():
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#b'
+        instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
@@ -1231,6 +1231,7 @@ class TestInequality():
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01'])
         })
         pd.testing.assert_frame_equal(out, expected_out)
+
 
 class TestScalarInequality():
 
@@ -1402,7 +1403,9 @@ class TestScalarInequality():
             'a': pd.to_datetime(['2020-01-01']),
             'b': pd.to_datetime(['2020-01-02'])
         })
-        instance = ScalarInequality(column_name='b', value=pd.to_datetime(['2020-01-01']), relation='>')
+        instance = ScalarInequality(
+            column_name='b', value=pd.to_datetime(
+                ['2020-01-01']), relation='>')
 
         # Run
         instance._fit(table_data)
@@ -1443,7 +1446,10 @@ class TestScalarInequality():
           for the rest.
         """
         # Setup
-        instance = ScalarInequality(column_name='b', value=pd.to_datetime('8/31/2021'), relation='>=')
+        instance = ScalarInequality(
+            column_name='b',
+            value=pd.to_datetime('8/31/2021'),
+            relation='>=')
 
         # Run
         table_data = pd.DataFrame({
@@ -1501,7 +1507,10 @@ class TestScalarInequality():
         - Same table with a diff column of the logarithms of the distances + 1 in the ``column_name``'s place.
         """
         # Setup
-        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>')
+        instance = ScalarInequality(
+            column_name='a',
+            value=pd.to_datetime('2020-01-01T00:00:00'),
+            relation='>')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
 
@@ -1615,9 +1624,13 @@ class TestScalarInequality():
         and the diff column dropped.
         """
         # Setup
-        instance = ScalarInequality(column_name='a', value=pd.to_datetime('2020-01-01T00:00:00'), relation='>=')
+        instance = ScalarInequality(
+            column_name='a',
+            value=pd.to_datetime('2020-01-01T00:00:00'),
+            relation='>=')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
+        instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
@@ -1629,7 +1642,7 @@ class TestScalarInequality():
         # Assert
         expected_out = pd.DataFrame({
             'c': [1, 2],
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
