@@ -871,6 +871,28 @@ class TestInequality():
         # Assert
         assert instance._operator == np.greater
 
+    def test__get_is_datetime_incorrect_data(self):
+        """Test the ``Inequality._get_is_datetime`` method.
+
+        Ensure that if one of the low/high columns is datetime, both of them are.
+
+        Input:
+        - Table data.
+        Side Effect:
+        - Raises ``ValueError`` if only one of the low/high columns is datetime.
+        """
+        # Setupy
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+            'b': ['a']
+        })
+        instance = Inequality(low_column_name='a', high_column_name='b')
+
+        # Run / Assert
+        err_msg = 'Both high and low must be datetime.'
+        with pytest.raises(ValueError, match=err_msg):
+            instance._get_is_datetime(table_data)
+
     def test__validate_columns_exist_incorrect_columns(self):
         """Test the ``Inequality._validate_columns_exist`` method.
 
@@ -1246,7 +1268,8 @@ class TestScalarInequality():
         - Raise ``ValueError`` because the column name must be a string
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`column_name` must be a string.'
+        with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name=['a'], value=1, relation='>')
 
     def test__validate_inputs_incorrect_value(self):
@@ -1262,7 +1285,8 @@ class TestScalarInequality():
         - Raise ``ValueError`` because the value must be a numerical
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`value` must be a number or datetime.'
+        with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name='a', value='b', relation='>')
 
     def test__validate_inputs_incorrect_relation(self):
@@ -1278,8 +1302,9 @@ class TestScalarInequality():
         - Raise ``ValueError`` because the relation must be an inequality
         """
         # Run / Assert
-        with pytest.raises(ValueError):
-            ScalarInequality._validate_inputs(column_name='a', value=['b', 'c'], relation='=')
+        err_msg = '`relation` must be one of the following: `>`, `>=`, ``<`, `<=`'
+        with pytest.raises(ValueError, match=err_msg):
+            ScalarInequality._validate_inputs(column_name='a', value=1, relation='=')
 
     @patch('sdv.constraints.tabular.ScalarInequality._validate_inputs')
     def test___init___(self, mock_validate):
@@ -1311,6 +1336,27 @@ class TestScalarInequality():
         assert instance._dtype is None
         assert instance._is_datetime is None
         mock_validate.assert_called_once_with('a', 1, '>')
+
+    def test__get_is_datetime_incorrect_data(self):
+        """Test the ``ScalarInequality._get_is_datetime`` method.
+
+        Ensure that if one of column/value is datetime, both of them are.
+
+        Input:
+        - Table data.
+        Side Effect:
+        - Raises ``ValueError`` if only one of column/value is datetime.
+        """
+        # Setupy
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+        })
+        instance = ScalarInequality(column_name='a', value=1, relation='<')
+
+        # Run / Assert
+        err_msg = 'Both column and value must be datetime.'
+        with pytest.raises(ValueError, match=err_msg):
+            instance._get_is_datetime(table_data)
 
     def test__validate_columns_exist_incorrect_columns(self):
         """Test the ``ScalarInequality._validate_columns_exist`` method.
