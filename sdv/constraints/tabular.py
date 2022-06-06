@@ -36,7 +36,11 @@ from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type
 
-INEQUALITY_TO_OPERATION = {'>': np.greater, '>=': np.greater_equal, '<': np.less, '<=': np.less_equal}
+INEQUALITY_TO_OPERATION = {
+    '>': np.greater,
+    '>=': np.greater_equal,
+    '<': np.less,
+    '<=': np.less_equal}
 
 
 class CustomConstraint(Constraint):

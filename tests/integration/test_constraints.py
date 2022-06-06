@@ -5,9 +5,8 @@ import pytest
 
 from sdv.constraints import (
     Between, ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive,
-    Unique)
+    ScalarInequality, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
-from sdv.constraints import ScalarInequality
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 

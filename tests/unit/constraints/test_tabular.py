@@ -817,7 +817,7 @@ class TestInequality():
         - a string
         - a non-bool
         Side effect:
-        - Raise ``ValueError`` because column names must be strings
+        - Raise ``ValueError`` because ``strict_boundaries`` must be a boolean
         """
         # Run / Assert
         with pytest.raises(ValueError):
@@ -832,16 +832,13 @@ class TestInequality():
         The passed arguments should be stored as attributes.
 
         Input:
-        - low_column_name = 'a'
-        - high_column_name = 'b'
+        - low_column_name and high_column_name should be two column names
         Side effects:
-        - instance._low_column_name = 'a'
-        - instance._high_column_name = 'b'
-        - instance._diff_column_name = 'a#b'
-        - instance._operator = np.greater_equal
-        - instance.rebuild_columns = 'b'
-        - instance._dtype = None
-        - instance._is_datetime = None
+        - _low_column_name and _high_column_name are set to the input column names
+        - _diff_column_name is set to '_low_column_name#_high_column_name'
+        - _operator is set to the default np.greater_equal
+        - rebuild_columns is a tuple of _igh_column_name
+        - _dtype and _is_datetime are None
         - _validate_inputs is called once
         """
         # Run
@@ -896,7 +893,7 @@ class TestInequality():
     def test__fit(self):
         """Test the ``Inequality._fit`` method.
 
-        The method should learn the ``dtype`` of ``_column_name`` and ``is_datetime``.
+        The method should learn the ``dtype`` of ``_column_name`` and ``_is_datetime``.
 
         Input:
         - Table data with integers.
@@ -932,7 +929,7 @@ class TestInequality():
         Input:
         - Table data with floats.
         Side Effect:
-        - _dtype should be a list of float dtypes.
+        - _dtype should be a float dtype.
         """
         # Setup
         table_data = pd.DataFrame({
@@ -1291,16 +1288,15 @@ class TestScalarInequality():
         The passed arguments should be stored as attributes.
 
         Input:
-        - low_column_name = 'a'
-        - high_column_name = 'b'
-        - relation = '>'
+        - column_name should be a column name
+        - value should be a number
+        - relation should be an inequality symbol
         Side effects:
-        - instance._column_name = 'a'
-        - instance._value = 1
-        - instance._diff_column_name = 'a#'
-        - instance._operator = np.greater
-        - instance._dtype = None
-        - instance._is_datetime = None
+        - _column_name is set to column_name
+        - _value is set to value
+        - _diff_column_name is set to 'column_name#diff'
+        - _operator is set to the numpy operation corresponding to the input relation
+        - _dtype and _is_datetime are None
         - _validate_inputs is called once
         """
         # Run
@@ -1338,7 +1334,7 @@ class TestScalarInequality():
     def test__fit(self):
         """Test the ``ScalarInequality._fit`` method.
 
-        The method should learn the ``dtype`` of ``column_name`` and ``is_datetime``.
+        The method should learn the ``dtype`` of ``column_name`` and ``_is_datetime``.
 
         Input:
         - Table data with integers.
@@ -1374,7 +1370,7 @@ class TestScalarInequality():
         Input:
         - Table data with floats.
         Side Effect:
-        - _dtype should be a list of float dtypes.
+        - _dtype should be a float dtype.
         """
         # Setup
         table_data = pd.DataFrame({
