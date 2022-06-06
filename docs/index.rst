@@ -138,7 +138,7 @@ for specific needs.
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
 .. |Slack| image:: https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack
-   :target: https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw
+   :target: https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw
 
 
 .. toctree::
