@@ -2027,7 +2027,7 @@ class TestColumnFormula():
 
 def transform(data, low, high):
     """Transform to be used for the TestBetween class."""
-    data = (data - low) / (high - low) * 0.95 + 0.025
+    data = (data - low) / (high - low)
     return np.log(data / (1.0 - data))
 
 
@@ -2218,7 +2218,7 @@ class TestRange():
             'age_when_joined': [18, 19, 20],
             'current_age': [21, 22, 25],
             'retirement_age': [65, 68, 75]
-        })
+        }, dtype=np.int64)
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
 
         # Run
@@ -2226,6 +2226,7 @@ class TestRange():
 
         # Assert
         assert instance._transformed_column == 'current_age#age_when_joined#retirement_age'
+        assert instance._dtype == np.int64
         assert not instance._is_datetime
 
     def test_is_valid_lt(self):
@@ -3653,7 +3654,7 @@ class TestFixedIncrements():
         # Setup
         data = pd.DataFrame({'column': [1.3, 3.5, 4.2, 2.1]})
         instance = FixedIncrements(column_name='column', increment_value=7)
-        instance._dtype = int
+        instance._dtype = np.int64
 
         # Run
         reverse_transformed = instance.reverse_transform(data)

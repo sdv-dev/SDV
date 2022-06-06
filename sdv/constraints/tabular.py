@@ -778,7 +778,6 @@ class Range(Constraint):
         high = table_data[self.high_column_name]
 
         data = (table_data[self.middle_column_name] - low) / (high - low)
-        data = data * 0.95 + 0.025
         data = np.log(data / (1.0 - data))
 
         table_data[self._transformed_column] = data
@@ -807,7 +806,6 @@ class Range(Constraint):
         data = table_data[self._transformed_column]
 
         data = 1 / (1 + np.exp(-data))
-        data = (data - 0.025) / 0.95
         data = data * (high - low) + low
         data = data.clip(low, high)
 
@@ -918,7 +916,6 @@ class ScalarRange(Constraint):
         """
         table_data = table_data.copy()
         data = (table_data[self.column_name] - self.low_value) / (self.high_value - self.low_value)
-        data = data * 0.95 + 0.025
         data = np.log(data / (1.0 - data))
 
         table_data[self.column_name] = data
@@ -944,7 +941,6 @@ class ScalarRange(Constraint):
         data = table_data[self.column_name]
 
         data = 1 / (1 + np.exp(-data))
-        data = (data - 0.025) / 0.95
         data = data * (self.high_value - self.low_value) + self.low_value
         data = data.clip(self.low_value, self.high_value)
 
