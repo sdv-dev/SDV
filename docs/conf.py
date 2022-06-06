@@ -135,7 +135,7 @@ html_context = {
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
     "twitter_url": "https://twitter.com/sdv_dev",
-    "slack_url": "https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw",
+    "slack_url": "https://bit.ly/sdv-slack-invite",
     "show_prev_next": True,
     "google_analytics_id": "UA-180602145-3",
 }

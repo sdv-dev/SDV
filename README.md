@@ -10,7 +10,7 @@
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
-[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw)
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://bit.ly/sdv-slack-invite)
 
 <div align="left">
 <br/>
@@ -59,7 +59,7 @@ hierarchical generative modeling and recursive sampling techniques.
 [License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
-[Community]: https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw
+[Community]: https://bit.ly/sdv-slack-invite
 [MyBinder Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/mybinder.png
 [Tutorials]: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
 
@@ -98,7 +98,7 @@ If you want to be part of the SDV community to receive announcements of the late
 ask questions, suggest new features or participate in the development meetings, please join
 our Slack Workspace!
 
-[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw)
+[![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://bit.ly/sdv-slack-invite)
 
 # Install
 
@@ -251,7 +251,7 @@ https://github.com/sdv-dev/SDMetrics) library.
    to see how you can contribute to the project.
 3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
    https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
-   https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw)
+   https://bit.ly/sdv-slack-invite)
 4. Also, do not forget to check the [project documentation site](https://sdv.dev/SDV/)!
 
 # Citation

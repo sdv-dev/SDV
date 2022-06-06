@@ -23,7 +23,7 @@ timeseries data would be associated.
    The PAR model is under active development. Please use it, try it on
    your data and give us feedback on a `github
    issue <https://github.com/sdv-dev/SDV/issues>`__ or our `Slack
-   workspace <https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw>`__
+   workspace <https://bit.ly/sdv-slack-invite>`__
 
 Quick Usage
 -----------
