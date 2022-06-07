@@ -1302,7 +1302,7 @@ class TestScalarInequality():
         - Raise ``ValueError`` because the relation must be an inequality
         """
         # Run / Assert
-        err_msg = '`relation` must be one of the following: `>`, `>=`, ``<`, `<=`'
+        err_msg = '`relation` must be one of the following: `>`, `>=`, `<`, `<=`'
         with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name='a', value=1, relation='=')
 

@@ -91,8 +91,6 @@ def test_failing_constraints():
         '\n4  3'
         '\n6  5'
         '\n'
-        "\nunsupported operand type(s) for -: 'str' and 'str'"
-        '\n'
         "\nData is not valid for the 'OneHotEncoding' constraint:"
         '\n   g   h'
         '\n0  1   1'

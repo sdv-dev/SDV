@@ -272,6 +272,7 @@ class Inequality(Constraint):
             Whether the comparison of the values should be strict ``>=`` or
             not ``>``. Currently, this is only respected if ``reject_sampling``
             or ``all`` handling strategies are used.
+            Defaults to False.
     """
 
     @staticmethod
@@ -423,14 +424,14 @@ class ScalarInequality(Constraint):
             raise ValueError('`value` must be a number or datetime.')
 
         if relation not in ['>', '>=', '<', '<=']:
-            raise ValueError('`relation` must be one of the following: `>`, `>=`, ``<`, `<=`')
+            raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
     def __init__(self, column_name, value, relation):
         self._validate_inputs(column_name, value, relation)
         self._column_name = column_name
         self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
         self._diff_column_name = f'{self._column_name}#diff'
-        self.constraint_columns = tuple(column_name)
+        self.constraint_columns = tuple([column_name])
         self._is_datetime = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]

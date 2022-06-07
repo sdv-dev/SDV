@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements
+from sdv.constraints import FixedIncrements, Inequality, ScalarInequality
 from sdv.tabular import GaussianCopula
 
 
@@ -19,3 +19,20 @@ def test_FixedIncrements():
 
     # Assert
     assert all(sampled % 5 == 0)
+
+def test_Inequality():
+    """Test the ``Inequality`` constraint end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'low': np.random.randint(1, 10, size=20),
+        'high': np.random.randint(10, 20, size=20)
+    })
+    constraint = Inequality('low', 'high')
+    gc = GaussianCopula(constraints=[constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(10)
+
+    # Assert
+    assert all(sampled['low'] <= sampled['high'])
