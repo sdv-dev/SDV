@@ -762,7 +762,7 @@ class Range(Constraint):
         """Transform the table data.
 
         The transformation consists of scaling the ``middle_column_name``
-        (``(middle_column-low)/(high-low) * cnt + small_cnt``) and then applying
+        (``(middle_column-low)/(high-low)``) and then applying
         a ``logit`` function to the scaled version of the column.
 
         Args:
@@ -790,7 +790,7 @@ class Range(Constraint):
 
         The reverse transform consists of applying a sigmoid to the transformed
         ``middle_column_name`` and then scaling it back to the original space
-        ( ``(middle_column - cnt) * (high - low) / cnt + low`` ).
+        ( ``middle_column * (high - low) / low`` ).
 
         Args:
             table_data (pandas.DataFrame):
@@ -810,7 +810,7 @@ class Range(Constraint):
         data = data.clip(low, high)
 
         if self._is_datetime:
-            table_data[self.middle_column_name] = pd.to_datetime(data.round('100ms'))
+            table_data[self.middle_column_name] = pd.to_datetime(data.round('1000ms'))
         else:
             table_data[self.middle_column_name] = data.astype(self._dtype)
 
@@ -903,7 +903,7 @@ class ScalarRange(Constraint):
         """Transform the table data.
 
         The transformation consists of scaling the ``column_name``
-        (``(column-low)/(high-low) * cnt + small_cnt``) and then applying
+        (``(column-low)/(high-low)``) and then applying
         a logit function to the scaled version of the column.
 
         Args:
@@ -927,7 +927,7 @@ class ScalarRange(Constraint):
 
         The reverse transform consists of applying a sigmoid to the transformed
         ``column_name`` and then scaling it back to the original space
-        ( ``(column - cnt) * (high - low) / cnt + low`` ).
+        ( ``column * (high - low) / low`` ).
 
         Args:
             table_data (pandas.DataFrame):
@@ -945,7 +945,7 @@ class ScalarRange(Constraint):
         data = data.clip(self.low_value, self.high_value)
 
         if self._is_datetime:
-            table_data[self.column_name] = pd.to_datetime(data.round('100ms'))
+            table_data[self.column_name] = pd.to_datetime(data.round('1000ms'))
         else:
             table_data[self.column_name] = data.astype(self._dtype)
 
