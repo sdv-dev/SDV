@@ -401,10 +401,7 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     - Correct columns to condition on are passed to underlying sample method
     """
     # Setup
-    constraint = Inequality(
-        low_column_name='age_joined',
-        high_column_name='age',
-    )
+    constraint = Inequality(low_column_name='age_joined', high_column_name='age')
     data = pd.DataFrame({
         'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
         'age': [27.0, 28.0, 26.0, 21.0, 30.0],

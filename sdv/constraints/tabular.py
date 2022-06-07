@@ -283,6 +283,7 @@ class Inequality(Constraint):
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
         self._operator = np.greater if strict_boundaries else np.greater_equal
         self.rebuild_columns = tuple(high_column_name)
+        self.constraint_columns = tuple([low_column_name, high_column_name])
         self._dtype = None
         self._is_datetime = None
         super().__init__(handling_strategy='transform', fit_columns_model=False)
@@ -425,6 +426,7 @@ class ScalarInequality(Constraint):
         self._column_name = column_name
         self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
         self._diff_column_name = f'{self._column_name}#'
+        self.constraint_columns = tuple(column_name)
         self._is_datetime = None
         self._dtype = None
         str_to_op = {'>': np.greater, '>=': np.greater_equal, '<': np.less, '<=': np.less_equal}
