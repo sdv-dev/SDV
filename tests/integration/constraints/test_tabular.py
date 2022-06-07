@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements, Inequality, ScalarInequality
+from sdv.constraints import FixedIncrements, Inequality
 from sdv.tabular import GaussianCopula
 
 
@@ -19,6 +19,7 @@ def test_FixedIncrements():
 
     # Assert
     assert all(sampled % 5 == 0)
+
 
 def test_Inequality():
     """Test the ``Inequality`` constraint end to end."""
