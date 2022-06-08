@@ -528,7 +528,12 @@ class ScalarInequality(Constraint):
         if self._is_datetime:
             diff_column = diff_column.astype('timedelta64[ns]')
 
-        table_data[self._column_name] = pd.Series(diff_column + self._value).astype(self._dtype)
+        if self._operator in [np.greater, np.greater_equal]:
+            original_column = self._value + diff_column
+        else:
+            original_column = self._value - diff_column
+
+        table_data[self._column_name] = pd.Series(original_column).astype(self._dtype)
         return table_data.drop(self._diff_column_name, axis=1)
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements, Inequality
+from sdv.constraints import FixedIncrements, Inequality, ScalarInequality
 from sdv.tabular import GaussianCopula
 
 
@@ -37,3 +37,20 @@ def test_Inequality():
 
     # Assert
     assert all(sampled['low'] <= sampled['high'])
+
+
+def test_ScalarInequality():
+    """Test the ``ScalarInequality`` constraint end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'low': np.random.randint(1, 10, size=20),
+    })
+    constraint = ScalarInequality(column_name='low', value=11, relation='<')
+    gc = GaussianCopula(constraints=[constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(10)
+
+    # Assert
+    assert all(sampled['low'] < 11)
