@@ -2025,12 +2025,6 @@ class TestColumnFormula():
         pd.testing.assert_frame_equal(expected_out, out)
 
 
-def transform(data, low, high):
-    """Transform to be used for the TestBetween class."""
-    data = (data - low) / (high - low)
-    return np.log(data / (1.0 - data))
-
-
 class TestRange():
 
     def test___init__(self):
@@ -2346,7 +2340,7 @@ class TestRange():
         out = instance._transform(table_data)
 
         # Assert
-        expected_transform = transform(
+        expected_transform = logit(
             table_data['current_age'],
             table_data['age_when_joined'],
             table_data['retirement_age']
@@ -2383,7 +2377,7 @@ class TestRange():
         out = instance._transform(table_data)
 
         # Assert
-        expected_transform = transform(
+        expected_transform = logit(
             table_data['promotion_date'],
             table_data['join_date'],
             table_data['retirement_date']
@@ -2418,7 +2412,7 @@ class TestRange():
             'retirement_age': [65, 68, 75],
             'current_age': [21, 22, 25],
         })
-        expected_transform = transform(
+        expected_transform = logit(
             table_data['current_age'],
             table_data['age_when_joined'],
             table_data['retirement_age']
@@ -2454,25 +2448,41 @@ class TestRange():
             - A pd.DataFrame containing the original data.
         """
         table_data = pd.DataFrame({
-            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
-            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
-            'promotion_date': pd.to_datetime(['2023-04-11', '2023-06-10', '2023-11-17']),
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
         })
-        expected_transform = transform(
-            table_data['promotion_date'],
-            table_data['join_date'],
-            table_data['retirement_date']
-        )
-        transformed_data = pd.DataFrame({
-            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
-            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14']),
-            'promotion_date#join_date#retirement_date': expected_transform
-        })
-        instance = Range('join_date', 'promotion_date', 'retirement_date')
 
+        transformed = pd.DataFrame({
+            'b': [
+                pd.to_datetime('2020-01-03'),
+                pd.to_datetime('2020-02-01'),
+                pd.to_datetime('2020-02-03'),
+            ],
+            'c': [
+                pd.to_datetime('2020-10-03'),
+                pd.to_datetime('2020-11-01'),
+                pd.to_datetime('2020-11-03'),
+            ],
+            'a#b#c': logit(table_data['a'], table_data['b'], table_data['c'])
+        })
+
+        instance = Range('b', 'a', 'c')
         # Run
         instance.fit(table_data)
-        out = instance.reverse_transform(transformed_data)
+        out = instance.reverse_transform(transformed)
 
         # Assert
         pd.testing.assert_frame_equal(table_data, out)
@@ -2605,6 +2615,31 @@ class TestScalarRange():
         with pytest.raises(ValueError, match=expected_text):
             instance._get_is_datetime(table_data)
 
+    def test__get_diff_column_name(self):
+        """Test the ``ScalarRange._get_diff_column_name`` method.
+
+        This method should return the name for the new ``transform_column``.
+
+        Setup:
+            - Create a pd.DataFrame.
+            - Instance of ``ScalarRange`` constraint.
+
+        Input:
+            - pd.DataFrame with ``current_age`` column.
+
+        Output:
+            - The column name concatenated with ``#`` followed by the ``low`` and ``high`` values.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        instance = ScalarRange('current_age', 18, 35)
+
+        # Run
+        transformed_column_name = instance._get_diff_column_name(table_data)
+
+        # Assert
+        assert transformed_column_name == 'current_age#18#35'
+
     def test__fit(self):
         """Test the ``_fit`` method of ``Range``.
 
@@ -2630,6 +2665,7 @@ class TestScalarRange():
 
         # Assert
         assert not instance._is_datetime
+        assert instance._transformed_column == 'current_age#18#20'
 
     def test_is_valid_lt(self):
         """Test the ``ScalarRange.is_valid``.
@@ -2726,8 +2762,8 @@ class TestScalarRange():
         out = instance._transform(table_data)
 
         # Assert
-        expected_transform = transform(table_data['current_age'], 20, 28)
-        expected_out = pd.DataFrame({'current_age': expected_transform})
+        expected_transform = logit(table_data['current_age'], 20, 28)
+        expected_out = pd.DataFrame({'current_age#20#28': expected_transform})
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test__transform_datetime_data(self):
@@ -2757,13 +2793,13 @@ class TestScalarRange():
         out = instance._transform(table_data)
 
         # Assert
-        expected_transform = transform(
+        expected_transform = logit(
             table_data['promotion_date'],
             pd.to_datetime('2021-02-10'),
             pd.to_datetime('2050-10-11')
         )
         expected_out = pd.DataFrame({
-            'promotion_date': expected_transform
+            'promotion_date#2021-02-10 00:00:00#2050-10-11 00:00:00': expected_transform
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -2786,8 +2822,8 @@ class TestScalarRange():
 
         # Setup
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
-        expected_transform = transform(table_data['current_age'], 20, 28)
-        transformed_data = pd.DataFrame({'current_age': expected_transform})
+        expected_transform = logit(table_data['current_age'], 20, 28)
+        transformed_data = pd.DataFrame({'current_age#20#28': expected_transform})
         instance = ScalarRange('current_age', 20, 28)
 
         # Run
@@ -2813,29 +2849,34 @@ class TestScalarRange():
         Output:
             - A pd.DataFrame containing the original data.
         """
+        column = 'a'
+        low = pd.to_datetime('1900-01-01')
+        high = pd.to_datetime('2021-01-01')
+        instance = ScalarRange(column_name=column, low_value=low, high_value=high)
+
         table_data = pd.DataFrame({
-            'promotion_date': pd.to_datetime(['2022-04-12', '2022-08-11', '2022-10-23']),
+            'b': [4, 5, 6],
+            'a': [
+                pd.to_datetime('2020-09-03'),
+                pd.to_datetime('2020-08-01'),
+                pd.to_datetime('2020-08-03'),
+            ],
         })
-        expected_transform = transform(
-            table_data['promotion_date'],
-            pd.to_datetime('2021-02-10'),
-            pd.to_datetime('2050-10-11')
-        )
-        transformed_data = pd.DataFrame({
-            'promotion_date': expected_transform
-        })
-        instance = ScalarRange(
-            'promotion_date',
-            pd.to_datetime('2021-02-10'),
-            pd.to_datetime('2050-10-11')
-        )
+        transformed_data = logit(table_data[column], low, high)
 
         # Run
         instance.fit(table_data)
-        out = instance.reverse_transform(transformed_data)
+
+        transformed = pd.DataFrame({
+            'b': [4, 5, 6],
+            'a#1900-01-01 00:00:00#2021-01-01 00:00:00': transformed_data
+        })
+        out = instance.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_frame_equal(table_data, out)
+        expected_out = table_data
+        pd.testing.assert_series_equal(expected_out['b'], out['b'])
+        pd.testing.assert_series_equal(expected_out['a'], out['a'].astype('datetime64[ms]'))
 
 
 class TestOneHotEncoding():

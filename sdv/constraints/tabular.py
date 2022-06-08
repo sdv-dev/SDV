@@ -36,7 +36,7 @@ import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.utils import is_datetime_type
+from sdv.constraints.utils import is_datetime_type, logit, sigmoid
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -777,9 +777,7 @@ class Range(Constraint):
         low = table_data[self.low_column_name]
         high = table_data[self.high_column_name]
 
-        data = (table_data[self.middle_column_name] - low) / (high - low)
-        data = np.log(data / (1.0 - data))
-
+        data = logit(table_data[self.middle_column_name], low, high)
         table_data[self._transformed_column] = data
         table_data = table_data.drop(self.middle_column_name, axis=1)
 
@@ -805,12 +803,11 @@ class Range(Constraint):
         high = table_data[self.high_column_name]
         data = table_data[self._transformed_column]
 
-        data = 1 / (1 + np.exp(-data))
-        data = data * (high - low) + low
+        data = sigmoid(data, low, high)
         data = data.clip(low, high)
 
         if self._is_datetime:
-            table_data[self.middle_column_name] = pd.to_datetime(data.round('1000ms'))
+            table_data[self.middle_column_name] = pd.to_datetime(data)
         else:
             table_data[self.middle_column_name] = data.astype(self._dtype)
 
@@ -849,6 +846,15 @@ class ScalarRange(Constraint):
 
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
+    def _get_diff_column_name(self, table_data):
+        token = '#'
+        columns = [self.column_name, self.low_value, self.high_value]
+        components = list(map(str, columns))
+        while token.join(components) in table_data.columns:
+            token += '#'
+
+        return token.join(components)
+
     def _get_is_datetime(self, table_data):
         data = table_data[self.column_name]
 
@@ -871,6 +877,7 @@ class ScalarRange(Constraint):
         """
         self._dtype = table_data[self.column_name].dtypes
         self._is_datetime = self._get_is_datetime(table_data)
+        self._transformed_column = self._get_diff_column_name(table_data)
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
@@ -915,10 +922,9 @@ class ScalarRange(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        data = (table_data[self.column_name] - self.low_value) / (self.high_value - self.low_value)
-        data = np.log(data / (1.0 - data))
-
-        table_data[self.column_name] = data
+        data = logit(table_data[self.column_name], self.low_value, self.high_value)
+        table_data[self._transformed_column] = data
+        table_data = table_data.drop(self.column_name, axis=1)
 
         return table_data
 
@@ -927,7 +933,7 @@ class ScalarRange(Constraint):
 
         The reverse transform consists of applying a sigmoid to the transformed
         ``column_name`` and then scaling it back to the original space
-        ( ``column * (high - low) / low`` ).
+        (``column * (high - low) / low``).
 
         Args:
             table_data (pandas.DataFrame):
@@ -938,16 +944,17 @@ class ScalarRange(Constraint):
                 Transformed data.
         """
         table_data = table_data.copy()
-        data = table_data[self.column_name]
+        data = table_data[self._transformed_column]
 
-        data = 1 / (1 + np.exp(-data))
-        data = data * (self.high_value - self.low_value) + self.low_value
+        data = sigmoid(data, self.low_value, self.high_value)
         data = data.clip(self.low_value, self.high_value)
 
         if self._is_datetime:
-            table_data[self.column_name] = pd.to_datetime(data.round('1000ms'))
+            table_data[self.column_name] = pd.to_datetime(data)
         else:
             table_data[self.column_name] = data.astype(self._dtype)
+
+        table_data = table_data.drop(self._transformed_column, axis=1)
 
         return table_data
 
