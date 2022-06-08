@@ -2031,7 +2031,7 @@ class TestRange():
         """Test the ``Range.__init__`` method.
 
         The instance should contain the name of the three passed columns and also
-        use an operator ``lower than`` if ``strict_boundaries`` is ``True`` by default.
+        use an operator ``<`` if ``strict_boundaries`` is ``True`` by default.
         Input:
             - Three column names.
         """
@@ -2226,7 +2226,7 @@ class TestRange():
     def test_is_valid_lt(self):
         """Test the ``Range.is_valid``.
 
-        This test ensures that the ``is_valid`` method works with the operator ``lower than``
+        This test ensures that the ``is_valid`` method works with the operator ``<``
         (``<``) and validates that the ``middle_column_name`` is between ``low_column_name`` and
         ``high_column_name``.
 
@@ -2255,7 +2255,7 @@ class TestRange():
         """Test the ``Range.is_valid``.
 
         This test ensures that the ``is_valid`` method works with the operator
-        ``lower than or equal`` (``=<``) and validates that the ``middle_column_name`` is
+        ``<=`` and validates that the ``middle_column_name`` is
         between ``low_column_name`` and ``high_column_name``.
 
         Setup:
@@ -2390,7 +2390,7 @@ class TestRange():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_numerical_data(self):
-        """"Test the ``reverse_transform`` method for ``Range``.
+        """Test the ``reverse_transform`` method for ``Range``.
 
         It is expected to recover the original table which was transformed, but with different
         column order. It does so by applying a sigmoid to the transformed column and then
@@ -2494,7 +2494,7 @@ class TestScalarRange():
         """Test the ``ScalarRange.__init__`` method.
 
         The instance should contain the name of the three passed columns and also
-        use an operator ``lower than`` if ``strict_boundaries`` is ``True`` by default.
+        use an operator ``<`` if ``strict_boundaries`` is ``True`` by default.
         Input:
             - Column name.
             - Lower value.
@@ -2670,7 +2670,7 @@ class TestScalarRange():
     def test_is_valid_lt(self):
         """Test the ``ScalarRange.is_valid``.
 
-        This test ensures that the ``is_valid`` method works with the operator ``lower than``
+        This test ensures that the ``is_valid`` method works with the operator ``<``
         (``<``) and validates that the ``column_name`` is between ``low_value`` and
         ``high_value``.
 
@@ -2696,7 +2696,7 @@ class TestScalarRange():
         """Test the ``ScalarRange.is_valid``.
 
         This test ensures that the ``is_valid`` method works with the operator
-        ``lower than or equal`` (``=<``) and validates that the ``column_name`` is
+        ``<=`` and validates that the ``column_name`` is
         between ``low_value`` and ``high_value``.
 
         Setup:
@@ -2804,7 +2804,7 @@ class TestScalarRange():
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_reverse_transform_numerical_data(self):
-        """"Test the ``reverse_transform`` method for ``ScalarRange``.
+        """Test the ``reverse_transform`` method for ``ScalarRange``.
 
         It is expected to recover the original table which was transformed, but with different
         column order. It does so by applying a sigmoid to the transformed column and then

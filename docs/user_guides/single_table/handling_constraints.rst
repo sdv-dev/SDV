@@ -257,7 +257,7 @@ constraint by passing it:
 
 Range Constraint
 ~~~~~~~~~~~~~~~~
-Another posibility is the ``Range`` constraint. It guarantees that one column is always
+Another possibility is the ``Range`` constraint. It guarantees that one column is always
 between two other columns. For example the if we have an ``age`` column, ``age_when_joined``
 and ``retirement_age`` we can specify that ``age`` has to bigger than ``age_when_joined``
 but lower than ``retirement_age``.
@@ -268,7 +268,7 @@ In order to use it, we need to create an instance passing:
 - the name of the middle column (``middle_column_name``).
 - the name of the higher bound column (``high_column_name``).
 - (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
-  whether the ecomparison of the values should be strict or not.
+  whether the comparison of the values should be strict or not.
 
 .. ipython:: python
     :okwarning:
@@ -294,7 +294,7 @@ In order to use it, we need to create an instance passing:
 - the ``low_value`` value.
 - the ``high_value`` value.
 - (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
-  whether the ecomparison of the values should be strict or not.
+  whether the comparison of the values should be strict or not.
 
 .. ipython:: python
     :okwarning:

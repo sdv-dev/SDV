@@ -22,7 +22,7 @@ Currently implemented constraints are:
     * Range: Ensure that the value in one column is always between the values
       of two other columns.
     * ScalarRange: Ensure that the value in one column is always between the values
-      of two other scalar values.
+      of two other scalars.
     * OneHotEncoding: Ensure the rows of the specified columns are one hot encoded.
     * Unique: Ensure that each value for a specified column/group of columns is unique.
     * FixedIncrements: Ensure that every value is a multiple of a specified increment.
@@ -718,8 +718,8 @@ class Range(Constraint):
     def _fit(self, table_data):
         """Fit the constraint.
 
-        The fit process consists in generating the `transformed_column` name and determine
-        whether or not the data is `datetime`.
+        The fit process consists in generating the ``transformed_column`` name and determine
+        whether or not the data is ``datetime``.
 
         Args:
             table_data (pandas.DataFrame):
