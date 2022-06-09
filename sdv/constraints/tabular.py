@@ -373,9 +373,9 @@ class Inequality(Constraint):
         """Reverse transform the table data.
 
         The transformation is reversed by computing an exponential of the difference value,
-        subtracting 1, clipping it to 0 to ensure the value is positive and converting it
-        to the original dtype. Finally, the obtained column is added to the ``low_column_name``
-        column to get back the original ``high_column_name`` value.
+        subtracting 1 and converting it to the original dtype. Finally, the obtained column
+        is added to the ``low_column_name`` column to get back the original
+        ``high_column_name`` value.
 
         Args:
             table_data (pandas.DataFrame):
@@ -508,9 +508,8 @@ class ScalarInequality(Constraint):
         """Reverse transform the table data.
 
         The transformation is reversed by computing an exponential of the difference value,
-        subtracting 1, clipping it to 0 to ensure the value is positive and converting it
-        to the original dtype. Finally, the obtained column is added to the ``low_column_name``
-        column to get back the original ``high_column_name`` value.
+        subtracting 1 and converting it to the original dtype. Finally, the obtained column
+        is added/subtrated from the ``value`` to get back the original ``column_name``.
 
         Args:
             table_data (pandas.DataFrame):
