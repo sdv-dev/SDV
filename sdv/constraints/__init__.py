@@ -2,14 +2,15 @@
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, GreaterThan,
-    Negative, OneHotEncoding, Positive, Unique)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality,
+    Negative, OneHotEncoding, Positive, ScalarInequality, Unique)
 
 __all__ = [
     'Constraint',
     'ColumnFormula',
     'CustomConstraint',
-    'GreaterThan',
+    'Inequality',
+    'ScalarInequality',
     'FixedCombinations',
     'FixedIncrements',
     'Between',

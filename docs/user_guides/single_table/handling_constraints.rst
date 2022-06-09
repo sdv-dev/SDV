@@ -138,7 +138,7 @@ To use this constraint, we must make an instance and provide:
     )
 
 FixedCombinations Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The next constraint that we will explore is the ``FixedCombinations``
 constraint.
@@ -162,87 +162,54 @@ order to use this constraint we will need to import it from the
         handling_strategy='transform'
     )
 
-GreaterThan Constraint
-~~~~~~~~~~~~~~~~~~~~~~
+Inequality and ScalarInequality Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The second constraint that we need for our data is the ``GreaterThan``
+Another constraint that we need for our data is the ``Inequality``
 constraint. This constraint guarantees that one column is always greater
 than the other one. In order to use it, we need to create an instance
 passing:
 
--  the name of the ``low`` column
--  the name of the ``high`` column
--  the handling strategy that we want to use
+-  the ``low_column_name``
+-  the ``high_column_name``
 
 .. ipython:: python
     :okwarning:
 
-    from sdv.constraints import GreaterThan
+    from sdv.constraints import Inequality
 
-    age_gt_age_when_joined_constraint = GreaterThan(
-        low='age_when_joined',
-        high='age',
-        handling_strategy='reject_sampling'
+    age_gt_age_when_joined_constraint = Inequality(
+        low_column_name='age_when_joined',
+        high_column_name='age',
     )
 
-The ``GreaterThan`` constraint can also be used to guarantee a column is greater
+The ``ScalarInequality`` constraint can be used to guarantee a column is greater
 or lower than a scalar value or specific datetime value instead of another column. 
 To use this functionality, we can pass:
 
--  the scalar value for ``low`` or the scalar value for ``high``
--  a flag indicating whether ``low`` or ``high`` is a scalar
+- the ``column_name``
+- the scalar ``value``
+- a flag indicating what the ``relation`` between them is (choose between ``'>'``, ``'>='``, ``'<'``, ``'<='``)
 
 .. ipython:: python
     :okwarning:
 
-    salary_gt_30000_constraint = GreaterThan(
-        low=30000,
-        high='salary',
-        scalar='low',
-        handling_strategy='reject_sampling'
+    salary_gt_30000_constraint = ScalarInequality(
+        column_name='salary',
+        value=30000,
+        relation='>',
     )
-
-.. note::
-    If you want to indicate that the column must be *lower than* a scalar value, 
-    all you need to do is invert the arguments, pass the scalar value as the ``high`` 
-    argument, the column name as the ``low`` argument, and set the `scalar` flag to ``"high"``.
-
-Optionally, when constructing ``GreaterThan`` constraint we can specify 
-more than a single column in either the ``high`` or ``low`` arguments. 
-For example, we can create a ``GreaterThan`` constraint that that ensures 
-that both the years in the company and prior years of experience is more 
-than one year.
-
-.. ipython:: python
-    :okwarning:
-
-    experience_years_gt_one_constraint = GreaterThan(
-        low=1,
-        high=['years_in_the_company', 'prior_years_experience'],
-        scalar='low',
-        handling_strategy='reject_sampling'
-    )
-
-.. warning::
-
-    Warning! Passing a list of columns to the `high` or `low` arguments is only possible 
-    when the other one has been passed as a single column name or scalar value! If you need 
-    to compare multiple ``high`` columns against multiple ``low`` columns (or vice versa), 
-    you need to decompose one of the ends, ``high`` or ``low``, into multiple single column
-    names and define one ``GreaterThan`` constraint for each one of them.
-
 
 Positive and Negative Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
+Similar to the ``ScalarInequality`` constraint, we can use the ``Positive``
 or ``Negative`` constraints. These constraints enforce that the specified
-column(s) are always positive or negative. We can create an instance passing:
+column are always positive or negative. We can create an instance passing:
 
-- the name of the column(s) for ``Negative`` or ``Positive`` constraints
+- the name of the column for ``Negative`` or ``Positive`` constraints
 - a boolean specifying whether to make the data strictly above or below 0, 
   or include 0 as a possible value
-- the handling strategy that we want to use
 
 .. ipython:: python
     :okwarning:
@@ -250,9 +217,8 @@ column(s) are always positive or negative. We can create an instance passing:
     from sdv.constraints import Positive
 
     positive_age_constraint = Positive(
-        columns='age',
+        column_name='age',
         strict=False,
-        handling_strategy='reject_sampling'
     )
 
 ColumnFormula Constraint

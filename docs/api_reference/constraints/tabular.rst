@@ -22,7 +22,7 @@ CustomConstraint
    CustomConstraint.to_dict
 
 FixedCombinations
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -37,24 +37,40 @@ FixedCombinations
    FixedCombinations.from_dict
    FixedCombinations.to_dict
 
-GreaterThan
+Inequality
+~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Inequality
+   Inequality.fit
+   Inequality.transform
+   Inequality.fit_transform
+   Inequality.reverse_transform
+   Inequality.is_valid
+   Inequality.filter_valid
+   Inequality.from_dict
+   Inequality.to_dict
+
+ScalarInequality
 ~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   GreaterThan
-   GreaterThan.fit
-   GreaterThan.transform
-   GreaterThan.fit_transform
-   GreaterThan.reverse_transform
-   GreaterThan.is_valid
-   GreaterThan.filter_valid
-   GreaterThan.from_dict
-   GreaterThan.to_dict
+   ScalarInequality
+   ScalarInequality.fit
+   ScalarInequality.transform
+   ScalarInequality.fit_transform
+   ScalarInequality.reverse_transform
+   ScalarInequality.is_valid
+   ScalarInequality.filter_valid
+   ScalarInequality.from_dict
+   ScalarInequality.to_dict
 
 Positive
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -70,7 +86,7 @@ Positive
    Positive.to_dict
 
 Negative
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -86,7 +102,7 @@ Negative
    Negative.to_dict
 
 ColumnFormula
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -118,7 +134,7 @@ Between
    Between.to_dict
 
 OneHotEncoding
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -134,7 +150,7 @@ OneHotEncoding
    OneHotEncoding.to_dict
 
 Unique
-~~~~~~~~~~~~~~~~
+~~~~~~
 
 .. autosummary::
    :toctree: api/

@@ -5,7 +5,7 @@ import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import FixedCombinations, Unique
-from sdv.constraints.tabular import GreaterThan
+from sdv.constraints.tabular import Inequality
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular.copulagan import CopulaGAN
@@ -370,7 +370,7 @@ def test_conditional_sampling_constraint_uses_columns_model(gm_mock, isinstance_
     expected_states = pd.Series(['CA', 'CA', 'CA', 'CA', 'CA'], name='state')
     expected_ages = pd.Series([30, 30, 30, 30, 30], name='age')
     sample_calls = model._model.sample.mock_calls
-    assert len(sample_calls) >= 2 and len(sample_calls) <= 3
+    assert 2 <= len(sample_calls) <= 3
     assert all(c[2]['conditions']['age.value'] == 30 for c in sample_calls)
     assert all('city#state.value' in c[2]['conditions'] for c in sample_calls)
     pd.testing.assert_series_equal(sampled_data['age'], expected_ages)
@@ -389,7 +389,7 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     model should be valid because reject sampling is used on any that aren't.
 
     Setup:
-    - The model is being passed a ``GreaterThan`` constraint and then
+    - The model is being passed an ``Inequality`` constraint and then
     asked to sample with one condition. One of the constraint columns is
     the conditioned column. The ``GaussianMultivariate`` class is mocked
     so that the constraint's ``_column_model`` returns some invalid rows
@@ -401,13 +401,10 @@ def test_conditional_sampling_constraint_uses_columns_model_reject_sampling(colu
     - Correct columns to condition on are passed to underlying sample method
     """
     # Setup
-    constraint = GreaterThan(
-        low='age_joined',
-        high='age',
-        handling_strategy='transform',
-        fit_columns_model=True,
-        drop='high'
-    )
+    constraint = Inequality(
+        low_column_name='age_joined',
+        high_column_name='age',
+        fit_columns_model=True)
     data = pd.DataFrame({
         'age_joined': [22.0, 21.0, 15.0, 18.0, 29.0],
         'age': [27.0, 28.0, 26.0, 21.0, 30.0],

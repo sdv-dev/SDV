@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -10,8 +10,8 @@ import pytest
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, GreaterThan,
-    Negative, OneHotEncoding, Positive, Unique)
+    Between, ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality,
+    Negative, OneHotEncoding, Positive, ScalarInequality, Unique)
 
 
 def dummy_transform_table(table_data):
@@ -787,1521 +787,302 @@ class TestFixedCombinations():
         pd.testing.assert_frame_equal(expected_out, out)
 
 
-class TestGreaterThan():
+class TestInequality():
 
-    def test__validate_scalar(self):
-        """Test the ``_validate_scalar`` method.
+    def test__validate_inputs_incorrect_column(self):
+        """Test the ``_validate_inputs`` method.
 
-        This method validates the inputs if and transforms them into
-        the correct format.
-
-        Input:
-        - scalar_column = 0
-        - column_names = 'b'
-        Output:
-        - column_names == ['b']
-        """
-        # Setup
-        scalar_column = 0
-        column_names = 'b'
-        scalar = 'high'
-
-        # Run
-        out = GreaterThan._validate_scalar(scalar_column, column_names, scalar)
-
-        # Assert
-        out == ['b']
-
-    def test__validate_scalar_list(self):
-        """Test the ``_validate_scalar`` method.
-
-        This method validates the inputs if and transforms them into
-        the correct format.
+        Ensure the method crashes when one of the passed columns is not a string.
 
         Input:
-        - scalar_column = 0
-        - column_names = ['b']
-        Output:
-        - column_names == ['b']
-        """
-        # Setup
-        scalar_column = 0
-        column_names = ['b']
-        scalar = 'low'
-
-        # Run
-        out = GreaterThan._validate_scalar(scalar_column, column_names, scalar)
-
-        # Assert
-        out == ['b']
-
-    def test__validate_scalar_error(self):
-        """Test the ``_validate_scalar`` method.
-
-        This method raises an error when the the scalar column is a list.
-
-        Input:
-        - scalar_column = 0
-        - column_names = 'b'
+        - a string
+        - a non-string
+        - a bool
         Side effect:
-        - Raise error since the scalar is a list
-        """
-        # Setup
-        scalar_column = [0]
-        column_names = 'b'
-        scalar = 'high'
-
-        # Run / Assert
-        with pytest.raises(TypeError):
-            GreaterThan._validate_scalar(scalar_column, column_names, scalar)
-
-    def test__validate_inputs_high_is_scalar(self):
-        """Test the ``_validate_inputs`` method.
-
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
-
-        Input:
-        - low = 'a'
-        - high = 3
-        - scalar = 'high'
-        Output:
-        - low == ['a']
-        - high == 3
-        - constraint_columns = ('a')
-        """
-        # Setup / Run
-        low, high, constraint_columns = GreaterThan._validate_inputs(
-            low='a', high=3, scalar='high', drop=None)
-
-        # Assert
-        low == ['a']
-        high == 3
-        constraint_columns == ('a',)
-
-    def test__validate_inputs_low_is_scalar(self):
-        """Test the ``_validate_inputs`` method.
-
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
-
-        Input:
-        - low = 3
-        - high = 'b'
-        - scalar = 'low'
-        - drop = None
-        Output:
-        - low == 3
-        - high == ['b']
-        - constraint_columns = ('b')
-        """
-        # Setup / Run
-        low, high, constraint_columns = GreaterThan._validate_inputs(
-            low=3, high='b', scalar='low', drop=None)
-
-        # Assert
-        low == 3
-        high == ['b']
-        constraint_columns == ('b',)
-
-    def test__validate_inputs_scalar_none(self):
-        """Test the ``_validate_inputs`` method.
-
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
-
-        Input:
-        - low = 'a'
-        - high = 3 # where 3 is a column name
-        - scalar = None
-        - drop = None
-        Output:
-        - low == ['a']
-        - high == [3]
-        - constraint_columns = ('a', 3)
-        """
-        # Setup / Run
-        low, high, constraint_columns = GreaterThan._validate_inputs(
-            low='a', high=3, scalar=None, drop=None)
-
-        # Assert
-        low == ['a']
-        high == [3]
-        constraint_columns == ('a', 3)
-
-    def test__validate_inputs_scalar_none_lists(self):
-        """Test the ``_validate_inputs`` method.
-
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
-
-        Input:
-        - low = ['a']
-        - high = ['b', 'c']
-        - scalar = None
-        - drop = None
-        Output:
-        - low == ['a']
-        - high == ['b', 'c']
-        - constraint_columns = ('a', 'b', 'c')
-        """
-        # Setup / Run
-        low, high, constraint_columns = GreaterThan._validate_inputs(
-            low=['a'], high=['b', 'c'], scalar=None, drop=None)
-
-        # Assert
-        low == ['a']
-        high == ['b', 'c']
-        constraint_columns == ('a', 'b', 'c')
-
-    def test__validate_inputs_scalar_none_two_lists(self):
-        """Test the ``_validate_inputs`` method.
-
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
-
-        Input:
-        - low = ['a', 0]
-        - high = ['b', 'c']
-        - scalar = None
-        - drop = None
-        Side effect:
-        - Raise error because both high and low are more than one column
+        - Raise ``ValueError`` because column names must be strings
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low=['a', 0], high=['b', 'c'], scalar=None, drop=None)
+            Inequality._validate_inputs(
+                low_column_name='a', high_column_name=['b', 'c'], strict_boundaries=True
+            )
 
-    def test__validate_inputs_scalar_unknown(self):
+    def test__validate_inputs_incorrect_strict_boundaries(self):
         """Test the ``_validate_inputs`` method.
 
-        This method checks ``scalar`` and formats the data based
-        on what is expected to be a list or not. In addition, it
-        returns the ``constraint_columns``.
+        Ensure the method crashes when ``strict_boundaries`` is not a bool.
 
         Input:
-        - low = 'a'
-        - high = 'b'
-        - scalar = 'unknown'
-        - drop = None
+        - a string
+        - a string
+        - a non-bool
         Side effect:
-        - Raise error because scalar is unknown
+        - Raise ``ValueError`` because ``strict_boundaries`` must be a boolean
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low='a', high='b', scalar='unknown', drop=None)
+            Inequality._validate_inputs(
+                low_column_name='a', high_column_name='b', strict_boundaries=None
+            )
 
-    def test__validate_inputs_drop_error_low(self):
-        """Test the ``_validate_inputs`` method.
-
-        Make sure the method raises an error if ``drop``==``scalar``
-        when ``scalar`` is not ``None``.
-
-        Input:
-        - low = 2
-        - high = 'b'
-        - scalar = 'low'
-        - drop = 'low'
-        Side effect:
-        - Raise error because scalar is unknown
-        """
-        # Run / Assert
-        with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low=2, high='b', scalar='low', drop='low')
-
-    def test__validate_inputs_drop_error_high(self):
-        """Test the ``_validate_inputs`` method.
-
-        Make sure the method raises an error if ``drop``==``scalar``
-        when ``scalar`` is not ``None``.
-
-        Input:
-        - low = 'a'
-        - high = 3
-        - scalar = 'high'
-        - drop = 'high'
-        Side effect:
-        - Raise error because scalar is unknown
-        """
-        # Run / Assert
-        with pytest.raises(ValueError):
-            GreaterThan._validate_inputs(low='a', high=3, scalar='high', drop='high')
-
-    def test__validate_inputs_drop_success(self):
-        """Test the ``_validate_inputs`` method.
-
-        Make sure the method raises an error if ``drop``==``scalar``
-        when ``scalar`` is not ``None``.
-
-        Input:
-        - low = 'a'
-        - high = 'b'
-        - scalar = 'high'
-        - drop = 'low'
-        Output:
-        - low = ['a']
-        - high = 0
-        - constraint_columns == ('a')
-        """
-        # Run / Assert
-        low, high, constraint_columns = GreaterThan._validate_inputs(
-            low='a', high=0, scalar='high', drop='low')
-
-        assert low == ['a']
-        assert high == 0
-        assert constraint_columns == ('a',)
-
-    def test___init___(self):
-        """Test the ``GreaterThan.__init__`` method.
+    @patch('sdv.constraints.tabular.Inequality._validate_inputs')
+    def test___init___(self, mock_validate):
+        """Test the ``Inequality.__init__`` method.
 
         The passed arguments should be stored as attributes.
 
         Input:
-        - low = 'a'
-        - high = 'b'
+        - low_column_name and high_column_name should be two column names
         Side effects:
-        - instance._low == 'a'
-        - instance._high == 'b'
-        - instance._strict == False
+        - _low_column_name and _high_column_name are set to the input column names
+        - _diff_column_name is set to '_low_column_name#_high_column_name'
+        - _operator is set to the default np.greater_equal
+        - rebuild_columns is a tuple of _igh_column_name
+        - _dtype and _is_datetime are None
+        - _validate_inputs is called once
         """
         # Run
-        instance = GreaterThan(low='a', high='b')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Asserts
-        assert instance._low == ['a']
-        assert instance._high == ['b']
-        assert instance._strict is False
-        assert instance._scalar is None
-        assert instance._drop is None
-        assert instance.constraint_columns == ('a', 'b')
+        assert instance._low_column_name == 'a'
+        assert instance._high_column_name == 'b'
+        assert instance._diff_column_name == 'a#b'
+        assert instance._operator == np.greater_equal
+        assert instance.rebuild_columns == tuple('b')
+        assert instance._dtype is None
+        assert instance._is_datetime is None
+        mock_validate.assert_called_once_with('a', 'b', False)
 
-    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
-        """Test the ``GreaterThan.__init__`` method.
+    def test___init___strict_boundaries_true(self):
+        """Test the ``Inequality.__init__`` method.
 
-        The rebuild columns should only be set if the ``handling_strategy``
-        is not ``reject_sampling``.
-
-        Side effects:
-        - instance.rebuild_columns are set
-        """
-        # Run
-        instance = GreaterThan(low='a', high='b', handling_strategy='transform')
-
-        # Assert
-        assert instance.rebuild_columns == ['b']
-
-    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
-        """Test the ``GreaterThan.__init__`` method.
-
-        The rebuild columns should not be set if the ``handling_strategy``
-        is ``reject_sampling``.
-
-        Side effects:
-        - instance.rebuild_columns are empty
-        """
-        # Run
-        instance = GreaterThan(low='a', high='b', handling_strategy='reject_sampling')
-
-        # Assert
-        assert instance.rebuild_columns == ()
-
-    def test___init___high_is_scalar(self):
-        """Test the ``GreaterThan.__init__`` method.
-
-        The passed arguments should be stored as attributes. Make sure ``scalar``
-        is set to ``'high'``.
-
-        Input:
-        - low = 'a'
-        - high = 0
-        - strict = True
-        - drop = 'low'
-        - scalar = 'high'
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._drop = 'low'
-        - instance._scalar == 'high'
-        """
-        # Run
-        instance = GreaterThan(low='a', high=0, strict=True, drop='low', scalar='high')
-
-        # Asserts
-        assert instance._low == ['a']
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._scalar == 'high'
-        assert instance._drop == 'low'
-        assert instance.constraint_columns == ('a',)
-
-    def test___init___low_is_scalar(self):
-        """Test the ``GreaterThan.__init__`` method.
-
-        The passed arguments should be stored as attributes. Make sure ``scalar``
-        is set to ``'high'``.
-
-        Input:
-        - low = 0
-        - high = 'a'
-        - strict = True
-        - drop = 'high'
-        - scalar = 'low'
-        Side effects:
-        - instance._low == 0
-        - instance._high == 'a'
-        - instance._stric == True
-        - instance._drop = 'high'
-        - instance._scalar == 'low'
-        """
-        # Run
-        instance = GreaterThan(low=0, high='a', strict=True, drop='high', scalar='low')
-
-        # Asserts
-        assert instance._low == 0
-        assert instance._high == ['a']
-        assert instance._strict is True
-        assert instance._scalar == 'low'
-        assert instance._drop == 'high'
-        assert instance.constraint_columns == ('a',)
-
-    def test___init___strict_is_false(self):
-        """Test the ``GreaterThan.__init__`` method.
-
-        Ensure that ``operator`` is set to ``np.greater_equal``
-        when ``strict`` is set to ``False``.
+        Ensure that ``_operator`` is set to ``np.greater``
+        when ``strict_boundaries`` is set to ``True``.
 
         Input:
         - low = 'a'
         - high = 'b'
-        - strict = False
+        - strict_boundaries = True
         """
         # Run
-        instance = GreaterThan(low='a', high='b', strict=False)
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
 
         # Assert
-        assert instance.operator == np.greater_equal
+        assert instance._operator == np.greater
 
-    def test___init___strict_is_true(self):
-        """Test the ``GreaterThan.__init__`` method.
+    def test__get_is_datetime_incorrect_data(self):
+        """Test the ``Inequality._get_is_datetime`` method.
 
-        Ensure that ``operator`` is set to ``np.greater``
-        when ``strict`` is set to ``True``.
-
-        Input:
-        - low = 'a'
-        - high = 'b'
-        - strict = True
-        """
-        # Run
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Assert
-        assert instance.operator == np.greater
-
-    def test__init__get_columns_to_reconstruct_default(self):
-        """Test the ``GreaterThan._get_columns_to_reconstruct`` method.
-
-        This method returns:
-            - ``_high`` if drop is "high"
-            - ``_low`` if drop is "low"
-            - ``_low`` if scalar is "high"
-            - ``_high`` otherwise
-
-        Setup:
-        - low = 'a'
-        - high = 'b'
-        Side effects:
-        - self._columns_to_reconstruct == ['b']
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-        instance._columns_to_reconstruct == ['b']
-
-    def test__init__get_columns_to_reconstruct_drop_high(self):
-        """Test the ``GreaterThan._get_columns_to_reconstruct`` method.
-
-        This method returns:
-            - ``_high`` if drop is "high"
-            - ``_low`` if drop is "low"
-            - ``_low`` if scalar is "high"
-            - ``_high`` otherwise
-
-        Setup:
-        - low = 'a'
-        - high = 'b'
-        - drop = 'high'
-        Side effects:
-        - self._columns_to_reconstruct == ['b']
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', drop='high')
-        instance._columns_to_reconstruct == ['b']
-
-    def test__init__get_columns_to_reconstruct_drop_low(self):
-        """Test the ``GreaterThan._get_columns_to_reconstruct`` method.
-
-        This method returns:
-            - ``_high`` if drop is "high"
-            - ``_low`` if drop is "low"
-            - ``_low`` if scalar is "high"
-            - ``_high`` otherwise
-
-        Setup:
-        - low = 'a'
-        - high = 'b'
-        - drop = 'low'
-        Side effects:
-        - self._columns_to_reconstruct == ['a']
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', drop='low')
-        instance._columns_to_reconstruct == ['a']
-
-    def test__init__get_columns_to_reconstruct_scalar_high(self):
-        """Test the ``GreaterThan._get_columns_to_reconstruct`` method.
-
-        This method returns:
-            - ``_high`` if drop is "high"
-            - ``_low`` if drop is "low"
-            - ``_low`` if scalar is "high"
-            - ``_high`` otherwise
-
-        Setup:
-        - low = 'a'
-        - high = 0
-        - scalar = 'high'
-        Side effects:
-        - self._columns_to_reconstruct == ['a']
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=0, scalar='high')
-        instance._columns_to_reconstruct == ['a']
-
-    def test__get_value_column_list(self):
-        """Test the ``GreaterThan._get_value`` method.
-
-        This method returns a scalar or a ndarray of values
-        depending on the type of the ``field``.
+        Ensure that if one of the low/high columns is datetime, both of them are.
 
         Input:
-        - Table with given data.
-        - field = 'low'
+        - Table data.
+        Side Effect:
+        - Raises ``ValueError`` if only one of the low/high columns is datetime.
         """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
+        # Setupy
         table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
+            'a': pd.to_datetime(['2020-01-01']),
+            'b': ['a']
         })
-        out = instance._get_value(table_data, 'low')
-
-        # Assert
-        expected = table_data[['a']].values
-        np.testing.assert_array_equal(out, expected)
-
-    def test__get_value_scalar(self):
-        """Test the ``GreaterThan._get_value`` method.
-
-        This method returns a scalar or a ndarray of values
-        depending on the type of the ``field``.
-
-        Input:
-        - Table with given data.
-        - field = 'low'
-        - scalar = 'low'
-        """
-        # Setup
-        instance = GreaterThan(low=3, high='b', scalar='low')
-
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-        out = instance._get_value(table_data, 'low')
-
-        # Assert
-        expected = 3
-        assert out == expected
-
-    def test__get_diff_columns_name_low_is_scalar(self):
-        """Test the ``GreaterThan._get_diff_columns_name`` method.
-
-        The returned names should be equal to the given columns plus
-        tokenized with '#'.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low=0, high=['a', 'b#'], scalar='low')
-
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b#': [4, 5, 6]
-        })
-        out = instance._get_diff_columns_name(table_data)
-
-        # Assert
-        expected = ['a#', 'b##']
-        assert out == expected
-
-    def test__get_diff_columns_name_high_is_scalar(self):
-        """Test the ``GreaterThan._get_diff_columns_name`` method.
-
-        The returned names should be equal to the given columns plus
-        tokenized with '#'.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=0, scalar='high')
-
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
-        out = instance._get_diff_columns_name(table_data)
-
-        # Assert
-        expected = ['a#', 'b#']
-        assert out == expected
-
-    def test__get_diff_columns_name_scalar_is_none(self):
-        """Test the ``GreaterThan._get_diff_columns_name`` method.
-
-        The returned names should be equal one name of the two columns
-        with a token between them.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b#', scalar=None)
-
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b#': [4, 5, 6]
-        })
-        out = instance._get_diff_columns_name(table_data)
-
-        # Assert
-        expected = ['b##a']
-        assert out == expected
-
-    def test__get_diff_columns_name_scalar_is_none_multi_column_low(self):
-        """Test the ``GreaterThan._get_diff_columns_name`` method.
-
-        The returned names should be equal one name of the two columns
-        with a token between them.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low=['a#', 'c'], high='b', scalar=None)
-
-        table_data = pd.DataFrame({
-            'a#': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c#': [7, 8, 9]
-        })
-        out = instance._get_diff_columns_name(table_data)
-
-        # Assert
-        expected = ['a##b', 'c#b']
-        assert out == expected
-
-    def test__get_diff_columns_name_scalar_is_none_multi_column_high(self):
-        """Test the ``GreaterThan._get_diff_columns_name`` method.
-
-        The returned names should be equal one name of the two columns
-        with a token between them.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low=0, high=['b', 'c'], scalar=None)
-
-        table_data = pd.DataFrame({
-            0: [1, 2, 4],
-            'b': [4, 5, 6],
-            'c#': [7, 8, 9]
-        })
-        out = instance._get_diff_columns_name(table_data)
-
-        # Assert
-        expected = ['b#0', 'c#0']
-        assert out == expected
-
-    def test__check_columns_exist_success(self):
-        """Test the ``GreaterThan._check_columns_exist`` method.
-
-        This method raises an error if the specified columns in
-        ``low`` or ``high`` do not exist.
-
-        Input:
-        - Table with given data.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run / Assert
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
-        instance._check_columns_exist(table_data, 'low')
-        instance._check_columns_exist(table_data, 'high')
+        err_msg = 'Both high and low must be datetime.'
+        with pytest.raises(ValueError, match=err_msg):
+            instance._get_is_datetime(table_data)
 
-    def test__check_columns_exist_error(self):
-        """Test the ``GreaterThan._check_columns_exist`` method.
+    def test__validate_columns_exist_incorrect_columns(self):
+        """Test the ``Inequality._validate_columns_exist`` method.
 
-        This method raises an error if the specified columns in
-        ``low`` or ``high`` do not exist.
+        This method raises an error if ``low_column_name`` or ``high_column_name`` do not exist.
 
         Input:
         - Table with given data.
         """
         # Setup
-        instance = GreaterThan(low='a', high='c')
-
-        # Run / Assert
         table_data = pd.DataFrame({
             'a': [1, 2, 4],
             'b': [4, 5, 6]
         })
-        instance._check_columns_exist(table_data, 'low')
+        instance = Inequality(low_column_name='a', high_column_name='c')
+
+        # Run / Assert
         with pytest.raises(KeyError):
-            instance._check_columns_exist(table_data, 'high')
+            instance._validate_columns_exist(table_data)
 
-    def test__fit_only_one_datetime_arg(self):
-        """Test the ``Between._fit`` method by passing in only one arg as datetime.
+    def test__fit(self):
+        """Test the ``Inequality._fit`` method.
 
-        If only one of the high / low args is a datetime type, expect a ValueError.
+        The method should learn the ``dtype`` of ``_column_name`` and ``_is_datetime``.
 
         Input:
-        - low is an int column
-        - high is a datetime
-        Output:
-        - n/a
-        Side Effects:
-        - ValueError
+        - Table data with integers.
+        Side Effect:
+        - _validate_columns_exist should be called once
+        - _get_is_datetime should be called once
+        - _is_datetime should receive the output of _get_is_datetime
+        - _dtype should be a list of integer dtypes.
         """
         # Setup
-        instance = GreaterThan(low='a', high=pd.to_datetime('2021-01-01'), scalar='high')
-
-        # Run and assert
         table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
+            'a': [1, 2, 4],
             'b': [4, 5, 6]
         })
-        with pytest.raises(ValueError):
-            instance._fit(table_data)
-
-    def test__fit__low_is_not_found_and_scalar_is_none(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should raise an error if
-        the ``low`` is set to a value not seen in ``table_data``.
-
-        Input:
-        - Table without ``low`` in columns.
-        Side Effect:
-        - KeyError.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high='b')
-
-        # Run / Assert
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        with pytest.raises(KeyError):
-            instance._fit(table_data)
-
-    def test__fit__high_is_not_found_and_scalar_is_none(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should raise an error if
-        the ``high`` is set to a value not seen in ``table_data``.
-
-        Input:
-        - Table without ``high`` in columns.
-        Side Effect:
-        - KeyError.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=3)
-
-        # Run / Assert
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        with pytest.raises(KeyError):
-            instance._fit(table_data)
-
-    def test__fit__low_is_not_found_scalar_is_high(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should raise an error if
-        the ``low`` is set to a value not seen in ``table_data``.
-
-        Input:
-        - Table without ``low`` in columns.
-        Side Effect:
-        - KeyError.
-        """
-        # Setup
-        instance = GreaterThan(low='c', high=3, scalar='high')
-
-        # Run / Assert
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        with pytest.raises(KeyError):
-            instance._fit(table_data)
-
-    def test__fit__high_is_not_found_scalar_is_high(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should raise an error if
-        the ``high`` is set to a value not seen in ``table_data``.
-
-        Input:
-        - Table without ``high`` in columns.
-        Side Effect:
-        - KeyError.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high='c', scalar='low')
-
-        # Run / Assert
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6]
-        })
-        with pytest.raises(KeyError):
-            instance._fit(table_data)
-
-    def test__fit__columns_to_reconstruct_drop_high(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_columns_to_reconstruct``
-        to ``instance._high`` if ``instance_drop`` is `high`.
-
-        Input:
-        - Table with two columns.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._high``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', drop='high')
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._validate_columns_exist = Mock()
+        instance._get_is_datetime = Mock(return_value='abc')
 
         # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
         instance._fit(table_data)
 
-        # Asserts
-        assert instance._columns_to_reconstruct == ['b']
+        # Assert
+        instance._validate_columns_exist.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once_with(table_data)
+        assert instance._is_datetime == 'abc'
+        assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
-    def test__fit__columns_to_reconstruct_drop_low(self):
-        """Test the ``GreaterThan._fit`` method.
+    def test__fit_floats(self):
+        """Test the ``Inequality._fit`` method.
 
-        The ``GreaterThan._fit`` method should set ``_columns_to_reconstruct``
-        to ``instance._low`` if ``instance_drop`` is `low`.
+        The attribute ``_dtype`` should be float when ``high_column_name`` contains floats.
 
         Input:
-        - Table with two columns.
+        - Table data with floats.
         Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._low``
+        - _dtype should be a float dtype.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', drop='low')
-
-        # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
+            'a': [1, 2, 4],
+            'b': [4., 5., 6.]
         })
-        instance._fit(table_data)
-
-        # Asserts
-        assert instance._columns_to_reconstruct == ['a']
-
-    def test__fit__columns_to_reconstruct_default(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_columns_to_reconstruct``
-        to `high` by default.
-
-        Input:
-        - Table with two columns.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._high``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
         instance._fit(table_data)
 
-        # Asserts
-        assert instance._columns_to_reconstruct == ['b']
-
-    def test__fit__columns_to_reconstruct_high_is_scalar(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_columns_to_reconstruct``
-        to `low` if ``instance._scalar`` is ``'high'``.
-
-        Input:
-        - Table with two columns.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._low``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', scalar='high')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert instance._columns_to_reconstruct == ['a']
-
-    def test__fit__columns_to_reconstruct_low_is_scalar(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_columns_to_reconstruct``
-        to `high` if ``instance._scalar`` is ``'low'``.
-
-        Input:
-        - Table with two columns.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._high``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', scalar='low')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert instance._columns_to_reconstruct == ['b']
-
-    def test__fit__diff_columns_one_column(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_diff_columns``
-        to the one column in ``instance.constraint_columns`` plus a
-        token if there is only one column in that set.
-
-        Input:
-        - Table with one column.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._low``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=3, scalar='high')
-
-        # Run
-        table_data = pd.DataFrame({'a': [1, 2, 3]})
-        instance._fit(table_data)
-
-        # Asserts
-        assert instance._diff_columns == ['a#']
-
-    def test__fit__diff_columns_multiple_columns(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should set ``_diff_columns``
-        to the two columns in ``instance.constraint_columns`` separated
-        by a token if there both columns are in that set.
-
-        Input:
-        - Table with two column.
-        Side Effect:
-        - ``_columns_to_reconstruct`` is ``instance._low``
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert instance._diff_columns == ['b#a']
-
-    def test__fit_int(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should only learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute
-        if ``_low_is_scalar`` and ``high_is_scalar`` are ``False``.
-
-        Input:
-        - Table that contains two constrained columns with the high one
-          being made of integers.
-        Side Effect:
-        - The _dtype attribute gets `int` as the value even if the low
-          column has a different dtype.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert all([dtype.kind == 'i' for dtype in instance._dtype])
-
-    def test__fit_float(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should only learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute
-        if ``_low_is_scalar`` and ``high_is_scalar`` are ``False``.
-
-        Input:
-        - Table that contains two constrained columns with the high one
-          being made of float values.
-        Side Effect:
-        - The _dtype attribute gets `float` as the value even if the low
-          column has a different dtype.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4., 5., 6.],
-            'c': [7, 8, 9]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert all([dtype.kind == 'f' for dtype in instance._dtype])
+        # Assert
+        assert instance._dtype == np.dtype('float')
 
     def test__fit_datetime(self):
-        """Test the ``GreaterThan._fit`` method.
+        """Test the ``Inequality._fit`` method.
 
-        The ``GreaterThan._fit`` method should only learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute
-        if ``_low_is_scalar`` and ``high_is_scalar`` are ``False``.
+        The attribute ``_dtype`` should be datetime when ``high_column_name`` contains datetimes.
 
         Input:
-        - Table that contains two constrained columns of datetimes.
+        - Table data with datetimes.
         Side Effect:
-        - The _dtype attribute gets `datetime` as the value.
+        - _dtype should be a list of datetime dtypes.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b')
-
-        # Run
         table_data = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01']),
             'b': pd.to_datetime(['2020-01-02'])
         })
-        instance._fit(table_data)
-
-        # Asserts
-        assert all([dtype.kind == 'M' for dtype in instance._dtype])
-
-    def test__fit_type__high_is_scalar(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should learn and store the
-        ``dtype`` of the ``low`` column as the ``_dtype`` attribute
-        if ``_scalar`` is ``'high'``.
-
-        Input:
-        - Table that contains two constrained columns with the low one
-          being made of floats.
-        Side Effect:
-        - The _dtype attribute gets `float` as the value.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=3, scalar='high')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
-        table_data = pd.DataFrame({
-            'a': [1., 2., 3.],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert all([dtype.kind == 'f' for dtype in instance._dtype])
-
-    def test__fit_type__low_is_scalar(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute
-        if ``_scalar`` is ``'low'``.
-
-        Input:
-        - Table that contains two constrained columns with the high one
-          being made of floats.
-        Side Effect:
-        - The _dtype attribute gets `float` as the value.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high='b', scalar='low')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4., 5., 6.],
-            'c': [7, 8, 9]
-        })
-        instance._fit(table_data)
-
-        # Asserts
-        assert all([dtype.kind == 'f' for dtype in instance._dtype])
-
-    def test__fit_high_is_scalar_multi_column(self):
-        """Test the ``GreaterThan._fit`` method.
-
-        The ``GreaterThan._fit`` method should learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute.
-
-        Input:
-        - Table that contains two constrained columns with different dtype.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=0, scalar='high')
-        dtype_int = pd.Series([1]).dtype
-        dtype_float = np.dtype('float')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4., 5., 6.]
-        })
         instance._fit(table_data)
 
         # Assert
-        expected_diff_columns = ['a#', 'b#']
-        expected_dtype = pd.Series([dtype_int, dtype_float], index=table_data.columns)
-        assert instance._diff_columns == expected_diff_columns
-        pd.testing.assert_series_equal(instance._dtype, expected_dtype)
+        assert instance._dtype == np.dtype('<M8[ns]')
 
-    def test__fit_low_is_scalar_multi_column(self):
-        """Test the ``GreaterThan._fit`` method.
+    def test_is_valid(self):
+        """Test the ``Inequality.is_valid`` method.
 
-        The ``GreaterThan._fit`` method should learn and store the
-        ``dtype`` of the ``high`` column as the ``_dtype`` attribute.
+        The method should return True when ``high_column_name`` column is greater or equal to
+        ``low_column_name`` or the row contains nan, otherwise return False.
 
         Input:
-        - Table that contains two constrained columns with different dtype.
-        """
-        # Setup
-        instance = GreaterThan(low=0, high=['a', 'b'], scalar='low')
-        dtype_int = pd.Series([1]).dtype
-        dtype_float = np.dtype('float')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4., 5., 6.]
-        })
-        instance._fit(table_data)
-
-        # Assert
-        expected_diff_columns = ['a#', 'b#']
-        expected_dtype = pd.Series([dtype_int, dtype_float], index=table_data.columns)
-        assert instance._diff_columns == expected_diff_columns
-        pd.testing.assert_series_equal(instance._dtype, expected_dtype)
-
-    def test_is_valid_strict_false(self):
-        """Test the ``GreaterThan.is_valid`` method with strict False.
-
-        If strict is False, equal values should count as valid.
-
-        Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - False should be returned for the strictly invalid row and True
-          for the other two.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=False)
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
+            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
+            'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
+            'c': [7, 8, 9, 10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, True, False]
+        expected_out = [True, True, False, True, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_strict_true(self):
-        """Test the ``GreaterThan.is_valid`` method with strict True.
+    def test_is_valid_strict_boundaries_True(self):
+        """Test the ``Inequality.is_valid`` method with ``strict_boundaries = True``.
 
-        If strict is True, equal values should count as invalid.
+        The method should return True when ``high_column_name`` column is greater than
+        ``low_column_name`` or the row contains nan, otherwise return False.
 
         Input:
-        - Table with a strictly valid row, a strictly invalid row and
-          a row that has the same value for both high and low.
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
         Output:
-        - True should be returned for the strictly valid row and False
-          for the other two.
+        - False should be returned for the non-strictly invalid rows and True for the rest.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
+            'a': [1, np.nan, 3, 4, None, 6, 8, 0],
+            'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
+            'c': [7, 8, 9, 10, 11, 12, 13, 14]
         })
         out = instance.is_valid(table_data)
 
         # Assert
-        expected_out = [True, False, False]
+        expected_out = [True, True, False, False, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_low_is_scalar_high_is_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
+    def test_is_valid_datetimes(self):
+        """Test the ``Inequality.is_valid`` method with datetimes.
 
-        If low is a scalar, and high is a column name, then
-        the values in that column should all be higher than
-        ``instance._low``.
+        The method should return True when ``high_column_name`` column is greater or equal to
+        ``low_column_name`` or the row contains nan, otherwise return False.
 
         Input:
-        - Table with values above and below low.
+        - Table with datetimes and np.nans.
         Output:
-        - True should be returned for the rows where the high
-        column is above low.
+        - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
-        instance = GreaterThan(low=3, high='b', strict=False, scalar='low')
+        instance = Inequality(low_column_name='a', high_column_name='b')
 
         # Run
         table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
+            'a': [datetime(2020, 5, 17), datetime(2021, 9, 1), np.nan],
+            'b': [datetime(2020, 5, 18), datetime(2020, 9, 2), datetime(2020, 9, 2)],
             'c': [7, 8, 9]
         })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, False, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_scalar_low_is_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a scalar, and low is a column name, then
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below high.
-        Output:
-        - True should be returned for the rows where the low
-        column is below high.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=2, strict=False, scalar='high')
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a scalar, and low is multi column, then
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below high.
-        Output:
-        - True should be returned for the rows where the low
-        column is below high.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=2, strict=False, scalar='high')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_low_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If low is a scalar, and high is multi column, then
-        the values in that column should all be higher than
-        ``instance._low``.
-
-        Input:
-        - Table with values above and below low.
-        Output:
-        - True should be returned for the rows where the high
-        column is above low.
-        """
-        # Setup
-        instance = GreaterThan(low=2, high=['a', 'b'], strict=False, scalar='low')
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_scalar_is_none_multi_column(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If scalar is none, and high is multi column, then
-        the values in that column should all be higher than
-        in the low column.
-
-        Input:
-        - Table with values above and below low.
-        Output:
-        - True should be returned for the rows where the high
-        column is above low.
-        """
-        # Setup
-        instance = GreaterThan(low='b', high=['a', 'c'], strict=False)
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 2, 2],
-            'c': [7, 8, 9]
-        })
-
-        # Run
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_high_is_datetime(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If high is a datetime and low is a column,
-        the values in that column should all be lower than
-        ``instance._high``.
-
-        Input:
-        - Table with values above and below `high`.
-        Output:
-        - True should be returned for the rows where the low
-        column is below `high`.
-        """
-        # Setup
-        high_dt = pd.to_datetime('8/31/2021')
-        instance = GreaterThan(low='a', high=high_dt, strict=False, scalar='high')
-        table_data = pd.DataFrame({
-            'a': [datetime(2020, 5, 17), datetime(2020, 2, 1), datetime(2021, 9, 1)],
-            'b': [4, 2, 2],
-        })
-
-        # Run
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_low_is_datetime(self):
-        """Test the ``GreaterThan.is_valid`` method.
-
-        If low is a datetime and high is a column,
-        the values in that column should all be higher than
-        ``instance._low``.
-
-        Input:
-        - Table with values above and below `low`.
-        Output:
-        - True should be returned for the rows where the high
-        column is above `low`.
-        """
-        # Setup
-        low_dt = pd.to_datetime('8/31/2021')
-        instance = GreaterThan(low=low_dt, high='a', strict=False, scalar='low')
-        table_data = pd.DataFrame({
-            'a': [datetime(2021, 9, 17), datetime(2021, 7, 1), datetime(2021, 9, 1)],
-            'b': [4, 2, 2],
-        })
-
-        # Run
         out = instance.is_valid(table_data)
 
         # Assert
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_two_cols_with_nans(self):
-        """Test the ``GreaterThan.is_valid`` method with nan values.
+    def test__transform(self):
+        """Test the ``Inequality._transform`` method.
 
-        If there is a NaN row, expect that `is_valid` returns True.
-
-        Input:
-        - Table with a NaN row
-        Output:
-        - True should be returned for the NaN row.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, None, 3],
-            'b': [4, None, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test_is_valid_two_cols_with_one_nan(self):
-        """Test the ``GreaterThan.is_valid`` method with nan values.
-
-        If there is a row in which we compare one NaN value with one
-        non-NaN value, expect that `is_valid` returns True.
-
-        Input:
-        - Table with a row that contains only one NaN value.
-        Output:
-        - True should be returned for the row with the NaN value.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, None, 3],
-            'b': [4, 5, 2],
-            'c': [7, 8, 9]
-        })
-        out = instance.is_valid(table_data)
-
-        # Assert
-        expected_out = [True, True, False]
-        np.testing.assert_array_equal(expected_out, out)
-
-    def test__transform_int_drop_none(self):
-        """Test the ``GreaterThan._transform`` method passing a high column of type int.
-
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high and low columns and create a diff column with the
-        logarithm of the distance + 1.
+        The method is expected to compute the distance between the high and low columns
+        and create a diff column with the logarithm of the distance + 1.
 
         Setup:
-        - ``_drop`` is set to ``None``, so all original columns will be in output.
+        - ``_diff_column_name`` is set to ``'a#b'``.
         Input:
-        - Table with two columns two constrained columns at a constant distance of
-          exactly 3 and one additional dummy column.
+        - Table with two columns at a constant distance of 3 and one additional dummy column.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
+        - Same table with a diff column of the log of distances + 1, which is np.log(4).
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_columns = ['a#b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_int_drop_high(self):
-        """Test the ``GreaterThan._transform`` method passing a high column of type int.
-
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high and low columns and create a diff column with the
-        logarithm of the distance + 1. It should also drop the high column.
-
-        Setup:
-        - ``_drop`` is set to ``high``.
-        Input:
-        - Table with two columns two constrained columns at a constant distance of
-          exactly 3 and one additional dummy column.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4) and the high column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
-        instance._diff_columns = ['a#b']
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._diff_column_name = 'a#b'
 
         # Run
         table_data = pd.DataFrame({
@@ -2319,97 +1100,22 @@ class TestGreaterThan():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test__transform_int_drop_low(self):
-        """Test the ``GreaterThan._transform`` method passing a high column of type int.
+    def test__transform_datetime(self):
+        """Test the ``Inequality._transform`` method.
 
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high and low columns and create a diff column with the
-        logarithm of the distance + 1. It should also drop the low column.
-
-        Setup:
-        - ``_drop`` is set to ``low``.
-        Input:
-        - Table with two columns two constrained columns at a constant distance of
-          exactly 3 and one additional dummy column.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4) and the low column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
-        instance._diff_columns = ['a#b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_float_drop_none(self):
-        """Test the ``GreaterThan._transform`` method passing a high column of type float.
-
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high and low columns and create a diff column with the
-        logarithm of the distance + 1.
+        The method is expected to compute the distance between the high and low columns
+        and create a diff column with the logarithm of the distance + 1.
 
         Setup:
-        - ``_drop`` is set to ``None``, so all original columns will be in output.
+        - ``_diff_column_name`` is set to ``'a#b'``.
         Input:
-        - Table with two constrained columns at a constant distance of
-          exactly 3 and one additional dummy column.
+        - Table with two datetime columns at a distance of 3 and one additional dummy column.
         Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
+        - Same table with a diff column of the log of distances + 1, which is np.log(4).
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_columns = ['a#b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4., 5., 6.],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4., 5., 6.],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_datetime_drop_none(self):
-        """Test the ``GreaterThan._transform`` method passing a high column of type datetime.
-
-        If the columns are of type datetime, ``_transform`` is expected
-        to convert the timedelta distance into numeric before applying
-        the +1 and logarithm.
-
-        Setup:
-        - ``_drop`` is set to ``None``, so all original columns will be in output.
-        Input:
-        - Table with values at a distance of exactly 1 second.
-        Output:
-        - Same table with a diff column of the logarithms
-          of the dinstance in nanoseconds + 1, which is np.log(1_000_000_001).
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._diff_columns = ['a#b']
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._diff_column_name = 'a#b'
         instance._is_datetime = True
 
         # Run
@@ -2423,210 +1129,15 @@ class TestGreaterThan():
         # Assert
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_transform_not_all_columns_provided(self):
-        """Test the ``GreaterThan.transform`` method.
+    def test_reverse_transform(self):
+        """Test the ``Inequality.reverse_transform`` method.
 
-        If some of the columns needed for the transform are missing, it will raise
-        a ``MissingConstraintColumnError``.
-
-        Input:
-        - Table data (pandas.DataFrame)
-        Output:
-        - Raises ``MissingConstraintColumnError``.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, fit_columns_model=False)
-
-        # Run/Assert
-        with pytest.raises(MissingConstraintColumnError):
-            instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
-
-    def test__transform_high_is_scalar(self):
-        """Test the ``GreaterThan._transform`` method with high as scalar.
-
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high scalar value and the low column and create a diff column
-        with the logarithm of the distance + 1.
-
-        Setup:
-        - ``_high`` is set to 5 and ``_scalar`` is ``'high'``.
-        Input:
-        - Table with one low column and two dummy columns.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=5, strict=True, scalar='high')
-        instance._diff_columns = ['a#b']
-        instance.constraint_columns = ['a']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(5), np.log(4), np.log(3)],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_low_is_scalar(self):
-        """Test the ``GreaterThan._transform`` method with high as scalar.
-
-        The ``GreaterThan._transform`` method is expected to compute the distance
-        between the high scalar value and the low column and create a diff column
-        with the logarithm of the distance + 1.
-
-        Setup:
-        - ``_high`` is set to 5 and ``_scalar`` is ``'low'``.
-        Input:
-        - Table with one low column and two dummy columns.
-        Output:
-        - Same table with a diff column of the logarithms of the distances + 1,
-        which is np.log(4).
-        """
-        # Setup
-        instance = GreaterThan(low=2, high='b', strict=True, scalar='low')
-        instance._diff_columns = ['a#b']
-        instance.constraint_columns = ['b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(3), np.log(4), np.log(5)],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test__transform_high_is_scalar_multi_column(self):
-        """Test the ``GreaterThan._transform`` method.
-
-        The ``GreaterThan._transform`` method is expected to compute the logarithm
-        of given columns + 1.
-
-        Input:
-        - Table with given data.
-        Output:
-        - Same table with additional columns of the logarithms + 1.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, scalar='high')
-        instance._diff_columns = ['a#', 'b#']
-        instance.constraint_columns = ['a', 'b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(3), np.log(2), np.log(1)],
-            'b#': [np.log(0), np.log(-1), np.log(-2)],
-        })
-        pd.testing.assert_frame_equal(out, expected)
-
-    def test__transform_low_is_scalar_multi_column(self):
-        """Test the ``GreaterThan._transform`` method.
-
-        The ``GreaterThan._transform`` method is expected to compute the logarithm
-        of given columns + 1.
-
-        Input:
-        - Table with given data.
-        Output:
-        - Same table with additional columns of the logarithms + 1.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, scalar='low')
-        instance._diff_columns = ['a#', 'b#']
-        instance.constraint_columns = ['a', 'b']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(-1), np.log(0), np.log(1)],
-            'b#': [np.log(2), np.log(3), np.log(4)],
-        })
-        pd.testing.assert_frame_equal(out, expected)
-
-    def test__transform_scalar_is_none_multi_column(self):
-        """Test the ``GreaterThan._transform`` method.
-
-        The ``GreaterThan._transform`` method is expected to compute the logarithm
-        of given columns + 1.
-
-        Input:
-        - Table with given data.
-        Output:
-        - Same table with additional columns of the logarithms + 1.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'c'], high='b', strict=True)
-        instance._diff_columns = ['a#', 'c#']
-        instance.constraint_columns = ['a', 'c']
-
-        # Run
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        out = instance._transform(table_data)
-
-        # Assert
-        expected = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(4)] * 3,
-            'c#': [np.log(-2)] * 3,
-        })
-        pd.testing.assert_frame_equal(out, expected)
-
-    def test_reverse_transform_int_drop_high(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
+        The method is expected to:
             - apply an exponential to the input
             - subtract 1
             - add the low column
@@ -2634,18 +1145,17 @@ class TestGreaterThan():
             - add back the dropped column
 
         Setup:
-        - ``_drop`` is set to ``high``.
+        - ``_diff_column_name = 'a#b'``
+        - ``_dtype`` as integer
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 3 with diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
-        instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['b']
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#b'
 
         # Run
         transformed = pd.DataFrame({
@@ -2663,29 +1173,28 @@ class TestGreaterThan():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform_float_drop_high(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype float.
+    def test_reverse_transform_floats(self):
+        """Test the ``Inequality.reverse_transform`` method.
 
-        The ``GreaterThan.reverse_transform`` method is expected to:
+        The method is expected to:
             - apply an exponential to the input
             - subtract 1
             - add the low column
-            - convert the output to float values
+            - convert the output to floats
             - add back the dropped column
 
         Setup:
-        - ``_drop`` is set to ``high``.
+        - ``_diff_column_name = 'a#b'``
+        - ``_dtype`` as float
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as float values
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 3 with diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
-        instance._dtype = [np.dtype('float')]
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['b']
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._dtype = np.dtype('float')
+        instance._diff_column_name = 'a#b'
 
         # Run
         transformed = pd.DataFrame({
@@ -2703,30 +1212,29 @@ class TestGreaterThan():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform_datetime_drop_high(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
+    def test_reverse_transform_datetime(self):
+        """Test the ``Inequality.reverse_transform`` method.
 
-        The ``GreaterThan.reverse_transform`` method is expected to:
+        The method is expected to:
             - apply an exponential to the input
             - subtract 1
-            - convert the distance to a timedelta
             - add the low column
-            - convert the output to datetimes
+            - convert the output to datetime
+            - add back the dropped column
 
         Setup:
-        - ``_drop`` is set to ``high``.
+        - ``_diff_column_name = 'a#b'``
+        - ``_dtype`` as datetime
         Input:
-        - Table with a diff column that contains the constant np.log(1_000_000_001).
+        - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + one second
-        and the diff column dropped.
+        - Same table with the high column replaced by the low one + 1sec with diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='high')
-        instance._dtype = [np.dtype('<M8[ns]')]
-        instance._diff_columns = ['a#b']
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column_name = 'a#b'
         instance._is_datetime = True
-        instance._columns_to_reconstruct = ['b']
 
         # Run
         transformed = pd.DataFrame({
@@ -2744,472 +1252,446 @@ class TestGreaterThan():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform_int_drop_low(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
 
-        The ``GreaterThan.reverse_transform`` method is expected to:
+class TestScalarInequality():
+
+    def test__validate_inputs_incorrect_column(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the column name is not a string.
+
+        Input:
+        - a non-string
+        - a number
+        - an inequality
+        Side effect:
+        - Raise ``ValueError`` because the column name must be a string
+        """
+        # Run / Assert
+        err_msg = '`column_name` must be a string.'
+        with pytest.raises(ValueError, match=err_msg):
+            ScalarInequality._validate_inputs(column_name=['a'], value=1, relation='>')
+
+    def test__validate_inputs_incorrect_value(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the value is not numerical.
+
+        Input:
+        - a string
+        - a non-number
+        - an inequality
+        Side effect:
+        - Raise ``ValueError`` because the value must be a numerical
+        """
+        # Run / Assert
+        err_msg = '`value` must be a number or datetime.'
+        with pytest.raises(ValueError, match=err_msg):
+            ScalarInequality._validate_inputs(column_name='a', value='b', relation='>')
+
+    def test__validate_inputs_incorrect_relation(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method crashes when the column name is not a string.
+
+        Input:
+        - a string
+        - a number
+        - a non-inequality
+        Side effect:
+        - Raise ``ValueError`` because the relation must be an inequality
+        """
+        # Run / Assert
+        err_msg = '`relation` must be one of the following: `>`, `>=`, `<`, `<=`'
+        with pytest.raises(ValueError, match=err_msg):
+            ScalarInequality._validate_inputs(column_name='a', value=1, relation='=')
+
+    @patch('sdv.constraints.tabular.ScalarInequality._validate_inputs')
+    def test___init___(self, mock_validate):
+        """Test the ``ScalarInequality.__init__`` method.
+
+        The passed arguments should be stored as attributes.
+
+        Input:
+        - column_name should be a column name
+        - value should be a number
+        - relation should be an inequality symbol
+        Side effects:
+        - _column_name is set to column_name
+        - _value is set to value
+        - _diff_column_name is set to 'column_name#diff'
+        - _operator is set to the numpy operation corresponding to the input relation
+        - _dtype and _is_datetime are None
+        - _validate_inputs is called once
+        """
+        # Run
+        instance = ScalarInequality(column_name='a', value=1, relation='>')
+        instance._validate_inputs = Mock()
+
+        # Asserts
+        assert instance._column_name == 'a'
+        assert instance._value == 1
+        assert instance._diff_column_name == 'a#diff'
+        assert instance._operator == np.greater
+        assert instance._dtype is None
+        assert instance._is_datetime is None
+        mock_validate.assert_called_once_with('a', 1, '>')
+
+    def test__get_is_datetime_incorrect_data(self):
+        """Test the ``ScalarInequality._get_is_datetime`` method.
+
+        Ensure that if one of column/value is datetime, both of them are.
+
+        Input:
+        - Table data.
+        Side Effect:
+        - Raises ``ValueError`` if only one of column/value is datetime.
+        """
+        # Setupy
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+        })
+        instance = ScalarInequality(column_name='a', value=1, relation='<')
+
+        # Run / Assert
+        err_msg = 'Both column and value must be datetime.'
+        with pytest.raises(ValueError, match=err_msg):
+            instance._get_is_datetime(table_data)
+
+    def test__validate_columns_exist_incorrect_columns(self):
+        """Test the ``ScalarInequality._validate_columns_exist`` method.
+
+        This method raises an error if ``column_name`` does not exist.
+
+        Input:
+        - Table with given data.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        instance = ScalarInequality(column_name='c', value=5, relation='>')
+
+        # Run / Assert
+        with pytest.raises(KeyError):
+            instance._validate_columns_exist(table_data)
+
+    def test__fit(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The method should learn the ``dtype`` of ``column_name`` and ``_is_datetime``.
+
+        Input:
+        - Table data with integers.
+        Side Effect:
+        - _validate_columns_exist should be called once
+        - _get_is_datetime should be called once
+        - _is_datetime should receive the output of _get_is_datetime
+        - _dtype should be a list of integer dtypes.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4, 5, 6]
+        })
+        instance = ScalarInequality(column_name='b', value=3, relation='>')
+        instance._validate_columns_exist = Mock()
+        instance._get_is_datetime = Mock(return_value='abc')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        instance._validate_columns_exist.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once_with(table_data)
+        assert instance._is_datetime == 'abc'
+        assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+
+    def test__fit_floats(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The attribute ``_dtype`` should be float when ``column_name`` contains floats.
+
+        Input:
+        - Table data with floats.
+        Side Effect:
+        - _dtype should be a float dtype.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': [1, 2, 4],
+            'b': [4., 5., 6.]
+        })
+        instance = ScalarInequality(column_name='b', value=10, relation='>')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._dtype == np.dtype('float')
+
+    def test__fit_datetime(self):
+        """Test the ``ScalarInequality._fit`` method.
+
+        The attribute ``_dtype`` should be datetime when ``column_name`` contains datetimes.
+
+        Input:
+        - Table data with datetimes.
+        Side Effect:
+        - _dtype should be a list of datetime dtypes.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01']),
+            'b': pd.to_datetime(['2020-01-02'])
+        })
+        instance = ScalarInequality(
+            column_name='b', value=pd.to_datetime(
+                ['2020-01-01']), relation='>')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._dtype == np.dtype('<M8[ns]')
+
+    def test_is_valid(self):
+        """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
+
+        The method should return True when ``column_name`` is greater than
+        ``value`` or the row contains nan, otherwise return False.
+
+        Input:
+        - Table with a mixture of valid and invalid rows, as well as np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True for the rest.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='b', value=2, relation='>')
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, np.nan, 3, 4, None],
+            'b': [4, 2, np.nan, -6, None],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_datetimes(self):
+        """Test the ``ScalarInequality.is_valid`` method with datetimes and ``relation = '<='``.
+
+        The method should return True when ``column_name`` is greater or equal to
+        ``value`` or the row contains nan, otherwise return False.
+
+        Input:
+        - Table with datetimes and np.nans.
+        Output:
+        - False should be returned for the strictly invalid rows and True for the rest.
+        """
+        # Setup
+        instance = ScalarInequality(
+            column_name='b',
+            value=pd.to_datetime('8/31/2021'),
+            relation='>=')
+
+        # Run
+        table_data = pd.DataFrame({
+            'b': [datetime(2021, 8, 30), datetime(2021, 8, 31), datetime(2021, 9, 2), np.nan],
+            'c': [7, 8, 9, 10]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [False, True, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test__transform(self):
+        """Test the ``ScalarInequality._transform`` method.
+
+        The method is expected to compute the distance between the ``column_name`` and ``value``
+        and create a diff column with the logarithm of the distance + 1.
+
+        Setup:
+        - ``_diff_column_name`` is set to ``'a#'``.
+        Input:
+        - Table data.
+        Output:
+        - Same table with a diff column of the log of the distances + 1
+          in the ``column_name``'s place.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [7, 8, 9],
+            'a#': [np.log(1), np.log(2), np.log(3)],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test__transform_datetime(self):
+        """Test the ``ScalarInequality._transform`` method.
+
+        The method is expected to compute the distance between the ``column_name`` and ``value``
+        and create a diff column with the logarithm of the distance + 1.
+
+        Setup:
+        - ``_diff_column_name`` is set to ``'a#'``.
+        Input:
+        - Table data with datetimes.
+        Output:
+        - Same table with a diff column of the logarithms of the distances + 1
+          in the ``column_name``'s place.
+        """
+        # Setup
+        instance = ScalarInequality(
+            column_name='a',
+            value=pd.to_datetime('2020-01-01T00:00:00'),
+            relation='>')
+        instance._diff_column_name = 'a#'
+        instance._is_datetime = True
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
+            'c': [1, 2],
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [1, 2],
+            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
             - apply an exponential to the input
             - subtract 1
-            - subtract from the high column
+            - add the ``column_name``
             - convert the output to integers
             - add back the dropped column
 
         Setup:
-        - ``_drop`` is set to ``low``.
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as integer
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the low column replaced by the high one - 3, as int
+        - Same table with the high column replaced by the low one + 3, as int
         and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
-        instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['a']
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#'
 
         # Run
         transformed = pd.DataFrame({
-            'b': [4, 5, 6],
+            'a#': [np.log(1), np.log(2), np.log(3)],
             'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
         })
         out = instance.reverse_transform(transformed)
 
         # Assert
         expected_out = pd.DataFrame({
-            'b': [4, 5, 6],
             'c': [7, 8, 9],
             'a': [1, 2, 3],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_reverse_transform_datetime_drop_low(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
+    def test_reverse_transform_floats(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
 
-        The ``GreaterThan.reverse_transform`` method is expected to:
+        The method is expected to:
             - apply an exponential to the input
             - subtract 1
-            - convert the distance to a timedelta
-            - subtract from the high column
-            - convert the output to datetimes
+            - add the ``value``
+            - convert the output to float
+            - add back the dropped column
 
         Setup:
-        - ``_drop`` is set to ``low``.
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as float
         Input:
-        - Table with a diff column that contains the constant np.log(1_000_000_001).
+        - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the low column replaced by the high one - one second
+        - Same table with the high column replaced by the low one + 1, as float
         and the diff column dropped.
         """
         # Setup
-        instance = GreaterThan(low='a', high='b', strict=True, drop='low')
-        instance._dtype = [np.dtype('<M8[ns]')]
-        instance._diff_columns = ['a#b']
+        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance._dtype = np.dtype('float')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1.1), np.log(2.1), np.log(3.3)],
+            'c': [7, 8, 9],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [7, 8, 9],
+            'a': [1.1, 2.1, 3.3],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - add the ``column_name``
+            - convert the output to datetime
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as datetime
+        Input:
+        - Table with a diff column that contains the constant np.log(4).
+        Output:
+        - Same table with the high column replaced by the low one + 3, as datetime
+        and the diff column dropped.
+        """
+        # Setup
+        instance = ScalarInequality(
+            column_name='a',
+            value=pd.to_datetime('2020-01-01T00:00:00'),
+            relation='>=')
+        instance._dtype = np.dtype('<M8[ns]')
+        instance._diff_column_name = 'a#'
         instance._is_datetime = True
-        instance._columns_to_reconstruct = ['a']
 
         # Run
         transformed = pd.DataFrame({
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'c': [1, 2],
-            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
         out = instance.reverse_transform(transformed)
 
         # Assert
         expected_out = pd.DataFrame({
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
             'c': [1, 2],
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00'])
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_int_drop_none(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype int.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the low column when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        The table should have one invalid row where the low column is
-        higher than the high column.
-        Output:
-        - Same table with the high column replaced by the low one + 3 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 1, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_datetime_drop_none(self):
-        """Test the ``GreaterThan.reverse_transform`` method for dtype datetime.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - convert the distance to a timedelta
-            - add the low column when the row is invalid
-            - convert the output to datetimes
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        Input:
-        - Table with a diff column that contains the constant np.log(1_000_000_001).
-        The table should have one invalid row where the low column is
-        higher than the high column.
-        Output:
-        - Same table with the high column replaced by the low one + one second
-        for all invalid rows, and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high='b', strict=True)
-        instance._dtype = [np.dtype('<M8[ns]')]
-        instance._diff_columns = ['a#b']
-        instance._is_datetime = True
-        instance._columns_to_reconstruct = ['b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
-            'c': [1, 2],
-            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
-            'c': [1, 2]
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_low_is_scalar(self):
-        """Test the ``GreaterThan.reverse_transform`` method with low as a scalar.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the low value when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        - ``_low`` is set to an int and ``_scalar`` is ``'low'``.
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        The table should have one invalid row where the low value is
-        higher than the high column.
-        Output:
-        - Same table with the high column replaced by the low value + 3 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high='b', strict=True, scalar='low')
-        instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 1, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 6, 6],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_high_is_scalar(self):
-        """Test the ``GreaterThan.reverse_transform`` method with high as a scalar.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - subtract from the high value when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        - ``_high`` is set to an int and ``_scalar`` is ``'high'``.
-        Input:
-        - Table with a diff column that contains the constant np.log(4).
-        The table should have one invalid row where the low column is
-        higher than the high value.
-        Output:
-        - Same table with the low column replaced by the high one - 3 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low='a', high=3, strict=True, scalar='high')
-        instance._dtype = [pd.Series([1]).dtype]    # exact dtype (32 or 64) depends on OS
-        instance._diff_columns = ['a#b']
-        instance._columns_to_reconstruct = ['a']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 0],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_high_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.reverse_transform`` method with high as a scalar.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - subtract from the high value when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        - ``_high`` is set to an int and ``_scalar`` is ``'high'``.
-        - ``_low`` is set to multiple columns.
-        Input:
-        - Table with a diff column that contains the constant np.log(4)/np.log(5).
-        The table should have one invalid row where the low column is
-        higher than the high value.
-        Output:
-        - Same table with the low column replaced by the high one - 3/-4 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=3, strict=True, scalar='high')
-        dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._dtype = [dtype, dtype]
-        instance._diff_columns = ['a#', 'b#']
-        instance._columns_to_reconstruct = ['a', 'b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [0, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(4)] * 3,
-            'b#': [np.log(5)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 0, 0],
-            'b': [0, -1, -1],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_low_is_scalar_multi_column(self):
-        """Test the ``GreaterThan.reverse_transform`` method with low as a scalar.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the low value when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_drop`` is set to ``None``.
-        - ``_low`` is set to an int and ``_scalar`` is ``'low'``.
-        - ``_high`` is set to multiple columns.
-        Input:
-        - Table with a diff column that contains the constant np.log(4)/np.log(5).
-        The table should have one invalid row where the low value is
-        higher than the high column.
-        Output:
-        - Same table with the high column replaced by the low value +3/+4 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low=3, high=['a', 'b'], strict=True, scalar='low')
-        dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._dtype = [dtype, dtype]
-        instance._diff_columns = ['a#', 'b#']
-        instance._columns_to_reconstruct = ['a', 'b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(4)] * 3,
-            'b#': [np.log(5)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [6, 6, 4],
-            'b': [7, 7, 6],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_scalar_is_none_multi_column(self):
-        """Test the ``GreaterThan.reverse_transform`` method with low as a scalar.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - add the low value when the row is invalid
-            - convert the output to integers
-
-        Setup:
-        - ``_low`` = ['a', 'c'].
-        - ``_high`` = ['b'].
-        Input:
-        - Table with a diff column that contains the constant np.log(4)/np.log(-2).
-        The table should have one invalid row where the low value is
-        higher than the high column.
-        Output:
-        - Same table with the high column replaced by the low value +3/-4 for all
-        invalid rows, as int and the diff column dropped.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'c'], high=['b'], strict=True)
-        dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._dtype = [dtype, dtype]
-        instance._diff_columns = ['a#', 'c#']
-        instance._columns_to_reconstruct = ['a', 'c']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#': [np.log(1)] * 3,
-            'c#': [np.log(1)] * 3,
-        })
-        out = instance.reverse_transform(transformed)
-        print(out)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_multi_column_positive(self):
-        """Test the ``GreaterThan.reverse_transform`` method for positive constraint.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - subtract from the high value when the row is invalid
-            - convert the output to integers
-
-        Input:
-        - Table with given data.
-        Output:
-        - Same table with with replaced rows and dropped columns.
-        """
-        # Setup
-        instance = GreaterThan(low=0, high=['a', 'b'], strict=True, scalar='low')
-        dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._dtype = [dtype, dtype]
-        instance._diff_columns = ['a#', 'b#']
-        instance._columns_to_reconstruct = ['a', 'b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, -1],
-            'c': [7, 8, 9],
-            'a#': [np.log(2), np.log(3), np.log(4)],
-            'b#': [np.log(5), np.log(6), np.log(0)],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 0],
-            'c': [7, 8, 9],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
-    def test_reverse_transform_multi_column_negative(self):
-        """Test the ``GreaterThan.reverse_transform`` method for negative constraint.
-
-        The ``GreaterThan.reverse_transform`` method is expected to:
-            - apply an exponential to the input
-            - subtract 1
-            - subtract from the high value when the row is invalid
-            - convert the output to integers
-
-        Input:
-        - Table with given data.
-        Output:
-        - Same table with with replaced rows and dropped columns.
-        """
-        # Setup
-        instance = GreaterThan(low=['a', 'b'], high=0, strict=True, scalar='high')
-        dtype = pd.Series([1]).dtype    # exact dtype (32 or 64) depends on OS
-        instance._dtype = [dtype, dtype]
-        instance._diff_columns = ['a#', 'b#']
-        instance._columns_to_reconstruct = ['a', 'b']
-
-        # Run
-        transformed = pd.DataFrame({
-            'a': [-1, -2, 1],
-            'b': [-4, -5, -1],
-            'c': [7, 8, 9],
-            'a#': [np.log(2), np.log(3), np.log(0)],
-            'b#': [np.log(5), np.log(6), np.log(2)],
-        })
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        expected_out = pd.DataFrame({
-            'a': [-1, -2, 0],
-            'b': [-4, -5, -1],
-            'c': [7, 8, 9],
+            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -3217,121 +1699,59 @@ class TestGreaterThan():
 class TestPositive():
 
     def test__init__(self):
-        """
-        Test the ``Positive.__init__`` method.
+        """Test the ``Positive.__init__`` method.
 
-        The method is expected to set the ``_low`` instance variable
-        to 0, the ``_scalar`` variable to ``'low'``. The rest of the
-        parameters should be passed. Check that ``_drop`` is set to
-        ``None`` when ``drop`` is ``False``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = False
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar == 'low'
-        - instance._drop = None
+        Ensure the attributes are correctly set.
         """
         # Run
-        instance = Positive(columns='a', strict=True, drop=False)
+        instance = Positive(column_name='abc')
 
         # Asserts
-        assert instance._low == 0
-        assert instance._high == ['a']
-        assert instance._strict is True
-        assert instance._scalar == 'low'
-        assert instance._drop is None
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.greater_equal
 
-    def test__init__drop_true(self):
-        """
-        Test the ``Positive.__init__`` method with drop is ``True``.
+    def test__init__strict_True(self):
+        """Test the ``Positive.__init__`` method.
 
-        Check that ``_drop`` is set to 'high' when ``drop`` is ``True``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = True
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar == 'low'
-        - instance._drop = 'high'
+        Ensure the attributes are correctly set when ``strict`` is True.
         """
         # Run
-        instance = Positive(columns='a', strict=True, drop=True)
+        instance = Positive(column_name='abc', strict=True)
 
         # Asserts
-        assert instance._low == 0
-        assert instance._high == ['a']
-        assert instance._strict is True
-        assert instance._scalar == 'low'
-        assert instance._drop == 'high'
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.greater
 
 
 class TestNegative():
 
     def test__init__(self):
-        """
-        Test the ``Negative.__init__`` method.
+        """Test the ``Negative.__init__`` method.
 
-        The method is expected to set the ``_high`` instance variable
-        to 0, the ``_scalar`` variable to ``'high'``. The rest of the
-        parameters should be passed. Check that ``_drop`` is set to
-        ``None`` when ``drop`` is ``False``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = False
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar = 'high'
-        - instance._drop = None
+        Ensure the attributes are correctly set.
         """
         # Run
-        instance = Negative(columns='a', strict=True, drop=False)
+        instance = Negative(column_name='abc')
 
         # Asserts
-        assert instance._low == ['a']
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._scalar == 'high'
-        assert instance._drop is None
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.less_equal
 
-    def test__init__drop_true(self):
-        """
-        Test the ``Negative.__init__`` method with drop is ``True``.
+    def test__init__strict_True(self):
+        """Test the ``Negative.__init__`` method.
 
-        Check that ``_drop`` is set to 'low' when ``drop`` is ``True``.
-
-        Input:
-        - strict = True
-        - low = 'a'
-        - drop = True
-        Side effects:
-        - instance._low == 'a'
-        - instance._high == 0
-        - instance._strict == True
-        - instance._scalar = 'high'
-        - instance._drop = 'low'
+        Ensure the attributes are correctly set when ``strict`` is True.
         """
         # Run
-        instance = Negative(columns='a', strict=True, drop=True)
+        instance = Negative(column_name='abc', strict=True)
 
         # Asserts
-        assert instance._low == ['a']
-        assert instance._high == 0
-        assert instance._strict is True
-        assert instance._scalar == 'high'
-        assert instance._drop == 'low'
+        assert instance._value == 0
+        assert instance._column_name == 'abc'
+        assert instance._operator == np.less
 
 
 def new_column(data):
