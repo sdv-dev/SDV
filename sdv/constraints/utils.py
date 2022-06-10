@@ -28,7 +28,7 @@ def is_datetime_type(val):
 def _cast_to_type(data, dtype):
     if isinstance(data, pd.Series):
         data = data.apply(dtype)
-    elif isinstance(data, np.array):
+    elif isinstance(data, (np.ndarray, list)):
         data = np.array([dtype(value) for value in data])
     else:
         data = dtype(data)

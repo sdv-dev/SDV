@@ -69,7 +69,9 @@ def test_failing_constraints():
         Negative('d'),
         OneHotEncoding(['g', 'h']),
         Unique(['i']),
-        ScalarInequality('j', 5.5, '>=')
+        ScalarInequality('j', 5.5, '>='),
+        Range('a', 'b', 'c'),
+        ScalarRange('a', 0, 0),
     ]
     gc = GaussianCopula(constraints=constraints)
 
@@ -98,6 +100,24 @@ def test_failing_constraints():
         '\n4  0   0'
         '\n5  1  10'
         '\n+1 more'
+        '\n'
+        "\nData is not valid for the 'Range' constraint:"
+        '\n   a  b  c'
+        '\n0  0  1 -1'
+        '\n1  0 -1 -1'
+        '\n2  0  2 -1'
+        '\n3  0 -2 -1'
+        '\n4  0  3 -1'
+        '\n+2 more'
+        '\n'
+        "\nData is not valid for the 'ScalarRange' constraint:"
+        '\n   a'
+        '\n0  0'
+        '\n1  0'
+        '\n2  0'
+        '\n3  0'
+        '\n4  0'
+        '\n+2 more'
         '\n'
         "\nData is not valid for the 'Unique' constraint:"
         '\n   i'

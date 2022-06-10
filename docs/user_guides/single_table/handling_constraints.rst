@@ -258,8 +258,8 @@ constraint by passing it:
 Range Constraint
 ~~~~~~~~~~~~~~~~
 Another possibility is the ``Range`` constraint. It guarantees that one column is always
-between two other columns. For example the if we have an ``age`` column, ``age_when_joined``
-and ``retirement_age`` we can specify that ``age`` has to bigger than ``age_when_joined``
+between two other columns. For example if we have a column ``age``, ``age_when_joined``
+and ``retirement_age`` we can specify that ``age`` has to be bigger than ``age_when_joined``
 but lower than ``retirement_age``.
 
 In order to use it, we need to create an instance passing:
@@ -285,8 +285,8 @@ ScalarRange Constraint
 ~~~~~~~~~~~~~~~~~~~~~~
 If we need to ensure that a column is between two numerical values, we can use the ``ScalarRange``
 constraint. It guarantees that one column is always between a ``low_value`` and a ``high_value``.
-For example, the age column in our demo data is realistically bounded to the ages of 15 and 90
-since acual employees won't be too young or too old.
+For example, the ``age`` column in our demo data is realistically bounded to the ages of 15 and 90
+since actual employees won't be too young or too old.
 
 In order to use it, we need to create an instance passing:
 
