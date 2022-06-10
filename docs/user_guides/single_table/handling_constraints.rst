@@ -255,30 +255,56 @@ constraint by passing it:
         handling_strategy='transform'
     )
 
-Between Constraint
-~~~~~~~~~~~~~~~~~~
-
-Another possibility is the ``Between`` constraint. It guarantees
-that one column is always in between two other columns/values. For example,
-the ``age`` column in our demo data is realistically bounded to the ages of
-15 and 90 since acual employees won't be too young or too old.
+Range Constraint
+~~~~~~~~~~~~~~~~
+Another possibility is the ``Range`` constraint. It guarantees that one column is always
+between two other columns. For example if we have a column ``age``, ``age_when_joined``
+and ``retirement_age`` we can specify that ``age`` has to be bigger than ``age_when_joined``
+but lower than ``retirement_age``.
 
 In order to use it, we need to create an instance passing:
 
--  the name of the ``low`` column or a scalar value to be used as the lower bound
--  the name of the ``high`` column or a scalar value to be used as the upper bound
--  the handling strategy that we want to use
+- the name of the lower bound column (``low_column_name``).
+- the name of the middle column (``middle_column_name``).
+- the name of the higher bound column (``high_column_name``).
+- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
+  whether the comparison of the values should be strict or not.
 
 .. ipython:: python
     :okwarning:
-    
-    from sdv.constraints import Between
 
-    reasonable_age_constraint = Between(
-        column='age',
-        low=15,
-        high=90,
-        handling_strategy='transform'
+    from sdv.constraints import Range
+
+    current_age = Range(
+        low_column_name='age_when_joined',
+        middle_column_name='age',
+        high_column_name='retirement_age'
+    )
+
+ScalarRange Constraint
+~~~~~~~~~~~~~~~~~~~~~~
+If we need to ensure that a column is between two numerical values, we can use the ``ScalarRange``
+constraint. It guarantees that one column is always between a ``low_value`` and a ``high_value``.
+For example, the ``age`` column in our demo data is realistically bounded to the ages of 15 and 90
+since actual employees won't be too young or too old.
+
+In order to use it, we need to create an instance passing:
+
+- the name of the column (``column_name``).
+- the ``low_value`` value.
+- the ``high_value`` value.
+- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
+  whether the comparison of the values should be strict or not.
+
+.. ipython:: python
+    :okwarning:
+
+    from sdv.constraints import ScalarRange
+
+    reasonable_age_constraint = ScalarRange(
+        column_name='age',
+        low_value=15,
+        high_value=90
     )
 
 OneHotEncoding Constraint

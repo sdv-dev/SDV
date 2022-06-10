@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    Between, ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive,
-    ScalarInequality, Unique)
+    ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range,
+    ScalarInequality, ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -67,10 +67,11 @@ def test_failing_constraints():
         Inequality('a', 'b'),
         Positive('c'),
         Negative('d'),
-        Between('f', 0, 3),
         OneHotEncoding(['g', 'h']),
         Unique(['i']),
-        ScalarInequality('j', 5.5, '>=')
+        ScalarInequality('j', 5.5, '>='),
+        Range('a', 'b', 'c'),
+        ScalarRange('a', 0, 0),
     ]
     gc = GaussianCopula(constraints=constraints)
 
@@ -116,15 +117,29 @@ def test_failing_constraints():
         '\n2  4.0'
         '\n3  5.0'
         '\n'
+        "\nData is not valid for the 'Range' constraint:"
+        '\n   a  b  c'
+        '\n0  0  1 -1'
+        '\n1  0 -1 -1'
+        '\n2  0  2 -1'
+        '\n3  0 -2 -1'
+        '\n4  0  3 -1'
+        '\n+2 more'
+        '\n'
+        "\nData is not valid for the 'ScalarRange' constraint:"
+        '\n   a'
+        '\n0  0'
+        '\n1  0'
+        '\n2  0'
+        '\n3  0'
+        '\n4  0'
+        '\n+2 more'
+        '\n'
         "\nData is not valid for the 'Inequality' constraint:"
         '\n   a  b'
         '\n1  0 -1'
         '\n3  0 -2'
         '\n5  0 -3'
-        '\n'
-        "\nData is not valid for the 'Between' constraint:"
-        '\n   f'
-        '\n6 -1'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):

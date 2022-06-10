@@ -117,21 +117,37 @@ ColumnFormula
    ColumnFormula.from_dict
    ColumnFormula.to_dict
 
-Between
-~~~~~~~
+Range
+~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   Between
-   Between.fit
-   Between.transform
-   Between.fit_transform
-   Between.reverse_transform
-   Between.is_valid
-   Between.filter_valid
-   Between.from_dict
-   Between.to_dict
+   Range
+   Range.fit
+   Range.transform
+   Range.fit_transform
+   Range.reverse_transform
+   Range.is_valid
+   Range.filter_valid
+   Range.from_dict
+   Range.to_dict
+
+ScalarRange
+~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   ScalarRange
+   ScalarRange.fit
+   ScalarRange.transform
+   ScalarRange.fit_transform
+   ScalarRange.reverse_transform
+   ScalarRange.is_valid
+   ScalarRange.filter_valid
+   ScalarRange.from_dict
+   ScalarRange.to_dict
 
 OneHotEncoding
 ~~~~~~~~~~~~~~
