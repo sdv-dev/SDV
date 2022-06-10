@@ -156,7 +156,7 @@ def test_conditional_sampling_numerical():
     assert list(sampled.column1) == [1.0] * 5
 
 
-def test_unique_combination_constraint():
+def test_fixed_combination_constraint():
     employees = load_tabular_demo()
 
     fixed_company_department_constraint = FixedCombinations(

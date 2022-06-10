@@ -68,7 +68,13 @@ def test_failing_constraints():
     gc = GaussianCopula(constraints=constraints)
 
     err_msg = re.escape(
-        "Data is not valid for the 'Positive' constraint:"
+        "Data is not valid for the 'Inequality' constraint:"
+        '\n   a  b'
+        '\n1  0 -1'
+        '\n3  0 -2'
+        '\n5  0 -3'
+        '\n'
+        "\nData is not valid for the 'Positive' constraint:"
         '\n   c'
         '\n0 -1'
         '\n1 -1'
@@ -126,12 +132,6 @@ def test_failing_constraints():
         '\n3  0'
         '\n4  0'
         '\n+2 more'
-        '\n'
-        "\nData is not valid for the 'Inequality' constraint:"
-        '\n   a  b'
-        '\n1  0 -1'
-        '\n3  0 -2'
-        '\n5  0 -3'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):

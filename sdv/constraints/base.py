@@ -4,6 +4,7 @@ import copy
 import importlib
 import inspect
 import logging
+import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -116,7 +117,6 @@ class Constraint(metaclass=ConstraintMeta):
         return table_data
 
     def _identity_with_validation(self, table_data):
-        self._validate_data_on_constraint(table_data)
         return table_data
 
     def __init__(self, handling_strategy):
@@ -129,23 +129,8 @@ class Constraint(metaclass=ConstraintMeta):
         elif handling_strategy != 'all':
             raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
 
-    def _fit(self, table_data):
-        del table_data
-
-    def fit(self, table_data):
-        """Fit ``Constraint`` class to data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-        """
-        self._fit(table_data)
-
-    def _transform(self, table_data):
-        return table_data
-
-    def _validate_data_on_constraint(self, table_data):
-        """Make sure the given data is valid for the given constraints.
+    def _validate_data_meets_constraint(self, table_data):
+        """Make sure the given data is valid for the constraint.
 
         Args:
             data (pandas.DataFrame):
@@ -169,16 +154,37 @@ class Constraint(metaclass=ConstraintMeta):
 
                 raise ConstraintsNotMetError(err_msg)
 
-    def check_missing_columns(self, table_data):
-        """Check ``table_data`` for missing columns.
+    def _fit(self, table_data):
+        del table_data
+
+    def fit(self, table_data):
+        """Fit ``Constraint`` class to data.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
+        self._fit(table_data)
+        self._validate_data_meets_constraint(table_data)
+
+    def _transform(self, table_data):
+        return table_data
+
+    def _validate_all_columns_present(self, table_data):
+        """Validate that all required columns are in ``table_data``.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Raises:
+            MissingConstraintColumnError:
+                If the data is missing any columns needed for the constraint transformation,
+                a ``MissingConstraintColumnError`` is raised.
+        """
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
-            raise MissingConstraintColumnError()
+            raise MissingConstraintColumnError(missing_columns=missing_columns)
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
@@ -188,7 +194,8 @@ class Constraint(metaclass=ConstraintMeta):
         should overwrite the ``_transform`` method instead. This method raises a
         ``MissingConstraintColumnError`` if the ``table_data`` is missing any columns
         needed to do the transformation. If columns are present, this method will call
-        the ``_transform`` method.
+        the ``_transform`` method. If ``_transform`` fails, the data will be returned
+        unchanged.
 
         Args:
             table_data (pandas.DataFrame):
@@ -198,9 +205,16 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._validate_data_on_constraint(table_data)
-        self.check_missing_columns(table_data)
-        return self._transform(table_data)
+        self._validate_all_columns_present(table_data)
+
+        try:
+            return self._transform(table_data)
+
+        except Exception:
+            warnings.warn(
+                f'Error transforming {self.__name__}. Using the reject sampling approach instead.'
+            )
+            return table_data
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
