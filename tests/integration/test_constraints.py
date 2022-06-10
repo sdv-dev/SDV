@@ -101,6 +101,22 @@ def test_failing_constraints():
         '\n5  1  10'
         '\n+1 more'
         '\n'
+        "\nData is not valid for the 'Unique' constraint:"
+        '\n   i'
+        '\n1  1'
+        '\n2  1'
+        '\n3  1'
+        '\n4  1'
+        '\n5  1'
+        '\n+1 more'
+        '\n'
+        "\nData is not valid for the 'ScalarInequality' constraint:"
+        '\n     j'
+        '\n0  2.0'
+        '\n1  3.0'
+        '\n2  4.0'
+        '\n3  5.0'
+        '\n'
         "\nData is not valid for the 'Range' constraint:"
         '\n   a  b  c'
         '\n0  0  1 -1'
@@ -119,43 +135,11 @@ def test_failing_constraints():
         '\n4  0'
         '\n+2 more'
         '\n'
-        "\nData is not valid for the 'Unique' constraint:"
-        '\n   i'
-        '\n1  1'
-        '\n2  1'
-        '\n3  1'
-        '\n4  1'
-        '\n5  1'
-        '\n+1 more'
-        '\n'
-        "\nData is not valid for the 'ScalarInequality' constraint:"
-        '\n     j'
-        '\n0  2.0'
-        '\n1  3.0'
-        '\n2  4.0'
-        '\n3  5.0'
-        '\n'
         "\nData is not valid for the 'Inequality' constraint:"
         '\n   a  b'
         '\n1  0 -1'
         '\n3  0 -2'
         '\n5  0 -3'
-        '\n'
-        "\nData is not valid for the 'Positive' constraint:"
-        '\n   c'
-        '\n0 -1'
-        '\n1 -1'
-        '\n2 -1'
-        '\n3 -1'
-        '\n4 -1'
-        '\n+2 more'
-        '\n'
-        "\nData is not valid for the 'Negative' constraint:"
-        '\n   d'
-        '\n0  1'
-        '\n2  2'
-        '\n4  3'
-        '\n6  5'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
