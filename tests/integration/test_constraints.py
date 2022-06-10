@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    ColumnFormula, CustomConstraint, FixedCombinations, FixedIncrements, Inequality, Negative,
-    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique)
+    ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range,
+    ScalarInequality, ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
