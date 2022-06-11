@@ -273,8 +273,8 @@ class TestConstraint():
         # Assert
         instance._fit.assert_called_once_with(table_data)
 
-    def test__validate_data_on_constraints(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method calls ``is_valid`` when the constraint columns
         are in the given data.
@@ -296,13 +296,13 @@ class TestConstraint():
         constraint.is_valid = Mock()
 
         # Run
-        constraint._validate_data_on_constraint(data)
+        constraint._validate_data_meets_constraint(data)
 
         # Assert
         constraint.is_valid.assert_called_once_with(data)
 
-    def test__validate_data_on_constraints_invalid_input(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints_invalid_input(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method raises an error when the constraint columns
         are in the given data and the ``is_valid`` returns False for any row.
@@ -325,10 +325,10 @@ class TestConstraint():
 
         # Run / Assert
         with pytest.raises(ConstraintsNotMetError):
-            constraint._validate_data_on_constraint(data)
+            constraint._validate_data_meets_constraint(data)
 
-    def test__validate_data_on_constraints_missing_cols(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints_missing_cols(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method doesn't do anything when the columns are not in the given data.
 
@@ -349,7 +349,7 @@ class TestConstraint():
         constraint.is_valid = Mock()
 
         # Run
-        constraint._validate_data_on_constraint(data)
+        constraint._validate_data_meets_constraint(data)
 
         # Assert
         assert not constraint.is_valid.called

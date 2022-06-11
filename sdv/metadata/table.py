@@ -10,7 +10,6 @@ import pandas as pd
 import rdt
 from faker import Faker
 
-from sdv.constraints.base import Constraint
 from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
@@ -245,21 +244,6 @@ class Table:
                 'float': custom_float
             })
 
-    @staticmethod
-    def _prepare_constraints(constraints):
-        constraints = constraints or []
-        prepared_constraints = []
-        for constraint in constraints:
-            if isinstance(constraint, type):
-                constraint = constraint().to_dict()
-            elif isinstance(constraint, Constraint):
-                constraint = constraint.to_dict()
-
-            constraint = Constraint.from_dict(constraint)
-            prepared_constraints.append(constraint)
-
-        return prepared_constraints
-
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
@@ -276,7 +260,7 @@ class Table:
         self._sequence_index = sequence_index
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
-        self._constraints = self._prepare_constraints(constraints)
+        self._constraints = constraints or []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
