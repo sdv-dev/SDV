@@ -5,7 +5,6 @@ import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import FixedCombinations, Unique
-from sdv.constraints.tabular import Inequality
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular.copulagan import CopulaGAN

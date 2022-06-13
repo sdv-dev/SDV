@@ -323,16 +323,29 @@ class Constraint(metaclass=ConstraintMeta):
 class ColumnsModel:
     """ColumnsModel class.
 
-    This class is intented to be used when trying to
+    The ``ColumnsModel`` class enables the usage of conditional sampling when a column is a
+    ``constraint``.
     """
 
     _columns_model = None
 
     def __init__(self, constraint_columns):
-        self.constraint_columns = constraint_columns
+        if isinstance(constraint_columns, list):
+            self.constraint_columns = constraint_columns
+        else:
+            self.constraint_columns = [constraint_columns]
 
     def fit(self, table_data):
-        data_to_model = table_data[list(self.constraint_columns)]
+        """Fit the ``ColumnsModel``.
+
+        Fit a ``GaussianUnivariate`` model to the ``self.constraint_column`` columns in the
+        ``table_data`` in order to sample those columns when missing.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        data_to_model = table_data[self.constraint_columns]
         self._hyper_transformer = HyperTransformer(
             default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
         )
@@ -374,7 +387,20 @@ class ColumnsModel:
 
         return valid_rows.iloc[0:num_rows, :]
 
-    def sample_constraint_columns(self, table_data):
+    def sample(self, table_data):
+        """Sample any missing columns.
+
+        Sample any missing columns, ``self.constraint_columns``, that ``table_data``
+        does not contain.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Table data with additional ``constraint_columns``.
+        """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
         all_sampled_rows = list()

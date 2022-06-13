@@ -1,12 +1,8 @@
 """Tests for the sdv.constraints.base module."""
-import warnings
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pandas as pd
 import pytest
-from copulas.multivariate.gaussian import GaussianMultivariate
-from copulas.univariate import GaussianUnivariate
-from rdt.hyper_transformer import HyperTransformer
 
 from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
