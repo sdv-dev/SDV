@@ -185,11 +185,14 @@ class Constraint(metaclass=ConstraintMeta):
         self._validate_all_columns_present(table_data)
 
         try:
-            return self._transform(table_data)
+            transformed = self._transform(table_data)
+            self.reverse_transform(transformed)
+            return transformed
 
         except Exception:
             warnings.warn(
-                f'Error transforming {self.__name__}. Using the reject sampling approach instead.'
+                f'Error transforming {self.__class__.__name__}. Using the reject sampling '
+                'approach instead.'
             )
             self._use_reject_sampling = True
             return table_data

@@ -123,10 +123,7 @@ order to use this constraint we will need to import it from the
 
     from sdv.constraints import FixedCombinations
 
-    fixed_company_department_constraint = FixedCombinations(
-        column_names=['company', 'department'],
-        handling_strategy='transform'
-    )
+    fixed_company_department_constraint = FixedCombinations(column_names=['company', 'department'])
 
 Inequality and ScalarInequality Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -27,21 +27,6 @@ The following public methods are implemented in this class:
 * ``from_dict``: Build a ``Constraint`` from its dict representation.
 * ``to_dict``: Return a dict representing the ``Constraint``.
 
-handling_strategy
-~~~~~~~~~~~~~~~~~
-
-Additionally, the ``Constraint.__init__`` method sets up the class based on the value of the
-argument ``handling_strategy`` as follows:
-
-* If ``handling_strategy`` equals ``'transform'``, the ``filter_valid`` method is disabled by
-  replacing it with an identity function.
-* If ``handling_strategy`` equals ``'reject_sampling'``, both the ``transform`` and
-  ``reverse_transform`` methods are disabled by replacing them with an identity function.
-
-Because of this, any subclass has the option to implement both the transformation and reject
-sampling strategies and later on give the user the choice to choose between the two by just
-calling the ``super().__init__`` method passing the corresponding ``handling_strategy`` value.
-
 Implementing a Custom Constraint
 --------------------------------
 
