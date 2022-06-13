@@ -389,6 +389,15 @@ class Inequality(Constraint):
         """
         table_data = table_data.copy()
         diff_column = np.exp(table_data[self._diff_column_name]) - 1
+
+        # Clip the column to ensure the reverse transformed values satisfy the constraint
+        if self._operator is np.greater_equal:
+            diff_column = diff_column.clip(0)
+        elif self._dtype == np.dtype('int'):
+            diff_column = diff_column.clip(1)
+        else:
+            diff_column = diff_column.clip(1e-6)
+
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
 
@@ -523,6 +532,15 @@ class ScalarInequality(Constraint):
         """
         table_data = table_data.copy()
         diff_column = np.exp(table_data[self._diff_column_name]) - 1
+
+        # Clip the column to ensure the reverse transformed values satisfy the constraint
+        if self._operator in [np.less_equal, np.greater_equal]:
+            diff_column = diff_column.clip(0)
+        elif self._dtype == np.dtype('int'):
+            diff_column = diff_column.clip(1)
+        else:
+            diff_column = diff_column.clip(1e-6)
+
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
 
@@ -802,9 +820,15 @@ class Range(Constraint):
         low = table_data[self.low_column_name]
         high = table_data[self.high_column_name]
         data = table_data[self._transformed_column]
-
         data = sigmoid(data, low, high)
-        data = data.clip(low, high)
+
+        # Clip the column to ensure the reverse transformed values satisfy the constraint
+        if self._operator is np.less_equal:
+            data = data.clip(low, high)
+        elif self._dtype == np.dtype('int'):
+            data = data.clip(low + 1, high - 1)
+        else:
+            data = data.clip(low + 1e-6, high - 1e-6)
 
         if self._is_datetime:
             table_data[self.middle_column_name] = pd.to_datetime(data)
@@ -843,6 +867,7 @@ class ScalarRange(Constraint):
         self.low_value = low_value
         self.high_value = high_value
         self._operator = operator.lt if strict_boundaries else operator.le
+        self._dtype = None
 
         super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
 
@@ -945,9 +970,15 @@ class ScalarRange(Constraint):
         """
         table_data = table_data.copy()
         data = table_data[self._transformed_column]
-
         data = sigmoid(data, self.low_value, self.high_value)
-        data = data.clip(self.low_value, self.high_value)
+
+        # Clip the column to ensure the reverse transformed values satisfy the constraint
+        if self._operator is np.less_equal:
+            data = data.clip(self.low_value, self.high_value)
+        elif self._dtype == np.dtype('int'):
+            data = data.clip(self.low_value + 1, self.high_value - 1)
+        else:
+            data = data.clip(self.low_value + 1e-6, self.high_value - 1e-6)
 
         if self._is_datetime:
             table_data[self.column_name] = pd.to_datetime(data)
