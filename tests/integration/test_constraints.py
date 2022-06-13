@@ -21,8 +21,7 @@ def test_constraints(tmpdir):
 
     fixed_company_department_constraint = FixedCombinations(
         column_names=['company', 'department'],
-        handling_strategy='transform',
-        fit_columns_model=False
+        handling_strategy='transform'
     )
 
     age_gt_age_when_joined_constraint = Inequality(

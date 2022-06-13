@@ -4,7 +4,6 @@ import copy
 import importlib
 import inspect
 import logging
-import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -332,7 +331,7 @@ class ColumnsModel:
     def __init__(self, constraint_columns):
         self.constraint_columns = constraint_columns
 
-    def fit(self):
+    def fit(self, table_data):
         data_to_model = table_data[list(self.constraint_columns)]
         self._hyper_transformer = HyperTransformer(
             default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}

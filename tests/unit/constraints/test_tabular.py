@@ -689,8 +689,8 @@ class TestFixedCombinations():
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.
 
-        If some of the columns needed for the transform are missing, and
-        ``fit_columns_model`` is False, it will raise a ``MissingConstraintColumnError``.
+        If some of the columns needed for the transform are missing, and it will raise a
+        ``MissingConstraintColumnError``.
 
         Input:
         - Table data (pandas.DataFrame)
@@ -704,7 +704,7 @@ class TestFixedCombinations():
             'c': ['g', 'h', 'i']
         })
         columns = ['b', 'c']
-        instance = FixedCombinations(column_names=columns, fit_columns_model=False)
+        instance = FixedCombinations(column_names=columns)
         instance.fit(table_data)
 
         # Run/Assert
@@ -3146,7 +3146,6 @@ class TestUnique():
 
         # Assert
         assert instance.column_names == ['a', 'b']
-        assert instance.fit_columns_model is False
         assert instance.transform == instance._identity_with_validation
         assert instance.reverse_transform == instance._identity
 
