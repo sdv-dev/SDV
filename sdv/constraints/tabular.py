@@ -136,9 +136,6 @@ class FixedCombinations(Constraint):
         column_names (list[str]):
             Names of the columns that need to produce fixed combinations. Must
             contain at least two columns.
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``. Defaults to ``transform``.
     """
 
     _separator = None
@@ -146,14 +143,13 @@ class FixedCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
-    def __init__(self, column_names, handling_strategy='transform'):
+    def __init__(self, column_names):
         if len(column_names) < 2:
             raise ValueError('FixedCombinations requires at least two constraint columns.')
 
         self._columns = column_names
         self.constraint_columns = tuple(column_names)
         self.rebuild_columns = tuple(column_names)
-        super().__init__(handling_strategy=handling_strategy)
 
     def _fit(self, table_data):
         """Fit this Constraint to the data.
@@ -225,7 +221,7 @@ class FixedCombinations(Constraint):
         table_data[self._joint_column] = list(uuids)
         return table_data.drop(self._columns, axis=1)
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The transformation is reversed by popping the joint column from
@@ -278,8 +274,7 @@ class Inequality(Constraint):
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
-    def __init__(self, low_column_name, high_column_name, strict_boundaries=False,
-                 handling_strategy='transform'):
+    def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
         self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
@@ -289,7 +284,6 @@ class Inequality(Constraint):
         self.constraint_columns = tuple([low_column_name, high_column_name])
         self._dtype = None
         self._is_datetime = None
-        super().__init__(handling_strategy=handling_strategy)
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
@@ -364,7 +358,7 @@ class Inequality(Constraint):
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._high_column_name, axis=1)
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The transformation is reversed by computing an exponential of the difference value,
@@ -430,7 +424,6 @@ class ScalarInequality(Constraint):
         self._is_datetime = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
-        super().__init__(handling_strategy='transform')
 
     def _get_is_datetime(self, table_data):
         column = table_data[self._column_name].to_numpy()
@@ -499,7 +492,7 @@ class ScalarInequality(Constraint):
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._column_name, axis=1)
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The transformation is reversed by computing an exponential of the difference value,
@@ -589,7 +582,7 @@ class Range(Constraint):
     """
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
-                 handling_strategy='transform', strict_boundaries=True):
+                 strict_boundaries=True):
 
         self.constraint_columns = (low_column_name, middle_column_name, high_column_name)
         self.low_column_name = low_column_name
@@ -597,7 +590,6 @@ class Range(Constraint):
         self.high_column_name = high_column_name
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
-        super().__init__(handling_strategy=handling_strategy)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
@@ -691,7 +683,7 @@ class Range(Constraint):
 
         return table_data
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The reverse transform consists of applying a sigmoid to the transformed
@@ -743,16 +735,13 @@ class ScalarRange(Constraint):
             not ``>`` when comparing them.
     """
 
-    def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
-                 strict_boundaries=True):
+    def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
 
         self.constraint_columns = (column_name,)
         self.column_name = column_name
         self.low_value = low_value
         self.high_value = high_value
         self._operator = operator.lt if strict_boundaries else operator.le
-
-        super().__init__(handling_strategy=handling_strategy)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
@@ -836,7 +825,7 @@ class ScalarRange(Constraint):
 
         return table_data
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         The reverse transform consists of applying a sigmoid to the transformed
@@ -876,14 +865,11 @@ class FixedIncrements(Constraint):
         increment_value (int):
             The increment that each value in the column must be a multiple of. Must be greater
             than 0.
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``
-            or ``reject_sampling``. Defaults to ``transform``.
     """
 
     _dtype = None
 
-    def __init__(self, column_name, increment_value, handling_strategy='transform'):
+    def __init__(self, column_name, increment_value):
         if increment_value <= 0:
             raise ValueError('The increment_value must be greater than 0.')
 
@@ -892,7 +878,6 @@ class FixedIncrements(Constraint):
 
         self.increment_value = increment_value
         self.column_name = column_name
-        super().__init__(handling_strategy=handling_strategy)
 
     def is_valid(self, table_data):
         """Determine if the data is evenly divisible by the increment.
@@ -935,7 +920,7 @@ class FixedIncrements(Constraint):
         table_data[self.column_name] = table_data[self.column_name] / self.increment_value
         return table_data
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Convert column to multiples of the increment.
 
         Args:
@@ -962,15 +947,11 @@ class OneHotEncoding(Constraint):
     Args:
         column_names (list[str]):
             Names of the columns containing one hot rows.
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``
-            or ``reject_sampling`` (not recommended). Defaults to ``transform``.
     """
 
-    def __init__(self, column_names, handling_strategy='transform'):
+    def __init__(self, column_names):
         self._column_names = column_names
         self.constraint_columns = tuple(column_names)
-        super().__init__(handling_strategy)
 
     def is_valid(self, table_data):
         """Check whether the data satisfies the one-hot constraint.
@@ -992,7 +973,7 @@ class OneHotEncoding(Constraint):
 
         return sum_one & max_one & min_zero & no_nans
 
-    def reverse_transform(self, table_data):
+    def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
         Set the column with the largest value to one, set all other columns to zero.
@@ -1030,7 +1011,6 @@ class Unique(Constraint):
     def __init__(self, column_names):
         self.column_names = column_names
         self.constraint_columns = tuple(self.column_names)
-        super().__init__(handling_strategy='reject_sampling')
 
     def is_valid(self, table_data):
         """Get indices of first instance of unique rows.

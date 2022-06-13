@@ -274,10 +274,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     """
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
-    constraint = FixedCombinations(
-        column_names=['city', 'state'],
-        handling_strategy='transform',
-    )
+    constraint = FixedCombinations(column_names=['city', 'state'])
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],

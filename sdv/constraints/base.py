@@ -92,42 +92,18 @@ class Constraint(metaclass=ConstraintMeta):
     This class is not intended to be used directly and should rather be
     subclassed to create different types of constraints.
 
-    If ``handling_strategy`` is passed with the value ``transform``
-    or ``reject_sampling``, the ``filter_valid`` or ``transform`` and
-    ``reverse_transform`` methods will be replaced respectively by a simple
-    identity function.
-
     Attributes:
         constraint_columns (tuple[str]):
             The names of the columns used by this constraint.
         rebuild_columns (tuple[str]):
             The names of the columns that this constraint will rebuild during
             ``reverse_transform``.
-    Args:
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``.
     """
 
     constraint_columns = ()
     rebuild_columns = ()
     _hyper_transformer = None
-
-    def _identity(self, table_data):
-        return table_data
-
-    def _identity_with_validation(self, table_data):
-        return table_data
-
-    def __init__(self, handling_strategy):
-        if handling_strategy == 'transform':
-            self.filter_valid = self._identity
-        elif handling_strategy == 'reject_sampling':
-            self.rebuild_columns = ()
-            self.transform = self._identity_with_validation
-            self.reverse_transform = self._identity
-        elif handling_strategy != 'all':
-            raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
+    _use_reject_sampling = False
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -205,6 +181,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
+        self._use_reject_sampling = False
         self._validate_all_columns_present(table_data)
 
         try:
@@ -214,6 +191,7 @@ class Constraint(metaclass=ConstraintMeta):
             warnings.warn(
                 f'Error transforming {self.__name__}. Using the reject sampling approach instead.'
             )
+            self._use_reject_sampling = True
             return table_data
 
     def fit_transform(self, table_data):
@@ -230,8 +208,15 @@ class Constraint(metaclass=ConstraintMeta):
         self.fit(table_data)
         return self.transform(table_data)
 
+    def _reverse_transform(self, table_data):
+        return table_data
+    
     def reverse_transform(self, table_data):
-        """Identity method for completion. To be optionally overwritten by subclasses.
+        """Handle logic around reverse transforming constraints.
+
+        If the ``transform`` method was skipped, then this method should be too.
+        Otherwise attempt to reverse transform and if that fails, return the data
+        unchanged to fall back on reject sampling.
 
         Args:
             table_data (pandas.DataFrame):
@@ -241,7 +226,10 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        return table_data
+        if self._use_reject_sampling:
+            return table_data
+
+        return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):
         """Say whether the given table rows are valid.

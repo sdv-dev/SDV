@@ -19,15 +19,11 @@ def test_constraints(tmpdir):
 
     employees = load_tabular_demo()
 
-    fixed_company_department_constraint = FixedCombinations(
-        column_names=['company', 'department'],
-        handling_strategy='transform'
-    )
+    fixed_company_department_constraint = FixedCombinations(column_names=['company', 'department'])
 
     age_gt_age_when_joined_constraint = Inequality(
         low_column_name='age_when_joined',
-        high_column_name='age',
-        handling_strategy='reject_sampling'
+        high_column_name='age'
     )
 
     constraints = [

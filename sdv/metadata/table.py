@@ -102,8 +102,6 @@ class Table:
     """
 
     _hyper_transformer = None
-    _fakers = None
-    _constraint_instances = None
     _fields_metadata = None
     fitted = False
 
@@ -243,6 +241,16 @@ class Table:
                 'integer': custom_int,
                 'float': custom_float
             })
+    
+    def _get_transform_constraints(self):
+        rebuild_columns = set()
+        transform_constraints = []
+        for constraint in self._constraints:
+            if not (rebuild_columns & set(constraint.constraint_columns)):
+                transform_constraints.append(constraint)
+                rebuild_columns.update(constraint.rebuild_columns)
+
+        return transform_constraints
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
@@ -261,6 +269,7 @@ class Table:
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
         self._constraints = constraints or []
+        self._constraints_to_transform = self._get_transform_constraints()
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
@@ -415,7 +424,7 @@ class Table:
 
     def _fit_transform_constraints(self, data):
         errors = []
-        # Fit and validate all constraints first because `fit_transform` might change columns
+        # Fit and validate all constraints first because `transform` might change columns
         # making the following constraints invalid
         for constraint in self._constraints:
             try:
@@ -423,7 +432,7 @@ class Table:
             except Exception as e:
                 errors.append(e)
 
-        for constraint in self._constraints:
+        for constraint in self._constraints_to_transform:
             try:
                 data = constraint.transform(data)
             except Exception as e:
@@ -579,7 +588,7 @@ class Table:
         self.fitted = True
 
     def _transform_constraints(self, data):
-        for constraint in self._constraints:
+        for constraint in self._constraints_to_transform:
             try:
                 data = constraint.transform(data)
             except MissingConstraintColumnError as e:
@@ -656,7 +665,7 @@ class Table:
         except rdt.errors.NotFittedError:
             reversed_data = data
 
-        for constraint in reversed(self._constraints):
+        for constraint in reversed(self._constraints_to_transform):
             reversed_data = constraint.reverse_transform(reversed_data)
 
         for name, field_metadata in self._fields_metadata.items():
