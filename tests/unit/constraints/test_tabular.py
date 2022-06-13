@@ -1141,6 +1141,7 @@ class TestInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 0
             - add the low column
             - convert the output to integers
             - add back the dropped column
@@ -1149,9 +1150,9 @@ class TestInequality():
         - ``_diff_column_name = 'a#b'``
         - ``_dtype`` as integer
         Input:
-        - Table with a diff column that contains the constant np.log(4).
+        - Table with a diff column containing a log(4), a 0 and a negative value.
         Output:
-        - Same table with the high column replaced by the low one + 3 with diff column dropped.
+        - Same table with the high column replaced by the low one, with +3 added where log(4) was. 
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1162,7 +1163,7 @@ class TestInequality():
         transformed = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4), 0, -10],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1170,7 +1171,49 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': [1, 2, 3],
             'c': [7, 8, 9],
-            'b': [4, 5, 6],
+            'b': [4, 2, 3],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_strict(self):
+        """Test the ``Inequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - clip negative values to 0
+            - add the low column
+            - convert the output to integers
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#b'``
+        - ``_dtype`` as integer
+        - strict_boundaries set to True
+        Input:
+        - Table with a diff column containing a log(4), a 0 and a negative value.
+        Output:
+        - Same table with the high column replaced by the low one, with +3 added
+        where log(4) was and +1 for the other two values.
+        """
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#b'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+            'a#b': [np.log(4), 0, -10],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': [1, 2, 3],
+            'c': [7, 8, 9],
+            'b': [4, 3, 4],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1188,12 +1231,13 @@ class TestInequality():
         - ``_diff_column_name = 'a#b'``
         - ``_dtype`` as float
         Input:
-        - Table with a diff column that contains the constant np.log(4).
+        - Table with a diff column containing a log(4), a 0 and a negative value.
         Output:
-        - Same table with the high column replaced by the low one + 3 with diff column dropped.
+        - Same table with the high column replaced by the low one, with +3 added
+        where log(4) was and +1e-6 for the other two values.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
         instance._dtype = np.dtype('float')
         instance._diff_column_name = 'a#b'
 
@@ -1201,7 +1245,7 @@ class TestInequality():
         transformed = pd.DataFrame({
             'a': [1.1, 2.2, 3.3],
             'c': [7, 8, 9],
-            'a#b': [np.log(4)] * 3,
+            'a#b': [np.log(4), 0, -10],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1209,9 +1253,9 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': [1.1, 2.2, 3.3],
             'c': [7, 8, 9],
-            'b': [4.1, 5.2, 6.3],
+            'b': [4.1, 2.200001, 3.300001],
         })
-        pd.testing.assert_frame_equal(out, expected_out)
+        pd.testing.assert_frame_equal(out, expected_out, rtol=1e-8)
 
     def test_reverse_transform_datetime(self):
         """Test the ``Inequality.reverse_transform`` method.
@@ -1227,12 +1271,13 @@ class TestInequality():
         - ``_diff_column_name = 'a#b'``
         - ``_dtype`` as datetime
         Input:
-        - Table with a diff column that contains the constant np.log(4).
+        - Table with a diff column containing a log(4), a 0 and a negative value.
         Output:
-        - Same table with the high column replaced by the low one + 1sec with diff column dropped.
+        - Same table with the high column replaced by the low one, with +3 added
+        where log(4) was and +1e-6 for the other two values.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#b'
         instance._is_datetime = True
@@ -1241,7 +1286,7 @@ class TestInequality():
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b': [np.log(1_000_000_001), -10],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1249,7 +1294,7 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01'])
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:00'])
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
