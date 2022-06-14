@@ -2480,8 +2480,7 @@ class TestRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_non_strict(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
-        """
+        """Test the ``reverse_transform`` method for ``Range`` when strict_boundaries is False."""
         # Setup
         instance = Range(
             'age_when_joined',
@@ -2512,8 +2511,7 @@ class TestRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_float(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
-        """
+        """Test the ``reverse_transform`` method for ``Range`` with floats."""
         # Setup
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
         instance._dtype = np.dtype('float')
@@ -2540,8 +2538,7 @@ class TestRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_datetime(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
-        """
+        """Test the ``reverse_transform`` method for ``Range`` with datetimes."""
         # Setup
         instance = Range('date_when_joined', 'current_date', 'retirement_date')
         instance._dtype = np.dtype('<M8[ns]')
@@ -2896,24 +2893,7 @@ class TestScalarRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_non_strict(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``ScalarRange``.
-
-        It is expected to recover the original table which was transformed, but with different
-        column order. It does so by applying a sigmoid to the transformed column and then
-        scaling it back to the original space. It also replaces the transformed column with
-        an equal column but with the original name.
-
-        Mock:
-            - Mock the sigmoid function.
-
-        Setup:
-            - Original table data.
-            - An expected transformed data.
-            - Instance of ScalarRange constraint.
-
-        Output:
-            - A pd.DataFrame containing the original data.
-        """
+        """Test ``reverse_transform`` for ``ScalarRange`` with strict_boundaries as False."""
         # Setup
         table_data = pd.DataFrame({'current_age': [20, 22, 28]})
         transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
@@ -2930,7 +2910,7 @@ class TestScalarRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_float(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
+        """Test the ``reverse_transform`` method for ``ScalarRange`` for floats.
         """
         # Setup
         table_data = pd.DataFrame({'current_age': [20.000001, 22, 27.999999]})
@@ -2948,21 +2928,18 @@ class TestScalarRange():
 
     @patch('sdv.constraints.tabular.sigmoid')
     def test_reverse_transform_datetime(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
-        """
+        """Test the ``reverse_transform`` method for ``ScalarRange`` for datetimes."""
         # Setup
         table_data = pd.DataFrame({
             'current_date': pd.to_datetime(
                 ['2020-01-01T00:00:01', '2020-01-02T00:00:05', '2020-01-02T00:00:09']
             )
         })
-        col_name = "current_date#2020-01-01 00:00:00#2020-01-02 00:00:10"
+        col_name = 'current_date#2020-01-01 00:00:00#2020-01-02 00:00:10'
         transformed_data = pd.DataFrame({col_name: [1, 2, 3]})
-        mock_sigmoid.return_value = pd.Series(
-            pd.to_datetime(
-                ['2020-01-01T00:00:00', '2020-01-02T00:00:05', '2030-01-01T00:00:00']
-            )
-        )
+        mock_sigmoid.return_value = pd.Series(pd.to_datetime(
+            ['2020-01-01T00:00:00', '2020-01-02T00:00:05', '2030-01-01T00:00:00']
+        ))
         instance = ScalarRange(
             'current_date',
             pd.to_datetime('2020-01-01T00:00:00'),
