@@ -353,6 +353,24 @@ class ColumnsModel:
         self._model = GaussianMultivariate(distribution=GaussianUnivariate)
         self._model.fit(transformed_data)
 
+    def is_valid(self, table_data):
+        """Say whether the given table rows are valid.
+
+        This is a dummy version of the method that returns a series of ``True``
+        values to avoid dropping any rows. This should be overwritten by all
+        the subclasses that have a way to decide which rows are valid and which
+        are not.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.Series:
+                Series of ``True`` values
+        """
+        return pd.Series(True, index=table_data.index)
+
     def _reject_sample(self, num_rows, conditions):
         sampled = self._model.sample(num_rows=num_rows, conditions=conditions)
         sampled = self._hyper_transformer.reverse_transform(sampled)
