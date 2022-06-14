@@ -116,23 +116,13 @@ modeling and sampling the number of `pairs of legs` instead of the number of `le
             table_data[self._column_name] = table_data[self._column_name] * 2
             return table_data
 
-With this new implementation, our Constraint would be ready to handle both strategies,
-`reject sampling` and `transform`, but in some cases we might want to let the user
-chose only one of them, so the other is skipped.
-
-In a situation like this, we can simply add a ``handling_strategy`` parameter to our
-``__init__`` method and call ``super().__init__`` passing it, so the base ``Constraint`` class
-can handle it adequately:
-
-
 .. code-block:: python
 
     class PositiveEven(Constraint):
         """Ensure that values are positive and even."""
 
-        def __init__(self, column_name, handling_strategy='transform'):
+        def __init__(self, column_name):
             self._column_name = column_name
-            super().__init__(handling_strategy=handling_strategy)
 
         def is_valid(self, table_data):
             """Say if values are positive and even."""

@@ -157,100 +157,6 @@ def test_import_object_function():
 
 class TestConstraint():
 
-    def test__identity(self):
-        """Test ```Constraint._identity`` method.
-
-        ``_identity`` method should return whatever it is passed.
-
-        Input:
-            - anything
-        Output:
-            - Input
-        """
-        # Run
-        instance = Constraint('all')
-        output = instance._identity('input')
-
-        # Asserts
-        assert output == 'input'
-
-    def test___init___transform(self):
-        """Test ```Constraint.__init__`` method when 'transform' is passed.
-
-        If 'transform' is given, the ``__init__`` method should replace the ``is_valid`` method
-        with an identity and leave ``transform`` and ``reverse_transform`` untouched.
-
-        Input:
-            - transform
-        Side effects:
-            - is_valid == identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='transform')
-
-        # Asserts
-        assert instance.filter_valid == instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___reject_sampling(self):
-        """Test ``Constraint.__init__`` method when 'reject_sampling' is passed.
-
-        If 'reject_sampling' is given, the ``__init__`` method should replace the ``transform``
-        and ``reverse_transform`` methods with an identity and leave ``is_valid`` untouched.
-
-        Input:
-            - reject_sampling
-        Side effects:
-            - is_valid != identity
-            - transform == identity
-            - reverse_transform == identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='reject_sampling')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform == instance._identity_with_validation
-        assert instance.reverse_transform == instance._identity
-
-    def test___init___all(self):
-        """Test ``Constraint.__init__`` method when 'all' is passed.
-
-        If 'all' is given, the ``__init__`` method should leave ``transform``,
-        ``reverse_transform`` and ``is_valid`` untouched.
-
-        Input:
-            - all
-        Side effects:
-            - is_valid != identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='all')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___not_kown(self):
-        """Test ``Constraint.__init__`` method when a not known ``handling_strategy`` is passed.
-
-        If a not known ``handling_strategy`` is given, a ValueError is raised.
-
-        Input:
-            - not_known
-        Side effects:
-            - ValueError
-        """
-        # Run
-        with pytest.raises(ValueError):
-            Constraint(handling_strategy='not_known')
-
     def test_fit(self):
         """Test the ``Constraint.fit`` method.
 
@@ -264,7 +170,7 @@ class TestConstraint():
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
         })
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._fit = Mock()
 
         # Run
@@ -291,7 +197,7 @@ class TestConstraint():
             'a': [0, 1, 2],
             'b': [3, 4, 5]
         }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
         constraint.is_valid = Mock()
 
@@ -319,7 +225,7 @@ class TestConstraint():
             'a': [0, 1, 2],
             'b': [3, 4, 5]
         }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
         constraint.is_valid = Mock(return_value=pd.Series([True, False, True]))
 
@@ -344,7 +250,7 @@ class TestConstraint():
             'a': [0, 1, 2],
             'b': [3, 4, 5]
         }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b', 'c']
         constraint.is_valid = Mock()
 
@@ -368,7 +274,7 @@ class TestConstraint():
         - Input
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
@@ -406,7 +312,7 @@ class TestConstraint():
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -424,7 +330,7 @@ class TestConstraint():
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -475,7 +381,7 @@ class TestConstraint():
         - Input
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         output = instance.reverse_transform('input')
 
         # Assert
@@ -499,7 +405,7 @@ class TestConstraint():
         })
 
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         out = instance.is_valid(table_data)
 
         # Assert
@@ -625,13 +531,12 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        instance = FixedCombinations(column_names=['a', 'b'], handling_strategy='transform')
+        instance = FixedCombinations(column_names=['a', 'b'])
         constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
             'constraint': 'sdv.constraints.tabular.FixedCombinations',
-            'handling_strategy': 'transform',
             'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict

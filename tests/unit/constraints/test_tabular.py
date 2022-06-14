@@ -399,11 +399,10 @@ class TestFixedCombinations():
         # Assert
         assert instance._columns == columns
 
-    def test___init__sets_rebuild_columns_if_not_reject_sampling(self):
+    def test___init__sets_rebuild_columns(self):
         """Test the ``FixedCombinations.__init__`` method.
 
-        The rebuild columns should only be set if the ``handling_strategy``
-        is not ``reject_sampling``.
+        The rebuild columns should be set.
 
         Side effects:
         - instance.rebuild_columns are set
@@ -412,28 +411,10 @@ class TestFixedCombinations():
         columns = ['b', 'c']
 
         # Run
-        instance = FixedCombinations(column_names=columns, handling_strategy='transform')
+        instance = FixedCombinations(column_names=columns)
 
         # Assert
         assert instance.rebuild_columns == tuple(columns)
-
-    def test___init__does_not_set_rebuild_columns_reject_sampling(self):
-        """Test the ``FixedCombinations.__init__`` method.
-
-        The rebuild columns should not be set if the ``handling_strategy``
-        is ``reject_sampling``.
-
-        Side effects:
-        - instance.rebuild_columns are empty
-        """
-        # Setup
-        columns = ['b', 'c']
-
-        # Run
-        instance = FixedCombinations(column_names=columns, handling_strategy='reject_sampling')
-
-        # Assert
-        assert instance.rebuild_columns == ()
 
     def test___init__with_one_column(self):
         """Test the ``FixedCombinations.__init__`` method with only one constraint column.
@@ -2600,22 +2581,18 @@ class TestUnique():
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
 
-        The ``column_names`` should be set to those provided and the
-        ``handling_strategy`` should be set to ``'reject_sampling'``.
+        The ``column_names`` should be set to those provided.
 
         Input:
         - column names to keep unique.
         Output:
-        - Instance with ``column_names`` set and ``transform``
-        and ``reverse_transform`` methods set to ``instance._identity``.
+        - Instance with ``column_names`` set.
         """
         # Run
         instance = Unique(column_names=['a', 'b'])
 
         # Assert
         assert instance.column_names == ['a', 'b']
-        assert instance.transform == instance._identity_with_validation
-        assert instance.reverse_transform == instance._identity
 
     def test_is_valid(self):
         """Test the ``Unique.is_valid`` method.

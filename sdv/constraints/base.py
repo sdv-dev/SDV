@@ -213,7 +213,7 @@ class Constraint(metaclass=ConstraintMeta):
 
     def _reverse_transform(self, table_data):
         return table_data
-    
+
     def reverse_transform(self, table_data):
         """Handle logic around reverse transforming constraints.
 
