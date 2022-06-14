@@ -1,3 +1,4 @@
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -6,7 +7,7 @@ from faker import Faker
 from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import NumericalTransformer
 
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
 from sdv.metadata import Table
 
 
@@ -325,6 +326,107 @@ class TestTable:
 
         assert new_data['item 1'].equals(data['item 1'])
         assert new_data['item 0'].is_unique
+
+    def test_fit_fits_and_transforms_constraints(self):
+        """Test the ``fit`` method.
+
+        The ``fit`` method should loop through all the constraints, fit them,
+        and then call ``transform`` for all of them.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effect:
+            - Each constraint should be fit and transform the data.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        transformed_data = pd.DataFrame({'a': [4, 5, 6]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.return_value = transformed_data
+        constraint2.transform.return_value = data
+        instance._constraints = [constraint1, constraint2]
+
+        # Run
+        instance.fit(data)
+
+        # Assert
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.transform.assert_called_once_with(transformed_data)
+
+    def test_fit_constraint_fit_errors(self):
+        """Test the ``fit`` method when constraints error on fit.
+
+        The ``fit`` method should loop through all the constraints and try to fit them. If
+        any errors are raised, they should be caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling fit.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.fit.side_effect = Exception('error 1')
+        constraint2.fit.side_effect = Exception('error 2')
+        instance._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            instance.fit(data)
+
+    def test_fit_constraint_transform_errors(self):
+        """Test the ``fit`` method when constraints error on transform.
+
+        The ``fit`` method should loop through all the constraints and try to fit them. Then it
+        should loop through again and try to transform. If any errors are raised, they should be
+        caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling transform.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.side_effect = Exception('error 1')
+        constraint2.transform.side_effect = Exception('error 2')
+        instance._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            instance.fit(data)
+
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
 
     def test_transform_calls__transform_constraints(self):
         """Test that the `transform` method calls `_transform_constraints` with right parameters

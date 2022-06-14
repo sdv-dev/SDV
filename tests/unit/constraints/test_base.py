@@ -1,4 +1,5 @@
 """Tests for the sdv.constraints.base module."""
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -172,12 +173,14 @@ class TestConstraint():
         })
         instance = Constraint()
         instance._fit = Mock()
+        instance._validate_data_meets_constraint = Mock()
 
         # Run
         instance.fit(table_data)
 
         # Assert
         instance._fit.assert_called_once_with(table_data)
+        instance._validate_data_meets_constraint.assert_called_once_with(table_data)
 
     def test__validate_data_meets_constraints(self):
         """Test the ``_validate_data_meets_constraint`` method.
@@ -222,15 +225,21 @@ class TestConstraint():
         """
         # Setup
         data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
+            'a': [0, 1, 2, 3, 4, 5, 6, 7],
+            'b': [3, 4, 5, 6, 7, 8, 9, 10]
+        }, index=[0, 1, 2, 3, 4, 5, 6, 7])
         constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
-        constraint.is_valid = Mock(return_value=pd.Series([True, False, True]))
+        is_valid_result = pd.Series([True, False, True, False, False, False, False, False])
+        constraint.is_valid = Mock(return_value=is_valid_result)
 
         # Run / Assert
-        with pytest.raises(ConstraintsNotMetError):
+        error_message = re.escape(
+            "Data is not valid for the 'Constraint' constraint:\n   "
+            'a  b\n1  1  4\n3  3  6\n4  4  7\n5  5  8\n6  6  9'
+            '\n+1 more'
+        )
+        with pytest.raises(ConstraintsNotMetError, match=error_message):
             constraint._validate_data_meets_constraint(data)
 
     def test__validate_data_meets_constraints_missing_cols(self):
@@ -263,44 +272,116 @@ class TestConstraint():
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
 
-        When no constraints are passed, it behaves like an identity method,
-        to be optionally overwritten by subclasses.
+        By default, it behaves like an identity method, to be optionally overwritten by subclasses.
+        It should set the ``_use_reject_sampling`` parameter to ``False``.
 
         The ``Constraint.transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return the input data unmodified.
+
         Input:
-        - a DataFrame
+            - a DataFrame
+
         Output:
-        - Input
+            - Input
         """
         # Run
         instance = Constraint()
+        instance._use_reject_sampling = True
         output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
         pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
+        assert instance._use_reject_sampling is False
 
-    def test_transform_calls__transform(self):
+    def test_transform_calls__transform_and_reverse_transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
 
         The ``Constraint.transform`` method is expected to:
-        - Return value returned by ``_transform``.
+            - Return value returned by ``_transform``.
 
         Input:
-        - Anything
+            - Anything
+
         Output:
-        - Result of ``_transform(input)``
+            - Result of ``_transform(input)``
         """
         # Setup
         constraint_mock = Mock()
         constraint_mock._transform.return_value = 'the_transformed_data'
-        constraint_mock._validate_columns.return_value = pd.DataFrame()
 
         # Run
         output = Constraint.transform(constraint_mock, 'input')
 
         # Assert
         assert output == 'the_transformed_data'
+        constraint_mock._validate_all_columns_present.assert_called_once()
+        constraint_mock.reverse_transform.assert_called_once()
+
+    @patch('sdv.constraints.base.warnings')
+    def test_transform__transform_errors(self, warnings_mock):
+        """Test that the ``transform`` method handles any errors.
+
+        If the ``_transform`` method raises an error, the data should be return unchanged
+        and a warning should be raised.
+
+        Setup:
+            - Make ``_transform`` raise an error.
+            - Mock warnings.
+
+        Input:
+            - ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effects:
+            - Warning should be raised.
+        """
+        # Setup
+        constraint_mock = Mock()
+        constraint_mock._transform.side_effect = Exception()
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        output = Constraint.transform(constraint_mock, data)
+
+        # Assert
+        pd.testing.assert_frame_equal(data, output)
+        expected_message = 'Error transforming Mock. Using the reject sampling approach instead.'
+        warnings_mock.warn.assert_called_with(expected_message)
+
+    @patch('sdv.constraints.base.warnings')
+    def test_transform_reverse_transform_errors(self, warnings_mock):
+        """Test that the ``transform`` method handles any errors.
+
+        If the ``reverse_transform`` method raises an error, the data should be return unchanged
+        and a warning should be raised.
+
+        Setup:
+            - Make ``reverse_transform`` raise an error.
+            - Mock warnings.
+
+        Input:
+            - ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effects:
+            - Warning should be raised.
+        """
+        # Setup
+        constraint_mock = Mock()
+        constraint_mock.reverse_transform.side_effect = Exception()
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        output = Constraint.transform(constraint_mock, data)
+
+        # Assert
+        pd.testing.assert_frame_equal(data, output)
+        expected_message = 'Error transforming Mock. Using the reject sampling approach instead.'
+        warnings_mock.warn.assert_called_with(expected_message)
 
     def test_transform_columns_missing(self):
         """Test the ``Constraint.transform`` method with invalid data.
@@ -373,12 +454,12 @@ class TestConstraint():
         for completion, to be optionally overwritten by subclasses.
 
         The ``Constraint.reverse_transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return the input data unmodified.
 
         Input:
-        - Anything
+            - Anything
         Output:
-        - Input
+            - Input
         """
         # Run
         instance = Constraint()
@@ -386,6 +467,31 @@ class TestConstraint():
 
         # Assert
         assert output == 'input'
+
+    def test_reverse_transform_use_reject_sampling(self):
+        """Test the ``reverse_transform`` method when ``_use_reject_sampling`` is ``True``.
+
+        The ``Constraint.reverse_transform`` method is expected to:
+            - Return the input data unmodified.
+
+        Setup:
+            - Set ``_use_reject_sampling`` to ``True``.
+        Input:
+            - ``pd.DataFrame``.
+
+        Output:
+            - Input.
+        """
+        # Setup
+        instance = Constraint()
+        instance._use_reject_sampling = True
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        output = instance.reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(output, data)
 
     def test_is_valid(self):
         """Test the ``Constraint.is_valid` method. This should be overwritten by all the
