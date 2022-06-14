@@ -1,10 +1,12 @@
 """Tests for the sdv.constraints.base module."""
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+from copulas.univariate import GaussianUnivariate
 
-from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
+from sdv.constraints.base import (
+    Constraint, ColumnsModel, _get_qualified_name, get_subclasses, import_object)
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import ColumnFormula, FixedCombinations
 from sdv.errors import ConstraintsNotMetError
@@ -650,3 +652,99 @@ class TestConstraint():
 
         # Assert
         assert constraint_dict['formula'](1) == 2
+
+
+class TestColumnsModel:
+
+    def test___init__(self):
+        """Test the ``__init__`` method of ``ColumnsModel``.
+
+        Test that creating a ``ColumnsModel`` with a column name, stores it as a list.
+
+        Setup:
+            - Create an instance of ``ColumnsModel`` with a string representing the column
+              name.
+
+        Input:
+            - String name of a column.
+
+        Side Effects:
+            - ``instance.constraint_columns`` is a list from the string given before.
+        """
+
+        # Run
+        instance = ColumnsModel('age')
+
+        # Assert
+        assert instance.constraint_columns == ['age']
+
+    def test___init__list(self):
+        """Test the ``__init__`` method of ``ColumnsModel``.
+
+        Test that creating a ``ColumnsModel`` with a list, stores it as a list
+
+        Setup:
+            - Create an instance of ``ColumnsModel`` with a list of strings.
+
+        Input:
+            - List of columns.
+
+        Side Effects:
+            - ``instance.constraint_columns`` is the input list.
+        """
+
+        # Run
+        instance = ColumnsModel(['age', 'age_when_joined'])
+
+        # Assert
+        assert instance.constraint_columns == ['age', 'age_when_joined']
+
+    @patch('sdv.constraints.base.GaussianMultivariate')
+    @patch('sdv.constraints.base.HyperTransformer')
+    def test_fit(self, mock_hyper_transformer, mock_gaussian_multivariate):
+        """Test the ``fit`` method.
+
+        The ``fit`` method should create an instance of ``rdt.HyperTransformer`` and use
+        the ``fit_transform`` method in order to transform the data, which afterwards is being
+        fitted to the ``GaussianMultivariate`` which uses as ``distribution`` the
+        ``GaussianUnivariate``.
+
+        Setup:
+            - Instance of ``ColumnsModel``.
+
+        Input:
+            - table_data with 3 columns.
+
+        Mock:
+            - Mock ``rdt.HyperTransformer``.
+            - Mock ``GaussianMultivariate``.
+
+        Side Effects:
+            - Instance of ``rdt.HyperTransformer`` has been created and fitted.
+            - A ``GaussianMultivariate`` model has been created and fitted.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age': [1, 2, 3, 4],
+            'age_when_joined': [5, 6, 7, 8],
+            'retirement': ['a', 'b', 'c', 'd']
+        })
+
+        mock_hyper_transformer.return_value.fit_transform.return_value = 'transformed_data'
+
+        instance = ColumnsModel(['age', 'age_when_joined'])
+
+        # Run
+        instance.fit(table_data)
+
+        # Assert
+        mock_hyper_transformer.assert_called_once_with(
+            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
+        )
+        call_data = mock_hyper_transformer.return_value.fit_transform.call_args[0][0]
+        pd.testing.assert_frame_equal(table_data[['age', 'age_when_joined']], call_data)
+
+        mock_gaussian_multivariate.assert_called_once_with(distribution=GaussianUnivariate)
+        mock_gaussian_multivariate.return_value.fit.assert_called_once_with('transformed_data')
+        assert instance._hyper_transformer
+        assert instance._model
