@@ -843,7 +843,7 @@ class TestInequality():
         - _validate_inputs is called once
         """
         # Run
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=False)
 
         # Asserts
         assert instance._low_column_name == 'a'
@@ -1002,7 +1002,7 @@ class TestInequality():
         - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=False)
 
         # Run
         table_data = pd.DataFrame({
@@ -1152,10 +1152,10 @@ class TestInequality():
         Input:
         - Table with a diff column containing a log(4), a 0 and a negative value.
         Output:
-        - Same table with the high column replaced by the low one, with +3 added where log(4) was. 
+        - Same table with the high column replaced by the low one, with +3 added where log(4) was.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=False)
         instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
         instance._diff_column_name = 'a#b'
 
@@ -1181,7 +1181,7 @@ class TestInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
-            - clip negative values to 0
+            - clip negative values to 1
             - add the low column
             - convert the output to integers
             - add back the dropped column
@@ -1197,7 +1197,7 @@ class TestInequality():
         where log(4) was and +1 for the other two values.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
+        instance = Inequality(low_column_name='a', high_column_name='b')
         instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
         instance._diff_column_name = 'a#b'
 
@@ -1223,6 +1223,7 @@ class TestInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 1e-6
             - add the low column
             - convert the output to floats
             - add back the dropped column
@@ -1237,7 +1238,7 @@ class TestInequality():
         where log(4) was and +1e-6 for the other two values.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
+        instance = Inequality(low_column_name='a', high_column_name='b')
         instance._dtype = np.dtype('float')
         instance._diff_column_name = 'a#b'
 
@@ -1263,6 +1264,7 @@ class TestInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 1 second
             - add the low column
             - convert the output to datetime
             - add back the dropped column
@@ -1271,13 +1273,13 @@ class TestInequality():
         - ``_diff_column_name = 'a#b'``
         - ``_dtype`` as datetime
         Input:
-        - Table with a diff column containing a log(4), a 0 and a negative value.
+        - Table with a diff column containing the log of two seconds and a negative value
         Output:
-        - Same table with the high column replaced by the low one, with +3 added
-        where log(4) was and +1e-6 for the other two values.
+        - Same table with the high column replaced by the low one, with +2s added
+        where the log was and +1s for the other value.
         """
         # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b', strict_boundaries=True)
+        instance = Inequality(low_column_name='a', high_column_name='b')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#b'
         instance._is_datetime = True
@@ -1286,7 +1288,7 @@ class TestInequality():
         transformed = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            'a#b': [np.log(1_000_000_001), -10],
+            'a#b': [np.log(2_000_000_001), -10],
         })
         out = instance.reverse_transform(transformed)
 
@@ -1294,7 +1296,7 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:00'])
+            'b': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:01'])
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1629,6 +1631,7 @@ class TestScalarInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 0
             - add the ``column_name``
             - convert the output to integers
             - add back the dropped column
@@ -1637,10 +1640,9 @@ class TestScalarInequality():
         - ``_diff_column_name = 'a#'``
         - ``_dtype`` as integer
         Input:
-        - Table with a diff column that contains the constant np.log(4).
+        - Table with a diff column.
         Output:
-        - Same table with the high column replaced by the low one + 3, as int
-        and the diff column dropped.
+        - Same table with the high column replaced by the value + the reversed diff column.
         """
         # Setup
         instance = ScalarInequality(column_name='a', value=1, relation='>=')
@@ -1649,7 +1651,7 @@ class TestScalarInequality():
 
         # Run
         transformed = pd.DataFrame({
-            'a#': [np.log(1), np.log(2), np.log(3)],
+            'a#': [np.log(1), np.log(2), -3],
             'c': [7, 8, 9],
         })
         out = instance.reverse_transform(transformed)
@@ -1657,7 +1659,45 @@ class TestScalarInequality():
         # Assert
         expected_out = pd.DataFrame({
             'c': [7, 8, 9],
-            'a': [1, 2, 3],
+            'a': [1, 2, 1],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_strict(self):
+        """Test the ``ScalarInequality.reverse_transform`` method.
+
+        The method is expected to:
+            - apply an exponential to the input
+            - subtract 1
+            - clip negative values to 1
+            - add the ``column_name``
+            - convert the output to integers
+            - add back the dropped column
+
+        Setup:
+        - ``_diff_column_name = 'a#'``
+        - ``_dtype`` as integer
+        Input:
+        - Table with a diff column.
+        Output:
+        - Same table with the high column replaced by the value + the reversed diff column.
+        """
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='>')
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1), np.log(2), -3],
+            'c': [7, 8, 9],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [7, 8, 9],
+            'a': [2, 2, 2],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1667,6 +1707,7 @@ class TestScalarInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 1e-6
             - add the ``value``
             - convert the output to float
             - add back the dropped column
@@ -1677,17 +1718,16 @@ class TestScalarInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 1, as float
-        and the diff column dropped.
+        - Same table with the high column replaced by the value + the reversed diff column.
         """
         # Setup
-        instance = ScalarInequality(column_name='a', value=1, relation='>=')
+        instance = ScalarInequality(column_name='a', value=1, relation='>')
         instance._dtype = np.dtype('float')
         instance._diff_column_name = 'a#'
 
         # Run
         transformed = pd.DataFrame({
-            'a#': [np.log(1.1), np.log(2.1), np.log(3.3)],
+            'a#': [np.log(1.1), np.log(2.1), 0],
             'c': [7, 8, 9],
         })
         out = instance.reverse_transform(transformed)
@@ -1695,9 +1735,9 @@ class TestScalarInequality():
         # Assert
         expected_out = pd.DataFrame({
             'c': [7, 8, 9],
-            'a': [1.1, 2.1, 3.3],
+            'a': [1.1, 2.1, 1.000001],
         })
-        pd.testing.assert_frame_equal(out, expected_out)
+        pd.testing.assert_frame_equal(out, expected_out, rtol=1e-8)
 
     def test_reverse_transform_datetime(self):
         """Test the ``ScalarInequality.reverse_transform`` method.
@@ -1705,6 +1745,7 @@ class TestScalarInequality():
         The method is expected to:
             - apply an exponential to the input
             - subtract 1
+            - clip negative values to 1 second
             - add the ``column_name``
             - convert the output to datetime
             - add back the dropped column
@@ -1715,21 +1756,20 @@ class TestScalarInequality():
         Input:
         - Table with a diff column that contains the constant np.log(4).
         Output:
-        - Same table with the high column replaced by the low one + 3, as datetime
-        and the diff column dropped.
+        - Same table with the high column replaced by the value + the reversed diff column.
         """
         # Setup
         instance = ScalarInequality(
             column_name='a',
             value=pd.to_datetime('2020-01-01T00:00:00'),
-            relation='>=')
+            relation='>')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
 
         # Run
         transformed = pd.DataFrame({
-            'a#': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#': [np.log(2_000_000_001), -10],
             'c': [1, 2],
         })
         out = instance.reverse_transform(transformed)
@@ -1737,7 +1777,7 @@ class TestScalarInequality():
         # Assert
         expected_out = pd.DataFrame({
             'c': [1, 2],
-            'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
+            'a': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-01T00:00:01']),
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -2420,9 +2460,9 @@ class TestRange():
         table_data = pd.DataFrame({
             'age_when_joined': [18, 19, 20],
             'retirement_age': [65, 68, 75],
-            'current_age': [21, 22, 25],
+            'current_age': [19, 67, 25],
         })
-        mock_sigmoid.return_value = pd.Series([21, 22, 25])
+        mock_sigmoid.return_value = pd.Series([17, 68, 25])
         transformed_data = pd.DataFrame({
             'age_when_joined': [18, 19, 20],
             'retirement_age': [65, 68, 75],
@@ -2437,6 +2477,106 @@ class TestRange():
         # Assert
         mock_sigmoid.assert_called_once()
         pd.testing.assert_frame_equal(table_data, out)
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_non_strict(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``Range``.
+        """
+        # Setup
+        instance = Range(
+            'age_when_joined',
+            'current_age',
+            'retirement_age',
+            strict_boundaries=False)
+        instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
+        instance._transformed_column = 'current_age#age_when_joined#retirement_age'
+        instance._is_datetime = False
+        mock_sigmoid.return_value = pd.Series([17, 68, 25])
+
+        # Run
+        transformed = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': [1, 2, 3]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age': [18, 68, 25],
+        })
+        mock_sigmoid.assert_called_once()
+        pd.testing.assert_frame_equal(out, expected_output)
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_float(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``Range``.
+        """
+        # Setup
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance._dtype = np.dtype('float')
+        instance._transformed_column = 'current_age#age_when_joined#retirement_age'
+        instance._is_datetime = False
+        mock_sigmoid.return_value = pd.Series([17, 68, 25.0])
+
+        # Run
+        transformed = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': [1, 2, 3]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age': [18.000001, 67.999999, 25],
+        })
+        mock_sigmoid.assert_called_once()
+        pd.testing.assert_frame_equal(out, expected_output, rtol=1e-8)
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_datetime(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``Range``.
+        """
+        # Setup
+        instance = Range('date_when_joined', 'current_date', 'retirement_date')
+        instance._dtype = np.dtype('<M8[ns]')
+        instance._transformed_column = 'current_date#date_when_joined#retirement_date'
+        instance._is_datetime = True
+        mock_sigmoid.return_value = pd.Series(pd.to_datetime(
+            ['2020-01-01T00:00:00', '2040-01-02T00:00:00', '2020-01-02T00:00:10']
+        ))
+
+        # Run
+        transformed = pd.DataFrame({
+            'date_when_joined': pd.to_datetime(
+                ['2020-01-01T00:00:00', '2020-01-02T00:00:00', '2020-01-02T00:00:00']
+            ),
+            'retirement_date': pd.to_datetime(
+                ['2030-01-01T00:00:01', '2030-01-02T00:00:01', '2030-01-02T00:00:01']
+            ),
+            'current_date#date_when_joined#retirement_date': [1, 2, 3]
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'date_when_joined': pd.to_datetime(
+                ['2020-01-01T00:00:00', '2020-01-02T00:00:00', '2020-01-02T00:00:00']
+            ),
+            'retirement_date': pd.to_datetime(
+                ['2030-01-01T00:00:01', '2030-01-02T00:00:01', '2030-01-02T00:00:01']
+            ),
+            'current_date': pd.to_datetime(
+                ['2020-01-01T00:00:01', '2030-01-02T00:00:00', '2020-01-02T00:00:10']
+            )
+        })
+        mock_sigmoid.assert_called_once()
+        pd.testing.assert_frame_equal(out, expected_output)
 
 
 class TestScalarRange():
@@ -2741,10 +2881,93 @@ class TestScalarRange():
             - A pd.DataFrame containing the original data.
         """
         # Setup
-        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        table_data = pd.DataFrame({'current_age': [21, 22, 27]})
         transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
-        mock_sigmoid.return_value = pd.Series([21, 22, 25])
+        mock_sigmoid.return_value = pd.Series([19, 22, 28])
         instance = ScalarRange('current_age', 20, 28)
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+        mock_sigmoid.assert_called_once()
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_non_strict(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``ScalarRange``.
+
+        It is expected to recover the original table which was transformed, but with different
+        column order. It does so by applying a sigmoid to the transformed column and then
+        scaling it back to the original space. It also replaces the transformed column with
+        an equal column but with the original name.
+
+        Mock:
+            - Mock the sigmoid function.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data.
+            - Instance of ScalarRange constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [20, 22, 28]})
+        transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
+        mock_sigmoid.return_value = pd.Series([19, 22, 28])
+        instance = ScalarRange('current_age', 20, 28, strict_boundaries=False)
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+        mock_sigmoid.assert_called_once()
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_float(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``Range``.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [20.000001, 22, 27.999999]})
+        transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
+        mock_sigmoid.return_value = pd.Series([19, 22, 28])
+        instance = ScalarRange('current_age', 20, 28)
+
+        # Run
+        instance.fit(table_data)
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+        mock_sigmoid.assert_called_once()
+
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_datetime(self, mock_sigmoid):
+        """Test the ``reverse_transform`` method for ``Range``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'current_date': pd.to_datetime(
+                ['2020-01-01T00:00:01', '2020-01-02T00:00:05', '2020-01-02T00:00:09']
+            )
+        })
+        col_name = "current_date#2020-01-01 00:00:00#2020-01-02 00:00:10"
+        transformed_data = pd.DataFrame({col_name: [1, 2, 3]})
+        mock_sigmoid.return_value = pd.Series(
+            pd.to_datetime(
+                ['2020-01-01T00:00:00', '2020-01-02T00:00:05', '2030-01-01T00:00:00']
+            )
+        )
+        instance = ScalarRange(
+            'current_date',
+            pd.to_datetime('2020-01-01T00:00:00'),
+            pd.to_datetime('2020-01-02T00:00:10')
+        )
 
         # Run
         instance.fit(table_data)

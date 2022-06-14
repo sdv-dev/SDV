@@ -271,10 +271,8 @@ class Inequality(Constraint):
         high_column_name (str):
             Name of the column that contains the high values.
         strict_boundaries (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>``. Currently, this is only respected if ``reject_sampling``
-            or ``all`` handling strategies are used.
-            Defaults to False.
+            Whether the comparison of the values should be strict ``>=`` or not ``>``.
+            Defaults to True.
     """
 
     @staticmethod
@@ -285,7 +283,7 @@ class Inequality(Constraint):
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
-    def __init__(self, low_column_name, high_column_name, strict_boundaries=False,
+    def __init__(self, low_column_name, high_column_name, strict_boundaries=True,
                  handling_strategy='transform', fit_columns_model=False):
         self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
@@ -395,8 +393,10 @@ class Inequality(Constraint):
             diff_column = diff_column.clip(0)
         elif self._dtype == np.dtype('int'):
             diff_column = diff_column.clip(1)
-        else:
+        elif self._dtype == np.dtype('float'):
             diff_column = diff_column.clip(1e-6)
+        elif self._is_datetime:
+            diff_column = diff_column.clip(1_000_000_000)
 
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
@@ -538,8 +538,10 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.clip(0)
         elif self._dtype == np.dtype('int'):
             diff_column = diff_column.clip(1)
-        else:
+        elif self._dtype == np.dtype('float'):
             diff_column = diff_column.clip(1e-6)
+        elif self._is_datetime:
+            diff_column = diff_column.clip(1_000_000_000)
 
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
@@ -566,9 +568,8 @@ class Positive(ScalarInequality):
         column_name (str):
             The name of the column that is constrained to be positive.
         strict (bool):
-            Whether the comparison of the values should be strict; disclude
-            zero ``>`` or include it ``>=``. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
+            Whether the comparison of the values should be strict ``>=`` or not ``>``.
+            Defaults to False.
     """
 
     def __init__(self, column_name, strict=False):
@@ -585,9 +586,8 @@ class Negative(ScalarInequality):
         column_name (str):
             The name of the column that is constrained to be negative.
         strict (bool):
-            Whether the comparison of the values should be strict, disclude
-            zero ``<`` or include it ``<=``. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
+            Whether the comparison of the values should be strict ``>=`` or not ``>``.
+            Defaults to False.
     """
 
     def __init__(self, column_name, strict=False):
@@ -694,8 +694,8 @@ class Range(Constraint):
         high_column_name (str):
             Name of the column which will be the higher bound.
         strict_boundaries (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them.
+            Whether the comparison of the values should be strict ``>=`` or not ``>``.
+            Defaults to True.
     """
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
@@ -823,12 +823,15 @@ class Range(Constraint):
         data = sigmoid(data, low, high)
 
         # Clip the column to ensure the reverse transformed values satisfy the constraint
-        if self._operator is np.less_equal:
+        if self._operator is operator.le:
             data = data.clip(low, high)
         elif self._dtype == np.dtype('int'):
             data = data.clip(low + 1, high - 1)
-        else:
+        elif self._dtype == np.dtype('float'):
             data = data.clip(low + 1e-6, high - 1e-6)
+        elif self._is_datetime:
+            one_second = pd.Timedelta(seconds=1)
+            data = data.clip(low + one_second, high - one_second)
 
         if self._is_datetime:
             table_data[self.middle_column_name] = pd.to_datetime(data)
@@ -855,8 +858,8 @@ class ScalarRange(Constraint):
         high_value (int or float):
             Higher bound on the values of the ``column_name``.
         strict_boundaries (bool):
-            Whether the comparison of the values should be strict ``>=`` or
-            not ``>`` when comparing them.
+            Whether the comparison of the values should be strict ``>=`` or not ``>``.
+            Defaults to True.
     """
 
     def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
@@ -973,12 +976,15 @@ class ScalarRange(Constraint):
         data = sigmoid(data, self.low_value, self.high_value)
 
         # Clip the column to ensure the reverse transformed values satisfy the constraint
-        if self._operator is np.less_equal:
+        if self._operator is operator.le:
             data = data.clip(self.low_value, self.high_value)
         elif self._dtype == np.dtype('int'):
             data = data.clip(self.low_value + 1, self.high_value - 1)
-        else:
+        elif self._dtype == np.dtype('float'):
             data = data.clip(self.low_value + 1e-6, self.high_value - 1e-6)
+        elif self._is_datetime:
+            one_second = pd.Timedelta(seconds=1)
+            data = data.clip(self.low_value + one_second, self.high_value - one_second)
 
         if self._is_datetime:
             table_data[self.column_name] = pd.to_datetime(data)
