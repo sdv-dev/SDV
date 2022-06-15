@@ -364,7 +364,7 @@ class TestConstraint():
         # Assert
         assert output == 'the_transformed_data'
 
-    def test_transform_model_disabled_any_columns_missing(self):
+    def test_transform_columns_missing(self):
         """Test the ``Constraint.transform`` method with invalid data.
 
         If ``table_data`` is missing any columns it should raise a
@@ -382,8 +382,8 @@ class TestConstraint():
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame([[1, 2], [3, 4]], columns=['b', 'c']))
 
-    def test_transform_model_enabled_all_columns_missing(self):
-        """Test the ``Constraint.transform`` method with missing columns.
+    def test_transform_all_columns_missing(self):
+        """Test the ``Constraint.transform`` method with all columns missing.
 
         If ``table_data`` is missing all of the ``constraint_columns`` a
         ``MissingConstraintColumnError`` is raised.
@@ -673,10 +673,12 @@ class TestColumnsModel:
         """
 
         # Run
-        instance = ColumnsModel('age')
+        constraint = Mock()
+        instance = ColumnsModel(constraint, 'age')
 
         # Assert
         assert instance.constraint_columns == ['age']
+        assert instance.constraint == constraint
 
     def test___init__list(self):
         """Test the ``__init__`` method of ``ColumnsModel``.
@@ -694,10 +696,12 @@ class TestColumnsModel:
         """
 
         # Run
-        instance = ColumnsModel(['age', 'age_when_joined'])
+        constraint = Mock()
+        instance = ColumnsModel(constraint, ['age', 'age_when_joined'])
 
         # Assert
         assert instance.constraint_columns == ['age', 'age_when_joined']
+        assert instance.constraint == constraint
 
     @patch('sdv.constraints.base.GaussianMultivariate')
     @patch('sdv.constraints.base.HyperTransformer')
@@ -731,8 +735,7 @@ class TestColumnsModel:
         })
 
         mock_hyper_transformer.return_value.fit_transform.return_value = 'transformed_data'
-
-        instance = ColumnsModel(['age', 'age_when_joined'])
+        instance = ColumnsModel(Mock(), ['age', 'age_when_joined'])
 
         # Run
         instance.fit(table_data)
@@ -769,7 +772,12 @@ class TestColumnsModel:
             - Transformed data with all columns.
         """
         # Setup
-        instance = ColumnsModel(['a', 'b'])
+        constraint = Mock()
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [True for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
@@ -805,6 +813,17 @@ class TestColumnsModel:
         assert model_calls[1][2]['num_rows'] > 3
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 
+        expected_call_1 = pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
+        expected_call_2 = pd.DataFrame([
+            [1, 4],
+            [1, 5],
+            [1, 6],
+            [1, 7]
+        ], columns=['a', 'b'])
+
+        pd.testing.assert_frame_equal(expected_call_1, constraint.is_valid.call_args_list[0][0][0])
+        pd.testing.assert_frame_equal(expected_call_2, constraint.is_valid.call_args_list[1][0][0])
+
     def test__reject_sampling_duplicates_valid_rows(self):
         """Test the ``Constraint.transform`` method's reject sampling fall back.
 
@@ -825,7 +844,12 @@ class TestColumnsModel:
             - Transformed data with all columns.
         """
         # Setup
-        instance = ColumnsModel(['a', 'b'])
+        constraint = Mock()
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [True for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
@@ -874,7 +898,8 @@ class TestColumnsModel:
             - Transformed data with all columns.
         """
         # Setup
-        instance = ColumnsModel(['a', 'b'])
+        constraint = Mock()
+        instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]

@@ -329,11 +329,13 @@ class ColumnsModel:
 
     _columns_model = None
 
-    def __init__(self, constraint_columns):
+    def __init__(self, constraint, constraint_columns):
         if isinstance(constraint_columns, list):
             self.constraint_columns = constraint_columns
         else:
             self.constraint_columns = [constraint_columns]
+
+        self.constraint = constraint
 
     def fit(self, table_data):
         """Fit the ``ColumnsModel``.
@@ -353,28 +355,10 @@ class ColumnsModel:
         self._model = GaussianMultivariate(distribution=GaussianUnivariate)
         self._model.fit(transformed_data)
 
-    def is_valid(self, table_data):
-        """Say whether the given table rows are valid.
-
-        This is a dummy version of the method that returns a series of ``True``
-        values to avoid dropping any rows. This should be overwritten by all
-        the subclasses that have a way to decide which rows are valid and which
-        are not.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.Series:
-                Series of ``True`` values
-        """
-        return pd.Series(True, index=table_data.index)
-
     def _reject_sample(self, num_rows, conditions):
         sampled = self._model.sample(num_rows=num_rows, conditions=conditions)
         sampled = self._hyper_transformer.reverse_transform(sampled)
-        valid_rows = sampled[self.is_valid(sampled)]
+        valid_rows = sampled[self.constraint.is_valid(sampled)]
         counter = 0
         total_sampled = num_rows
 
@@ -399,7 +383,7 @@ class ColumnsModel:
             total_sampled += num_to_sample
             new_sampled = self._model.sample(num_rows=num_to_sample, conditions=conditions)
             new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
-            new_valid_rows = new_sampled[self.is_valid(new_sampled)]
+            new_valid_rows = new_sampled[self.constraint.is_valid(new_sampled)]
             valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
             counter += 1
 
