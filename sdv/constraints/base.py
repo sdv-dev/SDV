@@ -366,8 +366,7 @@ class ColumnsModel:
             num_valid = len(valid_rows)
             if counter >= 100:
                 if len(valid_rows) == 0:
-                    error = 'Could not get enough valid rows within 100 trials.'
-                    raise ValueError(error)
+                    raise ValueError('Could not get enough valid rows within 100 trials.')
                 else:
                     multiplier = num_rows // num_valid
                     num_rows_missing = num_rows % num_valid

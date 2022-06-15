@@ -31,6 +31,25 @@ def test__get_qualified_name_class():
     assert fully_qualified_name == expected_name
 
 
+def test__get_qualified_name_class_has_no_name():
+    """Test the ``_get_qualified_name`` function, if a class is passed but no name on it.
+
+    The ``_get_qualified_name`` function is expected to:
+    - Return the Fully Qualified Name from a class.
+
+    Input:
+    - A class.
+    Output:
+    - The class qualified name.
+    """
+    # Run
+    fully_qualified_name = _get_qualified_name(Mock())
+
+    # Assert
+    expected_name = 'unittest.mock.Mock'
+    assert fully_qualified_name == expected_name
+
+
 def test__get_qualified_name_function():
     """Test the ``_get_qualified_name`` function, if a function is passed.
 
@@ -877,6 +896,48 @@ class TestColumnsModel:
         assert len(model_calls) == 101
         instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
         pd.testing.assert_frame_equal(transformed_data, expected_result)
+
+    def test__reject_sampling_no_valid_rows(self):
+        """Test the ``Constraint.transform`` method's reject sampling fall back.
+
+        Raises an error when there is no valid rows.
+
+        Setup:
+            - Instance of ``ColumnsModel.
+
+        Mock:
+            - ``instance._hyper_transformer``.
+            - ``instance._model``.
+            - ``instance.constraint``.
+
+        Input:
+            - Table with some missing columns.
+
+        Side Effects:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        constraint = Mock()
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [False for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
+        instance._hyper_transformer = Mock()
+        instance._model = Mock()
+        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
+        instance._model.sample.side_effect = [
+            pd.DataFrame([
+                [1, 2],
+                [1, 3]
+            ], columns=['a', 'b'])
+        ] + [pd.DataFrame()] * 100
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform = lambda x: x
+
+        # Run
+        with pytest.raises(ValueError, match='Could not get enough valid rows within 100 trials.'):
+            instance._reject_sample(num_rows=5, conditions={'b': 1})
 
     def test_sample(self):
         """Test the ``ColumnsModel.sample`` method.
