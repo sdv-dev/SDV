@@ -101,22 +101,6 @@ Negative
    Negative.from_dict
    Negative.to_dict
 
-ColumnFormula
-~~~~~~~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   ColumnFormula
-   ColumnFormula.fit
-   ColumnFormula.transform
-   ColumnFormula.fit_transform
-   ColumnFormula.reverse_transform
-   ColumnFormula.is_valid
-   ColumnFormula.filter_valid
-   ColumnFormula.from_dict
-   ColumnFormula.to_dict
-
 Range
 ~~~~~
 

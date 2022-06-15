@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    ColumnFormula, FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range,
-    ScalarInequality, ScalarRange, Unique)
+    FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range, ScalarInequality,
+    ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
@@ -30,16 +30,9 @@ def test_constraints(tmpdir):
         handling_strategy='reject_sampling'
     )
 
-    years_in_the_company_constraint = ColumnFormula(
-        column='years_in_the_company',
-        formula=years_in_the_company,
-        handling_strategy='transform'
-    )
-
     constraints = [
         fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
-        years_in_the_company_constraint,
     ]
     gc = GaussianCopula(constraints=constraints)
     gc.fit(employees)

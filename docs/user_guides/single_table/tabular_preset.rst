@@ -191,23 +191,19 @@ In most cases, the preset is able to learn a general trend and create synthetic 
 of the rows follow the rule. Use a constraint if you want to enforce that *all* of the rows
 must follow the rule.
 
-In our dataset, we have a constraint: If experience_years=0, then work_experience=False.
-Otherwise, work_experience=True. We can describe this using a
-`ColumnFormula constraint <https://sdv.dev/SDV/user_guides/single_table/handling_constraints.html#columnformula-constraint>`__.
+In our dataset, we have a constraint: All the numerical values in the duration column must be divisible by 3.
+We can describe this using a FixedIncrements constraint.
+
 
 .. ipython:: python
    :okwarning:
 
-   from sdv.constraints import ColumnFormula
-
-   # define the formula for computing work experience
-   def calculate_work_experience(data):
-       return data['experience_years'] > 0
+   from sdv.constraints import FixedIncrements
    
    # use the formula when defining the constraint
-   work_constraint = ColumnFormula(
-       column='work_experience',
-       formula=calculate_work_experience,
+   duration_constraint = FixendIncrements(
+       column_name='duration',
+       increment=3,
    )
 
 You can input constraints into the presets when creating your model.
@@ -218,7 +214,7 @@ You can input constraints into the presets when creating your model.
    constrained_model = TabularPreset(
        name='FAST_ML',
        metadata=metadata,
-       constraints=[work_constraint],
+       constraints=[duration_constraint],
    )
    constrained_model.fit(data)
 

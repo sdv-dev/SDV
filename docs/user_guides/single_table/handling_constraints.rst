@@ -221,40 +221,6 @@ column are always positive or negative. We can create an instance passing:
         strict=False,
     )
 
-ColumnFormula Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-In some cases, one column will need to be computed based on the other
-columns using a custom formula. This is, for example, what happens with
-the ``years_in_the_company`` column in our demo data, which will always
-need to be computed based on the ``age`` and ``age_when_joined`` columns
-by subtracting them. In these cases, we need to define a custom function
-that defines how to compute the value of the column:
-
-.. ipython:: python
-    :okwarning:
-
-    def years_in_the_company(data):
-        return data['age'] - data['age_when_joined']
-
-Once we have defined this function, we can use the ``ColumnFormula``
-constraint by passing it:
-
--  the name of the column that we want to generate
--  the function that generates the column values
--  the handling strategy that we want to use
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import ColumnFormula
-
-    years_in_the_company_constraint = ColumnFormula(
-        column='years_in_the_company',
-        formula=years_in_the_company,
-        handling_strategy='transform'
-    )
-
 Range Constraint
 ~~~~~~~~~~~~~~~~
 Another possibility is the ``Range`` constraint. It guarantees that one column is always
