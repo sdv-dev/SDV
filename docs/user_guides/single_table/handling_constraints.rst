@@ -194,6 +194,8 @@ To use this functionality, we can pass:
 .. ipython:: python
     :okwarning:
 
+    from sdv.constraints import ScalarInequality
+
     salary_gt_30000_constraint = ScalarInequality(
         column_name='salary',
         value=30000,
@@ -313,10 +315,7 @@ constraints that we just defined as a ``list``:
         fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
         salary_gt_30000_constraint,
-        experience_years_gt_one_constraint,	
         positive_age_constraint,	
-        years_in_the_company_constraint,	
-        salary_rounding_constraint,	
         reasonable_age_constraint,	
         one_hot_constraint
     ]
