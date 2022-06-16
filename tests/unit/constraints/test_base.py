@@ -911,9 +911,9 @@ class TestColumnsModel:
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 
     def test__reject_sampling_no_valid_rows(self):
-        """Test the ``Constraint.transform`` method's reject sampling fall back.
+        """Test the ``ColumnsModel._reject_sampling`` method.
 
-        Raises an error when there is no valid rows.
+        Raises an error when there is no valid rows within 100 tries.
 
         Setup:
             - Instance of ``ColumnsModel.
