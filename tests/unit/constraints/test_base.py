@@ -6,7 +6,8 @@ import pytest
 from copulas.univariate import GaussianUnivariate
 
 from sdv.constraints.base import (
-    ColumnsModel, Constraint, _get_qualified_name, get_subclasses, import_object)
+    ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
+    import_object)
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import ColumnFormula, FixedCombinations
 from sdv.errors import ConstraintsNotMetError
@@ -67,6 +68,18 @@ def test__get_qualified_name_function():
     # Assert
     expected_name = 'sdv.constraints.base._get_qualified_name'
     assert fully_qualified_name == expected_name
+
+
+def test__module_contains_callable_name():
+    """Test the ``_module_constraint_callable_name``.
+
+    Return whether or not the ``module`` contains a callable name from this object.
+    """
+    # Setup
+    result = _module_contains_callable_name(Mock())
+
+    # Assert
+    assert result
 
 
 def test_get_subclasses():
