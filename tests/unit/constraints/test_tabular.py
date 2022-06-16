@@ -2395,6 +2395,55 @@ class TestRange():
         mock_sigmoid.assert_called_once()
         pd.testing.assert_frame_equal(table_data, out)
 
+    @patch('sdv.constraints.tabular.pd')
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_is_datetime(self, mock_sigmoid, mock_pd):
+        """Test the ``reverse_transform`` method for ``Range``.
+
+        When ``instance._is_datetime`` is ``True``, the data should be converted
+        to ``pandas.to_datetime``.
+
+        Mock:
+            - Mock the sigmoid function.
+            - Mock pandas.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data.
+            - Instance of ScalarRange constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+
+        Side Effects:
+            - ``mock_pd`` has to be called once.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age': [21, 22, 25],
+        })
+        mock_sigmoid.return_value = pd.Series([21, 22, 25])
+        transformed_data = pd.DataFrame({
+            'age_when_joined': [18, 19, 20],
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': [1, 2, 3]
+        })
+        mock_pd.to_datetime.side_effect = lambda x: x
+
+        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance._transformed_column = 'current_age#age_when_joined#retirement_age'
+        instance._is_datetime = True
+
+        # Run
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+        mock_sigmoid.assert_called_once()
+        mock_pd.to_datetime.assert_called_once()
+
 
 class TestScalarRange():
 
@@ -2713,6 +2762,46 @@ class TestScalarRange():
         # Assert
         pd.testing.assert_frame_equal(table_data, out)
         mock_sigmoid.assert_called_once()
+
+    @patch('sdv.constraints.tabular.pd')
+    @patch('sdv.constraints.tabular.sigmoid')
+    def test_reverse_transform_is_datetime(self, mock_sigmoid, mock_pd):
+        """Test the ``reverse_transform`` method for ``ScalarRange``.
+
+        When ``instance._is_datetime`` is ``True``, the data should be converted
+        to ``pandas.to_datetime``.
+
+        Mock:
+            - Mock the sigmoid function.
+            - Mock pandas.
+
+        Setup:
+            - Original table data.
+            - An expected transformed data.
+            - Instance of ScalarRange constraint.
+
+        Output:
+            - A pd.DataFrame containing the original data.
+
+        Side Effects:
+            - ``mock_pd`` has to be called once.
+        """
+        # Setup
+        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
+        mock_sigmoid.return_value = pd.Series([21, 22, 25])
+        instance = ScalarRange('current_age', 20, 28)
+        instance._transformed_column = 'current_age#20#28'
+        instance._is_datetime = True
+        mock_pd.to_datetime.side_effect = lambda x: x
+
+        # Run
+        out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(table_data, out)
+        mock_sigmoid.assert_called_once()
+        mock_pd.to_datetime.assert_called_once()
 
 
 class TestOneHotEncoding():
