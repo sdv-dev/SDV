@@ -451,8 +451,8 @@ class TestFixedCombinations():
         with pytest.raises(ValueError):
             FixedCombinations(column_names=columns)
 
-    def test_fit(self):
-        """Test the ``FixedCombinations.fit`` method.
+    def test__fit(self):
+        """Test the ``FixedCombinations._fit`` method.
 
         The ``FixedCombinations.fit`` method is expected to:
         - Call ``FixedCombinations._valid_separator``.
@@ -469,17 +469,18 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
+            'b#c': ['1', '2', '3'],
         })
-        instance.fit(table_data)
+        instance._fit(table_data)
 
         # Asserts
         expected_combinations = pd.DataFrame({
             'b': ['d', 'e', 'f'],
             'c': ['g', 'h', 'i']
         })
-        assert instance._separator == '#'
-        assert instance._joint_column == 'b#c'
+        assert instance._separator == '##'
+        assert instance._joint_column == 'b##c'
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
 
     def test_is_valid_true(self):
@@ -2211,7 +2212,8 @@ class TestRange():
         table_data = pd.DataFrame({
             'age_when_joined': [18, 19, 20],
             'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
+            'retirement_age': [65, 68, 75],
+            'current_age#age_when_joined#retirement_age': [1, 2, 3]
         }, dtype=np.int64)
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
 
@@ -2219,7 +2221,7 @@ class TestRange():
         instance._fit(table_data)
 
         # Assert
-        assert instance._transformed_column == 'current_age#age_when_joined#retirement_age'
+        assert instance._transformed_column == 'current_age##age_when_joined##retirement_age'
         assert instance._dtype == np.int64
         assert not instance._is_datetime
 
@@ -2537,14 +2539,17 @@ class TestScalarRange():
             - The column name concatenated with ``#`` followed by the ``low`` and ``high`` values.
         """
         # Setup
-        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
+        table_data = pd.DataFrame({
+            'current_age': [21, 22, 25],
+            'current_age#18#35': [1, 2, 3]
+        })
         instance = ScalarRange('current_age', 18, 35)
 
         # Run
         transformed_column_name = instance._get_diff_column_name(table_data)
 
         # Assert
-        assert transformed_column_name == 'current_age#18#35'
+        assert transformed_column_name == 'current_age##18##35'
 
     def test__fit(self):
         """Test the ``_fit`` method of ``Range``.
