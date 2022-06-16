@@ -47,29 +47,20 @@ simulated employees from several companies.
 
 If we observe the data closely we will find a few **constraints**:
 
-1. There should be at most one ``employee_id`` for every employee
-   at a ``company``.
-2. Each ``company`` has employees from two or more ``departments``, but
+1. Each ``company`` has employees from two or more ``departments``, but
    ``department`` names are different across ``companies``. This implies
    that a ``company`` should only be paired with its own ``departments``
    and never with the ``departments`` of other ``companies``.
-3. We have an ``age`` column that represents the age of the employee at
+2. We have an ``age`` column that represents the age of the employee at
    the date when the data was created and an ``age_when_joined`` that
    represents the age of the employee when they joined the ``company``.
    Since all of them joined the ``company`` before the data was created,
    the ``age_when_joined`` will always be equal or lower than the
    ``age`` column.
-4. We have a ``years_in_the_company`` column that indicates how many
+3. We have a ``years_in_the_company`` column that indicates how many
    years passed since they joined the company, which means that the
    ``years_in_the_company`` will always be equal to the ``age`` minus
    the ``age_when_joined``.
-5. We have a ``salary`` column that should always be rounded to 2
-   decimal points.
-6. The ``age`` column is bounded, since realistically an employee can only be
-   so old (or so young).
-7. The ``full_time``, ``part_time`` and ``contractor`` columns
-   are related in such a way that one of them will always be one and the others
-   zero, since the employee must be part of one of the three categories.
 
 How does SDV Handle Constraints?
 --------------------------------
@@ -106,36 +97,11 @@ the ones that do not adjust to the constraint, and re-samples them. This
 process is repeated until enough rows have been sampled.
 
 
-Predefined Constraints
+Defining Constraints
 ----------------------
 
 Let us go back to the demo data that we loaded before and define
 **Constraints** that indicate **SDV** how to work with this data.
-
-Unique Constraint
-~~~~~~~~~~~~~~~~~
-
-Sometimes a table may have a column that is not the primary key, but still needs
-to be unique throughout the table. In some cases, there may even be a collection
-of columns for which each unique combination of their values can only show up once
-in the table. The ``Unique`` constraint enforces that the provided column(s) at
-most have one instance of each possible combination of values in the synthetic data.
-
-As an example, let us apply this constraint to the ``employee_id`` and ``company``
-columns, since the ``employee_id`` should be unique for each ``company``.
-
-To use this constraint, we must make an instance and provide:
-
-- A list of names of columns that need to have unique values
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Unique
-
-    unique_employee_id_company_constraint = Unique(
-        column_names=['employee_id', 'company']
-    )
 
 FixedCombinations Constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,101 +168,6 @@ To use this functionality, we can pass:
         relation='>',
     )
 
-Positive and Negative Constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Similar to the ``ScalarInequality`` constraint, we can use the ``Positive``
-or ``Negative`` constraints. These constraints enforce that the specified
-column are always positive or negative. We can create an instance passing:
-
-- the name of the column for ``Negative`` or ``Positive`` constraints
-- a boolean specifying whether to make the data strictly above or below 0, 
-  or include 0 as a possible value
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Positive
-
-    positive_age_constraint = Positive(
-        column_name='age',
-        strict=False,
-    )
-
-Range Constraint
-~~~~~~~~~~~~~~~~
-Another possibility is the ``Range`` constraint. It guarantees that one column is always
-between two other columns. For example if we have a column ``age``, ``age_when_joined``
-and ``retirement_age`` we can specify that ``age`` has to be bigger than ``age_when_joined``
-but lower than ``retirement_age``.
-
-In order to use it, we need to create an instance passing:
-
-- the name of the lower bound column (``low_column_name``).
-- the name of the middle column (``middle_column_name``).
-- the name of the higher bound column (``high_column_name``).
-- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
-  whether the comparison of the values should be strict or not.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Range
-
-    current_age = Range(
-        low_column_name='age_when_joined',
-        middle_column_name='age',
-        high_column_name='retirement_age'
-    )
-
-ScalarRange Constraint
-~~~~~~~~~~~~~~~~~~~~~~
-If we need to ensure that a column is between two numerical values, we can use the ``ScalarRange``
-constraint. It guarantees that one column is always between a ``low_value`` and a ``high_value``.
-For example, the ``age`` column in our demo data is realistically bounded to the ages of 15 and 90
-since actual employees won't be too young or too old.
-
-In order to use it, we need to create an instance passing:
-
-- the name of the column (``column_name``).
-- the ``low_value`` value.
-- the ``high_value`` value.
-- (optional) we can set ``strict_boundaries`` to ``True`` or ``False`` indicating
-  whether the comparison of the values should be strict or not.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import ScalarRange
-
-    reasonable_age_constraint = ScalarRange(
-        column_name='age',
-        low_value=15,
-        high_value=90
-    )
-
-OneHotEncoding Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Another constraint available is the ``OneHotEncoding`` constraint.
-This constraint allows the user to specify a list of columns where each row 
-is a one hot vector. Then, the constraint will make sure that the output
-of the model is transformed so that the column with the largest value is
-set to 1 while all other columns are set to 0. To apply the constraint we
-need to create an instance passing:
-
-- A list of the names of the columns of interest
-- The strategy we want to use (``transform`` is recommended)
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import OneHotEncoding
-
-    one_hot_constraint = OneHotEncoding(
-        column_names=['full_time', 'part_time', 'contractor']
-    )
-
 Using the Constraints
 ---------------------
 
@@ -311,13 +182,8 @@ constraints that we just defined as a ``list``:
     from sdv.tabular import GaussianCopula
 
     constraints = [
-        unique_employee_id_company_constraint,
         fixed_company_department_constraint,
-        age_gt_age_when_joined_constraint,
-        salary_gt_30000_constraint,
-        positive_age_constraint,	
-        reasonable_age_constraint,	
-        one_hot_constraint
+        age_gt_age_when_joined_constraint
     ]
 
     gc = GaussianCopula(constraints=constraints)
