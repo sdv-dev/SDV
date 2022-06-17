@@ -104,6 +104,7 @@ class Constraint(metaclass=ConstraintMeta):
     rebuild_columns = ()
     _hyper_transformer = None
     _use_reject_sampling = False
+    is_custom = False
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -186,7 +187,8 @@ class Constraint(metaclass=ConstraintMeta):
 
         try:
             transformed = self._transform(table_data)
-            self.reverse_transform(transformed)
+            if self.is_custom:
+                self.reverse_transform(transformed)
             return transformed
 
         except Exception:

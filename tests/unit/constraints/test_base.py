@@ -293,7 +293,7 @@ class TestConstraint():
         pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
         assert instance._use_reject_sampling is False
 
-    def test_transform_calls__transform_and_reverse_transform(self):
+    def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
 
         The ``Constraint.transform`` method is expected to:
@@ -315,7 +315,35 @@ class TestConstraint():
         # Assert
         assert output == 'the_transformed_data'
         constraint_mock._validate_all_columns_present.assert_called_once()
-        constraint_mock.reverse_transform.assert_called_once()
+
+    def test_transform_calls__transform_and_reverse_transform_if_custom(self):
+        """Test that the ``Constraint.transform`` method calls ``_reverse_transform`` if it's custom.
+
+        The ``Constraint.transform`` method is expected to:
+            - Return value returned by ``_transform``.
+
+        Setup:
+            - Set ``is_custom`` to True.
+
+        Input:
+            - Anything
+
+        Output:
+            - Result of ``_transform(input)``
+        """
+        # Setup
+        instance = Constraint()
+        instance.is_custom = True
+        instance._transform = Mock()
+        instance.reverse_transform = Mock()
+        instance._transform.return_value = 'the_transformed_data'
+
+        # Run
+        output = instance.transform('input')
+
+        # Assert
+        assert output == 'the_transformed_data'
+        instance.reverse_transform.assert_called_once()
 
     @patch('sdv.constraints.base.warnings')
     def test_transform__transform_errors(self, warnings_mock):
@@ -360,6 +388,7 @@ class TestConstraint():
         Setup:
             - Make ``reverse_transform`` raise an error.
             - Mock warnings.
+            - Set ``is_custom`` to True.
 
         Input:
             - ``pandas.DataFrame``.
@@ -371,16 +400,20 @@ class TestConstraint():
             - Warning should be raised.
         """
         # Setup
-        constraint_mock = Mock()
-        constraint_mock.reverse_transform.side_effect = Exception()
+        constraint = Constraint()
+        constraint.is_custom = True
+        constraint.reverse_transform = Mock()
+        constraint.reverse_transform.side_effect = Exception()
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
-        output = Constraint.transform(constraint_mock, data)
+        output = constraint.transform(data)
 
         # Assert
         pd.testing.assert_frame_equal(data, output)
-        expected_message = 'Error transforming Mock. Using the reject sampling approach instead.'
+        expected_message = (
+            'Error transforming Constraint. Using the reject sampling approach instead.'
+        )
         warnings_mock.warn.assert_called_with(expected_message)
 
     def test_transform_columns_missing(self):
