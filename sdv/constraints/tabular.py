@@ -107,7 +107,6 @@ class CustomConstraint(Constraint):
         else:
             self._columns = columns
 
-        self.fit_columns_model = False
         if transform is not None:
             self._transform = import_object(transform)
             self.transform = self._run_transform
@@ -141,10 +140,6 @@ class FixedCombinations(Constraint):
         handling_strategy (str):
             How this Constraint should be handled, which can be ``transform``,
             ``reject_sampling`` or ``all``. Defaults to ``transform``.
-        fit_columns_model (bool):
-            If False, reject sampling will be used to handle conditional sampling.
-            Otherwise, a model will be trained and used to sample other columns
-            based on the conditioned column. Defaults to False.
     """
 
     _separator = None
@@ -152,15 +147,14 @@ class FixedCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
-    def __init__(self, column_names, handling_strategy='transform', fit_columns_model=False):
+    def __init__(self, column_names, handling_strategy='transform'):
         if len(column_names) < 2:
             raise ValueError('FixedCombinations requires at least two constraint columns.')
 
         self._columns = column_names
         self.constraint_columns = tuple(column_names)
         self.rebuild_columns = tuple(column_names)
-        super().__init__(handling_strategy=handling_strategy,
-                         fit_columns_model=fit_columns_model)
+        super().__init__(handling_strategy=handling_strategy)
 
     def _fit(self, table_data):
         """Fit this Constraint to the data.
@@ -286,7 +280,7 @@ class Inequality(Constraint):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
     def __init__(self, low_column_name, high_column_name, strict_boundaries=False,
-                 handling_strategy='transform', fit_columns_model=False):
+                 handling_strategy='transform'):
         self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
@@ -296,7 +290,7 @@ class Inequality(Constraint):
         self.constraint_columns = tuple([low_column_name, high_column_name])
         self._dtype = None
         self._is_datetime = None
-        super().__init__(handling_strategy=handling_strategy, fit_columns_model=fit_columns_model)
+        super().__init__(handling_strategy=handling_strategy)
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
@@ -437,7 +431,7 @@ class ScalarInequality(Constraint):
         self._is_datetime = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
-        super().__init__(handling_strategy='transform', fit_columns_model=False)
+        super().__init__(handling_strategy='transform')
 
     def _get_is_datetime(self, table_data):
         column = table_data[self._column_name].to_numpy()
@@ -602,7 +596,7 @@ class ColumnFormula(Constraint):
         self._formula = import_object(formula)
         self._drop_column = drop_column
         self.rebuild_columns = (column,)
-        super().__init__(handling_strategy, fit_columns_model=False)
+        super().__init__(handling_strategy)
 
     def is_valid(self, table_data):
         """Say whether the data fulfills the formula.
@@ -689,7 +683,7 @@ class Range(Constraint):
         self.high_column_name = high_column_name
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
-        super().__init__(handling_strategy=handling_strategy, fit_columns_model=True)
+        super().__init__(handling_strategy=handling_strategy)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
@@ -844,7 +838,7 @@ class ScalarRange(Constraint):
         self.high_value = high_value
         self._operator = operator.lt if strict_boundaries else operator.le
 
-        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
+        super().__init__(handling_strategy=handling_strategy)
 
     def _get_diff_column_name(self, table_data):
         token = '#'
@@ -984,7 +978,7 @@ class FixedIncrements(Constraint):
 
         self.increment_value = increment_value
         self.column_name = column_name
-        super().__init__(handling_strategy=handling_strategy, fit_columns_model=False)
+        super().__init__(handling_strategy=handling_strategy)
 
     def is_valid(self, table_data):
         """Determine if the data is evenly divisible by the increment.
@@ -1062,81 +1056,7 @@ class OneHotEncoding(Constraint):
     def __init__(self, column_names, handling_strategy='transform'):
         self._column_names = column_names
         self.constraint_columns = tuple(column_names)
-        super().__init__(handling_strategy, fit_columns_model=True)
-
-    def _sample_constraint_columns(self, table_data):
-        """Handle constraint columns when conditioning.
-
-        When handling a set of one-hot columns, a subset of columns may be provided
-        to condition on. To handle this, this function does the following:
-
-        1. If the user specifies that a particular column must be 1,
-           then all other columns must be 0.
-        2. If the user specifies that one or more columns must be 0, then
-           we need to sample the other columns and select the highest value
-           and enforce the one-hot constraint.
-        3. If the user specifies something invalid, we need to raise an error.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data containing the conditions.
-
-        Returns:
-            pandas.DataFrame:
-                Table data with the constraint columns filled in.
-
-        Raise:
-            ``ValueError`` if the conditions are invalid.
-        """
-        table_data = table_data.copy()
-
-        condition_columns = [col for col in self._column_names if col in table_data.columns]
-        conditions_data = table_data[condition_columns]
-        conditions_data_sum = conditions_data.sum(axis=1)
-        if not conditions_data.isin([0.0, 1.0]).all(axis=1).all():
-            raise ValueError('Condition values must be ones or zeros.')
-
-        if (conditions_data_sum > 1.0).any():
-            raise ValueError('Each row of a condition can only contain one number one.')
-
-        has_one = conditions_data_sum == 1.0
-        if (~has_one).sum() > 0:
-            sub_table_data = table_data.loc[~has_one, condition_columns]
-            should_transform = False
-
-            if len(condition_columns) == len(self._column_names) - 1:
-                proposed_table_data = sub_table_data.copy()
-                for column in self._column_names:
-                    if column not in condition_columns:
-                        proposed_table_data[column] = 1.0
-
-            else:
-                should_transform = True
-                conditions = sub_table_data[condition_columns]
-                transformed_conditions = self._hyper_transformer.transform(conditions)
-                proposed_table_data = self._columns_model.sample(
-                    num_rows=len(sub_table_data),
-                    conditions=transformed_conditions.iloc[0].to_dict()
-                )
-
-            if should_transform:
-                proposed_table_data = self._hyper_transformer.reverse_transform(
-                    proposed_table_data)
-
-            for column in self._column_names:
-                if column not in condition_columns:
-                    sub_table_data[column] = proposed_table_data[column].values
-                else:
-                    sub_table_data[column] = float('-inf')
-
-            table_data.loc[~has_one, self._column_names] = self.reverse_transform(sub_table_data)
-
-        if has_one.sum() > 0:
-            for column in self._column_names:
-                if column not in condition_columns:
-                    table_data.loc[has_one, column] = 0
-
-        return table_data
+        super().__init__(handling_strategy)
 
     def is_valid(self, table_data):
         """Check whether the data satisfies the one-hot constraint.
@@ -1196,7 +1116,7 @@ class Unique(Constraint):
     def __init__(self, column_names):
         self.column_names = column_names
         self.constraint_columns = tuple(self.column_names)
-        super().__init__(handling_strategy='reject_sampling', fit_columns_model=False)
+        super().__init__(handling_strategy='reject_sampling')
 
     def is_valid(self, table_data):
         """Get indices of first instance of unique rows.
