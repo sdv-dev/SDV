@@ -91,7 +91,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 Function to replace the ``is_valid`` method.
         """
 
-        TYPE = 'CUSTOM_CONSTRAINT'  # this lets us know how to handle it
+        IS_CUSTOM = True
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names

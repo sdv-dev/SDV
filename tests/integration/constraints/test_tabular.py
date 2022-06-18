@@ -1,9 +1,26 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange
+from sdv.constraints import FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint
 from sdv.tabular import GaussianCopula
 
+def test_create_custom_constraint():
+    """Test the ``create_custom_constraint`` method end to end."""
+    # Setup
+    is_positive = lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']])
+    square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
+    square_root = lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
+    custom_constraint = create_custom_constraint(is_positive, square, square_root)('col')
+
+    data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
+    gc = GaussianCopula(constraints=[custom_constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(100)
+
+    # Assert
+    assert all(sampled > 0)
 
 def test_FixedIncrements():
     """Test the ``FixedIncrements`` constraint end to end."""
