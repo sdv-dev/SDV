@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint
+from sdv.constraints import (
+    create_custom_constraint, FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange)
 from sdv.tabular import GaussianCopula
+
 
 def test_create_custom_constraint():
     """Test the ``create_custom_constraint`` method end to end."""
@@ -21,6 +23,7 @@ def test_create_custom_constraint():
 
     # Assert
     assert all(sampled > 0)
+
 
 def test_FixedIncrements():
     """Test the ``FixedIncrements`` constraint end to end."""

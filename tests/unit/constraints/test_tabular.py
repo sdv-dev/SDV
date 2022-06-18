@@ -171,7 +171,7 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.Series([False, True, True, True, False])
         pd.testing.assert_series_equal(valid_out, expected_out)
-    
+
     def test_create_custom_constraint_is_valid_wrong_shape(self):
         """Test ``is_valid`` method of ``CustomConstraint`` which produces data of wrong shape.
 
@@ -191,7 +191,6 @@ class TestCreateCustomConstraint():
         err_msg = '`is_valid_fn` did not produce exactly 1 True/False value for each row.'
         with pytest.raises(InvalidFunctionError, match=err_msg):
             custom_constraint.is_valid(data)
-
 
     def test_create_custom_constraint_transform(self):
         """Test ``transform`` method of ``CustomConstraint``.
@@ -216,7 +215,7 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transform_out, expected_out)
-    
+
     def test_create_custom_constraint_transform_not_defined(self):
         """Test ``transform`` method of ``CustomConstraint`` when it wasn't defined.
 
@@ -236,7 +235,7 @@ class TestCreateCustomConstraint():
         err_msg = 'Transform is not defined for this custom constraint.'
         with pytest.raises(ValueError, match=err_msg):
             custom_constraint.transform(data)
-    
+
     def test_create_custom_constraint_transform_wrong_shape(self):
         """Test ``transform`` method of ``CustomConstraint`` which produces data of wrong shape.
 
@@ -280,7 +279,7 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transformed_out, expected_out)
-    
+
     def test_create_custom_constraint_reverse_transform_not_defined(self):
         """Test ``reverse_transform`` method of ``CustomConstraint`` when it wasn't defined.
 
@@ -299,8 +298,8 @@ class TestCreateCustomConstraint():
         err_msg = 'Reverse transform is not defined for this custom constraint.'
         with pytest.raises(ValueError, match=err_msg):
             custom_constraint.reverse_transform(data)
-    
-    def test_create_custom_constraint_transform_wrong_shape(self):
+
+    def test_create_custom_constraint_reverse_transform_wrong_shape(self):
         """Test invalid ``reverse_transform`` method of ``CustomConstraint``
 
         Call ``create_custom_constraint`` on a ``reverse_transform`` function
