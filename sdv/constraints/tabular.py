@@ -4,6 +4,11 @@ This module contains constraints that are evaluated within a single table,
 and which can affect one or more columns at a time, as well as one or more
 rows.
 
+Note: the data produced by the reverse transform of a constraint does not
+necessarily satisfy that constraint. Any invalid rows produced will have to
+be reject sampled at some later stage. For more information,
+check link.
+
 Currently implemented constraints are:
 
     * CustomConstraint: Simple constraint to be set up by passing the python
