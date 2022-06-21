@@ -9,7 +9,7 @@ from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
     import_object)
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.tabular import ColumnFormula, FixedCombinations
+from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 
 
@@ -635,55 +635,6 @@ class TestConstraint():
             'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict
-
-    def test_to_dict_column_formula_lambda(self):
-        """Test the ``Constraint.to_dict`` when the constraint is
-        a ColumnFormula type and is passed a lambda.
-
-        If the ``Constraint`` type is ColumnFormula,
-        and the formula argument is a lambda, the dictionary
-        should contain the lambda object as the value.
-
-        Output:
-        - Dict with the right values.
-        """
-        # Run
-        instance = ColumnFormula(
-            column='a',
-            formula=lambda x: x + 1,
-            handling_strategy='transform'
-        )
-        constraint_dict = instance.to_dict()
-
-        # Assert
-        assert constraint_dict['formula'](1) == 2
-
-    def test_to_dict_column_formula_returned_function(self):
-        """Test the ``Constraint.to_dict`` when the constraint is
-        a ColumnFormula type and is passed a function returned
-        from another function.
-
-        If the ``Constraint`` type is ColumnFormula,
-        and the formula argument is a function returned from another
-        function, the dictionary should contain the function as the value.
-
-        Output:
-        - Dict with the right values.
-        """
-        # Run
-        def func_creator():
-            def func(x):
-                return x + 1
-            return func
-        instance = ColumnFormula(
-            column='a',
-            formula=func_creator(),
-            handling_strategy='transform'
-        )
-        constraint_dict = instance.to_dict()
-
-        # Assert
-        assert constraint_dict['formula'](1) == 2
 
 
 class TestColumnsModel:

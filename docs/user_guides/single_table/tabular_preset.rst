@@ -3,8 +3,8 @@
 Tabular Preset
 ==============
 
-The ``TabularPreset`` is a tabular model that comes with pre-configured settings. This 
-is meant for users who want to get started with using synthetic data and spend 
+The ``TabularPreset`` is a tabular model that comes with pre-configured settings. This
+is meant for users who want to get started with using synthetic data and spend
 less time worrying about which model to choose or how to tune its parameters.
 
 .. note::
@@ -98,7 +98,7 @@ Pass in your metadata to create the TabularPreset FAST_ML model.
    :okwarning:
 
    from sdv.lite import TabularPreset
-   
+
    # Use the FAST_ML preset to optimize for modeling time
    model = TabularPreset(name='FAST_ML', metadata=metadata)
 
@@ -123,7 +123,7 @@ After you are finished modeling, you can save the fitted model and load it in ag
 
    # save the model in a new file
    model.save('fast_ml_model.pkl')
-   
+
    # later, you can load it in again
    model = TabularPreset.load('fast_ml_model.pkl')
 
@@ -163,11 +163,11 @@ of column names and the exact value you want, along with the number of rows to s
    :okwarning:
 
    from sdv.sampling.tabular import Condition
-   
+
    # 100 science students with work experience
    science_students = Condition(
       column_values={'high_spec': 'Science', 'work_experience': True}, num_rows=100)
-   
+
    # 200 commerce students with work experience
    commerce_students = Condition(
       column_values={'high_spec': 'Commerce', 'work_experience': True}, num_rows=200)
@@ -191,23 +191,19 @@ In most cases, the preset is able to learn a general trend and create synthetic 
 of the rows follow the rule. Use a constraint if you want to enforce that *all* of the rows
 must follow the rule.
 
-In our dataset, we have a constraint: If experience_years=0, then work_experience=False.
-Otherwise, work_experience=True. We can describe this using a
-`ColumnFormula constraint <https://sdv.dev/SDV/user_guides/single_table/handling_constraints.html#columnformula-constraint>`__.
+In our dataset, we have a constraint: All the numerical values in the duration column must be divisible by 3.
+We can describe this using a FixedIncrements constraint.
+
 
 .. ipython:: python
    :okwarning:
 
-   from sdv.constraints import ColumnFormula
+   from sdv.constraints import FixedIncrements
 
-   # define the formula for computing work experience
-   def calculate_work_experience(data):
-       return data['experience_years'] > 0
-   
    # use the formula when defining the constraint
-   work_constraint = ColumnFormula(
-       column='work_experience',
-       formula=calculate_work_experience,
+   duration_constraint = FixedIncrements(
+       column_name='duration',
+       increment_value=3,
    )
 
 You can input constraints into the presets when creating your model.
@@ -218,7 +214,7 @@ You can input constraints into the presets when creating your model.
    constrained_model = TabularPreset(
        name='FAST_ML',
        metadata=metadata,
-       constraints=[work_constraint],
+       constraints=[duration_constraint],
    )
    constrained_model.fit(data)
 
@@ -230,7 +226,7 @@ When you sample from the model, the synthetic data will follow the constraints
    constrained_synthetic_data = constrained_model.sample(num_rows=1_000)
    constrained_synthetic_data.head(10)
 
-To read more about defining constraints, see the 
+To read more about defining constraints, see the
 `Handling Constraints User Guide <https://sdv.dev/SDV/user_guides/single_table/handling_constraints.html>`__.
 
 Resources
