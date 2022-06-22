@@ -323,7 +323,7 @@ class TestConstraint():
             - Return value returned by ``_transform``.
 
         Setup:
-            - Set ``is_custom`` to True.
+            - Set ``IS_CUSTOM`` to True.
 
         Input:
             - Anything
@@ -333,7 +333,7 @@ class TestConstraint():
         """
         # Setup
         instance = Constraint()
-        instance.is_custom = True
+        instance.IS_CUSTOM = True
         instance._transform = Mock()
         instance.reverse_transform = Mock()
         instance._transform.return_value = 'the_transformed_data'
@@ -388,7 +388,7 @@ class TestConstraint():
         Setup:
             - Make ``reverse_transform`` raise an error.
             - Mock warnings.
-            - Set ``is_custom`` to True.
+            - Set ``IS_CUSTOM`` to True.
 
         Input:
             - ``pandas.DataFrame``.
@@ -401,7 +401,7 @@ class TestConstraint():
         """
         # Setup
         constraint = Constraint()
-        constraint.is_custom = True
+        constraint.IS_CUSTOM = True
         constraint.reverse_transform = Mock()
         constraint.reverse_transform.side_effect = Exception()
         data = pd.DataFrame({'a': [1, 2, 3]})
