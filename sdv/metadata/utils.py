@@ -4,7 +4,8 @@ import re
 import string
 
 import numpy as np
-import sre_parse
+
+import sre_parse  # isort:skip
 
 
 def _literal(character, max_repeat):
