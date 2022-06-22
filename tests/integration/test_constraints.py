@@ -61,7 +61,7 @@ def test_failing_constraints():
         Negative('d'),
         OneHotEncoding(['g', 'h']),
         Unique(['i']),
-        ScalarInequality('j', 5.5, '>='),
+        ScalarInequality('j', '>=', 5.5),
         Range('a', 'b', 'c'),
         ScalarRange('a', 0, 0),
     ]

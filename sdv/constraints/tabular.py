@@ -4,6 +4,10 @@ This module contains constraints that are evaluated within a single table,
 and which can affect one or more columns at a time, as well as one or more
 rows.
 
+Note: the data produced by the reverse transform of a constraint does not
+necessarily satisfy that constraint. Any invalid rows produced will have to
+be reject sampled at some later stage.
+
 Currently implemented constraints are:
 
     * CustomConstraint: Simple constraint to be set up by passing the python
@@ -402,11 +406,11 @@ class ScalarInequality(Constraint):
     Args:
         column_name (str):
             Name of the column to compare.
-        value (float or datetime):
-            Scalar value to compare.
         relation (str):
             Describes the relation between ``column_name`` and ``value``.
             Choose one among ``'>'``, ``'>='``, ``'<'``, ``'<='``.
+        value (float or datetime):
+            Scalar value to compare.
     """
 
     @staticmethod
@@ -414,13 +418,13 @@ class ScalarInequality(Constraint):
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
 
-        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
-            raise ValueError('`value` must be a number or datetime.')
-
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
-    def __init__(self, column_name, value, relation):
+        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
+            raise ValueError('`value` must be a number or datetime.')
+
+    def __init__(self, column_name, relation, value):
         self._validate_inputs(column_name, value, relation)
         self._column_name = column_name
         self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
@@ -546,7 +550,7 @@ class Positive(ScalarInequality):
     """
 
     def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, value=0, relation='>' if strict else '>=')
+        super().__init__(column_name=column_name, relation='>' if strict else '>=', value=0)
 
 
 class Negative(ScalarInequality):
@@ -565,7 +569,7 @@ class Negative(ScalarInequality):
     """
 
     def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, value=0, relation='<' if strict else '<=')
+        super().__init__(column_name=column_name, relation='<' if strict else '<=', value=0)
 
 
 class Range(Constraint):
