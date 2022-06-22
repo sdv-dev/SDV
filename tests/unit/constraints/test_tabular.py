@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import MissingConstraintColumnError, InvalidFunctionError
+from sdv.constraints.errors import InvalidFunctionError, MissingConstraintColumnError
 from sdv.constraints.tabular import (
-    create_custom_constraint, FixedCombinations, FixedIncrements, Inequality, Negative,
-    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique,
-    _validate_inputs_custom_constraint)
+    FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
+    ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
+    create_custom_constraint)
 
 
 def dummy_transform_table(table_data):
@@ -185,8 +185,9 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        is_valid = lambda _, x: pd.Series([True, True, True])
-        custom_constraint = create_custom_constraint(is_valid)('col')
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True, True, True])
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -206,9 +207,11 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
-        valid = lambda _, x: pd.Series([True] * 5)
-        square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-        custom_constraint = create_custom_constraint(valid, square, sorted)('col')
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True] * 5),
+            lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
+            sorted
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -229,8 +232,9 @@ class TestCreateCustomConstraint():
         - ValueError
         """
         # Setup
-        valid = lambda _, x: pd.Series([True] * 5)
-        custom_constraint = create_custom_constraint(valid)('col')
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True] * 5)
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -249,9 +253,11 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        valid = lambda _, x: pd.Series([True] * 5)
-        transform_ = lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
-        custom_constraint = create_custom_constraint(valid, transform_, sorted)('col')
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True] * 5),
+            lambda _, x: pd.DataFrame({'col': [1, 2, 3]}),
+            sorted
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -271,8 +277,11 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
-        square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-        custom_constraint = create_custom_constraint(sorted, sorted, square)('col')
+        custom_constraint = create_custom_constraint(
+            sorted,
+            sorted,
+            lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -313,8 +322,11 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        reverse_transform_ = lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
-        custom_constraint = create_custom_constraint(sorted, sorted, reverse_transform_)('col')
+        custom_constraint = create_custom_constraint(
+            sorted,
+            sorted,
+            lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run

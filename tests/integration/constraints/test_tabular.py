@@ -2,17 +2,18 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints import (
-    create_custom_constraint, FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange)
+    FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
 from sdv.tabular import GaussianCopula
 
 
 def test_create_custom_constraint():
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
-    is_positive = lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']])
-    square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-    square_root = lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
-    custom_constraint = create_custom_constraint(is_positive, square, square_root)('col')
+    custom_constraint = create_custom_constraint(
+        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
+        lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
+        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
+    )('col')
 
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
