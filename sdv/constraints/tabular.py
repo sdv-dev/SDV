@@ -33,7 +33,6 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
-from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import is_datetime_type, logit, sigmoid
 
 INEQUALITY_TO_OPERATION = {
@@ -43,12 +42,29 @@ INEQUALITY_TO_OPERATION = {
     '<=': np.less_equal}
 
 
-class CustomConstraint(Constraint):
-    """Custom Constraint Class.
+def _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn):
+    if is_valid_fn is None:
+        raise ValueError('Missing required parameter `is_valid`.')
+    if not callable(is_valid_fn):
+        raise ValueError('`is_valid` must be a function.')
 
-    This class simply takes the ``transform``, ``reverse_transform``
-    and ``is_valid`` methods as optional arguments, so users can
-    pass custom functions for each one of them.
+    # Transform & reverse are optional but should be provided together or not at all
+    if transform_fn is None and reverse_transform_fn is not None:
+        if not callable(reverse_transform_fn):
+            raise ValueError('`reverse_transform_fn` must be a function.')
+        raise ValueError('Missing parameter `transform_fn`.')
+
+    if transform_fn is not None and reverse_transform_fn is None:
+        if not callable(transform_fn):
+            raise ValueError('`transform_fn` must be a function.')
+        raise ValueError('Missing parameter `reverse_transform_fn`.')
+
+
+def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
+    """Create a custom constraint class.
+
+    Creates a constraint class which uses the ``transform``, ``reverse_transform`` and
+    ``is_valid`` methods given in the arguments.
 
     Args:
         transform (callable):
@@ -57,70 +73,99 @@ class CustomConstraint(Constraint):
             Function to replace the ``reverse_transform`` method.
         is_valid (callable):
             Function to replace the ``is_valid`` method.
+
+    Returns:
+        CustomConstraint class:
+            A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
     """
+    _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 
-    def _run(self, function, table_data, reverse=False):
-        table_data = table_data.copy()
-        if self._columns:
-            if reverse:
-                columns = reversed(self._columns)
-            else:
-                columns = self._columns
+    class CustomConstraint(Constraint):
+        """Custom Constraint Class.
 
-            for column in columns:
-                try:
-                    table_data = function(table_data, column)
-                except TypeError:
-                    table_data[column] = function(table_data[column])
+        Args:
+            transform (callable):
+                Function to replace the ``transform`` method.
+            reverse_transform (callable):
+                Function to replace the ``reverse_transform`` method.
+            is_valid (callable):
+                Function to replace the ``is_valid`` method.
+        """
 
-        else:
-            table_data = function(table_data)
+        TYPE = 'CUSTOM_CONSTRAINT'  # this lets us know how to handle it
 
-        return table_data
+        def __init__(self, column_names, **kwargs):
+            self.column_names = column_names
+            self.kwargs = kwargs
 
-    def _run_transform(self, table_data):
-        if self._columns:
-            missing_columns = [col for col in self._columns if col not in table_data.columns]
-            if missing_columns:
-                raise MissingConstraintColumnError(missing_columns=missing_columns)
+        def is_valid(self, data):
+            """Check whether the column values are valid.
 
-        return self._run(self._transform, table_data)
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
 
-    def _run_reverse_transform(self, table_data):
-        return self._run(self._reverse_transform, table_data, reverse=True)
+            Returns:
+                pandas.Series:
+                    Whether each row is valid.
+            """
+            valid = is_valid_fn(self.column_names, data, **self.kwargs)
+            if len(valid) != data.shape[0]:
+                raise Exception(
+                    '`is_valid_fn` should produce exactly 1 True/False value for each row.')
 
-    def _run_is_valid(self, table_data):
-        if self._columns:
-            try:
-                valid = [self._is_valid(table_data, column) for column in self._columns]
-            except TypeError:
-                valid = [self._is_valid(table_data[column]) for column in self._columns]
+            return valid
 
-            return np.logical_and.reduce(valid)
+        def _transform(self, data):
+            """Transform the table data.
 
-        return self._is_valid(table_data)
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
 
-    def __init__(self, columns=None, transform=None, reverse_transform=None, is_valid=None):
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            if transform_fn is None:
+                raise ValueError('Transform is not defined for this custom constraint.')
 
-        if transform is not None:
-            self._transform = import_object(transform)
-            self.transform = self._run_transform
+            data = data.copy()
+            transformed_data = transform_fn(self.column_names, data, **self.kwargs)
+            if data.shape[0] != transformed_data.shape[0]:
+                raise Exception(
+                    'Transformation did not produce the same number of rows as the original')
 
-        if reverse_transform is not None:
-            self._reverse_transform = import_object(reverse_transform)
-            self.reverse_transform = self._run_reverse_transform
+            return transformed_data
 
-        if is_valid is not None:
-            self._is_valid = import_object(is_valid)
-            self.is_valid = self._run_is_valid
+        def _reverse_transform(self, data):
+            """Reverse transform the table data.
+
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
+
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            if reverse_transform_fn is None:
+                raise Exception('Reverse transform is not defined for this custom constraint.')
+
+            data = data.copy()
+            transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
+            if data.shape[0] != transformed_data.shape[0]:
+                raise Exception(
+                    'Reverse transform did not produce the same number of rows as the original.'
+                )
+
+            return transformed_data
+
+    return CustomConstraint
 
 
 class FixedCombinations(Constraint):
-    """Ensure that the combinations across multiple colums are fixed.
+    """Ensure that the combinations across multiple columns are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can

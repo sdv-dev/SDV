@@ -7,7 +7,7 @@ import scipy
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
-from sdv.constraints import CustomConstraint
+from sdv.constraints import create_custom_constraint
 from sdv.sampling.tabular import Condition
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
