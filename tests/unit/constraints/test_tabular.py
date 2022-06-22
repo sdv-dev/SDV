@@ -9,10 +9,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.tabular import (create_custom_constraint,
-    FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding,
-    Positive, Range, ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint)
+from sdv.constraints.errors import MissingConstraintColumnError, InvalidFunctionError
+from sdv.constraints.tabular import (
+    create_custom_constraint, FixedCombinations, FixedIncrements, Inequality, Negative,
+    OneHotEncoding, Positive, Range, ScalarInequality, ScalarRange, Unique,
+    _validate_inputs_custom_constraint)
 
 
 def dummy_transform_table(table_data):
@@ -161,8 +162,9 @@ class TestCreateCustomConstraint():
         - pd.Series of booleans, describing whether the values of the input are valid
         """
         # Setup
-        is_positive = lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
-        custom_constraint = create_custom_constraint(is_positive)('col')
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run

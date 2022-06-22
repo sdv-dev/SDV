@@ -33,8 +33,9 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.errors import InvalidFunctionError
-from sdv.constraints.base import Constraint, import_object
+from sdv.constraints.base import Constraint
 from sdv.constraints.utils import is_datetime_type, logit, sigmoid
+
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
