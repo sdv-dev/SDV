@@ -6,8 +6,7 @@ rows.
 
 Note: the data produced by the reverse transform of a constraint does not
 necessarily satisfy that constraint. Any invalid rows produced will have to
-be reject sampled at some later stage. For more information,
-check link.
+be reject sampled at some later stage.
 
 Currently implemented constraints are:
 
