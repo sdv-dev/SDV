@@ -245,30 +245,6 @@ class Constraint(metaclass=ConstraintMeta):
 
         return table_data[valid]
 
-    @classmethod
-    def from_dict(cls, constraint_dict):
-        """Build a Constraint object from a dict.
-
-        Args:
-            constraint_dict (dict):
-                Dict containing the keyword ``constraint`` alongside
-                any additional arguments needed to create the instance.
-
-        Returns:
-            Constraint:
-                New constraint instance.
-        """
-        constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint')
-        subclasses = get_subclasses(cls)
-        if isinstance(constraint_class, str):
-            if '.' in constraint_class:
-                constraint_class = import_object(constraint_class)
-            else:
-                constraint_class = subclasses[constraint_class]
-
-        return constraint_class(**constraint_dict)
-
     def to_dict(self):
         """Return a dict representation of this Constraint.
 
