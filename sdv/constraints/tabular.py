@@ -158,9 +158,7 @@ def create_custom_constraint(is_valid, transform=None, reverse_transform=None):
             A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
     """
     global is_valid_fn, transform_fn, reverse_transform_fn
-    is_valid_fn = is_valid
-    transform_fn = transform
-    reverse_transform_fn = reverse_transform
+    is_valid_fn, transform_fn, reverse_transform_fn = is_valid, transform, reverse_transform
     _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
     return CustomConstraint
 
