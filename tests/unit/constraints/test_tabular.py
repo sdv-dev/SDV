@@ -2154,9 +2154,9 @@ class TestScalarRange():
         instance = ScalarRange(column_name='age_when_joined', low_value=18, high_value=28)
 
         # Assert
-        assert instance.column_name == 'age_when_joined'
-        assert instance.low_value == 18
-        assert instance.high_value == 28
+        assert instance._column_name == 'age_when_joined'
+        assert instance._low_value == 18
+        assert instance._high_value == 28
         assert instance._operator == operator.lt
 
     def test___init__strict_boundaries_false(self):
@@ -2175,9 +2175,9 @@ class TestScalarRange():
         instance = ScalarRange('age_when_joined', 18, 28, strict_boundaries=False)
 
         # Assert
-        assert instance.column_name == 'age_when_joined'
-        assert instance.low_value == 18
-        assert instance.high_value == 28
+        assert instance._column_name == 'age_when_joined'
+        assert instance._low_value == 18
+        assert instance._high_value == 28
         assert instance._operator == operator.le
 
     def test__get_is_datetime(self):

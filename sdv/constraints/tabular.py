@@ -38,7 +38,8 @@ import pandas as pd
 
 from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.utils import is_datetime_type, logit, sigmoid
+from sdv.constraints.utils import (
+    cast_to_datetime64, detect_datetime_format, is_datetime_type, logit, sigmoid)
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -410,13 +411,17 @@ class ScalarInequality(Constraint):
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
-        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
-            raise ValueError('`value` must be a number or datetime.')
+        if is_datetime_type(value):
+            if not isinstance(value, str):
+                raise ValueError('Datetime must be represented as a string.')
+
+            return cast_to_datetime64(value)
+
+        return value
 
     def __init__(self, column_name, relation, value):
-        self._validate_inputs(column_name, value, relation)
+        self._value = self._validate_inputs(column_name, value, relation)
         self._column_name = column_name
-        self._value = value.to_datetime64() if isinstance(value, pd.Timestamp) else value
         self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = tuple([column_name])
         self._is_datetime = None
@@ -448,6 +453,8 @@ class ScalarInequality(Constraint):
         self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._column_name].dtypes
+        if self._is_datetime:
+            self._datetime_format = detect_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -517,6 +524,11 @@ class ScalarInequality(Constraint):
             original_column = self._value - diff_column
 
         table_data[self._column_name] = pd.Series(original_column).astype(self._dtype)
+        if self._is_datetime and self._datetime_format:
+            table_data[self._column_name] = pd.to_datetime(
+                table_data[self._column_name].dt.strftime(self._datetime_format)
+            )
+
         return table_data.drop(self._diff_column_name, axis=1)
 
 
@@ -729,17 +741,27 @@ class ScalarRange(Constraint):
             not ``>`` when comparing them.
     """
 
-    def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
+    @staticmethod
+    def _validate_inputs(low_value, high_value):
+        if is_datetime_type(low_value) and is_datetime_type(high_value):
+            if not isinstance(low_value, str) or not isinstance(high_value, str):
+                raise ValueError('Datetime must be represented as a string.')
+
+            return cast_to_datetime64(low_value), cast_to_datetime64(high_value)
+
+        return low_value, high_value
+
+    def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
+                 strict_boundaries=True):
 
         self.constraint_columns = (column_name,)
-        self.column_name = column_name
-        self.low_value = low_value
-        self.high_value = high_value
+        self._column_name = column_name
+        self._low_value, self._high_value = self._validate_values(low_value, high_value)
         self._operator = operator.lt if strict_boundaries else operator.le
 
     def _get_diff_column_name(self, table_data):
         token = '#'
-        columns = [self.column_name, self.low_value, self.high_value]
+        columns = [self._column_name, self._low_value, self._high_value]
         components = list(map(str, columns))
         while token.join(components) in table_data.columns:
             token += '#'
@@ -747,11 +769,11 @@ class ScalarRange(Constraint):
         return token.join(components)
 
     def _get_is_datetime(self, table_data):
-        data = table_data[self.column_name]
+        data = table_data[self._column_name]
 
         is_column_datetime = is_datetime_type(data)
-        is_low_datetime = is_datetime_type(self.low_value)
-        is_high_datetime = is_datetime_type(self.high_value)
+        is_low_datetime = is_datetime_type(self._low_value)
+        is_high_datetime = is_datetime_type(self._high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
         if not is_datetime and any([is_low_datetime, is_column_datetime, is_high_datetime]):
@@ -766,9 +788,11 @@ class ScalarRange(Constraint):
             table_data (pandas.DataFrame):
                 Table data.
         """
-        self._dtype = table_data[self.column_name].dtypes
+        self._dtype = table_data[self._column_name].dtypes
         self._is_datetime = self._get_is_datetime(table_data)
         self._transformed_column = self._get_diff_column_name(table_data)
+        if self._is_datetime:
+            self._datetime_format = detect_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
@@ -781,15 +805,15 @@ class ScalarRange(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        data = table_data[self.column_name]
+        data = table_data[self._column_name]
 
         satisfy_low_bound = np.logical_or(
-            self._operator(self.low_value, data),
-            np.isnan(self.low_value),
+            self._operator(self._low_value, data),
+            np.isnan(self._low_value),
         )
         satisfy_high_bound = np.logical_or(
-            self._operator(data, self.high_value),
-            np.isnan(self.high_value),
+            self._operator(data, self._high_value),
+            np.isnan(self._high_value),
         )
 
         return np.logical_or(
@@ -812,9 +836,9 @@ class ScalarRange(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        data = logit(table_data[self.column_name], self.low_value, self.high_value)
+        data = logit(table_data[self._column_name], self._low_value, self._high_value)
         table_data[self._transformed_column] = data
-        table_data = table_data.drop(self.column_name, axis=1)
+        table_data = table_data.drop(self._column_name, axis=1)
 
         return table_data
 
@@ -835,13 +859,17 @@ class ScalarRange(Constraint):
         """
         data = table_data[self._transformed_column]
 
-        data = sigmoid(data, self.low_value, self.high_value)
-        data = data.clip(self.low_value, self.high_value)
+        data = sigmoid(data, self._low_value, self._high_value)
+        data = data.clip(self._low_value, self._high_value)
 
         if self._is_datetime:
-            table_data[self.column_name] = pd.to_datetime(data)
+            table_data[self._column_name] = pd.to_datetime(data)
+            if self._datetime_format:
+                table_data[self._column_name] = pd.to_datetime(
+                    table_data[self._column_name].dt.strftime(self._datetime_format)
+                )
         else:
-            table_data[self.column_name] = data.astype(self._dtype)
+            table_data[self._column_name] = data.astype(self._dtype)
 
         table_data = table_data.drop(self._transformed_column, axis=1)
 
