@@ -8,7 +8,7 @@ Currently implemented constraints are:
 
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
-      and validation.
+      and validation. It can be created through the ``create_custom_constraint`` method.
     * FixedCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * Inequality: Ensure that the value in one column is always greater than
@@ -42,26 +42,24 @@ INEQUALITY_TO_OPERATION = {
     '<=': np.less_equal}
 
 
-def _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn):
-    if is_valid_fn is None:
-        raise ValueError('Missing required parameter `is_valid`.')
+def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
     if not callable(is_valid_fn):
         raise ValueError('`is_valid` must be a function.')
 
     # Transform & reverse are optional but should be provided together or not at all
     if transform_fn is None and reverse_transform_fn is not None:
-        if not callable(reverse_transform_fn):
-            raise ValueError('`reverse_transform_fn` must be a function.')
         raise ValueError('Missing parameter `transform_fn`.')
-
     if transform_fn is not None and reverse_transform_fn is None:
-        if not callable(transform_fn):
-            raise ValueError('`transform_fn` must be a function.')
         raise ValueError('Missing parameter `reverse_transform_fn`.')
+
+    if transform_fn is not None and not callable(transform_fn):
+        raise ValueError('`transform_fn` must be a function.')
+    if reverse_transform_fn is not None and not callable(reverse_transform_fn):
+        raise ValueError('`reverse_transform_fn` must be a function.')
 
 
 def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
-    """Create a custom constraint class.
+    """Create a CustomConstraint class.
 
     Creates a constraint class which uses the ``transform``, ``reverse_transform`` and
     ``is_valid`` methods given in the arguments.
@@ -138,7 +136,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
             return transformed_data
 
-        def _reverse_transform(self, data):
+        def reverse_transform(self, data):
             """Reverse transform the table data.
 
             Args:

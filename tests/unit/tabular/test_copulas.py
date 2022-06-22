@@ -7,7 +7,7 @@ import scipy
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianKDE, GaussianUnivariate
 
-from sdv.constraints import create_custom_constraint
+from sdv.constraints import Inequality
 from sdv.sampling.tabular import Condition
 from sdv.tabular.base import NonParametricError
 from sdv.tabular.copulas import GaussianCopula
@@ -46,7 +46,7 @@ class TestGaussianCopula:
             field_transformers={'a_field': 'categorical'},
             anonymize_fields={'a_field': 'name'},
             primary_key=['a_field'],
-            constraints=[CustomConstraint()],
+            constraints=[Inequality()],
             field_distributions={'a_field': 'gaussian'},
             default_distribution='beta',
             categorical_transformer='categorical_fuzzy'
@@ -62,7 +62,7 @@ class TestGaussianCopula:
             'fields': None,
             'constraints': [
                 {
-                    'constraint': 'sdv.constraints.tabular.CustomConstraint'
+                    'constraint': 'sdv.constraints.tabular.Inequality'
                 }
             ],
             'model_kwargs': {
