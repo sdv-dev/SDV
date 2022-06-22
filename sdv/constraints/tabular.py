@@ -32,6 +32,7 @@ import uuid
 import numpy as np
 import pandas as pd
 
+from sdv.constraints.errors import InvalidFunctionError
 from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.utils import is_datetime_type, logit, sigmoid
 
@@ -79,7 +80,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
     _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 
     class CustomConstraint(Constraint):
-        """Custom Constraint Class.
+        """CustomConstraint class.
 
         Args:
             transform (callable):
@@ -109,8 +110,8 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             """
             valid = is_valid_fn(self.column_names, data, **self.kwargs)
             if len(valid) != data.shape[0]:
-                raise Exception(
-                    '`is_valid_fn` should produce exactly 1 True/False value for each row.')
+                raise InvalidFunctionError(
+                    '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
             return valid
 
@@ -128,10 +129,9 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             if transform_fn is None:
                 raise ValueError('Transform is not defined for this custom constraint.')
 
-            data = data.copy()
             transformed_data = transform_fn(self.column_names, data, **self.kwargs)
             if data.shape[0] != transformed_data.shape[0]:
-                raise Exception(
+                raise InvalidFunctionError(
                     'Transformation did not produce the same number of rows as the original')
 
             return transformed_data
@@ -148,12 +148,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                     Transformed data.
             """
             if reverse_transform_fn is None:
-                raise Exception('Reverse transform is not defined for this custom constraint.')
+                raise ValueError('Reverse transform is not defined for this custom constraint.')
 
-            data = data.copy()
             transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
             if data.shape[0] != transformed_data.shape[0]:
-                raise Exception(
+                raise InvalidFunctionError(
                     'Reverse transform did not produce the same number of rows as the original.'
                 )
 

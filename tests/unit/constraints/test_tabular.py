@@ -57,9 +57,9 @@ class TestCreateCustomConstraint():
         """Test validation when ``is_valid_fn`` is not callable.
 
         Input:
-        - ``is_valid_fn`` as a non-callable object.
+        - ``is_valid_fn`` as a non-callable object
         Side effects:
-        - Raise ValueError.
+        - Raise ValueError
         """
         err_msg = '`is_valid` must be a function.'
         # Run / Assert
@@ -70,10 +70,10 @@ class TestCreateCustomConstraint():
         """Test validation when ``transform_fn`` not passed.
 
         Input:
-        - ``is_valid`` as callable.
-        - ``reverse_transform_fn`` as callable.
+        - ``is_valid`` as callable
+        - ``reverse_transform_fn`` as callable
         Side effects:
-        - Raise ValueError.
+        - Raise ValueError
         """
         err_msg = 'Missing parameter `transform_fn`.'
         # Run / Assert
@@ -84,10 +84,10 @@ class TestCreateCustomConstraint():
         """Test validation when ``reverse_transform_fn`` is not passed.
 
         Input:
-        - ``is_valid`` as callable.
-        - ``transform_fn`` as callable.
+        - ``is_valid`` as callable
+        - ``transform_fn`` as callable
         Side effects:
-        - Raise ValueError.
+        - Raise ValueError
         """
         err_msg = 'Missing parameter `reverse_transform_fn`.'
         # Run / Assert
@@ -98,11 +98,11 @@ class TestCreateCustomConstraint():
         """Test validation when ``transform_fn`` is not callable.
 
         Input:
-        - ``is_valid`` as callable.
-        - ``transform_fn`` as non-callable.
-        - ``reverse_transform_fn`` as callable.
+        - ``is_valid`` as callable
+        - ``transform_fn`` as non-callable
+        - ``reverse_transform_fn`` as callable
         Side effects:
-        - Raise ValueError.
+        - Raise ValueError
         """
         err_msg = '`transform_fn` must be a function.'
         # Run / Assert
@@ -114,11 +114,11 @@ class TestCreateCustomConstraint():
         """Test validation when ``reverse_transform_fn`` is not callable.
 
         Input:
-        - ``is_valid`` as callable.
-        - ``transform_fn`` as callable.
-        - ``reverse_transform_fn`` as non-callable.
+        - ``is_valid`` as callable
+        - ``transform_fn`` as callable
+        - ``reverse_transform_fn`` as non-callable
         Side effects:
-        - Raise ValueError.
+        - Raise ValueError
         """
         err_msg = '`reverse_transform_fn` must be a function.'
         # Run / Assert
@@ -131,13 +131,13 @@ class TestCreateCustomConstraint():
         """Test ``CustomConstraint`` object is correctly created.
 
         Input:
-        - ``is_valid`` as callable.
-        - ``transform_fn`` as callable.
-        - ``reverse_transform_fn`` as callable.
+        - ``is_valid`` as callable
+        - ``transform_fn`` as callable
+        - ``reverse_transform_fn`` as callable
         Side effects:
-        - call ``_validate_inputs_custom_constraint``.
+        - call ``_validate_inputs_custom_constraint``
         Output:
-        - ``CustomConstraint`` object.
+        - ``CustomConstraint`` object
         """
         # Run
         out = create_custom_constraint(sorted, sorted, sorted)
@@ -156,9 +156,9 @@ class TestCreateCustomConstraint():
         the produced ``CustomConstraint`` correctly applied ``is_valid``.
 
         Input:
-        - pd.DataFrame.
+        - pd.DataFrame
         Output:
-        - pd.Series of booleans, describing whether the values of the input are valid.
+        - pd.Series of booleans, describing whether the values of the input are valid
         """
         # Setup
         is_positive = lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
@@ -171,6 +171,27 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.Series([False, True, True, True, False])
         pd.testing.assert_series_equal(valid_out, expected_out)
+    
+    def test_create_custom_constraint_is_valid_wrong_shape(self):
+        """Test ``is_valid`` method of ``CustomConstraint`` which produces data of wrong shape.
+
+        Call ``create_custom_constraint`` on an invalid ``is_valid`` function.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - InvalidFunctionError
+        """
+        # Setup
+        is_valid = lambda _, x: pd.Series([True, True, True])
+        custom_constraint = create_custom_constraint(is_valid)('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = '`is_valid_fn` did not produce exactly 1 True/False value for each row.'
+        with pytest.raises(InvalidFunctionError, match=err_msg):
+            custom_constraint.is_valid(data)
+
 
     def test_create_custom_constraint_transform(self):
         """Test ``transform`` method of ``CustomConstraint``.
@@ -179,9 +200,9 @@ class TestCreateCustomConstraint():
         the produced ``CustomConstraint`` correctly applied ``transform``.
 
         Input:
-        - pd.DataFrame.
+        - pd.DataFrame
         Output:
-        - pd.DataFrame of transformed values.
+        - pd.DataFrame of transformed values
         """
         # Setup
         valid = lambda _, x: pd.Series([True] * 5)
@@ -195,6 +216,47 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transform_out, expected_out)
+    
+    def test_create_custom_constraint_transform_not_defined(self):
+        """Test ``transform`` method of ``CustomConstraint`` when it wasn't defined.
+
+        Call ``create_custom_constraint`` on a not defined ``transform`` function.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - ValueError
+        """
+        # Setup
+        valid = lambda _, x: pd.Series([True] * 5)
+        custom_constraint = create_custom_constraint(valid)('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = 'Transform is not defined for this custom constraint.'
+        with pytest.raises(ValueError, match=err_msg):
+            custom_constraint.transform(data)
+    
+    def test_create_custom_constraint_transform_wrong_shape(self):
+        """Test ``transform`` method of ``CustomConstraint`` which produces data of wrong shape.
+
+        Call ``create_custom_constraint`` on an invalid ``transform`` function.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - InvalidFunctionError
+        """
+        # Setup
+        valid = lambda _, x: pd.Series([True] * 5)
+        transform_ = lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
+        custom_constraint = create_custom_constraint(valid, transform_, sorted)('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = 'Transformation did not produce the same number of rows as the original'
+        with pytest.raises(InvalidFunctionError, match=err_msg):
+            custom_constraint.transform(data)
 
     def test_create_custom_constraint_reverse_transform(self):
         """Test ``reverse_transform`` method of ``CustomConstraint``.
@@ -203,14 +265,13 @@ class TestCreateCustomConstraint():
         the produced ``CustomConstraint`` correctly applied ``reverse_transform``.
 
         Input:
-        - pd.DataFrame.
+        - pd.DataFrame
         Output:
-        - pd.DataFrame of transformed values.
+        - pd.DataFrame of transformed values
         """
         # Setup
-        valid = lambda _, x: pd.Series([True] * 5)
         square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-        custom_constraint = create_custom_constraint(valid, sorted, square)('col')
+        custom_constraint = create_custom_constraint(sorted, sorted, square)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -219,6 +280,46 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transformed_out, expected_out)
+    
+    def test_create_custom_constraint_reverse_transform_not_defined(self):
+        """Test ``reverse_transform`` method of ``CustomConstraint`` when it wasn't defined.
+
+        Call ``create_custom_constraint`` on a not defined ``reverse_transform`` function.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - ValueError
+        """
+        # Setup
+        custom_constraint = create_custom_constraint(sorted)('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = 'Reverse transform is not defined for this custom constraint.'
+        with pytest.raises(ValueError, match=err_msg):
+            custom_constraint.reverse_transform(data)
+    
+    def test_create_custom_constraint_transform_wrong_shape(self):
+        """Test invalid ``reverse_transform`` method of ``CustomConstraint``
+
+        Call ``create_custom_constraint`` on a ``reverse_transform`` function
+        which produces data of the wrong shape.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - InvalidFunctionError
+        """
+        # Setup
+        reverse_transform_ = lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
+        custom_constraint = create_custom_constraint(sorted, sorted, reverse_transform_)('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = 'Reverse transform did not produce the same number of rows as the original.'
+        with pytest.raises(InvalidFunctionError, match=err_msg):
+            custom_constraint.reverse_transform(data)
 
 
 class TestFixedCombinations():
