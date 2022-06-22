@@ -184,8 +184,8 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values.
         """
         # Setup
-        valid = lambda _, x: pd.Series([True]*5)
-        square = lambda _, x: pd.DataFrame({'col': x['col']**2})
+        valid = lambda _, x: pd.Series([True] * 5)
+        square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
         custom_constraint = create_custom_constraint(valid, square, sorted)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
@@ -195,7 +195,7 @@ class TestCreateCustomConstraint():
         # Assert
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transform_out, expected_out)
-    
+
     def test_create_custom_constraint_reverse_transform(self):
         """Test ``reverse_transform`` method of ``CustomConstraint``.
 
@@ -208,8 +208,8 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values.
         """
         # Setup
-        valid = lambda _, x: pd.Series([True]*5)
-        square = lambda _, x: pd.DataFrame({'col': x['col']**2})
+        valid = lambda _, x: pd.Series([True] * 5)
+        square = lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
         custom_constraint = create_custom_constraint(valid, sorted, square)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
