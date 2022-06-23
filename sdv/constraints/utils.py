@@ -41,7 +41,9 @@ def detect_datetime_format(value):
     Return:
         String representing the datetime format or ``None`` if not detected.
     """
-    if not isinstance(value, (list, np.ndarray, pd.Series)):
+    if isinstance(value, pd.Series):
+        value = value.astype(str).to_list()
+    if not isinstance(value, (list, np.ndarray)):
         value = [value]
 
     return _guess_datetime_format_for_array(value)

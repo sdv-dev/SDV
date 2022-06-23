@@ -756,7 +756,7 @@ class ScalarRange(Constraint):
 
         self.constraint_columns = (column_name,)
         self._column_name = column_name
-        self._low_value, self._high_value = self._validate_values(low_value, high_value)
+        self._low_value, self._high_value = self._validate_inputs(low_value, high_value)
         self._operator = operator.lt if strict_boundaries else operator.le
 
     def _get_diff_column_name(self, table_data):
