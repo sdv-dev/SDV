@@ -98,7 +98,7 @@ and low columns. The columns can be either numerical or datetime.
 
     from sdv.constraints import Inequality
 
-    age_gt_age_when_joined_constraint = GreaterThan(
+    age_gt_age_when_joined_constraint = Inequality(
         low_column_name='age_when_joined',
         high_column_name='age'
     )
@@ -259,6 +259,7 @@ Once you have defined the constraints, you can use them in any SDV single table 
 to pass in the objects a list.
 
 .. ipython:: python
+
     from sdv.tabular import GaussianCopula
 
     constraints = [
@@ -269,12 +270,13 @@ to pass in the objects a list.
         age_btwn_18_100
     ]
 
-    model = GaussianCopula(constraints=constraints, min_vaue=None, max_value=None)
+    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
 
 Then you can fit the model using the real data. During this process, the SDV ensures that the
 model learns the constraints.
 
 .. ipython:: python
+
     model.fit(employees)
 
 .. warning::
