@@ -4,7 +4,6 @@ import copy
 import importlib
 import inspect
 import logging
-import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -101,10 +100,7 @@ class Constraint(metaclass=ConstraintMeta):
     """
 
     constraint_columns = ()
-    rebuild_columns = ()
     _hyper_transformer = None
-    _use_reject_sampling = False
-    IS_CUSTOM = False
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -182,22 +178,8 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._use_reject_sampling = False
         self._validate_all_columns_present(table_data)
-
-        try:
-            transformed = self._transform(table_data)
-            if self.IS_CUSTOM:
-                self.reverse_transform(transformed)
-            return transformed
-
-        except Exception:
-            warnings.warn(
-                f'Error transforming {self.__class__.__name__}. Using the reject sampling '
-                'approach instead.'
-            )
-            self._use_reject_sampling = True
-            return table_data
+        return self._transform(table_data)
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
@@ -231,9 +213,6 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        if self._use_reject_sampling:
-            return table_data
-
         return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):

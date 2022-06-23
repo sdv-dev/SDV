@@ -149,7 +149,6 @@ class FixedCombinations(Constraint):
 
         self._columns = column_names
         self.constraint_columns = tuple(column_names)
-        self.rebuild_columns = tuple(column_names)
 
     def _fit(self, table_data):
         """Fit this Constraint to the data.
@@ -280,7 +279,6 @@ class Inequality(Constraint):
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
         self._operator = np.greater if strict_boundaries else np.greater_equal
-        self.rebuild_columns = tuple(high_column_name)
         self.constraint_columns = tuple([low_column_name, high_column_name])
         self._dtype = None
         self._is_datetime = None

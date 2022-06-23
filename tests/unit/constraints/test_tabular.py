@@ -398,23 +398,7 @@ class TestFixedCombinations():
 
         # Assert
         assert instance._columns == columns
-
-    def test___init__sets_rebuild_columns(self):
-        """Test the ``FixedCombinations.__init__`` method.
-
-        The rebuild columns should be set.
-
-        Side effects:
-        - instance.rebuild_columns are set
-        """
-        # Setup
-        columns = ['b', 'c']
-
-        # Run
-        instance = FixedCombinations(column_names=columns)
-
-        # Assert
-        assert instance.rebuild_columns == tuple(columns)
+        assert instance.constraint_columns == tuple(columns)
 
     def test___init__with_one_column(self):
         """Test the ``FixedCombinations.__init__`` method with only one constraint column.
@@ -820,7 +804,6 @@ class TestInequality():
         - _low_column_name and _high_column_name are set to the input column names
         - _diff_column_name is set to '_low_column_name#_high_column_name'
         - _operator is set to the default np.greater_equal
-        - rebuild_columns is a tuple of _igh_column_name
         - _dtype and _is_datetime are None
         - _validate_inputs is called once
         """
@@ -832,7 +815,6 @@ class TestInequality():
         assert instance._high_column_name == 'b'
         assert instance._diff_column_name == 'a#b'
         assert instance._operator == np.greater_equal
-        assert instance.rebuild_columns == tuple('b')
         assert instance._dtype is None
         assert instance._is_datetime is None
         mock_validate.assert_called_once_with('a', 'b', False)
