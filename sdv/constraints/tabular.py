@@ -40,7 +40,8 @@ INEQUALITY_TO_OPERATION = {
     '>': np.greater,
     '>=': np.greater_equal,
     '<': np.less,
-    '<=': np.less_equal}
+    '<=': np.less_equal
+}
 
 
 def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
@@ -90,8 +91,6 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             is_valid (callable):
                 Function to replace the ``is_valid`` method.
         """
-
-        IS_CUSTOM = True
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
