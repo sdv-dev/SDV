@@ -415,7 +415,7 @@ class Table:
     def _warn_of_missing_columns(constraint, error):
         warnings.warn(
             f'{constraint.__class__.__name__} cannot be transformed because columns: '
-            f'{error.missing_columns} are not found. Using the reject sampling approach '
+            f'{error.missing_columns} were not found. Using the reject sampling approach '
             'instead.'
         )
 

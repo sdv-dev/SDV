@@ -101,6 +101,7 @@ class Constraint(metaclass=ConstraintMeta):
 
     constraint_columns = ()
     _hyper_transformer = None
+    _use_reject_sampling = False
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -143,22 +144,6 @@ class Constraint(metaclass=ConstraintMeta):
     def _transform(self, table_data):
         return table_data
 
-    def _validate_all_columns_present(self, table_data):
-        """Validate that all required columns are in ``table_data``.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Raises:
-            MissingConstraintColumnError:
-                If the data is missing any columns needed for the constraint transformation,
-                a ``MissingConstraintColumnError`` is raised.
-        """
-        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
-        if missing_columns:
-            raise MissingConstraintColumnError(missing_columns=missing_columns)
-
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
 
@@ -178,7 +163,13 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._validate_all_columns_present(table_data)
+        self._use_reject_sampling = False
+
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            self._use_reject_sampling = True
+            raise MissingConstraintColumnError(missing_columns=missing_columns)
+
         return self._transform(table_data)
 
     def fit_transform(self, table_data):
@@ -213,6 +204,9 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
+        if self._use_reject_sampling:
+            return table_data
+
         return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):

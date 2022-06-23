@@ -11,30 +11,32 @@ from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 
 
-def years_in_the_company(data):
-    return data['age'] - data['age_when_joined']
-
-
 def test_constraints(tmpdir):
-
+    # Setup
     employees = load_tabular_demo()
-
     fixed_company_department_constraint = FixedCombinations(column_names=['company', 'department'])
-
     age_gt_age_when_joined_constraint = Inequality(
         low_column_name='age_when_joined',
         high_column_name='age'
     )
-
+    age_range_constraint = ScalarRange('age', 29, 50)
     constraints = [
         fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
+        age_range_constraint
     ]
-    gc = GaussianCopula(constraints=constraints)
+
+    # Run
+    gc = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
     gc.fit(employees)
     gc.save(tmpdir / 'test.pkl')
     gc = gc.load(tmpdir / 'test.pkl')
-    gc.sample(10)
+    sampled = gc.sample(10)
+
+    # Assert
+    assert all(age_gt_age_when_joined_constraint.is_valid(sampled))
+    assert all(age_range_constraint.is_valid(sampled))
+    assert all(fixed_company_department_constraint.is_valid(sampled))
 
 
 def test_failing_constraints():

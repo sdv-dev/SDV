@@ -464,7 +464,7 @@ class TestTable:
         constraint1.fit.assert_called_once_with(data)
         constraint2.fit.assert_called_once_with(data)
         warning_message = (
-            "Mock cannot be transformed because columns: ['column'] are not found. Using the "
+            "Mock cannot be transformed because columns: ['column'] were not found. Using the "
             'reject sampling approach instead.'
         )
         warnings_mock.warn.assert_called_once_with(warning_message)

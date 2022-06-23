@@ -286,10 +286,12 @@ class TestConstraint():
         """
         # Run
         instance = Constraint()
+        instance._use_reject_sampling = True
         output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
         pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
+        assert instance._use_reject_sampling is False
 
     def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
@@ -305,6 +307,7 @@ class TestConstraint():
         """
         # Setup
         constraint_mock = Mock()
+        constraint_mock.constraint_columns = []
         constraint_mock._transform.return_value = 'the_transformed_data'
 
         # Run
@@ -312,7 +315,6 @@ class TestConstraint():
 
         # Assert
         assert output == 'the_transformed_data'
-        constraint_mock._validate_all_columns_present.assert_called_once()
 
     def test_transform__transform_errors(self):
         """Test that the ``transform`` method handles any errors.
