@@ -5,7 +5,8 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 
-from sdv.constraints.utils import _cast_to_type, is_datetime_type, logit, sigmoid
+from sdv.constraints.utils import (
+    _cast_to_type, cast_to_datetime64, detect_datetime_format, is_datetime_type, logit, sigmoid)
 
 
 def test_is_datetime_type_with_datetime_series():
@@ -87,6 +88,46 @@ def test_is_datetime_type_with_int():
 
     # Run
     is_datetime = is_datetime_type(data)
+
+    # Assert
+    assert is_datetime is False
+
+
+def test_is_datetime_type_with_datetime_str():
+    """Test the ``is_datetime_type`` function when an valid datetime string is passed.
+
+    Expect to return False when an int variable is passed.
+
+    Input:
+    - string
+    Output:
+    - True
+    """
+    # Setup
+    value = '2021-02-02'
+
+    # Run
+    is_datetime = is_datetime_type(value)
+
+    # Assert
+    assert is_datetime
+
+
+def test_is_datetime_type_with_invalid_str():
+    """Test the ``is_datetime_type`` function when an invalid string is passed.
+
+    Expect to return False when an int variable is passed.
+
+    Input:
+    - string
+    Output:
+    - True
+    """
+    # Setup
+    value = 'abcd'
+
+    # Run
+    is_datetime = is_datetime_type(value)
 
     # Assert
     assert is_datetime is False
@@ -215,3 +256,62 @@ def test_sigmoid():
 
     # Assert
     assert res == expected_res
+
+
+def test_cast_to_datetime64():
+    """Test the ``cast_to_datetime64`` function.
+
+    Setup:
+        - String value representing a datetime
+        - List value with a ``np.nan`` and string values.
+        - pd.Series with datetime values.
+    Output:
+        - A single np.datetime64
+        - A list of np.datetime64
+        - A series of np.datetime64
+    """
+    # Setup
+    string_value = '2021-02-02'
+    list_value = [np.nan, '2021-02-02']
+    series_value = pd.Series(['2021-02-02'])
+
+    # Run
+    string_out = cast_to_datetime64(string_value)
+    list_out = cast_to_datetime64(list_value)
+    series_out = cast_to_datetime64(series_value)
+
+    # Assert
+    expected_string_output = np.datetime64('2021-02-02')
+    expected_series_output = pd.Series(np.datetime64('2021-02-02'))
+    expected_list_output = np.array([np.datetime64("NaT"), '2021-02-02'], dtype='datetime64[ns]')
+    np.testing.assert_array_equal(expected_list_output, list_out)
+    pd.testing.assert_series_equal(expected_series_output, series_out)
+    assert expected_string_output == string_out
+
+
+def test_detect_datetime_format():
+    """Test the ``detect_datetime_format``.
+
+    Setup:
+        - string value representing datetime.
+        - list of values with a datetime.
+        - series with a datetime.
+
+    Output:
+        - The expected output is the format of the datetime representation.
+    """
+    # Setup
+    string_value = '2021-02-02'
+    list_value = [np.nan, '2021-02-02']
+    series_value = pd.Series(['2021-02-02T12:10:59'])
+
+    # Run
+    string_out = detect_datetime_format(string_value)
+    list_out = detect_datetime_format(list_value)
+    series_out = detect_datetime_format(series_value)
+
+    # Assert
+    expected_output = '%Y-%m-%d'
+    assert string_out == expected_output
+    assert list_out == expected_output
+    assert series_out == '%Y-%m-%dT%H:%M:%S'
