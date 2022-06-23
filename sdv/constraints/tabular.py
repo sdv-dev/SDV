@@ -411,6 +411,9 @@ class ScalarInequality(Constraint):
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
+        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
+            raise ValueError('`value` must be a number or datetime.')
+
         if is_datetime_type(value):
             if not isinstance(value, str):
                 raise ValueError('Datetime must be represented as a string.')
