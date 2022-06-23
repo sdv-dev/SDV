@@ -18,7 +18,6 @@ CustomConstraint
    CustomConstraint.reverse_transform
    CustomConstraint.is_valid
    CustomConstraint.filter_valid
-   CustomConstraint.from_dict
    CustomConstraint.to_dict
 
 FixedCombinations
@@ -34,7 +33,6 @@ FixedCombinations
    FixedCombinations.reverse_transform
    FixedCombinations.is_valid
    FixedCombinations.filter_valid
-   FixedCombinations.from_dict
    FixedCombinations.to_dict
 
 Inequality
@@ -50,7 +48,6 @@ Inequality
    Inequality.reverse_transform
    Inequality.is_valid
    Inequality.filter_valid
-   Inequality.from_dict
    Inequality.to_dict
 
 ScalarInequality
@@ -66,7 +63,6 @@ ScalarInequality
    ScalarInequality.reverse_transform
    ScalarInequality.is_valid
    ScalarInequality.filter_valid
-   ScalarInequality.from_dict
    ScalarInequality.to_dict
 
 Positive
@@ -82,7 +78,6 @@ Positive
    Positive.reverse_transform
    Positive.is_valid
    Positive.filter_valid
-   Positive.from_dict
    Positive.to_dict
 
 Negative
@@ -98,7 +93,6 @@ Negative
    Negative.reverse_transform
    Negative.is_valid
    Negative.filter_valid
-   Negative.from_dict
    Negative.to_dict
 
 Range
@@ -114,7 +108,6 @@ Range
    Range.reverse_transform
    Range.is_valid
    Range.filter_valid
-   Range.from_dict
    Range.to_dict
 
 ScalarRange
@@ -130,7 +123,6 @@ ScalarRange
    ScalarRange.reverse_transform
    ScalarRange.is_valid
    ScalarRange.filter_valid
-   ScalarRange.from_dict
    ScalarRange.to_dict
 
 OneHotEncoding
@@ -146,7 +138,6 @@ OneHotEncoding
    OneHotEncoding.reverse_transform
    OneHotEncoding.is_valid
    OneHotEncoding.filter_valid
-   OneHotEncoding.from_dict
    OneHotEncoding.to_dict
 
 Unique
@@ -162,5 +153,4 @@ Unique
    Unique.reverse_transform
    Unique.is_valid
    Unique.filter_valid
-   Unique.from_dict
    Unique.to_dict

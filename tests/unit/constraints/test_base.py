@@ -510,54 +510,6 @@ class TestConstraint():
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
-    def test_from_dict_fqn(self):
-        """Test the ``Constraint.from_dict`` method passing a FQN.
-
-        If the ``constraint`` string is a FQN, import the class
-        before creating an instance of it.
-
-        Input:
-        - constraint dict with a FQN and args
-        Output:
-        - Instance of the subclass with the right args.
-        """
-        # Setup
-        constraint_dict = {
-            'constraint': 'sdv.constraints.tabular.FixedCombinations',
-            'column_names': ['a', 'b'],
-        }
-
-        # Run
-        instance = Constraint.from_dict(constraint_dict)
-
-        # Assert
-        assert isinstance(instance, FixedCombinations)
-        assert instance._columns == ['a', 'b']
-
-    def test_from_dict_subclass(self):
-        """Test the ``Constraint.from_dict`` method passing a subclass name.
-
-        If the ``constraint`` string is a subclass name, take it from the
-        Subclasses dict.
-
-        Input:
-        - constraint dict with a subclass name and args
-        Output:
-        - Instance of the subclass with the right args.
-        """
-        # Setup
-        constraint_dict = {
-            'constraint': 'FixedCombinations',
-            'column_names': ['a', 'b'],
-        }
-
-        # Run
-        instance = Constraint.from_dict(constraint_dict)
-
-        # Assert
-        assert isinstance(instance, FixedCombinations)
-        assert instance._columns == ['a', 'b']
-
     def test_to_dict(self):
         """Test the ``Constraint.to_dict`` method.
 

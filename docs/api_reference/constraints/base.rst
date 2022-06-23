@@ -18,5 +18,4 @@ Constraint
    Constraint.reverse_transform
    Constraint.is_valid
    Constraint.filter_valid
-   Constraint.from_dict
    Constraint.to_dict
