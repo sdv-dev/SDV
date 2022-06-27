@@ -259,6 +259,7 @@ class Table:
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
         self._constraints = constraints or []
+        self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
@@ -419,26 +420,47 @@ class Table:
             'instead.'
         )
 
-    def _fit_transform_constraints(self, data):
+    def _fit_constraints(self, data):
         errors = []
-        # Fit and validate all constraints first because `transform` might change columns
-        # making the following constraints invalid
         for constraint in self._constraints:
             try:
                 constraint.fit(data)
             except Exception as e:
                 errors.append(e)
 
+        if errors:
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+
+    def _transform_constraints(self, data, is_condition=False):
+        errors = []
+        if not is_condition:
+            self._constraints_to_reverse = []
+
         for constraint in self._constraints:
             try:
                 data = constraint.transform(data)
+                self._constraints_to_reverse.append(constraint)
+
             except MissingConstraintColumnError as e:
                 Table._warn_of_missing_columns(constraint, e)
+                if is_condition:
+                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
+                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
+                    data = data.drop(columns_to_drop, axis=1)
+
             except Exception as e:
                 errors.append(e)
 
         if errors:
             raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+
+        return data
+
+    def _fit_transform_constraints(self, data):
+        # Fit and validate all constraints first because `transform` might change columns
+        # making the following constraints invalid
+        self._fit_constraints(data)
+        data = self._transform_constraints(data)
 
         return data
 
@@ -586,19 +608,7 @@ class Table:
         self._fit_hyper_transformer(constrained, extra_columns)
         self.fitted = True
 
-    def _transform_constraints(self, data):
-        for constraint in self._constraints:
-            try:
-                data = constraint.transform(data)
-            except MissingConstraintColumnError as e:
-                Table._warn_of_missing_columns(constraint, e)
-                indices_to_drop = data.columns.isin(constraint.constraint_columns)
-                columns_to_drop = data.columns.where(indices_to_drop).dropna()
-                data = data.drop(columns_to_drop, axis=1)
-
-        return data
-
-    def transform(self, data):
+    def transform(self, data, is_condition=False):
         """Transform the given data.
 
         Args:
@@ -617,7 +627,7 @@ class Table:
         data = self._anonymize(data[fields])
 
         LOGGER.debug('Transforming constraints for table %s', self.name)
-        data = self._transform_constraints(data)
+        data = self._transform_constraints(data, is_condition)
 
         LOGGER.debug('Transforming table %s', self.name)
         try:
@@ -660,7 +670,7 @@ class Table:
         except rdt.errors.NotFittedError:
             reversed_data = data
 
-        for constraint in reversed(self._constraints):
+        for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
 
         for name, field_metadata in self._fields_metadata.items():

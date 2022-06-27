@@ -101,7 +101,6 @@ class Constraint(metaclass=ConstraintMeta):
 
     constraint_columns = ()
     _hyper_transformer = None
-    _use_reject_sampling = False
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -163,11 +162,8 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._use_reject_sampling = False
-
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
-            self._use_reject_sampling = True
             raise MissingConstraintColumnError(missing_columns=missing_columns)
 
         return self._transform(table_data)
@@ -204,9 +200,6 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        if self._use_reject_sampling:
-            return table_data
-
         return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):
