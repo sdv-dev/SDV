@@ -412,14 +412,6 @@ class Table:
 
         return transformers
 
-    @staticmethod
-    def _warn_of_missing_columns(constraint, error):
-        warnings.warn(
-            f'{constraint.__class__.__name__} cannot be transformed because columns: '
-            f'{error.missing_columns} were not found. Using the reject sampling approach '
-            'instead.'
-        )
-
     def _fit_constraints(self, data):
         errors = []
         for constraint in self._constraints:
@@ -442,7 +434,11 @@ class Table:
                 self._constraints_to_reverse.append(constraint)
 
             except MissingConstraintColumnError as e:
-                Table._warn_of_missing_columns(constraint, e)
+                warnings.warn(
+                    f'{constraint.__class__.__name__} cannot be transformed because columns: '
+                    f'{e.missing_columns} were not found. Using the reject sampling approach '
+                    'instead.'
+                )
                 if is_condition:
                     indices_to_drop = data.columns.isin(constraint.constraint_columns)
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()

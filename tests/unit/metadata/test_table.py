@@ -473,12 +473,12 @@ class TestTable:
         """Test that the `transform` method calls `_transform_constraints` with right parameters
 
         The ``transform`` method is expected to call the ``_transform_constraints`` method
-        with the data and correct value for ``on_missing_column``.
+        with the data and correct value for ``is_condition``.
 
         Input:
-        - Table data
+            - Table data
         Side Effects:
-        - Calls _transform_constraints
+            - Calls _transform_constraints
         """
         # Setup
         data = pd.DataFrame({
@@ -493,7 +493,7 @@ class TestTable:
         table_mock._hyper_transformer.transform.return_value = data
 
         # Run
-        Table.transform(table_mock, data)
+        Table.transform(table_mock, data, True)
 
         # Assert
         expected_data = pd.DataFrame({
@@ -504,6 +504,7 @@ class TestTable:
         args = mock_calls[0][1]
         assert len(mock_calls) == 1
         assert args[0].equals(expected_data)
+        assert args[1] is True
 
     def test__transform_constraints(self):
         """Test that method correctly transforms data based on constraints
@@ -512,9 +513,9 @@ class TestTable:
         and call each constraint's ``transform`` method on the data.
 
         Input:
-        - Table data
+            - Table data
         Output:
-        - Transformed data
+            - Transformed data
         """
         # Setup
         data = pd.DataFrame({
@@ -529,27 +530,33 @@ class TestTable:
         second_constraint_mock = Mock()
         first_constraint_mock.transform.return_value = transformed_data
         second_constraint_mock.return_value = transformed_data
-        table_mock = Mock()
-        table_mock._constraints = [first_constraint_mock, second_constraint_mock]
+        table_instance = Table()
+        table_instance._constraints = [first_constraint_mock, second_constraint_mock]
 
         # Run
-        result = Table._transform_constraints(table_mock, data)
+        result = table_instance._transform_constraints(data)
 
         # Assert
         assert result.equals(transformed_data)
         first_constraint_mock.transform.assert_called_once_with(data)
         second_constraint_mock.transform.assert_called_once_with(transformed_data)
+        assert table_instance._constraints_to_reverse == [
+            first_constraint_mock,
+            second_constraint_mock
+        ]
 
-    def test__transform_constraints_drops_columns(self):
-        """Test that method drops columns when specified.
+    def test__transform_constraints_is_condition_drops_columns(self):
+        """Test that method drops columns when necessary.
 
         The ``_transform_constraints`` method is expected to drop columns associated with
-        a constraint when its transform raises a ``MissingConstraintColumnError``.
+        a constraint when its transform raises a ``MissingConstraintColumnError`` and the
+        ``is_condition`` flag is True.
 
         Input:
-        - Table data
+            - Table data
+            - ``is_condition`` set to True
         Output:
-        - Table with dropped columns
+            - Table with dropped columns
         """
         # Setup
         data = pd.DataFrame({
@@ -563,13 +570,48 @@ class TestTable:
         table_mock._constraints = [constraint_mock]
 
         # Run
-        result = Table._transform_constraints(table_mock, data)
+        result = Table._transform_constraints(table_mock, data, True)
 
         # Assert
         expected_result = pd.DataFrame({
             'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         assert result.equals(expected_result)
+
+    def test__transform_constraints_is_condition_false_returns_data(self):
+        """Test that method returns data unchanged when necessary.
+
+        The ``_transform_constraints`` method is expected to return data unchanged
+        when the constraint transform raises a ``MissingConstraintColumnError`` and the
+        ``is_condition`` flag is False.
+
+        Input:
+            - Table data
+        Output:
+            - Table with dropped columns
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint_mock = Mock()
+        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
+        constraint_mock.constraint_columns = ['item 0']
+        table_instance = Table()
+        table_instance._constraints = [constraint_mock]
+        table_instance._constraints_to_reverse = [constraint_mock]
+
+        # Run
+        result = table_instance._transform_constraints(data, False)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        assert result.equals(expected_result)
+        assert table_instance._constraints_to_reverse == []
 
     def test_from_dict_min_max(self):
         """Test the ``Table.from_dict`` method.

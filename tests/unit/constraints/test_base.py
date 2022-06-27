@@ -273,7 +273,6 @@ class TestConstraint():
         """Test the ``Constraint.transform`` method.
 
         By default, it behaves like an identity method, to be optionally overwritten by subclasses.
-        It should set the ``_use_reject_sampling`` parameter to ``False``.
 
         The ``Constraint.transform`` method is expected to:
             - Return the input data unmodified.
@@ -286,12 +285,10 @@ class TestConstraint():
         """
         # Run
         instance = Constraint()
-        instance._use_reject_sampling = True
         output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
         pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
-        assert instance._use_reject_sampling is False
 
     def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
@@ -427,31 +424,6 @@ class TestConstraint():
 
         # Assert
         assert output == 'input'
-
-    def test_reverse_transform_use_reject_sampling(self):
-        """Test the ``reverse_transform`` method when ``_use_reject_sampling`` is ``True``.
-
-        The ``Constraint.reverse_transform`` method is expected to:
-            - Return the input data unmodified.
-
-        Setup:
-            - Set ``_use_reject_sampling`` to ``True``.
-        Input:
-            - ``pd.DataFrame``.
-
-        Output:
-            - Input.
-        """
-        # Setup
-        instance = Constraint()
-        instance._use_reject_sampling = True
-        data = pd.DataFrame({'a': [1, 2, 3]})
-
-        # Run
-        output = instance.reverse_transform(data)
-
-        # Assert
-        pd.testing.assert_frame_equal(output, data)
 
     def test_is_valid(self):
         """Test the ``Constraint.is_valid` method. This should be overwritten by all the
