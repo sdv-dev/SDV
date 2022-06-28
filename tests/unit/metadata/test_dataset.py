@@ -911,7 +911,6 @@ class TestMetadata(TestCase):
                     'a_field',
                     'b_field',
                 ],
-                'handling_strategy': 'transform',
             }
         ]
 
@@ -935,7 +934,6 @@ class TestMetadata(TestCase):
                         'a_field',
                         'b_field',
                     ],
-                    'handling_strategy': 'transform',
                 },
             ]
         }

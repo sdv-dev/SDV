@@ -263,9 +263,7 @@ class Inequality(Constraint):
             Name of the column that contains the high values.
         strict_boundaries (bool):
             Whether the comparison of the values should be strict ``>=`` or
-            not ``>``. Currently, this is only respected if ``reject_sampling``
-            or ``all`` handling strategies are used.
-            Defaults to False.
+            not ``>``. Defaults to False.
     """
 
     @staticmethod
@@ -544,8 +542,7 @@ class Positive(ScalarInequality):
             The name of the column that is constrained to be positive.
         strict (bool):
             Whether the comparison of the values should be strict; disclude
-            zero ``>`` or include it ``>=``. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
+            zero ``>`` or include it ``>=``.
     """
 
     def __init__(self, column_name, strict=False):
@@ -563,8 +560,7 @@ class Negative(ScalarInequality):
             The name of the column that is constrained to be negative.
         strict (bool):
             Whether the comparison of the values should be strict, disclude
-            zero ``<`` or include it ``<=``. Currently, this is only respected
-            if ``reject_sampling`` or ``all`` handling strategies are used.
+            zero ``<`` or include it ``<=``.
     """
 
     def __init__(self, column_name, strict=False):
@@ -755,9 +751,7 @@ class ScalarRange(Constraint):
         if not (values_are_numerical or values_are_datetimes):
             raise ValueError('``low_value`` and ``high_value`` must be a number or datetime.')
 
-    def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
-                 strict_boundaries=True):
-
+    def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
         self.constraint_columns = (column_name,)
         self._column_name = column_name
         self._validate_inputs(low_value, high_value)
