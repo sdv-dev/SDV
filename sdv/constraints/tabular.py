@@ -214,7 +214,6 @@ class FixedCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         combinations = table_data[self._columns].itertuples(index=False, name=None)
         uuids = map(self._combinations_to_uuids.get, combinations)
         table_data[self._joint_column] = list(uuids)
@@ -236,7 +235,6 @@ class FixedCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
 
         for index, column in enumerate(self._columns):
@@ -347,7 +345,6 @@ class Inequality(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         low, high = self._get_data(table_data)
         diff_column = high - low
         if self._is_datetime:
@@ -372,7 +369,6 @@ class Inequality(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         diff_column = np.exp(table_data[self._diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
@@ -481,7 +477,6 @@ class ScalarInequality(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         column = table_data[self._column_name].to_numpy()
         diff_column = abs(column - self._value)
         if self._is_datetime:
@@ -505,7 +500,6 @@ class ScalarInequality(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         diff_column = np.exp(table_data[self._diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
@@ -671,7 +665,6 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         low = table_data[self.low_column_name]
         high = table_data[self.high_column_name]
 
@@ -696,7 +689,6 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         low = table_data[self.low_column_name]
         high = table_data[self.high_column_name]
         data = table_data[self._transformed_column]
@@ -816,7 +808,6 @@ class ScalarRange(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         data = logit(table_data[self.column_name], self.low_value, self.high_value)
         table_data[self._transformed_column] = data
         table_data = table_data.drop(self.column_name, axis=1)
@@ -838,7 +829,6 @@ class ScalarRange(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
         data = table_data[self._transformed_column]
 
         data = sigmoid(data, self.low_value, self.high_value)
@@ -914,7 +904,6 @@ class FixedIncrements(Constraint):
             pandas.DataFrame:
                 Data divided by increment.
         """
-        table_data = table_data.copy()
         table_data[self.column_name] = table_data[self.column_name] / self.increment_value
         return table_data
 
@@ -984,8 +973,6 @@ class OneHotEncoding(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        table_data = table_data.copy()
-
         one_hot_data = table_data[self._column_names]
         transformed_data = np.zeros_like(one_hot_data.values)
         transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1
