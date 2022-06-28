@@ -10,6 +10,7 @@ and classes in SDV.
    :maxdepth: 2
 
    sdv
+   lite/index
    tabular/index
    relational/index
    timeseries/index
