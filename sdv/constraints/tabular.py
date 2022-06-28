@@ -39,7 +39,7 @@ import pandas as pd
 from sdv.constraints.base import Constraint, import_object
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.utils import (
-    cast_to_datetime64, detect_datetime_format, is_datetime_type, logit, sigmoid)
+    cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -405,29 +405,28 @@ class ScalarInequality(Constraint):
 
     @staticmethod
     def _validate_inputs(column_name, value, relation):
+        value_is_datetime = is_datetime_type(value)
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
 
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
-        if not (isinstance(value, (int, float)) or is_datetime_type(value)):
+        if not (isinstance(value, (int, float)) or value_is_datetime):
             raise ValueError('`value` must be a number or datetime.')
 
-        if is_datetime_type(value):
+        if value_is_datetime:
             if not isinstance(value, str):
                 raise ValueError('Datetime must be represented as a string.')
 
-            return cast_to_datetime64(value)
-
-        return value
-
     def __init__(self, column_name, relation, value):
-        self._value = self._validate_inputs(column_name, value, relation)
+        self._validate_inputs(column_name, value, relation)
+        self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = tuple([column_name])
         self._is_datetime = None
+        self._datetime_format = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
 
@@ -457,7 +456,7 @@ class ScalarInequality(Constraint):
         self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._column_name].dtypes
         if self._is_datetime:
-            self._datetime_format = detect_datetime_format(table_data[self._column_name])
+            self._datetime_format = get_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -746,20 +745,27 @@ class ScalarRange(Constraint):
 
     @staticmethod
     def _validate_inputs(low_value, high_value):
-        if is_datetime_type(low_value) and is_datetime_type(high_value):
+        values_are_datetimes = is_datetime_type(low_value) and is_datetime_type(high_value)
+        if values_are_datetimes:
             if not isinstance(low_value, str) or not isinstance(high_value, str):
                 raise ValueError('Datetime must be represented as a string.')
 
-            return cast_to_datetime64(low_value), cast_to_datetime64(high_value)
-
-        return low_value, high_value
+        values_are_numerical = bool(
+            isinstance(low_value, (int, float)) and isinstance(high_value, (int, float))
+        )
+        if not (values_are_numerical or values_are_datetimes):
+            raise ValueError('``low_value`` and ``high_value`` must be a number or datetime.')
 
     def __init__(self, column_name, low_value, high_value, handling_strategy='transform',
                  strict_boundaries=True):
 
         self.constraint_columns = (column_name,)
         self._column_name = column_name
-        self._low_value, self._high_value = self._validate_inputs(low_value, high_value)
+        self._validate_inputs(low_value, high_value)
+        self._is_datetime = None
+        self._datetime_format = None
+        self._low_value = low_value
+        self._high_value = high_value
         self._operator = operator.lt if strict_boundaries else operator.le
 
     def _get_diff_column_name(self, table_data):
@@ -795,7 +801,9 @@ class ScalarRange(Constraint):
         self._is_datetime = self._get_is_datetime(table_data)
         self._transformed_column = self._get_diff_column_name(table_data)
         if self._is_datetime:
-            self._datetime_format = detect_datetime_format(table_data[self._column_name])
+            self._low_value = cast_to_datetime64(self._low_value)
+            self._high_value = cast_to_datetime64(self._high_value)
+            self._datetime_format = get_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.

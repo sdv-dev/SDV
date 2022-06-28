@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, detect_datetime_format, is_datetime_type, logit, sigmoid)
+    _cast_to_type, cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
 
 
 def test_is_datetime_type_with_datetime_series():
@@ -289,8 +289,8 @@ def test_cast_to_datetime64():
     assert expected_string_output == string_out
 
 
-def test_detect_datetime_format():
-    """Test the ``detect_datetime_format``.
+def test_get_datetime_format():
+    """Test the ``get_datetime_format``.
 
     Setup:
         - string value representing datetime.
@@ -306,9 +306,9 @@ def test_detect_datetime_format():
     series_value = pd.Series(['2021-02-02T12:10:59'])
 
     # Run
-    string_out = detect_datetime_format(string_value)
-    list_out = detect_datetime_format(list_value)
-    series_out = detect_datetime_format(series_value)
+    string_out = get_datetime_format(string_value)
+    list_out = get_datetime_format(list_value)
+    series_out = get_datetime_format(series_value)
 
     # Assert
     expected_output = '%Y-%m-%d'

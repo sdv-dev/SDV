@@ -32,15 +32,20 @@ def cast_to_datetime64(value):
     return value
 
 
-def detect_datetime_format(value):
-    """Detect if possible the datetime format.
+def get_datetime_format(value):
+    """Get the ``strftime`` format for a given ``value``.
+
+    This function returns the ``strftime`` format of a given ``value`` when possible.
+    If the ``_guess_datetime_format_for_array`` from ``pandas.core.tools.datetimes`` is
+    able to detect the ``strftime`` it will return it as a ``string`` if not, a ``None``
+    will be returned.
 
     Args:
         value (pandas.Series, np.ndarray, list, or str):
             Input to attempt detecting the format.
 
     Return:
-        String representing the datetime format or ``None`` if not detected.
+        String representing the datetime format in ``strftime`` format or ``None`` if not detected.
     """
     if isinstance(value, pd.Series):
         value = value.astype(str).to_list()
@@ -68,7 +73,7 @@ def is_datetime_type(value):
         pd.api.types.is_datetime64_any_dtype(value)
         or isinstance(value, pd.Timestamp)
         or isinstance(value, datetime)
-        or bool(detect_datetime_format([value]))
+        or bool(get_datetime_format([value]))
     )
 
 
