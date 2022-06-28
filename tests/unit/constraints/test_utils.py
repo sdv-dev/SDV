@@ -96,7 +96,7 @@ def test_is_datetime_type_with_int():
 def test_is_datetime_type_with_datetime_str():
     """Test the ``is_datetime_type`` function when an valid datetime string is passed.
 
-    Expect to return False when an int variable is passed.
+    Expect to return True when a valid string representing datetime is passed.
 
     Input:
     - string
@@ -116,12 +116,12 @@ def test_is_datetime_type_with_datetime_str():
 def test_is_datetime_type_with_invalid_str():
     """Test the ``is_datetime_type`` function when an invalid string is passed.
 
-    Expect to return False when an int variable is passed.
+    Expect to return False when an invalid string is passed.
 
     Input:
     - string
     Output:
-    - True
+    - False
     """
     # Setup
     value = 'abcd'

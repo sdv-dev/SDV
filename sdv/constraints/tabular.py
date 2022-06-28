@@ -415,9 +415,8 @@ class ScalarInequality(Constraint):
         if not (isinstance(value, (int, float)) or value_is_datetime):
             raise ValueError('`value` must be a number or datetime.')
 
-        if value_is_datetime:
-            if not isinstance(value, str):
-                raise ValueError('Datetime must be represented as a string.')
+        if value_is_datetime not isinstance(value, str):
+            raise ValueError('Datetime must be represented as a string.')
 
     def __init__(self, column_name, relation, value):
         self._validate_inputs(column_name, value, relation)
@@ -746,9 +745,9 @@ class ScalarRange(Constraint):
     @staticmethod
     def _validate_inputs(low_value, high_value):
         values_are_datetimes = is_datetime_type(low_value) and is_datetime_type(high_value)
-        if values_are_datetimes:
-            if not isinstance(low_value, str) or not isinstance(high_value, str):
-                raise ValueError('Datetime must be represented as a string.')
+        values_are_strings = isinstance(low_value, str) and isinstance(high_value, str)
+        if values_are_datetimes and not values_are_strings:
+            raise ValueError('Datetime must be represented as a string.')
 
         values_are_numerical = bool(
             isinstance(low_value, (int, float)) and isinstance(high_value, (int, float))
