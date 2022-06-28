@@ -313,36 +313,7 @@ class TestConstraint():
         # Assert
         assert output == 'the_transformed_data'
 
-    def test_transform_calls__transform_and_reverse_transform_if_custom(self):
-        """Test that the ``Constraint.transform`` method calls ``_reverse_transform`` if it's custom.
 
-        The ``Constraint.transform`` method is expected to:
-            - Return value returned by ``_transform``.
-
-        Setup:
-            - Set ``IS_CUSTOM`` to True.
-
-        Input:
-            - Anything
-
-        Output:
-            - Result of ``_transform(input)``
-        """
-        # Setup
-        instance = Constraint()
-        instance.IS_CUSTOM = True
-        instance._transform = Mock()
-        instance.reverse_transform = Mock()
-        instance._transform.return_value = 'the_transformed_data'
-
-        # Run
-        output = instance.transform(pd.DataFrame())
-
-        # Assert
-        assert output == 'the_transformed_data'
-        instance.reverse_transform.assert_called_once()
-
-    @patch('sdv.constraints.base.warnings')
     def test_transform__transform_errors(self, warnings_mock):
         """Test that the ``transform`` method handles any errors.
 

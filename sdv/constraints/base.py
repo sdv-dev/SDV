@@ -162,23 +162,11 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._use_reject_sampling = False
-        self._validate_all_columns_present(table_data)
-        table_data = table_data.copy()
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            raise MissingConstraintColumnError(missing_columns=missing_columns)
 
-        try:
-            transformed = self._transform(table_data)
-            if self.IS_CUSTOM:
-                self.reverse_transform(transformed)
-            return transformed
-
-        except Exception:
-            warnings.warn(
-                f'Error transforming {self.__class__.__name__}. Using the reject sampling '
-                'approach instead.'
-            )
-            self._use_reject_sampling = True
-            return table_data
+        return self._transform(table_data)
 
     def fit_transform(self, table_data):
         """Fit this Constraint to the data and then transform it.
@@ -212,9 +200,6 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        if self._use_reject_sampling:
-            return table_data
-
         table_data = table_data.copy()
         return self._reverse_transform(table_data)
 
