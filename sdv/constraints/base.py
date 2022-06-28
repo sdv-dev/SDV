@@ -91,61 +91,19 @@ class Constraint(metaclass=ConstraintMeta):
     This class is not intended to be used directly and should rather be
     subclassed to create different types of constraints.
 
-    If ``handling_strategy`` is passed with the value ``transform``
-    or ``reject_sampling``, the ``filter_valid`` or ``transform`` and
-    ``reverse_transform`` methods will be replaced respectively by a simple
-    identity function.
-
     Attributes:
         constraint_columns (tuple[str]):
             The names of the columns used by this constraint.
         rebuild_columns (tuple[str]):
             The names of the columns that this constraint will rebuild during
             ``reverse_transform``.
-    Args:
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``.
     """
 
     constraint_columns = ()
-    rebuild_columns = ()
     _hyper_transformer = None
 
-    def _identity(self, table_data):
-        return table_data
-
-    def _identity_with_validation(self, table_data):
-        self._validate_data_on_constraint(table_data)
-        return table_data
-
-    def __init__(self, handling_strategy):
-        if handling_strategy == 'transform':
-            self.filter_valid = self._identity
-        elif handling_strategy == 'reject_sampling':
-            self.rebuild_columns = ()
-            self.transform = self._identity_with_validation
-            self.reverse_transform = self._identity
-        elif handling_strategy != 'all':
-            raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
-
-    def _fit(self, table_data):
-        del table_data
-
-    def fit(self, table_data):
-        """Fit ``Constraint`` class to data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-        """
-        self._fit(table_data)
-
-    def _transform(self, table_data):
-        return table_data
-
-    def _validate_data_on_constraint(self, table_data):
-        """Make sure the given data is valid for the given constraints.
+    def _validate_data_meets_constraint(self, table_data):
+        """Make sure the given data is valid for the constraint.
 
         Args:
             data (pandas.DataFrame):
@@ -169,16 +127,21 @@ class Constraint(metaclass=ConstraintMeta):
 
                 raise ConstraintsNotMetError(err_msg)
 
-    def check_missing_columns(self, table_data):
-        """Check ``table_data`` for missing columns.
+    def _fit(self, table_data):
+        del table_data
+
+    def fit(self, table_data):
+        """Fit ``Constraint`` class to data.
 
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
-        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
-        if missing_columns:
-            raise MissingConstraintColumnError()
+        self._fit(table_data)
+        self._validate_data_meets_constraint(table_data)
+
+    def _transform(self, table_data):
+        return table_data
 
     def transform(self, table_data):
         """Perform necessary transformations needed by constraint.
@@ -188,7 +151,8 @@ class Constraint(metaclass=ConstraintMeta):
         should overwrite the ``_transform`` method instead. This method raises a
         ``MissingConstraintColumnError`` if the ``table_data`` is missing any columns
         needed to do the transformation. If columns are present, this method will call
-        the ``_transform`` method.
+        the ``_transform`` method. If ``_transform`` fails, the data will be returned
+        unchanged.
 
         Args:
             table_data (pandas.DataFrame):
@@ -198,8 +162,10 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        self._validate_data_on_constraint(table_data)
-        self.check_missing_columns(table_data)
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            raise MissingConstraintColumnError(missing_columns=missing_columns)
+
         return self._transform(table_data)
 
     def fit_transform(self, table_data):
@@ -216,8 +182,15 @@ class Constraint(metaclass=ConstraintMeta):
         self.fit(table_data)
         return self.transform(table_data)
 
+    def _reverse_transform(self, table_data):
+        return table_data
+
     def reverse_transform(self, table_data):
-        """Identity method for completion. To be optionally overwritten by subclasses.
+        """Handle logic around reverse transforming constraints.
+
+        If the ``transform`` method was skipped, then this method should be too.
+        Otherwise attempt to reverse transform and if that fails, return the data
+        unchanged to fall back on reject sampling.
 
         Args:
             table_data (pandas.DataFrame):
@@ -227,7 +200,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        return table_data
+        return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):
         """Say whether the given table rows are valid.

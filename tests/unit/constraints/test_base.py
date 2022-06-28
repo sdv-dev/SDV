@@ -1,4 +1,5 @@
 """Tests for the sdv.constraints.base module."""
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -157,100 +158,6 @@ def test_import_object_function():
 
 class TestConstraint():
 
-    def test__identity(self):
-        """Test ```Constraint._identity`` method.
-
-        ``_identity`` method should return whatever it is passed.
-
-        Input:
-            - anything
-        Output:
-            - Input
-        """
-        # Run
-        instance = Constraint('all')
-        output = instance._identity('input')
-
-        # Asserts
-        assert output == 'input'
-
-    def test___init___transform(self):
-        """Test ```Constraint.__init__`` method when 'transform' is passed.
-
-        If 'transform' is given, the ``__init__`` method should replace the ``is_valid`` method
-        with an identity and leave ``transform`` and ``reverse_transform`` untouched.
-
-        Input:
-            - transform
-        Side effects:
-            - is_valid == identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='transform')
-
-        # Asserts
-        assert instance.filter_valid == instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___reject_sampling(self):
-        """Test ``Constraint.__init__`` method when 'reject_sampling' is passed.
-
-        If 'reject_sampling' is given, the ``__init__`` method should replace the ``transform``
-        and ``reverse_transform`` methods with an identity and leave ``is_valid`` untouched.
-
-        Input:
-            - reject_sampling
-        Side effects:
-            - is_valid != identity
-            - transform == identity
-            - reverse_transform == identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='reject_sampling')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform == instance._identity_with_validation
-        assert instance.reverse_transform == instance._identity
-
-    def test___init___all(self):
-        """Test ``Constraint.__init__`` method when 'all' is passed.
-
-        If 'all' is given, the ``__init__`` method should leave ``transform``,
-        ``reverse_transform`` and ``is_valid`` untouched.
-
-        Input:
-            - all
-        Side effects:
-            - is_valid != identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='all')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___not_kown(self):
-        """Test ``Constraint.__init__`` method when a not known ``handling_strategy`` is passed.
-
-        If a not known ``handling_strategy`` is given, a ValueError is raised.
-
-        Input:
-            - not_known
-        Side effects:
-            - ValueError
-        """
-        # Run
-        with pytest.raises(ValueError):
-            Constraint(handling_strategy='not_known')
-
     def test_fit(self):
         """Test the ``Constraint.fit`` method.
 
@@ -264,17 +171,19 @@ class TestConstraint():
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
         })
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._fit = Mock()
+        instance._validate_data_meets_constraint = Mock()
 
         # Run
         instance.fit(table_data)
 
         # Assert
         instance._fit.assert_called_once_with(table_data)
+        instance._validate_data_meets_constraint.assert_called_once_with(table_data)
 
-    def test__validate_data_on_constraints(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method calls ``is_valid`` when the constraint columns
         are in the given data.
@@ -291,18 +200,18 @@ class TestConstraint():
             'a': [0, 1, 2],
             'b': [3, 4, 5]
         }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
         constraint.is_valid = Mock()
 
         # Run
-        constraint._validate_data_on_constraint(data)
+        constraint._validate_data_meets_constraint(data)
 
         # Assert
         constraint.is_valid.assert_called_once_with(data)
 
-    def test__validate_data_on_constraints_invalid_input(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints_invalid_input(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method raises an error when the constraint columns
         are in the given data and the ``is_valid`` returns False for any row.
@@ -316,19 +225,25 @@ class TestConstraint():
         """
         # Setup
         data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+            'a': [0, 1, 2, 3, 4, 5, 6, 7],
+            'b': [3, 4, 5, 6, 7, 8, 9, 10]
+        }, index=[0, 1, 2, 3, 4, 5, 6, 7])
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
-        constraint.is_valid = Mock(return_value=pd.Series([True, False, True]))
+        is_valid_result = pd.Series([True, False, True, False, False, False, False, False])
+        constraint.is_valid = Mock(return_value=is_valid_result)
 
         # Run / Assert
-        with pytest.raises(ConstraintsNotMetError):
-            constraint._validate_data_on_constraint(data)
+        error_message = re.escape(
+            "Data is not valid for the 'Constraint' constraint:\n   "
+            'a  b\n1  1  4\n3  3  6\n4  4  7\n5  5  8\n6  6  9'
+            '\n+1 more'
+        )
+        with pytest.raises(ConstraintsNotMetError, match=error_message):
+            constraint._validate_data_meets_constraint(data)
 
-    def test__validate_data_on_constraints_missing_cols(self):
-        """Test the ``_validate_data_on_constraint`` method.
+    def test__validate_data_meets_constraints_missing_cols(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
         Expect that the method doesn't do anything when the columns are not in the given data.
 
@@ -344,12 +259,12 @@ class TestConstraint():
             'a': [0, 1, 2],
             'b': [3, 4, 5]
         }, index=[0, 1, 2])
-        constraint = Constraint(handling_strategy='transform')
+        constraint = Constraint()
         constraint.constraint_columns = ['a', 'b', 'c']
         constraint.is_valid = Mock()
 
         # Run
-        constraint._validate_data_on_constraint(data)
+        constraint._validate_data_meets_constraint(data)
 
         # Assert
         assert not constraint.is_valid.called
@@ -357,18 +272,19 @@ class TestConstraint():
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
 
-        When no constraints are passed, it behaves like an identity method,
-        to be optionally overwritten by subclasses.
+        By default, it behaves like an identity method, to be optionally overwritten by subclasses.
 
         The ``Constraint.transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return the input data unmodified.
+
         Input:
-        - a DataFrame
+            - a DataFrame
+
         Output:
-        - Input
+            - Input
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         output = instance.transform(pd.DataFrame({'col': ['input']}))
 
         # Assert
@@ -378,23 +294,51 @@ class TestConstraint():
         """Test that the ``Constraint.transform`` method calls ``_transform``.
 
         The ``Constraint.transform`` method is expected to:
-        - Return value returned by ``_transform``.
+            - Return value returned by ``_transform``.
 
         Input:
-        - Anything
+            - Anything
+
         Output:
-        - Result of ``_transform(input)``
+            - Result of ``_transform(input)``
         """
         # Setup
         constraint_mock = Mock()
+        constraint_mock.constraint_columns = []
         constraint_mock._transform.return_value = 'the_transformed_data'
-        constraint_mock._validate_columns.return_value = pd.DataFrame()
 
         # Run
         output = Constraint.transform(constraint_mock, 'input')
 
         # Assert
         assert output == 'the_transformed_data'
+
+    def test_transform__transform_errors(self):
+        """Test that the ``transform`` method handles any errors.
+
+        If the ``_transform`` method raises an error, the error should be raised.
+
+        Setup:
+            - Make ``_transform`` raise an error.
+
+        Input:
+            - ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effects:
+            - Exception should be raised
+        """
+        # Setup
+        instance = Constraint()
+        instance._transform = Mock()
+        instance._transform.side_effect = Exception()
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run / Assert
+        with pytest.raises(Exception):
+            instance.transform(data)
 
     def test_transform_columns_missing(self):
         """Test the ``Constraint.transform`` method with invalid data.
@@ -406,7 +350,7 @@ class TestConstraint():
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -424,7 +368,7 @@ class TestConstraint():
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -467,15 +411,15 @@ class TestConstraint():
         for completion, to be optionally overwritten by subclasses.
 
         The ``Constraint.reverse_transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return the input data unmodified.
 
         Input:
-        - Anything
+            - Anything
         Output:
-        - Input
+            - Input
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         output = instance.reverse_transform('input')
 
         # Assert
@@ -499,7 +443,7 @@ class TestConstraint():
         })
 
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         out = instance.is_valid(table_data)
 
         # Assert
@@ -625,13 +569,12 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        instance = FixedCombinations(column_names=['a', 'b'], handling_strategy='transform')
+        instance = FixedCombinations(column_names=['a', 'b'])
         constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
             'constraint': 'sdv.constraints.tabular.FixedCombinations',
-            'handling_strategy': 'transform',
             'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict

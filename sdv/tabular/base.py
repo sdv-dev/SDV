@@ -568,7 +568,7 @@ class BaseTabularModel:
                     * no rows could be generated.
         """
         try:
-            transformed_conditions = self._metadata.transform(conditions, on_missing_column='drop')
+            transformed_conditions = self._metadata.transform(conditions, is_condition=True)
         except ConstraintsNotMetError as cnme:
             cnme.message = 'Provided conditions are not valid for the given constraints'
             raise
