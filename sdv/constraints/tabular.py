@@ -415,7 +415,7 @@ class ScalarInequality(Constraint):
         if not (isinstance(value, (int, float)) or value_is_datetime):
             raise ValueError('`value` must be a number or datetime.')
 
-        if value_is_datetime not isinstance(value, str):
+        if value_is_datetime and not isinstance(value, str):
             raise ValueError('Datetime must be represented as a string.')
 
     def __init__(self, column_name, relation, value):
