@@ -162,6 +162,7 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
+        table_data = table_data.copy()
         missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
         if missing_columns:
             raise MissingConstraintColumnError(missing_columns=missing_columns)

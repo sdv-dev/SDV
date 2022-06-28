@@ -275,7 +275,7 @@ class TestConstraint():
         By default, it behaves like an identity method, to be optionally overwritten by subclasses.
 
         The ``Constraint.transform`` method is expected to:
-            - Return the input data unmodified.
+            - Return a copy of the input data.
 
         Input:
             - a DataFrame
@@ -283,12 +283,16 @@ class TestConstraint():
         Output:
             - Input
         """
-        # Run
+        # Setup
         instance = Constraint()
-        output = instance.transform(pd.DataFrame({'col': ['input']}))
+        data = pd.DataFrame({'col': ['input']})
+
+        # Run
+        output = instance.transform(data)
 
         # Assert
         pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
+        assert id(output) != id(data)
 
     def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
@@ -313,8 +317,7 @@ class TestConstraint():
         # Assert
         assert output == 'the_transformed_data'
 
-
-    def test_transform__transform_errors(self, warnings_mock):
+    def test_transform__transform_errors(self):
         """Test that the ``transform`` method handles any errors.
 
         If the ``_transform`` method raises an error, the error should be raised.
@@ -412,19 +415,23 @@ class TestConstraint():
         for completion, to be optionally overwritten by subclasses.
 
         The ``Constraint.reverse_transform`` method is expected to:
-            - Return the input data unmodified.
+            - Return a copy of the input data.
 
         Input:
             - Anything
         Output:
             - Input
         """
-        # Run
+        # Setup
         instance = Constraint()
-        output = instance.reverse_transform(pd.DataFrame())
+        data = pd.DataFrame()
+
+        # Run
+        output = instance.reverse_transform(data)
 
         # Assert
         pd.testing.assert_frame_equal(output, pd.DataFrame())
+        assert id(output) != id(data)
 
     def test_is_valid(self):
         """Test the ``Constraint.is_valid` method. This should be overwritten by all the
