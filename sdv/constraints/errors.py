@@ -7,6 +7,9 @@ class MissingConstraintColumnError(Exception):
     def __init__(self, missing_columns):
         self.missing_columns = missing_columns
 
+    def __init__(self, missing_columns):
+        self.missing_columns = missing_columns
+
 
 class MultipleConstraintsErrors(Exception):
     """Error used to represent a list of constraint errors."""
