@@ -1179,7 +1179,7 @@ class TestScalarInequality():
     def test__validate_inputs_incorrect_column(self):
         """Test the ``_validate_inputs`` method.
 
-        Ensure the method crashes when the column name is not a string.
+        Ensure the method raises an error when the column name is not a string.
 
         Input:
         - a non-string
@@ -1193,10 +1193,29 @@ class TestScalarInequality():
         with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name=['a'], value=1, relation='>')
 
+    def test__validate_inputs_incorrect_value_datetime(self):
+        """Test the ``_validate_inputs`` method.
+
+        Ensure the method raises an error when the ``value`` is not a ``Datetime`` represented
+        as string.
+
+        Input:
+        - a string
+        - a non string datetime
+        - an inequality
+        Side effect:
+        - Raise ``ValueError`` because the datetime has to be represented as a string.
+        """
+        # Run / Assert
+        value = pd.to_datetime('2021-02-01')
+        err_msg = 'Datetime must be represented as a string.'
+        with pytest.raises(ValueError, match=err_msg):
+            ScalarInequality._validate_inputs(column_name='a', value=value, relation='>')
+
     def test__validate_inputs_incorrect_value(self):
         """Test the ``_validate_inputs`` method.
 
-        Ensure the method crashes when the value is not numerical.
+        Ensure the method raises an error when the value is not numerical.
 
         Input:
         - a string
@@ -1213,7 +1232,7 @@ class TestScalarInequality():
     def test__validate_inputs_incorrect_relation(self):
         """Test the ``_validate_inputs`` method.
 
-        Ensure the method crashes when the column name is not a string.
+        Raise an error when the relation is not valid.
 
         Input:
         - a string
@@ -1227,7 +1246,7 @@ class TestScalarInequality():
         with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name='a', value=1, relation='=')
 
-    @patch('sdv.constraints.tabular.ScalarInequality._validate_inputs')
+    @patch('sdv.constraints.ScalarInequality._validate_inputs')
     def test___init___(self, mock_validate):
         """Test the ``ScalarInequality.__init__`` method.
 
@@ -1247,7 +1266,6 @@ class TestScalarInequality():
         """
         # Run
         instance = ScalarInequality(column_name='a', value=1, relation='>')
-        instance._validate_inputs = Mock()
 
         # Asserts
         assert instance._column_name == 'a'
@@ -1256,6 +1274,7 @@ class TestScalarInequality():
         assert instance._operator == np.greater
         assert instance._dtype is None
         assert instance._is_datetime is None
+        assert instance._datetime_format is None
         mock_validate.assert_called_once_with('a', 1, '>')
 
     def test__get_is_datetime_incorrect_data(self):
@@ -1318,7 +1337,7 @@ class TestScalarInequality():
         })
         instance = ScalarInequality(column_name='b', value=3, relation='>')
         instance._validate_columns_exist = Mock()
-        instance._get_is_datetime = Mock(return_value='abc')
+        instance._get_is_datetime = Mock(return_value=False)
 
         # Run
         instance._fit(table_data)
@@ -1326,7 +1345,7 @@ class TestScalarInequality():
         # Assert
         instance._validate_columns_exist.assert_called_once_with(table_data)
         instance._get_is_datetime.assert_called_once_with(table_data)
-        assert instance._is_datetime == 'abc'
+        assert not instance._is_datetime
         assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
     def test__fit_floats(self):
@@ -1367,15 +1386,14 @@ class TestScalarInequality():
             'a': pd.to_datetime(['2020-01-01']),
             'b': pd.to_datetime(['2020-01-02'])
         })
-        instance = ScalarInequality(
-            column_name='b', value=pd.to_datetime(
-                ['2020-01-01']), relation='>')
+        instance = ScalarInequality(column_name='b', value='2020-01-01', relation='>')
 
         # Run
         instance._fit(table_data)
 
         # Assert
         assert instance._dtype == np.dtype('<M8[ns]')
+        assert instance._datetime_format == '%Y-%m-%d'
 
     def test_is_valid(self):
         """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
@@ -1416,7 +1434,7 @@ class TestScalarInequality():
         # Setup
         instance = ScalarInequality(
             column_name='b',
-            value=pd.to_datetime('8/31/2021'),
+            value='8/31/2021',
             relation='>=')
 
         # Run
@@ -1479,7 +1497,7 @@ class TestScalarInequality():
         # Setup
         instance = ScalarInequality(
             column_name='a',
-            value=pd.to_datetime('2020-01-01T00:00:00'),
+            value='2020-01-01T00:00:00',
             relation='>')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
@@ -1596,11 +1614,12 @@ class TestScalarInequality():
         # Setup
         instance = ScalarInequality(
             column_name='a',
-            value=pd.to_datetime('2020-01-01T00:00:00'),
+            value='2020-01-01T00:00:00',
             relation='>=')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
+        instance._datetime_format = '%Y-%m-%dT%H:%M:%S'
 
         # Run
         transformed = pd.DataFrame({
@@ -2096,6 +2115,47 @@ class TestRange():
 
 class TestScalarRange():
 
+    def test__validate_inputs(self):
+        """Test the ``_validate_inputs`` method.
+
+        The method should raise an error if the inputs are not valid.
+
+        Setup:
+            - low_value as a string not representing a datetime.
+            - high_value as a int.
+
+        Side Effects:
+            A value error should be raised.
+        """
+        # Setup
+        low_value = 'abc'
+        high_value = 2
+
+        # Run / Assert
+        error_msg = '``low_value`` and ``high_value`` must be a number or datetime.'
+        with pytest.raises(ValueError, match=error_msg):
+            ScalarRange._validate_inputs(low_value, high_value)
+
+    def test__validate_inputs_datetimes_not_strings(self):
+        """Test the ``_validate_inputs`` method.
+
+        The method should raise an error if the datetimes are not represented as string.
+
+        Setup:
+            - low_value as ``pd.datetime``
+            - high_value as ``pd.datetime``
+
+        Side Effects:
+            A value error should be raised.
+        """
+        # Setup
+        low_value = pd.to_datetime('2021-02-02')
+        high_value = pd.to_datetime('2021-02-02')
+
+        # Run / Assert
+        with pytest.raises(ValueError, match='Datetime must be represented as a string.'):
+            ScalarRange._validate_inputs(low_value, high_value)
+
     def test___init__(self):
         """Test the ``ScalarRange.__init__`` method.
 
@@ -2110,9 +2170,9 @@ class TestScalarRange():
         instance = ScalarRange(column_name='age_when_joined', low_value=18, high_value=28)
 
         # Assert
-        assert instance.column_name == 'age_when_joined'
-        assert instance.low_value == 18
-        assert instance.high_value == 28
+        assert instance._column_name == 'age_when_joined'
+        assert instance._low_value == 18
+        assert instance._high_value == 28
         assert instance._operator == operator.lt
 
     def test___init__strict_boundaries_false(self):
@@ -2131,9 +2191,9 @@ class TestScalarRange():
         instance = ScalarRange('age_when_joined', 18, 28, strict_boundaries=False)
 
         # Assert
-        assert instance.column_name == 'age_when_joined'
-        assert instance.low_value == 18
-        assert instance.high_value == 28
+        assert instance._column_name == 'age_when_joined'
+        assert instance._low_value == 18
+        assert instance._high_value == 28
         assert instance._operator == operator.le
 
     def test__get_is_datetime(self):
@@ -2156,11 +2216,7 @@ class TestScalarRange():
         table_data = pd.DataFrame({
             'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
         })
-        instance = ScalarRange(
-            'promotion_date',
-            pd.to_datetime('2021-02-10'),
-            pd.to_datetime('2050-10-11')
-        )
+        instance = ScalarRange('promotion_date', '2021-02-10', '2050-10-11')
 
         # Run
         is_datetime = instance._get_is_datetime(table_data)
@@ -2250,13 +2306,13 @@ class TestScalarRange():
         assert transformed_column_name == 'current_age##18##35'
 
     def test__fit(self):
-        """Test the ``_fit`` method of ``Range``.
+        """Test the ``_fit`` method of ``ScalarRange``.
 
         Test that the ``_fit`` method stores the proper transformation column name and
         learns whether the data is ``datetime``or not and it's ``dtype``.
 
         Setup:
-            - Create a pd.DataFrame with three columns.
+            - Create a pd.DataFrame with a column.
             - Instance of ``ScalarRange`` constraint with those three column names.
 
         Input:
@@ -2275,6 +2331,38 @@ class TestScalarRange():
         # Assert
         assert not instance._is_datetime
         assert instance._transformed_column == 'current_age#18#20'
+
+    def test__fit_datetime(self):
+        """Test the ``_fit`` method of ``ScalarRange`` when fitting with ``datetime`` data.
+
+        Setup:
+            - table_data with datetimes.
+
+        Side Effects:
+            - The ``instance._low_value`` and ``ìnstance._high_value`` have been converted
+              to ``pd.datetime``
+            - The ``instance._datetime_format`` equals to the ``table_data``.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'checkin': [
+                pd.to_datetime('2022-05-06'),
+                pd.to_datetime('2022-05-07'),
+                pd.to_datetime('2022-05-08'),
+                pd.to_datetime('2022-05-09'),
+            ]
+        })
+        instance = ScalarRange('checkin', '2022-05-05', '2022-06-01')
+
+        # Run
+        instance._fit(table_data)
+
+        # Assert
+        assert instance._is_datetime
+        assert instance._transformed_column == 'checkin#2022-05-05#2022-06-01'
+        assert instance._datetime_format == '%Y-%m-%d'
+        assert instance._low_value == pd.to_datetime('2022-05-05')
+        assert instance._high_value == pd.to_datetime('2022-06-01')
 
     def test_is_valid_lt(self):
         """Test the ``ScalarRange.is_valid``.
@@ -2436,21 +2524,28 @@ class TestScalarRange():
             - ``mock_pd`` has to be called once.
         """
         # Setup
-        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
         mock_sigmoid.return_value = pd.Series([21, 22, 25])
         instance = ScalarRange('current_age', 20, 28)
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
-        mock_pd.to_datetime.side_effect = lambda x: x
+        mock_pd.to_datetime.side_effect = lambda x: pd.to_datetime('2021-02-02 10:10:59')
+        instance._datetime_format = '%Y-%m-%d'
 
         # Run
-        out = instance.reverse_transform(transformed_data)
+        output = instance.reverse_transform(transformed_data)
 
         # Assert
-        pd.testing.assert_frame_equal(table_data, out)
+        expected_output = pd.DataFrame({
+            'current_age': [
+                pd.to_datetime('2021-02-02 10:10:59'),
+                pd.to_datetime('2021-02-02 10:10:59'),
+                pd.to_datetime('2021-02-02 10:10:59'),
+            ]
+        })
+        pd.testing.assert_frame_equal(expected_output, output)
         mock_sigmoid.assert_called_once()
-        mock_pd.to_datetime.assert_called_once()
+        assert mock_pd.to_datetime.call_count == 2
 
 
 class TestOneHotEncoding():
