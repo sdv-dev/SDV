@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
+    'sphinx_toolbox.collapse'
 ]
 
 ipython_execlines = [

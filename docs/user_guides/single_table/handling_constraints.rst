@@ -9,11 +9,11 @@ to describe business logic to any of the SDV single table models.
 The SDV has predefined constraints that are commonly found in datasets. For example:
 
 
--  Fixing combinations. Your table might have two different columns for city and country. The
-values in those columns should not be shuffled because that would result in incorrect locations
-(eg. Paris USA or London Italy).
+- Fixing combinations. Your table might have two different columns for city and country. The
+  values in those columns should not be shuffled because that would result in incorrect locations
+  (eg. Paris USA or London Italy).
 - Comparing inequalities. Your table might have two different columns for an employee's start_date
-and end_date that are related to each other: The start_date must always come before the end_date.
+  and end_date that are related to each other: The start_date must always come before the end_date.
 
 In this guide, we'll walk through the usage of each predefined constraint.
 
@@ -79,7 +79,9 @@ more column names.
 
     from sdv.constraints import FixedCombinations
 
-    fixed_company_department_constraint = FixedCombinations(column_names=['company', 'department'])
+    fixed_company_department_constraint = FixedCombinations(
+        column_names=['company', 'department']
+    )
 
 Inequality
 ~~~~~~~~~~
@@ -276,6 +278,7 @@ Then you can fit the model using the real data. During this process, the SDV ens
 model learns the constraints.
 
 .. ipython:: python
+    :okwarning:
 
     model.fit(employees)
 
@@ -288,6 +291,7 @@ Finally, you can sample synthetic data. Observe that every row in the synthetic 
 the constraints.
 
 .. ipython:: python
+
     synthetic_data = model.sample(num_rows=10)
     synthetic_data
 
@@ -300,67 +304,72 @@ FAQs
     to ask:
 
     - How do I plan to use the synthetic data? Without the constraint, the rule may still be valid
-    a majority of the time. Only add the constraint if you require 100% adherence.
+      a majority of the time. Only add the constraint if you require 100% adherence.
     - Who do I plan to share the synthetic data with? Consider whether they will be able to use
-    the business rule to uncover sensitive information about the real data.
+      the business rule to uncover sensitive information about the real data.
     - How did the rule come to be? In some cases, there may be other data sources that are present
-    without extra columns and rules.
+      without extra columns and rules.
 
     In the ideal case, there are only a handful constraints you are applying to your model.
 
 .. collapse:: When do constraints affect the modeling & sampling performance?
+
     In most cases, the time it takes to fit the model and sample synthetic data should not be
     significantly affected if you add a few constraints. However, there are certain scenarios
     where you may notice a slow-down:
 
     - You have a large number of constraints that overlap. That is, multiple constraints are
-    referencing the same column(s) in the data.
+      referencing the same column(s) in the data.
 
     - Your constrained data has a high cardinality. For example, you have a categorical column
-    with hundreds of possible categories that you are using in a FixedCombinations constraint.
+      with hundreds of possible categories that you are using in a FixedCombinations constraint.
 
     - You are conditional sampling on a constrained column. This requires some special processing
-    and it may not always be possible to efficiently create conditional synthetic data.
+      and it may not always be possible to efficiently create conditional synthetic data.
 
     For any questions or feature requests related to performance, please create an issue describing
     your data, constraints and sampling needs.
 
 .. collapse:: What happened to Rounding and ColumnFormula?
+
     Rounding and ColumnFormula constraints were available in older versions of the SDV. These
     constraints are no longer included as predefined constraints because there are other ways
     to achieve the same logic:
 
     - **Rounding**: All SDV single table models contain a 'rounding' parameter. By default, they
-    learn the number of decimal digits in your data and enforce that the synthetic data has the
-    same.
+      learn the number of decimal digits in your data and enforce that the synthetic data has the
+      same.
 
     - **ColumnFormula**: In this version of the SDV, you can implement a formula as a
-    CustomConstraint. See the Defining Custom Constraints guide for more details.
+      CustomConstraint. See the Defining Custom Constraints guide for more details.
 
 .. collapse:: Why am I getting a ConstraintsNotMetError when I try to fit my data?
+
     A constraint should describe a rule that is true for every row in your real data. If any rows
     in the real data violate the rule, the SDV will throw a ConstraintsNotMetError. Since the
     constraint is not true in your real data, the model will not be able to learn it.
 
     If you see this error, you have two options:
+
     - (recommended) Remove the constraint. This ensures the model learns patterns that exist in the
-    real data. You can use conditional sampling later to generate synthetic data with specific
-    values.
+      real data. You can use conditional sampling later to generate synthetic data with specific
+      values.
 
     - Clean your input dataset. If you remove the violative rows in the real data, then you will be
-    able to apply the constraint. This is not recommended because even if the model is not truly
-    representative of the original data.
+      able to apply the constraint. This is not recommended because even if the model is not truly
+      representative of the original data.
 
 .. collapse:: How does the SDV handle the constraints?
+
     Under-the-hood, the SDV uses a combination of strategies to ensure that the synthetic data
     always follows the constraints. These strategies are:
 
     1. **Transformation**: Most of the time, it's possible to transform the data in a way that
-    guarantees the models will be able to learn the constraint. This is paired with a reverse
-    transformation to ensure the synthetic data looks like the original.
+       guarantees the models will be able to learn the constraint. This is paired with a reverse
+       transformation to ensure the synthetic data looks like the original.
 
     2. **Reject Sampling**: Another strategy is to model and sample synthetic data as usual, and
-    then throw away any rows in the synthetic data that violate the constraints.
+       then throw away any rows in the synthetic data that violate the constraints.
 
     Transformation is the most efficient strategy, but it is not always possible to use. For
     example, multiple constraints might be attempting to transform the same column, or the

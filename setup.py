@@ -52,6 +52,7 @@ development_requires = [
     'docutils>=0.12,<0.18',
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
+    'sphinx_toolbox>=2.5,<3',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme<0.5',
     'markupsafe<2.1.0',
