@@ -1,19 +1,33 @@
 .. _custom_constraints:
 
-Defining Custom Constraints
-===========================
+Custom Constraints
+==================
 
-In some cases, the predefined constraints do not cover all your needs. 
-In such scenarios, you can use ``CustomConstraint`` to define your own 
-logic on how to constrain your data. There are three main functions that 
-you can create:
+If you have business logic that cannot be represented using (Predefined Constraints)[https://],
+you can define custom logic. In this guide, we'll walk through the process for defining a custom
+constraint and using it.
 
-- ``transform`` which is responsible for the forward pass when using ``transform`` strategy.
-  Its main function is to change your data in a way that enforces the constraint.
-- ``reverse_transform`` which defines how to reverse the transformation of the ``transform``.
-- ``is_valid`` which indicates which rows satisfy the constraint and which ones do not.
+Defining your custom constraint
+-------------------------------
+To define your custom constraint you need to write some functionality in a separate Python file.
+This includes:
 
-Let's look at a demo dataset:
+* **Validity Check**: A test that determines whether a row in the data meets the rule, and
+* (optional) **Transformation Functions**: Functions to modify the data before & after modeling
+
+The SDV then uses the functionality you provided, as shown in the diagram below.
+
+.. image:: /images/custom_constraint.png
+
+Each function (validity, transform and reverse transform) must accept the same inputs:
+* column_names: The names of the columns involved in the constraints
+* data: The full dataset, represented as a pandas.DataFrame
+* <other parameters>: Any other parameters that are necessary for your logic
+
+Example
+=======
+
+Let's demonstrate this using our demo dataset.
 
 .. ipython:: python
     :okwarning:
@@ -23,225 +37,146 @@ Let's look at a demo dataset:
     employees = load_tabular_demo()
     employees
 
-The dataset defined in :ref:`handling_constraints` contains basic details about employees.
-We will use this dataset to demonstrate how you can create your own constraint. 
+
+The dataset contains basic details about employees in some fictional companies. Many of the rules
+in the dataset can be described using predefined constraints. However, there is one complex rule
+that needs a custom constraint:
+
+* If the employee is not a contractor (contractor == 0), then the salary must be divisible by 500
+* Otherwise if the employee is a contractor (contractor == 1), then this rule does not apply
+
+Note that this is similar to the predefined FixedIncrements constraint with the addition of an
+exclusion criteria (exclude the constraint check if the employee is a contractor).
 
 
-Using the ``CustomConstraint``
-------------------------------
+Validity Check
+~~~~~~~~~~~~~~
+The validity check should return a list of True/False values that determine whether each row is
+valid.
 
-We wish to generate synthetic data from the ``employees`` records. If you look at the data 
-above, you will notice that the ``salary`` column is a multiple of a *base* value, in
-this case the base unit is 500. In other words, the ``salary`` increments by 500. 
-We will define ``transform`` and ``reverse_transform`` methods to make sure our 
-data satisfy our constraint.
+Let's code the logic up using parameters:
 
-We can achieve our goal by performing transformations in a 2 step process:
+* **column_names** will be a single item list containing the column that must be divisible
+  (eg. salary)
+* **data** will be the full dataset
+* Custom parameter: **increment** describes the numerical increment (eg. 500)
+* Custom parameter: **exclusion_column** describes the column with the exclusion criteria
+  (eg. contractor)
 
-- Divide ``salary`` by the base unit (500). This transformation makes it easier for the model 
-  to learn the data since it would now learn regular integer values without any explicit constraint on the data.
-- Reversing the effect by multiplying ``salary`` back with the base unit. Now that the model has 
-  learned regular integer values, we multiply it with the base (500) such that it now conforms to our original data range.
+.. code-block:: python
 
+    def is_valid(column_names, data, increment, exclusion_column):
+        column_name=column_names[0]
+
+        is_divisible = (data[column_name] % increment == 0)
+        is_excluded = (data[eclusion_column] > 0)
+
+        return list(is_divisible | is_excluded)
+
+
+Transformations
+~~~~~~~~~~~~~~~
+
+The transformations must return the full datasets with particular columns transformed. We can
+modify, delete or add columns as long as we can reverse the transformation later.
+
+In our case, the transformation can just divide each of the values in the column by the increment.
+
+.. code-block:: python
+
+    def transform(column_names, data, increment, exclusion_column):
+      column_name = column_names[0]
+      data[column_name] = data[column_name] / increment
+      return data
+
+
+Reversing the transformation is trickier. If we multiply every value by the increment, the
+salaries won't necessarily be divisible by 500. Instead we should:
+* Round values to whole numbers whenever the employee is not a contractor first, and then
+* Multiply every value by 500
+
+.. code-block:: python
+
+    def reverse_transform(column_names, transformed_data, increment, exclusion_column):
+      column_name = column_names[0]
+
+      included = transformed_data[column_name].loc[(transformed_data[exclusion_column] == 0)]
+      included = included.round()
+
+      transformed_data[column_name] = transformed_data[column_name].multiply(increment)
+      return transformed_data
+
+
+Creating your class
+===================
+
+Finally, we can put all the functionality together to create a class that describes our
+constraint. Use the **create_custom_constraint** factory method to do this. It accepts your
+functions as inputs and returns a class that's ready to use.
+
+You can name this class whatever you'd like. Since our constraint is similar to FixedIncrements,
+let's call it FixedIncrementsWithExclusion.
 
 .. ipython:: python
     :okwarning:
 
-    def transform(table_data):
-        base = 500.
-        table_data['salary'] = table_data['salary'] / base
-        return table_data
+    from sdv.constraints import create_custom_constraint
 
-
-After defining ``transform`` we create ``reverse_transform`` that reverses the operations made.
-
-.. ipython:: python
-    :okwarning:
-
-    def reverse_transform(table_data):
-        base = 500.
-        table_data['salary'] = table_data['salary'].round() * base
-        return table_data
-
-
-Then, we pack every thing together in ``CustomConstraint``.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import CustomConstraint
-
-    constraint = CustomConstraint(
-        transform=transform, 
-        reverse_transform=reverse_transform
+    FixedIncrementsWithExclusion = create_custom_constraint(
+        is_valid_fn=is_valid,
+        transform_fn=transform, # optional
+        reverse_transform_fn=reverse_transform # optional
     )
 
 
-Can I apply the same function to multiple columns?
---------------------------------------------------
+Using your custom constraint
+============================
 
-In the example above we fixed the ``salary`` format, but if we continue observing the data 
-we will see that ``annual_bonus`` is also constrained by the same logic. Rather than 
-defining two constraints, or editing the code of our functions for each new column that we want 
-to constraint, we provide another style of writing functions such that the function should accept 
-a column data as input.
+Now that you have a class, you can use it like any other predefined constraint. Create an object
+by putting in the parameters you defined. Note that you do not need to input the data.
 
-The ``transform`` function takes ``column_data`` as input and returns the transformed column.
-
+You can apply the same constraint to other columns by creating a different object. In our case
+the **annual_bonus** column also follows the same logic.
 
 .. ipython:: python
     :okwarning:
 
-    def transform(column_data):
-        base = 500.
-        return column_data / base
+    salary_divis_500 = FixedIncrementsWithExclusion(
+       column_names=['salary'],
+       increment=500,
+       exclusion_column='contractor'
+    )
 
-Similarly we defined ``reverse_transform`` in a way that it operates on the data of a 
-single column.
-
-.. ipython:: python
-    :okwarning:
-
-    def reverse_transform(column_data):
-        base = 500.
-        return column_data.round() * base
-
-Now that we have our functions, we initialize ``CustomConstraint`` and we 
-specify which column(s) are the desired ones.
-
-.. ipython:: python
-    :okwarning:
-
-    constraint = CustomConstraint(
-        columns=['salary', 'annual_bonus'],
-        transform=transform, 
-        reverse_transform=reverse_transform
+    bonus_divis_500 = FixedIncrementsWithExclusion(
+       column_names=['annual_bonus'],
+       increment=500,
+       exclusion_column='contractor'
     )
 
 
-Can I access the rest of the table from my column functions?
-------------------------------------------------------------
-
-If we look closely at the data, we notice that ``salary`` and ``annual_bonus`` are only a 
-multiple of 500 when the employee is not a "contractor". To take this requirement into 
-consideration, we refer to a "fixed" column ``contractor`` in order to know whether we
-should apply this constraint or not. The access to ``contractor`` column will allow us
-to properly transform and reverse transform the data.
-
-We write our functions to take as input:
-
--  ``table_data`` which contains all the information.
--  ``column`` which is a an argument to represent the columns of interest.
-
-Now we can construct our functions freely, we write our methods
-with said arguments and be able to access ``'contractor'``.
-
-We first write our ``transform`` function as we have done previously:
-
-.. ipython:: python
-    :okwarning:
-
-    def transform(table_data, column):
-        base = 500.
-        table_data[column] = table_data[column] / base
-        return table_data
-
-When it comes to defining ``reverse_transform``, we need to distinguish between
-contractors and non contractors, the operations are as follows:
-
-1. round values to four decimal points for contractors such that the end result will 
-   be two decimal points after multiplying the result with 500.
-2. round values to zero for employees that are not contractors such that the end
-   result will be a multiple of 500.
-
-.. ipython:: python
-    :okwarning:
-
-    def reverse_transform(table_data, column):
-        base = 500.
-        is_not_contractor = table_data.contractor == 0.
-        table_data[column] = table_data[column].round(4)
-        table_data[column].loc[is_not_contractor] = table_data[column].loc[is_not_contractor].round()
-        table_data[column] *= base
-        return table_data
-
-We now stich everything together and pass it to the model.
+Finally, input these constraints into your model using the constraints parameter just like you
+would for predefined constraints.
 
 .. ipython:: python
     :okwarning:
 
     from sdv.tabular import GaussianCopula
 
-    constraint = CustomConstraint(
-        columns=['salary', 'annual_bonus'],
-        transform=transform, 
-        reverse_transform=reverse_transform
-    )
+    constraints = [
+      # you can add predefined constraints here too
+      salary_divis_500,
+      bonus_divis_500
+    ]
 
-    gc = GaussianCopula(constraints=[constraint])
+    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
 
-    gc.fit(employees)
+    model.fit(my_data)
 
-    sampled = gc.sample(10)
-
-
-When we view the ``sampled`` data, we should find that all the rows in the sampled 
-data have a salary that is a multiple of the base value with the exception
-of "contractor" records.
+Now, when you sample from the model, all rows of the synthetic data will follow the custom
+constraint.
 
 .. ipython:: python
     :okwarning:
 
-    sampled
-
-This style gives flexibility to access any column in the table while still operating on 
-a column basis.
-
-
-Can I write a ``CustomConstraint`` based on reject sampling?
-------------------------------------------------------------
-
-In the previous section, we defined our ``CustomConstraint`` using ``transform`` and 
-``reverse_transform`` functions. Sometimes, our constraints are not possible to implement 
-using these methods, that is when we rely on the ``reject_sampling`` strategy. 
-In ``reject_sampling`` we need to implement an ``is_valid`` function that identifies 
-which rows do not follow the said constraint, in our case, which rows are not a multiple 
-of the *base* unit.
-
-We can define ``is_valid`` according to the three styles mentioned in the previous section:
-
-1. function with ``table_data`` argument.
-2. function with ``column_data`` argument.
-3. function with ``table_data`` and ``column`` argument.
-
-``is_valid`` should return a ``pd.Series`` where every valid row corresponds to *True*,
-otherwise it should contain *False*. Here is an example of how you would define 
-``is_valid`` for each one of the mentioned styles:
-
-.. code-block:: python
-
-    def is_valid(table_data):
-        base = 500.
-        return table_data['salary'] % base == 0
-
-    def is_valid(column_data):
-        base = 500.
-        return column_data % base == 0
-
-    def is_valid(table_data, column):
-        base = 500.
-        is_contractor = table_data.contractor == 1
-        valid = table_data[column] % base == 0
-        contractor_salary = employees['salary'].loc[is_contractor]
-        valid.loc[is_contractor] = contractor_salary == contractor_salary.round(2)
-        return valid
-
-Then we construct ``CustomConstraint`` to take ``is_valid`` on its own.
-
-.. code-block:: python
-
-    constraint = CustomConstraint(
-        columns=['salary', 'annual_bonus'],
-        is_valid=is_valid
-    )
-
+    synthetic_data = model.sample(num_rows=10)
+    synthetic_data
