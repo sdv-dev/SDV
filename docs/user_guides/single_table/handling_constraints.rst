@@ -356,8 +356,8 @@ FAQs
       values.
 
     - Clean your input dataset. If you remove the violative rows in the real data, then you will be
-      able to apply the constraint. This is not recommended because even if the model is not truly
-      representative of the original data.
+      able to apply the constraint. This is not recommended because even if the model can learn the
+      constraint, it is not truly representative of the full, original dataset.
 
 .. collapse:: How does the SDV handle the constraints?
 
