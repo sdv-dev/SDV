@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -7,7 +7,8 @@ from faker import Faker
 from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import NumericalTransformer
 
-from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.metadata import Table
 
 
@@ -430,32 +431,34 @@ class TestTable:
 
     @patch('sdv.metadata.table.warnings')
     def test_fit_constraint_transform_missing_columns_error(self, warnings_mock):
-        """Test the ``fit`` method when transform raises a ``MissingConstraintColumnError``.
+        """Test the ``fit`` method when transform raises a errors.
 
         The ``fit`` method should loop through all the constraints and try to fit them. Then it
-        should loop through again and try to transform. If a ``MissingConstraintColumnError`` is
-        raised, a warning should be raised and reject sampling should be used.
+        should loop through again and try to transform. If a ``MissingConstraintColumnError`` or
+        ``FunctionError`` is raised, a warning should be raised and reject sampling should be used.
 
         Setup:
             - Set the ``_constraints`` to be a list of mocked constraints.
-            - Set constraint mocks to raise ``MissingConstraintColumnError`` when calling
-            transform.
+            - Set constraint mocks to raise ``MissingConstraintColumnError`` and ``FunctionError``
+            when calling transform.
             - Mock warnings module.
 
         Input:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MissingConstraintColumnError`` should be raised.
+            - ``MissingConstraintColumnError`` and ``FunctionError`` warning messages.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
         instance = Table()
         constraint1 = Mock()
         constraint2 = Mock()
+        constraint3 = Mock()
         constraint1.transform.return_value = data
         constraint2.transform.side_effect = MissingConstraintColumnError(['column'])
-        instance._constraints = [constraint1, constraint2]
+        constraint3.transform.side_effect = FunctionError()
+        instance._constraints = [constraint1, constraint2, constraint3]
 
         # Run
         instance.fit(data)
@@ -463,11 +466,14 @@ class TestTable:
         # Assert
         constraint1.fit.assert_called_once_with(data)
         constraint2.fit.assert_called_once_with(data)
-        warning_message = (
+        constraint3.fit.assert_called_once_with(data)
+        assert warnings_mock.warn.call_count == 2
+        warning_message1 = (
             "Mock cannot be transformed because columns: ['column'] were not found. Using the "
             'reject sampling approach instead.'
         )
-        warnings_mock.warn.assert_called_once_with(warning_message)
+        warning_message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
+        warnings_mock.warn.assert_has_calls([call(warning_message1), call(warning_message2)])
 
     def test_transform_calls__transform_constraints(self):
         """Test that the `transform` method calls `_transform_constraints` with right parameters

@@ -14,3 +14,7 @@ class MultipleConstraintsErrors(Exception):
 
 class InvalidFunctionError(Exception):
     """Error used when an invalid function is utilized."""
+
+
+class FunctionError(Exception):
+    """Error used when an a function produces an unexpected error."""

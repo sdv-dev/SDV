@@ -10,7 +10,8 @@ import pandas as pd
 import rdt
 from faker import Faker
 
-from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -433,12 +434,18 @@ class Table:
                 data = constraint.transform(data)
                 self._constraints_to_reverse.append(constraint)
 
-            except MissingConstraintColumnError as e:
-                warnings.warn(
-                    f'{constraint.__class__.__name__} cannot be transformed because columns: '
-                    f'{e.missing_columns} were not found. Using the reject sampling approach '
-                    'instead.'
-                )
+            except (MissingConstraintColumnError, FunctionError) as e:
+                if isinstance(e, MissingConstraintColumnError):
+                    warnings.warn(
+                        f'{constraint.__class__.__name__} cannot be transformed because columns: '
+                        f'{e.missing_columns} were not found. Using the reject sampling approach '
+                        'instead.'
+                    )
+                else:
+                    warnings.warn(
+                        f'Error transforming {constraint.__class__.__name__}. '
+                        'Using the reject sampling approach instead.'
+                    )
                 if is_condition:
                     indices_to_drop = data.columns.isin(constraint.constraint_columns)
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()

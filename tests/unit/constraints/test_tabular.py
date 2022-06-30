@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import InvalidFunctionError, MissingConstraintColumnError
+from sdv.constraints.errors import (
+    FunctionError, InvalidFunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -210,7 +211,7 @@ class TestCreateCustomConstraint():
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-            sorted
+            lambda _, x: pd.DataFrame({'col': x['col'] ** 1 / 2}),
         )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
@@ -229,7 +230,7 @@ class TestCreateCustomConstraint():
         Input:
         - pd.DataFrame
         Raises:
-        - ValueError
+        - Original data
         """
         # Setup
         custom_constraint = create_custom_constraint(
@@ -238,9 +239,10 @@ class TestCreateCustomConstraint():
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
-        err_msg = 'Transform is not defined for this custom constraint.'
-        with pytest.raises(ValueError, match=err_msg):
-            custom_constraint.transform(data)
+        out = custom_constraint.transform(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(data, out)
 
     def test_create_custom_constraint_transform_wrong_shape(self):
         """Test ``transform`` method of ``CustomConstraint`` which produces data of wrong shape.
@@ -263,6 +265,29 @@ class TestCreateCustomConstraint():
         # Run
         err_msg = 'Transformation did not produce the same number of rows as the original'
         with pytest.raises(InvalidFunctionError, match=err_msg):
+            custom_constraint.transform(data)
+
+    def test_create_custom_constraint_incorrect_transform(self):
+        """Test ``transform`` method of ``CustomConstraint`` with incorrect transform.
+
+        Call ``create_custom_constraint`` on an incorrect ``transform`` function, such as
+        only accepting 1 argument instead of the required 2.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - FunctionError
+        """
+        # Setup
+        custom_constraint = create_custom_constraint(
+            lambda _, x: pd.Series([True] * 5),
+            lambda _: pd.DataFrame({'col': [1, 2, 3]}),
+            sorted
+        )('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        with pytest.raises(FunctionError):
             custom_constraint.transform(data)
 
     def test_create_custom_constraint_reverse_transform(self):
@@ -298,17 +323,18 @@ class TestCreateCustomConstraint():
 
         Input:
         - pd.DataFrame
-        Raises:
-        - ValueError
+        Output:
+        - Original data
         """
         # Setup
         custom_constraint = create_custom_constraint(sorted)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
-        err_msg = 'Reverse transform is not defined for this custom constraint.'
-        with pytest.raises(ValueError, match=err_msg):
-            custom_constraint.reverse_transform(data)
+        out = custom_constraint.reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(data, out)
 
     def test_create_custom_constraint_reverse_transform_wrong_shape(self):
         """Test invalid ``reverse_transform`` method of ``CustomConstraint``
