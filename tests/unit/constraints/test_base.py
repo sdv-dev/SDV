@@ -520,8 +520,10 @@ class TestConstraint():
 
     def test_from_dict_fqn(self):
         """Test the ``Constraint.from_dict`` method passing a FQN.
+
         If the ``constraint`` string is a FQN, import the class
         before creating an instance of it.
+
         Input:
         - constraint dict with a FQN and args
         Output:
@@ -542,8 +544,10 @@ class TestConstraint():
 
     def test_from_dict_subclass(self):
         """Test the ``Constraint.from_dict`` method passing a subclass name.
+
         If the ``constraint`` string is a subclass name, take it from the
         Subclasses dict.
+
         Input:
         - constraint dict with a subclass name and args
         Output:
