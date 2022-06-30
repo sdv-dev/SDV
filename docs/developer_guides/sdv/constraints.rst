@@ -24,6 +24,7 @@ The following public methods are implemented in this class:
 * ``is_valid``: Return a ``pandas.Series`` full or ``True`` values with the same length as the
   given data.
 * ``filter_valid``: Return only the rows for which ``self.is_valid`` returns ``True``.
+* ``from_dict``: Build a ``Constraint`` from its dict representation.
 * ``to_dict``: Return a dict representing the ``Constraint``.
 
 Implementing a Custom Constraint
