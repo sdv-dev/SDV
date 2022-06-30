@@ -55,6 +55,9 @@ def test_failing_constraints():
         'k': [1, -1, 2, -2, 3, -3, 5]
     })
 
+    custom_constraint = create_custom_constraint(
+        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['k']])
+    )
     constraints = [
         Inequality('a', 'b'),
         Positive('c'),
@@ -64,9 +67,7 @@ def test_failing_constraints():
         ScalarInequality('j', '>=', 5.5),
         Range('a', 'b', 'c'),
         ScalarRange('a', 0, 0),
-        create_custom_constraint(
-            lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['k']])
-        )('k')
+        custom_constraint('k')
     ]
     gc = GaussianCopula(constraints=constraints)
 
