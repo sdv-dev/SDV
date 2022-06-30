@@ -38,12 +38,13 @@ extensions = [
     'sphinx.ext.napoleon',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
+    'sphinx_toolbox.collapse'
 ]
 
 ipython_execlines = [
     "import pandas as pd",
     "pd.set_option('display.width', 1000000)",
-    "pd.set_option('max_columns', 1000)",
+    "pd.set_option('display.max_columns', 1000)",
 ]
 
 autosummary_generate = True
