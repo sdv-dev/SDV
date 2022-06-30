@@ -100,6 +100,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
             self.kwargs = kwargs
+            self.constraint_columns = tuple(column_names)
 
         def is_valid(self, data):
             """Check whether the column values are valid.
