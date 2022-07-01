@@ -342,8 +342,8 @@ class BaseTabularModel:
                     progress_bar.update(num_increase)
 
             remaining = batch_size - num_valid
-            valid_rate = num_valid / batch_size
-            num_rows_to_sample = remaining / valid_rate if valid_rate > 0 else remaining * 2
+            valid_rate = (num_valid + 1) / (batch_size + 1)
+            num_rows_to_sample = remaining / valid_rate
             if remaining > 0:
                 LOGGER.info(
                     f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
