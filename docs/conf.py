@@ -33,6 +33,7 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
@@ -42,6 +43,7 @@ extensions = [
 ]
 
 ipython_execlines = [
+    "from utils import is_valid, transform, reverse_transform",
     "import pandas as pd",
     "pd.set_option('display.width', 1000000)",
     "pd.set_option('display.max_columns', 1000)",
