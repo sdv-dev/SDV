@@ -459,7 +459,7 @@ class TestBaseTabularModel:
         # Assert
         assert len(sampled) == 0
         model._sample_batch.assert_called_once_with(
-            20, None, condition, transformed_conditions, 0.01, None, None)
+            2, None, condition, transformed_conditions, 0.01, None, None)
 
     def test__conditionally_sample_rows_graceful_reject_sampling_false(self):
         """Test the `BaseTabularModel._conditionally_sample_rows` method.
@@ -494,7 +494,7 @@ class TestBaseTabularModel:
             )
 
         model._sample_batch.assert_called_once_with(
-            20, None, condition, transformed_conditions, 0.01, None, None)
+            2, None, condition, transformed_conditions, 0.01, None, None)
 
     def test__sample_remaining_columns(self):
         """Test the `BaseTabularModel._sample_remaining_colmns` method.
@@ -899,7 +899,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     _, args, kwargs = model._metadata.transform.mock_calls[0]
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(50, 100, conditions, None, 0.01, None, None)
+    model._sample_batch.assert_called_with(5, 100, conditions, None, 0.01, None, None)
     pd.testing.assert_frame_equal(output, expected_output)
 
 
@@ -960,13 +960,13 @@ def test__sample_with_conditions_transform_conditions_correctly():
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
-        30, 100, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
+        3, 100, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        10, 100, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
+        1, 100, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        10, 100, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
+        1, 100, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
     )
 
 

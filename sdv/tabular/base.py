@@ -343,7 +343,7 @@ class BaseTabularModel:
 
             remaining = batch_size - num_valid
             valid_rate = (num_valid + 1) / (batch_size + 1)
-            num_rows_to_sample = remaining / valid_rate
+            num_rows_to_sample = int(remaining / valid_rate)
             if remaining > 0:
                 LOGGER.info(
                     f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
@@ -380,7 +380,7 @@ class BaseTabularModel:
                                    max_tries_per_batch=None, batch_size=None, float_rtol=0.01,
                                    graceful_reject_sampling=True, progress_bar=None,
                                    output_file_path=None):
-        batch_size = batch_size or len(dataframe) * 10
+        batch_size = batch_size or len(dataframe)
         sampled_rows = self._sample_batch(
             batch_size,
             max_tries_per_batch,

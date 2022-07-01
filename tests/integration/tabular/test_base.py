@@ -304,7 +304,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     })
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) == 2
-    model._model.sample.assert_any_call(50, conditions=expected_transformed_conditions)
+    model._model.sample.assert_any_call(5, conditions=expected_transformed_conditions)
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
