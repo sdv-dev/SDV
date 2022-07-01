@@ -154,7 +154,7 @@ def test_conditional_sampling_numerical():
     conditions = [Condition({
         'column1': 1.0,
     }, num_rows=5)]
-    sampled = model.sample_conditions(conditions=conditions)
+    sampled = model.sample_conditions(conditions=conditions, max_tries_per_batch=300)
 
     assert list(sampled.column1) == [1.0] * 5
 
