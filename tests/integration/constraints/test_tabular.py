@@ -1,8 +1,52 @@
 import numpy as np
 import pandas as pd
 
-from sdv.constraints import FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange
+from sdv.constraints import (
+    FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
 from sdv.tabular import GaussianCopula
+
+
+def test_create_custom_constraint():
+    """Test the ``create_custom_constraint`` method end to end."""
+    # Setup
+    custom_constraint = create_custom_constraint(
+        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
+        lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
+        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
+    )('col')
+
+    data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
+    gc = GaussianCopula(constraints=[custom_constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(100)
+
+    # Assert
+    assert all(sampled > 0)
+
+
+def test_invalid_create_custom_constraint():
+    """Test the an invalid ``create_custom_constraint`` method end to end.
+
+    It should correctly sample the synthetic data through reject sample.
+    """
+    # Setup
+    custom_constraint = create_custom_constraint(
+        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
+        lambda _: pd.DataFrame({'col': [10 / 0] * 100}),
+        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
+    )('col')
+
+    data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
+    gc = GaussianCopula(constraints=[custom_constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(100)
+
+    # Assert
+    assert all(sampled > 0)
 
 
 def test_FixedIncrements():

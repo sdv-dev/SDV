@@ -12,7 +12,7 @@ Currently implemented constraints are:
 
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
-      and validation.
+      and validation. It can be created through the ``create_custom_constraint`` method.
     * FixedCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * Inequality: Ensure that the value in one column is always greater than
@@ -36,8 +36,8 @@ import uuid
 import numpy as np
 import pandas as pd
 
-from sdv.constraints.base import Constraint, import_object
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.base import Constraint
+from sdv.constraints.errors import FunctionError, InvalidFunctionError
 from sdv.constraints.utils import (
     cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
 
@@ -45,15 +45,31 @@ INEQUALITY_TO_OPERATION = {
     '>': np.greater,
     '>=': np.greater_equal,
     '<': np.less,
-    '<=': np.less_equal}
+    '<=': np.less_equal
+}
 
 
-class CustomConstraint(Constraint):
-    """Custom Constraint Class.
+def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
+    if not callable(is_valid_fn):
+        raise ValueError('`is_valid` must be a function.')
 
-    This class simply takes the ``transform``, ``reverse_transform``
-    and ``is_valid`` methods as optional arguments, so users can
-    pass custom functions for each one of them.
+    # Transform & reverse are optional but should be provided together or not at all
+    if transform_fn is None and reverse_transform_fn is not None:
+        raise ValueError('Missing parameter `transform_fn`.')
+    if transform_fn is not None and reverse_transform_fn is None:
+        raise ValueError('Missing parameter `reverse_transform_fn`.')
+
+    if transform_fn is not None and not callable(transform_fn):
+        raise ValueError('`transform_fn` must be a function.')
+    if reverse_transform_fn is not None and not callable(reverse_transform_fn):
+        raise ValueError('`reverse_transform_fn` must be a function.')
+
+
+def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
+    """Create a CustomConstraint class.
+
+    Creates a constraint class which uses the ``transform``, ``reverse_transform`` and
+    ``is_valid`` methods given in the arguments.
 
     Args:
         transform (callable):
@@ -62,70 +78,104 @@ class CustomConstraint(Constraint):
             Function to replace the ``reverse_transform`` method.
         is_valid (callable):
             Function to replace the ``is_valid`` method.
+
+    Returns:
+        CustomConstraint class:
+            A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
     """
+    _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 
-    def _run(self, function, table_data, reverse=False):
-        table_data = table_data.copy()
-        if self._columns:
-            if reverse:
-                columns = reversed(self._columns)
-            else:
-                columns = self._columns
+    class CustomConstraint(Constraint):
+        """CustomConstraint class.
 
-            for column in columns:
-                try:
-                    table_data = function(table_data, column)
-                except TypeError:
-                    table_data[column] = function(table_data[column])
+        Args:
+            transform (callable):
+                Function to replace the ``transform`` method.
+            reverse_transform (callable):
+                Function to replace the ``reverse_transform`` method.
+            is_valid (callable):
+                Function to replace the ``is_valid`` method.
+        """
 
-        else:
-            table_data = function(table_data)
+        def __init__(self, column_names, **kwargs):
+            self.column_names = column_names
+            self.kwargs = kwargs
+            self.constraint_columns = tuple(column_names)
 
-        return table_data
+        def is_valid(self, data):
+            """Check whether the column values are valid.
 
-    def _run_transform(self, table_data):
-        if self._columns:
-            missing_columns = [col for col in self._columns if col not in table_data.columns]
-            if missing_columns:
-                raise MissingConstraintColumnError(missing_columns=missing_columns)
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
 
-        return self._run(self._transform, table_data)
+            Returns:
+                pandas.Series:
+                    Whether each row is valid.
+            """
+            valid = is_valid_fn(self.column_names, data, **self.kwargs)
+            if len(valid) != data.shape[0]:
+                raise InvalidFunctionError(
+                    '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
-    def _run_reverse_transform(self, table_data):
-        return self._run(self._reverse_transform, table_data, reverse=True)
+            return valid
 
-    def _run_is_valid(self, table_data):
-        if self._columns:
+        def transform(self, data):
+            """Transform the table data.
+
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
+
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            if transform_fn is None:
+                return data
+
             try:
-                valid = [self._is_valid(table_data, column) for column in self._columns]
-            except TypeError:
-                valid = [self._is_valid(table_data[column]) for column in self._columns]
+                transformed_data = transform_fn(self.column_names, data, **self.kwargs)
+                if data.shape[0] != transformed_data.shape[0]:
+                    raise InvalidFunctionError(
+                        'Transformation did not produce the same number of rows as the original')
 
-            return np.logical_and.reduce(valid)
+                self.reverse_transform(transformed_data)
+                return transformed_data
 
-        return self._is_valid(table_data)
+            except InvalidFunctionError as e:
+                raise e
 
-    def __init__(self, columns=None, transform=None, reverse_transform=None, is_valid=None):
-        if isinstance(columns, str):
-            self._columns = [columns]
-        else:
-            self._columns = columns
+            except Exception:
+                raise FunctionError
 
-        if transform is not None:
-            self._transform = import_object(transform)
-            self.transform = self._run_transform
+        def reverse_transform(self, data):
+            """Reverse transform the table data.
 
-        if reverse_transform is not None:
-            self._reverse_transform = import_object(reverse_transform)
-            self.reverse_transform = self._run_reverse_transform
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
 
-        if is_valid is not None:
-            self._is_valid = import_object(is_valid)
-            self.is_valid = self._run_is_valid
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            if reverse_transform_fn is None:
+                return data
+
+            transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
+            if data.shape[0] != transformed_data.shape[0]:
+                raise InvalidFunctionError(
+                    'Reverse transform did not produce the same number of rows as the original.'
+                )
+
+            return transformed_data
+
+    return CustomConstraint
 
 
 class FixedCombinations(Constraint):
-    """Ensure that the combinations across multiple colums are fixed.
+    """Ensure that the combinations across multiple columns are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can

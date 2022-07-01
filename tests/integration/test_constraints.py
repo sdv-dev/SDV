@@ -7,6 +7,7 @@ from sdv.constraints import (
     FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range, ScalarInequality,
     ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.constraints.tabular import create_custom_constraint
 from sdv.demo import load_tabular_demo
 from sdv.tabular import GaussianCopula
 
@@ -50,9 +51,13 @@ def test_failing_constraints():
         'g': [1, 0, 1, 0, 0, 1, 0],
         'h': [1, 1, 1, 0, 0, 10, 0],
         'i': [1, 1, 1, 1, 1, 1, 1],
-        'j': [2, 3, 4, 5, 6, 7, 5.5]
+        'j': [2, 3, 4, 5, 6, 7, 5.5],
+        'k': [1, -1, 2, -2, 3, -3, 5]
     })
 
+    custom_constraint = create_custom_constraint(
+        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['k']])
+    )
     constraints = [
         Inequality('a', 'b'),
         Positive('c'),
@@ -62,6 +67,7 @@ def test_failing_constraints():
         ScalarInequality('j', '>=', 5.5),
         Range('a', 'b', 'c'),
         ScalarRange('a', 0, 0),
+        custom_constraint('k')
     ]
     gc = GaussianCopula(constraints=constraints)
 
@@ -130,6 +136,12 @@ def test_failing_constraints():
         '\n3  0'
         '\n4  0'
         '\n+2 more'
+        '\n'
+        "\nData is not valid for the 'CustomConstraint' constraint:"
+        '\n   k'
+        '\n1 -1'
+        '\n3 -2'
+        '\n5 -3'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
