@@ -226,17 +226,17 @@ def test_check_num_rows_reject_sampling_error():
     num_rows = 0
     expected_num_rows = 5
     is_reject_sampling = True
-    max_tries = 1
-    batch_size_per_try = 5
+    max_tries_per_batch = 1
+    batch_size = 5
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        r'Try increasing `max_tries` \(currently: 1\) or increasing '
-        r'`batch_size_per_try` \(currently: 5\)')
+        r'Try increasing `max_tries_per_batch` \(currently: 1\) or increasing '
+        r'`batch_size` \(currently: 5\)')
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         check_num_rows(
-            num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+            num_rows, expected_num_rows, is_reject_sampling, max_tries_per_batch, batch_size)
 
 
 def test_check_num_rows_non_reject_sampling_error():

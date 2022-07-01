@@ -116,11 +116,11 @@ class TestBaseTabularModel:
 
         # Asserts
         model._conditionally_sample_rows.assert_called_once_with(
-            DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
-            {'a': 'a'},
-            None,
-            100,
-            None,
+            dataframe=DataFrameMatcher(pd.DataFrame({COND_IDX: [0, 1, 2], 'a': ['a', 'a', 'a']})),
+            condition={'a': 'a'},
+            transformed_condition=None,
+            max_tries_per_batch=100,
+            batch_size=None,
             progress_bar=None,
             output_file_path=None,
         )
@@ -157,7 +157,7 @@ class TestBaseTabularModel:
         }
 
         # Run
-        output = BaseTabularModel._sample_batch(model, num_rows=5, conditions=conditions)
+        output = BaseTabularModel._sample_batch(model, batch_size=5, conditions=conditions)
 
         # Assert
         assert model._sample_rows.call_count == 2
@@ -171,7 +171,7 @@ class TestBaseTabularModel:
         with the header included in the first batch write.
 
         Input:
-            - num_rows = 4
+            - batch_size = 4
             - output_file_path = temp file
         Output:
             - The requested number of sampled rows (4).
@@ -186,7 +186,7 @@ class TestBaseTabularModel:
 
         # Run
         output = BaseTabularModel._sample_batch(
-            model, num_rows=4, output_file_path=output_file_path)
+            model, batch_size=4, output_file_path=output_file_path)
 
         # Assert
         assert model._sample_rows.call_count == 1
@@ -287,20 +287,20 @@ class TestBaseTabularModel:
 
         # Assert
         assert model._sample_batch.has_calls([
-            call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
-            call(5, batch_size_per_try=5, progress_bar=ANY, output_file_path=None),
+            call(batch_size=5, progress_bar=ANY, output_file_path=None),
+            call(batch_size=5, progress_bar=ANY, output_file_path=None),
         ])
         tqdm_mock.assert_has_calls([call(total=10)])
         assert len(output) == 10
 
-    def test__sample_batch_with_batch_size_per_try(self):
-        """Test the `BaseTabularModel._sample_batch` method with `batch_size_per_try`.
+    def test__sample_batch_with_batch_size(self):
+        """Test the `BaseTabularModel._sample_batch` method with `batch_size`.
 
         Expect that the expected calls to `_sample_rows` are made.
 
         Input:
             - num_rows = 10
-            - batch_size_per_try = 5
+            - batch_size = 5
         Output:
             - The requested number of sampled rows.
         Side Effect:
@@ -319,12 +319,12 @@ class TestBaseTabularModel:
         ]
 
         # Run
-        output = BaseTabularModel._sample_batch(model, num_rows=10, batch_size_per_try=5)
+        output = BaseTabularModel._sample_batch(model, batch_size=10)
 
         # Assert
         assert model._sample_rows.has_calls([
-            call(5, None, None, 0.01, DataFrameMatcher(pd.DataFrame())),
-            call(5, None, None, 0.01, DataFrameMatcher(sampled_data)),
+            call(10, None, None, 0.01, DataFrameMatcher(pd.DataFrame())),
+            call(10, None, None, 0.01, DataFrameMatcher(sampled_data)),
         ])
         assert len(output) == 10
 
@@ -459,7 +459,7 @@ class TestBaseTabularModel:
         # Assert
         assert len(sampled) == 0
         model._sample_batch.assert_called_once_with(
-            2, None, None, condition, transformed_conditions, 0.01, None, None)
+            20, None, condition, transformed_conditions, 0.01, None, None)
 
     def test__conditionally_sample_rows_graceful_reject_sampling_false(self):
         """Test the `BaseTabularModel._conditionally_sample_rows` method.
@@ -494,7 +494,7 @@ class TestBaseTabularModel:
             )
 
         model._sample_batch.assert_called_once_with(
-            2, None, None, condition, transformed_conditions, 0.01, None, None)
+            20, None, condition, transformed_conditions, 0.01, None, None)
 
     def test__sample_remaining_columns(self):
         """Test the `BaseTabularModel._sample_remaining_colmns` method.
@@ -657,7 +657,7 @@ class TestBaseTabularModel:
 
         # Assert
         model._sample_batch.called_once_with(
-            1, batch_size_per_try=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
+            1, batch_size=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
         os_mock.remove.called_once_with(TMP_FILE_NAME)
 
     @patch('sdv.tabular.base.os')
@@ -682,7 +682,7 @@ class TestBaseTabularModel:
 
         # Assert
         model._sample_batch.called_once_with(
-            1, batch_size_per_try=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
+            1, batch_size=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
         assert os_mock.remove.call_count == 0
 
     @patch('sdv.tabular.base.os')
@@ -706,7 +706,7 @@ class TestBaseTabularModel:
 
         # Assert
         model._sample_batch.called_once_with(
-            1, batch_size_per_try=1, progress_bar=ANY, output_file_path='temp.csv')
+            1, batch_size=1, progress_bar=ANY, output_file_path='temp.csv')
         assert os_mock.remove.call_count == 0
 
 
@@ -899,7 +899,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     _, args, kwargs = model._metadata.transform.mock_calls[0]
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(5, 100, None, conditions, None, 0.01, None, None)
+    model._sample_batch.assert_called_with(50, 100, conditions, None, 0.01, None, None)
     pd.testing.assert_frame_equal(output, expected_output)
 
 
@@ -960,13 +960,13 @@ def test__sample_with_conditions_transform_conditions_correctly():
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
-        3, 100, None, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
+        30, 100, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
+        10, 100, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
     )
     model._sample_batch.assert_any_call(
-        1, 100, None, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
+        10, 100, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
     )
 
 
