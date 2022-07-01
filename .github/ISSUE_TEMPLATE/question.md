@@ -2,7 +2,7 @@
 name: Question
 about: Ask a general question about SDV usage
 title: ''
-labels: question, pending review
+labels: question, new
 assignees: ''
 
 ---
