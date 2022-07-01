@@ -2,7 +2,7 @@
 name: Bug report
 about: Report an error that you found when using SDV
 title: ''
-labels: bug, pending review
+labels: bug, new
 assignees: ''
 
 ---
