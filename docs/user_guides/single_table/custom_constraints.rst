@@ -55,7 +55,7 @@ that needs a custom constraint:
 Validity Check
 ^^^^^^^^^^^^^^
 
-The validity check should return a ``numpy.array`` of ``True``/``False`` values that determine
+The validity check should return a ``list`` of ``True``/``False`` values that determine
 whether each row is valid.
 
 Let's code the logic up using parameters:
@@ -75,7 +75,7 @@ Let's code the logic up using parameters:
         is_divisible = (data[column_name] % increment == 0)
         is_excluded = (data[exclusion_column] > 0)
 
-        return np.array(is_divisible | is_excluded)
+        return (is_divisible | is_excluded)
 
 
 Transformations

@@ -118,6 +118,9 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 raise InvalidFunctionError(
                     '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
+            if isinstance(valid, (list, np.ndarray)):
+                valid = pd.Series(valid)
+
             return valid
 
         def transform(self, data):

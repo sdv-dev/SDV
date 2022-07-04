@@ -7,7 +7,7 @@ def is_valid(column_names, data, increment, exclusion_column):
     is_divisible = (data[column_name] % increment == 0)
     is_excluded = (data[exclusion_column] > 0)
 
-    return np.array(is_divisible | is_excluded)
+    return (is_divisible | is_excluded)
 
 
 def transform(column_names, data, increment, exclusion_column):
