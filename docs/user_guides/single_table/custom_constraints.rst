@@ -23,7 +23,7 @@ The SDV then uses the functionality you provided, as shown in the diagram below.
 Each function (validity, transform and reverse transform) must accept the same inputs:
 
 - column_names: The names of the columns involved in the constraints
-- data: The full dataset, represented as a pandas.DataFrame
+- data: The full dataset, represented as a ``pandas.DataFrame``
 - <other parameters>: Any other parameters that are necessary for your logic
 
 Example
@@ -55,7 +55,7 @@ that needs a custom constraint:
 Validity Check
 ^^^^^^^^^^^^^^
 
-The validity check should return a ``list`` of ``True``/``False`` values that determine
+The validity check should return a ``pandas.Series`` of ``True``/``False`` values that determine
 whether each row is valid.
 
 Let's code the logic up using parameters:
