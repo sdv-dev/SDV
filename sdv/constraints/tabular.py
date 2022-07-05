@@ -118,8 +118,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 raise InvalidFunctionError(
                     '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
-            if isinstance(valid, (list, np.ndarray)):
-                valid = pd.Series(valid)
+            if not isinstance(valid, pd.Series):
+                raise ValueError(
+                    "The custom 'is_valid' function returned an unsupported type. "
+                    'The returned object must be a pandas.Series'
+                )
 
             return valid
 
