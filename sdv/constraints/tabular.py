@@ -118,6 +118,12 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 raise InvalidFunctionError(
                     '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
+            if not isinstance(valid, pd.Series):
+                raise ValueError(
+                    "The custom 'is_valid' function returned an unsupported type. "
+                    'The returned object must be a pandas.Series'
+                )
+
             return valid
 
         def transform(self, data):
@@ -131,6 +137,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 pandas.DataFrame:
                     Transformed data.
             """
+            data = data.copy()
             if transform_fn is None:
                 return data
 
@@ -140,7 +147,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                     raise InvalidFunctionError(
                         'Transformation did not produce the same number of rows as the original')
 
-                self.reverse_transform(transformed_data)
+                self.reverse_transform(transformed_data.copy())
                 return transformed_data
 
             except InvalidFunctionError as e:
@@ -160,6 +167,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 pandas.DataFrame:
                     Transformed data.
             """
+            data = data.copy()
             if reverse_transform_fn is None:
                 return data
 

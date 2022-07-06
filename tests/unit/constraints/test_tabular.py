@@ -196,6 +196,31 @@ class TestCreateCustomConstraint():
         with pytest.raises(InvalidFunctionError, match=err_msg):
             custom_constraint.is_valid(data)
 
+    def test_create_custom_constraint_is_valid_not_a_series(self):
+        """Test ``is_valid`` method of ``CustomConstraint`` which produces a list.
+
+        Call ``create_custom_constraint`` on an ``is_valid`` function that returns
+        a list instead of a ``pandas.Series``.
+
+        Input:
+        - pd.DataFrame
+        Raises:
+        - ValueError
+        """
+        # Setup
+        custom_constraint = create_custom_constraint(
+            lambda _, x: list([True if x_i >= 0 else False for x_i in x['col']])
+        )('col')
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+
+        # Run
+        err_msg = (
+            "The custom 'is_valid' function returned an unsupported type. "
+            'The returned object must be a pandas.Series'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            custom_constraint.is_valid(data)
+
     def test_create_custom_constraint_transform(self):
         """Test ``transform`` method of ``CustomConstraint``.
 
