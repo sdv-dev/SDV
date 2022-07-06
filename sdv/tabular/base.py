@@ -272,7 +272,7 @@ class BaseTabularModel:
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
-        all of them are valid and match the requested conditions. If `max_tries_per_batch`
+        all of them are valid and match the requested conditions. If `max_tries`
         is exceeded, it will return as many rows as it has sampled, which may be less
         than the target number of rows.
 
@@ -650,11 +650,12 @@ class BaseTabularModel:
                     )
                     sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
+            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
+                self._model, copulas.multivariate.GaussianMultivariate))
             check_num_rows(
                 num_rows=len(sampled),
                 expected_num_rows=num_rows,
-                is_reject_sampling=(hasattr(self, '_model') and not isinstance(
-                    self._model, copulas.multivariate.GaussianMultivariate)),
+                is_reject_sampling=is_reject_sampling,
                 max_tries_per_batch=max_tries_per_batch,
                 batch_size=batch_size,
             )
