@@ -268,18 +268,18 @@ class TestBaseTabularModel:
             call(2).tail(2).to_csv(output_file_path, index=False),
         )
 
-    @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
+    @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
-        """Test the `BaseTabularModel.sample` method with a valid `num_rows` argument.
+        """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
 
-        Expect that the expected call to `_sample_batch` is made.
+        Expect that the expected call to ``_sample_batch`` is made.
 
         Input:
             - num_rows = 5
         Output:
             - The requested number of sampled rows.
         Side Effect:
-            - Call `_sample_batch` method with the expected number of rows.
+            - Call ``_sample_batch`` method with the expected number of rows.
         """
         # Setup
         model = Mock(spec_set=CTGAN)
@@ -332,11 +332,11 @@ class TestBaseTabularModel:
                 match=r'You must specify the number of rows to sample \(e.g. num_rows=100\)'):
             model.sample(num_rows)
 
-    @patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
+    @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_batch_size(self, tqdm_mock):
-        """Test the `BaseTabularModel.sample` method with a valid `batch_size` argument.
+        """Test the ``BaseTabularModel.sample`` method with a valid ``batch_size`` argument.
 
-        Expect that the expected calls to `_sample_batch` are made.
+        Expect that the expected calls to ``_sample_batch`` are made.
 
         Input:
             - num_rows = 10
@@ -344,7 +344,7 @@ class TestBaseTabularModel:
         Output:
             - The requested number of sampled rows.
         Side Effect:
-            - Call `_sample_batch` method twice with the expected number of rows.
+            - Call ``_sample_batch`` method twice with the expected number of rows.
         """
         # Setup
         model = Mock(spec_set=CTGAN)
