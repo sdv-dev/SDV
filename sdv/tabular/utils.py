@@ -3,7 +3,6 @@
 import warnings
 
 import numpy as np
-import tqdm
 
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
@@ -136,25 +135,6 @@ def unflatten_dict(flat):
             unflattened[key] = value
 
     return unflattened
-
-
-def progress_bar_wrapper(function, pb_total, pb_description):
-    """Enclose given function with a progress bar.
-
-    Args:
-        function (function):
-            The function to execute.
-        pb_total (int):
-            The total to use in the progress bar.
-        pb_description (str):
-            The description of the progress bar.
-
-    Returns:
-        The function return value.
-    """
-    with tqdm.tqdm(total=pb_total) as progress_bar:
-        progress_bar.set_description(pb_description)
-        return function(progress_bar)
 
 
 def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):

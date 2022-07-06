@@ -134,7 +134,7 @@ class TestBaseTabularModel:
         See https://github.com/sdv-dev/SDV/issues/285.
 
         Input:
-            - num_rows = 5
+            - batch_size = 5
             - condition on `column1` = 2
         Output:
             - The requested number of sampled rows (5).
@@ -162,6 +162,79 @@ class TestBaseTabularModel:
         # Assert
         assert model._sample_rows.call_count == 2
         assert len(output) == 5
+
+    def test__sample_batch_exceeds_max_tries_per_batch(self):
+        """Test the ``BaseTabularModel._sample_batch`` when ``max_tries_per_batch`` is exceeded.
+
+        Expect that the data sampled is returned.
+
+        Setup:
+            - Mock ``_sample_rows`` to never return anything.
+        Input:
+            - batch_size = 5
+            - max_tries = 10
+        Output:
+            - An empty pd.DataFrame.
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        model._sample_rows.return_value = (pd.DataFrame({}), 0)
+
+        # Run
+        output = BaseTabularModel._sample_batch(model, batch_size=5, max_tries=10)
+
+        # Assert
+        assert model._sample_rows.call_count == 10
+        pd.testing.assert_frame_equal(output, pd.DataFrame())
+
+    def test__sample_batch_with_progress_bar(self):
+        """Test the ``BaseTabularModel._sample_batch`` with a progress bar.
+
+        Expect that the progress bar is updated.
+
+        Setup:
+            - Mock ``_sample_rows`` to return one row at a time.
+        Input:
+            - batch_size = 500
+            - Mock for the progress bar
+        Output:
+            - An empty pd.DataFrame.
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        samples = [(pd.DataFrame({'a': [1] * i}), i) for i in range(100)]
+        model._sample_rows.side_effect = samples
+        progress_bar_mock = Mock()
+
+        # Run
+        BaseTabularModel._sample_batch(model, batch_size=500, progress_bar=progress_bar_mock)
+
+        # Assert
+        progress_bar_mock.update.assert_has_calls([call(1)] * 99)
+
+    def test__sample_batch_caps_at_10x(self):
+        """Test the ``BaseTabularModel._sample_batch`` caps the number of samples it requests.
+
+        ``_sample_batch`` should never request more than 10x the ``batch_size``.
+
+        Setup:
+            - Mock ``_sample_rows`` to return one row at a time.
+        Input:
+            - batch_size = 500
+        Output:
+            - An empty pd.DataFrame.
+        """
+        # Setup
+        model = Mock(spec_set=CTGAN)
+        samples = [(pd.DataFrame({'a': [1] * i}), i) for i in range(100)]
+        model._sample_rows.side_effect = samples
+
+        # Run
+        BaseTabularModel._sample_batch(model, batch_size=500)
+
+        # Assert
+        samples_requested = [sample_call[1][0] for sample_call in model._sample_rows.mock_calls]
+        assert max(samples_requested) == 5000
 
     @patch('sdv.tabular.base.os.path', spec=os.path)
     def test__sample_batch_output_file_path(self, path_mock):
@@ -222,7 +295,7 @@ class TestBaseTabularModel:
 
         # Assert
         assert model._sample_batch.called_once_with(5)
-        assert tqdm_mock.call_count == 0
+        assert tqdm_mock.call_count == 1
         assert len(output) == 5
 
     def test_sample_no_num_rows(self):
