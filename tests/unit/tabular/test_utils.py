@@ -1,13 +1,11 @@
 """Tests for the sdv.models.utils module."""
 
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pytest
-import tqdm
 
 from sdv.tabular.utils import (
-    _key_order, check_num_rows, flatten_array, flatten_dict, handle_sampling_error,
-    progress_bar_wrapper, unflatten_dict)
+    _key_order, check_num_rows, flatten_array, flatten_dict, handle_sampling_error, unflatten_dict)
 
 
 def test_flatten_array_default():
@@ -135,41 +133,6 @@ def test_unflatten_dict():
     assert result == expected
 
 
-@patch('sdv.tabular.utils.tqdm.tqdm', spec=tqdm.tqdm)
-def test_progress_bar_wrapper(tqdm_mock):
-    """Test the ``progress_bar_wrapper`` function.
-
-    Expect that it wraps the given function with a tqdm progress bar.
-
-    Input:
-        - test function
-        - total=100
-        - progress bar description
-    Output:
-        - test function output
-    Side Effects:
-        - the progress bar is created.
-    """
-    # Setup
-    total = 100
-    description = 'test description'
-
-    def test_fn(pbar):
-        return 'hello'
-
-    # Run
-    output = progress_bar_wrapper(test_fn, total, description)
-
-    # Assert
-    assert output == 'hello'
-    tqdm_mock.assert_has_calls([
-        call(total=total),
-        call().__enter__(),
-        call().__enter__().set_description(description),
-        call().__exit__(None, None, None),
-    ])
-
-
 def test_handle_sampling_error():
     """Test the ``handle_sampling_error`` function.
 
@@ -226,17 +189,17 @@ def test_check_num_rows_reject_sampling_error():
     num_rows = 0
     expected_num_rows = 5
     is_reject_sampling = True
-    max_tries = 1
-    batch_size_per_try = 5
+    max_tries_per_batch = 1
+    batch_size = 5
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        r'Try increasing `max_tries` \(currently: 1\) or increasing '
-        r'`batch_size_per_try` \(currently: 5\)')
+        r'Try increasing `max_tries_per_batch` \(currently: 1\) or increasing '
+        r'`batch_size` \(currently: 5\)')
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         check_num_rows(
-            num_rows, expected_num_rows, is_reject_sampling, max_tries, batch_size_per_try)
+            num_rows, expected_num_rows, is_reject_sampling, max_tries_per_batch, batch_size)
 
 
 def test_check_num_rows_non_reject_sampling_error():
