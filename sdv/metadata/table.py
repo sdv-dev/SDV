@@ -699,6 +699,9 @@ class Table:
             else:
                 field_data = reversed_data[name]
 
+            if field_metadata['transformer'] == 'integer':
+                field_data = field_data.round()
+
             reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
 
         return reversed_data[self._field_names]
