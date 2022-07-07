@@ -960,6 +960,7 @@ class FixedIncrements(Constraint):
 
         self.increment_value = increment_value
         self.column_name = column_name
+        self.constraint_columns = tuple([column_name])
 
     def is_valid(self, table_data):
         """Determine if the data is evenly divisible by the increment.

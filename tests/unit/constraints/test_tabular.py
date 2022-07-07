@@ -2930,6 +2930,7 @@ class TestFixedIncrements():
         # Assert
         assert instance.column_name == 'column'
         assert instance.increment_value == 5
+        assert instance.constraint_columns == ('column', )
 
     def test___init___increment_value_is_negative_number(self):
         """Test the ``FixedIncrements.__init__ method with a negative increment.

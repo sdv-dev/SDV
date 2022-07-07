@@ -1,11 +1,12 @@
 import re
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from sdv.constraints import (
-    FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range, ScalarInequality,
-    ScalarRange, Unique)
+    FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
+    ScalarInequality, ScalarRange, Unique)
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.constraints.tabular import create_custom_constraint
 from sdv.demo import load_tabular_demo
@@ -52,7 +53,8 @@ def test_failing_constraints():
         'h': [1, 1, 1, 0, 0, 10, 0],
         'i': [1, 1, 1, 1, 1, 1, 1],
         'j': [2, 3, 4, 5, 6, 7, 5.5],
-        'k': [1, -1, 2, -2, 3, -3, 5]
+        'k': [1, -1, 2, -2, 3, -3, 5],
+        'l': [25, 50, 70, np.nan, 50, 25, 25],
     })
 
     custom_constraint = create_custom_constraint(
@@ -67,7 +69,8 @@ def test_failing_constraints():
         ScalarInequality('j', '>=', 5.5),
         Range('a', 'b', 'c'),
         ScalarRange('a', 0, 0),
-        custom_constraint('k')
+        custom_constraint('k'),
+        FixedIncrements(column_name='l', increment_value=25),
     ]
     gc = GaussianCopula(constraints=constraints)
 
@@ -142,6 +145,10 @@ def test_failing_constraints():
         '\n1 -1'
         '\n3 -2'
         '\n5 -3'
+        '\n'
+        "\nData is not valid for the 'FixedIncrements' constraint:"
+        '\n      l'
+        '\n2  70.0'
     )
 
     with pytest.raises(MultipleConstraintsErrors, match=err_msg):
