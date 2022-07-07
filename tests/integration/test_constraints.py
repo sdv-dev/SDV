@@ -10,6 +10,7 @@ from sdv.constraints import (
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.constraints.tabular import create_custom_constraint
 from sdv.demo import load_tabular_demo
+from sdv.sampling import Condition
 from sdv.tabular import GaussianCopula
 
 
@@ -39,6 +40,35 @@ def test_constraints(tmpdir):
     assert all(age_gt_age_when_joined_constraint.is_valid(sampled))
     assert all(age_range_constraint.is_valid(sampled))
     assert all(fixed_company_department_constraint.is_valid(sampled))
+
+
+def test_constraints_with_conditions():
+    # Setup
+    data = pd.DataFrame(data={
+        'low_col': [i for i in range(50)],
+        'mid_col': [i + 1 for i in range(50)],
+        'high_col': [i + 2 for i in range(50)]
+    })
+
+    low_lt_mid_constraint = Inequality(
+        low_column_name='low_col',
+        high_column_name='mid_col'
+    )
+    mid_lt_high_constraint = Inequality(
+        low_column_name='mid_col',
+        high_column_name='high_col'
+    )
+
+    # Run
+    model = GaussianCopula(constraints=[low_lt_mid_constraint, mid_lt_high_constraint])
+    model.fit(data)
+
+    my_condition = Condition(column_values={'low_col': 1, 'mid_col': 2}, num_rows=2)
+    sampled = model.sample_conditions(conditions=[my_condition])
+
+    # Assert
+    assert all(low_lt_mid_constraint.is_valid(sampled))
+    assert all(mid_lt_high_constraint.is_valid(sampled))
 
 
 def test_failing_constraints():

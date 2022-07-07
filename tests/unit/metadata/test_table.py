@@ -572,17 +572,19 @@ class TestTable:
         constraint_mock = Mock()
         constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
         constraint_mock.constraint_columns = ['item 0']
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
+        table_instance = Table()
+        table_instance._constraints = [constraint_mock]
+        table_instance._constraints_to_reverse = [constraint_mock]
 
         # Run
-        result = Table._transform_constraints(table_mock, data, True)
+        result = table_instance._transform_constraints(data, True)
 
         # Assert
         expected_result = pd.DataFrame({
             'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         assert result.equals(expected_result)
+        assert table_instance._constraints_to_reverse == [constraint_mock]
 
     def test__transform_constraints_is_condition_false_returns_data(self):
         """Test that method returns data unchanged when necessary.

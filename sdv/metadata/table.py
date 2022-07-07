@@ -445,7 +445,8 @@ class Table:
         for constraint in self._constraints:
             try:
                 data = constraint.transform(data)
-                self._constraints_to_reverse.append(constraint)
+                if not is_condition:
+                    self._constraints_to_reverse.append(constraint)
 
             except (MissingConstraintColumnError, FunctionError) as e:
                 if isinstance(e, MissingConstraintColumnError):
