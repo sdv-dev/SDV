@@ -1276,7 +1276,7 @@ class TestScalarInequality():
         - Raise ``ValueError`` because the value must be a numerical
         """
         # Run / Assert
-        err_msg = '`value` must be a number or datetime.'
+        err_msg = '`value` must be a number or a string that represents a datetime.'
         with pytest.raises(ValueError, match=err_msg):
             ScalarInequality._validate_inputs(column_name='a', value='b', relation='>')
 
@@ -2183,7 +2183,10 @@ class TestScalarRange():
         high_value = 2
 
         # Run / Assert
-        error_msg = '``low_value`` and ``high_value`` must be a number or datetime.'
+        error_msg = (
+            '``low_value`` and ``high_value`` must be a number or a string that '
+            'represents a datetime.'
+        )
         with pytest.raises(ValueError, match=error_msg):
             ScalarRange._validate_inputs(low_value, high_value)
 
