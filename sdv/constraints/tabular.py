@@ -469,7 +469,7 @@ class ScalarInequality(Constraint):
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
         if not (isinstance(value, (int, float)) or value_is_datetime):
-            raise ValueError('`value` must be a number or datetime.')
+            raise ValueError('`value` must be a number or a string that represents a datetime.')
 
         if value_is_datetime and not isinstance(value, str):
             raise ValueError('Datetime must be represented as a string.')
@@ -807,7 +807,10 @@ class ScalarRange(Constraint):
             isinstance(low_value, (int, float)) and isinstance(high_value, (int, float))
         )
         if not (values_are_numerical or values_are_datetimes):
-            raise ValueError('``low_value`` and ``high_value`` must be a number or datetime.')
+            raise ValueError(
+                '``low_value`` and ``high_value`` must be a number or a string that '
+                'represents a datetime.'
+            )
 
     def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
         self.constraint_columns = (column_name,)
