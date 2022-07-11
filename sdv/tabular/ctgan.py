@@ -164,21 +164,13 @@ class CTGAN(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
+        enforce_min_max_values (int, str or None):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``False``.
     """
 
     _MODEL_CLASS = CTGANSynthesizer
@@ -189,7 +181,7 @@ class CTGAN(CTGANModel):
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
                  log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True,
-                 rounding='auto', min_value='auto', max_value='auto'):
+                 learn_rounding_scheme=False, enforce_min_max_values=False):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -198,9 +190,8 @@ class CTGAN(CTGANModel):
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,
-            rounding=rounding,
-            max_value=max_value,
-            min_value=min_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
 
         self._model_kwargs = {
@@ -278,21 +269,13 @@ class TVAE(CTGANModel):
         cuda (bool or str):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
+        enforce_min_max_values (int, str or None):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``False``.
     """
 
     _MODEL_CLASS = TVAESynthesizer
@@ -301,7 +284,8 @@ class TVAE(CTGANModel):
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
                  l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True,
-                 rounding='auto', min_value='auto', max_value='auto'):
+                 learn_rounding_scheme=False, enforce_min_max_values=False):
+
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -310,9 +294,8 @@ class TVAE(CTGANModel):
             anonymize_fields=anonymize_fields,
             constraints=constraints,
             table_metadata=table_metadata,
-            rounding=rounding,
-            max_value=max_value,
-            min_value=min_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
 
         self._model_kwargs = {
