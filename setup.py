@@ -19,10 +19,10 @@ install_requires = [
     'pandas>=1.1.3,<2',
     'tqdm>=4.15,<5',
     'copulas>=0.7.0,<0.8',
-    'ctgan>=0.5.1,<0.6',
+    'ctgan>=0.5.2.dev0,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=0.6.2,<0.7',
-    'sdmetrics>=0.5.0,<0.6',
+    'rdt>=1.1.0,<2.0',
+    'sdmetrics>=0.5.1.dev0,<0.6',
 ]
 
 pomegranate_requires = [
