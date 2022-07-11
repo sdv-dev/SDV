@@ -621,6 +621,33 @@ class TestTable:
         assert result.equals(expected_result)
         assert table_instance._constraints_to_reverse == []
 
+    def test_reverse_transform_integer_rounding(self):
+        """Test the ``Table.reverse_transform`` method correctly rounds.
+
+
+        """
+        # Setup
+        data = pd.DataFrame({'bar': [0.2, 1.4, 2]})
+        table = Table()
+        table.fitted = True
+        table._fields_metadata = {
+            'bar': {
+                'type': 'categorical',
+                'transformer': 'integer'
+            },
+        }
+        table._hyper_transformer = Mock()
+        table._hyper_transformer.reverse_transform.return_value = data
+        table._constraints_to_reverse = []
+        table._dtypes = {'bar': 'int'}
+
+        # Run
+        output = table.reverse_transform(data)
+
+        # Assert
+        expected_data = pd.DataFrame({'bar': [0, 1, 2]})
+        pd.testing.assert_frame_equal(output, expected_data)
+
     def test_from_dict_min_max(self):
         """Test the ``Table.from_dict`` method.
 

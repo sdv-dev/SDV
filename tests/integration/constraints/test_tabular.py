@@ -152,7 +152,10 @@ def test_ScalarRange():
 
 
 def test_ScalarRange_conditions():
-    """Test ``ScalarRange`` with conditions."""
+    """Test ``ScalarRange`` with conditions.
+
+    This test ensures that the conditions are not altered by the constraint transformation.
+    """
     # Setup
     constraint = ScalarRange(column_name='input', low_value=49, high_value=100)
     data = pd.DataFrame({
