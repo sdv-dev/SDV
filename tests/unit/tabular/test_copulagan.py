@@ -2,7 +2,7 @@ from unittest.mock import Mock, call, patch
 
 import pandas as pd
 from rdt import HyperTransformer
-from rdt.transformers import GaussianCopulaTransformer
+from rdt.transformers import GaussianNormalizer
 
 from sdv.tabular.copulagan import CopulaGAN
 from tests.utils import DataFrameMatcher
@@ -12,8 +12,8 @@ class TestCopulaGAN:
 
     @patch('sdv.tabular.copulagan.CTGAN._fit')
     @patch('sdv.tabular.copulagan.HyperTransformer', spec_set=HyperTransformer)
-    @patch('sdv.tabular.copulagan.GaussianCopulaTransformer',
-           spec_set=GaussianCopulaTransformer)
+    @patch('sdv.tabular.copulagan.GaussianNormalizer',
+           spec_set=GaussianNormalizer)
     def test__fit(self, gct_mock, ht_mock, ctgan_fit_mock):
         """Test the ``CopulaGAN._fit`` method.
 
@@ -35,7 +35,7 @@ class TestCopulaGAN:
             - None
 
         Side Effects:
-            - GaussianCopulaTransformer is called with the expected disributions.
+            - GaussianNormalizer is called with the expected disributions.
             - HyperTransformer is called to create a hyper transformer object.
             - HyperTransformer fit_transform is called with the expected data.
             - CTGAN's fit method is called with the expected data.
@@ -69,8 +69,8 @@ class TestCopulaGAN:
 
     @patch('sdv.tabular.copulagan.CTGAN._fit')
     @patch('sdv.tabular.copulagan.HyperTransformer', spec_set=HyperTransformer)
-    @patch('sdv.tabular.copulagan.GaussianCopulaTransformer',
-           spec_set=GaussianCopulaTransformer)
+    @patch('sdv.tabular.copulagan.GaussianNormalizer',
+           spec_set=GaussianNormalizer)
     def test__fit_with_transformed_columns(self, gct_mock, ht_mock, ctgan_fit_mock):
         """Test the ``CopulaGAN._fit`` method with transformed columns.
 
@@ -91,7 +91,7 @@ class TestCopulaGAN:
             - None
 
         Side Effects:
-            - GaussianCopulaTransformer is called with the expected disributions.
+            - GaussianNormalizer is called with the expected disributions.
             - HyperTransformer is called to create a hyper transformer object.
             - HyperTransformer fit_transform is called with the expected data.
             - CTGAN's fit method is called with the expected data.
