@@ -44,14 +44,14 @@ class Table:
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
-                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
-                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
-                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
-                * ``boolean``: Uses a ``BooleanTransformer``.
-                * ``datetime``: Uses a ``DatetimeTransformer``.
+                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
+                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
+                * ``label_encoding``: Uses a ``LabelEncoder``.
+                * ``boolean``: Uses a ``BinaryEncoder``.
+                * ``datetime``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -86,21 +86,13 @@ class Table:
             The columns in the dataframe which are constant within each
             group/entity. These columns will be provided at sampling time
             (i.e. the samples will be conditioned on the context variables).
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
+        enforce_min_max_values (int, str or None):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``False``.
     """
 
     _hyper_transformer = None
@@ -109,14 +101,14 @@ class Table:
 
     _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
-        'integer': rdt.transformers.NumericalTransformer(dtype=int),
-        'float': rdt.transformers.NumericalTransformer(dtype=float),
-        'categorical': rdt.transformers.CategoricalTransformer,
-        'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
-        'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
-        'label_encoding': rdt.transformers.LabelEncodingTransformer,
-        'boolean': rdt.transformers.BooleanTransformer,
-        'datetime': rdt.transformers.DatetimeTransformer(strip_constant=True),
+        'integer': rdt.transformers.FloatFormatter,
+        'float': rdt.transformers.FloatFormatter,
+        'categorical': rdt.transformers.FrequencyEncoder,
+        'categorical_fuzzy': rdt.transformers.FrequencyEncoder(add_noise=True),
+        'one_hot_encoding': rdt.transformers.OneHotEncoder,
+        'label_encoding': rdt.transformers.LabelEncoder,
+        'boolean': rdt.transformers.BinaryEncoder,
+        'datetime': rdt.transformers.UnixTimestampEncoder,
     }
     _DTYPE_TRANSFORMERS = {
         'i': 'integer',
@@ -230,15 +222,17 @@ class Table:
             for _ in range(num_values)
         )
 
-    def _update_transformer_templates(self, rounding, min_value, max_value):
+    def _update_transformer_templates(self, learn_rounding_scheme, enforce_min_max_values):
         default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
-        if (rounding != default_numerical_transformer.rounding
-                or min_value != default_numerical_transformer.min_value
-                or max_value != default_numerical_transformer.max_value):
-            custom_int = rdt.transformers.NumericalTransformer(
-                dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
-            custom_float = rdt.transformers.NumericalTransformer(
-                dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
+        if learn_rounding_scheme or enforce_min_max_values:
+            custom_int = rdt.transformers.FloatFormatter(
+                learn_rounding_scheme=learn_rounding_scheme,
+                enforce_min_max_values=enforce_min_max_values
+            )
+            custom_int = rdt.transformers.FloatFormatter(
+                learn_rounding_scheme=learn_rounding_scheme,
+                enforce_min_max_values=enforce_min_max_values
+            )
             self._transformer_templates.update({
                 'integer': custom_int,
                 'float': custom_float
@@ -259,8 +253,8 @@ class Table:
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
-                 entity_columns=None, context_columns=None, rounding=None, min_value=None,
-                 max_value=None):
+                 entity_columns=None, context_columns=None,
+                 learn_rounding_scheme=False, enforce_min_max_values=False):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -276,7 +270,7 @@ class Table:
         self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
-        self._update_transformer_templates(rounding, min_value, max_value)
+        self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
 
@@ -513,10 +507,12 @@ class Table:
 
         transformers_dict = self._get_transformers(dtypes)
         for column in numerical_extras:
-            transformers_dict[column] = rdt.transformers.NumericalTransformer()
+            transformers_dict[column] = rdt.transformers.FloatFormatter()
 
-        self._hyper_transformer = rdt.HyperTransformer(field_transformers=transformers_dict)
-        self._hyper_transformer.fit(data[list(transformers_dict.keys())])
+        self._hyper_transformer = rdt.HyperTransformer()
+        self._hyper_transformer.detect_initial_config(data)
+        self._hyper_transformer.update_transformers(transformers_dict)
+        self._hyper_transformer.fit(data)
 
     @staticmethod
     def _get_key_subtype(field_meta):
@@ -799,9 +795,8 @@ class Table:
             entity_columns=metadata_dict.get('entity_columns') or [],
             context_columns=metadata_dict.get('context_columns') or [],
             dtype_transformers=dtype_transformers,
-            min_value=metadata_dict.get('min_value', 'auto'),
-            max_value=metadata_dict.get('max_value', 'auto'),
-            rounding=metadata_dict.get('rounding', 'auto'),
+            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', 'auto'),
+            learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', 'auto'),
         )
         instance._fields_metadata = fields
         return instance

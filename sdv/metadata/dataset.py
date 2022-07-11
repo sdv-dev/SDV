@@ -8,7 +8,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from rdt import HyperTransformer, transformers
+from rdt import HyperTransformer
 
 from sdv.constraints import Constraint
 from sdv.metadata import visualization
@@ -419,64 +419,14 @@ class Metadata:
 
         return pii_fields
 
-    @staticmethod
-    def _get_transformers(dtypes, pii_fields):
-        """Create the transformer instances needed to process the given dtypes.
-
-        Temporary drop-in replacement of ``HyperTransformer._analyze`` method,
-        before RDT catches up.
-
-        Args:
-            dtypes (dict):
-                mapping of field names and dtypes.
-            pii_fields (dict):
-                mapping of pii field names and categories.
-
-        Returns:
-            dict:
-                mapping of field names and transformer instances.
-        """
-        transformers_dict = dict()
-        for name, dtype in dtypes.items():
-            dtype = np.dtype(dtype)
-            if dtype.kind == 'i':
-                transformer = transformers.NumericalTransformer(dtype=int)
-            elif dtype.kind == 'f':
-                transformer = transformers.NumericalTransformer(dtype=float)
-            elif dtype.kind == 'O':
-                anonymize = pii_fields.get(name)
-                transformer = transformers.CategoricalTransformer(anonymize=anonymize)
-            elif dtype.kind == 'b':
-                transformer = transformers.BooleanTransformer()
-            elif dtype.kind == 'M':
-                transformer = transformers.DatetimeTransformer()
-            else:
-                raise ValueError('Unsupported dtype: {}'.format(dtype))
-
-            LOGGER.info('Loading transformer %s for field %s',
-                        transformer.__class__.__name__, name)
-            transformers_dict[name] = transformer
-
-        return transformers_dict
-
-    def _load_hyper_transformer(self, table_name):
-        """Create and return a new ``rdt.HyperTransformer`` instance for a table.
-
-        First get the ``dtypes`` and ``pii fields`` from a given table, then use
-        those to build a transformer dictionary to be used by the ``HyperTransformer``.
-
-        Args:
-            table_name (str):
-                Table name for which to load the HyperTransformer.
+    def _update_hyper_transformer(self, table_name, hyper_transformer):
+        """Update the ``rdt.HyperTransformer`` with custom ``pii`` transformers.
 
         Returns:
             rdt.HyperTransformer:
-                Instance of ``rdt.HyperTransformer`` for the given table.
+                Instance of ``rdt.HyperTransformer`` with the given ``pii`` transformers.
         """
-        dtypes = self.get_dtypes(table_name)
-        pii_fields = self._get_pii_fields(table_name)
-        transformers_dict = self._get_transformers(dtypes, pii_fields)
-        return HyperTransformer(field_transformers=transformers_dict)
+        pass
 
     def transform(self, table_name, data):
         """Transform data for a given table.
@@ -495,13 +445,18 @@ class Metadata:
         """
         hyper_transformer = self._hyper_transformers.get(table_name)
         if hyper_transformer is None:
-            hyper_transformer = self._load_hyper_transformer(table_name)
-            fields = list(hyper_transformer.transformers.keys())
+            hyper_transformer = rdt.HyperTransformer()
+            hyper_transformer.detect_initial_config(data)
+            pii_fields = self._get_pii_fields(table_name)
+            if pii_fields:
+                # TODO: We have to define the pii and how we should pass to ``AnonymizedFaker``.
+                self._update_hyper_transformer(pii_fileds, hyper_transformer)
+
             hyper_transformer.fit(data[fields])
             self._hyper_transformers[table_name] = hyper_transformer
 
         hyper_transformer = self._hyper_transformers.get(table_name)
-        fields = list(hyper_transformer.transformers.keys())
+        fields = list(hyper_transformer.get_config().get('transformers'))
         return hyper_transformer.transform(data[fields])
 
     def reverse_transform(self, table_name, data):

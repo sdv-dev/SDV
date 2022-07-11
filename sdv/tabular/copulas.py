@@ -141,8 +141,8 @@ class GaussianCopula(BaseTabularModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  field_distributions=None, default_distribution=None,
-                 categorical_transformer=None, rounding='auto', min_value='auto',
-                 max_value='auto'):
+                 categorical_transformer=None, learn_rounding_scheme=False,
+                 enforce_min_max_values=False):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
@@ -181,9 +181,8 @@ class GaussianCopula(BaseTabularModel):
             primary_key=primary_key,
             constraints=constraints,
             table_metadata=table_metadata,
-            rounding=rounding,
-            max_value=max_value,
-            min_value=min_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
 
         self._metadata.set_model_kwargs(self.__class__.__name__, {
