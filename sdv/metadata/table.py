@@ -223,13 +223,12 @@ class Table:
         )
 
     def _update_transformer_templates(self, learn_rounding_scheme, enforce_min_max_values):
-        default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
         if learn_rounding_scheme or enforce_min_max_values:
             custom_int = rdt.transformers.FloatFormatter(
                 learn_rounding_scheme=learn_rounding_scheme,
                 enforce_min_max_values=enforce_min_max_values
             )
-            custom_int = rdt.transformers.FloatFormatter(
+            custom_float = rdt.transformers.FloatFormatter(
                 learn_rounding_scheme=learn_rounding_scheme,
                 enforce_min_max_values=enforce_min_max_values
             )

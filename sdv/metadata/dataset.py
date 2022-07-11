@@ -445,19 +445,18 @@ class Metadata:
         """
         hyper_transformer = self._hyper_transformers.get(table_name)
         if hyper_transformer is None:
-            hyper_transformer = rdt.HyperTransformer()
+            hyper_transformer = HyperTransformer()
             hyper_transformer.detect_initial_config(data)
             pii_fields = self._get_pii_fields(table_name)
             if pii_fields:
                 # TODO: We have to define the pii and how we should pass to ``AnonymizedFaker``.
-                self._update_hyper_transformer(pii_fileds, hyper_transformer)
+                self._update_hyper_transformer(pii_fields, hyper_transformer)
 
-            hyper_transformer.fit(data[fields])
+            hyper_transformer.fit(data)
             self._hyper_transformers[table_name] = hyper_transformer
 
         hyper_transformer = self._hyper_transformers.get(table_name)
-        fields = list(hyper_transformer.get_config().get('transformers'))
-        return hyper_transformer.transform(data[fields])
+        return hyper_transformer.transform(data)
 
     def reverse_transform(self, table_name, data):
         """Reverse the transformed data for a given table.
