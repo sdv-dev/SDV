@@ -101,8 +101,8 @@ class Table:
 
     _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
-        'integer': rdt.transformers.FloatFormatter,
-        'float': rdt.transformers.FloatFormatter,
+        'integer': rdt.transformers.FloatFormatter(missing_value_replacement='mean', model_missing_values=True),
+        'float': rdt.transformers.FloatFormatter(missing_value_replacement='mean', model_missing_values=True),
         'categorical': rdt.transformers.FrequencyEncoder,
         'categorical_fuzzy': rdt.transformers.FrequencyEncoder(add_noise=True),
         'one_hot_encoding': rdt.transformers.OneHotEncoder,
@@ -643,7 +643,7 @@ class Table:
 
         LOGGER.debug('Transforming table %s', self.name)
         try:
-            return self._hyper_transformer.transform(data)
+            return self._hyper_transformer._transform(data, prevent_subset=False)
         except rdt.errors.NotFittedError:
             return data
 
