@@ -74,7 +74,7 @@ class BaseTimeseriesModel:
     _DTYPE_TRANSFORMERS = {
         'i': None,
         'f': None,
-        'M': rdt.transformers.DatetimeTransformer(strip_constant=True),
+        'M': rdt.transformers.UnixTimestampEncoder(),
         'b': None,
         'O': None,
     }

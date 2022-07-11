@@ -1,7 +1,7 @@
 """Combination of GaussianCopula transformation and GANs."""
 
 from rdt import HyperTransformer
-from rdt.transformers import GaussianCopulaTransformer
+from rdt.transformers import GaussianNormalizer
 
 from sdv.tabular.ctgan import CTGAN
 
@@ -10,12 +10,12 @@ class CopulaGAN(CTGAN):
     """Combination of GaussianCopula transformation and GANs.
 
     This model extends the ``CTGAN`` model to add the flexibility of the GaussianCopula
-    transformations provided by the ``GaussianCopulaTransformer`` from ``RDT``.
+    transformations provided by the ``GaussianNormalizer`` from ``RDT``.
 
     Overall, the fitting process consists of the following steps:
 
     1. Transform each non categorical variable from the input
-       data using a ``GaussianCopulaTransformer``:
+       data using a ``GaussianNormalizer``:
 
        i. If not specified, find out the distribution which each one
           of the variables from the input dataset has.
@@ -181,7 +181,7 @@ class CopulaGAN(CTGAN):
         return {
             transformer.column_prefix: transformer._univariate.to_dict()['type']
             for transformer in self._ht._transformers_sequence
-            if isinstance(transformer, GaussianCopulaTransformer)
+            if isinstance(transformer, GaussianNormalizer)
         }
 
     def _fit(self, table_data):
@@ -202,11 +202,13 @@ class CopulaGAN(CTGAN):
                 field_name,
                 dict(),
             ).get('type') != 'categorical':
-                transformers[field] = GaussianCopulaTransformer(
+                transformers[field] = GaussianNormalizer(
                     distribution=distributions.get(field_name, self._default_distribution)
                 )
 
-        self._ht = HyperTransformer(field_transformers=transformers)
+        self._ht = HyperTransformer()
+        self._ht.detect_initial_config(table_data)
+        self._ht.update_transformers(transformers)
         table_data = self._ht.fit_transform(table_data)
 
         super()._fit(table_data)
