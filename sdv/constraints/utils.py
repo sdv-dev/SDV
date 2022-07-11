@@ -1,6 +1,7 @@
 """Constraint utility functions."""
 
 from datetime import datetime
+from decimal import Decimal
 
 import numpy as np
 import pandas as pd
@@ -102,7 +103,8 @@ def logit(data, low, high):
         Logit scaled version of the input data.
     """
     data = (data - low) / (high - low)
-    data = data * 0.95 + 0.025
+    data = _cast_to_type(data, Decimal)
+    data = data * Decimal(0.95) + Decimal(0.025)
     data = _cast_to_type(data, float)
     return np.log(data / (1.0 - data))
 
@@ -122,7 +124,8 @@ def sigmoid(data, low, high):
         Sigmoid transform of the input data.
     """
     data = 1 / (1 + np.exp(-data))
-    data = (data - 0.025) / 0.95
+    data = _cast_to_type(data, Decimal)
+    data = (data - Decimal(0.025)) / Decimal(0.95)
     data = _cast_to_type(data, float)
     data = data * (high - low) + low
 

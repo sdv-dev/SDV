@@ -624,7 +624,13 @@ class TestTable:
     def test_reverse_transform_integer_rounding(self):
         """Test the ``Table.reverse_transform`` method correctly rounds.
 
+        Expect the data to be rounded when the ``_fields_metadata`` specifies
+        the ``'transformer'`` as ``'integer'``.
 
+        Input:
+        - A dictionary with float values.
+        Output:
+        - The input dictionary rounded.
         """
         # Setup
         data = pd.DataFrame({'bar': [0.2, 1.4, 2]})
