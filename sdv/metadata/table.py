@@ -89,7 +89,7 @@ class Table:
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
-        enforce_min_max_values (int, str or None):
+        enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
             during ``fit``. Defaults to ``False``.
@@ -101,14 +101,30 @@ class Table:
 
     _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
-        'integer': rdt.transformers.FloatFormatter(missing_value_replacement='mean', model_missing_values=True),
-        'float': rdt.transformers.FloatFormatter(missing_value_replacement='mean', model_missing_values=True),
+        'integer': rdt.transformers.FloatFormatter(
+            learn_rounding_scheme=True,
+            enforce_min_max_values=True,
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        ),
+        'float': rdt.transformers.FloatFormatter(
+            learn_rounding_scheme=True,
+            enforce_min_max_values=True,
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        ),
         'categorical': rdt.transformers.FrequencyEncoder,
         'categorical_fuzzy': rdt.transformers.FrequencyEncoder(add_noise=True),
         'one_hot_encoding': rdt.transformers.OneHotEncoder,
         'label_encoding': rdt.transformers.LabelEncoder,
-        'boolean': rdt.transformers.BinaryEncoder,
-        'datetime': rdt.transformers.UnixTimestampEncoder,
+        'boolean': rdt.transformers.BinaryEncoder(
+            missing_value_replacement=-1,
+            model_missing_values=True
+        ),
+        'datetime': rdt.transformers.UnixTimestampEncoder(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        ),
     }
     _DTYPE_TRANSFORMERS = {
         'i': 'integer',
@@ -225,10 +241,14 @@ class Table:
     def _update_transformer_templates(self, learn_rounding_scheme, enforce_min_max_values):
         if learn_rounding_scheme or enforce_min_max_values:
             custom_int = rdt.transformers.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=True,
                 learn_rounding_scheme=learn_rounding_scheme,
                 enforce_min_max_values=enforce_min_max_values
             )
             custom_float = rdt.transformers.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=True,
                 learn_rounding_scheme=learn_rounding_scheme,
                 enforce_min_max_values=enforce_min_max_values
             )
@@ -643,7 +663,7 @@ class Table:
 
         LOGGER.debug('Transforming table %s', self.name)
         try:
-            return self._hyper_transformer._transform(data, prevent_subset=False)
+            return self._hyper_transformer.transform_subset(data)
         except rdt.errors.NotFittedError:
             return data
 
@@ -794,8 +814,8 @@ class Table:
             entity_columns=metadata_dict.get('entity_columns') or [],
             context_columns=metadata_dict.get('context_columns') or [],
             dtype_transformers=dtype_transformers,
-            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', 'auto'),
-            learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', 'auto'),
+            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
+            learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', True),
         )
         instance._fields_metadata = fields
         return instance

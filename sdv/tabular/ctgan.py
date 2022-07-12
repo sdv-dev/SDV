@@ -167,7 +167,7 @@ class CTGAN(CTGANModel):
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
-        enforce_min_max_values (int, str or None):
+        enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
             during ``fit``. Defaults to ``False``.
@@ -272,7 +272,7 @@ class TVAE(CTGANModel):
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
-        enforce_min_max_values (int, str or None):
+        enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
             during ``fit``. Defaults to ``False``.

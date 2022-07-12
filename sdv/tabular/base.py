@@ -76,11 +76,10 @@ class BaseTabularModel:
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
-        enforce_min_max_values (int, str or None):
-            Specify the minimum value the ``FloatFormatter`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
+        enforce_min_max_values (bool):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``False``.
     """
 
     _DTYPE_TRANSFORMERS = None

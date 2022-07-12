@@ -115,7 +115,7 @@ class CopulaGAN(CTGAN):
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``False``.
-        enforce_min_max_values (int, str or None):
+        enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
             during ``fit``. Defaults to ``False``.
@@ -194,6 +194,7 @@ class CopulaGAN(CTGAN):
                 dict(),
             ).get('type') != 'categorical':
                 transformers[field] = GaussianNormalizer(
+                    model_missing_values=True,
                     distribution=distributions.get(field_name, self._default_distribution)
                 )
 
