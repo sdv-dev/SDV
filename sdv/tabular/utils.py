@@ -191,7 +191,7 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             if is_reject_sampling:
                 user_msg = user_msg + (
                     f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}). '
-                    'Note that increasing these values will also increase the sampling time.'
+                    'Note that increasing this value will also increase the sampling time.'
                 )
             else:
                 user_msg = user_msg + (
@@ -205,7 +205,7 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             user_msg = (
                 f'Only able to sample {num_rows} rows for the given conditions. '
                 'To sample more rows, try increasing `max_tries_per_batch` '
-                f'(currently: {max_tries_per_batch}). Note that increasing these values '
+                f'(currently: {max_tries_per_batch}). Note that increasing this value '
                 'will also increase the sampling time.'
             )
             warnings.warn(user_msg)
