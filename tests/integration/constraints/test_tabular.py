@@ -3,6 +3,7 @@ import pandas as pd
 
 from sdv.constraints import (
     FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
+from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
@@ -148,3 +149,31 @@ def test_ScalarRange():
     # Assert
     assert sampled.column.min() >= 5
     assert sampled.column.max() <= 11
+
+
+def test_ScalarRange_conditions():
+    """Test ``ScalarRange`` with conditions.
+
+    This test ensures that the conditions are not altered by the constraint transformation.
+    """
+    # Setup
+    constraint = ScalarRange(column_name='input', low_value=49, high_value=100)
+    data = pd.DataFrame({
+        'input': [_ for _ in range(50, 80)],
+        'output': [np.random.rand() for _ in range(30)]
+    })
+    condition = Condition({'input': 88}, num_rows=10)
+    model = GaussianCopula(
+        field_names=['input', 'output'],
+        field_transformers={'input': 'integer', 'output': 'float'},
+        constraints=[constraint],
+    )
+
+    # Run
+    model.fit(data)
+    sampled = model.sample_conditions([condition])
+
+    # Assert
+    assert all(sampled['input'] == 88)
+    assert all(sampled['output'] > 0)
+    assert all(sampled['output'] < 1)
