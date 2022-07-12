@@ -68,7 +68,7 @@ class TabularPreset():
                 constraints=constraints,
                 categorical_transformer='categorical_fuzzy',
                 default_distribution='gaussian',
-                rounding=None,
+                learn_rounding_scheme=False,
             )
 
             # Decide if transformers should model the null column or not.

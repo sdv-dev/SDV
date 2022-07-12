@@ -58,8 +58,8 @@ class TestCopulaGAN:
         assert out is None
         assert model._field_distributions == {'a': 'a_distribution'}
         gct_mock.assert_has_calls([
-            call(distribution='a_distribution'),
-            call(distribution='default_distribution'),
+            call(model_missing_values=True, distribution='a_distribution'),
+            call(model_missing_values=True, distribution='default_distribution'),
         ])
         assert gct_mock.call_count == 2
 
@@ -111,7 +111,7 @@ class TestCopulaGAN:
         # asserts
         assert out is None
         assert model._field_distributions == {'a': 'a_distribution'}
-        gct_mock.assert_called_once_with(distribution='a_distribution')
+        gct_mock.assert_called_once_with(model_missing_values=True, distribution='a_distribution')
 
         assert model._ht == ht_mock.return_value
         ht_mock.return_value.fit_transform.called_once_with(DataFrameMatcher(data))

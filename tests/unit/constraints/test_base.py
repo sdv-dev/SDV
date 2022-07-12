@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 from copulas.univariate import GaussianUnivariate
+from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
@@ -675,8 +676,10 @@ class TestColumnsModel:
         instance.fit(table_data)
 
         # Assert
-        mock_hyper_transformer.assert_called_once_with(
-            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
+        mock_hyper_transformer.assert_called_once_with()
+        mock_hyper_transformer.return_value.detect_initial_config.assert_called_once()
+        mock_hyper_transformer.return_value.update_transformers_by_sdtype.assert_called_once_with(
+            {'categorical': OneHotEncoder}
         )
         call_data = mock_hyper_transformer.return_value.fit_transform.call_args[0][0]
         pd.testing.assert_frame_equal(table_data[['age', 'age_when_joined']], call_data)

@@ -530,8 +530,11 @@ class Table:
 
         self._hyper_transformer = rdt.HyperTransformer()
         self._hyper_transformer.detect_initial_config(data)
-        self._hyper_transformer.update_transformers(transformers_dict)
-        self._hyper_transformer.fit(data)
+        try:
+            self._hyper_transformer.update_transformers(transformers_dict)
+            self._hyper_transformer.fit(data)
+        except rdt.errors.Error:
+            pass
 
     @staticmethod
     def _get_key_subtype(field_meta):
@@ -664,7 +667,7 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         try:
             return self._hyper_transformer.transform_subset(data)
-        except rdt.errors.NotFittedError:
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
             return data
 
     @classmethod
@@ -699,7 +702,7 @@ class Table:
 
         try:
             reversed_data = self._hyper_transformer.reverse_transform(data)
-        except rdt.errors.NotFittedError:
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
             reversed_data = data
 
         for constraint in reversed(self._constraints_to_reverse):

@@ -213,6 +213,8 @@ class HMA1(BaseRelationalModel):
                 column_data = table_data[column]
                 if column_data.dtype in (np.int, np.float):
                     fill_value = column_data.mean()
+                    if column_data.isna().all():
+                        fill_value = 0
                 else:
                     fill_value = column_data.mode()[0]
 
@@ -531,7 +533,7 @@ class HMA1(BaseRelationalModel):
         primary_key = self.metadata.get_primary_key(parent_name)
         parent_rows = parent_rows.set_index(primary_key)
         num_rows = parent_rows[f'__{table_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
-
+        myau = f'__{table_name}__{foreign_key}__num_rows'
         likelihoods = self._get_likelihoods(table_rows, parent_rows, table_name, foreign_key)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 

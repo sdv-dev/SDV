@@ -250,8 +250,18 @@ class TestTable:
 
         # Asserts
         assert len(transformer_mock.mock_calls) == 2
-        transformer_mock.assert_any_call(learn_rounding_scheme=True, enforce_min_max_values=True)
-        transformer_mock.assert_any_call(learn_rounding_scheme=True, enforce_min_max_values=True)
+        transformer_mock.assert_any_call(
+            learn_rounding_scheme=True,
+            enforce_min_max_values=True,
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        )
+        transformer_mock.assert_any_call(
+            learn_rounding_scheme=True,
+            enforce_min_max_values=True,
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        )
 
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
