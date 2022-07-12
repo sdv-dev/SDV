@@ -236,7 +236,6 @@ class GaussianCopula(BaseTabularModel):
         LOGGER.debug('Fitting %s to table %s; shape: %s', self._model.__class__.__name__,
                      self._metadata.name, table_data.shape)
 
-        print(table_data)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(table_data)

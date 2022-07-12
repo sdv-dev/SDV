@@ -701,7 +701,7 @@ class Table:
             raise MetadataNotFittedError()
 
         try:
-            reversed_data = self._hyper_transformer.reverse_transform(data)
+            reversed_data = self._hyper_transformer.reverse_transform_subset(data)
         except (rdt.errors.NotFittedError, rdt.errors.Error):
             reversed_data = data
 
