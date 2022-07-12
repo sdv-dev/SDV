@@ -633,7 +633,7 @@ class TestTable:
         - The input dictionary rounded.
         """
         # Setup
-        data = pd.DataFrame({'bar': [0.2, 1.4, 2]})
+        data = pd.DataFrame({'bar': [0.2, 1.7, 2]})
         table = Table()
         table.fitted = True
         table._fields_metadata = {
@@ -652,8 +652,8 @@ class TestTable:
         output = table.reverse_transform(data)
 
         # Assert
-        expected_data = pd.DataFrame({'bar': [0, 1, 2]})
-        pd.testing.assert_frame_equal(output, expected_data)
+        expected_data = pd.DataFrame({'bar': [0, 2, 2]})
+        pd.testing.assert_frame_equal(output, expected_data, check_dtype=False)
 
     def test_from_dict_min_max(self):
         """Test the ``Table.from_dict`` method.
