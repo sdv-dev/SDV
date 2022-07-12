@@ -656,8 +656,7 @@ class BaseTabularModel:
                 num_rows=len(sampled),
                 expected_num_rows=num_rows,
                 is_reject_sampling=is_reject_sampling,
-                max_tries_per_batch=max_tries_per_batch,
-                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch
             )
 
         except (Exception, KeyboardInterrupt) as error:
@@ -725,8 +724,7 @@ class BaseTabularModel:
                 expected_num_rows=len(known_columns),
                 is_reject_sampling=(hasattr(self, '_model') and isinstance(
                     self._model, copulas.multivariate.GaussianMultivariate)),
-                max_tries_per_batch=max_tries_per_batch,
-                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch
             )
 
         except (Exception, KeyboardInterrupt) as error:
