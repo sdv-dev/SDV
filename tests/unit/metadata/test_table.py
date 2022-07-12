@@ -646,6 +646,7 @@ class TestTable:
         table._hyper_transformer.reverse_transform.return_value = data
         table._constraints_to_reverse = []
         table._dtypes = {'bar': 'int'}
+        table._field_names = ['bar']
 
         # Run
         output = table.reverse_transform(data)
