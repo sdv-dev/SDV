@@ -460,8 +460,8 @@ class BaseTabularModel:
         else:
             self._set_random_state(FIXED_RNG_SEED)
 
-    def sample(self, num_rows, randomize_samples=True, batch_size=None, output_file_path=None,
-               conditions=None):
+    def sample(self, num_rows, randomize_samples=True, max_tries_per_batch=100, batch_size=None,
+               output_file_path=None, conditions=None):
         """Sample rows from this table.
 
         Args:
@@ -470,6 +470,8 @@ class BaseTabularModel:
             randomize_samples (bool):
                 Whether or not to use a fixed seed when sampling. Defaults
                 to True.
+            max_tries_per_batch (int):
+                Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
                 The batch size to sample. Defaults to `num_rows`, if None.
             output_file_path (str or None):
@@ -508,6 +510,7 @@ class BaseTabularModel:
                 for step in range(math.ceil(num_rows / batch_size)):
                     sampled_rows = self._sample_batch(
                         batch_size=batch_size,
+                        max_tries=max_tries_per_batch,
                         progress_bar=progress_bar,
                         output_file_path=output_file_path,
                     )

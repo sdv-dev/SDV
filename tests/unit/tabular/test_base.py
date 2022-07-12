@@ -291,10 +291,10 @@ class TestBaseTabularModel:
         model._sample_batch.return_value = valid_sampled_data
 
         # Run
-        output = BaseTabularModel.sample(model, 5)
+        output = BaseTabularModel.sample(model, 5, max_tries_per_batch=50)
 
         # Assert
-        assert model._sample_batch.called_once_with(5)
+        assert model._sample_batch.called_once_with(5, max_tries=50)
         assert tqdm_mock.call_count == 1
         assert len(output) == 5
 
