@@ -333,7 +333,7 @@ class TestTabularPreset:
         TabularPreset.sample(preset, 5)
 
         # Assert
-        model.sample.assert_called_once_with(5, True, None, None, None)
+        model.sample.assert_called_once_with(5, True, 100, None, None, None)
 
     def test_sample_conditions(self):
         """Test the ``TabularPreset.sample_conditions`` method.
@@ -376,7 +376,7 @@ class TestTabularPreset:
         conditions = [Mock()]
 
         # Run
-        TabularPreset.sample_conditions(preset, conditions, max_tries=2, batch_size_per_try=5)
+        TabularPreset.sample_conditions(preset, conditions, max_tries_per_batch=2, batch_size=5)
 
         # Assert
         model.sample_conditions.assert_called_once_with(conditions, 2, 5, True, None)
@@ -423,7 +423,7 @@ class TestTabularPreset:
 
         # Run
         TabularPreset.sample_remaining_columns(
-            preset, conditions, max_tries=2, batch_size_per_try=5)
+            preset, conditions, max_tries_per_batch=2, batch_size=5)
 
         # Assert
         model.sample_remaining_columns.assert_called_once_with(conditions, 2, 5, True, None)
