@@ -363,15 +363,10 @@ class TestTabularPreset:
         """Test the ``TabularPreset.sample_conditions`` method with max tries.
 
         Expect that the model's sample_conditions method is called with the expected args.
-        If the model is an instance of ``GaussianCopula``, ``max_tries`` is not passed
-        through.
 
         Input:
         - num_rows=5
         - max_retries=2
-
-        Side Effects:
-        - The model's ``sample_conditions`` method is called without ``max_tries``.
         """
         # Setup
         model = MagicMock(spec=GaussianCopula)
@@ -384,8 +379,7 @@ class TestTabularPreset:
         TabularPreset.sample_conditions(preset, conditions, max_tries=2, batch_size_per_try=5)
 
         # Assert
-        model.sample_conditions.assert_called_once_with(
-            conditions, batch_size=5, randomize_samples=True, output_file_path=None)
+        model.sample_conditions.assert_called_once_with(conditions, 2, 5, True, None)
 
     def test_sample_remaining_columns(self):
         """Test the ``TabularPreset.sample_remaining_columns`` method.
@@ -415,15 +409,10 @@ class TestTabularPreset:
         """Test the ``TabularPreset.sample_remaining_columns`` method with max tries.
 
         Expect that the model's sample_remaining_columns method is called with the expected args.
-        If the model is an instance of ``GaussianCopula``, ``max_tries`` is not passed
-        through.
 
         Input:
         - num_rows=5
         - max_retries=2
-
-        Side Effects:
-        - The model's ``sample_conditions`` method is called without ``max_tries``.
         """
         # Setup
         model = MagicMock(spec=GaussianCopula)
@@ -437,8 +426,7 @@ class TestTabularPreset:
             preset, conditions, max_tries=2, batch_size_per_try=5)
 
         # Assert
-        model.sample_remaining_columns.assert_called_once_with(
-            conditions, batch_size=5, randomize_samples=True, output_file_path=None)
+        model.sample_remaining_columns.assert_called_once_with(conditions, 2, 5, True, None)
 
     def test_list_available_presets(self):
         """Tests the ``TabularPreset.list_available_presets`` method.

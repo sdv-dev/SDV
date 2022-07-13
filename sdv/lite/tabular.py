@@ -197,16 +197,8 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        if isinstance(self._model, GaussianCopula):
-            sampled = self._model.sample_conditions(
-                conditions,
-                batch_size=batch_size_per_try,
-                randomize_samples=randomize_samples,
-                output_file_path=output_file_path,
-            )
-        else:
-            sampled = self._model.sample_conditions(
-                conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        sampled = self._model.sample_conditions(
+            conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
@@ -235,16 +227,8 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        if isinstance(self._model, GaussianCopula):
-            sampled = self._model.sample_remaining_columns(
-                known_columns,
-                batch_size=batch_size_per_try,
-                randomize_samples=randomize_samples,
-                output_file_path=output_file_path,
-            )
-        else:
-            sampled = self._model.sample_remaining_columns(
-                known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        sampled = self._model.sample_remaining_columns(
+            known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
