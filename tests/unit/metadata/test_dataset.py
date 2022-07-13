@@ -1,6 +1,6 @@
 import os
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
