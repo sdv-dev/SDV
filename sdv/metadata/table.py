@@ -417,25 +417,24 @@ class Table:
         for name, dtype in dtypes.items():
             field_metadata = self._fields_metadata.get(name, {})
             transformer_template = field_metadata.get('transformer')
-            if transformer_template is None:
-                transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
-                if transformer_template is None:
-                    # Skip this dtype
-                    continue
+            if self._dtype_transformers[np.dtype(dtype).kind] is None:
+                transformers[name] = None
 
+            elif transformer_template is None:
+                transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
                 field_metadata['transformer'] = transformer_template
 
-            if isinstance(transformer_template, str):
-                transformer_template = self._transformer_templates[transformer_template]
+                if isinstance(transformer_template, str):
+                    transformer_template = self._transformer_templates[transformer_template]
 
-            if isinstance(transformer_template, type):
-                transformer = transformer_template()
-            else:
-                transformer = copy.deepcopy(transformer_template)
+                if isinstance(transformer_template, type):
+                    transformer = transformer_template()
+                else:
+                    transformer = copy.deepcopy(transformer_template)
 
-            LOGGER.debug('Loading transformer %s for field %s',
-                         transformer.__class__.__name__, name)
-            transformers[name] = transformer
+                LOGGER.debug('Loading transformer %s for field %s',
+                             transformer.__class__.__name__, name)
+                transformers[name] = transformer
 
         return transformers
 
@@ -530,9 +529,14 @@ class Table:
 
         self._hyper_transformer = rdt.HyperTransformer()
         self._hyper_transformer.detect_initial_config(data)
-        try:
+        if transformers_dict:
             self._hyper_transformer.update_transformers(transformers_dict)
-            self._hyper_transformer.fit(data)
+
+        try:
+            self._hyper_transformer_fields = list(
+                self._hyper_transformer.get_config().get('transformers')
+            )
+            self._hyper_transformer.fit(data[self._hyper_transformer_fields])
         except rdt.errors.Error:
             pass
 
