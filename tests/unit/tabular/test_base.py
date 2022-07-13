@@ -268,6 +268,83 @@ class TestBaseTabularModel:
             call(2).tail(2).to_csv(output_file_path, index=False),
         )
 
+    def test__sample_in_batches(self):
+        """Test the ``_sample_in_batches`` method.
+
+        The ``_sample_in_batches`` method should break the sampling into ``num_rows``
+        / ``batch_size`` steps and call ``_sample_batch`` with each of these steps.
+
+        Setup:
+            - Mock ``_sample_batch`` to return in steps.
+
+        Input:
+            - Set ``num_rows`` to be greater than ``batch_size``.
+            - Set conditions and transformed conditions.
+
+        Output:
+            - The concatenated DataFrames returned from ``_sample_batch``.
+        """
+        # Setup
+        model = GaussianCopula()
+        model._sample_batch = Mock()
+        batch_samples = pd.DataFrame({'col1': [10] * 25})
+        model._sample_batch.side_effect = [batch_samples] * 4
+        conditions = [Mock()]
+        transformed_conditions = [Mock()]
+
+        # Run
+        sampled = model._sample_in_batches(
+            100, 25, 100, conditions=conditions, transformed_conditions=transformed_conditions)
+
+        # Assert
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame({'col1': [10] * 100}))
+        expected_call = call(
+            batch_size=25,
+            max_tries=100,
+            conditions=conditions,
+            transformed_conditions=transformed_conditions,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+        model._sample_batch.assert_has_calls([expected_call] * 4)
+
+    def test__sample_in_batches_num_rows_less_than_batch_size(self):
+        """Test the ``_sample_in_batches`` method.
+
+        The ``_sample_in_batches`` method should use ``num_rows`` as the ``batch_size``
+        if ``batch_size`` > ``num_rows``.
+
+        Setup:
+            - Mock ``_sample_batch`` to return in steps.
+
+        Input:
+            - Set ``num_rows`` to be less than ``batch_size``.
+
+        Output:
+            - The concatenated DataFrames returned from ``_sample_batch``.
+        """
+        # Setup
+        model = GaussianCopula()
+        model._sample_batch = Mock()
+        batch_samples = pd.DataFrame({'col1': [10] * 100})
+        model._sample_batch.return_value = batch_samples
+
+        # Run
+        sampled = model._sample_in_batches(100, 200, 100)
+
+        # Assert
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame({'col1': [10] * 100}))
+        model._sample_batch.assert_called_once_with(
+            batch_size=100,
+            max_tries=100,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
