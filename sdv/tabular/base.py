@@ -378,19 +378,40 @@ class BaseTabularModel:
             for condition_list in condition_dataframes.values()
         ]
 
+    def _sample_in_batches(self, num_rows, batch_size, max_tries_per_batch, conditions=None,
+                           transformed_conditions=None, float_rtol=0.01, progress_bar=None,
+                           output_file_path=None):
+        sampled = []
+        batch_size = batch_size if num_rows > batch_size else num_rows
+        for step in range(math.ceil(num_rows / batch_size)):
+            sampled_rows = self._sample_batch(
+                batch_size=batch_size,
+                max_tries=max_tries_per_batch,
+                conditions=conditions,
+                transformed_conditions=transformed_conditions,
+                float_rtol=float_rtol,
+                progress_bar=progress_bar,
+                output_file_path=output_file_path,
+            )
+            sampled.append(sampled_rows)
+
+        sampled = pd.concat(sampled, ignore_index=True) if len(sampled) > 0 else pd.DataFrame()
+        return sampled.head(num_rows)
+
     def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
                                    max_tries_per_batch=None, batch_size=None, float_rtol=0.01,
                                    graceful_reject_sampling=True, progress_bar=None,
                                    output_file_path=None):
         batch_size = batch_size or len(dataframe)
-        sampled_rows = self._sample_batch(
-            batch_size,
-            max_tries_per_batch,
-            condition,
-            transformed_condition,
-            float_rtol,
-            progress_bar,
-            output_file_path,
+        sampled_rows = self._sample_in_batches(
+            num_rows=len(dataframe),
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+            conditions=condition,
+            transformed_conditions=transformed_condition,
+            float_rtol=float_rtol,
+            progress_bar=progress_bar,
+            output_file_path=output_file_path
         )
 
         if len(sampled_rows) > 0:
@@ -503,18 +524,16 @@ class BaseTabularModel:
 
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
 
-        sampled = []
         try:
             with tqdm.tqdm(total=num_rows) as progress_bar:
                 progress_bar.set_description('Sampling rows')
-                for step in range(math.ceil(num_rows / batch_size)):
-                    sampled_rows = self._sample_batch(
-                        batch_size=batch_size,
-                        max_tries=max_tries_per_batch,
-                        progress_bar=progress_bar,
-                        output_file_path=output_file_path,
-                    )
-                    sampled.append(sampled_rows)
+                sampled = self._sample_in_batches(
+                    num_rows=num_rows,
+                    batch_size=batch_size,
+                    max_tries_per_batch=max_tries_per_batch,
+                    progress_bar=progress_bar,
+                    output_file_path=output_file_path
+                )
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
@@ -523,7 +542,7 @@ class BaseTabularModel:
             if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
                 os.remove(output_file_path)
 
-        return pd.concat(sampled, ignore_index=True) if len(sampled) > 0 else pd.DataFrame()
+        return sampled
 
     def _validate_conditions(self, conditions):
         """Validate the user-passed conditions."""
