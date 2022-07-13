@@ -165,8 +165,7 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
     raise sampling_error
 
 
-def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_per_batch,
-                   batch_size):
+def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_per_batch):
     """Check the number of sampled rows against the expected number of rows.
 
     If the number of sampled rows is zero, throw a ValueError.
@@ -182,8 +181,6 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             If reject sampling is used or not.
         max_tries_per_batch (int):
             Number of times to retry sampling until the batch size is met.
-        batch_size (int):
-            The batch size to use per sampling call.
 
     Side Effects:
         ValueError or warning.
@@ -193,9 +190,8 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             user_msg = ('Unable to sample any rows for the given conditions. ')
             if is_reject_sampling:
                 user_msg = user_msg + (
-                    f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}) '
-                    f'or increasing `batch_size` (currently: {batch_size}). Note that '
-                    'increasing these values will also increase the sampling time.'
+                    f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}). '
+                    'Note that increasing this value will also increase the sampling time.'
                 )
             else:
                 user_msg = user_msg + (
@@ -209,8 +205,7 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             user_msg = (
                 f'Only able to sample {num_rows} rows for the given conditions. '
                 'To sample more rows, try increasing `max_tries_per_batch` '
-                f'(currently: {max_tries_per_batch}) or increasing `batch_size` '
-                f'(currently: {batch_size}. Note that increasing these values '
-                f'will also increase the sampling time.'
+                f'(currently: {max_tries_per_batch}). Note that increasing this value '
+                'will also increase the sampling time.'
             )
             warnings.warn(user_msg)
