@@ -1,4 +1,3 @@
-from cmath import exp
 from unittest.mock import patch
 
 import pandas as pd
@@ -311,7 +310,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
 
 def test_sample_conditions_with_batch_size():
     """Test the ``sample_conditions`` method with a different ``batch_size``.
-    
+
     If a smaller ``batch_size`` is passed, then the conditions should be broken down into
     batches of that size. If the ``batch_size`` is larger than the condition length, then
     the condition length should be used.
@@ -331,13 +330,16 @@ def test_sample_conditions_with_batch_size():
         'column3': list(range(100))
     })
     model.fit(data)
-    conditions = [Condition({'column1': 10}, num_rows=100), Condition({'column1': 50}, num_rows=10)]
+    conditions = [
+        Condition({'column1': 10}, num_rows=100),
+        Condition({'column1': 50}, num_rows=10)
+    ]
 
     # Run
     sampled_data = model.sample_conditions(conditions, batch_size=50)
 
     # Assert
-    expected = pd.Series([10]*100 + [50]*10, name='column1')
+    expected = pd.Series([10] * 100 + [50] * 10, name='column1')
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
 
 
