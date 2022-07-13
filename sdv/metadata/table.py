@@ -532,7 +532,10 @@ class Table:
         if transformers_dict:
             self._hyper_transformer.update_transformers(transformers_dict)
 
-        self._hyper_transformer.fit(data)
+        try:
+            self._hyper_transformer.fit(data)
+        except rdt.errors.Error:
+            pass
 
     @staticmethod
     def _get_key_subtype(field_meta):
