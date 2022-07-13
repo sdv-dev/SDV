@@ -532,13 +532,7 @@ class Table:
         if transformers_dict:
             self._hyper_transformer.update_transformers(transformers_dict)
 
-        try:
-            self._hyper_transformer_fields = list(
-                self._hyper_transformer.get_config().get('transformers')
-            )
-            self._hyper_transformer.fit(data[self._hyper_transformer_fields])
-        except rdt.errors.Error:
-            pass
+        self._hyper_transformer.fit(data)
 
     @staticmethod
     def _get_key_subtype(field_meta):
@@ -704,8 +698,15 @@ class Table:
         if not self.fitted:
             raise MetadataNotFittedError()
 
+        reversable_columns = [
+            column
+            for column in self._hyper_transformer._output_columns
+            if column in data.columns
+        ]
         try:
-            reversed_data = self._hyper_transformer.reverse_transform_subset(data)
+            reversed_data = self._hyper_transformer.reverse_transform_subset(
+                data[reversable_columns]
+            )
         except (rdt.errors.NotFittedError, rdt.errors.Error):
             reversed_data = data
 
