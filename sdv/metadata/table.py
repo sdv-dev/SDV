@@ -532,10 +532,8 @@ class Table:
         if transformers_dict:
             self._hyper_transformer.update_transformers(transformers_dict)
 
-        try:
+        if not data.empty:
             self._hyper_transformer.fit(data)
-        except rdt.errors.Error:
-            pass
 
     @staticmethod
     def _get_key_subtype(field_meta):
@@ -706,12 +704,15 @@ class Table:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
+
+        reversed_data = data
         try:
-            reversed_data = self._hyper_transformer.reverse_transform_subset(
-                data[reversable_columns]
-            )
-        except (rdt.errors.NotFittedError, rdt.errors.Error):
-            reversed_data = data
+            if not data.empty:
+                reversed_data = self._hyper_transformer.reverse_transform_subset(
+                    data[reversable_columns]
+                )
+        except rdt.errors.NotFittedError:
+            pass
 
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
