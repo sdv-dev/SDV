@@ -650,7 +650,8 @@ class TestTable:
             },
         }
         table._hyper_transformer = Mock()
-        table._hyper_transformer.reverse_transform.return_value = data
+        table._hyper_transformer.reverse_transform_subset.return_value = data
+        table._hyper_transformer._output_columns = []
         table._constraints_to_reverse = []
         table._dtypes = {'bar': 'int'}
         table._field_names = ['bar']
