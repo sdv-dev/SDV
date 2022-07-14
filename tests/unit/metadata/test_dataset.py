@@ -5,8 +5,7 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata.dataset import (
-    Metadata, SingleTableMetadata, _load_csv, _parse_dtypes, _read_csv_dtypes)
+from sdv.metadata.dataset import Metadata, _load_csv, _parse_dtypes, _read_csv_dtypes
 
 
 def test__read_csv_dtypes():
@@ -96,81 +95,6 @@ def test__load_csv(rcdtypes_mock, read_csv_mock, pdtypes_mock):
     dtypes = rcdtypes_mock.return_value
     read_csv_mock.assert_called_once_with(os.path.join('a', 'path', 'filename.csv'), dtype=dtypes)
     pdtypes_mock.assert_called_once_with(read_csv_mock.return_value, table_meta)
-
-
-class TestSingleTableMetadata(TestCase):
-    """Test ``SingleTableMetadata`` class."""
-    def test___init__(self):
-        """Test creating an instance of ``SingleTableMetadata``."""
-        # Run
-        instance = SingleTableMetadata()
-
-        # Assert
-        assert instance._columns == {}
-        assert instance._primary_key is None
-        assert instance._alternate_keys == []
-        assert instance._constraints == []
-        assert instance._version == 'SINGLE_TABLE_V1'
-        assert instance._metadata == {
-            'columns': {},
-            'primary_key': None,
-            'alternate_key': [],
-            'constraints': [],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
-        }
-
-    def test_to_dict(self):
-        """Test the ``to_dict`` method from ``SingleTableMetadata``.
-
-        Setup:
-            - Instance of ``SingleTableMetadata`` and modify the ``instance._columns`` to ensure
-            that ``to_dict`` works properly.
-        Output:
-            - A dictionary representation of the ``instance`` that does not modify the
-              internal dictionaries.
-        """
-        # Setup
-        instance = SingleTableMetadata()
-        instance._columns['my_column'] = 'value'
-
-        # Run
-        result = instance.to_dict()
-
-        # Assert
-        assert result == {
-            'columns': {'my_column': 'value'},
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
-        }
-
-        result['columns']['my_column'] = 1
-        assert instance._columns['my_column'] == 'value'
-
-    def test__set_metadata_dict(self):
-        """Test the ``_set_metadata_dict`` to a instance.
-
-        Setup:
-            - Instance of ``SingleTableMetadata``.
-            - Dictionary representing ``SingleTableMetadata``.
-
-        Output:
-            - ``SingleTableMetadata`` instance with the dictionary represented values.
-        """
-        # Setup
-        instance = SingleTableMetadata()
-        metadata = {
-            'columns': {'my_column': 'value'},
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
-        }
-
-        # Run
-        instance._set_metadata_dict(metadata)
-
-        # # Assert
-        # assert instance._metadata == {
-        #     'columns': {'my_column': 'value'},
-        #     'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
-        # }
-        # assert instance._columns == {'my_column': 'value'}
 
 
 class TestMetadata(TestCase):
