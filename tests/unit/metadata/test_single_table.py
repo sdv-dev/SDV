@@ -309,6 +309,35 @@ class TestSingleTableMetadata:
         assert instance._alternate_keys == []
         assert instance._constraints == []
 
+    @patch('sdv.metadata.single_table.Path')
+    def test_save_to_json_file_exists(self, mock_path):
+        # Setup
+        instance = SingleTableMetadata()
+        mock_path.return_value.exists.return_value = True
+        mock_path.return_value.name = 'filepath.json'
+
+        # Run
+        error_msg = (
+            "A file named 'filepath.json' already exists in this folder. Please specify "
+            'a different filename.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json('filepath.json')
+
+    def test_save_to_json(self, mock_path):
+        # Setup
+        instance = SingleTableMetadata()
+        mock_path.return_value.exists.return_value = True
+        mock_path.return_value.name = 'filepath.json'
+
+        # Run
+        error_msg = (
+            "A file named 'filepath.json' already exists in this folder. Please specify "
+            'a different filename.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json('filepath.json')
+
     @patch('sdv.metadata.single_table.json')
     def test___repr__(self, mock_json):
         """Test that the ``__repr__`` method.
