@@ -5,22 +5,6 @@ Tabular Constraints
 
 .. currentmodule:: sdv.constraints
 
-CustomConstraint
-~~~~~~~~~~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   CustomConstraint
-   CustomConstraint.fit
-   CustomConstraint.transform
-   CustomConstraint.fit_transform
-   CustomConstraint.reverse_transform
-   CustomConstraint.is_valid
-   CustomConstraint.filter_valid
-   CustomConstraint.from_dict
-   CustomConstraint.to_dict
-
 FixedCombinations
 ~~~~~~~~~~~~~~~~~
 
