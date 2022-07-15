@@ -308,6 +308,41 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
+def test_sample_conditions_with_batch_size():
+    """Test the ``sample_conditions`` method with a different ``batch_size``.
+
+    If a smaller ``batch_size`` is passed, then the conditions should be broken down into
+    batches of that size. If the ``batch_size`` is larger than the condition length, then
+    the condition length should be used.
+
+    - Input:
+        - Conditions one of length 100 and another of length 10
+        - Batch size of length 50
+
+    - Output:
+        - Sampled data
+    """
+    # Setup
+    model = GaussianCopula()
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+    model.fit(data)
+    conditions = [
+        Condition({'column1': 10}, num_rows=100),
+        Condition({'column1': 50}, num_rows=10)
+    ]
+
+    # Run
+    sampled_data = model.sample_conditions(conditions, batch_size=50)
+
+    # Assert
+    expected = pd.Series([10] * 100 + [50] * 10, name='column1')
+    pd.testing.assert_series_equal(sampled_data['column1'], expected)
+
+
 @pytest.mark.parametrize('model', MODELS)
 def test_sampling_with_randomize_samples_True(model):
     data = pd.DataFrame({

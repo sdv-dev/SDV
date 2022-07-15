@@ -133,7 +133,7 @@ def test_conditional_sampling_two_conditions():
         'column2': 'b',
         'column3': 'f'
     }, num_rows=5)]
-    samples = model.sample_conditions(conditions=conditions)
+    samples = model.sample_conditions(conditions=conditions, max_tries_per_batch=200)
     assert list(samples.column2) == ['b'] * 5
     assert list(samples.column3) == ['f'] * 5
 

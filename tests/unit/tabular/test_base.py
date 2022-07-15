@@ -268,6 +268,83 @@ class TestBaseTabularModel:
             call(2).tail(2).to_csv(output_file_path, index=False),
         )
 
+    def test__sample_in_batches(self):
+        """Test the ``_sample_in_batches`` method.
+
+        The ``_sample_in_batches`` method should break the sampling into ``num_rows``
+        / ``batch_size`` steps and call ``_sample_batch`` with each of these steps.
+
+        Setup:
+            - Mock ``_sample_batch`` to return in steps.
+
+        Input:
+            - Set ``num_rows`` to be greater than ``batch_size``.
+            - Set conditions and transformed conditions.
+
+        Output:
+            - The concatenated DataFrames returned from ``_sample_batch``.
+        """
+        # Setup
+        model = GaussianCopula()
+        model._sample_batch = Mock()
+        batch_samples = pd.DataFrame({'col1': [10] * 25})
+        model._sample_batch.side_effect = [batch_samples] * 4
+        conditions = [Mock()]
+        transformed_conditions = [Mock()]
+
+        # Run
+        sampled = model._sample_in_batches(
+            100, 25, 100, conditions=conditions, transformed_conditions=transformed_conditions)
+
+        # Assert
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame({'col1': [10] * 100}))
+        expected_call = call(
+            batch_size=25,
+            max_tries=100,
+            conditions=conditions,
+            transformed_conditions=transformed_conditions,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+        model._sample_batch.assert_has_calls([expected_call] * 4)
+
+    def test__sample_in_batches_num_rows_less_than_batch_size(self):
+        """Test the ``_sample_in_batches`` method.
+
+        The ``_sample_in_batches`` method should use ``num_rows`` as the ``batch_size``
+        if ``batch_size`` > ``num_rows``.
+
+        Setup:
+            - Mock ``_sample_batch`` to return in steps.
+
+        Input:
+            - Set ``num_rows`` to be less than ``batch_size``.
+
+        Output:
+            - The concatenated DataFrames returned from ``_sample_batch``.
+        """
+        # Setup
+        model = GaussianCopula()
+        model._sample_batch = Mock()
+        batch_samples = pd.DataFrame({'col1': [10] * 100})
+        model._sample_batch.return_value = batch_samples
+
+        # Run
+        sampled = model._sample_in_batches(100, 200, 100)
+
+        # Assert
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame({'col1': [10] * 100}))
+        model._sample_batch.assert_called_once_with(
+            batch_size=100,
+            max_tries=100,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
@@ -288,13 +365,13 @@ class TestBaseTabularModel:
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
-        model._sample_batch.return_value = valid_sampled_data
+        model._sample_in_batches.return_value = valid_sampled_data
 
         # Run
         output = BaseTabularModel.sample(model, 5, max_tries_per_batch=50)
 
         # Assert
-        assert model._sample_batch.called_once_with(5, max_tries=50)
+        assert model._sample_in_batches.called_once_with(5, max_tries=50)
         assert tqdm_mock.call_count == 1
         assert len(output) == 5
 
@@ -347,16 +424,18 @@ class TestBaseTabularModel:
             - Call ``_sample_batch`` method twice with the expected number of rows.
         """
         # Setup
-        model = Mock(spec_set=CTGAN)
+        model = CTGAN()
+        model._model = Mock()
         sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
+        model._sample_batch = Mock()
         model._sample_batch.side_effect = [sampled_data, sampled_data]
 
         # Run
-        output = BaseTabularModel.sample(model, 10, batch_size=5)
+        output = model.sample(10, batch_size=5)
 
         # Assert
         assert model._sample_batch.has_calls([
@@ -367,9 +446,9 @@ class TestBaseTabularModel:
         assert len(output) == 10
 
     def test__sample_batch_with_batch_size(self):
-        """Test the `BaseTabularModel._sample_batch` method with `batch_size`.
+        """Test the ``BaseTabularModel._sample_batch`` method with ``batch_size``.
 
-        Expect that the expected calls to `_sample_rows` are made.
+        Expect that the expected calls to ``_sample_rows`` are made.
 
         Input:
             - num_rows = 10
@@ -377,7 +456,7 @@ class TestBaseTabularModel:
         Output:
             - The requested number of sampled rows.
         Side Effect:
-            - Call `_sample_rows` method twice with the expected number of rows.
+            - Call ``_sample_rows`` method twice with the expected number of rows.
         """
         # Setup
         model = Mock(spec_set=CTGAN)
@@ -518,7 +597,7 @@ class TestBaseTabularModel:
         transformed_conditions = pd.DataFrame([condition_values] * 2)
         condition = Condition(condition_values, num_rows=2)
 
-        model._sample_batch.return_value = pd.DataFrame()
+        model._sample_in_batches.return_value = pd.DataFrame()
 
         # Run
         sampled = BaseTabularModel._conditionally_sample_rows(
@@ -531,8 +610,16 @@ class TestBaseTabularModel:
 
         # Assert
         assert len(sampled) == 0
-        model._sample_batch.assert_called_once_with(
-            2, None, condition, transformed_conditions, 0.01, None, None)
+        model._sample_in_batches.assert_called_once_with(
+            num_rows=2,
+            batch_size=2,
+            max_tries_per_batch=None,
+            conditions=condition,
+            transformed_conditions=transformed_conditions,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
 
     def test__conditionally_sample_rows_graceful_reject_sampling_false(self):
         """Test the `BaseTabularModel._conditionally_sample_rows` method.
@@ -553,7 +640,7 @@ class TestBaseTabularModel:
         transformed_conditions = pd.DataFrame([condition_values] * 2)
         condition = Condition(condition_values, num_rows=2)
 
-        model._sample_batch.return_value = pd.DataFrame()
+        model._sample_in_batches.return_value = pd.DataFrame()
 
         # Run and assert
         with pytest.raises(ValueError,
@@ -566,8 +653,16 @@ class TestBaseTabularModel:
                 graceful_reject_sampling=False,
             )
 
-        model._sample_batch.assert_called_once_with(
-            2, None, condition, transformed_conditions, 0.01, None, None)
+        model._sample_in_batches.assert_called_once_with(
+            num_rows=2,
+            batch_size=2,
+            max_tries_per_batch=None,
+            conditions=condition,
+            transformed_conditions=transformed_conditions,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
 
     def test__sample_remaining_columns(self):
         """Test the `BaseTabularModel._sample_remaining_colmns` method.
@@ -747,14 +842,14 @@ class TestBaseTabularModel:
         # Setup
         model = Mock()
         model._validate_file_path.return_value = TMP_FILE_NAME
-        model._sample_batch.side_effect = ValueError('test error')
+        model._sample_in_batches.side_effect = ValueError('test error')
 
         # Run
         with pytest.raises(ValueError, match='test error'):
             BaseTabularModel.sample(model, 1, output_file_path=None)
 
         # Assert
-        model._sample_batch.called_once_with(
+        model._sample_in_batches.called_once_with(
             1, batch_size=1, progress_bar=ANY, output_file_path=TMP_FILE_NAME)
         assert os_mock.remove.call_count == 0
 
@@ -972,7 +1067,15 @@ def test__sample_with_conditions_empty_transformed_conditions():
     _, args, kwargs = model._metadata.transform.mock_calls[0]
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(5, 100, conditions, None, 0.01, None, None)
+    model._sample_batch.assert_called_with(
+        batch_size=5,
+        max_tries=100,
+        conditions=conditions,
+        transformed_conditions=None,
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None
+    )
     pd.testing.assert_frame_equal(output, expected_output)
 
 
@@ -1033,13 +1136,31 @@ def test__sample_with_conditions_transform_conditions_correctly():
     pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
     model._metadata.transform.assert_called_once()
     model._sample_batch.assert_any_call(
-        3, 100, {'column1': 25}, {'transformed_column': 50}, 0.01, None, None,
+        batch_size=3,
+        max_tries=100,
+        conditions={'column1': 25},
+        transformed_conditions={'transformed_column': 50},
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None
     )
     model._sample_batch.assert_any_call(
-        1, 100, {'column1': 30}, {'transformed_column': 60}, 0.01, None, None,
+        batch_size=1,
+        max_tries=100,
+        conditions={'column1': 30},
+        transformed_conditions={'transformed_column': 60},
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None
     )
     model._sample_batch.assert_any_call(
-        1, 100, {'column1': 30}, {'transformed_column': 70}, 0.01, None, None,
+        batch_size=1,
+        max_tries=100,
+        conditions={'column1': 30},
+        transformed_conditions={'transformed_column': 70},
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None
     )
 
 
