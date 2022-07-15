@@ -144,8 +144,8 @@ class TabularPreset():
 
         return sampled
 
-    def sample(self, num_rows, randomize_samples=True, batch_size=None, output_file_path=None,
-               conditions=None):
+    def sample(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
+               batch_size=None, output_file_path=None, conditions=None):
         """Sample rows from this table.
 
         Args:
@@ -154,6 +154,8 @@ class TabularPreset():
             randomize_samples (bool):
                 Whether or not to use a fixed seed when sampling. Defaults
                 to True.
+            max_tries_per_batch (int):
+                Number of times to try sampling discarded rows. Defaults to 100.
             batch_size (int or None):
                 The batch size to sample. Defaults to `num_rows`, if None.
             output_file_path (str or None):
@@ -168,11 +170,13 @@ class TabularPreset():
                 Sampled data.
         """
         sampled = self._model.sample(
-            num_rows, randomize_samples, batch_size, output_file_path, conditions)
+            num_rows, randomize_samples, max_tries_per_batch,
+            batch_size, output_file_path, conditions
+        )
 
         return self._postprocess_sampled(sampled)
 
-    def sample_conditions(self, conditions, max_tries=100, batch_size_per_try=None,
+    def sample_conditions(self, conditions, max_tries_per_batch=100, batch_size=None,
                           randomize_samples=True, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
@@ -181,9 +185,9 @@ class TabularPreset():
                 A list of sdv.sampling.Condition objects, which specify the column
                 values in a condition, along with the number of rows for that
                 condition.
-            max_tries (int):
+            max_tries_per_batch (int):
                 Number of times to try sampling discarded rows. Defaults to 100.
-            batch_size_per_try (int):
+            batch_size (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
@@ -197,20 +201,12 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        if isinstance(self._model, GaussianCopula):
-            sampled = self._model.sample_conditions(
-                conditions,
-                batch_size=batch_size_per_try,
-                randomize_samples=randomize_samples,
-                output_file_path=output_file_path,
-            )
-        else:
-            sampled = self._model.sample_conditions(
-                conditions, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        sampled = self._model.sample_conditions(
+            conditions, max_tries_per_batch, batch_size, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
-    def sample_remaining_columns(self, known_columns, max_tries=100, batch_size_per_try=None,
+    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100, batch_size=None,
                                  randomize_samples=True, output_file_path=None):
         """Sample rows from this table.
 
@@ -219,9 +215,9 @@ class TabularPreset():
                 A pandas.DataFrame with the columns that are already known. The output
                 is a DataFrame such that each row in the output is sampled
                 conditionally on the corresponding row in the input.
-            max_tries (int):
+            max_tries_per_batch (int):
                 Number of times to try sampling discarded rows. Defaults to 100.
-            batch_size_per_try (int):
+            batch_size (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             randomize_samples (bool):
@@ -235,16 +231,8 @@ class TabularPreset():
             pandas.DataFrame:
                 Sampled data.
         """
-        if isinstance(self._model, GaussianCopula):
-            sampled = self._model.sample_remaining_columns(
-                known_columns,
-                batch_size=batch_size_per_try,
-                randomize_samples=randomize_samples,
-                output_file_path=output_file_path,
-            )
-        else:
-            sampled = self._model.sample_remaining_columns(
-                known_columns, max_tries, batch_size_per_try, randomize_samples, output_file_path)
+        sampled = self._model.sample_remaining_columns(
+            known_columns, max_tries_per_batch, batch_size, randomize_samples, output_file_path)
 
         return self._postprocess_sampled(sampled)
 
