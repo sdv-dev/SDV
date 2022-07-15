@@ -34,7 +34,12 @@ class SingleTableMetadata:
         return copy.deepcopy(metadata)
 
     def _set_metadata_dict(self, metadata):
-        """Set a ``metadata`` dictionary to the current instance."""
+        """Set a ``metadata`` dictionary to the current instance.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``SingleTableMetadata`` object.
+        """
         self._metadata = {}
         for key in self.KEYS:
             value = copy.deepcopy(metadata.get(key))
@@ -46,7 +51,15 @@ class SingleTableMetadata:
 
     @classmethod
     def _load_from_dict(cls, metadata):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``."""
+        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``SingleTableMetadata`` object.
+
+        Returns:
+            Instance of ``SingleTableMetadata``.
+        """
         instance = cls()
         instance._set_metadata_dict(metadata)
         return instance
