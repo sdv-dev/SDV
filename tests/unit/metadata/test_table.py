@@ -638,8 +638,8 @@ class TestTable:
         table.fitted = True
         table._fields_metadata = {
             'bar': {
-                'type': 'categorical',
-                'transformer': 'integer'
+                'type': 'numerical',
+                'subtype': 'integer'
             },
         }
         table._hyper_transformer = Mock()
