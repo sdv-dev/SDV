@@ -1,6 +1,7 @@
 """Test Single Table Metadata."""
 
 from unittest.mock import patch
+
 from sdv.metadata.single_table import SingleTableMetadata
 
 
