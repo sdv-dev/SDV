@@ -11,7 +11,11 @@ def test_sample():
     # Run
     preset = TabularPreset(name='FAST_ML')
     preset.fit(data)
-    samples = preset.sample(10)
+    samples = preset.sample(
+        num_rows=10,
+        max_tries_per_batch=20,
+        batch_size=5
+    )
 
     # Assert
     assert samples['a'].all() in [1, 2, 3]
