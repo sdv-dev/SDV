@@ -1,5 +1,6 @@
 """Test Single Table Metadata."""
 
+from unittest.mock import patch
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -102,3 +103,28 @@ class TestSingleTableMetadata:
         assert instance._primary_key == 'pk'
         assert instance._alternate_keys == []
         assert instance._constraints == []
+
+    @patch('sdv.metadata.single_table.json')
+    def test___repr__(self, mock_json):
+        """Test that the ``__repr__`` method.
+
+        Test that the ``__repr__`` method calls the ``json.dumps``  method and
+        returns its output.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+        Mock:
+            - ``json`` from ``sdv.metadata.single_table``.
+
+        Output:
+            - ``json.dumps`` return value.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        res = instance.__repr__()
+
+        # Assert
+        mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
+        assert res == mock_json.dumps.return_value
