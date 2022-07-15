@@ -120,6 +120,59 @@ class SingleTableMetadata:
         instance._set_metadata_dict(metadata)
         return instance
 
+    @classmethod
+    def load_from_json(cls, filepath):
+        """Create an instance from a ``json`` file.
+
+        Args:
+            filepath (str):
+                Strin that represents the ``path`` to the ``json`` file.
+
+        Raises:
+            - An ``Error`` if the path does not exist.
+            - An ``Error`` if the ``json`` file does not contain the ``SCHEMA_VERSION``.
+
+        Returns:
+            A ``SingleTableMetadata`` instance.
+        """
+        filepath = Path(filepath)
+        if not filepath.exists():
+            raise ValueError(
+                f'A file named {filepath} does not exist. Please specify a different filename.')
+
+        with open(filepath, 'r', encoding='utf-8') as metadata_file:
+            metadata = json.load(metadata_file)
+
+        if 'SCHEMA_VERSION' not in metadata:
+            raise ValueError(
+                'This metadata file is incompatible with the ``SingleTableMetadata`` '
+                'class and version.'
+            )
+
+        return cls._load_from_dict(metadata)
+
+    def save_to_json(self, filepath):
+        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
+
+        Args:
+            filepath (str):
+                String that represent the ``path`` to the ``json`` file to be written.
+
+        Raises:
+            Raises an ``Error`` if the path already exists.
+        """
+        filepath = Path(filepath)
+        if filepath.exists():
+            raise ValueError(
+                f"A file named '{filepath.name}' already exists in this folder. Please specify "
+                'a different filename.'
+            )
+
+        metadata = self.to_dict()
+        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
+        with open(filepath, 'w', encoding='utf-8') as metadata_file:
+            json.dump(metadata, metadata_file, indent=4)
+
     def __repr__(self):
         """Pretty print the ``SingleTableMetadata```SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
