@@ -319,7 +319,7 @@ class TestSingleTableMetadata:
             - Mock the ``Path`` library in order to return ``False``, that the file does not exist.
 
         Input:
-            - Strin representing a filepath.
+            - String representing a filepath.
 
         Side Effects:
             - A ``ValueError`` is raised pointing that the ``file`` does not exist.
@@ -350,7 +350,7 @@ class TestSingleTableMetadata:
             - Mock the ``open`` in order to avoid loading a binary file.
 
         Input:
-            - Strin representing a filepath.
+            - String representing a filepath.
 
         Side Effects:
             - A ``ValueError`` is raised pointing that the given metadata configuration is not
@@ -391,7 +391,7 @@ class TestSingleTableMetadata:
             - Mock the ``open`` in order to avoid loading a binary file.
 
         Input:
-            - Strin representing a filepath.
+            - String representing a filepath.
 
         Output:
             - ``SingleTableMetadata`` instance with the custom configuration from the ``json``

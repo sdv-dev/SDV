@@ -126,7 +126,7 @@ class SingleTableMetadata:
 
         Args:
             filepath (str):
-                Strin that represents the ``path`` to the ``json`` file.
+                String that represents the ``path`` to the ``json`` file.
 
         Raises:
             - An ``Error`` if the path does not exist.
