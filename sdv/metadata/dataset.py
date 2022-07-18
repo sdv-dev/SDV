@@ -447,11 +447,6 @@ class Metadata:
         if hyper_transformer is None:
             hyper_transformer = HyperTransformer()
             hyper_transformer.detect_initial_config(data)
-            pii_fields = self._get_pii_fields(table_name)
-            if pii_fields:
-                # TODO: We have to define the pii and how we should pass to ``AnonymizedFaker``.
-                self._update_hyper_transformer(pii_fields, hyper_transformer)
-
             hyper_transformer.fit(data)
             self._hyper_transformers[table_name] = hyper_transformer
 
