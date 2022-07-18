@@ -1,6 +1,13 @@
 """Test Single Table Metadata."""
 
-from unittest.mock import patch
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import call, patch
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -26,6 +33,203 @@ class TestSingleTableMetadata:
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
+
+    def test_detect_from_dataframe_raises_value_error(self):
+        """Test the ``detect_from_dataframe`` method.
+
+        Test that if there are existing columns in the metadata, this raises a ``ValueError``.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+            - Add some value to ``instance._columns``.
+
+        Side Effects:
+            Raises a ``ValueError`` stating that ``metadata`` already exists.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'column': {'sdtype': 'categorical'}}
+
+        # Run / Assert
+        err_msg = (
+            'Metadata already exists. Create a new ``SingleTableMetadata`` '
+            'object to detect from other data sources.'
+        )
+
+        with pytest.raises(ValueError, match=err_msg):
+            instance.detect_from_dataframe('dataframe')
+
+    @patch('sdv.metadata.single_table.print')
+    def test_from_dataframe(self, mock_print):
+        """Test the ``dectect_from_dataframe`` method.
+
+        Test that when given a ``pandas.DataFrame``, the current instance of
+        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        column in the ``pandas.DataFrame``.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - ``pandas.DataFrame`` with multiple data types.
+
+        Side Effects:
+            - ``instance._columns`` has been updated with the expected ``sdtypes``.
+            - A message is being printed.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'categorical': ['cat', 'dog', 'tiger', np.nan],
+            'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
+            'int': [1, 2, 3, 4],
+            'float': [1., 2., 3., 4],
+            'bool': [np.nan, True, False, True]
+        })
+
+        # Run
+        instance.detect_from_dataframe(data)
+
+        # Assert
+        assert instance._columns == {
+            'categorical': {'sdtype': 'categorical'},
+            'date': {'sdtype': 'datetime'},
+            'int': {'sdtype': 'numerical'},
+            'float': {'sdtype': 'numerical'},
+            'bool': {'sdtype': 'boolean'}
+        }
+
+        expected_print_calls = [
+            call('Detected metadata:'),
+            call(json.dumps(instance.to_dict(), indent=4))
+        ]
+        assert mock_print.call_args_list == expected_print_calls
+
+    def test_detect_from_csv_raises_value_error(self):
+        """Test the ``detect_from_csv`` method.
+
+        Test that if there are existing columns in the metadata, this raises a ``ValueError``.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+            - Add some value to ``instance._columns``.
+
+        Side Effects:
+            Raises a ``ValueError`` stating that ``metadata`` already exists.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'column': {'sdtype': 'categorical'}}
+
+        # Run / Assert
+        err_msg = (
+            'Metadata already exists. Create a new ``SingleTableMetadata`` '
+            'object to detect from other data sources.'
+        )
+
+        with pytest.raises(ValueError, match=err_msg):
+            instance.detect_from_csv('filepath')
+
+    @patch('sdv.metadata.single_table.print')
+    def test_detect_from_csv(self, mock_print):
+        """Test the ``dectect_from_csv`` method.
+
+        Test that when given a file path to a ``csv`` file, the current instance of
+        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        column from the read data that is contained within the ``pandas.DataFrame`` from
+        that ``csv`` file.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - String that represents the ``path`` to the ``csv`` file.
+
+        Side Effects:
+            - ``instance._columns`` has been updated with the expected ``sdtypes``.
+            - A message is being printed.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'categorical': ['cat', 'dog', 'tiger', np.nan],
+            'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
+            'int': [1, 2, 3, 4],
+            'float': [1., 2., 3., 4],
+            'bool': [np.nan, True, False, True]
+        })
+
+        # Run
+        with TemporaryDirectory() as temp_dir:
+            filepath = Path(temp_dir) / 'mydata.csv'
+            data.to_csv(filepath, index=False)
+            instance.detect_from_csv(filepath)
+
+        # Assert
+        assert instance._columns == {
+            'categorical': {'sdtype': 'categorical'},
+            'date': {'sdtype': 'categorical'},
+            'int': {'sdtype': 'numerical'},
+            'float': {'sdtype': 'numerical'},
+            'bool': {'sdtype': 'boolean'}
+        }
+
+        expected_print_calls = [
+            call('Detected metadata:'),
+            call(json.dumps(instance.to_dict(), indent=4))
+        ]
+        assert mock_print.call_args_list == expected_print_calls
+
+    @patch('sdv.metadata.single_table.print')
+    def test_detect_from_csv_with_kwargs(self, mock_print):
+        """Test the ``dectect_from_csv`` method.
+
+        Test that when given a file path to a ``csv`` file, the current instance of
+        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        column from the read data that is contained within the ``pandas.DataFrame`` from
+        that ``csv`` file, having in consideration the ``kwargs`` that are passed.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - String that represents the ``path`` to the ``csv`` file.
+
+        Side Effects:
+            - ``instance._columns`` has been updated with the expected ``sdtypes``.
+            - one of the columns must be datetime
+            - A message is being printed.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'categorical': ['cat', 'dog', 'tiger', np.nan],
+            'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
+            'int': [1, 2, 3, 4],
+            'float': [1., 2., 3., 4],
+            'bool': [np.nan, True, False, True]
+        })
+
+        # Run
+        with TemporaryDirectory() as temp_dir:
+            filepath = Path(temp_dir) / 'mydata.csv'
+            data.to_csv(filepath, index=False)
+            instance.detect_from_csv(filepath, pandas_kwargs={'parse_dates': ['date']})
+
+        # Assert
+        assert instance._columns == {
+            'categorical': {'sdtype': 'categorical'},
+            'date': {'sdtype': 'datetime'},
+            'int': {'sdtype': 'numerical'},
+            'float': {'sdtype': 'numerical'},
+            'bool': {'sdtype': 'boolean'}
+        }
+
+        expected_print_calls = [
+            call('Detected metadata:'),
+            call(json.dumps(instance.to_dict(), indent=4))
+        ]
+        assert mock_print.call_args_list == expected_print_calls
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.
