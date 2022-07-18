@@ -138,7 +138,9 @@ class SingleTableMetadata:
         filepath = Path(filepath)
         if not filepath.exists():
             raise ValueError(
-                f'A file named {filepath} does not exist. Please specify a different filename.')
+                f"A file named '{filepath.name}' does not exist. "
+                'Please specify a different filename.'
+            )
 
         with open(filepath, 'r', encoding='utf-8') as metadata_file:
             metadata = json.load(metadata_file)
