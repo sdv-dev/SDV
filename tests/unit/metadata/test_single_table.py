@@ -328,7 +328,7 @@ class TestSingleTableMetadata:
         mock_path.return_value.exists.return_value = False
         mock_path.return_value.name = 'filepath.json'
 
-        # Run
+        # Run / Assert
         error_msg = (
             "A file named 'filepath.json' does not exist. Please specify a different filename."
         )
@@ -368,7 +368,7 @@ class TestSingleTableMetadata:
             'primary_key': 'animals',
         }
 
-        # Run
+        # Run / Assert
         error_msg = (
             'This metadata file is incompatible with the ``SingleTableMetadata`` '
             'class and version.'
@@ -451,7 +451,7 @@ class TestSingleTableMetadata:
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
 
-        # Run
+        # Run / Assert
         error_msg = (
             "A file named 'filepath.json' already exists in this folder. Please specify "
             'a different filename.'
@@ -476,12 +476,11 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        # Run
+        # Run / Assert
         with TemporaryDirectory() as temp_dir:
             file_name = Path(temp_dir) / 'singletable.json'
             instance.save_to_json(file_name)
 
-            # Assert
             with open(file_name, 'rb') as single_table_file:
                 saved_metadata = json.load(single_table_file)
                 assert saved_metadata == instance.to_dict()
