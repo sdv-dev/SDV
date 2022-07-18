@@ -1,5 +1,38 @@
 # Release Notes
 
+## 0.16.0 - 2022-07-20
+
+This release brings user friendly improvements and bug fixes on the `SDV` constraints, to help
+users generate their synthetic data easily.
+
+The first and most important notice is that most of the constraints have been renamed to a more
+user friendly and descriptive name, and some of them have been separated for a better usability.
+This also led into improving the `API` of the constraints with renamed arguments and the removal
+of some confusing ones such as the `handling_strategy`, which now by default will attempt to
+`transform` and if not possible will perform a `reject_sampling`.
+
+Last but not least, this version of `SDV` unifies the sampling parameters for the reject sampling
+and updates the `TabularPreset` to support them.
+
+### Changes to Constraints
+
+- `GreatherThan` constraint is now separated in two new constraints: `Inequality`, which is
+  intended to be used between two columns, and `ScalarInequality`, which is intended to be used
+  between a column and a scalar.
+
+- `Between` constraint is now separated in two new constraints: `Range`, which is intended to
+  be used between three columns, and `ScalarRange`, which is intended to be used between a column
+  and low and high scalar values.
+
+- `FixedIncrements` a new constraint that makes the data increment by a certain value.
+- New `create_custom_constraint` function available to create custom constraints.
+
+#### Removed Constraints
+- `Rounding` Rounding is automatically being handled by the ``rdt.HyperTransformer``.
+- `ColumnFormula` the `create_custom_constraint` takes place over this one and allows more
+  advanced usage for the end users.
+
+
 ## 0.15.0 - 2022-05-25
 
 This release improves the speed of the `GaussianCopula` model by removing logic that previously searched for the appropriate distribution to
