@@ -572,9 +572,8 @@ dataset are within 0 and 1, ``CTGAN`` will not be able to set this value to 1000
 
     Conditional sampling works through a rejection sampling process, where
     rows are sampled repeatedly until one that satisfies the conditions is found.
-    In case you are not able to sample enough valid rows, update the related parameters:
-    increasing ``max_tries`` or increasing ``batch_size_per_try``.
-    More information about these paramters can be found in the `API section
+    In case you are not able to sample enough valid rows, try increasing ``max_tries_per_batch``.
+    More information about this parameter can be found in the `API section
     <https://sdv.dev/SDV/api_reference/tabular/api/sdv.tabular.ctgan.CTGAN.
     sample_conditions.html>`__
 
