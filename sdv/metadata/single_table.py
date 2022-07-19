@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from sdv.constraints import Constraint
+
 
 class SingleTableMetadata:
     """Single Table Metadata class."""
@@ -84,7 +86,10 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key, value in self._metadata.items():
-            if value:
+            if key == 'constraints' and value:
+                metadata[key] = [constraint.to_dict() for constraint in value]
+
+            elif value:
                 metadata[key] = value
 
         return copy.deepcopy(metadata)
@@ -99,6 +104,9 @@ class SingleTableMetadata:
         self._metadata = {}
         for key in self.KEYS:
             value = copy.deepcopy(metadata.get(key))
+            if key == 'constraints' and value:
+                value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
+
             if value:
                 self._metadata[key] = value
                 setattr(self, f'_{key}', value)

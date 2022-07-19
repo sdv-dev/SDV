@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -237,6 +237,7 @@ class TestSingleTableMetadata:
         Setup:
             - Instance of ``SingleTableMetadata`` and modify the ``instance._columns`` to ensure
             that ``to_dict`` works properly.
+            - Add constraint Mock and ensure that `to_dict` of the object is being called.
         Output:
             - A dictionary representation of the ``instance`` that does not modify the
               internal dictionaries.
@@ -244,6 +245,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._columns['my_column'] = 'value'
+        constraint = Mock()
+        constraint.to_dict.return_value = {'column': 'value', 'scalar': 1}
+        instance._constraints.append(constraint)
 
         # Run
         result = instance.to_dict()
@@ -251,9 +255,13 @@ class TestSingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
+            'constraints': [{'column': 'value', 'scalar': 1}],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
 
+        constraint.to_dict.assert_called_once()
+
+        # Ensure that the output object does not alterate the inside object
         result['columns']['my_column'] = 1
         assert instance._columns['my_column'] == 'value'
 
@@ -376,10 +384,11 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             SingleTableMetadata.load_from_json('filepath.json')
 
+    @patch('sdv.metadata.single_table.Constraint')
     @patch('sdv.metadata.single_table.open')
     @patch('sdv.metadata.single_table.Path')
     @patch('sdv.metadata.single_table.json')
-    def test_load_from_json(self, mock_json, mock_path, mock_open):
+    def test_load_from_json(self, mock_json, mock_path, mock_open, mock_constraint):
         """Test the ``load_from_json`` method.
 
         Test that ``load_from_json`` function creates an instance with the contents returned by the
@@ -389,6 +398,7 @@ class TestSingleTableMetadata:
             - Mock the ``Path`` library in order to return ``True``.
             - Mock the ``json`` library in order to use a custom return.
             - Mock the ``open`` in order to avoid loading a binary file.
+            - Mock the ``Constraint`` to ensure that is being loaded.
 
         Input:
             - String representing a filepath.
@@ -401,6 +411,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
+        mock_constraint.from_dict.return_value = {'my_constraint': 'my_params'}
         mock_json.load.return_value = {
             'columns': {
                 'animals': {
@@ -430,6 +441,7 @@ class TestSingleTableMetadata:
         assert instance._constraints == [{'my_constraint': 'my_params'}]
         assert instance._alternate_keys == []
         assert instance._metadata == expected_metadata
+        mock_constraint.from_dict.assert_called_once()
 
     @patch('sdv.metadata.single_table.Path')
     def test_save_to_json_file_exists(self, mock_path):
