@@ -247,7 +247,8 @@ class TestSingleTableMetadata:
         instance._columns['my_column'] = 'value'
         constraint = Mock()
         constraint.to_dict.return_value = {'column': 'value', 'scalar': 1}
-        instance._constraints.append(constraint)
+        dict_constraint = {'column': 'value', 'increment_value': 20}
+        instance._constraints.extend([constraint, dict_constraint])
 
         # Run
         result = instance.to_dict()
@@ -255,7 +256,10 @@ class TestSingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'constraints': [{'column': 'value', 'scalar': 1}],
+            'constraints': [
+                {'column': 'value', 'scalar': 1},
+                {'column': 'value', 'increment_value': 20}
+            ],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
 

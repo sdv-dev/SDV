@@ -87,7 +87,14 @@ class SingleTableMetadata:
         metadata = {}
         for key, value in self._metadata.items():
             if key == 'constraints' and value:
-                metadata[key] = [constraint.to_dict() for constraint in value]
+                constraints = []
+                for constraint in value:
+                    if not isinstance(constraint, dict):
+                        constraints.append(constraint.to_dict())
+                    else:
+                        constraints.append(constraint)
+
+                metadata[key] = constraints
 
             elif value:
                 metadata[key] = value
