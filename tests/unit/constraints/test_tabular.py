@@ -55,6 +55,24 @@ def dummy_is_valid_column(column_data):
 
 class TestCreateCustomConstraint():
 
+    def test__validate_inputs(self):
+        """Test the ``CustomConstraint._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method.
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_names") in a CustomConstraint constraint.'
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            constraint = create_custom_constraint(sorted, sorted, sorted)
+            constraint._validate_inputs(not_column_name=None, something_else=None)
+
     def test__validate_inputs_custom_constraint_is_valid_incorrect(self):
         """Test validation when ``is_valid_fn`` is not callable.
 
@@ -387,6 +405,27 @@ class TestCreateCustomConstraint():
 
 
 class TestFixedCombinations():
+
+    def test__validate_inputs(self):
+        """Test the ``FixedCombinations._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_names") in a FixedCombinations constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_column_name', 'something_else')"
+                "are present in a FixedCombinations constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            FixedCombinations._validate_inputs(not_column_name=None, something_else=None)
 
     def test___init__(self):
         """Test the ``FixedCombinations.__init__`` method.
@@ -762,6 +801,28 @@ class TestFixedCombinations():
 
 
 class TestInequality():
+
+    def test__validate_inputs(self):
+        """Test the ``Inequality._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("high_column_name", "low_column_name")'
+                'in an Inequality constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_high_column', 'not_low_column')"
+                "are present in an Inequality constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            Inequality._validate_inputs(not_high_column=None, not_low_column=None)
 
     def test__validate_inputs_incorrect_column(self):
         """Test the ``_validate_inputs`` method.
@@ -1227,6 +1288,28 @@ class TestInequality():
 
 class TestScalarInequality():
 
+    def test__validate_inputs(self):
+        """Test the ``ScalarInequality._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("relation", "column_name", "value")'
+                'in a ScalarInequality constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_high_column', 'not_low_column', 'not_relation')"
+                "are present in a ScalarInequality constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            ScalarInequality._validate_inputs(not_high_column=None, not_low_column=None)
+
     def test__validate_inputs_incorrect_column(self):
         """Test the ``_validate_inputs`` method.
 
@@ -1689,6 +1772,27 @@ class TestScalarInequality():
 
 class TestPositive():
 
+    def test__validate_inputs(self):
+        """Test the ``Positive._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_name") in a Positive constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_column_name', 'something_else')"
+                "are present in a Positive constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            Positive._validate_inputs(not_column_name=None, something_else=None)
+
     def test__init__(self):
         """Test the ``Positive.__init__`` method.
 
@@ -1718,6 +1822,27 @@ class TestPositive():
 
 class TestNegative():
 
+    def test__validate_inputs(self):
+        """Test the ``Negative._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_name") in a Negative constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_column_name', 'something_else')"
+                "are present in a Negative constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            Negative._validate_inputs(not_column_name=None, something_else=None)
+
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
 
@@ -1746,6 +1871,28 @@ class TestNegative():
 
 
 class TestRange():
+
+    def test__validate_inputs(self):
+        """Test the ``Range._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("high_column_name", "between_column_name",'
+                '"low_column_name") in a Range constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_high_column', 'not_low_column')"
+                "are present in a Range constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            Range._validate_inputs(not_high_column=None, not_low_column=None)
 
     def test___init__(self):
         """Test the ``Range.__init__`` method.
@@ -2167,6 +2314,28 @@ class TestRange():
 class TestScalarRange():
 
     def test__validate_inputs(self):
+        """Test the ``ScalarRange._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_name", "low_value", "high_value")'
+                'in a ScalarRange constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_high_column', 'not_low_column')"
+                "are present in a ScalarRange constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            ScalarRange._validate_inputs(not_high_column=None, not_low_column=None)
+
+    def test__validate_init_inputs(self):
         """Test the ``_validate_inputs`` method.
 
         The method should raise an error if the inputs are not valid.
@@ -2604,6 +2773,28 @@ class TestScalarRange():
 
 class TestOneHotEncoding():
 
+    def test__validate_inputs(self):
+        """Test the ``OneHotEncoding._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_names")'
+                'in a OneHotEncoding constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_column_names', 'something_else')"
+                "are present in a OneHotEncoding constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            OneHotEncoding._validate_inputs(not_column_names=None, something_else=None)
+
     def test_reverse_transform(self):
         """Test the ``OneHotEncoding.reverse_transform`` method.
 
@@ -2664,6 +2855,25 @@ class TestOneHotEncoding():
 
 
 class TestUnique():
+
+    def test__validate_inputs(self):
+        """Test the ``Unique._validate_inputs`` method.
+
+        Input:
+        -  Incorrect arguments for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError('Missing required values ("column_names") in a Unique constraint.'),
+            ValueError(
+                "Invalid values ('not_column_name', 'something_else')"
+                "are present in a Unique constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            Unique._validate_inputs(not_column_name=None, something_else=None)
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -2914,6 +3124,28 @@ class TestUnique():
 
 
 class TestFixedIncrements():
+
+    def test__validate_inputs(self):
+        """Test the ``FixedIncrements._validate_inputs`` method.
+
+        Input:
+        -  Incorrect parameters for the method
+        Raises:
+        - List of ValueErrors
+        """
+        err_msg = [
+            ValueError(
+                'Missing required values ("column_name", "increment")'
+                'in a FixedIncrements constraint.'
+            ),
+            ValueError(
+                "Invalid values ('not_column_names', 'not_increment')"
+                "are present in a FixedIncrements constraint."
+            )
+        ]
+        # Run / Assert
+        with pytest.raises(Exception, match=err_msg):
+            FixedIncrements._validate_inputs(not_column_names=None, not_increment=None)
 
     def test___init__(self):
         """Test the ``FixedIncrements.__init__`` method.

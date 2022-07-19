@@ -97,6 +97,14 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 Function to replace the ``is_valid`` method.
         """
 
+        @classmethod
+        def _validate_inputs(cls, **kwargs):
+            super()._validate_inputs(
+                valid_parameters={'column_names'},
+                constraint='a CustomConstraint',
+                **kwargs
+            )
+
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
             self.kwargs = kwargs
@@ -205,6 +213,14 @@ class FixedCombinations(Constraint):
     _joint_column = None
     _combinations_to_uuids = None
     _uuids_to_combinations = None
+
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_names'},
+            constraint='a FixedCombinations',
+            **kwargs
+        )
 
     def __init__(self, column_names):
         if len(column_names) < 2:
@@ -324,8 +340,16 @@ class Inequality(Constraint):
             not ``>``. Defaults to False.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'high_column_name', 'low_column_name'},
+            constraint='an Inequality',
+            **kwargs
+        )
+
     @staticmethod
-    def _validate_inputs(low_column_name, high_column_name, strict_boundaries):
+    def _validate_init_inputs(low_column_name, high_column_name, strict_boundaries):
         if not (isinstance(low_column_name, str) and isinstance(high_column_name, str)):
             raise ValueError('`low_column_name` and `high_column_name` must be strings.')
 
@@ -333,7 +357,7 @@ class Inequality(Constraint):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
     def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
-        self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
+        self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
@@ -459,8 +483,16 @@ class ScalarInequality(Constraint):
             Scalar value to compare.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'relation', 'column_name', 'value'},
+            constraint='a ScalarInequality',
+            **kwargs
+        )
+
     @staticmethod
-    def _validate_inputs(column_name, value, relation):
+    def _validate_init_inputs(column_name, value, relation):
         value_is_datetime = is_datetime_type(value)
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
@@ -475,7 +507,7 @@ class ScalarInequality(Constraint):
             raise ValueError('Datetime must be represented as a string.')
 
     def __init__(self, column_name, relation, value):
-        self._validate_inputs(column_name, value, relation)
+        self._validate_init_inputs(column_name, value, relation)
         self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
@@ -603,6 +635,14 @@ class Positive(ScalarInequality):
             zero ``>`` or include it ``>=``.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_name'},
+            constraint='a Positive',
+            **kwargs
+        )
+
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='>' if strict else '>=', value=0)
 
@@ -620,6 +660,14 @@ class Negative(ScalarInequality):
             Whether the comparison of the values should be strict, disclude
             zero ``<`` or include it ``<=``.
     """
+
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_name'},
+            constraint='a Negative',
+            **kwargs
+        )
 
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='<' if strict else '<=', value=0)
@@ -643,6 +691,14 @@ class Range(Constraint):
             Whether the comparison of the values should be strict ``>=`` or
             not ``>`` when comparing them.
     """
+
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'high_column_name', 'between_column_name', 'low_column_name'},
+            constraint='a Range',
+            **kwargs
+        )
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
                  strict_boundaries=True):
@@ -796,8 +852,16 @@ class ScalarRange(Constraint):
             not ``>`` when comparing them.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_name', 'low_value', 'high_value'},
+            constraint='a ScalarRange',
+            **kwargs
+        )
+
     @staticmethod
-    def _validate_inputs(low_value, high_value):
+    def _validate_init_inputs(low_value, high_value):
         values_are_datetimes = is_datetime_type(low_value) and is_datetime_type(high_value)
         values_are_strings = isinstance(low_value, str) and isinstance(high_value, str)
         if values_are_datetimes and not values_are_strings:
@@ -954,6 +1018,14 @@ class FixedIncrements(Constraint):
 
     _dtype = None
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_name', 'increment'},
+            constraint='a FixedIncrements',
+            **kwargs
+        )
+
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:
             raise ValueError('The increment_value must be greater than 0.')
@@ -1034,6 +1106,14 @@ class OneHotEncoding(Constraint):
             Names of the columns containing one hot rows.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_names'},
+            constraint='a OneHotEncoding',
+            **kwargs
+        )
+
     def __init__(self, column_names):
         self._column_names = column_names
         self.constraint_columns = tuple(column_names)
@@ -1090,6 +1170,14 @@ class Unique(Constraint):
         column_names (list[str]):
             List of name(s) of the column(s) to keep unique.
     """
+
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        super()._validate_inputs(
+            valid_parameters={'column_name'},
+            constraint='a Unique',
+            **kwargs
+        )
 
     def __init__(self, column_names):
         self.column_names = column_names
