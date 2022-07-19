@@ -60,7 +60,7 @@ class TestSingleTableMetadata:
             instance.detect_from_dataframe('dataframe')
 
     @patch('sdv.metadata.single_table.print')
-    def test_from_dataframe(self, mock_print):
+    def test_detect_from_dataframe(self, mock_print):
         """Test the ``dectect_from_dataframe`` method.
 
         Test that when given a ``pandas.DataFrame``, the current instance of

@@ -52,7 +52,7 @@ class SingleTableMetadata:
         for field in data:
             clean_data = data[field].dropna()
             kind = clean_data.infer_objects().dtype.kind
-            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES[kind]}
+            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
 
         print('Detected metadata:')
         print(json.dumps(self.to_dict(), indent=4))
