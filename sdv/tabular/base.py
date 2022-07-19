@@ -580,18 +580,9 @@ class BaseTabularModel:
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        try:
-            transformed_conditions = self._metadata.transform(conditions, is_condition=True)
-        except ConstraintsNotMetError as cnme:
-            cnme.message = 'Provided conditions are not valid for the given constraints'
-            raise
-
         condition_columns = list(conditions.columns)
-        transformed_columns = list(transformed_conditions.columns)
         conditions.index.name = COND_IDX
         conditions.reset_index(inplace=True)
-        transformed_conditions.index.name = COND_IDX
-        transformed_conditions.reset_index(inplace=True)
         grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
@@ -601,8 +592,20 @@ class BaseTabularModel:
             if not isinstance(group, tuple):
                 group = [group]
 
-            condition_indices = dataframe[COND_IDX]
             condition = dict(zip(condition_columns, group))
+            condition_df = dataframe.iloc[0].to_frame().T
+            try:
+                transformed_condition = self._metadata.transform(condition_df, is_condition=True)
+            except ConstraintsNotMetError as cnme:
+                cnme.message = 'Provided conditions are not valid for the given constraints'
+                raise
+            transformed_conditions = pd.concat(
+                [transformed_condition] * len(dataframe),
+                ignore_index=True
+            )
+            transformed_columns = list(transformed_conditions.columns)
+            transformed_conditions[COND_IDX] = dataframe[COND_IDX]
+
             if len(transformed_columns) == 0:
                 sampled_rows = self._conditionally_sample_rows(
                     dataframe=dataframe,
@@ -615,8 +618,7 @@ class BaseTabularModel:
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
-                transformed_conditions_in_group = transformed_conditions.loc[condition_indices]
-                transformed_groups = transformed_conditions_in_group.groupby(transformed_columns)
+                transformed_groups = transformed_conditions.groupby(transformed_columns)
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
                         transformed_group = [transformed_group]
