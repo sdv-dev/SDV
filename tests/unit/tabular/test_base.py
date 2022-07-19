@@ -1041,7 +1041,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     conditions = {
         'column1': 25
     }
-    conditions_series = pd.Series([25, 25, 25, 25, 25], name='column1')
+    conditions_series = pd.Series([25], name='column1')
     model._sample_batch = Mock()
     sampled = pd.DataFrame({
         'column1': [28, 28],
@@ -1102,7 +1102,6 @@ def test__sample_with_conditions_transform_conditions_correctly():
     })
 
     condition_values = [25, 25, 25, 30, 30]
-    conditions_series = pd.Series([25, 25, 25, 30, 30], name='column1')
     model._sample_batch = Mock()
     expected_outputs = [
         pd.DataFrame({
@@ -1113,28 +1112,26 @@ def test__sample_with_conditions_transform_conditions_correctly():
             'column1': [30],
             'column2': [37],
             'column3': [93],
-        }), pd.DataFrame({
-            'column1': [30],
-            'column2': [37],
-            'column3': [93],
         })
     ]
     model._sample_batch.side_effect = expected_outputs
     model.fit(data)
     model._metadata = Mock()
     model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
-    model._metadata.transform.return_value = pd.DataFrame([
-        [50], [50], [50], [60], [70]
-    ], columns=['transformed_column'])
+    model._metadata.transform.side_effect = [
+        pd.DataFrame([[50]], columns=['transformed_column']),
+        pd.DataFrame([[60]], columns=['transformed_column'])
+    ]
 
     # Run
     model._sample_with_conditions(
         pd.DataFrame({'column1': condition_values}), 100, None)
 
     # Assert
-    _, args, kwargs = model._metadata.transform.mock_calls[0]
-    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
-    model._metadata.transform.assert_called_once()
+    first_condition = model._metadata.transform.mock_calls[0][1][0]['column1']
+    second_condition = model._metadata.transform.mock_calls[1][1][0]['column1']
+    pd.testing.assert_series_equal(first_condition, pd.Series([25], name='column1'))
+    pd.testing.assert_series_equal(second_condition, pd.Series([30], name='column1', index=[3]))
     model._sample_batch.assert_any_call(
         batch_size=3,
         max_tries=100,
@@ -1145,19 +1142,10 @@ def test__sample_with_conditions_transform_conditions_correctly():
         output_file_path=None
     )
     model._sample_batch.assert_any_call(
-        batch_size=1,
+        batch_size=2,
         max_tries=100,
         conditions={'column1': 30},
         transformed_conditions={'transformed_column': 60},
-        float_rtol=0.01,
-        progress_bar=None,
-        output_file_path=None
-    )
-    model._sample_batch.assert_any_call(
-        batch_size=1,
-        max_tries=100,
-        conditions={'column1': 30},
-        transformed_conditions={'transformed_column': 70},
         float_rtol=0.01,
         progress_bar=None,
         output_file_path=None
