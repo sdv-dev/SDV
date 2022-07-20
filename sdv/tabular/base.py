@@ -481,6 +481,57 @@ class BaseTabularModel:
         else:
             self._set_random_state(FIXED_RNG_SEED)
 
+    def _sample_with_progress_bar(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
+                                  batch_size=None, output_file_path=None, conditions=None,
+                                  show_progress_bar=True):
+        if conditions is not None:
+            raise TypeError('This method does not support the conditions parameter. '
+                            'Please create `sdv.sampling.Condition` objects and pass them '
+                            'into the `sample_conditions` method. '
+                            'See User Guide or API for more details.')
+
+        if num_rows is None:
+            raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
+
+        if num_rows == 0:
+            return pd.DataFrame()
+
+        self._randomize_samples(randomize_samples)
+
+        output_file_path = self._validate_file_path(output_file_path)
+
+        batch_size = min(batch_size, num_rows) if batch_size else num_rows
+
+        try:
+            if show_progress_bar:
+                with tqdm.tqdm(total=num_rows) as progress_bar:
+                    progress_bar.set_description('Sampling rows')
+                    sampled = self._sample_in_batches(
+                        num_rows=num_rows,
+                        batch_size=batch_size,
+                        max_tries_per_batch=max_tries_per_batch,
+                        progress_bar=progress_bar,
+                        output_file_path=output_file_path
+                    )
+
+            else:
+                sampled = self._sample_in_batches(
+                    num_rows=num_rows,
+                    batch_size=batch_size,
+                    max_tries_per_batch=max_tries_per_batch,
+                    progress_bar=None,
+                    output_file_path=output_file_path
+                )
+
+        except (Exception, KeyboardInterrupt) as error:
+            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
+
+        else:
+            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
+                os.remove(output_file_path)
+
+        return sampled
+
     def sample(self, num_rows, randomize_samples=True, max_tries_per_batch=100, batch_size=None,
                output_file_path=None, conditions=None):
         """Sample rows from this table.
@@ -506,43 +557,15 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
-        if conditions is not None:
-            raise TypeError('This method does not support the conditions parameter. '
-                            'Please create `sdv.sampling.Condition` objects and pass them '
-                            'into the `sample_conditions` method. '
-                            'See User Guide or API for more details.')
-
-        if num_rows is None:
-            raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
-
-        if num_rows == 0:
-            return pd.DataFrame()
-
-        self._randomize_samples(randomize_samples)
-
-        output_file_path = self._validate_file_path(output_file_path)
-
-        batch_size = min(batch_size, num_rows) if batch_size else num_rows
-
-        try:
-            with tqdm.tqdm(total=num_rows) as progress_bar:
-                progress_bar.set_description('Sampling rows')
-                sampled = self._sample_in_batches(
-                    num_rows=num_rows,
-                    batch_size=batch_size,
-                    max_tries_per_batch=max_tries_per_batch,
-                    progress_bar=progress_bar,
-                    output_file_path=output_file_path
-                )
-
-        except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
-
-        return sampled
+        return self._sample_with_progress_bar(
+            num_rows,
+            randomize_samples,
+            max_tries_per_batch,
+            batch_size,
+            output_file_path,
+            conditions,
+            show_progress_bar=True
+        )
 
     def _validate_conditions(self, conditions):
         """Validate the user-passed conditions."""

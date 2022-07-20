@@ -345,6 +345,28 @@ class TestBaseTabularModel:
             output_file_path=None
         )
 
+    def test__sample_with_progress_bar_show_progress_bar_false(self):
+        """Test the ``_sample_with_progress_bar`` method.
+
+        If ``show_progress_bar`` is false, then no progress bar should be shown.
+
+        Input:
+            - show_progress_bar set to False
+
+        Side effect:
+            - ``_sample_in_batches`` should be called with ``progress_bar`` set to None.
+        """
+        # Setup
+        model = CTGAN()
+        model._model = Mock()
+        model._sample_in_batches = Mock()
+
+        # Run
+        model._sample_with_progress_bar(5, max_tries_per_batch=50)
+
+        # Assert
+        assert model._sample_in_batches.called_once_with(5, max_tries=50, progress_bar=None)
+
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
@@ -359,16 +381,18 @@ class TestBaseTabularModel:
             - Call ``_sample_batch`` method with the expected number of rows.
         """
         # Setup
-        model = Mock(spec_set=CTGAN)
+        model = CTGAN()
+        model._model = Mock()
         valid_sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
+        model._sample_in_batches = Mock()
         model._sample_in_batches.return_value = valid_sampled_data
 
         # Run
-        output = BaseTabularModel.sample(model, 5, max_tries_per_batch=50)
+        output = model.sample(5, max_tries_per_batch=50)
 
         # Assert
         assert model._sample_in_batches.called_once_with(5, max_tries=50)
@@ -840,13 +864,15 @@ class TestBaseTabularModel:
             - ValueError is thrown.
         """
         # Setup
-        model = Mock()
+        model = GaussianCopula()
+        model._validate_file_path = Mock()
         model._validate_file_path.return_value = TMP_FILE_NAME
+        model._sample_in_batches = Mock()
         model._sample_in_batches.side_effect = ValueError('test error')
 
         # Run
         with pytest.raises(ValueError, match='test error'):
-            BaseTabularModel.sample(model, 1, output_file_path=None)
+            model.sample(1, output_file_path=None)
 
         # Assert
         model._sample_in_batches.called_once_with(
