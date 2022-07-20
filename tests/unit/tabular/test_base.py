@@ -428,6 +428,31 @@ class TestBaseTabularModel:
         model._sample_with_progress_bar.assert_called_once_with(
             5, True, 100, 5, None, None, show_progress_bar=True)
 
+    def test_sample_batch_show_progress_bar_because_of_multiple_batches(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` does not equal the ``batch_size``, the ``show_progress_bar`` should be
+        shown.
+
+        Setup:
+            - Mock the ``get_metadata`` method to not have constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        model.get_metadata._constraints.return_value = None
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=1)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 1, None, None, show_progress_bar=True)
+
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
