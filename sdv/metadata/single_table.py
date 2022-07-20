@@ -155,9 +155,7 @@ class SingleTableMetadata:
 
         sdtype = kwargs.get('sdtype')
         if sdtype is None:
-            raise ValueError(
-                f"Please provide a 'sdtype' for column '{column_name}'."
-            )
+            raise ValueError(f"Please provide a 'sdtype' for column '{column_name}'.")
 
         self._validate_column(column_name, **kwargs)
         self._columns[column_name] = deepcopy(kwargs)
@@ -182,6 +180,7 @@ class SingleTableMetadata:
             sdtype = kwargs.pop('sdtype')
         else:
             sdtype = self._columns[column_name]['sdtype']
+            _kwargs['sdtype'] = sdtype
 
         self._validate_column(column_name, sdtype, **kwargs)
         self._columns[column_name] = _kwargs

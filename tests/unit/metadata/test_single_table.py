@@ -222,7 +222,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        # Run / Assert
+        # Run / Assert non raising errors
         instance._validate_unexpected_kwargs('age', 'numerical')
         instance._validate_unexpected_kwargs('age', 'numerical', representation='int')
         instance._validate_unexpected_kwargs('start_date', 'datetime')
@@ -236,7 +236,7 @@ class TestSingleTableMetadata:
         instance._validate_unexpected_kwargs('phone', 'phone_number')
         instance._validate_unexpected_kwargs('phone', 'phone_number', pii=True)
 
-
+        # Run / Assert raising errors
         numerical_error_msg = re.escape(
             "Invalid values '(datetime_format, pii)' for numerical column 'age'.")
         with pytest.raises(ValueError, match=numerical_error_msg):
@@ -249,7 +249,7 @@ class TestSingleTableMetadata:
                 'start_date', 'datetime', datetime_format='%Y-%d', pii=True)
 
         categorical_error_msg = re.escape(
-            f"Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
+            "Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
         with pytest.raises(ValueError, match=categorical_error_msg):
             instance._validate_unexpected_kwargs(
                 'name', 'categorical', pii=True, ordering=['a', 'b'], ordered='numerical_values')
@@ -271,26 +271,307 @@ class TestSingleTableMetadata:
             instance._validate_unexpected_kwargs(
                 'phone', 'phone_number', anonymization=True, order_by='phone_number')
 
-    def test__validate_column_numerical(self):
-        pass
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
+    def test__validate_column_numerical(self, mock__validate_numerical, mock__validate_kwargs):
+        """Test ``_validate_column`` method.
 
-    def test__validate_column_categorical(self):
-        pass
+        Test the ``_validate_column`` method when a ``numerical`` sdtype is passed.
 
-    def test__validate_column_boolean(self):
-        pass
+        Setup:
+            - Instance of ``SingleTableMetadata``.
 
-    def test__validate_column_datetime(self):
-        pass
+        Input:
+            - ``column_name`` - a string.
+            - ``sdtype`` - a string 'numerical'.
+            - kwargs - any additional key word arguments.
 
-    def test__validate_column_text(self):
-        pass
+        Mock:
+            - ``_validate_unexpected_kwargs`` function from ``SingleTableMetadata``.
+            - ``_validate_numerical`` function from ``SingleTableMetadata``.
+
+        Side effects:
+            - ``_validate_numerical`` has been called once.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._validate_column('age', 'numerical', representation='int')
+
+        # Assert
+        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='int')
+        mock__validate_numerical.assert_called_once_with('age', representation='int')
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_categorical')
+    def test__validate_column_categorical(self, mock__validate_categorical, mock__validate_kwargs):
+        """Test ``_validate_column`` method.
+
+        Test the ``_validate_column`` method when a ``categorical`` sdtype is passed.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - ``column_name`` - a string.
+            - ``sdtype`` - a string 'categorical'.
+            - kwargs - any additional key word arguments.
+
+        Mock:
+            - ``_validate_unexpected_kwargs``
+            - ``_validate_categorical`` function from ``SingleTableMetadata``.
+
+        Side effects:
+            - ``_validate_categorical`` has been called once.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._validate_column('name', 'categorical', order=['a', 'b', 'c'])
+
+        # Assert
+        mock__validate_kwargs.assert_called_once_with(
+            'name', 'categorical', order=['a', 'b', 'c'])
+        mock__validate_categorical.assert_called_once_with('name', order=['a', 'b', 'c'])
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    def test__validate_column_boolean(self, mock__validate_kwargs):
+        """Test ``_validate_column`` method.
+
+        Test the ``_validate_column`` method when a ``boolean`` sdtype is passed.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - ``column_name`` - a string.
+            - ``sdtype`` - a string 'boolean'.
+            - kwargs - any additional key word arguments.
+
+        Mock:
+            - ``_validate_unexpected_kwargs``
+
+        Side effects:
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._validate_column('snythetic', 'boolean')
+
+        # Assert
+        mock__validate_kwargs.assert_called_once_with('snythetic', 'boolean')
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_datetime')
+    def test__validate_column_datetime(self, mock__validate_datetime, mock__validate_kwargs):
+        """Test ``_validate_column`` method.
+
+        Test the ``_validate_column`` method when a ``datetime`` sdtype is passed.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - ``column_name`` - a string.
+            - ``sdtype`` - a string 'datetime'.
+            - kwargs - any additional key word arguments.
+
+        Mock:
+            - ``_validate_unexpected_kwargs``
+            - ``_validate_datetime`` function from ``SingleTableMetadata``.
+
+        Side effects:
+            - ``_validate_datetime`` has been called once.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._validate_column('start', 'datetime')
+
+        # Assert
+        mock__validate_kwargs.assert_called_once_with('start', 'datetime')
+        mock__validate_datetime.assert_called_once_with('start')
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_text')
+    def test__validate_column_text(self, mock__validate_text, mock__validate_kwargs):
+        """Test ``_validate_column`` method.
+
+        Test the ``_validate_column`` method when a ``text`` sdtype is passed.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - ``column_name`` - a string.
+            - ``sdtype`` - a string 'text'.
+            - kwargs - any additional key word arguments.
+
+        Mock:
+            - ``_validate_unexpected_kwargs``
+            - ``_validate_text`` function from ``SingleTableMetadata``.
+
+        Side effects:
+            - ``_validate_text`` has been called once.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._validate_column('phrase', 'text', regex_format='[A-z0-9]', pii=True)
+
+        # Assert
+        mock__validate_kwargs.assert_called_once_with(
+            'phrase', 'text', regex_format='[A-z0-9]', pii=True)
+        mock__validate_text.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
+
+    def test_add_column_column_name_in_columns(self):
+        """Test ``add_column`` method.
+
+        Test that when calling ``add_column`` with a column that is already in
+        ``instance._columns`` raises a ``ValueError`` stating to use the ``update_column`` instead.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+            - ``_columns`` with some values.
+
+        Input:
+            - A column name that is already in ``instance._columns``.
+
+        Side Effects:
+            - ``ValueError`` is being raised stating that the column exists.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'age': {'sdtype': 'numerical'}}
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Column name 'age' already exists. Use 'update_column' to update an existing column.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance.add_column('age')
+
+    def test_add_column_sdtype_not_in_kwargs(self):
+        """Test ``add_column`` method.
+
+        Test that when calling ``add_column`` without an sdtype a ``ValueError`` stating that
+        it must be provided is raised.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - A column name.
+
+        Side Effects:
+            - ``ValueError`` is being raised stating that sdtype must be provided.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        error_msg = re.escape("Please provide a 'sdtype' for column 'synthetic'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance.add_column('synthetic')
 
     def test_add_column(self):
-        pass
+        """Test ``add_column`` method.
 
-    def test_upate_column(self):
-        pass
+        Test that when calling ``add_column`` method with a ``sdtype`` and the proper ``kwargs``
+        this is being added to the ``instance._columns``.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+
+        Input:
+            - A column name.
+            - An ``sdtype``.
+
+        Side Effects:
+            - ``instance._columns[column_name]`` now exists.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.add_column('age', sdtype='numerical', representation='int')
+
+        # Assert
+        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'int'}
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
+    def test_upate_column_sdtype_in_kwargs(self,
+                                           mock__validate_column_exists, mock__validate_column):
+        """Test the ``update_column`` method.
+
+        Test that when calling ``update_column`` with an ``sdtype`` this is being updated as well
+        as any additional.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+            - A column already in ``_columns``.
+
+        Mock:
+            - ``_validate_column_exists``.
+            - ``_validate_column``.
+
+        Side Effects:
+            - The column has been updated with the new ``sdtype`` and ``kwargs``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'age': {'sdtype': 'numerical'}}
+
+        # Run
+        instance.update_column('age', sdtype='categorical', order_by='numerical_value')
+
+        # Assert
+        assert instance._columns['age'] == {
+            'sdtype': 'categorical',
+            'order_by': 'numerical_value'
+        }
+        mock__validate_column_exists.assert_called_once_with('age')
+        mock__validate_column.assert_called_once_with(
+            'age', 'categorical', order_by='numerical_value')
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
+    def test_upate_column_no_sdtype(self, mock__validate_column_exists, mock__validate_column):
+        """Test the ``update_column`` method.
+
+        Test that when calling ``update_column`` without an ``sdtype`` is updating the other
+        ``kwargs``.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+            - A column already in ``_columns``.
+
+        Mock:
+            - ``_validate_column_exists``.
+            - ``_validate_column``.
+
+        Side Effects:
+            - The column has been updated with the new ``kwargs``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'age': {'sdtype': 'numerical'}}
+
+        # Run
+        instance.update_column('age', representation='float')
+
+        # Assert
+        assert instance._columns['age'] == {
+            'sdtype': 'numerical',
+            'representation': 'float'
+        }
+        mock__validate_column_exists.assert_called_once_with('age')
+        mock__validate_column.assert_called_once_with('age', 'numerical', representation='float')
 
     def test_detect_from_dataframe_raises_value_error(self):
         """Test the ``detect_from_dataframe`` method.
