@@ -42,17 +42,19 @@ class SingleTableMetadata:
         representation = kwargs.get('representation')
         if representation and representation not in representations:
             raise ValueError(
-                f"Invalid value for 'representation' {representation} for column '{column_name}.")
+                f"Invalid value for 'representation' {representation} for column '{column_name}'.")
 
     @staticmethod
     def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
         if datetime_format:
             formated_date = datetime.now().strftime(datetime_format)
-            match = re.search('%.', formated_date)
-            if match:
+            matches = re.findall('(%.)|(%)', formated_date)
+            if matches:
+                matches = ', '.join(item for match in matches for item in match if item)
+                matches = ''.join(char if not char.isalnum() else '.' for char in matches)
                 raise ValueError(
-                    f"Invalid datetime fromat stringa '{match.group(0)}' "
+                    f"Invalid datetime format string '{matches}' "
                     f"for datetime column '{column_name}'."
                 )
 
@@ -65,12 +67,13 @@ class SingleTableMetadata:
                 f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
                 'attribute. Only 1 is allowed.'
             )
-        elif order_by not in ('numerical_value', 'alphabetical'):
+        if order_by and order_by not in ('numerical_value', 'alphabetical'):
             raise ValueError(
                 f"Unknown ordering method '{order_by}' provided for categorical column "
                 f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
             )
-        elif order and not isinstance(order, list):
+        if (isinstance(order, list) and not len(order)) or\
+           (not isinstance(order, list) and order is not None):
             raise ValueError(
                 f"Invalid order value provided for categorical column '{column_name}'. "
                 "The 'order' must be a list with 1 or more elements."
@@ -104,6 +107,8 @@ class SingleTableMetadata:
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
+            unexpected_kwargs = list(unexpected_kwargs)
+            unexpected_kwargs.sort()
             unexpected_kwargs = ', '.join(unexpected_kwargs)
             raise ValueError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
@@ -112,7 +117,7 @@ class SingleTableMetadata:
         if column_name not in self._columns:
             raise ValueError(
                 f"Column name ('{column_name}') does not exist in the table. "
-                "Use 'add_column'  to add new column."
+                "Use 'add_column' to add new column."
             )
 
     def _validate_column(self, column_name, sdtype, **kwargs):
@@ -123,34 +128,8 @@ class SingleTableMetadata:
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
             self._validate_datetime(column_name, **kwargs)
-        elif sdtype =='text':
+        elif sdtype == 'text':
             self._validate_text(column_name, **kwargs)
-        elif sdtype =='text':
-            self._validate_text(column_name, **kwargs)
-
-    def update_column(self, column_name, **kwargs):
-        """Update an existing column in the ``SingleTableMetadata``.
-
-        Args:
-            column_name (str):
-                The column name to be updated.
-            **kwargs (type):
-                Any key word arguments that describe metadata for the column.
-
-        Raises:
-            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
-            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
-              ``sdtype``.
-        """
-        self._validate_column_exists(column_name)
-        _kwargs = deepcopy(kwargs)
-        if 'sdtype' in kwargs:
-            sdtype = kwargs.pop('sdtype')
-        else:
-            sdtype = self._columns[column_name]['sdtype']
-
-        self._validate_column(column_name, sdtype, **kwargs)
-        self._columns[column_name] = _kwargs
 
     def add_column(self, column_name, **kwargs):
         """Add a column to the ``SingleTableMetadata``.
@@ -182,6 +161,30 @@ class SingleTableMetadata:
 
         self._validate_column(column_name, **kwargs)
         self._columns[column_name] = deepcopy(kwargs)
+
+    def update_column(self, column_name, **kwargs):
+        """Update an existing column in the ``SingleTableMetadata``.
+
+        Args:
+            column_name (str):
+                The column name to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+
+        Raises:
+            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
+              ``sdtype``.
+        """
+        self._validate_column_exists(column_name)
+        _kwargs = deepcopy(kwargs)
+        if 'sdtype' in kwargs:
+            sdtype = kwargs.pop('sdtype')
+        else:
+            sdtype = self._columns[column_name]['sdtype']
+
+        self._validate_column(column_name, sdtype, **kwargs)
+        self._columns[column_name] = _kwargs
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.

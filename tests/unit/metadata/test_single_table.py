@@ -1,6 +1,7 @@
 """Test Single Table Metadata."""
 
 import json
+import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
@@ -33,6 +34,263 @@ class TestSingleTableMetadata:
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
+
+    def test__validate_numerical(self):
+        """Test the ``_validate_numerical`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+            - list of accepted representations.
+
+        Input:
+            - Column name.
+            - sdtype numerical
+            - representation
+
+        Side Effects:
+            - Passes with the correct ``representation``
+            - ``ValueError`` is raised stating that the ``representation`` is wrong.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        representations = [
+            'int', 'int64', 'int32', 'int16', 'int8',
+            'uint', 'uint64', 'uint32', 'uint16', 'uint8'
+            'float', 'float64', 'float32', 'float16', 'float8'
+        ]
+
+        # Run / Assert
+        instance._validate_numerical('age')
+        for representation in representations:
+            instance._validate_numerical('age', representation=representation)
+
+        error_msg = re.escape("Invalid value for 'representation' 36 for column 'age'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_numerical('age', representation=36)
+
+    def test__validate_datetime(self):
+        """Test the ``_validate_datetime`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+
+        Input:
+            - Column name.
+            - sdtype datetime
+            - Valid ``datetime_format``.
+            - Invalid ``datetime_format``.
+
+        Side Effects:
+            - ``ValueError`` indicating the format ``%`` that has not been formatted.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_datetime('start_date', datetime_format='%Y-%m-%d')
+        instance._validate_datetime('start_date', datetime_format='%Y-%m-%d - Synthetic')
+
+        error_msg = re.escape(
+            "Invalid datetime format string '%' for datetime column 'start_date'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_datetime('start_date', datetime_format='%Y-%m-%d-%')
+
+        secondary_match = re.escape(
+            "Invalid datetime format string '%., %.' for datetime column 'start_date'.")
+        with pytest.raises(ValueError, match=secondary_match):
+            instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%0')
+
+    def test__validate_categorical(self):
+        """Test the ``_validate_categorical`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+
+        Input:
+            - Column name.
+            - sdtype categorical.
+            - A valid ``order_by``.
+            - A valid ``order``.
+            - An invalid ``order_by`` and ``order``.
+
+        Side Effects:
+            - ``ValueError`` when both ``order`` and ``order_by`` are present.
+            - ``ValueError`` when ``order`` is an empty list or a random string.
+            - ``ValueError`` when ``order_by`` is not ``numerical_value`` or ``alphabetical``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_categorical('name')
+        instance._validate_categorical('name', order_by='alphabetical')
+        instance._validate_categorical('name', order_by='numerical_value')
+        instance._validate_categorical('name', order=['a', 'b', 'c'])
+
+        error_msg = re.escape(
+            "Categorical column 'name' has both an 'order' and 'order_by' "
+            'attribute. Only 1 is allowed.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_categorical('name', order_by='alphabetical', order=['a', 'b', 'c'])
+
+        error_msg_order_by = re.escape(
+            "Unknown ordering method 'my_ordering' provided for categorical column "
+            "'name'. Ordering method must be 'numerical_value' or 'alphabetical'."
+        )
+        with pytest.raises(ValueError, match=error_msg_order_by):
+            instance._validate_categorical('name', order_by='my_ordering')
+
+        error_msg_order = re.escape(
+            "Invalid order value provided for categorical column 'name'. "
+            "The 'order' must be a list with 1 or more elements."
+        )
+        with pytest.raises(ValueError, match=error_msg_order):
+            instance._validate_categorical('name', order='my_ordering')
+
+        with pytest.raises(ValueError, match=error_msg_order):
+            instance._validate_categorical('name', order=[])
+
+    def test__validate_text(self):
+        """Test the ``_validate_text`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+
+        Input:
+            - Column name.
+            - sdtype text
+            - Valid ``regex_format``.
+            - Invalid ``regex_format``.
+
+        Side Effects:
+            - ``ValueError``
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_text('phrase', regex_format='[A-z]')
+        error_msg = re.escape("Invalid regex format string '[A-z{' for text column 'phrase'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_text('phrase', regex_format='[A-z{')
+
+    def test__validate_column_exists(self):
+        """Test the ``_validate_column_exists`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+            - A list of ``_columns``.
+
+        Input:
+            - Column name.
+
+        Side Effects:
+            - ``ValueError`` when the column is not in the ``instance._columns``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {
+            'name': {'sdtype': 'categorical'},
+            'age': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'phrase': {'sdtype': 'text'},
+        }
+
+        # Run / Assert
+        instance._validate_column_exists('age')
+        error_msg = re.escape(
+            "Column name ('synthetic') does not exist in the table. "
+            "Use 'add_column' to add new column."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_column_exists('synthetic')
+
+    def test__validate_unexpected_kwargs(self):
+        """Test the ``_validate_unexpected_kwargs`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+
+        Input:
+            - Column name.
+            - sdtype
+
+        Side Effects:
+            ValueError
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_unexpected_kwargs('age', 'numerical')
+        instance._validate_unexpected_kwargs('age', 'numerical', representation='int')
+        instance._validate_unexpected_kwargs('start_date', 'datetime')
+        instance._validate_unexpected_kwargs('start_date', 'datetime', datetime_format='%Y-%d')
+        instance._validate_unexpected_kwargs('name', 'categorical')
+        instance._validate_unexpected_kwargs('name', 'categorical', order_by='alphabetical')
+        instance._validate_unexpected_kwargs('name', 'categorical', order=['a', 'b', 'c'])
+        instance._validate_unexpected_kwargs('synthetic', 'boolean')
+        instance._validate_unexpected_kwargs('phrase', 'text')
+        instance._validate_unexpected_kwargs('phrase', 'text', regex_format='[A-z]')
+        instance._validate_unexpected_kwargs('phone', 'phone_number')
+        instance._validate_unexpected_kwargs('phone', 'phone_number', pii=True)
+
+
+        numerical_error_msg = re.escape(
+            "Invalid values '(datetime_format, pii)' for numerical column 'age'.")
+        with pytest.raises(ValueError, match=numerical_error_msg):
+            instance._validate_unexpected_kwargs(
+                'age', 'numerical', representation='int', datetime_format=None, pii=True)
+
+        datetime_error_msg = re.escape("Invalid values '(pii)' for datetime column 'start_date'.")
+        with pytest.raises(ValueError, match=datetime_error_msg):
+            instance._validate_unexpected_kwargs(
+                'start_date', 'datetime', datetime_format='%Y-%d', pii=True)
+
+        categorical_error_msg = re.escape(
+            f"Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
+        with pytest.raises(ValueError, match=categorical_error_msg):
+            instance._validate_unexpected_kwargs(
+                'name', 'categorical', pii=True, ordering=['a', 'b'], ordered='numerical_values')
+
+        boolean_error_msg = re.escape(
+            "Invalid values '(pii)' for boolean column 'synthetic'.")
+        with pytest.raises(ValueError, match=boolean_error_msg):
+            instance._validate_unexpected_kwargs('synthetic', 'boolean', pii=True)
+
+        text_error_msg = re.escape(
+            "Invalid values '(anonymization, pii)' for text column 'phrase'.")
+        with pytest.raises(ValueError, match=text_error_msg):
+            instance._validate_unexpected_kwargs(
+                'phrase', 'text', regex_format='[A-z]', pii=True, anonymization=True)
+
+        other_error_msg = re.escape(
+            "Invalid values '(anonymization, order_by)' for phone_number column 'phone'.")
+        with pytest.raises(ValueError, match=other_error_msg):
+            instance._validate_unexpected_kwargs(
+                'phone', 'phone_number', anonymization=True, order_by='phone_number')
+
+    def test__validate_column_numerical(self):
+        pass
+
+    def test__validate_column_categorical(self):
+        pass
+
+    def test__validate_column_boolean(self):
+        pass
+
+    def test__validate_column_datetime(self):
+        pass
+
+    def test__validate_column_text(self):
+        pass
+
+    def test_add_column(self):
+        pass
+
+    def test_upate_column(self):
+        pass
 
     def test_detect_from_dataframe_raises_value_error(self):
         """Test the ``detect_from_dataframe`` method.
