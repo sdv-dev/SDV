@@ -345,10 +345,14 @@ class TestBaseTabularModel:
             output_file_path=None
         )
 
-    def test__sample_with_progress_bar_show_progress_bar_false(self):
+    @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
+    def test__sample_with_progress_bar_show_progress_bar_false(self, tqdm_mock):
         """Test the ``_sample_with_progress_bar`` method.
 
         If ``show_progress_bar`` is false, then no progress bar should be shown.
+
+        Setup:
+            - Mock tqdm
 
         Input:
             - show_progress_bar set to False
@@ -362,20 +366,23 @@ class TestBaseTabularModel:
         model._sample_in_batches = Mock()
         model._validate_file_path = Mock()
         model._validate_file_path.return_value = None
+        progress_bar_mock = Mock()
+        tqdm_mock.return_value.__enter__.return_value = progress_bar_mock
 
         # Run
         model._sample_with_progress_bar(5, max_tries_per_batch=50, show_progress_bar=False)
 
         # Assert
+        tqdm_mock.assert_called_once_with(total=5, disable=True)
         model._sample_in_batches.assert_called_once_with(
             num_rows=5,
             batch_size=5,
             max_tries_per_batch=50,
-            progress_bar=None,
+            progress_bar=progress_bar_mock,
             output_file_path=None
         )
 
-    def test_sample_batch_hide_progress_bar(self):
+    def test_sample_hide_progress_bar(self):
         """Test the ``sample`` method.
 
         If ``num_rows`` equals the ``batch_size`` and there are no constraints, the
@@ -403,7 +410,7 @@ class TestBaseTabularModel:
         model._sample_with_progress_bar.assert_called_once_with(
             5, True, 100, 5, None, None, show_progress_bar=False)
 
-    def test_sample_batch_show_progress_bar_because_of_constraints(self):
+    def test_sample_show_progress_bar_because_of_constraints(self):
         """Test the ``sample`` method.
 
         If ``num_rows`` equals the ``batch_size`` and there are constraints, the
@@ -428,7 +435,7 @@ class TestBaseTabularModel:
         model._sample_with_progress_bar.assert_called_once_with(
             5, True, 100, 5, None, None, show_progress_bar=True)
 
-    def test_sample_batch_show_progress_bar_because_of_multiple_batches(self):
+    def test_sample_show_progress_bar_because_of_multiple_batches(self):
         """Test the ``sample`` method.
 
         If ``num_rows`` does not equal the ``batch_size``, the ``show_progress_bar`` should be
@@ -552,7 +559,7 @@ class TestBaseTabularModel:
             call(batch_size=5, progress_bar=ANY, output_file_path=None),
             call(batch_size=5, progress_bar=ANY, output_file_path=None),
         ])
-        tqdm_mock.assert_has_calls([call(total=10)])
+        tqdm_mock.assert_has_calls([call(total=10, disable=False)])
         assert len(output) == 10
 
     def test__sample_batch_with_batch_size(self):

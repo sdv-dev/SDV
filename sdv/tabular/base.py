@@ -503,23 +503,13 @@ class BaseTabularModel:
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
 
         try:
-            if show_progress_bar:
-                with tqdm.tqdm(total=num_rows) as progress_bar:
-                    progress_bar.set_description('Sampling rows')
-                    sampled = self._sample_in_batches(
-                        num_rows=num_rows,
-                        batch_size=batch_size,
-                        max_tries_per_batch=max_tries_per_batch,
-                        progress_bar=progress_bar,
-                        output_file_path=output_file_path
-                    )
-
-            else:
+            with tqdm.tqdm(total=num_rows, disable=not show_progress_bar) as progress_bar:
+                progress_bar.set_description('Sampling rows')
                 sampled = self._sample_in_batches(
                     num_rows=num_rows,
                     batch_size=batch_size,
                     max_tries_per_batch=max_tries_per_batch,
-                    progress_bar=None,
+                    progress_bar=progress_bar,
                     output_file_path=output_file_path
                 )
 
