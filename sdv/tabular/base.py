@@ -557,6 +557,8 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
+        show_progress_bar = bool(self.get_metadata()._constraints) or num_rows != batch_size
+
         return self._sample_with_progress_bar(
             num_rows,
             randomize_samples,
@@ -564,7 +566,7 @@ class BaseTabularModel:
             batch_size,
             output_file_path,
             conditions,
-            show_progress_bar=True
+            show_progress_bar=show_progress_bar
         )
 
     def _validate_conditions(self, conditions):

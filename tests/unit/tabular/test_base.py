@@ -360,12 +360,73 @@ class TestBaseTabularModel:
         model = CTGAN()
         model._model = Mock()
         model._sample_in_batches = Mock()
+        model._validate_file_path = Mock()
+        model._validate_file_path.return_value = None
 
         # Run
-        model._sample_with_progress_bar(5, max_tries_per_batch=50)
+        model._sample_with_progress_bar(5, max_tries_per_batch=50, show_progress_bar=False)
 
         # Assert
-        assert model._sample_in_batches.called_once_with(5, max_tries=50, progress_bar=None)
+        model._sample_in_batches.assert_called_once_with(
+            num_rows=5,
+            batch_size=5,
+            max_tries_per_batch=50,
+            progress_bar=None,
+            output_file_path=None
+        )
+
+    def test_sample_batch_hide_progress_bar(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` equals the ``batch_size`` and there are no constraints, the
+        ``show_progress_bar`` should be hidden.
+
+        Setup:
+            - Mock the ``get_metadata`` method to have no constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        metadata_mock = Mock()
+        model.get_metadata.return_value = metadata_mock
+        metadata_mock._constraints = []
+
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=5)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 5, None, None, show_progress_bar=False)
+
+    def test_sample_batch_show_progress_bar_because_of_constraints(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` equals the ``batch_size`` and there are constraints, the
+        ``show_progress_bar`` should be shown.
+
+        Setup:
+            - Mock the ``get_metadata`` method to have constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        model.get_metadata._constraints.return_value = [Mock()]
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=5)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 5, None, None, show_progress_bar=True)
 
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
