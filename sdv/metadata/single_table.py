@@ -1,8 +1,8 @@
 """Single Table Metadata."""
 
-import copy
 import json
 import re
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -66,7 +66,7 @@ class SingleTableMetadata:
             )
         elif order_by not in ('numerical_value', 'alphabetical'):
             raise ValueError(
-                f"Unknown ordering method 'testing' provided for categorical column "
+                "Unknown ordering method 'testing' provided for categorical column "
                 "'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
             )
         elif order and not isinstance(order, list):
@@ -100,7 +100,7 @@ class SingleTableMetadata:
         }
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, actual_kwargs):
-        expected_kwargs = DEFAULT_KWARGS.get(sdtype, ['pii'])
+        expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(list(actual_kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = ', '.join(unexpected_kwargs)
@@ -124,12 +124,40 @@ class SingleTableMetadata:
             self._validate_datetime(column_name, kwargs)
 
     def update_column(self, column_name, **kwargs):
+        """Update an existing column in the ``SingleTableMetadata``.
+
+        Args:
+            column_name (str):
+                The column name to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+
+        Raises:
+            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
+              ``sdtype``.
+        """
         self._validate_column_exists(column_name)
-        sdtype = self._columns[column_name]['sdtype']
+        sdtype = kwargs.get('sdtype') or self._columns[column_name]['sdtype']
         self._vlidate_column(column_name, sdtype, kwargs)
         self._columns[column_name] = deepcopy(kwargs)
 
-    def add_column(column_name, **kwargs):
+    def add_column(self, column_name, **kwargs):
+        """Add a column to the ``SingleTableMetadata``.
+
+        Args:
+            column_name (str):
+                The column name to be added.
+
+            kwargs (type):
+                Any additional key word arguments for the column, where ``sdtype`` is required.
+
+        Raises:
+            - ``ValueError`` if the column already exists.
+            - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
+              ``sdtype``.
+        """
         if column_name in self._columns:
             raise ValueError(
                 f"Column name '{column_name}' already exists. Use 'update_column' "
@@ -208,7 +236,7 @@ class SingleTableMetadata:
             elif value:
                 metadata[key] = value
 
-        return copy.deepcopy(metadata)
+        return deepcopy(metadata)
 
     def _set_metadata_dict(self, metadata):
         """Set a ``metadata`` dictionary to the current instance.
@@ -219,7 +247,7 @@ class SingleTableMetadata:
         """
         self._metadata = {}
         for key in self.KEYS:
-            value = copy.deepcopy(metadata.get(key))
+            value = deepcopy(metadata.get(key))
             if key == 'constraints' and value:
                 value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
 
