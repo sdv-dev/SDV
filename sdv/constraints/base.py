@@ -117,7 +117,7 @@ class Constraint(metaclass=ConstraintMeta):
                 f'Invalid values {invalid_values} are present in {constraint} constraint.'
             ))
 
-        raise Exception(errors)
+        return errors
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.

@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint
-from sdv.constraints.errors import FunctionError, InvalidFunctionError
+from sdv.constraints.errors import FunctionError, InvalidFunctionError, MultipleConstraintsErrors
 from sdv.constraints.utils import (
     cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
 
@@ -99,11 +99,10 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
         @classmethod
         def _validate_inputs(cls, **kwargs):
-            super()._validate_inputs(
-                valid_parameters={'column_names'},
-                constraint='a CustomConstraint',
-                **kwargs
-            )
+            if 'column_names' not in set(kwargs):
+                raise MultipleConstraintsErrors(
+                    "Missing required values {'column_names'} in a CustomConstraint constraint."
+                )
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
@@ -216,11 +215,12 @@ class FixedCombinations(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'column_names'},
             constraint='a FixedCombinations',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors))) 
 
     def __init__(self, column_names):
         if len(column_names) < 2:
@@ -342,11 +342,12 @@ class Inequality(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'high_column_name', 'low_column_name'},
             constraint='an Inequality',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     @staticmethod
     def _validate_init_inputs(low_column_name, high_column_name, strict_boundaries):
@@ -485,11 +486,12 @@ class ScalarInequality(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'relation', 'column_name', 'value'},
             constraint='a ScalarInequality',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     @staticmethod
     def _validate_init_inputs(column_name, value, relation):
@@ -637,11 +639,12 @@ class Positive(ScalarInequality):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = Constraint._validate_inputs(
             valid_parameters={'column_name'},
             constraint='a Positive',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='>' if strict else '>=', value=0)
@@ -663,11 +666,12 @@ class Negative(ScalarInequality):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = Constraint._validate_inputs(
             valid_parameters={'column_name'},
-            constraint='a Negative',
+            constraint='a Positive',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='<' if strict else '<=', value=0)
@@ -694,11 +698,12 @@ class Range(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'high_column_name', 'between_column_name', 'low_column_name'},
             constraint='a Range',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
                  strict_boundaries=True):
@@ -854,11 +859,12 @@ class ScalarRange(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'column_name', 'low_value', 'high_value'},
             constraint='a ScalarRange',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     @staticmethod
     def _validate_init_inputs(low_value, high_value):
@@ -879,7 +885,7 @@ class ScalarRange(Constraint):
     def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
         self.constraint_columns = (column_name,)
         self._column_name = column_name
-        self._validate_inputs(low_value, high_value)
+        self._validate_init_inputs(low_value, high_value)
         self._is_datetime = None
         self._datetime_format = None
         self._low_value = low_value
@@ -1020,11 +1026,12 @@ class FixedIncrements(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'column_name', 'increment'},
             constraint='a FixedIncrements',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:
@@ -1108,11 +1115,12 @@ class OneHotEncoding(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'column_names'},
             constraint='a OneHotEncoding',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_names):
         self._column_names = column_names
@@ -1173,11 +1181,12 @@ class Unique(Constraint):
 
     @classmethod
     def _validate_inputs(cls, **kwargs):
-        super()._validate_inputs(
+        errors = super()._validate_inputs(
             valid_parameters={'column_name'},
             constraint='a Unique',
             **kwargs
         )
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_names):
         self.column_names = column_names

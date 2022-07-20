@@ -4,13 +4,14 @@ import operator
 import uuid
 from datetime import datetime
 from unittest.mock import Mock, patch
+import re
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    FunctionError, InvalidFunctionError, MissingConstraintColumnError)
+    FunctionError, InvalidFunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -63,13 +64,11 @@ class TestCreateCustomConstraint():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_names") in a CustomConstraint constraint.'
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_names'} in a CustomConstraint constraint."
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             constraint = create_custom_constraint(sorted, sorted, sorted)
             constraint._validate_inputs(not_column_name=None, something_else=None)
 
@@ -414,17 +413,13 @@ class TestFixedCombinations():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_names") in a FixedCombinations constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_column_name', 'something_else')"
-                "are present in a FixedCombinations constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_names'} in a FixedCombinations constraint."
+            '\n'
+            "\nInvalid values {'something_else', 'not_column_name'} are present in a FixedCombinations constraint."
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             FixedCombinations._validate_inputs(not_column_name=None, something_else=None)
 
     def test___init__(self):
@@ -810,22 +805,19 @@ class TestInequality():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("high_column_name", "low_column_name")'
-                'in an Inequality constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_high_column', 'not_low_column')"
-                "are present in an Inequality constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'low_column_name', 'high_column_name'}"
+            ' in an Inequality constraint.'
+            '\n'
+            "\nInvalid values {'not_high_column', 'not_low_column'}"
+            ' are present in an Inequality constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             Inequality._validate_inputs(not_high_column=None, not_low_column=None)
 
-    def test__validate_inputs_incorrect_column(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_column(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Ensure the method crashes when one of the passed columns is not a string.
 
@@ -838,12 +830,12 @@ class TestInequality():
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            Inequality._validate_inputs(
+            Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name=['b', 'c'], strict_boundaries=True
             )
 
-    def test__validate_inputs_incorrect_strict_boundaries(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_strict_boundaries(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Ensure the method crashes when ``strict_boundaries`` is not a bool.
 
@@ -856,11 +848,11 @@ class TestInequality():
         """
         # Run / Assert
         with pytest.raises(ValueError):
-            Inequality._validate_inputs(
+            Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name='b', strict_boundaries=None
             )
 
-    @patch('sdv.constraints.tabular.Inequality._validate_inputs')
+    @patch('sdv.constraints.tabular.Inequality._validate_init_inputs')
     def test___init___(self, mock_validate):
         """Test the ``Inequality.__init__`` method.
 
@@ -873,7 +865,7 @@ class TestInequality():
         - _diff_column_name is set to '_low_column_name#_high_column_name'
         - _operator is set to the default np.greater_equal
         - _dtype and _is_datetime are None
-        - _validate_inputs is called once
+        - _validate_init_inputs is called once
         """
         # Run
         instance = Inequality(low_column_name='a', high_column_name='b')
@@ -1296,22 +1288,20 @@ class TestScalarInequality():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("relation", "column_name", "value")'
-                'in a ScalarInequality constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_high_column', 'not_low_column', 'not_relation')"
-                "are present in a ScalarInequality constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'relation', 'column_name', 'value'}" 
+            ' in a ScalarInequality constraint.'
+            '\n'
+            "\nInvalid values {'not_high_column', 'not_low_column'}"
+            ' are present in a ScalarInequality constraint.'
+        )
+
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             ScalarInequality._validate_inputs(not_high_column=None, not_low_column=None)
 
-    def test__validate_inputs_incorrect_column(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_column(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Ensure the method raises an error when the column name is not a string.
 
@@ -1325,10 +1315,10 @@ class TestScalarInequality():
         # Run / Assert
         err_msg = '`column_name` must be a string.'
         with pytest.raises(ValueError, match=err_msg):
-            ScalarInequality._validate_inputs(column_name=['a'], value=1, relation='>')
+            ScalarInequality._validate_init_inputs(column_name=['a'], value=1, relation='>')
 
-    def test__validate_inputs_incorrect_value_datetime(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_value_datetime(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Ensure the method raises an error when the ``value`` is not a ``Datetime`` represented
         as string.
@@ -1344,10 +1334,10 @@ class TestScalarInequality():
         value = pd.to_datetime('2021-02-01')
         err_msg = 'Datetime must be represented as a string.'
         with pytest.raises(ValueError, match=err_msg):
-            ScalarInequality._validate_inputs(column_name='a', value=value, relation='>')
+            ScalarInequality._validate_init_inputs(column_name='a', value=value, relation='>')
 
-    def test__validate_inputs_incorrect_value(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_value(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Ensure the method raises an error when the value is not numerical.
 
@@ -1361,10 +1351,10 @@ class TestScalarInequality():
         # Run / Assert
         err_msg = '`value` must be a number or a string that represents a datetime.'
         with pytest.raises(ValueError, match=err_msg):
-            ScalarInequality._validate_inputs(column_name='a', value='b', relation='>')
+            ScalarInequality._validate_init_inputs(column_name='a', value='b', relation='>')
 
-    def test__validate_inputs_incorrect_relation(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_incorrect_relation(self):
+        """Test the ``_validate_init_inputs`` method.
 
         Raise an error when the relation is not valid.
 
@@ -1378,9 +1368,9 @@ class TestScalarInequality():
         # Run / Assert
         err_msg = '`relation` must be one of the following: `>`, `>=`, `<`, `<=`'
         with pytest.raises(ValueError, match=err_msg):
-            ScalarInequality._validate_inputs(column_name='a', value=1, relation='=')
+            ScalarInequality._validate_init_inputs(column_name='a', value=1, relation='=')
 
-    @patch('sdv.constraints.ScalarInequality._validate_inputs')
+    @patch('sdv.constraints.ScalarInequality._validate_init_inputs')
     def test___init___(self, mock_validate):
         """Test the ``ScalarInequality.__init__`` method.
 
@@ -1396,7 +1386,7 @@ class TestScalarInequality():
         - _diff_column_name is set to 'column_name#diff'
         - _operator is set to the numpy operation corresponding to the input relation
         - _dtype and _is_datetime are None
-        - _validate_inputs is called once
+        - _validate_init_inputs is called once
         """
         # Run
         instance = ScalarInequality(column_name='a', value=1, relation='>')
@@ -1780,17 +1770,14 @@ class TestPositive():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_name") in a Positive constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_column_name', 'something_else')"
-                "are present in a Positive constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_name'} in a Positive constraint." 
+            '\n'
+            "\nInvalid values {'something_else', 'not_column_name'}" 
+            ' are present in a Positive constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             Positive._validate_inputs(not_column_name=None, something_else=None)
 
     def test__init__(self):
@@ -1830,18 +1817,15 @@ class TestNegative():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_name") in a Negative constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_column_name', 'something_else')"
-                "are present in a Negative constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_name'} in a Negative constraint." 
+            '\n'
+            "\nInvalid values {'something_else', 'not_column_name'}" 
+            ' are present in a Negative constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
-            Negative._validate_inputs(not_column_name=None, something_else=None)
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+            Positive._validate_inputs(not_column_name=None, something_else=None)
 
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
@@ -1880,18 +1864,15 @@ class TestRange():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("high_column_name", "between_column_name",'
-                '"low_column_name") in a Range constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_high_column', 'not_low_column')"
-                "are present in a Range constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'between_column_name', 'high_column_name',"
+            " 'low_column_name'} in a Range constraint." 
+            '\n'
+            "\nInvalid values {'not_high_column', 'not_low_column'}"
+            ' are present in a Range constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             Range._validate_inputs(not_high_column=None, not_low_column=None)
 
     def test___init__(self):
@@ -2321,22 +2302,19 @@ class TestScalarRange():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_name", "low_value", "high_value")'
-                'in a ScalarRange constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_high_column', 'not_low_column')"
-                "are present in a ScalarRange constraint."
-            )
-        ]
-        # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        err_msg = re.escape(
+            "Missing required values {'low_value', 'high_value', 'column_name'}"
+            'in a ScalarRange constraint.'
+            '\n'
+            "\nInvalid values {'not_high_column', 'not_low_column'}"
+            ' are present in a ScalarRange constraint.'
+        )
+        # Run / Assert 
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             ScalarRange._validate_inputs(not_high_column=None, not_low_column=None)
 
     def test__validate_init_inputs(self):
-        """Test the ``_validate_inputs`` method.
+        """Test the ``_validate_init_inputs`` method.
 
         The method should raise an error if the inputs are not valid.
 
@@ -2357,10 +2335,10 @@ class TestScalarRange():
             'represents a datetime.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            ScalarRange._validate_inputs(low_value, high_value)
+            ScalarRange._validate_init_inputs(low_value, high_value)
 
-    def test__validate_inputs_datetimes_not_strings(self):
-        """Test the ``_validate_inputs`` method.
+    def test__validate_init_inputs_datetimes_not_strings(self):
+        """Test the ``_validate_init_inputs`` method.
 
         The method should raise an error if the datetimes are not represented as string.
 
@@ -2377,7 +2355,7 @@ class TestScalarRange():
 
         # Run / Assert
         with pytest.raises(ValueError, match='Datetime must be represented as a string.'):
-            ScalarRange._validate_inputs(low_value, high_value)
+            ScalarRange._validate_init_inputs(low_value, high_value)
 
     def test___init__(self):
         """Test the ``ScalarRange.__init__`` method.
@@ -2781,18 +2759,14 @@ class TestOneHotEncoding():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_names")'
-                'in a OneHotEncoding constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_column_names', 'something_else')"
-                "are present in a OneHotEncoding constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_names'} in a OneHotEncoding constraint."
+            '\n'
+            "\nInvalid values {'not_column_names', 'something_else'}"
+            ' are present in a OneHotEncoding constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             OneHotEncoding._validate_inputs(not_column_names=None, something_else=None)
 
     def test_reverse_transform(self):
@@ -2864,15 +2838,14 @@ class TestUnique():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError('Missing required values ("column_names") in a Unique constraint.'),
-            ValueError(
-                "Invalid values ('not_column_name', 'something_else')"
-                "are present in a Unique constraint."
-            )
-        ]
+        err_msg = re.escape(
+            "Missing required values {'column_name'} in a Unique constraint."
+            '\n'
+            "\nInvalid values {'not_column_name', 'something_else'}"
+            ' are present in a Unique constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
             Unique._validate_inputs(not_column_name=None, something_else=None)
 
     def test___init__(self):
@@ -3133,19 +3106,18 @@ class TestFixedIncrements():
         Raises:
         - List of ValueErrors
         """
-        err_msg = [
-            ValueError(
-                'Missing required values ("column_name", "increment")'
-                'in a FixedIncrements constraint.'
-            ),
-            ValueError(
-                "Invalid values ('not_column_names', 'not_increment')"
-                "are present in a FixedIncrements constraint."
-            )
-        ]
+        err_msg = (
+            r'Missing required values {(.*)} in a FixedIncrements constraint.'
+            r'\n\nInvalid values {(.*)} are present in a FixedIncrements constraint.'
+        )
         # Run / Assert
-        with pytest.raises(Exception, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             FixedIncrements._validate_inputs(not_column_names=None, not_increment=None)
+
+        groups = re.search(err_msg, error.value)
+        assert groups is not None
+        assert set(eval(groups(1))) == {'increment', 'column_name'}
+        assert set(eval(groups(2))) == {'not_increment', 'not_column_name'}
 
     def test___init__(self):
         """Test the ``FixedIncrements.__init__`` method.
