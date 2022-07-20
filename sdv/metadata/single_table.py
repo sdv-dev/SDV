@@ -18,6 +18,7 @@ class SingleTableMetadata:
         'numerical': ['representation'],
         'datetime': ['datetime_format'],
         'categorical': ['order', 'order_by'],
+        'boolean': [],
         'text': ['regex_format'],
     }
 
@@ -44,7 +45,7 @@ class SingleTableMetadata:
                 f"Invalid value for 'representation' {representation} for column '{column_name}.")
 
     @staticmethod
-    def _validate_datetime(self, column_name, kwargs):
+    def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
         if datetime_format:
             formated_date = datetime.now().strftime(datetime_format)
@@ -56,7 +57,7 @@ class SingleTableMetadata:
                 )
 
     @staticmethod
-    def _validate_categorical(self, column_name, kwargs):
+    def _validate_categorical(column_name, **kwargs):
         order = kwargs.get('order')
         order_by = kwargs.get('order_by')
         if order and order_by:
@@ -66,8 +67,8 @@ class SingleTableMetadata:
             )
         elif order_by not in ('numerical_value', 'alphabetical'):
             raise ValueError(
-                "Unknown ordering method 'testing' provided for categorical column "
-                "'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
+                f"Unknown ordering method '{order_by}' provided for categorical column "
+                f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
             )
         elif order and not isinstance(order, list):
             raise ValueError(
@@ -76,8 +77,8 @@ class SingleTableMetadata:
             )
 
     @staticmethod
-    def _validate_text(self, column_name, kwargs):
-        regex = kwargs.get('regex')
+    def _validate_text(column_name, **kwargs):
+        regex = kwargs.get('regex_format')
         try:
             re.compile(regex)
         except Exception as exception:
@@ -99,9 +100,9 @@ class SingleTableMetadata:
             'SCHEMA_VERSION': self.SCHEMA_VERSION
         }
 
-    def _validate_unexpected_kwargs(self, column_name, sdtype, actual_kwargs):
+    def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
-        unexpected_kwargs = set(list(actual_kwargs)) - set(expected_kwargs)
+        unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = ', '.join(unexpected_kwargs)
             raise ValueError(
@@ -114,14 +115,18 @@ class SingleTableMetadata:
                 "Use 'add_column'  to add new column."
             )
 
-    def _validate_column(self, column_name, sdtype, kwargs):
-        self._validate_unexpected_kwargs(column_name, sdtype, kwargs)
+    def _validate_column(self, column_name, sdtype, **kwargs):
+        self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         if sdtype == 'categorical':
-            self._validate_categorical(column_name, kwargs)
+            self._validate_categorical(column_name, **kwargs)
         elif sdtype == 'numerical':
-            self._validate_numerical(column_name, kwargs)
+            self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
-            self._validate_datetime(column_name, kwargs)
+            self._validate_datetime(column_name, **kwargs)
+        elif sdtype =='text':
+            self._validate_text(column_name, **kwargs)
+        elif sdtype =='text':
+            self._validate_text(column_name, **kwargs)
 
     def update_column(self, column_name, **kwargs):
         """Update an existing column in the ``SingleTableMetadata``.
@@ -138,9 +143,14 @@ class SingleTableMetadata:
               ``sdtype``.
         """
         self._validate_column_exists(column_name)
-        sdtype = kwargs.get('sdtype') or self._columns[column_name]['sdtype']
-        self._vlidate_column(column_name, sdtype, kwargs)
-        self._columns[column_name] = deepcopy(kwargs)
+        _kwargs = deepcopy(kwargs)
+        if 'sdtype' in kwargs:
+            sdtype = kwargs.pop('sdtype')
+        else:
+            sdtype = self._columns[column_name]['sdtype']
+
+        self._validate_column(column_name, sdtype, **kwargs)
+        self._columns[column_name] = _kwargs
 
     def add_column(self, column_name, **kwargs):
         """Add a column to the ``SingleTableMetadata``.
@@ -170,7 +180,7 @@ class SingleTableMetadata:
                 f"Please provide a 'sdtype' for column '{column_name}'."
             )
 
-        self._validate_column(column_name, kwargs)
+        self._validate_column(column_name, **kwargs)
         self._columns[column_name] = deepcopy(kwargs)
 
     def detect_from_dataframe(self, data):
