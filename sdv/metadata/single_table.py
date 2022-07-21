@@ -52,7 +52,6 @@ class SingleTableMetadata:
             matches = re.findall('(%.)|(%)', formated_date)
             if matches:
                 matches = ', '.join(item for match in matches for item in match if item)
-                matches = ''.join(char if not char.isalnum() else '.' for char in matches)
                 raise ValueError(
                     f"Invalid datetime format string '{matches}' "
                     f"for datetime column '{column_name}'."

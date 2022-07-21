@@ -16,6 +16,37 @@ from sdv.metadata.single_table import SingleTableMetadata
 class TestSingleTableMetadata:
     """Test ``SingleTableMetadata`` class."""
 
+    VALID_KWARGS = [
+        ('age', 'numerical', {}),
+        ('age', 'numerical', {'representation': 'int'}),
+        ('start_date', 'datetime', {}),
+        ('start_date', 'datetime', {'datetime_format': '%Y-%d'}),
+        ('name', 'categorical', {}),
+        ('name', 'categorical', {'order_by': 'alphabetical'}),
+        ('name', 'categorical', {'order': ['a', 'b', 'c']}),
+        ('synthetic', 'boolean', {}),
+        ('phrase', 'text', {}),
+        ('phrase', 'text', {'regex_format': '[A-z]'}),
+        ('phone', 'phone_number', {}),
+        ('phone', 'phone_number', {'pii': True}),
+    ]
+
+    INVALID_KWARGS = [
+        ('age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
+         re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),),
+        ('start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
+         re.escape("Invalid values '(pii)' for datetime column 'start_date'.")),
+        ('name', 'categorical',
+         {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
+         re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")),
+        ('synthetic', 'boolean', {'pii': True},
+         re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")),
+        ('phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
+         re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")),
+        ('phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
+         re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
+    ]
+
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
         # Run
@@ -90,13 +121,8 @@ class TestSingleTableMetadata:
         instance._validate_datetime('start_date', datetime_format='%Y-%m-%d')
         instance._validate_datetime('start_date', datetime_format='%Y-%m-%d - Synthetic')
 
-        error_msg = re.escape(
-            "Invalid datetime format string '%' for datetime column 'start_date'.")
-        with pytest.raises(ValueError, match=error_msg):
-            instance._validate_datetime('start_date', datetime_format='%Y-%m-%d-%')
-
         secondary_match = re.escape(
-            "Invalid datetime format string '%., %.' for datetime column 'start_date'.")
+            "Invalid datetime format string '%1, %0' for datetime column 'start_date'.")
         with pytest.raises(ValueError, match=secondary_match):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%0')
 
@@ -206,7 +232,8 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_column_exists('synthetic')
 
-    def test__validate_unexpected_kwargs(self):
+    @pytest.mark.parametrize('column_name, sdtype, kwargs', VALID_KWARGS)
+    def test__validate_unexpected_kwargs_valid(self, column_name, sdtype, kwargs):
         """Test the ``_validate_unexpected_kwargs`` method.
 
         Setup:
@@ -215,61 +242,35 @@ class TestSingleTableMetadata:
         Input:
             - Column name.
             - sdtype
-
-        Side Effects:
-            ValueError
+            - valid kwargs
         """
         # Setup
         instance = SingleTableMetadata()
 
-        # Run / Assert non raising errors
-        instance._validate_unexpected_kwargs('age', 'numerical')
-        instance._validate_unexpected_kwargs('age', 'numerical', representation='int')
-        instance._validate_unexpected_kwargs('start_date', 'datetime')
-        instance._validate_unexpected_kwargs('start_date', 'datetime', datetime_format='%Y-%d')
-        instance._validate_unexpected_kwargs('name', 'categorical')
-        instance._validate_unexpected_kwargs('name', 'categorical', order_by='alphabetical')
-        instance._validate_unexpected_kwargs('name', 'categorical', order=['a', 'b', 'c'])
-        instance._validate_unexpected_kwargs('synthetic', 'boolean')
-        instance._validate_unexpected_kwargs('phrase', 'text')
-        instance._validate_unexpected_kwargs('phrase', 'text', regex_format='[A-z]')
-        instance._validate_unexpected_kwargs('phone', 'phone_number')
-        instance._validate_unexpected_kwargs('phone', 'phone_number', pii=True)
+        # Run / Assert
+        instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
-        # Run / Assert raising errors
-        numerical_error_msg = re.escape(
-            "Invalid values '(datetime_format, pii)' for numerical column 'age'.")
-        with pytest.raises(ValueError, match=numerical_error_msg):
-            instance._validate_unexpected_kwargs(
-                'age', 'numerical', representation='int', datetime_format=None, pii=True)
+    @pytest.mark.parametrize('column_name, sdtype, kwargs, error_msg', INVALID_KWARGS)
+    def test__validate_unexpected_kwargs_invalid(self, column_name, sdtype, kwargs, error_msg):
+        """Test the ``_validate_unexpected_kwargs`` method.
 
-        datetime_error_msg = re.escape("Invalid values '(pii)' for datetime column 'start_date'.")
-        with pytest.raises(ValueError, match=datetime_error_msg):
-            instance._validate_unexpected_kwargs(
-                'start_date', 'datetime', datetime_format='%Y-%d', pii=True)
+        Setup:
+            - instance of ``SingleTableMetadata``
 
-        categorical_error_msg = re.escape(
-            "Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
-        with pytest.raises(ValueError, match=categorical_error_msg):
-            instance._validate_unexpected_kwargs(
-                'name', 'categorical', pii=True, ordering=['a', 'b'], ordered='numerical_values')
+        Input:
+            - Column name.
+            - sdtype
+            - unexpected kwargs
 
-        boolean_error_msg = re.escape(
-            "Invalid values '(pii)' for boolean column 'synthetic'.")
-        with pytest.raises(ValueError, match=boolean_error_msg):
-            instance._validate_unexpected_kwargs('synthetic', 'boolean', pii=True)
+        Side Effects:
+            - ``ValueError`` is being raised for each sdtype.
+        """
+        # Setup
+        instance = SingleTableMetadata()
 
-        text_error_msg = re.escape(
-            "Invalid values '(anonymization, pii)' for text column 'phrase'.")
-        with pytest.raises(ValueError, match=text_error_msg):
-            instance._validate_unexpected_kwargs(
-                'phrase', 'text', regex_format='[A-z]', pii=True, anonymization=True)
-
-        other_error_msg = re.escape(
-            "Invalid values '(anonymization, order_by)' for phone_number column 'phone'.")
-        with pytest.raises(ValueError, match=other_error_msg):
-            instance._validate_unexpected_kwargs(
-                'phone', 'phone_number', anonymization=True, order_by='phone_number')
+        # Run / Assert
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
