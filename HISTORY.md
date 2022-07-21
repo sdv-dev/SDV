@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.16.0 - 2022-07-20
+## 0.16.0 - 2022-07-21
 
 This release brings user friendly improvements and bug fixes on the `SDV` constraints, to help
 users generate their synthetic data easily.
