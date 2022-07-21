@@ -346,6 +346,121 @@ class TestBaseTabularModel:
         )
 
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
+    def test__sample_with_progress_bar_show_progress_bar_false(self, tqdm_mock):
+        """Test the ``_sample_with_progress_bar`` method.
+
+        If ``show_progress_bar`` is false, then no progress bar should be shown.
+
+        Setup:
+            - Mock tqdm
+
+        Input:
+            - show_progress_bar set to False
+
+        Side effect:
+            - ``_sample_in_batches`` should be called with ``progress_bar`` set to None.
+        """
+        # Setup
+        model = CTGAN()
+        model._model = Mock()
+        model._sample_in_batches = Mock()
+        model._validate_file_path = Mock()
+        model._validate_file_path.return_value = None
+        progress_bar_mock = Mock()
+        tqdm_mock.return_value.__enter__.return_value = progress_bar_mock
+
+        # Run
+        model._sample_with_progress_bar(5, max_tries_per_batch=50, show_progress_bar=False)
+
+        # Assert
+        tqdm_mock.assert_called_once_with(total=5, disable=True)
+        model._sample_in_batches.assert_called_once_with(
+            num_rows=5,
+            batch_size=5,
+            max_tries_per_batch=50,
+            progress_bar=progress_bar_mock,
+            output_file_path=None
+        )
+
+    def test_sample_hide_progress_bar(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` equals the ``batch_size`` and there are no constraints, the
+        ``show_progress_bar`` should be hidden.
+
+        Setup:
+            - Mock the ``get_metadata`` method to have no constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        metadata_mock = Mock()
+        model.get_metadata.return_value = metadata_mock
+        metadata_mock._constraints = []
+
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=5)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 5, None, None, show_progress_bar=False)
+
+    def test_sample_show_progress_bar_because_of_constraints(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` equals the ``batch_size`` and there are constraints, the
+        ``show_progress_bar`` should be shown.
+
+        Setup:
+            - Mock the ``get_metadata`` method to have constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        model.get_metadata._constraints.return_value = [Mock()]
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=5)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 5, None, None, show_progress_bar=True)
+
+    def test_sample_show_progress_bar_because_of_multiple_batches(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` does not equal the ``batch_size``, the ``show_progress_bar`` should be
+        shown.
+
+        Setup:
+            - Mock the ``get_metadata`` method to not have constraints.
+
+        Input:
+            - ``num_rows`` set to same value as ``batch_size``.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        model.get_metadata._constraints.return_value = None
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5, batch_size=1)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, 1, None, None, show_progress_bar=True)
+
+    @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):
         """Test the ``BaseTabularModel.sample`` method with a valid ``num_rows`` argument.
 
@@ -359,16 +474,18 @@ class TestBaseTabularModel:
             - Call ``_sample_batch`` method with the expected number of rows.
         """
         # Setup
-        model = Mock(spec_set=CTGAN)
+        model = CTGAN()
+        model._model = Mock()
         valid_sampled_data = pd.DataFrame({
             'column1': [28, 28, 21, 1, 2],
             'column2': [37, 37, 1, 4, 5],
             'column3': [93, 93, 6, 4, 12],
         })
+        model._sample_in_batches = Mock()
         model._sample_in_batches.return_value = valid_sampled_data
 
         # Run
-        output = BaseTabularModel.sample(model, 5, max_tries_per_batch=50)
+        output = model.sample(5, max_tries_per_batch=50)
 
         # Assert
         assert model._sample_in_batches.called_once_with(5, max_tries=50)
@@ -442,7 +559,7 @@ class TestBaseTabularModel:
             call(batch_size=5, progress_bar=ANY, output_file_path=None),
             call(batch_size=5, progress_bar=ANY, output_file_path=None),
         ])
-        tqdm_mock.assert_has_calls([call(total=10)])
+        tqdm_mock.assert_has_calls([call(total=10, disable=False)])
         assert len(output) == 10
 
     def test__sample_batch_with_batch_size(self):
@@ -840,13 +957,15 @@ class TestBaseTabularModel:
             - ValueError is thrown.
         """
         # Setup
-        model = Mock()
+        model = GaussianCopula()
+        model._validate_file_path = Mock()
         model._validate_file_path.return_value = TMP_FILE_NAME
+        model._sample_in_batches = Mock()
         model._sample_in_batches.side_effect = ValueError('test error')
 
         # Run
         with pytest.raises(ValueError, match='test error'):
-            BaseTabularModel.sample(model, 1, output_file_path=None)
+            model.sample(1, output_file_path=None)
 
         # Assert
         model._sample_in_batches.called_once_with(
