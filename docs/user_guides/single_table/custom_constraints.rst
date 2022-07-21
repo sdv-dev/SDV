@@ -106,7 +106,7 @@ salaries won't necessarily be divisible by 500. Instead we should:
         column_name = column_names[0]
   
         is_included = (transformed_data[exclusion_column] == 0)
-        rounded_data = transformed_data[is_included][column_name].round()
+        rounded_data = transformed_data[is_included][column_name].round(2)
         transformed_data.at[is_included, column_name] = rounded_data
 
         transformed_data[column_name] *= increment
