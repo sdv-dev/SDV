@@ -1,10 +1,10 @@
 """Tests for the sdv.constraints.tabular module."""
 
 import operator
+import re
 import uuid
 from datetime import datetime
 from unittest.mock import Mock, patch
-import re
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ class TestCreateCustomConstraint():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
+        err_msg = (
             "Missing required values {'column_names'} in a CustomConstraint constraint."
         )
         # Run / Assert
@@ -413,14 +413,18 @@ class TestFixedCombinations():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'column_names'} in a FixedCombinations constraint."
-            '\n'
-            "\nInvalid values {'something_else', 'not_column_name'} are present in a FixedCombinations constraint."
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             FixedCombinations._validate_inputs(not_column_name=None, something_else=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a FixedCombinations constraint.'
+            r'\n\nInvalid values {(.*)} are present in a FixedCombinations constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert str(eval(groups.group(1))) == 'column_names'
+        assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
 
     def test___init__(self):
         """Test the ``FixedCombinations.__init__`` method.
@@ -805,16 +809,18 @@ class TestInequality():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'low_column_name', 'high_column_name'}"
-            ' in an Inequality constraint.'
-            '\n'
-            "\nInvalid values {'not_high_column', 'not_low_column'}"
-            ' are present in an Inequality constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             Inequality._validate_inputs(not_high_column=None, not_low_column=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in an Inequality constraint.'
+            r'\n\nInvalid values {(.*)} are present in an Inequality constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert set(eval(groups.group(1))) == {'low_column_name', 'high_column_name'}
+        assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
 
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
@@ -1288,17 +1294,22 @@ class TestScalarInequality():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'relation', 'column_name', 'value'}" 
-            ' in a ScalarInequality constraint.'
-            '\n'
-            "\nInvalid values {'not_high_column', 'not_low_column'}"
-            ' are present in a ScalarInequality constraint.'
-        )
-
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
-            ScalarInequality._validate_inputs(not_high_column=None, not_low_column=None)
+        with pytest.raises(MultipleConstraintsErrors) as error:
+            ScalarInequality._validate_inputs(
+                not_high_column=None, not_low_column=None, relation='+')
+
+        err_msg = (
+            r'Missing required values {(.*)} in a ScalarInequality constraint.'
+            r'\n\nInvalid values {(.*)} are present in a ScalarInequality constraint.'
+            r'\n\nInvalid relation value {(.*)} in a ScalarInequality constraint.'
+            " The relation must be one of: '>', '>=', '<' or '<='."
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert set(eval(groups.group(1))) == {'column_name', 'value'}
+        assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+        assert str(eval(groups.group(3))) == '+'
 
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
@@ -1770,15 +1781,18 @@ class TestPositive():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'column_name'} in a Positive constraint." 
-            '\n'
-            "\nInvalid values {'something_else', 'not_column_name'}" 
-            ' are present in a Positive constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             Positive._validate_inputs(not_column_name=None, something_else=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a Positive constraint.'
+            r'\n\nInvalid values {(.*)} are present in a Positive constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert str(eval(groups.group(1))) == 'column_name'
+        assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
 
     def test__init__(self):
         """Test the ``Positive.__init__`` method.
@@ -1817,15 +1831,18 @@ class TestNegative():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'column_name'} in a Negative constraint." 
-            '\n'
-            "\nInvalid values {'something_else', 'not_column_name'}" 
-            ' are present in a Negative constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
-            Positive._validate_inputs(not_column_name=None, something_else=None)
+        with pytest.raises(MultipleConstraintsErrors) as error:
+            Negative._validate_inputs(not_column_name=None, something_else=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a Negative constraint.'
+            r'\n\nInvalid values {(.*)} are present in a Negative constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert str(eval(groups.group(1))) == 'column_name'
+        assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
 
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
@@ -1864,16 +1881,19 @@ class TestRange():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'between_column_name', 'high_column_name',"
-            " 'low_column_name'} in a Range constraint." 
-            '\n'
-            "\nInvalid values {'not_high_column', 'not_low_column'}"
-            ' are present in a Range constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             Range._validate_inputs(not_high_column=None, not_low_column=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a Range constraint.'
+            r'\n\nInvalid values {(.*)} are present in a Range constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert set(eval(groups.group(1))) == {
+            'between_column_name', 'high_column_name', 'low_column_name'}
+        assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
 
     def test___init__(self):
         """Test the ``Range.__init__`` method.
@@ -2302,16 +2322,18 @@ class TestScalarRange():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'low_value', 'high_value', 'column_name'}"
-            'in a ScalarRange constraint.'
-            '\n'
-            "\nInvalid values {'not_high_column', 'not_low_column'}"
-            ' are present in a ScalarRange constraint.'
-        )
-        # Run / Assert 
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        # Run / Assert
+        with pytest.raises(MultipleConstraintsErrors) as error:
             ScalarRange._validate_inputs(not_high_column=None, not_low_column=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a ScalarRange constraint.'
+            r'\n\nInvalid values {(.*)} are present in a ScalarRange constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert set(eval(groups.group(1))) == {'low_value', 'high_value', 'column_name'}
+        assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
 
     def test__validate_init_inputs(self):
         """Test the ``_validate_init_inputs`` method.
@@ -2759,15 +2781,18 @@ class TestOneHotEncoding():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'column_names'} in a OneHotEncoding constraint."
-            '\n'
-            "\nInvalid values {'not_column_names', 'something_else'}"
-            ' are present in a OneHotEncoding constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             OneHotEncoding._validate_inputs(not_column_names=None, something_else=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a OneHotEncoding constraint.'
+            r'\n\nInvalid values {(.*)} are present in a OneHotEncoding constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert str(eval(groups.group(1))) == 'column_names'
+        assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
 
     def test_reverse_transform(self):
         """Test the ``OneHotEncoding.reverse_transform`` method.
@@ -2838,15 +2863,18 @@ class TestUnique():
         Raises:
         - List of ValueErrors
         """
-        err_msg = re.escape(
-            "Missing required values {'column_name'} in a Unique constraint."
-            '\n'
-            "\nInvalid values {'not_column_name', 'something_else'}"
-            ' are present in a Unique constraint.'
-        )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(MultipleConstraintsErrors) as error:
             Unique._validate_inputs(not_column_name=None, something_else=None)
+
+        err_msg = (
+            r'Missing required values {(.*)} in a Unique constraint.'
+            r'\n\nInvalid values {(.*)} are present in a Unique constraint.'
+        )
+        groups = re.search(err_msg, str(error.value))
+        assert groups is not None
+        assert str(eval(groups.group(1))) == 'column_name'
+        assert set(eval(groups.group(2))) == {'not_column_name', 'something_else'}
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -3109,15 +3137,19 @@ class TestFixedIncrements():
         err_msg = (
             r'Missing required values {(.*)} in a FixedIncrements constraint.'
             r'\n\nInvalid values {(.*)} are present in a FixedIncrements constraint.'
+            r'\n\nInvalid increment value {(.*)} in a FixedIncrements constraint.'
+            ' Increments must be positive integers.'
         )
         # Run / Assert
         with pytest.raises(MultipleConstraintsErrors) as error:
-            FixedIncrements._validate_inputs(not_column_names=None, not_increment=None)
+            FixedIncrements._validate_inputs(
+                not_column_name=None, increment=-1, something_else=None)
 
-        groups = re.search(err_msg, error.value)
+        groups = re.search(err_msg, str(error.value))
         assert groups is not None
-        assert set(eval(groups(1))) == {'increment', 'column_name'}
-        assert set(eval(groups(2))) == {'not_increment', 'not_column_name'}
+        assert str(eval(groups.group(1))) == 'column_name'
+        assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+        assert int(eval(groups.group(3))) == -1
 
     def test___init__(self):
         """Test the ``FixedIncrements.__init__`` method.

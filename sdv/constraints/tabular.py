@@ -220,7 +220,7 @@ class FixedCombinations(Constraint):
             constraint='a FixedCombinations',
             **kwargs
         )
-        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors))) 
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_names):
         if len(column_names) < 2:
@@ -491,6 +491,14 @@ class ScalarInequality(Constraint):
             constraint='a ScalarInequality',
             **kwargs
         )
+
+        if 'relation' in kwargs and kwargs['relation'] not in {'>', '>=', '<', '<='}:
+            wrong_relation = {kwargs['relation']}
+            errors.append(
+                f'Invalid relation value {wrong_relation} in a ScalarInequality constraint.'
+                " The relation must be one of: '>', '>=', '<' or '<='."
+            )
+
         raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     @staticmethod
@@ -668,7 +676,7 @@ class Negative(ScalarInequality):
     def _validate_inputs(cls, **kwargs):
         errors = Constraint._validate_inputs(
             valid_parameters={'column_name'},
-            constraint='a Positive',
+            constraint='a Negative',
             **kwargs
         )
         raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
@@ -1031,6 +1039,14 @@ class FixedIncrements(Constraint):
             constraint='a FixedIncrements',
             **kwargs
         )
+
+        if 'increment' in kwargs and kwargs['increment'] <= 0:
+            wrong_increment = {kwargs['increment']}
+            errors.append(
+                f'Invalid increment value {wrong_increment} in a FixedIncrements constraint.'
+                ' Increments must be positive integers.'
+            )
+
         raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_name, increment_value):
