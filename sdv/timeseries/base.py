@@ -258,7 +258,8 @@ class BaseTimeseriesModel:
 
             context = pd.DataFrame(index=range(num_sequences or 1))
         elif context is None:
-            context = self._context_model.sample(num_sequences, output_file_path='disable')
+            context = self._context_model._sample_with_progress_bar(
+                num_sequences, output_file_path='disable', show_progress_bar=False)
             for column in self._entity_columns or []:
                 if column not in context:
                     context[column] = range(len(context))
