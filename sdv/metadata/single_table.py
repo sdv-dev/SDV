@@ -15,11 +15,11 @@ class SingleTableMetadata:
     """Single Table Metadata class."""
 
     _EXPECTED_KWARGS = {
-        'numerical': ['representation'],
-        'datetime': ['datetime_format'],
-        'categorical': ['order', 'order_by'],
-        'boolean': [],
-        'text': ['regex_format'],
+        'numerical': frozenset(['representation']),
+        'datetime': frozenset(['datetime_format']),
+        'categorical': frozenset(['order', 'order_by']),
+        'boolean': frozenset([]),
+        'text': frozenset(['regex_format']),
     }
 
     _DTYPES_TO_SDTYPES = {
@@ -30,12 +30,18 @@ class SingleTableMetadata:
         'M': 'datetime',
     }
 
-    _NUMERICAL_REPRESENTATIONS = [
+    _NUMERICAL_REPRESENTATIONS = frozenset([
         'int', 'int64', 'int32', 'int16', 'int8',
         'uint', 'uint64', 'uint32', 'uint16', 'uint8',
         'float', 'float64', 'float32', 'float16', 'float8',
-    ]
-    KEYS = ['columns', 'primary_key', 'alternate_keys', 'constraints', 'SCHEMA_VERSION']
+    ])
+    _KEYS = frozenset([
+        'columns',
+        'primary_key',
+        'alternate_keys',
+        'constraints',
+        'SCHEMA_VERSION'
+    ])
     SCHEMA_VERSION = 'SINGLE_TABLE_V1'
 
     def _validate_numerical(self, column_name, **kwargs):
@@ -263,7 +269,7 @@ class SingleTableMetadata:
                 Python dictionary representing a ``SingleTableMetadata`` object.
         """
         self._metadata = {}
-        for key in self.KEYS:
+        for key in self._KEYS:
             value = deepcopy(metadata.get(key))
             if key == 'constraints' and value:
                 value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]

@@ -47,12 +47,6 @@ class TestSingleTableMetadata:
          re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
     ]
 
-    NUMERICAL_REPRESENTATIONS = [
-        'int', 'int64', 'int32', 'int16', 'int8',
-        'uint', 'uint64', 'uint32', 'uint16', 'uint8',
-        'float', 'float64', 'float32', 'float16', 'float8',
-    ]
-
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
         # Run
@@ -71,7 +65,6 @@ class TestSingleTableMetadata:
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
-
 
     def test__validate_numerical_default_and_invalid(self):
         """Test the ``_validate_numerical`` method.
@@ -99,7 +92,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_numerical('age', representation=36)
 
-    @pytest.mark.parametrize('representation', NUMERICAL_REPRESENTATIONS)
+    @pytest.mark.parametrize('representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
     def test__validate_numerical_representations(self, representation):
         """Test the ``_validate_numerical`` method.
 
