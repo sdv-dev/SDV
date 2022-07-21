@@ -50,7 +50,7 @@ class SingleTableMetadata:
         if datetime_format:
             try:
                 formated_date = datetime.now().strftime(datetime_format)
-            except ValueError as exception:
+            except Exception as exception:
                 raise ValueError(
                     f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
