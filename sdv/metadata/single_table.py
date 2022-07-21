@@ -48,12 +48,18 @@ class SingleTableMetadata:
     def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
         if datetime_format:
-            formated_date = datetime.now().strftime(datetime_format)
+            try:
+                formated_date = datetime.now().strftime(datetime_format)
+            except ValueError as exception:
+                raise ValueError(
+                    f"Invalid datetime format string '{datetime_format}' "
+                    f"for datetime column '{column_name}'."
+                ) from exception
+
             matches = re.findall('(%.)|(%)', formated_date)
             if matches:
-                matches = ', '.join(item for match in matches for item in match if item)
                 raise ValueError(
-                    f"Invalid datetime format string '{matches}' "
+                    f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
                 )
 
