@@ -122,7 +122,7 @@ class TestSingleTableMetadata:
         instance._validate_datetime('start_date', datetime_format='%Y-%m-%d - Synthetic')
 
         error_msg = re.escape(
-            "Invalid datetime format string '%1-%Y-%m-%d-%0' for datetime column 'start_date'.")
+            "Invalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'start_date'.")
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
 
