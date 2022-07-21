@@ -47,6 +47,12 @@ class TestSingleTableMetadata:
          re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
     ]
 
+    NUMERICAL_REPRESENTATIONS = [
+        'int', 'int64', 'int32', 'int16', 'int8',
+        'uint', 'uint64', 'uint32', 'uint16', 'uint8',
+        'float', 'float64', 'float32', 'float16', 'float8',
+    ]
+
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
         # Run
@@ -66,7 +72,35 @@ class TestSingleTableMetadata:
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
 
-    def test__validate_numerical(self):
+
+    def test__validate_numerical_default_and_invalid(self):
+        """Test the ``_validate_numerical`` method.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+            - list of accepted representations.
+
+        Input:
+            - Column name.
+            - sdtype numerical
+            - representation
+
+        Side Effects:
+            - Passes when no ``representation`` is provided
+            - ``ValueError`` is raised stating that the ``representation`` is not supported.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_numerical('age')
+
+        error_msg = re.escape("Invalid value for 'representation' 36 for column 'age'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_numerical('age', representation=36)
+
+    @pytest.mark.parametrize('representation', NUMERICAL_REPRESENTATIONS)
+    def test__validate_numerical_representations(self, representation):
         """Test the ``_validate_numerical`` method.
 
         Setup:
@@ -84,20 +118,9 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        representations = [
-            'int', 'int64', 'int32', 'int16', 'int8',
-            'uint', 'uint64', 'uint32', 'uint16', 'uint8'
-            'float', 'float64', 'float32', 'float16', 'float8'
-        ]
 
         # Run / Assert
-        instance._validate_numerical('age')
-        for representation in representations:
-            instance._validate_numerical('age', representation=representation)
-
-        error_msg = re.escape("Invalid value for 'representation' 36 for column 'age'.")
-        with pytest.raises(ValueError, match=error_msg):
-            instance._validate_numerical('age', representation=36)
+        instance._validate_numerical('age', representation=representation)
 
     def test__validate_datetime(self):
         """Test the ``_validate_datetime`` method.

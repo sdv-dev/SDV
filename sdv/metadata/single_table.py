@@ -29,18 +29,18 @@ class SingleTableMetadata:
         'b': 'boolean',
         'M': 'datetime',
     }
+
+    _NUMERICAL_REPRESENTATIONS = [
+        'int', 'int64', 'int32', 'int16', 'int8',
+        'uint', 'uint64', 'uint32', 'uint16', 'uint8',
+        'float', 'float64', 'float32', 'float16', 'float8',
+    ]
     KEYS = ['columns', 'primary_key', 'alternate_keys', 'constraints', 'SCHEMA_VERSION']
     SCHEMA_VERSION = 'SINGLE_TABLE_V1'
 
-    @staticmethod
-    def _validate_numerical(column_name, **kwargs):
-        representations = [
-            'int', 'int64', 'int32', 'int16', 'int8',
-            'uint', 'uint64', 'uint32', 'uint16', 'uint8'
-            'float', 'float64', 'float32', 'float16', 'float8'
-        ]
+    def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('representation')
-        if representation and representation not in representations:
+        if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
             raise ValueError(
                 f"Invalid value for 'representation' {representation} for column '{column_name}'.")
 
