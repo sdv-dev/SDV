@@ -425,7 +425,9 @@ class TestBaseTabularModel:
         # Setup
         model = CTGAN()
         model.get_metadata = Mock()
-        model.get_metadata._constraints.return_value = [Mock()]
+        metadata_mock = Mock()
+        model.get_metadata.return_value = metadata_mock
+        metadata_mock._constraints = [Mock()]
         model._sample_with_progress_bar = Mock()
 
         # Run
@@ -450,7 +452,9 @@ class TestBaseTabularModel:
         # Setup
         model = CTGAN()
         model.get_metadata = Mock()
-        model.get_metadata._constraints.return_value = None
+        metadata_mock = Mock()
+        model.get_metadata.return_value = metadata_mock
+        metadata_mock._constraints = None
         model._sample_with_progress_bar = Mock()
 
         # Run
@@ -459,6 +463,33 @@ class TestBaseTabularModel:
         # Assert
         model._sample_with_progress_bar.assert_called_once_with(
             5, True, 100, 1, None, None, show_progress_bar=True)
+
+    def test_sample_hide_progress_bar_because_batch_size_is_none(self):
+        """Test the ``sample`` method.
+
+        If ``num_rows`` does not equal the ``batch_size``, but the ``batch_size`` is None,
+        the ``show_progress_bar`` should be hidden.
+
+        Setup:
+            - Mock the ``get_metadata`` method to not have constraints.
+
+        Input:
+            - ``num_rows`` set.
+        """
+        # Setup
+        model = CTGAN()
+        model.get_metadata = Mock()
+        metadata_mock = Mock()
+        model.get_metadata.return_value = metadata_mock
+        metadata_mock._constraints = []
+        model._sample_with_progress_bar = Mock()
+
+        # Run
+        model.sample(5)
+
+        # Assert
+        model._sample_with_progress_bar.assert_called_once_with(
+            5, True, 100, None, None, None, show_progress_bar=False)
 
     @patch('sdv.tabular.base.tqdm.tqdm', spec=tqdm.tqdm)
     def test_sample_valid_num_rows(self, tqdm_mock):

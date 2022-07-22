@@ -547,7 +547,9 @@ class BaseTabularModel:
             pandas.DataFrame:
                 Sampled data.
         """
-        show_progress_bar = bool(self.get_metadata()._constraints) or num_rows != batch_size
+        has_constraints = bool(self.get_metadata()._constraints)
+        has_batches = batch_size is not None and batch_size != num_rows
+        show_progress_bar = has_constraints or has_batches
 
         return self._sample_with_progress_bar(
             num_rows,
