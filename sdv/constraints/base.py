@@ -4,7 +4,6 @@ import copy
 import importlib
 import inspect
 import logging
-import warnings
 
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
@@ -12,6 +11,7 @@ from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -91,45 +91,41 @@ class Constraint(metaclass=ConstraintMeta):
     This class is not intended to be used directly and should rather be
     subclassed to create different types of constraints.
 
-    If ``handling_strategy`` is passed with the value ``transform``
-    or ``reject_sampling``, the ``filter_valid`` or ``transform`` and
-    ``reverse_transform`` methods will be replaced respectively by a simple
-    identity function.
-
     Attributes:
         constraint_columns (tuple[str]):
             The names of the columns used by this constraint.
-        rebuild_columns (typle[str]):
+        rebuild_columns (tuple[str]):
             The names of the columns that this constraint will rebuild during
             ``reverse_transform``.
-    Args:
-        handling_strategy (str):
-            How this Constraint should be handled, which can be ``transform``,
-            ``reject_sampling`` or ``all``.
-        fit_columns_model (bool):
-            If False, reject sampling will be used to handle conditional sampling.
-            Otherwise, a model will be trained and used to sample other columns
-            based on the conditioned column.
     """
 
     constraint_columns = ()
-    rebuild_columns = ()
     _hyper_transformer = None
-    _columns_model = None
 
-    def _identity(self, table_data):
-        return table_data
+    def _validate_data_meets_constraint(self, table_data):
+        """Make sure the given data is valid for the constraint.
 
-    def __init__(self, handling_strategy, fit_columns_model=False):
-        self.fit_columns_model = fit_columns_model
-        if handling_strategy == 'transform':
-            self.filter_valid = self._identity
-        elif handling_strategy == 'reject_sampling':
-            self.rebuild_columns = ()
-            self.transform = self._identity
-            self.reverse_transform = self._identity
-        elif handling_strategy != 'all':
-            raise ValueError('Unknown handling strategy: {}'.format(handling_strategy))
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Raises:
+            ConstraintsNotMetError:
+                If the table data is not valid for the provided constraints.
+        """
+        if set(self.constraint_columns).issubset(table_data.columns.values):
+            is_valid_data = self.is_valid(table_data)
+            if not is_valid_data.all():
+                constraint_data = table_data[list(self.constraint_columns)]
+                invalid_rows = constraint_data[~is_valid_data]
+                err_msg = (
+                    f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
+                    f'{invalid_rows[:5]}'
+                )
+                if len(invalid_rows) > 5:
+                    err_msg += f'\n+{len(invalid_rows) - 5} more'
+
+                raise ConstraintsNotMetError(err_msg)
 
     def _fit(self, table_data):
         del table_data
@@ -137,126 +133,14 @@ class Constraint(metaclass=ConstraintMeta):
     def fit(self, table_data):
         """Fit ``Constraint`` class to data.
 
-        If ``fit_columns_model`` is True, then this method will fit
-        a ``GaussianCopula`` model to the relevant columns in ``table_data``.
-        Subclasses can overwrite this method, or overwrite the ``_fit`` method
-        if they will not be needing the model to handle conditional sampling.
-
         Args:
             table_data (pandas.DataFrame):
                 Table data.
         """
         self._fit(table_data)
-
-        if self.fit_columns_model and len(self.constraint_columns) > 1:
-            data_to_model = table_data[list(self.constraint_columns)]
-            self._hyper_transformer = HyperTransformer(default_data_type_transformers={
-                'categorical': 'OneHotEncodingTransformer',
-            })
-            transformed_data = self._hyper_transformer.fit_transform(data_to_model)
-            self._columns_model = GaussianMultivariate(
-                distribution=GaussianUnivariate
-            )
-            self._columns_model.fit(transformed_data)
+        self._validate_data_meets_constraint(table_data)
 
     def _transform(self, table_data):
-        return table_data
-
-    def _reject_sample(self, num_rows, conditions):
-        sampled = self._columns_model.sample(
-            num_rows=num_rows,
-            conditions=conditions
-        )
-        sampled = self._hyper_transformer.reverse_transform(sampled)
-        valid_rows = sampled[self.is_valid(sampled)]
-        counter = 0
-        total_sampled = num_rows
-
-        while len(valid_rows) < num_rows:
-            num_valid = len(valid_rows)
-            if counter >= 100:
-                if len(valid_rows) == 0:
-                    error = 'Could not get enough valid rows within 100 trials.'
-                    raise ValueError(error)
-                else:
-                    multiplier = num_rows // num_valid
-                    num_rows_missing = num_rows % num_valid
-                    remainder_rows = valid_rows.iloc[0:num_rows_missing, :]
-                    valid_rows = pd.concat([valid_rows] * multiplier + [remainder_rows],
-                                           ignore_index=True)
-                    break
-
-            remaining = num_rows - num_valid
-            valid_probability = (num_valid + 1) / (total_sampled + 1)
-            max_rows = num_rows * 10
-            num_to_sample = min(int(remaining / valid_probability), max_rows)
-            total_sampled += num_to_sample
-            new_sampled = self._columns_model.sample(
-                num_rows=num_to_sample,
-                conditions=conditions
-            )
-            new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
-            new_valid_rows = new_sampled[self.is_valid(new_sampled)]
-            valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
-            counter += 1
-
-        return valid_rows.iloc[0:num_rows, :]
-
-    def _sample_constraint_columns(self, table_data):
-        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        grouped_conditions = table_data[condition_columns].groupby(condition_columns)
-        all_sampled_rows = list()
-        for group, df in grouped_conditions:
-            if not isinstance(group, tuple):
-                group = [group]
-
-            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
-            sampled_rows = self._reject_sample(
-                num_rows=df.shape[0],
-                conditions=transformed_condition
-            )
-            all_sampled_rows.append(sampled_rows)
-
-        sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
-        return sampled_data
-
-    def _validate_constraint_columns(self, table_data):
-        """Validate the columns in ``table_data``.
-
-        If ``fit_columns_model`` is False and any columns in ``constraint_columns``
-        are not present in ``table_data``, this method will raise a
-        ``MissingConstraintColumnError``. Otherwise it will return the ``table_data``
-        unchanged. If ``fit_columns_model`` is True, then this method will sample
-        any missing ``constraint_columns`` from its model conditioned on the
-        ``constraint_columns`` that ``table_data`` does contain. If ``table_data``
-        doesn't contain any of the ``constraint_columns`` then a
-        ``MissingConstraintColumnError`` will be raised.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-        """
-        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
-        if missing_columns:
-            if not self._columns_model:
-                warning_message = (
-                    'When `fit_columns_model` is False and we are conditioning on a subset '
-                    'of the constraint columns, conditional sampling uses reject sampling '
-                    'which can be slow. Changing `fit_columns_model` to True can improve '
-                    'the performance.'
-                )
-                warnings.warn(warning_message, UserWarning)
-
-            all_columns_missing = len(missing_columns) == len(self.constraint_columns)
-            if self._columns_model is None or all_columns_missing:
-                raise MissingConstraintColumnError()
-
-            else:
-                sampled_data = self._sample_constraint_columns(table_data)
-                other_columns = [c for c in table_data.columns if c not in self.constraint_columns]
-                sampled_data[other_columns] = table_data[other_columns]
-                return sampled_data
-
         return table_data
 
     def transform(self, table_data):
@@ -267,7 +151,8 @@ class Constraint(metaclass=ConstraintMeta):
         should overwrite the ``_transform`` method instead. This method raises a
         ``MissingConstraintColumnError`` if the ``table_data`` is missing any columns
         needed to do the transformation. If columns are present, this method will call
-        the ``_transform`` method.
+        the ``_transform`` method. If ``_transform`` fails, the data will be returned
+        unchanged.
 
         Args:
             table_data (pandas.DataFrame):
@@ -277,7 +162,11 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        table_data = self._validate_constraint_columns(table_data)
+        table_data = table_data.copy()
+        missing_columns = [col for col in self.constraint_columns if col not in table_data.columns]
+        if missing_columns:
+            raise MissingConstraintColumnError(missing_columns=missing_columns)
+
         return self._transform(table_data)
 
     def fit_transform(self, table_data):
@@ -294,8 +183,15 @@ class Constraint(metaclass=ConstraintMeta):
         self.fit(table_data)
         return self.transform(table_data)
 
+    def _reverse_transform(self, table_data):
+        return table_data
+
     def reverse_transform(self, table_data):
-        """Identity method for completion. To be optionally overwritten by subclasses.
+        """Handle logic around reverse transforming constraints.
+
+        If the ``transform`` method was skipped, then this method should be too.
+        Otherwise attempt to reverse transform and if that fails, return the data
+        unchanged to fall back on reject sampling.
 
         Args:
             table_data (pandas.DataFrame):
@@ -305,7 +201,8 @@ class Constraint(metaclass=ConstraintMeta):
             pandas.DataFrame:
                 Input data unmodified.
         """
-        return table_data
+        table_data = table_data.copy()
+        return self._reverse_transform(table_data)
 
     def is_valid(self, table_data):
         """Say whether the given table rows are valid.
@@ -396,3 +293,103 @@ class Constraint(metaclass=ConstraintMeta):
                 constraint_dict[key] = obj
 
         return constraint_dict
+
+
+class ColumnsModel:
+    """ColumnsModel class.
+
+    The ``ColumnsModel`` class enables the usage of conditional sampling when a column is a
+    ``constraint``.
+    """
+
+    _columns_model = None
+
+    def __init__(self, constraint, constraint_columns):
+        if isinstance(constraint_columns, list):
+            self.constraint_columns = constraint_columns
+        else:
+            self.constraint_columns = [constraint_columns]
+
+        self.constraint = constraint
+
+    def fit(self, table_data):
+        """Fit the ``ColumnsModel``.
+
+        Fit a ``GaussianUnivariate`` model to the ``self.constraint_column`` columns in the
+        ``table_data`` in order to sample those columns when missing.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+        """
+        data_to_model = table_data[self.constraint_columns]
+        self._hyper_transformer = HyperTransformer(
+            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
+        )
+        transformed_data = self._hyper_transformer.fit_transform(data_to_model)
+        self._model = GaussianMultivariate(distribution=GaussianUnivariate)
+        self._model.fit(transformed_data)
+
+    def _reject_sample(self, num_rows, conditions):
+        sampled = self._model.sample(num_rows=num_rows, conditions=conditions)
+        sampled = self._hyper_transformer.reverse_transform(sampled)
+        valid_rows = sampled[self.constraint.is_valid(sampled)]
+        counter = 0
+        total_sampled = num_rows
+
+        while len(valid_rows) < num_rows:
+            num_valid = len(valid_rows)
+            if counter >= 100:
+                if len(valid_rows) == 0:
+                    raise ValueError('Could not get enough valid rows within 100 trials.')
+                else:
+                    multiplier = num_rows // num_valid
+                    num_rows_missing = num_rows % num_valid
+                    remainder_rows = valid_rows.iloc[0:num_rows_missing, :]
+                    valid_rows = pd.concat([valid_rows] * multiplier + [remainder_rows],
+                                           ignore_index=True)
+                    break
+
+            remaining = num_rows - num_valid
+            valid_probability = (num_valid + 1) / (total_sampled + 1)
+            max_rows = num_rows * 10
+            num_to_sample = min(int(remaining / valid_probability), max_rows)
+            total_sampled += num_to_sample
+            new_sampled = self._model.sample(num_rows=num_to_sample, conditions=conditions)
+            new_sampled = self._hyper_transformer.reverse_transform(new_sampled)
+            new_valid_rows = new_sampled[self.constraint.is_valid(new_sampled)]
+            valid_rows = pd.concat([valid_rows, new_valid_rows], ignore_index=True)
+            counter += 1
+
+        return valid_rows.iloc[0:num_rows, :]
+
+    def sample(self, table_data):
+        """Sample any missing columns.
+
+        Sample any missing columns, ``self.constraint_columns``, that ``table_data``
+        does not contain.
+
+        Args:
+            table_data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Table data with additional ``constraint_columns``.
+        """
+        condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
+        grouped_conditions = table_data[condition_columns].groupby(condition_columns)
+        all_sampled_rows = list()
+        for group, df in grouped_conditions:
+            if not isinstance(group, tuple):
+                group = [group]
+
+            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
+            sampled_rows = self._reject_sample(
+                num_rows=df.shape[0],
+                conditions=transformed_condition
+            )
+            all_sampled_rows.append(sampled_rows)
+
+        sampled_data = pd.concat(all_sampled_rows, ignore_index=True)
+        return sampled_data

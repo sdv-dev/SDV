@@ -156,14 +156,15 @@ def test_conditional_sampling_numerical():
     assert list(sampled.column1) == [1.0] * 5
 
 
-def test_unique_combination_constraint():
+def test_fixed_combination_constraint():
+    # Setup
     employees = load_tabular_demo()
-
-    fixed_company_department_constraint = FixedCombinations(
-        column_names=['company', 'department'],
-        handling_strategy='transform'
-    )
-
+    fixed_company_department_constraint = FixedCombinations(column_names=['company', 'department'])
     model = CTGAN(constraints=[fixed_company_department_constraint])
+
+    # Run
     model.fit(employees)
-    model.sample(10)
+    sampled = model.sample(10)
+
+    # Assert
+    assert all(fixed_company_department_constraint.is_valid(sampled))

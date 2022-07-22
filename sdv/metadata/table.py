@@ -3,15 +3,16 @@
 import copy
 import json
 import logging
+import warnings
 
 import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
 
-from sdv.constraints.base import Constraint
-from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.errors import ConstraintsNotMetError
+from sdv.constraints import Constraint
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.metadata.errors import MetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -103,8 +104,6 @@ class Table:
     """
 
     _hyper_transformer = None
-    _fakers = None
-    _constraint_instances = None
     _fields_metadata = None
     fitted = False
 
@@ -246,32 +245,16 @@ class Table:
             })
 
     @staticmethod
-    def _prepare_constraints(constraints):
+    def _load_constraints(constraints):
         constraints = constraints or []
-        rebuild_columns = set()
-        transform_constraints = []
-        reject_sampling_constraints = []
+        loaded_constraints = []
         for constraint in constraints:
-            if isinstance(constraint, type):
-                constraint = constraint().to_dict()
-            elif isinstance(constraint, Constraint):
-                constraint = constraint.to_dict()
-
-            constraint = Constraint.from_dict(constraint)
-
-            if not constraint.rebuild_columns:
-                reject_sampling_constraints.append(constraint)
-            elif rebuild_columns & set(constraint.constraint_columns):
-                intersecting_columns = rebuild_columns & set(constraint.constraint_columns)
-                raise Exception('Multiple constraints will modify the same column(s): '
-                                f'"{intersecting_columns}", which may lead to the constraint '
-                                'being unenforceable. Please use "reject_sampling" as the '
-                                '"handling_strategy" instead.')
+            if isinstance(constraint, dict):
+                loaded_constraints.append(Constraint.from_dict(constraint))
             else:
-                transform_constraints.append(constraint)
-                rebuild_columns.update(constraint.rebuild_columns)
+                loaded_constraints.append(constraint)
 
-        return reject_sampling_constraints + transform_constraints
+        return loaded_constraints
 
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
@@ -289,7 +272,8 @@ class Table:
         self._sequence_index = sequence_index
         self._entity_columns = entity_columns or []
         self._context_columns = context_columns or []
-        self._constraints = self._prepare_constraints(constraints)
+        self._constraints = self._load_constraints(constraints)
+        self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
         self._update_transformer_templates(rounding, min_value, max_value)
@@ -442,9 +426,58 @@ class Table:
 
         return transformers
 
-    def _fit_transform_constraints(self, data):
+    def _fit_constraints(self, data):
+        errors = []
         for constraint in self._constraints:
-            data = constraint.fit_transform(data)
+            try:
+                constraint.fit(data)
+            except Exception as e:
+                errors.append(e)
+
+        if errors:
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+
+    def _transform_constraints(self, data, is_condition=False):
+        errors = []
+        if not is_condition:
+            self._constraints_to_reverse = []
+
+        for constraint in self._constraints:
+            try:
+                data = constraint.transform(data)
+                if not is_condition:
+                    self._constraints_to_reverse.append(constraint)
+
+            except (MissingConstraintColumnError, FunctionError) as e:
+                if isinstance(e, MissingConstraintColumnError):
+                    warnings.warn(
+                        f'{constraint.__class__.__name__} cannot be transformed because columns: '
+                        f'{e.missing_columns} were not found. Using the reject sampling approach '
+                        'instead.'
+                    )
+                else:
+                    warnings.warn(
+                        f'Error transforming {constraint.__class__.__name__}. '
+                        'Using the reject sampling approach instead.'
+                    )
+                if is_condition:
+                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
+                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
+                    data = data.drop(columns_to_drop, axis=1)
+
+            except Exception as e:
+                errors.append(e)
+
+        if errors:
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+
+        return data
+
+    def _fit_transform_constraints(self, data):
+        # Fit and validate all constraints first because `transform` might change columns
+        # making the following constraints invalid
+        self._fit_constraints(data)
+        data = self._transform_constraints(data)
 
         return data
 
@@ -592,61 +625,16 @@ class Table:
         self._fit_hyper_transformer(constrained, extra_columns)
         self.fitted = True
 
-    def _transform_constraints(self, data, on_missing_column='error'):
-        for constraint in self._constraints:
-            try:
-                data = constraint.transform(data)
-            except MissingConstraintColumnError:
-                if on_missing_column == 'error':
-                    raise MissingConstraintColumnError()
-
-                elif on_missing_column == 'drop':
-                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
-                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
-                    data = data.drop(columns_to_drop, axis=1)
-
-                else:
-                    raise ValueError('on_missing_column must be \'drop\' or \'error\'')
-
-        return data
-
-    def _validate_data_on_constraints(self, data):
-        """Make sure the given data is valid for the given constraints.
-
-        Args:
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            None
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
-        """
-        for constraint in self._constraints:
-            if set(constraint.constraint_columns).issubset(data.columns.values):
-                if not constraint.is_valid(data).all():
-                    raise ConstraintsNotMetError('Data is not valid for the given constraints')
-
-    def transform(self, data, on_missing_column='error'):
+    def transform(self, data, is_condition=False):
         """Transform the given data.
 
         Args:
             data (pandas.DataFrame):
                 Table data.
-            on_missing_column (str):
-                If the value is error, then a `MissingConstraintColumnError` is raised.
-                If the value is drop, then the columns involved in the constraint that
-                are present in data will be dropped.
 
         Returns:
             pandas.DataFrame:
                 Transformed data.
-
-        Raises:
-            ConstraintsNotMetError:
-                If the table data is not valid for the provided constraints.
         """
         if not self.fitted:
             raise MetadataNotFittedError()
@@ -655,10 +643,8 @@ class Table:
         LOGGER.debug('Anonymizing table %s', self.name)
         data = self._anonymize(data[fields])
 
-        self._validate_data_on_constraints(data)
-
         LOGGER.debug('Transforming constraints for table %s', self.name)
-        data = self._transform_constraints(data, on_missing_column)
+        data = self._transform_constraints(data, is_condition)
 
         LOGGER.debug('Transforming table %s', self.name)
         try:
@@ -701,7 +687,7 @@ class Table:
         except rdt.errors.NotFittedError:
             reversed_data = data
 
-        for constraint in reversed(self._constraints):
+        for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
 
         for name, field_metadata in self._fields_metadata.items():
@@ -712,6 +698,9 @@ class Table:
                 field_data = pd.Series(Table._get_fake_values(field_metadata, len(reversed_data)))
             else:
                 field_data = reversed_data[name]
+
+            if field_metadata['type'] == 'numerical' and field_metadata['subtype'] == 'integer':
+                field_data = field_data.round()
 
             reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
 

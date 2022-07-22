@@ -5,24 +5,8 @@ Tabular Constraints
 
 .. currentmodule:: sdv.constraints
 
-CustomConstraint
-~~~~~~~~~~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   CustomConstraint
-   CustomConstraint.fit
-   CustomConstraint.transform
-   CustomConstraint.fit_transform
-   CustomConstraint.reverse_transform
-   CustomConstraint.is_valid
-   CustomConstraint.filter_valid
-   CustomConstraint.from_dict
-   CustomConstraint.to_dict
-
 FixedCombinations
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -37,24 +21,40 @@ FixedCombinations
    FixedCombinations.from_dict
    FixedCombinations.to_dict
 
-GreaterThan
+Inequality
+~~~~~~~~~~
+
+.. autosummary::
+   :toctree: api/
+
+   Inequality
+   Inequality.fit
+   Inequality.transform
+   Inequality.fit_transform
+   Inequality.reverse_transform
+   Inequality.is_valid
+   Inequality.filter_valid
+   Inequality.from_dict
+   Inequality.to_dict
+
+ScalarInequality
 ~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   GreaterThan
-   GreaterThan.fit
-   GreaterThan.transform
-   GreaterThan.fit_transform
-   GreaterThan.reverse_transform
-   GreaterThan.is_valid
-   GreaterThan.filter_valid
-   GreaterThan.from_dict
-   GreaterThan.to_dict
+   ScalarInequality
+   ScalarInequality.fit
+   ScalarInequality.transform
+   ScalarInequality.fit_transform
+   ScalarInequality.reverse_transform
+   ScalarInequality.is_valid
+   ScalarInequality.filter_valid
+   ScalarInequality.from_dict
+   ScalarInequality.to_dict
 
 Positive
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -70,7 +70,7 @@ Positive
    Positive.to_dict
 
 Negative
-~~~~~~~~~~~~~~~~
+~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -85,56 +85,40 @@ Negative
    Negative.from_dict
    Negative.to_dict
 
-ColumnFormula
-~~~~~~~~~~~~~~~~
+Range
+~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   ColumnFormula
-   ColumnFormula.fit
-   ColumnFormula.transform
-   ColumnFormula.fit_transform
-   ColumnFormula.reverse_transform
-   ColumnFormula.is_valid
-   ColumnFormula.filter_valid
-   ColumnFormula.from_dict
-   ColumnFormula.to_dict
+   Range
+   Range.fit
+   Range.transform
+   Range.fit_transform
+   Range.reverse_transform
+   Range.is_valid
+   Range.filter_valid
+   Range.from_dict
+   Range.to_dict
 
-Between
-~~~~~~~
-
-.. autosummary::
-   :toctree: api/
-
-   Between
-   Between.fit
-   Between.transform
-   Between.fit_transform
-   Between.reverse_transform
-   Between.is_valid
-   Between.filter_valid
-   Between.from_dict
-   Between.to_dict
-
-Rounding
-~~~~~~~~
+ScalarRange
+~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
 
-   Rounding
-   Rounding.fit
-   Rounding.transform
-   Rounding.fit_transform
-   Rounding.reverse_transform
-   Rounding.is_valid
-   Rounding.filter_valid
-   Rounding.from_dict
-   Rounding.to_dict
+   ScalarRange
+   ScalarRange.fit
+   ScalarRange.transform
+   ScalarRange.fit_transform
+   ScalarRange.reverse_transform
+   ScalarRange.is_valid
+   ScalarRange.filter_valid
+   ScalarRange.from_dict
+   ScalarRange.to_dict
 
 OneHotEncoding
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: api/
@@ -150,7 +134,7 @@ OneHotEncoding
    OneHotEncoding.to_dict
 
 Unique
-~~~~~~~~~~~~~~~~
+~~~~~~
 
 .. autosummary::
    :toctree: api/

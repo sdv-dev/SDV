@@ -892,7 +892,7 @@ class TestMetadata(TestCase):
         - Constraints for the given table
         Side Effects:
         - An entry is added to the metadata for the provided table, which contains
-          the given fields and constrants.
+          the given fields and constraints.
         """
         # Setup
         metadata = Mock(spec_set=Metadata)
@@ -906,12 +906,11 @@ class TestMetadata(TestCase):
         }
         constraints = [
             {
-                'constraint': 'sdv.constraints.tabular.GreaterThan',
+                'constraint': 'sdv.constraints.tabular.Inequality',
                 'columns': [
                     'a_field',
                     'b_field',
                 ],
-                'handling_strategy': 'transform',
             }
         ]
 
@@ -930,12 +929,11 @@ class TestMetadata(TestCase):
             },
             'constraints': [
                 {
-                    'constraint': 'sdv.constraints.tabular.GreaterThan',
+                    'constraint': 'sdv.constraints.tabular.Inequality',
                     'columns': [
                         'a_field',
                         'b_field',
                     ],
-                    'handling_strategy': 'transform',
                 },
             ]
         }

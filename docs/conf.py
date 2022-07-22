@@ -33,17 +33,20 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
+    'sphinx_toolbox.collapse'
 ]
 
 ipython_execlines = [
+    "from utils import is_valid, transform, reverse_transform",
     "import pandas as pd",
     "pd.set_option('display.width', 1000000)",
-    "pd.set_option('max_columns', 1000)",
+    "pd.set_option('display.max_columns', 1000)",
 ]
 
 autosummary_generate = True
@@ -135,7 +138,7 @@ html_context = {
 html_theme_options = {
     "github_url": "https://github.com/sdv-dev/SDV",
     "twitter_url": "https://twitter.com/sdv_dev",
-    "slack_url": "https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw",
+    "slack_url": "https://bit.ly/sdv-slack-invite",
     "show_prev_next": True,
     "google_analytics_id": "UA-180602145-3",
 }

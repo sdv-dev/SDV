@@ -52,6 +52,7 @@ development_requires = [
     'docutils>=0.12,<0.18',
     'm2r2>=0.2.5,<0.3',
     'nbsphinx>=0.5.0,<0.7',
+    'sphinx_toolbox>=2.5,<3',
     'Sphinx>=3,<3.3',
     'pydata-sphinx-theme<0.5',
     'markupsafe<2.1.0',
@@ -113,6 +114,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.15.0',
+    version='0.16.0.dev6',
     zip_safe=False,
 )

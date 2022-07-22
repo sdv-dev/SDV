@@ -1,37 +1,27 @@
 .. _handling_constraints:
 
-Handling Constraints
-====================
+Inputting Business Logic Using Constraints
+==========================================
 
-A very common scenario that we face when working with tabular data is
-finding columns that have very particular relationships between them
-which are very hard to model and easily confuse the Tabular Models.
+Do you have rules in your dataset that every row in the data must follow? You can use constraints
+to describe business logic to any of the SDV single table models.
 
-Some simple examples of these scenarios include:
+The SDV has predefined constraints that are commonly found in datasets. For example:
 
--  A table that has the columns ``country`` and ``city``: In such
-   scenario, it might be very hard to learn which country each city
-   belongs to, and when sampling probabilistically, the model is likely
-   to end up generating invalid country/city combinations.
--  A table that contains both the ``age`` and the ``date of birth`` of a
-   user. The model will learn the age and date of birth distributions
-   and mostly generate valid combinations, but in some cases it might
-   end up giving back ages that do not correspond to the given date of
-   birth.
 
-These kind of special relationships between columns are called
-``Constraints``, and **SDV** provides a very powerful and flexible
-mechanism to take them into account and guarantee that the sampled data
-always respects them.
+- Fixing combinations. Your table might have two different columns for city and country. The
+  values in those columns should not be shuffled because that would result in incorrect locations
+  (eg. Paris USA or London Italy).
+- Comparing inequalities. Your table might have two different columns for an employee's start_date
+  and end_date that are related to each other: The start_date must always come before the end_date.
 
-Let us explore a few ``Constraint`` examples and learn how to handle
-them:
+In this guide, we'll walk through the usage of each predefined constraint.
 
 Load a Tabular Demo
 -------------------
 
-We will start by loading a small table that contains data with some
-constraints:
+To illustrate some of the constraints, let's load a small table that contains some details
+about employees from several companies.
 
 .. ipython:: python
     :okwarning:
@@ -41,92 +31,22 @@ constraints:
     employees = load_tabular_demo()
     employees
 
-
-This step loaded a simple table that gives us some basic details about
-simulated employees from several companies.
-
-If we observe the data closely we will find a few **constraints**:
-
-1. There should be at most one ``employee_id`` for every employee
-   at a ``company``.
-2. Each ``company`` has employees from two or more ``departments``, but
-   ``department`` names are different across ``companies``. This implies
-   that a ``company`` should only be paired with its own ``departments``
-   and never with the ``departments`` of other ``companies``.
-3. We have an ``age`` column that represents the age of the employee at
-   the date when the data was created and an ``age_when_joined`` that
-   represents the age of the employee when they joined the ``company``.
-   Since all of them joined the ``company`` before the data was created,
-   the ``age_when_joined`` will always be equal or lower than the
-   ``age`` column.
-4. We have a ``years_in_the_company`` column that indicates how many
-   years passed since they joined the company, which means that the
-   ``years_in_the_company`` will always be equal to the ``age`` minus
-   the ``age_when_joined``.
-5. We have a ``salary`` column that should always be rounded to 2
-   decimal points.
-6. The ``age`` column is bounded, since realistically an employee can only be
-   so old (or so young).
-7. The ``full_time``, ``part_time`` and ``contractor`` columns
-   are related in such a way that one of them will always be one and the others
-   zero, since the employee must be part of one of the three categories.
-
-How does SDV Handle Constraints?
---------------------------------
-
-**SDV** handles constraints using two different strategies:
-
-Transform Strategy
-~~~~~~~~~~~~~~~~~~
-
-When using this strategy, **SDV** applies a transformation to the data
-before learning it in a way that allows the model to better capture the
-data properties. For example, if we have one column that needs to be
-always greater than the other one, SDV can do the following:
-
-1. Replace the higher column with the difference between the two
-   columns, which will always be positive.
-2. Model the transformed data and sample new values.
-3. Recompute the value of the high column by adding the values of the
-   lower column to it.
-
-The **Transform** strategy is very efficient and does not affect the
-speed of the modeling and sampling process, but in some cases might
-affect the quality of the learning process or simply not be possible.
-
-Reject Sampling Strategy
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the cases where applying a **Transform** strategy is not possible or
-may affect the quality of the learning process, **SDV** can apply a
-**Reject Sampling** strategy.
-
-When using this strategy, **SDV** validates the sampled rows, discards
-the ones that do not adjust to the constraint, and re-samples them. This
-process is repeated until enough rows have been sampled.
-
+This table contains a few rules that can be written as predefined constraints. We'll use it as an
+example when describing the constraints.
 
 Predefined Constraints
 ----------------------
 
-Let us go back to the demo data that we loaded before and define
-**Constraints** that indicate **SDV** how to work with this data.
+Unique
+~~~~~~
 
-Unique Constraint
-~~~~~~~~~~~~~~~~~
+The Unique constraint enforces that the values in column (or set of columns) are unique within the
+entire table.
 
-Sometimes a table may have a column that is not the primary key, but still needs
-to be unique throughout the table. In some cases, there may even be a collection
-of columns for which each unique combination of their values can only show up once
-in the table. The ``Unique`` constraint enforces that the provided column(s) at
-most have one instance of each possible combination of values in the synthetic data.
+In our demo table, there is a Unique constraint: Within a company, all the employee ids must be
+unique.
 
-As an example, let us apply this constraint to the ``employee_id`` and ``company``
-columns, since the ``employee_id`` should be unique for each ``company``.
-
-To use this constraint, we must make an instance and provide:
-
-- The name of the column or a list of names of columns that need to have unique values
+Enforce this by creating a Unique constraint. This object accepts a list of 1 or more column names.
 
 .. ipython:: python
     :okwarning:
@@ -134,23 +54,25 @@ To use this constraint, we must make an instance and provide:
     from sdv.constraints import Unique
 
     unique_employee_id_company_constraint = Unique(
-        columns=['employee_id', 'company']
+        column_names=['employee_id', 'company']
     )
 
-FixedCombinations Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. note::
+    The SDV already ensures that primary keys are unique in the dataset. You do not need to add
+    a Unique constraint on these columns.
 
-The next constraint that we will explore is the ``FixedCombinations``
-constraint.
+FixedCombinations
+~~~~~~~~~~~~~~~~~
 
-This Constraint class can handle the situation number 1 indicated above,
-in which the values of a set of columns can only be combined exactly as
-seen in the original data, and new combinations are not accepted. In
-order to use this constraint we will need to import it from the
-``sdv.constraints`` module and create an instance of it indicating:
+The FixedCombinations constraint enforces that the combinations between a set of columns are fixed.
+That is, no other permutations or shuffling is allowed other than what's already observed in the
+real data.
 
--  the names of the affected columns
--  which strategy we want to use: ``transform`` or ``reject_sampling``
+In our demo table, there is a FixedCombinations constraint: Each company has a fixed set of
+departments. The company and department values should not be shuffled in the synthetic data.
+
+Enforce this by creating a FixedCombinations constraint. This object accepts a list of 2 or
+more column names.
 
 .. ipython:: python
     :okwarning:
@@ -158,219 +80,187 @@ order to use this constraint we will need to import it from the
     from sdv.constraints import FixedCombinations
 
     fixed_company_department_constraint = FixedCombinations(
-        column_names=['company', 'department'],
-        handling_strategy='transform'
+        column_names=['company', 'department']
     )
 
-GreaterThan Constraint
-~~~~~~~~~~~~~~~~~~~~~~
+Inequality
+~~~~~~~~~~
 
-The second constraint that we need for our data is the ``GreaterThan``
-constraint. This constraint guarantees that one column is always greater
-than the other one. In order to use it, we need to create an instance
-passing:
+The Inequality constraint enforces an inequality relationship between a pair of columns.
+For every row, the value in one column must be greater than a value in another.
 
--  the name of the ``low`` column
--  the name of the ``high`` column
--  the handling strategy that we want to use
+In our demo table, there is an Inequality constraint: The current age of an employee must be
+greater than or equal to the age they were when they joined.
+
+Enforce this by creating an Inequality constraint. This object accepts column names for the high
+and low columns. The columns can be either numerical or datetime.
 
 .. ipython:: python
     :okwarning:
 
-    from sdv.constraints import GreaterThan
+    from sdv.constraints import Inequality
 
-    age_gt_age_when_joined_constraint = GreaterThan(
-        low='age_when_joined',
-        high='age',
-        handling_strategy='reject_sampling'
+    age_gt_age_when_joined_constraint = Inequality(
+        low_column_name='age_when_joined',
+        high_column_name='age'
     )
 
-The ``GreaterThan`` constraint can also be used to guarantee a column is greater
-or lower than a scalar value or specific datetime value instead of another column. 
-To use this functionality, we can pass:
+ScalarInequality
+~~~~~~~~~~~~~~~~
 
--  the scalar value for ``low`` or the scalar value for ``high``
--  a flag indicating whether ``low`` or ``high`` is a scalar
+The ScalarInequality constraint enforces that all values in a column are greater or less than a
+fixed (scalar) value. That is, it enforces a lower or upper bound to the synthetic data.
+
+In our demo table, we can define a ScalarInequality constraint: All employees must be 18 or older.
+
+Enforce this by creating a ScalarInequality constraint. This object accepts a numerical or
+datetime column name and value. It also expects an inequality relation that must be one of
+">", ">=", "<" or "<=".
 
 .. ipython:: python
     :okwarning:
 
-    salary_gt_30000_constraint = GreaterThan(
-        low=30000,
-        high='salary',
-        scalar='low',
-        handling_strategy='reject_sampling'
+    from sdv.constraints import ScalarInequality
+
+    age_gt_18 = ScalarInequality(
+        column_name='age',
+        relation='>=',
+        value=18
     )
 
 .. note::
-    If you want to indicate that the column must be *lower than* a scalar value, 
-    all you need to do is invert the arguments, pass the scalar value as the ``high`` 
-    argument, the column name as the ``low`` argument, and set the `scalar` flag to ``"high"``.
+    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
+    on all columns. This constraint is redundant if you set these model parameters.
 
-Optionally, when constructing ``GreaterThan`` constraint we can specify 
-more than a single column in either the ``high`` or ``low`` arguments. 
-For example, we can create a ``GreaterThan`` constraint that that ensures 
-that both the years in the company and prior years of experience is more 
-than one year.
+Positive and Negative
+~~~~~~~~~~~~~~~~~~~~~
 
-.. ipython:: python
-    :okwarning:
+The Positive and Negative constraints are shortcuts to the ScalarInequality constraint when
+the column's values must be >0 or <0.
 
-    experience_years_gt_one_constraint = GreaterThan(
-        low=1,
-        high=['years_in_the_company', 'prior_years_experience'],
-        scalar='low',
-        handling_strategy='reject_sampling'
-    )
+In our demo table, we can define a Positive constraint: All employee ages must be positive.
 
-.. warning::
-
-    Warning! Passing a list of columns to the `high` or `low` arguments is only possible 
-    when the other one has been passed as a single column name or scalar value! If you need 
-    to compare multiple ``high`` columns against multiple ``low`` columns (or vice versa), 
-    you need to decompose one of the ends, ``high`` or ``low``, into multiple single column
-    names and define one ``GreaterThan`` constraint for each one of them.
-
-
-Positive and Negative Constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Similar to the ``GreaterThan`` constraint, we can use the ``Positive``
-or ``Negative`` constraints. These constraints enforce that the specified
-column(s) are always positive or negative. We can create an instance passing:
-
-- the name of the column(s) for ``Negative`` or ``Positive`` constraints
-- a boolean specifying whether to make the data strictly above or below 0, 
-  or include 0 as a possible value
-- the handling strategy that we want to use
+Enforce this by creating a Positive constraint. This object accepts a numerical column name.
+(The Negative constraint works the same way.)
 
 .. ipython:: python
-    :okwarning:
 
     from sdv.constraints import Positive
 
-    positive_age_constraint = Positive(
-        columns='age',
-        strict=False,
-        handling_strategy='reject_sampling'
-    )
+    age_positive = Positive(column_name='age')
 
-ColumnFormula Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. note::
+    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
+    on all columns. This constraint is redundant if you set these model parameters.
 
-In some cases, one column will need to be computed based on the other
-columns using a custom formula. This is, for example, what happens with
-the ``years_in_the_company`` column in our demo data, which will always
-need to be computed based on the ``age`` and ``age_when_joined`` columns
-by subtracting them. In these cases, we need to define a custom function
-that defines how to compute the value of the column:
+OneHotEncoding
+~~~~~~~~~~~~~~
 
-.. ipython:: python
-    :okwarning:
+The OneHotEncoding constraint enforces that a set of columns follow a
+`one hot encoding scheme <https://en.wikipedia.org/wiki/One-hot#Machine_learning_and_statistics>`__
+. That is, exactly one of the columns must contain a value of 1 while all the others must be 0.
 
-    def years_in_the_company(data):
-        return data['age'] - data['age_when_joined']
+In our demo table, we have a OneHotEncoding constraint: An employee can only be one of: full time,
+part time or contractor. That is, only 1 of these columns must be 1 while the others must be a 0.
 
-Once we have defined this function, we can use the ``ColumnFormula``
-constraint by passing it:
-
--  the name of the column that we want to generate
--  the function that generates the column values
--  the handling strategy that we want to use
+Enforce this by creating a OneHotEncoding constraint. The object accepts a list of column names
+that, together, are part of the one hot encoding scheme.
 
 .. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import ColumnFormula
-
-    years_in_the_company_constraint = ColumnFormula(
-        column='years_in_the_company',
-        formula=years_in_the_company,
-        handling_strategy='transform'
-    )
-
-Rounding Constraint
-~~~~~~~~~~~~~~~~~~~
-
-In order for data to be realistic, we also might want to round data
-to a certain number of digits. To do this, we can use the Rounding
-Constraint. We will pass this constraint:
-
--  the name of the column(s) that should be rounded.
--  the number of digits each column should be rounded to.
--  the handling strategy that we want to use
--  (optional) if reject sampling, we can customize the threshold of
-   the sampled values.
-
-.. ipython:: python
-    :okwarning:
-
-    from sdv.constraints import Rounding
-
-    salary_rounding_constraint = Rounding(
-        columns='salary',
-        digits=2,
-        handling_strategy='transform'
-    )
-
-Between Constraint
-~~~~~~~~~~~~~~~~~~
-
-Another possibility is the ``Between`` constraint. It guarantees
-that one column is always in between two other columns/values. For example,
-the ``age`` column in our demo data is realistically bounded to the ages of
-15 and 90 since acual employees won't be too young or too old.
-
-In order to use it, we need to create an instance passing:
-
--  the name of the ``low`` column or a scalar value to be used as the lower bound
--  the name of the ``high`` column or a scalar value to be used as the upper bound
--  the handling strategy that we want to use
-
-.. ipython:: python
-    :okwarning:
-    
-    from sdv.constraints import Between
-
-    reasonable_age_constraint = Between(
-        column='age',
-        low=15,
-        high=90,
-        handling_strategy='transform'
-    )
-
-OneHotEncoding Constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Another constraint available is the ``OneHotEncoding`` constraint.
-This constraint allows the user to specify a list of columns where each row 
-is a one hot vector. Then, the constraint will make sure that the output
-of the model is transformed so that the column with the largest value is
-set to 1 while all other columns are set to 0. To apply the constraint we
-need to create an instance passing:
-
-- A list of the names of the columns of interest
-- The strategy we want to use (``transform`` is recommended)
-
-.. ipython:: python
-    :okwarning:
 
     from sdv.constraints import OneHotEncoding
 
-    one_hot_constraint = OneHotEncoding(
-        columns=['full_time', 'part_time', 'contractor']
+    job_category_constraint = OneHotEncoding(
+        column_names=['full_time', 'part_time', 'contractor']
     )
 
-Using the Constraints
----------------------
+FixedIncrements
+~~~~~~~~~~~~~~~
 
-Now that we have defined the constraints needed to properly describe our
-dataset, we can pass them to the Tabular Model of our choice. For
-example, let us create a ``GaussianCopula`` model passing it the
-constraints that we just defined as a ``list``:
+The FixedIncrements constraint enforces that all the values in a column are increments of a
+particular, fixed value. That is, all the data must be divisible by the value.
+
+We do not have a FixedIncrements constraint in our demo table. But we can imagine a table where
+all the salary values must be divisible by 500.
+
+Enforce this by creating a FixedIncrements constraint. This object accepts a numerical column
+name and an increment value that must be an integer greater than 1.
 
 .. ipython:: python
-    :okwarning:
+
+    from sdv.constraints import FixedIncrements
+
+    # this constraint does not actually exist in the demo dataset
+    salary_divisble_by_500 = FixedIncrements(
+        column_name='salary',
+        increment_value=500
+    )
+
+Range
+~~~~~
+
+The Range constraint enforces that for all rows, the value of one of the columns is bounded by
+the values in the other two columns.
+
+We do not have a Range constraint in our demo table. But we can imagine a table where an
+employee's age is bounded by the age when they first started working and an age when they will
+retire.
+
+Enforce this by creating a Range constraint. This object accepts high, middle and low column names.
+The columns can be either numerical or datetime.
+
+.. ipython:: python
+
+    from sdv.constraints import Range
+
+    # this constraint does not actually exist in the demo dataset
+    age_btwn_joined_retirement = Range(
+        low_column_name='age_started_working',
+        middle_column_name='age_today',
+        high_column_name='age_when_retiring'
+    )
+
+.. note::
+    This constraint assumes strict bounds between the low, middle and high column names.
+    That is: low < middle < high. You can express other business logic using a multiple
+    Inequality and ScalarInequality constraints.
+
+ScalarRange
+~~~~~~~~~~~
+
+The ScalarRange constraint enforces that all the values in a column are in between two known,
+fixed values. That is, it enforces upper and lower bounds to the data.
+
+In our demo table, we can define a ScalarRange constraint: All employees must be between the
+ages of 18 and 100.
+
+Enforce this by creating a ScalarRange constraint. This object accepts a numerical or datetime
+column name and the low and high values. It also accepts a boolean that describes whether the
+ranges are strict (exclusive) or not (inclusive).
+
+.. ipython:: python
+
+    from sdv.constraints import ScalarRange
+
+    age_btwn_18_100 = ScalarRange(
+        column_name='age',
+        low_value=18,
+        high_value=100,
+        strict_boundaries=False
+    )
+
+.. note::
+    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
+    on all columns. This constraint is redundant if you set these model parameters.
+
+Applying the Constraints
+------------------------
+
+Once you have defined the constraints, you can use them in any SDV single table model
+(TabularPreset, GaussianCopula, CopulaGAN, CTGAN and TVAE). Use the constraints parameter
+to pass in the objects a list.
+
+.. ipython:: python
 
     from sdv.tabular import GaussianCopula
 
@@ -378,30 +268,113 @@ constraints that we just defined as a ``list``:
         unique_employee_id_company_constraint,
         fixed_company_department_constraint,
         age_gt_age_when_joined_constraint,
-        salary_gt_30000_constraint,
-        experience_years_gt_one_constraint,	
-        positive_age_constraint,	
-        years_in_the_company_constraint,	
-        salary_rounding_constraint,	
-        reasonable_age_constraint,	
-        one_hot_constraint
+        job_category_constraint,
+        age_btwn_18_100
     ]
 
-    gc = GaussianCopula(constraints=constraints)
+    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
 
-After creating the model, we can just fit and sample as usual:
-
-.. ipython:: python
-    :okwarning:
-
-    gc.fit(employees)
-
-    sampled = gc.sample(10)
-
-And observe that the sampled rows really adjust to the constraints that
-we defined:
+Then you can fit the model using the real data. During this process, the SDV ensures that the
+model learns the constraints.
 
 .. ipython:: python
     :okwarning:
 
-    sampled
+    model.fit(employees)
+
+.. warning::
+    The constraints must accurately describe the data. Constraints are business rules that must be
+    followed by every row of your data. If the real data does not fully meet the constraint, the
+    model will not be able to learn it well. The SDV will throw an error.
+
+Finally, you can sample synthetic data. Observe that every row in the synthetic data adheres to
+the constraints.
+
+.. ipython:: python
+
+    synthetic_data = model.sample(num_rows=10)
+    synthetic_data
+
+FAQs
+----
+
+.. warning::
+    **Constraints may slow down the synthetic data model & leak privacy.** Before adding a
+    constraint to your model, carefully consider whether it is necessary.  Here are a few questions
+    to ask:
+
+    - How do I plan to use the synthetic data? Without the constraint, the rule may still be valid
+      a majority of the time. Only add the constraint if you require 100% adherence.
+    - Who do I plan to share the synthetic data with? Consider whether they will be able to use
+      the business rule to uncover sensitive information about the real data.
+    - How did the rule come to be? In some cases, there may be other data sources that are present
+      without extra columns and rules.
+
+    In the ideal case, there are only a handful constraints you are applying to your model.
+
+.. collapse:: When do constraints affect the modeling & sampling performance?
+
+    In most cases, the time it takes to fit the model and sample synthetic data should not be
+    significantly affected if you add a few constraints. However, there are certain scenarios
+    where you may notice a slow-down:
+
+    - You have a large number of constraints that overlap. That is, multiple constraints are
+      referencing the same column(s) in the data.
+
+    - Your constrained data has a high cardinality. For example, you have a categorical column
+      with hundreds of possible categories that you are using in a FixedCombinations constraint.
+
+    - You are conditional sampling on a constrained column. This requires some special processing
+      and it may not always be possible to efficiently create conditional synthetic data.
+
+    For any questions or feature requests related to performance, please create an issue describing
+    your data, constraints and sampling needs.
+
+.. collapse:: What happened to Rounding and ColumnFormula?
+
+    Rounding and ColumnFormula constraints were available in older versions of the SDV. These
+    constraints are no longer included as predefined constraints because there are other ways
+    to achieve the same logic:
+
+    - **Rounding**: All SDV single table models contain a 'rounding' parameter. By default, they
+      learn the number of decimal digits in your data and enforce that the synthetic data has the
+      same.
+
+    - **ColumnFormula**: In this version of the SDV, you can implement a formula as a
+      CustomConstraint. See the Defining Custom Constraints guide for more details.
+
+.. collapse:: Why am I getting a ConstraintsNotMetError when I try to fit my data?
+
+    A constraint should describe a rule that is true for every row in your real data. If any rows
+    in the real data violate the rule, the SDV will throw a ConstraintsNotMetError. Since the
+    constraint is not true in your real data, the model will not be able to learn it.
+
+    If you see this error, you have two options:
+
+    - (recommended) Remove the constraint. This ensures the model learns patterns that exist in the
+      real data. You can use conditional sampling later to generate synthetic data with specific
+      values.
+
+    - Clean your input dataset. If you remove the violative rows in the real data, then you will be
+      able to apply the constraint. This is not recommended because even if the model can learn the
+      constraint, it is not truly representative of the full, original dataset.
+
+.. collapse:: How does the SDV handle the constraints?
+
+    Under-the-hood, the SDV uses a combination of strategies to ensure that the synthetic data
+    always follows the constraints. These strategies are:
+
+    1. **Transformation**: Most of the time, it's possible to transform the data in a way that
+       guarantees the models will be able to learn the constraint. This is paired with a reverse
+       transformation to ensure the synthetic data looks like the original.
+
+    2. **Reject Sampling**: Another strategy is to model and sample synthetic data as usual, and
+       then throw away any rows in the synthetic data that violate the constraints.
+
+    Transformation is the most efficient strategy, but it is not always possible to use. For
+    example, multiple constraints might be attempting to transform the same column, or the
+    logic itself may not be possible to achieve through transformation. 
+
+    In such cases, the SDV will fall back to using reject sampling. You'll get a warning when
+    this happens. Reject sampling may slow down the sampling process but there will be no other
+    effect on the synthetic data's quality or validity.

@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch
+import re
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -6,9 +7,8 @@ from faker import Faker
 from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import NumericalTransformer
 
-from sdv.constraints.base import Constraint
-from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.errors import ConstraintsNotMetError
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.metadata import Table
 
 
@@ -231,122 +231,6 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    @patch.object(Constraint, 'from_dict')
-    def test__prepare_constraints_sorts_constraints(self, from_dict_mock):
-        """Test that ``_prepare_constraints`` method sorts constraints.
-
-        The ``_prepare_constraints`` method should sort constraints by putting
-        constraints with ``rebuild_columns`` before the ones without them.
-
-        Input:
-        - list of constraints with some having ``rebuild_columns``
-        before constraints without them.
-        Output:
-        - List of constraints sorted properly.
-        """
-        # Setup
-        constraint1 = Constraint(handling_strategy='transform')
-        constraint2 = Constraint(handling_strategy='transform')
-        constraint3 = Constraint(handling_strategy='reject_sampling')
-        constraints = [constraint1, constraint2, constraint3]
-        constraint1.rebuild_columns = ['a']
-        constraint2.rebuild_columns = ['b']
-        constraint3.rebuild_columns = []
-        from_dict_mock.side_effect = [constraint1, constraint2, constraint3]
-
-        # Run
-        sorted_constraints = Table._prepare_constraints(constraints)
-
-        # Asserts
-        assert sorted_constraints == [constraint3, constraint1, constraint2]
-
-    @patch.object(Constraint, 'from_dict')
-    def test__prepare_constraints_sorts_constraints_none_rebuild_columns(self, from_dict_mock):
-        """Test that ``_prepare_constraints`` method sorts constraints.
-
-        The ``_prepare_constraints`` method should sort constraints with None as
-        ``rebuild_columns`` before those that have them.
-
-        Input:
-        - list of constraints with some having None as ``rebuild_columns``
-        listed after those with ``rebuild_columns``.
-        Output:
-        - List of constraints sorted properly.
-        """
-        # Setup
-        constraint1 = Constraint(handling_strategy='transform')
-        constraint2 = Constraint(handling_strategy='transform')
-        constraint3 = Constraint(handling_strategy='reject_sampling')
-        constraints = [constraint1, constraint2, constraint3]
-        constraint1.rebuild_columns = ['a']
-        constraint2.rebuild_columns = ['b']
-        constraint3.rebuild_columns = None
-        from_dict_mock.side_effect = [constraint1, constraint2, constraint3]
-
-        # Run
-        sorted_constraints = Table._prepare_constraints(constraints)
-
-        # Asserts
-        assert sorted_constraints == [constraint3, constraint1, constraint2]
-
-    @patch.object(Constraint, 'from_dict')
-    def test__prepare_constraints_validates_constraint_order(self, from_dict_mock):
-        """Test the ``_prepare_constraints`` method validates the constraint order.
-
-        If no constraint has ``rebuild_columns`` that are in a later
-        constraint's ``constraint_columns``, no exception should be raised.
-
-        Input:
-        - List of constraints with none having ``rebuild_columns``
-        that are in a later constraint's ``constraint_columns``.
-        Output:
-        - Sorted list of constraints.
-        """
-        # Setup
-        constraint1 = Constraint(handling_strategy='reject_sampling')
-        constraint2 = Constraint(handling_strategy='reject_sampling')
-        constraint3 = Constraint(handling_strategy='transform')
-        constraint4 = Constraint(handling_strategy='transform')
-        constraints = [constraint1, constraint2, constraint3, constraint4]
-        constraint3.rebuild_columns = ['e', 'd']
-        constraint4.constraint_columns = ['a', 'b', 'c']
-        constraint4.rebuild_columns = ['a']
-        from_dict_mock.side_effect = [constraint1, constraint2, constraint3, constraint4]
-
-        # Run
-        sorted_constraints = Table._prepare_constraints(constraints)
-
-        # Assert
-        assert sorted_constraints == constraints
-
-    @patch.object(Constraint, 'from_dict')
-    def test__prepare_constraints_invalid_order_raises_exception(self, from_dict_mock):
-        """Test the ``_prepare_constraints`` method validates the constraint order.
-
-        If one constraint has ``rebuild_columns`` that are in a later
-        constraint's ``constraint_columns``, an exception should be raised.
-
-        Input:
-        - List of constraints with some having ``rebuild_columns``
-        that are in a later constraint's ``constraint_columns``.
-        Side Effect:
-        - Exception should be raised.
-        """
-        # Setup
-        constraint1 = Constraint(handling_strategy='reject_sampling')
-        constraint2 = Constraint(handling_strategy='reject_sampling')
-        constraint3 = Constraint(handling_strategy='transform')
-        constraint4 = Constraint(handling_strategy='transform')
-        constraints = [constraint1, constraint2, constraint3, constraint4]
-        constraint3.rebuild_columns = ['a', 'd']
-        constraint4.constraint_columns = ['a', 'b', 'c']
-        constraint4.rebuild_columns = ['a']
-        from_dict_mock.side_effect = [constraint1, constraint2, constraint3, constraint4]
-
-        # Run
-        with pytest.raises(Exception):
-            Table._prepare_constraints(constraints)
-
     @patch('sdv.metadata.table.rdt.transformers.NumericalTransformer',
            spec_set=NumericalTransformer)
     def test___init__(self, transformer_mock):
@@ -371,15 +255,6 @@ class TestTable:
             dtype=int, rounding=-1, max_value=100, min_value=-50)
         transformer_mock.assert_any_call(
             dtype=float, rounding=-1, max_value=100, min_value=-50)
-
-    @patch.object(Table, '_prepare_constraints')
-    def test___init__calls_prepare_constraints(self, _prepare_constraints_mock):
-        """Test that ``__init__`` method calls ``_prepare_constraints"""
-        # Run
-        Table(constraints=[])
-
-        # Assert
-        _prepare_constraints_mock.called_once_with([])
 
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
@@ -453,16 +328,163 @@ class TestTable:
         assert new_data['item 1'].equals(data['item 1'])
         assert new_data['item 0'].is_unique
 
+    def test_fit_fits_and_transforms_constraints(self):
+        """Test the ``fit`` method.
+
+        The ``fit`` method should loop through all the constraints, fit them,
+        and then call ``transform`` for all of them.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effect:
+            - Each constraint should be fit and transform the data.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        transformed_data = pd.DataFrame({'a': [4, 5, 6]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.return_value = transformed_data
+        constraint2.transform.return_value = data
+        instance._constraints = [constraint1, constraint2]
+
+        # Run
+        instance.fit(data)
+
+        # Assert
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.transform.assert_called_once_with(transformed_data)
+
+    def test_fit_constraint_fit_errors(self):
+        """Test the ``fit`` method when constraints error on fit.
+
+        The ``fit`` method should loop through all the constraints and try to fit them. If
+        any errors are raised, they should be caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling fit.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.fit.side_effect = Exception('error 1')
+        constraint2.fit.side_effect = Exception('error 2')
+        instance._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            instance.fit(data)
+
+    def test_fit_constraint_transform_errors(self):
+        """Test the ``fit`` method when constraints error on transform.
+
+        The ``fit`` method should loop through all the constraints and try to fit them. Then it
+        should loop through again and try to transform. If any errors are raised, they should be
+        caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling transform.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.side_effect = Exception('error 1')
+        constraint2.transform.side_effect = Exception('error 2')
+        instance._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            instance.fit(data)
+
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+
+    @patch('sdv.metadata.table.warnings')
+    def test_fit_constraint_transform_missing_columns_error(self, warnings_mock):
+        """Test the ``fit`` method when transform raises a errors.
+
+        The ``fit`` method should loop through all the constraints and try to fit them. Then it
+        should loop through again and try to transform. If a ``MissingConstraintColumnError`` or
+        ``FunctionError`` is raised, a warning should be raised and reject sampling should be used.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise ``MissingConstraintColumnError`` and ``FunctionError``
+            when calling transform.
+            - Mock warnings module.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - ``MissingConstraintColumnError`` and ``FunctionError`` warning messages.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        instance = Table()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = Mock()
+        constraint1.transform.return_value = data
+        constraint2.transform.side_effect = MissingConstraintColumnError(['column'])
+        constraint3.transform.side_effect = FunctionError()
+        instance._constraints = [constraint1, constraint2, constraint3]
+
+        # Run
+        instance.fit(data)
+
+        # Assert
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+        constraint3.fit.assert_called_once_with(data)
+        assert warnings_mock.warn.call_count == 2
+        warning_message1 = (
+            "Mock cannot be transformed because columns: ['column'] were not found. Using the "
+            'reject sampling approach instead.'
+        )
+        warning_message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
+        warnings_mock.warn.assert_has_calls([call(warning_message1), call(warning_message2)])
+
     def test_transform_calls__transform_constraints(self):
         """Test that the `transform` method calls `_transform_constraints` with right parameters
 
         The ``transform`` method is expected to call the ``_transform_constraints`` method
-        with the data and correct value for ``on_missing_column``.
+        with the data and correct value for ``is_condition``.
 
         Input:
-        - Table data
+            - Table data
         Side Effects:
-        - Calls _transform_constraints
+            - Calls _transform_constraints
         """
         # Setup
         data = pd.DataFrame({
@@ -477,7 +499,7 @@ class TestTable:
         table_mock._hyper_transformer.transform.return_value = data
 
         # Run
-        Table.transform(table_mock, data, 'error')
+        Table.transform(table_mock, data, True)
 
         # Assert
         expected_data = pd.DataFrame({
@@ -488,7 +510,7 @@ class TestTable:
         args = mock_calls[0][1]
         assert len(mock_calls) == 1
         assert args[0].equals(expected_data)
-        assert args[1] == 'error'
+        assert args[1] is True
 
     def test__transform_constraints(self):
         """Test that method correctly transforms data based on constraints
@@ -497,9 +519,9 @@ class TestTable:
         and call each constraint's ``transform`` method on the data.
 
         Input:
-        - Table data
+            - Table data
         Output:
-        - Transformed data
+            - Transformed data
         """
         # Setup
         data = pd.DataFrame({
@@ -514,53 +536,33 @@ class TestTable:
         second_constraint_mock = Mock()
         first_constraint_mock.transform.return_value = transformed_data
         second_constraint_mock.return_value = transformed_data
-        table_mock = Mock()
-        table_mock._constraints = [first_constraint_mock, second_constraint_mock]
+        table_instance = Table()
+        table_instance._constraints = [first_constraint_mock, second_constraint_mock]
 
         # Run
-        result = Table._transform_constraints(table_mock, data)
+        result = table_instance._transform_constraints(data)
 
         # Assert
         assert result.equals(transformed_data)
         first_constraint_mock.transform.assert_called_once_with(data)
         second_constraint_mock.transform.assert_called_once_with(transformed_data)
+        assert table_instance._constraints_to_reverse == [
+            first_constraint_mock,
+            second_constraint_mock
+        ]
 
-    def test__transform_constraints_raises_error(self):
-        """Test that method raises error when specified.
-
-        The ``_transform_constraints`` method is expected to raise ``MissingConstraintColumnError``
-        if the constraint transform raises one and ``on_missing_column`` is set to error.
-
-        Input:
-        - Table data
-        Side Effects:
-        - MissingConstraintColumnError
-        """
-        # Setup
-        data = pd.DataFrame({
-            'item 0': [0, 1, 2],
-            'item 1': [3, 4, 5]
-        }, index=[0, 1, 2])
-        constraint_mock = Mock()
-        constraint_mock.transform.side_effect = MissingConstraintColumnError
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
-
-        # Run/Assert
-        with pytest.raises(MissingConstraintColumnError):
-            Table._transform_constraints(table_mock, data, 'error')
-
-    def test__transform_constraints_drops_columns(self):
-        """Test that method drops columns when specified.
+    def test__transform_constraints_is_condition_drops_columns(self):
+        """Test that method drops columns when necessary.
 
         The ``_transform_constraints`` method is expected to drop columns associated with
-        a constraint its transform raises a MissingConstraintColumnError and ``on_missing_column``
-        is set to drop.
+        a constraint when its transform raises a ``MissingConstraintColumnError`` and the
+        ``is_condition`` flag is True.
 
         Input:
-        - Table data
+            - Table data
+            - ``is_condition`` set to True
         Output:
-        - Table with dropped columns
+            - Table with dropped columns
         """
         # Setup
         data = pd.DataFrame({
@@ -568,106 +570,90 @@ class TestTable:
             'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         constraint_mock = Mock()
-        constraint_mock.transform.side_effect = MissingConstraintColumnError
+        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
         constraint_mock.constraint_columns = ['item 0']
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
+        table_instance = Table()
+        table_instance._constraints = [constraint_mock]
+        table_instance._constraints_to_reverse = [constraint_mock]
 
         # Run
-        result = Table._transform_constraints(table_mock, data, 'drop')
+        result = table_instance._transform_constraints(data, True)
 
         # Assert
         expected_result = pd.DataFrame({
             'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         assert result.equals(expected_result)
+        assert table_instance._constraints_to_reverse == [constraint_mock]
 
-    def test__validate_data_on_constraints(self):
-        """Test the ``Table._validate_data_on_constraints`` method.
+    def test__transform_constraints_is_condition_false_returns_data(self):
+        """Test that method returns data unchanged when necessary.
 
-        Expect that the method returns True when the constraint columns are in the given data,
-        and the constraint.is_valid method returns True.
+        The ``_transform_constraints`` method is expected to return data unchanged
+        when the constraint transform raises a ``MissingConstraintColumnError`` and the
+        ``is_condition`` flag is False.
 
         Input:
-        - Table data
+            - Table data
         Output:
-        - None
-        Side Effects:
-        - No error
+            - Table with dropped columns
         """
         # Setup
         data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         constraint_mock = Mock()
-        constraint_mock.is_valid.return_value = pd.Series([True, True, True])
-        constraint_mock.constraint_columns = ['a', 'b']
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
+        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
+        constraint_mock.constraint_columns = ['item 0']
+        table_instance = Table()
+        table_instance._constraints = [constraint_mock]
+        table_instance._constraints_to_reverse = [constraint_mock]
 
         # Run
-        result = Table._validate_data_on_constraints(table_mock, data)
+        result = table_instance._transform_constraints(data, False)
 
         # Assert
-        assert result is None
+        expected_result = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        assert result.equals(expected_result)
+        assert table_instance._constraints_to_reverse == []
 
-    def test__validate_data_on_constraints_invalid_input(self):
-        """Test the ``Table._validate_data_on_constraints`` method.
+    def test_reverse_transform_integer_rounding(self):
+        """Test the ``Table.reverse_transform`` method correctly rounds.
 
-        Expect that the method returns False when the constraint columns are in the given data,
-        and the constraint.is_valid method returns False for any row.
+        Expect the data to be rounded when the ``_fields_metadata`` specifies
+        the ``'transformer'`` as ``'integer'``.
 
         Input:
-        - Table data contains an invalid row
+        - A dictionary with float values.
         Output:
-        - None
-        Side Effects:
-        - A ConstraintsNotMetError is thrown
+        - The input dictionary rounded.
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
-        constraint_mock = Mock()
-        constraint_mock.is_valid.return_value = pd.Series([True, False, True])
-        constraint_mock.constraint_columns = ['a', 'b']
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
-
-        # Run and assert
-        with pytest.raises(ConstraintsNotMetError):
-            Table._validate_data_on_constraints(table_mock, data)
-
-    def test__validate_data_on_constraints_missing_cols(self):
-        """Test the ``Table._validate_data_on_constraints`` method.
-
-        Expect that the method returns True when the constraint columns are not
-        in the given data.
-
-        Input:
-        - Table data that is missing a constraint column
-        Output:
-        - None
-        Side Effects:
-        - No error
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
-        constraint_mock = Mock()
-        constraint_mock.constraint_columns = ['a', 'b', 'c']
-        table_mock = Mock()
-        table_mock._constraints = [constraint_mock]
+        data = pd.DataFrame({'bar': [0.2, 1.7, 2]})
+        table = Table()
+        table.fitted = True
+        table._fields_metadata = {
+            'bar': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+        }
+        table._hyper_transformer = Mock()
+        table._hyper_transformer.reverse_transform.return_value = data
+        table._constraints_to_reverse = []
+        table._dtypes = {'bar': 'int'}
+        table._field_names = ['bar']
 
         # Run
-        result = Table._validate_data_on_constraints(table_mock, data)
+        output = table.reverse_transform(data)
 
         # Assert
-        assert result is None
+        expected_data = pd.DataFrame({'bar': [0, 2, 2]})
+        pd.testing.assert_frame_equal(output, expected_data, check_dtype=False)
 
     def test_from_dict_min_max(self):
         """Test the ``Table.from_dict`` method.

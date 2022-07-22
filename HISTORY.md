@@ -1,5 +1,73 @@
 # Release Notes
 
+## 0.16.0 - 2022-07-21
+
+This release brings user friendly improvements and bug fixes on the `SDV` constraints, to help
+users generate their synthetic data easily.
+
+Some predefined constraints have been renamed and redefined to be more user friendly & consistent.
+The custom constraint API has also been updated for usability. The SDV now automatically determines
+the best `handling_strategy` to use for each constraint, attempting `transform` by default and
+falling back to `reject_sampling` otherwise. The `handling_strategy` parameters are no longer
+included in the API.
+
+Finally, this version of `SDV` also unifies the parameters for all sampling related methods for
+all models (including TabularPreset).
+
+### Changes to Constraints
+
+* `GreatherThan` constraint is now separated in two new constraints: `Inequality`, which is
+  intended to be used between two columns, and `ScalarInequality`, which is intended to be used
+  between a column and a scalar.
+
+* `Between` constraint is now separated in two new constraints: `Range`, which is intended to
+  be used between three columns, and `ScalarRange`, which is intended to be used between a column
+  and low and high scalar values.
+
+* `FixedIncrements` a new constraint that makes the data increment by a certain value.
+* New `create_custom_constraint` function available to create custom constraints.
+
+### Removed Constraints
+* `Rounding` Rounding is automatically being handled by the ``rdt.HyperTransformer``.
+* `ColumnFormula` the `create_custom_constraint` takes place over this one and allows more
+  advanced usage for the end users.
+
+### New Features
+
+* Improve error message for invalid constraints - Issue [#801](https://github.com/sdv-dev/SDV/issues/801) by @fealho
+* Numerical Instability in Constrained GaussianCopula - Issue [#806](https://github.com/sdv-dev/SDV/issues/806) by @fealho
+* Unify sampling params for reject sampling - Issue [#809](https://github.com/sdv-dev/SDV/issues/809) by @amontanez24
+* Split `GreaterThan` constraint into `Inequality` and `ScalarInequality` - Issue [#814](https://github.com/sdv-dev/SDV/issues/814) by @fealho
+* Split `Between` constraint into `Range` and `ScalarRange` - Issue [#815](https://github.com/sdv-dev/SDV/issues/815) @pvk-developer
+* Change `columns` to `column_names` in `OneHotEncoding` and `Unique` constraints - Issue [#816](https://github.com/sdv-dev/SDV/issues/816) by @amontanez24
+* Update columns parameter in `Positive` and `Negative` constraint - Issue [#817](https://github.com/sdv-dev/SDV/issues/817) by @fealho
+* Create `FixedIncrements` constraint - Issue [#818](https://github.com/sdv-dev/SDV/issues/818) by @amontanez24
+* Improve datetime handling in `ScalarInequality` and `ScalarRange` constraints - Issue [#819](https://github.com/sdv-dev/SDV/issues/819) by @pvk-developer
+* Support strict boundaries even when transform strategy is used - Issue [#820](https://github.com/sdv-dev/SDV/issues/820) by @fealho
+* Add `create_custom_constraint` factory method - Issue [#836](https://github.com/sdv-dev/SDV/issues/836) by @fealho
+
+### Internal Improvements
+* Remove `handling_strategy` parameter - Issue [#833](https://github.com/sdv-dev/SDV/issues/833) by @amontanez24
+* Remove `fit_columns_model` parameter - Issue [#834](https://github.com/sdv-dev/SDV/issues/834) by @pvk-developer
+* Remove the `ColumnFormula` constraint - Issue [#837](https://github.com/sdv-dev/SDV/issues/837) by @amontanez24
+* Move `table_data.copy` to base class of constraints - Issue [#845](https://github.com/sdv-dev/SDV/issues/845) by @fealho
+
+### Bugs Fixed
+* Numerical Instability in Constrained GaussianCopula - Issue [#801](https://github.com/sdv-dev/SDV/issues/801) by @tlranda and @fealho
+* Fix error message for `FixedIncrements` - Issue [#865](https://github.com/sdv-dev/SDV/issues/865) by @pvk-developer
+* Fix constraints with conditional sampling - Issue [#866](https://github.com/sdv-dev/SDV/issues/866) by @amontanez24
+* Fix error message in `ScalarInequality` - Issue [#868](https://github.com/sdv-dev/SDV/issues/868) by @pvk-developer
+* Cannot use `max_tries_per_batch` on sample: `TypeError: sample() got an unexpected keyword argument 'max_tries_per_batch'` - Issue [#885](https://github.com/sdv-dev/SDV/issues/885) by @amontanez24
+* Conditional sampling + batch size: `ValueError: Length of values (1) does not match length of index (5)` - Issue [#886](https://github.com/sdv-dev/SDV/issues/886) by @amontanez24
+* `TabularPreset` doesn't support new sampling parameters - Issue [#887](https://github.com/sdv-dev/SDV/issues/887) by @fealho
+* Conditional Sampling: `batch_size` is being set to `None` by default? - Issue [#889](https://github.com/sdv-dev/SDV/issues/889) by @amontanez24
+* Conditional sampling using GaussianCopula inefficient when categories are noised - Issue [#910](https://github.com/sdv-dev/SDV/issues/910) by @amontanez24
+
+### Documentation Changes
+* Show the `API` for `TabularPreset` models - Issue [#854](https://github.com/sdv-dev/SDV/issues/854) by @katxiao
+* Update handling constraints doc - Pull Request [#856](https://github.com/sdv-dev/SDV/issues/856) by @amontanez24
+* Update custom costraints documentation - Pull Request [#857](https://github.com/sdv-dev/SDV/issues/857) by @pvk-developer
+
 ## 0.15.0 - 2022-05-25
 
 This release improves the speed of the `GaussianCopula` model by removing logic that previously searched for the appropriate distribution to

@@ -1,16 +1,17 @@
 """Tests for the sdv.constraints.base module."""
-import warnings
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
-from rdt.hyper_transformer import HyperTransformer
 
-from sdv.constraints.base import Constraint, _get_qualified_name, get_subclasses, import_object
+from sdv.constraints.base import (
+    ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
+    import_object)
 from sdv.constraints.errors import MissingConstraintColumnError
-from sdv.constraints.tabular import ColumnFormula, FixedCombinations
+from sdv.constraints.tabular import FixedCombinations
+from sdv.errors import ConstraintsNotMetError
 
 
 def test__get_qualified_name_class():
@@ -32,6 +33,25 @@ def test__get_qualified_name_class():
     assert fully_qualified_name == expected_name
 
 
+def test__get_qualified_name_class_has_no_name():
+    """Test the ``_get_qualified_name`` function, if a class is passed but no name on it.
+
+    The ``_get_qualified_name`` function is expected to:
+    - Return the Fully Qualified Name from a class.
+
+    Input:
+    - A class.
+    Output:
+    - The class qualified name.
+    """
+    # Run
+    fully_qualified_name = _get_qualified_name(Mock())
+
+    # Assert
+    expected_name = 'unittest.mock.Mock'
+    assert fully_qualified_name == expected_name
+
+
 def test__get_qualified_name_function():
     """Test the ``_get_qualified_name`` function, if a function is passed.
 
@@ -49,6 +69,18 @@ def test__get_qualified_name_function():
     # Assert
     expected_name = 'sdv.constraints.base._get_qualified_name'
     assert fully_qualified_name == expected_name
+
+
+def test__module_contains_callable_name():
+    """Test the ``_module_constraint_callable_name``.
+
+    Return whether or not the ``module`` contains a callable name from this object.
+    """
+    # Setup
+    result = _module_contains_callable_name(Mock())
+
+    # Assert
+    assert result
 
 
 def test_get_subclasses():
@@ -126,100 +158,6 @@ def test_import_object_function():
 
 class TestConstraint():
 
-    def test__identity(self):
-        """Test ```Constraint._identity`` method.
-
-        ``_identity`` method should return whatever it is passed.
-
-        Input:
-            - anything
-        Output:
-            - Input
-        """
-        # Run
-        instance = Constraint('all')
-        output = instance._identity('input')
-
-        # Asserts
-        assert output == 'input'
-
-    def test___init___transform(self):
-        """Test ```Constraint.__init__`` method when 'transform' is passed.
-
-        If 'transform' is given, the ``__init__`` method should replace the ``is_valid`` method
-        with an identity and leave ``transform`` and ``reverse_transform`` untouched.
-
-        Input:
-            - transform
-        Side effects:
-            - is_valid == identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='transform')
-
-        # Asserts
-        assert instance.filter_valid == instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___reject_sampling(self):
-        """Test ``Constraint.__init__`` method when 'reject_sampling' is passed.
-
-        If 'reject_sampling' is given, the ``__init__`` method should replace the ``transform``
-        and ``reverse_transform`` methods with an identity and leave ``is_valid`` untouched.
-
-        Input:
-            - reject_sampling
-        Side effects:
-            - is_valid != identity
-            - transform == identity
-            - reverse_transform == identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='reject_sampling')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform == instance._identity
-        assert instance.reverse_transform == instance._identity
-
-    def test___init___all(self):
-        """Test ``Constraint.__init__`` method when 'all' is passed.
-
-        If 'all' is given, the ``__init__`` method should leave ``transform``,
-        ``reverse_transform`` and ``is_valid`` untouched.
-
-        Input:
-            - all
-        Side effects:
-            - is_valid != identity
-            - transform != identity
-            - reverse_transform != identity
-        """
-        # Run
-        instance = Constraint(handling_strategy='all')
-
-        # Asserts
-        assert instance.filter_valid != instance._identity
-        assert instance.transform != instance._identity
-        assert instance.reverse_transform != instance._identity
-
-    def test___init___not_kown(self):
-        """Test ``Constraint.__init__`` method when a not known ``handling_strategy`` is passed.
-
-        If a not known ``handling_strategy`` is given, a ValueError is raised.
-
-        Input:
-            - not_known
-        Side effects:
-            - ValueError
-        """
-        # Run
-        with pytest.raises(ValueError):
-            Constraint(handling_strategy='not_known')
-
     def test_fit(self):
         """Test the ``Constraint.fit`` method.
 
@@ -233,125 +171,190 @@ class TestConstraint():
         table_data = pd.DataFrame({
             'a': [1, 2, 3]
         })
-        instance = Constraint(handling_strategy='transform', fit_columns_model=False)
+        instance = Constraint()
         instance._fit = Mock()
+        instance._validate_data_meets_constraint = Mock()
 
         # Run
         instance.fit(table_data)
 
         # Assert
         instance._fit.assert_called_once_with(table_data)
+        instance._validate_data_meets_constraint.assert_called_once_with(table_data)
 
-    @patch('sdv.constraints.base.GaussianMultivariate', spec_set=GaussianMultivariate)
-    def test_fit_gaussian_multivariate_correct_distribution(self, gm_mock):
-        """Test the ``GaussianMultivariate`` from the ``Constraint.fit`` method.
+    def test__validate_data_meets_constraints(self):
+        """Test the ``_validate_data_meets_constraint`` method.
 
-        The ``GaussianMultivariate`` is expected to be called with default distribution
-        set as ``GaussianUnivariate``.
-
-        Input:
-        - Table data (pandas.DataFrame)
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [1, 2, 3]
-        })
-        instance = Constraint(handling_strategy='transform', fit_columns_model=True)
-        instance.constraint_columns = ('a', 'b')
-
-        # Run
-        instance.fit(table_data)
-
-        # Assert
-        gm_mock.assert_called_once_with(distribution=GaussianUnivariate)
-
-    @patch('sdv.constraints.base.GaussianMultivariate', spec_set=GaussianMultivariate)
-    @patch('sdv.constraints.base.HyperTransformer', spec_set=HyperTransformer)
-    def test_fit_trains_column_model(self, ht_mock, gm_mock):
-        """Test the ``Constraint.fit`` method trains the column model.
-
-        When ``fit_columns_model`` is True and there are multiple ``constraint_columns``,
-        the ``Constraint.fit`` method is expected to:
-        - Call ``_fit`` method.
-        - Create ``_hyper_transformer``.
-        - Create ``_column_model`` and train it.
+        Expect that the method calls ``is_valid`` when the constraint columns
+        are in the given data.
 
         Input:
-        - Table data (pandas.DataFrame)
+        - Table data
+        Output:
+        - None
+        Side Effects:
+        - No error
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        instance = Constraint(handling_strategy='transform', fit_columns_model=True)
-        instance.constraint_columns = ('a', 'b')
+        data = pd.DataFrame({
+            'a': [0, 1, 2],
+            'b': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint = Constraint()
+        constraint.constraint_columns = ['a', 'b']
+        constraint.is_valid = Mock()
 
         # Run
-        instance.fit(table_data)
+        constraint._validate_data_meets_constraint(data)
 
         # Assert
-        gm_mock.return_value.fit.assert_called_once()
-        calls = ht_mock.return_value.fit_transform.mock_calls
-        args = calls[0][1]
-        assert len(calls) == 1
-        pd.testing.assert_frame_equal(args[0], table_data)
+        constraint.is_valid.assert_called_once_with(data)
+
+    def test__validate_data_meets_constraints_invalid_input(self):
+        """Test the ``_validate_data_meets_constraint`` method.
+
+        Expect that the method raises an error when the constraint columns
+        are in the given data and the ``is_valid`` returns False for any row.
+
+        Input:
+        - Table data contains an invalid row
+        Output:
+        - None
+        Side Effects:
+        - A ``ConstraintsNotMetError`` is thrown
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0, 1, 2, 3, 4, 5, 6, 7],
+            'b': [3, 4, 5, 6, 7, 8, 9, 10]
+        }, index=[0, 1, 2, 3, 4, 5, 6, 7])
+        constraint = Constraint()
+        constraint.constraint_columns = ['a', 'b']
+        is_valid_result = pd.Series([True, False, True, False, False, False, False, False])
+        constraint.is_valid = Mock(return_value=is_valid_result)
+
+        # Run / Assert
+        error_message = re.escape(
+            "Data is not valid for the 'Constraint' constraint:\n   "
+            'a  b\n1  1  4\n3  3  6\n4  4  7\n5  5  8\n6  6  9'
+            '\n+1 more'
+        )
+        with pytest.raises(ConstraintsNotMetError, match=error_message):
+            constraint._validate_data_meets_constraint(data)
+
+    def test__validate_data_meets_constraints_missing_cols(self):
+        """Test the ``_validate_data_meets_constraint`` method.
+
+        Expect that the method doesn't do anything when the columns are not in the given data.
+
+        Input:
+        - Table data that is missing a constraint column
+        Output:
+        - None
+        Side Effects:
+        - No error
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [0, 1, 2],
+            'b': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint = Constraint()
+        constraint.constraint_columns = ['a', 'b', 'c']
+        constraint.is_valid = Mock()
+
+        # Run
+        constraint._validate_data_meets_constraint(data)
+
+        # Assert
+        assert not constraint.is_valid.called
 
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
 
-        It is an identity method for completion, to be optionally
-        overwritten by subclasses.
+        By default, it behaves like an identity method, to be optionally overwritten by subclasses.
 
         The ``Constraint.transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return a copy of the input data.
+
         Input:
-        - Anything
+            - a DataFrame
+
         Output:
-        - Input
+            - Input
         """
+        # Setup
+        instance = Constraint()
+        data = pd.DataFrame({'col': ['input']})
+
         # Run
-        instance = Constraint(handling_strategy='transform')
-        output = instance.transform('input')
+        output = instance.transform(data)
 
         # Assert
-        assert output == 'input'
+        pd.testing.assert_frame_equal(output, pd.DataFrame({'col': ['input']}))
+        assert id(output) != id(data)
 
     def test_transform_calls__transform(self):
         """Test that the ``Constraint.transform`` method calls ``_transform``.
 
         The ``Constraint.transform`` method is expected to:
-        - Return value returned by ``_transform``.
+            - Return value returned by ``_transform``.
 
         Input:
-        - Anything
+            - Anything
+
         Output:
-        - Result of ``_transform(input)``
+            - Result of ``_transform(input)``
         """
         # Setup
         constraint_mock = Mock()
-        constraint_mock.fit_columns_model = False
+        constraint_mock.constraint_columns = []
         constraint_mock._transform.return_value = 'the_transformed_data'
-        constraint_mock._validate_columns.return_value = pd.DataFrame()
 
         # Run
-        output = Constraint.transform(constraint_mock, 'input')
+        output = Constraint.transform(constraint_mock, pd.DataFrame())
 
         # Assert
         assert output == 'the_transformed_data'
 
-    def test_transform_model_disabled_any_columns_missing(self):
+    def test_transform__transform_errors(self):
+        """Test that the ``transform`` method handles any errors.
+
+        If the ``_transform`` method raises an error, the error should be raised.
+
+        Setup:
+            - Make ``_transform`` raise an error.
+
+        Input:
+            - ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effects:
+            - Exception should be raised
+        """
+        # Setup
+        instance = Constraint()
+        instance._transform = Mock()
+        instance._transform.side_effect = Exception()
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run / Assert
+        with pytest.raises(Exception):
+            instance.transform(data)
+
+    def test_transform_columns_missing(self):
         """Test the ``Constraint.transform`` method with invalid data.
 
-        If ``table_data`` is missing any columns and ``fit_columns_model``
-        is False, it should raise a ``MissingConstraintColumnError``.
+        If ``table_data`` is missing any columns it should raise a
+        ``MissingConstraintColumnError``.
 
         The ``Constraint.transform`` method is expected to:
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform', fit_columns_model=False)
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
@@ -359,207 +362,23 @@ class TestConstraint():
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame([[1, 2], [3, 4]], columns=['b', 'c']))
 
-    def test_transform_model_enabled_all_columns_missing(self):
-        """Test the ``Constraint.transform`` method with missing columns.
+    def test_transform_all_columns_missing(self):
+        """Test the ``Constraint.transform`` method with all columns missing.
 
-        If ``table_data`` is missing all of the ``constraint_columns`` and
-        ``fit_columns_model`` is True, it should raise a
-        ``MissingConstraintColumnError``.
+        If ``table_data`` is missing all of the ``constraint_columns`` a
+        ``MissingConstraintColumnError`` is raised.
 
         The ``Constraint.transform`` method is expected to:
         - Raise ``MissingConstraintColumnError``.
         """
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         instance._transform = lambda x: x
         instance.constraint_columns = ('a',)
 
         # Assert
         with pytest.raises(MissingConstraintColumnError):
             instance.transform(pd.DataFrame())
-
-    def test_transform_model_enabled_some_columns_missing(self):
-        """Test that the ``Constraint.transform`` method uses column model.
-
-        If ``table_data`` is missing some of the ``constraint_columns``,
-        the ``_column_model`` should be used to sample the rest and the
-        data should be transformed.
-
-        Input:
-        - Table with some missing columns.
-        Output:
-        - Transformed data with all columns.
-        """
-        # Setup
-        instance = Constraint(handling_strategy='transform')
-        instance._transform = lambda x: x
-        instance.constraint_columns = ('a', 'b')
-        instance._hyper_transformer = Mock()
-        instance._columns_model = Mock()
-        conditions = [
-            pd.DataFrame([[5, 1, 2]], columns=['a', 'b', 'c']),
-            pd.DataFrame([[6, 3, 4]], columns=['a', 'b', 'c'])
-        ]
-        transformed_conditions = [
-            pd.DataFrame([[1]], columns=['b']),
-            pd.DataFrame([[3]], columns=['b'])
-        ]
-        instance._columns_model.sample.return_value = pd.DataFrame([
-            [1, 2, 3]
-        ], columns=['b', 'c', 'a'])
-        instance._hyper_transformer.transform.side_effect = transformed_conditions
-        instance._hyper_transformer.reverse_transform.side_effect = conditions
-
-        # Run
-        data = pd.DataFrame([[1, 2], [3, 4]], columns=['b', 'c'])
-        transformed_data = instance.transform(data)
-
-        # Assert
-        expected_tranformed_data = pd.DataFrame([[1, 2, 3]], columns=['b', 'c', 'a'])
-        expected_result = pd.DataFrame([
-            [5, 1, 2],
-            [6, 3, 4]
-        ], columns=['a', 'b', 'c'])
-        model_calls = instance._columns_model.sample.mock_calls
-        assert len(model_calls) == 2
-        instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 1})
-        instance._columns_model.sample.assert_any_call(num_rows=1, conditions={'b': 3})
-        reverse_transform_calls = instance._hyper_transformer.reverse_transform.mock_calls
-        pd.testing.assert_frame_equal(reverse_transform_calls[0][1][0], expected_tranformed_data)
-        pd.testing.assert_frame_equal(reverse_transform_calls[1][1][0], expected_tranformed_data)
-        pd.testing.assert_frame_equal(transformed_data, expected_result)
-
-    def test_transform_model_enabled_reject_sampling(self):
-        """Test the ``Constraint.transform`` method's reject sampling.
-
-        If the column model is used but doesn't return valid rows,
-        reject sampling should be used to get the valid rows.
-
-        Setup:
-        - The ``_columns_model`` returns some valid_rows the first time,
-        and then the rest with the next call.
-        Input:
-        - Table with some missing columns.
-        Output:
-        - Transformed data with all columns.
-        """
-        # Setup
-        instance = Constraint(handling_strategy='transform')
-        instance._transform = lambda x: x
-        instance.constraint_columns = ('a', 'b')
-        instance._hyper_transformer = Mock()
-        instance._columns_model = Mock()
-        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
-        instance._columns_model.sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3]
-            ], columns=['a', 'b']),
-            pd.DataFrame([
-                [1, 4],
-                [1, 5],
-                [1, 6],
-                [1, 7]
-            ], columns=['a', 'b']),
-        ]
-        instance._hyper_transformer.transform.side_effect = transformed_conditions
-        instance._hyper_transformer.reverse_transform = lambda x: x
-
-        # Run
-        data = pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])
-        transformed_data = instance.transform(data)
-
-        # Assert
-        expected_result = pd.DataFrame([
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [1, 5],
-            [1, 6]
-        ], columns=['a', 'b'])
-        model_calls = instance._columns_model.sample.mock_calls
-        assert len(model_calls) == 2
-        instance._columns_model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
-        assert model_calls[1][2]['num_rows'] > 3
-        pd.testing.assert_frame_equal(transformed_data, expected_result)
-
-    def test_transform_model_enabled_reject_sampling_error(self):
-        """Test that the ``Constraint.transform`` method raises an error appropriately.
-
-        If the column model is used but doesn't return valid rows,
-        reject sampling should be used to get the valid rows. If it doesn't
-        get any valid rows in 100 tries, a ``ValueError`` is raised.
-
-        Setup:
-        - The ``_columns_model`` is fixed to always return an empty ``DataFrame``.
-        Input:
-        - Table with some missing columns.
-        Side Effect:
-        - ``ValueError`` raised.
-        """
-        # Setup
-        instance = Constraint(handling_strategy='transform')
-        instance.constraint_columns = ('a', 'b')
-        instance._hyper_transformer = Mock()
-        instance._columns_model = Mock()
-        transformed_conditions = pd.DataFrame([[1]], columns=['b'])
-        instance._columns_model.sample.return_value = pd.DataFrame()
-        instance._hyper_transformer.transform.return_value = transformed_conditions
-        instance._hyper_transformer.reverse_transform.return_value = pd.DataFrame()
-
-        # Run / Assert
-        data = pd.DataFrame([[1, 2], [3, 4]], columns=['b', 'c'])
-        with pytest.raises(ValueError):
-            instance.transform(data)
-
-    def test_transform_model_enabled_reject_sampling_duplicates_valid_rows(self):
-        """Test the ``Constraint.transform`` method's reject sampling fall back.
-
-        If the column model is used but doesn't return valid rows,
-        reject sampling should be used to get the valid rows. If after 100
-        tries, some valid rows are created but not enough, then the valid rows
-        are duplicated to meet the ``num_rows`` requirement.
-
-        Setup:
-        - The ``_columns_model`` returns some valid rows the first time, and then
-        an empy ``DataFrame`` for every other call.
-        Input:
-        - Table with some missing columns.
-        Output:
-        - Transformed data with all columns.
-        """
-        # Setup
-        instance = Constraint(handling_strategy='transform')
-        instance._transform = lambda x: x
-        instance.constraint_columns = ('a', 'b')
-        instance._hyper_transformer = Mock()
-        instance._columns_model = Mock()
-        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
-        instance._columns_model.sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3]
-            ], columns=['a', 'b'])
-        ] + [pd.DataFrame()] * 100
-        instance._hyper_transformer.transform.side_effect = transformed_conditions
-        instance._hyper_transformer.reverse_transform = lambda x: x
-
-        # Run
-        data = pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])
-        transformed_data = instance.transform(data)
-
-        # Assert
-        expected_result = pd.DataFrame([
-            [1, 2],
-            [1, 3],
-            [1, 2],
-            [1, 3],
-            [1, 2]
-        ], columns=['a', 'b'])
-        model_calls = instance._columns_model.sample.mock_calls
-        assert len(model_calls) == 101
-        instance._columns_model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
-        pd.testing.assert_frame_equal(transformed_data, expected_result)
 
     def test_fit_transform(self):
         """Test the ``Constraint.fit_transform`` method.
@@ -596,19 +415,23 @@ class TestConstraint():
         for completion, to be optionally overwritten by subclasses.
 
         The ``Constraint.reverse_transform`` method is expected to:
-        - Return the input data unmodified.
+            - Return a copy of the input data.
 
         Input:
-        - Anything
+            - Anything
         Output:
-        - Input
+            - Input
         """
+        # Setup
+        instance = Constraint()
+        data = pd.DataFrame()
+
         # Run
-        instance = Constraint(handling_strategy='transform')
-        output = instance.reverse_transform('input')
+        output = instance.reverse_transform(data)
 
         # Assert
-        assert output == 'input'
+        pd.testing.assert_frame_equal(output, pd.DataFrame())
+        assert id(output) != id(data)
 
     def test_is_valid(self):
         """Test the ``Constraint.is_valid` method. This should be overwritten by all the
@@ -628,7 +451,7 @@ class TestConstraint():
         })
 
         # Run
-        instance = Constraint(handling_strategy='transform')
+        instance = Constraint()
         out = instance.is_valid(table_data)
 
         # Assert
@@ -754,94 +577,332 @@ class TestConstraint():
         - Dict with the right values.
         """
         # Run
-        instance = FixedCombinations(column_names=['a', 'b'], handling_strategy='transform')
+        instance = FixedCombinations(column_names=['a', 'b'])
         constraint_dict = instance.to_dict()
 
         # Assert
         expected_dict = {
             'constraint': 'sdv.constraints.tabular.FixedCombinations',
-            'handling_strategy': 'transform',
             'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict
 
-    def test_to_dict_column_formula_lambda(self):
-        """Test the ``Constraint.to_dict`` when the constraint is
-        a ColumnFormula type and is passed a lambda.
 
-        If the ``Constraint`` type is ColumnFormula,
-        and the formula argument is a lambda, the dictionary
-        should contain the lambda object as the value.
+class TestColumnsModel:
 
-        Output:
-        - Dict with the right values.
-        """
-        # Run
-        instance = ColumnFormula(
-            column='a',
-            formula=lambda x: x + 1,
-            handling_strategy='transform'
-        )
-        constraint_dict = instance.to_dict()
+    def test___init__(self):
+        """Test the ``__init__`` method of ``ColumnsModel``.
 
-        # Assert
-        assert constraint_dict['formula'](1) == 2
-
-    def test_to_dict_column_formula_returned_function(self):
-        """Test the ``Constraint.to_dict`` when the constraint is
-        a ColumnFormula type and is passed a function returned
-        from another function.
-
-        If the ``Constraint`` type is ColumnFormula,
-        and the formula argument is a function returned from another
-        function, the dictionary should contain the function as the value.
-
-        Output:
-        - Dict with the right values.
-        """
-        # Run
-        def func_creator():
-            def func(x):
-                return x + 1
-            return func
-        instance = ColumnFormula(
-            column='a',
-            formula=func_creator(),
-            handling_strategy='transform'
-        )
-        constraint_dict = instance.to_dict()
-
-        # Assert
-        assert constraint_dict['formula'](1) == 2
-
-    def test__validate_constraint_columns_warning(self):
-        """Test the ``Constraint._validate_constraint_columns`` method.
-
-        Expect that ``_validate_constraint_columns`` throws a warning
-        when missing columns and not using columns model.
+        Test that creating a ``ColumnsModel`` with a column name, stores it as a list.
 
         Setup:
-        - Mock the constraint columns to have one more column than the table_data: ('a', 'b').
-        - Mock the ``_columns_model`` to be False.
-        - Mock the ``_sample_constraint_columns`` to return a dataframe.
+            - Create an instance of ``ColumnsModel`` with a string representing the column
+              name.
+
         Input:
-        - table_data with one column ('a').
-        Output:
-        - table_data
+            - String name of a column.
+
         Side Effects:
-        - A UserWarning is thrown.
+            - ``instance.constraint_columns`` is a list from the string given before.
+        """
+
+        # Run
+        constraint = Mock()
+        instance = ColumnsModel(constraint, 'age')
+
+        # Assert
+        assert instance.constraint_columns == ['age']
+        assert instance.constraint == constraint
+
+    def test___init__list(self):
+        """Test the ``__init__`` method of ``ColumnsModel``.
+
+        Test that creating a ``ColumnsModel`` with a list, stores it as a list
+
+        Setup:
+            - Create an instance of ``ColumnsModel`` with a list of strings.
+
+        Input:
+            - List of columns.
+
+        Side Effects:
+            - ``instance.constraint_columns`` is the input list.
+        """
+
+        # Run
+        constraint = Mock()
+        instance = ColumnsModel(constraint, ['age', 'age_when_joined'])
+
+        # Assert
+        assert instance.constraint_columns == ['age', 'age_when_joined']
+        assert instance.constraint == constraint
+
+    @patch('sdv.constraints.base.GaussianMultivariate')
+    @patch('sdv.constraints.base.HyperTransformer')
+    def test_fit(self, mock_hyper_transformer, mock_gaussian_multivariate):
+        """Test the ``fit`` method.
+
+        The ``fit`` method should create an instance of ``rdt.HyperTransformer`` and use
+        the ``fit_transform`` method in order to transform the data, which afterwards is being
+        fitted to the ``GaussianMultivariate`` which uses as ``distribution`` the
+        ``GaussianUnivariate``.
+
+        Setup:
+            - Instance of ``ColumnsModel``.
+
+        Input:
+            - table_data with 3 columns.
+
+        Mock:
+            - Mock ``rdt.HyperTransformer``.
+            - Mock ``GaussianMultivariate``.
+
+        Side Effects:
+            - Instance of ``rdt.HyperTransformer`` has been created and fitted.
+            - A ``GaussianMultivariate`` model has been created and fitted.
+        """
+        # Setup
+        table_data = pd.DataFrame({
+            'age': [1, 2, 3, 4],
+            'age_when_joined': [5, 6, 7, 8],
+            'retirement': ['a', 'b', 'c', 'd']
+        })
+
+        mock_hyper_transformer.return_value.fit_transform.return_value = 'transformed_data'
+        instance = ColumnsModel(Mock(), ['age', 'age_when_joined'])
+
+        # Run
+        instance.fit(table_data)
+
+        # Assert
+        mock_hyper_transformer.assert_called_once_with(
+            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
+        )
+        call_data = mock_hyper_transformer.return_value.fit_transform.call_args[0][0]
+        pd.testing.assert_frame_equal(table_data[['age', 'age_when_joined']], call_data)
+
+        mock_gaussian_multivariate.assert_called_once_with(distribution=GaussianUnivariate)
+        mock_gaussian_multivariate.return_value.fit.assert_called_once_with('transformed_data')
+        assert instance._hyper_transformer
+        assert instance._model
+
+    def test__reject_sample(self):
+        """Test the ``ColumnsModel._reject_sample``.
+
+        The ``_reject_sample`` method should call the ``instance._model`` wiith the given
+        number of rows and ``conditions``.
+
+        Setup:
+            - Instance of ``ColumnsModel.
+
+        Mock:
+            - ``instance._hyper_transformer``.
+            - ``instance._model``.
+
+        Input:
+            - Table with some missing columns.
+
+        Output:
+            - Transformed data with all columns.
         """
         # Setup
         constraint = Mock()
-        constraint.constraint_columns = ['a', 'b']
-        constraint._columns_model = False
-        constraint._sample_constraint_columns.return_value = pd.DataFrame({'a': [0, 1, 2]})
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [True for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
+        instance._hyper_transformer = Mock()
+        instance._model = Mock()
+        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
+        instance._model.sample.side_effect = [
+            pd.DataFrame([
+                [1, 2],
+                [1, 3]
+            ], columns=['a', 'b']),
+            pd.DataFrame([
+                [1, 4],
+                [1, 5],
+                [1, 6],
+                [1, 7]
+            ], columns=['a', 'b']),
+        ]
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform = lambda x: x
 
-        table_data = pd.DataFrame({'a': [0, 1, 2]})
+        # Run
+        transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
 
-        # Run and assert
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            Constraint._validate_constraint_columns(constraint, table_data)
-            assert len(w) == 1
-            assert issubclass(w[0].category, UserWarning)
+        # Assert
+        expected_result = pd.DataFrame([
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [1, 5],
+            [1, 6]
+        ], columns=['a', 'b'])
+        model_calls = instance._model.sample.mock_calls
+        assert len(model_calls) == 2
+        instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
+        assert model_calls[1][2]['num_rows'] > 3
+        pd.testing.assert_frame_equal(transformed_data, expected_result)
+
+        expected_call_1 = pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
+        expected_call_2 = pd.DataFrame([
+            [1, 4],
+            [1, 5],
+            [1, 6],
+            [1, 7]
+        ], columns=['a', 'b'])
+
+        pd.testing.assert_frame_equal(expected_call_1, constraint.is_valid.call_args_list[0][0][0])
+        pd.testing.assert_frame_equal(expected_call_2, constraint.is_valid.call_args_list[1][0][0])
+
+    def test__reject_sampling_duplicates_valid_rows(self):
+        """Test the ``Constraint.transform`` method's reject sampling fall back.
+
+        After 100 tries, some valid rows are created but not enough, then the valid rows
+        are duplicated to meet the ``num_rows`` requirement.
+
+        Setup:
+            - Instance of ``ColumnsModel.
+
+        Mock:
+            - ``instance._hyper_transformer``.
+            - ``instance._model``.
+
+        Input:
+            - Table with some missing columns.
+
+        Output:
+            - Transformed data with all columns.
+        """
+        # Setup
+        constraint = Mock()
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [True for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
+        instance._hyper_transformer = Mock()
+        instance._model = Mock()
+        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
+        instance._model.sample.side_effect = [
+            pd.DataFrame([
+                [1, 2],
+                [1, 3]
+            ], columns=['a', 'b'])
+        ] + [pd.DataFrame()] * 100
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform = lambda x: x
+
+        # Run
+        transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
+
+        # Assert
+        expected_result = pd.DataFrame([
+            [1, 2],
+            [1, 3],
+            [1, 2],
+            [1, 3],
+            [1, 2]
+        ], columns=['a', 'b'])
+        model_calls = instance._model.sample.mock_calls
+        assert len(model_calls) == 101
+        instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
+        pd.testing.assert_frame_equal(transformed_data, expected_result)
+
+    def test__reject_sampling_no_valid_rows(self):
+        """Test the ``ColumnsModel._reject_sampling`` method.
+
+        Raises an error when there is no valid rows within 100 tries.
+
+        Setup:
+            - Instance of ``ColumnsModel.
+
+        Mock:
+            - ``instance._hyper_transformer``.
+            - ``instance._model``.
+            - ``instance.constraint``.
+
+        Input:
+            - Table with some missing columns.
+
+        Side Effects:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        constraint = Mock()
+        constraint.is_valid.side_effect = lambda x: pd.Series(
+            [False for _ in range(len(x))],
+            index=x.index
+        )
+        instance = ColumnsModel(constraint, ['a', 'b'])
+        instance._hyper_transformer = Mock()
+        instance._model = Mock()
+        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
+        instance._model.sample.side_effect = [
+            pd.DataFrame([
+                [1, 2],
+                [1, 3]
+            ], columns=['a', 'b'])
+        ] + [pd.DataFrame()] * 100
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform = lambda x: x
+
+        # Run
+        with pytest.raises(ValueError, match='Could not get enough valid rows within 100 trials.'):
+            instance._reject_sample(num_rows=5, conditions={'b': 1})
+
+    def test_sample(self):
+        """Test the ``ColumnsModel.sample`` method.
+
+        This method should call ``instance._reject_sample`` with the given
+        conditions.
+
+        Setup:
+            - Instance of ``ColumnsModel.
+
+        Mock:
+            - ``instance._hyper_transformer``.
+            - ``instance._reject_sample``.
+
+        Input:
+            - Table with some missing columns.
+
+        Output:
+            - Transformed data with all columns.
+        """
+        # Setup
+        constraint = Mock()
+        instance = ColumnsModel(constraint, ['a', 'b'])
+        instance._hyper_transformer = Mock()
+        instance._model = Mock()
+        transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
+        instance._hyper_transformer.transform.side_effect = transformed_conditions
+        instance._hyper_transformer.reverse_transform = lambda x: x
+        instance._reject_sample = Mock()
+        instance._reject_sample.side_effect = [
+            pd.DataFrame([
+                [1, 2],
+                [1, 3],
+                [1, 4],
+                [1, 5],
+                [1, 6],
+            ], columns=['a', 'b']),
+        ]
+
+        # Run
+        data = pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])
+        transformed_data = instance.sample(data)
+
+        # Assert
+        expected_result = pd.DataFrame([
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [1, 5],
+            [1, 6]
+        ], columns=['a', 'b'])
+        instance._reject_sample.assert_any_call(num_rows=5, conditions={'b': 1})
+        pd.testing.assert_frame_equal(transformed_data, expected_result)
