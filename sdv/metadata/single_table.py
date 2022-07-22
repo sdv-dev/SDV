@@ -280,6 +280,25 @@ class SingleTableMetadata:
             else:
                 self._metadata[key] = getattr(self, f'_{key}')
 
+    def _validate_constraint_against_metadata(constraint_name, **kwargs):
+        column_names = **kwargs.get('column_names', **kwargs.get('column_name'))
+
+    def add_constraint(self, constraint_name, **kwargs):
+        """Add a constraint to the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        constraint_dict = {'constraint': constraint_name}
+        constraint_dict.update(**kwargs)
+        constraint = Constraint.from_dict(constraint_dict)
+        # TODO: call validation
+        self._constraints.append(constraint)
+
     @classmethod
     def _load_from_dict(cls, metadata):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
