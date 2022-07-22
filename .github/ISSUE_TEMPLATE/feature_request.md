@@ -2,7 +2,7 @@
 name: Feature request
 about: Request a new feature that you would like to see implemented in SDV
 title: ''
-labels: new feature, new
+labels: feature request, new
 assignees: ''
 
 ---
