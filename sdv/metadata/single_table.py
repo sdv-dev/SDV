@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+import warnings
 
 import pandas as pd
 
@@ -241,6 +242,49 @@ class SingleTableMetadata:
         pandas_kwargs = pandas_kwargs or {}
         data = pd.read_csv(filepath, **pandas_kwargs)
         self.detect_from_dataframe(data)
+
+    def set_primary_key(self, id):
+        """Set the metadata primary key.
+
+        Args:
+            id (str, tuple):
+                Name (or tuple of names) of the primary key column(s).
+        """
+        if self._primary_key is not None:
+            warnings.warn(
+                f'There is an existing primary key {self._primary_key}. This key will be removed.'
+            )
+
+        self._primary_key = id
+        self._metadata['primary_key'] = id
+
+    def set_alternate_keys(self, ids):
+        """Set the metadata alternate keys.
+
+        Args:
+            ids (list[str], list[tuple]):
+                List of names (or tuple of names) of the alternate key columns.
+        """
+        self._alternate_keys = ids
+        self._metadata['alternate_keys'] = ids
+
+    def set_sequence_key(self, id):
+        """Set the metadata sequence key.
+
+        Args:
+            id (str):
+                Name of the sequence key column.
+        """
+        self._metadata['sequence_key'] = id
+
+    def set_sequence_index(self, column_name):
+        """Set the metadata sequence index.
+
+        Args:
+            column_name (str):
+                Name of the sequence index column.
+        """
+        self._metadata['sequence_index'] = column_name
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
