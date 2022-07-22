@@ -2,10 +2,10 @@
 
 import json
 import re
+import warnings
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-import warnings
 
 import pandas as pd
 
@@ -119,8 +119,7 @@ class SingleTableMetadata:
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
-            unexpected_kwargs = list(unexpected_kwargs)
-            unexpected_kwargs.sort()
+            unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)
             raise ValueError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")

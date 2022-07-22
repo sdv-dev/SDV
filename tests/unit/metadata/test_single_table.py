@@ -787,6 +787,86 @@ class TestSingleTableMetadata:
         ]
         assert mock_print.call_args_list == expected_print_calls
 
+    def test_set_primary_key(self):
+        """Test that ``set_primary_key`` sets the ``_metadata['primary_key']`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_primary_key('column')
+
+        # Assert
+        instance._metadata['primary_key'] == 'column'
+
+    def test_set_primary_key_tuple(self):
+        """Test that ``set_primary_key`` sets the ``_metadata['primary_key']`` value for tuples."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_primary_key(('column1', 'column2'))
+
+        # Assert
+        instance._metadata['primary_key'] == ('column1', 'column2')
+
+    @patch('sdv.tabular.utils.warnings')
+    def test_set_primary_key_warning(self, warning_mock):
+        """Test that ``set_primary_key`` raises a warning when a primary key already exists.
+
+        Setup:
+            - An instance of ``SingleTableMetadata`` with ``_primary_key`` set.
+
+        Input:
+            - String.
+
+        Side Effect:
+            - A warning should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._primary_key = 'column'
+
+        # Run
+        instance.set_primary_key('column')
+
+        # Assert
+        warning_msg = "There is an existing primary key 'column'. This key will be removed."
+        warning_mock.warn.called_once_with(warning_msg)
+        instance._metadata['primary_key'] == 'column'
+
+    def test_set_alternate_keys(self):
+        """Test that ``set_alternate_keys`` sets the ``_metadata['alternate_keys']`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_alternate_keys(['column1', ('column2', 'column3')])
+
+        # Assert
+        instance._metadata['alternate_keys'] == ['column1', ('column2', 'column3')]
+
+    def test_set_sequence_key(self):
+        """Test that ``set_sequence_key`` sets the ``_metadata['sequence_key]`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_sequence_key('column')
+
+        # Assert
+        instance._metadata['sequence_key'] == 'column'
+
+    def test_set_sequence_index(self):
+        """Test that ``set_sequence_index`` sets the ``_metadata['sequence_index]`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_sequence_index('column')
+
+        # Assert
+        instance._metadata['sequence_index'] == 'column'
+
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.
 
